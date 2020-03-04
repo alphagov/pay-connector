@@ -228,7 +228,7 @@ public class ChargeExpiryService {
                         }
                     },
                     () -> {
-                        logger.error(format("Gateway status does not map to any charge " +
+                        logger.info(format("Gateway status does not map to any charge " +
                                         "status in %s, expiring without cancelling on the gateway.",
                                 ChargeStatus.class.getCanonicalName()),
                                 kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
