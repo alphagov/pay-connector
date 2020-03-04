@@ -70,6 +70,36 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldForceCaptureForChargeInErrorState() {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(ChargeStatus.AUTHORISATION_ERROR, transactionId);
+
+        String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+    }
+
+    @Test
+    public void shouldNotForceCaptureForChargeForOtherNotification() {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(USER_CANCELLED, transactionId);
+
+        String response = notifyConnector(transactionId, "1", "6", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        assertFrontendChargeStatusIs(chargeId, USER_CANCELLED.getValue());
+    }
+    
+    @Test
     public void shouldHandleAnAuthorisedNotification_whenChargeIsInAuthorisationSubmittedState() {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
