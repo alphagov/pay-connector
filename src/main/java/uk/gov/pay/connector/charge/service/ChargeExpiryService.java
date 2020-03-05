@@ -17,6 +17,7 @@ import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.Authorisat
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -201,21 +202,22 @@ public class ChargeExpiryService {
                     {
                         if (status.toExternal().isFinished()) {
                             logger.info(format("Expiring charge skipped as charge is in a terminal state on the gateway " +
-                                            "provider. Attempting to force state on charge to [%s]", status.getValue()),
+                                            "provider. Attempting to update charge state to [%s]", status.getValue()),
                                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                                     kv(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId()),
                                     kv(PROVIDER, chargeEntity.getGatewayAccount().getGatewayName()));
 
+                            // first try to transition to the terminal state gracefully if allowed, otherwise force the
+                            // transition
                             try {
-                                chargeService.forceTransitionChargeState(chargeEntity, status);
-                                expireCancelFailed.getAndIncrement();
-                            } catch (InvalidForceStateTransitionException e) {
-                                logger.error(format("Cannot expire charge as it is in a terminal state of [%s] with " +
-                                                "the gateway provider and it is not possible to transition the charge " +
-                                                "into this state. Current state: [%s]", 
-                                        status.getValue(), chargeEntity.getStatus()),
-                                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
-                                expireCancelFailed.getAndIncrement();
+                                chargeService.transitionChargeState(chargeEntity, status);
+                                expireCancelled.getAndIncrement();
+                            } catch (InvalidStateTransitionException e) {
+                                if (forceTransitionChargeState(chargeEntity, status)) {
+                                    expireCancelled.getAndIncrement();
+                                } else {
+                                    expireCancelFailed.getAndIncrement();
+                                }
                             }
                         } else {
                             ChargeEntity expiredCharge = expireChargeWithGatewayCleanup(chargeEntity);
@@ -241,6 +243,20 @@ public class ChargeExpiryService {
                 expireCancelled.intValue(),
                 expireCancelFailed.intValue()
         );
+    }
+    
+    private boolean forceTransitionChargeState(ChargeEntity chargeEntity, ChargeStatus status) {
+        try {
+            chargeService.forceTransitionChargeState(chargeEntity, status);
+            return true;
+        } catch (InvalidForceStateTransitionException e) {
+            logger.error(format("Cannot expire charge as it is in a terminal state of [%s] with " +
+                            "the gateway provider and it is not possible to transition the charge " +
+                            "into this state. Current state: [%s]",
+                    status.getValue(), chargeEntity.getStatus()),
+                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+            return false;
+        }
     }
 
     private ChargeEntity expireChargeWithGatewayCleanup(ChargeEntity chargeEntity) {
