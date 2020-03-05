@@ -34,7 +34,7 @@ public class ChargeNotificationProcessor {
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         String oldStatus = chargeEntity.getStatus();
         
-        if (newStatus.equals(oldStatus)) {
+        if (newStatus.getValue().equals(oldStatus)) {
             return;
         }
 
