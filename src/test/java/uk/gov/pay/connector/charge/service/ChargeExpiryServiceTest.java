@@ -17,6 +17,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -270,15 +272,41 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity updatedCharge = mock(ChargeEntity.class);
         when(updatedCharge.getStatus()).thenReturn(CAPTURED.toString());
+        when(mockChargeService.transitionChargeState(chargeEntity, CAPTURED)).thenThrow(InvalidStateTransitionException.class);
         when(mockChargeService.forceTransitionChargeState(chargeEntity, CAPTURED)).thenReturn(updatedCharge);
 
         Map<String, Integer> sweepResult = chargeExpiryService.expire(singletonList(chargeEntity));
 
-        assertThat(sweepResult.get("expiry-success"), is(0));
-        assertThat(sweepResult.get("expiry-failed"), is(1));
+        assertThat(sweepResult.get("expiry-success"), is(1));
+        assertThat(sweepResult.get("expiry-failed"), is(0));
 
         verify(mockPaymentProvider, never()).cancel(any());
         verify(mockChargeService).forceTransitionChargeState(chargeEntity, CAPTURED);
+    }
+
+    @Test
+    public void shouldUpdateStatusToMatchGatewayStatus_whenNormalStateTransitionAllowed() throws Exception {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now())
+                .withStatus(AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        when(mockQueryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())).thenReturn(true);
+        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(AUTHORISATION_REJECTED));
+
+        ChargeEntity updatedCharge = mock(ChargeEntity.class);
+        when(updatedCharge.getStatus()).thenReturn(AUTHORISATION_REJECTED.toString());
+        when(mockChargeService.transitionChargeState(chargeEntity, AUTHORISATION_REJECTED)).thenReturn(updatedCharge);
+
+        Map<String, Integer> sweepResult = chargeExpiryService.expire(singletonList(chargeEntity));
+
+        assertThat(sweepResult.get("expiry-success"), is(1));
+        assertThat(sweepResult.get("expiry-failed"), is(0));
+
+        verify(mockPaymentProvider, never()).cancel(any());
+        verify(mockChargeService).transitionChargeState(chargeEntity, AUTHORISATION_REJECTED);
     }
 
     @Test
