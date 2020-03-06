@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static javax.ws.rs.core.Response.Status.Family.familyOf;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -68,7 +70,7 @@ public class GatewayClient {
             response = requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
             int statusCode = response.getStatus();
             Response gatewayResponse = new Response(response);
-            if (statusCode == OK.getStatusCode()) {
+            if (familyOf(statusCode) == SUCCESSFUL) {
                 return gatewayResponse;
             } else {
                 if (statusCode >= INTERNAL_SERVER_ERROR.getStatusCode()) {
