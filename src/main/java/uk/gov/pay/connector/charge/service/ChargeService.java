@@ -84,7 +84,6 @@ import static java.util.Optional.ofNullable;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -100,9 +99,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
@@ -657,11 +653,6 @@ public class ChargeService {
         ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
 
         return PaymentGatewayStateTransitions.getEventForForceUpdate(targetChargeState).map(eventClass -> {
-            logger.info(format("Force state transition from [%s] to [%s]", charge.getStatus(), targetChargeState.getValue()), 
-                    List.of(kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
-                            kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccount().getId()),
-                            kv(PROVIDER, charge.getGatewayAccount().getGatewayName())));
-            
             charge.setStatusIgnoringValidTransitions(targetChargeState);
             ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge);
 

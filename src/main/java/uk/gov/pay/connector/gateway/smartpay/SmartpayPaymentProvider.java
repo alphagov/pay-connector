@@ -149,11 +149,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public boolean canQueryPaymentStatus() {
-        return false;
-    }
-
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<RefundEntity> refundEntityList) {
         return externalRefundAvailabilityCalculator.calculate(charge, refundEntityList);
     }

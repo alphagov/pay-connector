@@ -56,7 +56,6 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         Map<String, Object> cardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails.isEmpty(), is(false));
@@ -81,7 +80,7 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
     public void shouldRespondWith204WithLockingStatus_IfCancelledAfterAuth() {
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
@@ -96,7 +95,6 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
 
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         worldpayMockClient.mockCancelError();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
 

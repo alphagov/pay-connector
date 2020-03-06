@@ -14,7 +14,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
@@ -93,8 +92,8 @@ public class WorldpayMockClient {
         );
     }
 
-    public void mockAuthorisationQuerySuccess() {
-        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISED_INQUIRY_RESPONSE);
+    public void mockAuthorisationQuerySuccess(String gatewayTransactionId) {
+        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderInquiry[@orderCode]";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    
     }
