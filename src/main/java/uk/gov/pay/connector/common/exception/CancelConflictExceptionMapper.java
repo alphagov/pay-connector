@@ -14,9 +14,15 @@ public class CancelConflictExceptionMapper implements ExceptionMapper<CancelConf
     private static final Logger LOGGER = LoggerFactory.getLogger(CancelConflictExceptionMapper.class);
 
     @Override
-    public Response toResponse(CancelConflictException e) {
-        LOGGER.info(e.getMessage());
-        var errorResponse = new ErrorResponse(e.getConflictResult().getErrorIdentifier(), e.getMessage());
-        return Response.status(409).entity(errorResponse).type(APPLICATION_JSON).build();
+    public Response toResponse(CancelConflictException exception) {
+        LOGGER.info(exception.getMessage());
+
+        var errorResponse = new ErrorResponse(exception.getConflictResult().getErrorIdentifier(), 
+                exception.getMessage());
+
+        return Response.status(409)
+                .entity(errorResponse)
+                .type(APPLICATION_JSON)
+                .build();
     }
 }

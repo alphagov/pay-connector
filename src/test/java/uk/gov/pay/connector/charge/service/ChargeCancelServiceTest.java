@@ -130,7 +130,7 @@ public class ChargeCancelServiceTest {
                 .withStatus(status)
                 .build();
 
-        when(mockQueryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())).thenReturn(false);
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
