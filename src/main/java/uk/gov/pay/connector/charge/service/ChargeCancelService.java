@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
@@ -27,6 +28,7 @@ import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.PRE_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -98,10 +100,9 @@ public class ChargeCancelService {
                     chargeService.forceTransitionChargeState(chargeEntity, gatewayStatus.get());
                 } catch (InvalidForceStateTransitionException e) {
                     throw new CancelConflictException(
-                            format("Cannot cancel charge as it is in a terminal state of [%s] with the gateway " +
-                                            "provider and it is not possible to transition the charge into this " +
-                                            "state. Current state: [%s].", 
-                                    gatewayStatus.get().getValue(), chargeEntity.getStatus()),
+                            format("Cannot cancel charge as it is in a terminal state of [%s] with the gateway provider. " +
+                                    "The charge's state could not be transitioned to [%s].", 
+                                    gatewayStatus.get().getValue(), gatewayStatus.get().getValue()),
                             CancelConflictException.ConflictResult.CHARGE_NOT_TRANSITIONED);
                 }
                 throw new CancelConflictException(

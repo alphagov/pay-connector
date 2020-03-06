@@ -663,7 +663,6 @@ public class ChargeService {
                             kv(PROVIDER, charge.getGatewayAccount().getGatewayName())));
             
             charge.setStatusIgnoringValidTransitions(targetChargeState);
-            chargeDao.merge(charge);
             ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge);
 
             if (shouldEmitPaymentStateTransitionEvents) {
