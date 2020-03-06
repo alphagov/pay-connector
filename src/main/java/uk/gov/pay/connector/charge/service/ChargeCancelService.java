@@ -3,13 +3,10 @@ package uk.gov.pay.connector.charge.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
-import uk.gov.pay.connector.common.exception.CancelConflictException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -98,31 +95,14 @@ public class ChargeCancelService {
                 logger.info(message, List.of(kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                         kv(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId()),
                         kv(PROVIDER, chargeEntity.getGatewayAccount().getGatewayName())));
-                
-                try {
-                    chargeService.forceTransitionChargeState(chargeEntity, gatewayStatus.get());
-                } catch (InvalidForceStateTransitionException e) {
-                    throw new CancelConflictException(
-                            format("Cannot cancel charge as it is in a terminal state of [%s] with the gateway provider. " +
-                                    "The charge's state could not be transitioned to [%s].", 
-                                    gatewayStatus.get().getValue(), gatewayStatus.get().getValue()),
-                            CancelConflictException.ConflictResult.CHARGE_NOT_TRANSITIONED);
-                }
-                throw new CancelConflictException(
-                        format("Cannot cancel charge as it is in a terminal state of [%s] with the gateway provider. " +
-                                        "The charge's state was transitioned to [%s].", 
-                                gatewayStatus.get().getValue(), gatewayStatus.get().getValue()),
-                        CancelConflictException.ConflictResult.CHARGE_FORCIBLY_TRANSITIONED);
+                chargeService.forceTransitionChargeState(chargeEntity, gatewayStatus.get());
             } else {
                 cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
             }
         } else {
-            //should never happen
             var message = format("Cancelling charge aborted as gateway status does not map to any charge status in " +
                     "%s. ", ChargeStatus.class.getCanonicalName());
             logger.info(message, List.of(kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId())));
-            throw new RuntimeException("Cannot cancel charge as it is in some unknown state with the " +
-                    "gateway provider.");
         }
     }
 
