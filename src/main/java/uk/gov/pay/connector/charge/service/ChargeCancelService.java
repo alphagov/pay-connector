@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.common.exception.CancelConflictException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -171,7 +172,7 @@ public class ChargeCancelService {
         logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                 chargeEntity.getExternalId(), chargeEntity.getStatus(), completeStatus);
 
-        chargeService.transitionChargeState(chargeEntity.getExternalId(), completeStatus);
+        chargeService.forceTransitionChargeState(chargeEntity, completeStatus);
     }
 
     private void prepareForTerminate(ChargeEntity chargeEntity, StatusFlow statusFlow) {
