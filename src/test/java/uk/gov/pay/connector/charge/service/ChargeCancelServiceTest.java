@@ -304,25 +304,6 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_needToCheckWithGateway_hasUnknownStateWithProvider_cancelledWithoutProvider() throws Exception {
-        String externalChargeId = "external-charge-id";
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId(externalChargeId)
-                .withTransactionId("transaction-id")
-                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .build();
-
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
-        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.empty());
-        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-
-        chargeCancelService.doUserCancel(externalChargeId);
-
-        verify(mockPaymentProvider, never()).cancel(any());
-        verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
-    }
-
-    @Test
     public void doUserCancel_shouldFail_whenChargeNotFound() {
         String externalChargeId = "external-charge-id";
 
