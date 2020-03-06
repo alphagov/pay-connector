@@ -86,6 +86,10 @@ public class ConnectorConfiguration extends Configuration {
     private String graphiteHost;
 
     @NotNull
+    @JsonProperty("prometheusConfig")
+    private PrometheusConfig prometheusConfig;
+
+    @NotNull
     private String graphitePort;
 
     @NotNull
@@ -225,5 +229,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public ExpungeConfig getExpungeConfig() {
         return expungeConfig;
+    }
+
+    public PrometheusConfig getPrometheusConfig() {
+        return prometheusConfig;
     }
 }

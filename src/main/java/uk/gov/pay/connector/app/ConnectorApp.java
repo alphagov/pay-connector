@@ -21,6 +21,9 @@ import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
+import io.prometheus.client.exporter.MetricsServlet;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.pay.commons.utils.metrics.DatabaseMetricsService;
@@ -110,6 +113,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         injector.getInstance(PersistenceServiceInitialiser.class);
 
         initialiseMetrics(configuration, environment);
+
+        if (configuration.getPrometheusConfig().isPrometheusEnabled()) {
+            initialisePrometheus(environment, configuration.getPrometheusConfig());
+        }
 
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
@@ -204,7 +211,14 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .prefixedWith(SERVICE_METRICS_NODE)
                 .build(graphiteUDP)
                 .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
+    }
 
+    private void initialisePrometheus(Environment environment, PrometheusConfig prometheusConfig) {
+        CollectorRegistry.defaultRegistry.register(new DropwizardExports(environment.metrics()));
+        environment
+                .admin()
+                .addServlet("prometheusMetrics", new MetricsServlet())
+                .addMapping(prometheusConfig.getPath());
     }
 
     public static void main(String[] args) throws Exception {
