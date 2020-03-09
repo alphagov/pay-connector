@@ -36,7 +36,10 @@ import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -732,6 +735,51 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(chargeToExpungeFromDB.getId(), is(chargeToExpunge.getChargeId()));
         assertThat(chargeToExpungeFromDB.getExternalId(), is(chargeToExpunge.getExternalChargeId()));
         assertThat(chargeToExpungeFromDB.getCreatedDate(), is(chargeToExpunge.getCreatedDate()));
+    }
+
+    @Test
+    public void shouldFindChargesWithPaymentProviderAndStatuses() {
+        DatabaseFixtures databaseFixtures = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper);
+
+        DatabaseFixtures.TestAccount epdqAccount = databaseFixtures.aTestAccount()
+                .withAccountId(nextLong())
+                .withPaymentProvider("epdq")
+                .insert();
+
+        DatabaseFixtures.TestAccount worldpayAccount = databaseFixtures.aTestAccount()
+                .withAccountId(nextLong())
+                .withPaymentProvider("worldpay")
+                .insert();
+
+        TestCharge epdqCreatedCharge = databaseFixtures.aTestCharge()
+                .withTestAccount(epdqAccount)
+                .withChargeStatus(CREATED)
+                .insert();
+
+        databaseFixtures.aTestCharge()
+                .withTestAccount(worldpayAccount)
+                .withChargeStatus(CREATED)
+                .insert();
+
+        TestCharge epdqEnteringCardDetailsCharge = databaseFixtures.aTestCharge()
+                .withTestAccount(epdqAccount)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .insert();
+
+        databaseFixtures.aTestCharge()
+                .withTestAccount(epdqAccount)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
+                .insert();
+
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProviderAndStatusIn("epdq",
+                List.of(CREATED, ENTERING_CARD_DETAILS));
+
+        assertThat(charges, hasSize(2));
+        assertThat(charges, containsInAnyOrder(
+                hasProperty("externalId", is(epdqCreatedCharge.externalChargeId)),
+                hasProperty("externalId", is(epdqEnteringCardDetailsCharge.externalChargeId))
+        ));
     }
 
     private void insertTestAccount() {

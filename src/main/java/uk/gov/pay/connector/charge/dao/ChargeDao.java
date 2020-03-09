@@ -240,4 +240,12 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter(1, id)
                 .executeUpdate();
     }
+
+    public List<ChargeEntity> findWithPaymentProviderAndStatusIn(String provider, List<ChargeStatus> statuses) {
+        return entityManager.get()
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.gatewayAccount.gatewayName = :provider AND c.status in :statuses", ChargeEntity.class)
+                .setParameter("provider", provider)
+                .setParameter("statuses", statuses)
+                .getResultList();
+    }
 }
