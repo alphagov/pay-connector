@@ -1,27 +1,18 @@
 package uk.gov.pay.connector.gateway;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.epdq.EpdqStatusMapper;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayQueryResponse;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
+import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import java.util.Optional;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 public class ChargeQueryResponse {
     private ChargeStatus mappedStatus;
-    private final String rawGatewayResponse;
+    private final BaseInquiryResponse rawGatewayResponse;
 
-    public ChargeQueryResponse(ChargeStatus mappedStatus, String rawGatewayResponse) {
+    public ChargeQueryResponse(ChargeStatus mappedStatus, BaseInquiryResponse rawGatewayResponse) {
         this.mappedStatus = mappedStatus;
-        this.rawGatewayResponse = rawGatewayResponse;
-    }
-
-    public ChargeQueryResponse(WorldpayStatus worldpayStatus, String rawGatewayResponse) {
-        if (worldpayStatus != null) {
-            this.mappedStatus = worldpayStatus.getPayStatus();
-        }
-        
         this.rawGatewayResponse = rawGatewayResponse;
     }
 
@@ -29,21 +20,11 @@ public class ChargeQueryResponse {
         return Optional.ofNullable(mappedStatus);
     }
 
-    public String getRawGatewayResponse() {
-        return rawGatewayResponse;
+    public String getRawGatewayResponseString() {
+        return rawGatewayResponse.toString();
     }
-
-    public static ChargeQueryResponse from(WorldpayQueryResponse worldpayInquiryStatusResponse) {
-        return new ChargeQueryResponse(
-                WorldpayStatus.fromString(worldpayInquiryStatusResponse.getLastEvent()).orElse(null),
-                worldpayInquiryStatusResponse.toString()
-        );
-    }
-
-    public static ChargeQueryResponse from(EpdqQueryResponse epdqQueryResponse) {
-        return new ChargeQueryResponse(
-                EpdqStatusMapper.map(epdqQueryResponse.getStatus()),
-                epdqQueryResponse.toString()
-        );
+    
+    public boolean foundCharge() {
+        return isNotBlank(rawGatewayResponse.getTransactionId());
     }
 }

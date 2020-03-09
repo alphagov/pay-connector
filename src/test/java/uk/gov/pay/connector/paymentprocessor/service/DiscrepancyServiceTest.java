@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -36,6 +37,9 @@ public class DiscrepancyServiceTest {
     @Mock
     private ChargeExpiryService expiryService;
 
+    @Mock
+    private BaseInquiryResponse mockGatewayResponse;
+    
     @Before
     public void beforeTest() {
         discrepancyService = new DiscrepancyService(chargeService, queryService, expiryService);
@@ -47,7 +51,7 @@ public class DiscrepancyServiceTest {
                 .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(EXPIRED)
                 .build();
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockGatewayResponse);
         when(chargeService.findChargeByExternalId(charge.getExternalId())).thenReturn(charge);
         when(queryService.getChargeGatewayStatus(charge)).thenReturn(chargeQueryResponse);
         when(expiryService.forceCancelWithGateway(charge)).thenReturn(true);
@@ -64,7 +68,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build();
         
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockGatewayResponse);
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 
@@ -75,7 +79,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(CAPTURED)
                 .build();
         
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockGatewayResponse);
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 
@@ -86,7 +90,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(AUTHORISATION_3DS_READY)
                 .build();
 
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockGatewayResponse);
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 
@@ -97,7 +101,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(EXPIRED)
                 .build();
         
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(CAPTURED, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(CAPTURED, mockGatewayResponse);
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 
@@ -108,7 +112,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(EXPIRED)
                 .build();
         
-        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockGatewayResponse);
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 

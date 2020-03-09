@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.*;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
@@ -156,7 +157,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
-                .map(ChargeQueryResponse::from)
+                .map(epdqQueryResponse -> {
+                    ChargeStatus mappedStatus = EpdqStatusMapper.map(epdqQueryResponse.getStatus());
+                    return new ChargeQueryResponse(mappedStatus, epdqQueryResponse);
+                })
                 .orElseThrow(() -> 
                         new WebApplicationException(String.format(
                                 "Unable to query charge %s - an error occurred: %s",

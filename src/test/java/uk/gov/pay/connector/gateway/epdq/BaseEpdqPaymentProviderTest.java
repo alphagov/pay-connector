@@ -35,7 +35,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,12 +46,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
@@ -64,6 +63,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_E
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_QUERY_PAYMENT_STATUS_AUTHORISED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_QUERY_PAYMENT_STATUS_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
@@ -189,6 +190,14 @@ public abstract class BaseEpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_DELETE_SUCCESS_RESPONSE);
     }
 
+    String successQueryAuthorisedResponse() {
+        return TestTemplateResourceLoader.load(EPDQ_QUERY_PAYMENT_STATUS_AUTHORISED_RESPONSE);
+    }
+
+    String errorQueryResponse() {
+        return TestTemplateResourceLoader.load(EPDQ_QUERY_PAYMENT_STATUS_ERROR_RESPONSE);
+    }
+
     private RefundGatewayRequest buildTestRefundRequest(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         RefundEntity refundEntity = new RefundEntity(charge.getAmount() - 100, userExternalId, userEmail, charge.getExternalId());
         return RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity);
@@ -241,19 +250,25 @@ public abstract class BaseEpdqPaymentProviderTest {
     }
 
     private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(accountEntity)
-                .withTransactionId("payId")
-                .build();
+        ChargeEntity chargeEntity = buildChargeEntity(accountEntity);
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
     private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity gatewayAccountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        ChargeEntity chargeEntity = buildChargeEntity(gatewayAccountEntity);
+        return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity);
+    }
+
+    protected ChargeEntity buildChargeEntity() {
+        GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountEntity();
+        return buildChargeEntity(gatewayAccountEntity);
+    }
+
+    private ChargeEntity buildChargeEntity(GatewayAccountEntity gatewayAccountEntity) {
+        return aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withTransactionId("payId")
                 .build();
-        return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity);
     }
 
     private AuthCardDetails buildTestAuthCardDetails() {

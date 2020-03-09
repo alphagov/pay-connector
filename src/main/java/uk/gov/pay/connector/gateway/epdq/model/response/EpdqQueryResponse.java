@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.gateway.epdq.model.response;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.StringJoiner;
 
 @XmlRootElement(name = "ncresponse")
-public class EpdqQueryResponse extends EpdqBaseResponse implements BaseResponse {
+public class EpdqQueryResponse extends EpdqBaseResponse implements BaseInquiryResponse {
 
     private String status;
 

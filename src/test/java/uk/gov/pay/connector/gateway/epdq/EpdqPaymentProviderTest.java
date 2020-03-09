@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.epdq;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -16,6 +17,8 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
@@ -122,5 +125,21 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertEquals(response.getError().get(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
+    }
+
+    @Test
+    public void shouldSuccessfullyQueryChargeStatus() throws Exception {
+        mockPaymentProviderResponse(200, successQueryAuthorisedResponse());
+        ChargeQueryResponse response = provider.queryPaymentStatus(buildChargeEntity());
+        assertThat(response.getMappedStatus(), is(Optional.of(AUTHORISATION_SUCCESS)));
+        assertThat(response.foundCharge(), is(true));
+    }
+
+    @Test
+    public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
+        mockPaymentProviderResponse(200, errorQueryResponse());
+        ChargeQueryResponse response = provider.queryPaymentStatus(buildChargeEntity());
+        assertThat(response.getMappedStatus(), is(Optional.empty()));
+        assertThat(response.foundCharge(), is(false));
     }
 }

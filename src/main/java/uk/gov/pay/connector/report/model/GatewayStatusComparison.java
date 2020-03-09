@@ -35,7 +35,7 @@ public final class GatewayStatusComparison {
         chargeId = charge.getExternalId();
         payStatus = ChargeStatus.fromString(charge.getStatus());
         gatewayStatus = gatewayQueryResponse.getMappedStatus().orElse(null);
-        rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponse();
+        rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponseString();
         this.charge = charge;
     }
 
