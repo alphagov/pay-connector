@@ -47,6 +47,11 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+    
+    @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         return getSandboxGatewayResponse(cardNumber);
@@ -55,11 +60,6 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Sandbox");
-    }
-
-    @Override
-    public boolean canQueryPaymentStatus() {
-        return false;
     }
 
     @Override

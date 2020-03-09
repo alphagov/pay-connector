@@ -25,11 +25,20 @@ public class QueryService {
     public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) throws GatewayException {
         return providers.byName(charge.getPaymentGatewayName()).queryPaymentStatus(charge);
     }
-    
+
     public boolean canQueryChargeGatewayStatus(PaymentGatewayName paymentGatewayName) {
         return providers.byName(paymentGatewayName).canQueryPaymentStatus();
     }
 
+    public Optional<ChargeStatus> getMappedGatewayStatus(ChargeEntity charge) {
+        try {
+            return getChargeGatewayStatus(charge).getMappedStatus();
+        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
+            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
+            return Optional.empty();
+        }
+    }
+    
     public boolean isTerminableWithGateway(ChargeEntity charge) {
         try {
             return getChargeGatewayStatus(charge)
@@ -39,15 +48,6 @@ public class QueryService {
         } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;
-        }
-    }
-    
-    public Optional<ChargeStatus> getMappedGatewayStatus(ChargeEntity charge) {
-        try {
-            return getChargeGatewayStatus(charge).getMappedStatus();
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
-            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
-            return Optional.empty();
         }
     }
 }

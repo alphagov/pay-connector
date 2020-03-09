@@ -28,8 +28,6 @@ public interface PaymentProvider {
     GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws GatewayException;
 
     ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException;
-    
-    boolean canQueryPaymentStatus();
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
@@ -38,6 +36,8 @@ public interface PaymentProvider {
     CaptureResponse capture(CaptureGatewayRequest request);
 
     GatewayRefundResponse refund(RefundGatewayRequest request);
+
+    boolean canQueryPaymentStatus();
 
     GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException;
 

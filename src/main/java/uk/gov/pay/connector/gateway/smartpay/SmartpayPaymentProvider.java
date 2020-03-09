@@ -67,6 +67,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return SMARTPAY;
     }
@@ -146,11 +151,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Smartpay");
-    }
-
-    @Override
-    public boolean canQueryPaymentStatus() {
-        return false;
     }
 
     @Override

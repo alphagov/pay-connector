@@ -37,6 +37,7 @@ public class EpdqStatusMapper {
         if (epdqStatusMap.containsKey(epdqStatus)) {
             return epdqStatusMap.get(epdqStatus);
         }
-        return null; 
+        
+        return null;
     }
 }

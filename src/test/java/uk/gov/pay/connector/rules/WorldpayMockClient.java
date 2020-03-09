@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.http.Fault;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -15,7 +14,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
@@ -95,16 +93,9 @@ public class WorldpayMockClient {
     }
 
     public void mockAuthorisationQuerySuccess() {
-        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISED_INQUIRY_RESPONSE);
+        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderInquiry[@orderCode]";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    
-    }    
-    
-    public void mockAuthorisationQuerySuccess(WorldpayStatus worldpayStatus) {
-        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISED_INQUIRY_RESPONSE);
-        String capturedResponse = authSuccessResponse.replace("AUTHORISED", worldpayStatus.getWorldpayStatus());
-        String bodyMatchXpath = "//orderInquiry[@orderCode]";
-        bodyMatchingPaymentServiceResponse(bodyMatchXpath, capturedResponse);    
     }
 
     public void mockServerFault() {

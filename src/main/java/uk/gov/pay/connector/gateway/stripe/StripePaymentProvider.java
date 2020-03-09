@@ -80,6 +80,11 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return STRIPE;
     }
@@ -92,11 +97,6 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Stripe");
-    }
-
-    @Override
-    public boolean canQueryPaymentStatus() {
-        return false;
     }
 
     @Override

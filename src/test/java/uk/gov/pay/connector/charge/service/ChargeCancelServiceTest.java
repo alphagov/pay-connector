@@ -15,9 +15,7 @@ import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.common.exception.CancelConflictException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
@@ -41,10 +39,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeCancelServiceTest {
@@ -69,33 +67,6 @@ public class ChargeCancelServiceTest {
 
     @InjectMocks
     private ChargeCancelService chargeCancelService;
-    
-    @Test
-    @Parameters({
-            "AUTHORISATION 3DS REQUIRED",
-            "AUTHORISATION 3DS READY",
-            "AUTHORISATION SUCCESS"
-    })
-    public void cancelling_charge_should_force_transition_charge_state_and_emit_event_when_status_on_psp_is_captured(String chargeStatus) {
-        String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = nextLong();
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId(externalChargeId)
-                .withStatus(ChargeStatus.fromString(chargeStatus))
-                .build();
-
-        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
-        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(ChargeStatus.CAPTURED));
-        
-        try {
-            chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
-        } catch (CancelConflictException e) {
-            //expected
-        }
-        
-        verify(chargeService).forceTransitionChargeState(chargeEntity, ChargeStatus.CAPTURED);
-    }
 
     @Test
     public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
@@ -130,7 +101,7 @@ public class ChargeCancelServiceTest {
                 .withStatus(status)
                 .build();
 
-        when(mockQueryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())).thenReturn(false);
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
@@ -160,8 +131,7 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
-        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(status));
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
@@ -186,6 +156,7 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
@@ -240,7 +211,7 @@ public class ChargeCancelServiceTest {
                 .withStatus(status)
                 .build();
 
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(false);
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
 
         chargeCancelService.doUserCancel(externalChargeId);
@@ -269,8 +240,7 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
-        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(status));
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
@@ -300,25 +270,6 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doUserCancel(externalChargeId);
 
-        verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
-    }
-
-    @Test
-    public void doUserCancel_needToCheckWithGateway_hasUnknownStateWithProvider_cancelledWithoutProvider() throws Exception {
-        String externalChargeId = "external-charge-id";
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId(externalChargeId)
-                .withTransactionId("transaction-id")
-                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .build();
-
-        when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
-        when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.empty());
-        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-
-        chargeCancelService.doUserCancel(externalChargeId);
-
-        verify(mockPaymentProvider, never()).cancel(any());
         verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
     }
 
@@ -405,6 +356,20 @@ public class ChargeCancelServiceTest {
 
         verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
+    }
+
+    private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+            @Override
+            protected boolean matchesSafely(ChargeEntity chargeEntity) {
+                return chargeEntity.getStatus().equals(expectedStatus.getValue());
+            }
+
+            @Override
+            public void describeTo(Description description) {
+
+            }
+        });
     }
 
     private HamcrestArgumentMatcher<CancelGatewayRequest> aCancelGatewayRequestMatching(ChargeEntity chargeEntity) {
