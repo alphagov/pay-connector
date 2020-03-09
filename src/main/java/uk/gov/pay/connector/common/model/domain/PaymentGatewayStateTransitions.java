@@ -8,6 +8,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.events.model.charge.AuthorisationCancelled;
+import uk.gov.pay.connector.events.model.charge.AuthorisationErrorCheckedWithGatewayChargeWasMissing;
+import uk.gov.pay.connector.events.model.charge.AuthorisationErrorCheckedWithGatewayChargeWasRejected;
 import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.CancelByExpirationFailed;
@@ -19,6 +21,7 @@ import uk.gov.pay.connector.events.model.charge.CancelByUserSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelledByExpiration;
 import uk.gov.pay.connector.events.model.charge.CancelledByExternalService;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
+import uk.gov.pay.connector.events.model.charge.CancelledWithGatewayAfterAuthorisationError;
 import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
@@ -48,6 +51,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR_CHARGE_MISSING;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
@@ -195,6 +201,17 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(USER_CANCEL_READY, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, ModelledEvent.of(CancelByUserFailed.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
+
+        graph.putEdgeValue(AUTHORISATION_ERROR, AUTHORISATION_ERROR_CANCELLED, ModelledEvent.of(CancelledWithGatewayAfterAuthorisationError.class));
+        graph.putEdgeValue(AUTHORISATION_ERROR, AUTHORISATION_ERROR_REJECTED, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasRejected.class));
+        graph.putEdgeValue(AUTHORISATION_ERROR, AUTHORISATION_ERROR_CHARGE_MISSING, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasMissing.class));
+        graph.putEdgeValue(AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_ERROR_CANCELLED, ModelledEvent.of(CancelledWithGatewayAfterAuthorisationError.class));
+        graph.putEdgeValue(AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_ERROR_REJECTED, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasRejected.class));
+        graph.putEdgeValue(AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_ERROR_CHARGE_MISSING, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasMissing.class));
+        graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_CANCELLED, ModelledEvent.of(CancelledWithGatewayAfterAuthorisationError.class));
+        graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_REJECTED, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasRejected.class));
+        graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_CHARGE_MISSING, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasMissing.class));
+        
 
         return ImmutableValueGraph.copyOf(graph);
     }

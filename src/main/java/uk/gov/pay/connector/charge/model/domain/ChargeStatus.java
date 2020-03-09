@@ -55,7 +55,14 @@ public enum ChargeStatus implements Status {
     USER_CANCEL_READY("USER CANCEL READY", EXTERNAL_FAILED_CANCELLED, false),
     USER_CANCEL_SUBMITTED("USER CANCEL SUBMITTED", EXTERNAL_FAILED_CANCELLED, false),
     USER_CANCELLED("USER CANCELLED", EXTERNAL_FAILED_CANCELLED, true),
-    USER_CANCEL_ERROR("USER CANCEL ERROR", EXTERNAL_FAILED_CANCELLED, true);
+    USER_CANCEL_ERROR("USER CANCEL ERROR", EXTERNAL_FAILED_CANCELLED, true),
+    
+    // Below statuses exist to facilitate cancellation on the gateway for charges that entered the various authorisation
+    // error states. A recurring cleanup job moves charges into these states when it has handled them. This job is only
+    // run for ePDQ charges, so only ePDQ charges will enter these states.
+    AUTHORISATION_ERROR_CANCELLED("AUTHORISATION ERROR CANCELLED", EXTERNAL_ERROR_GATEWAY, true),
+    AUTHORISATION_ERROR_REJECTED("AUTHORISATION ERROR REJECTED", EXTERNAL_ERROR_GATEWAY, true),
+    AUTHORISATION_ERROR_CHARGE_MISSING("AUTHORISATION ERROR CHARGE MISSING", EXTERNAL_ERROR_GATEWAY, true);
 
     private String value;
     private ExternalChargeState externalStatus;
