@@ -15,6 +15,7 @@ public class EpdqStatusMapper {
     
     static {
         Map<String, ChargeStatus> aMap = new HashMap<>();
+        aMap.put("0", ChargeStatus.AUTHORISATION_ERROR);
         aMap.put("2", ChargeStatus.AUTHORISATION_REJECTED);
 
         aMap.put("46", ChargeStatus.AUTHORISATION_3DS_REQUIRED);

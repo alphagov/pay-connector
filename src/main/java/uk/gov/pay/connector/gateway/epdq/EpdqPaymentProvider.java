@@ -161,7 +161,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     ChargeStatus mappedStatus = EpdqStatusMapper.map(epdqQueryResponse.getStatus());
                     return new ChargeQueryResponse(mappedStatus, epdqQueryResponse);
                 })
-                .orElseThrow(() -> 
+                .orElseThrow(() ->
                         new WebApplicationException(String.format(
                                 "Unable to query charge %s - an error occurred: %s",
                                 charge.getExternalId(),
