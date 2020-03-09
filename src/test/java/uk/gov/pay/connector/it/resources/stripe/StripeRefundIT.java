@@ -83,7 +83,7 @@ public class StripeRefundIT extends ChargingITestBase {
         String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = testChargeCreatedWithStripeChargeAPI.getExternalChargeId();
         long amount = 10L;
-        stripeMockClient.mockTransferSuccess(null);
+        stripeMockClient.mockTransferSuccess();
         stripeMockClient.mockRefund();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", testChargeCreatedWithStripeChargeAPI.getAmount());
@@ -121,7 +121,7 @@ public class StripeRefundIT extends ChargingITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
         stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
-        stripeMockClient.mockTransferSuccess(null);
+        stripeMockClient.mockTransferSuccess();
         stripeMockClient.mockRefund();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
