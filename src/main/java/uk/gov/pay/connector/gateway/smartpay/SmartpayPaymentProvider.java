@@ -67,6 +67,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return SMARTPAY;
     }

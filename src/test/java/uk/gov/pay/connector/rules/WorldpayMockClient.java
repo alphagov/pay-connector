@@ -92,7 +92,7 @@ public class WorldpayMockClient {
         );
     }
 
-    public void mockAuthorisationQuerySuccess(String gatewayTransactionId) {
+    public void mockAuthorisationQuerySuccess() {
         String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderInquiry[@orderCode]";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    

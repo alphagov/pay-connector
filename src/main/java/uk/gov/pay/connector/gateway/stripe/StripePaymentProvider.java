@@ -80,6 +80,11 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return STRIPE;
     }

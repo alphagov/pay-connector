@@ -37,6 +37,8 @@ public interface PaymentProvider {
 
     GatewayRefundResponse refund(RefundGatewayRequest request);
 
+    boolean canQueryPaymentStatus();
+
     GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException;
 
     ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<RefundEntity> refundEntityList);

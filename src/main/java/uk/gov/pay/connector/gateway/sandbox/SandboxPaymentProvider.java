@@ -47,6 +47,11 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+    
+    @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         return getSandboxGatewayResponse(cardNumber);
