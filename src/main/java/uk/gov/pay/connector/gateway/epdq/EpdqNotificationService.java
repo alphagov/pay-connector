@@ -13,12 +13,14 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -114,6 +116,11 @@ public class EpdqNotificationService {
 
         if (newChargeStatus.isPresent()) {
             if(charge.isHistoric()){
+                if (CAPTURED.getValue().equals(newChargeStatus.get().getValue())) {
+                    chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, notification.getTransactionId(), charge, newChargeStatus.get(), null);
+                    return;
+                }
+                
                 logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
                         PAYMENT_GATEWAY_NAME, notification,
                         charge.getExternalId(),

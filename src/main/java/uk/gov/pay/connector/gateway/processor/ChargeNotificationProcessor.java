@@ -8,11 +8,16 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.CaptureConfirmedByGatewayNotification;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
+import java.util.List;
 
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -22,11 +27,13 @@ import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 public class ChargeNotificationProcessor {
 
     private ChargeService chargeService;
+    private EventService eventService;
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
-    ChargeNotificationProcessor(ChargeService chargeService) {
+    ChargeNotificationProcessor(ChargeService chargeService, EventService eventService) {
         this.chargeService = chargeService;
+        this.eventService = eventService;
     }
 
     public void invoke(String gatewayTransactionId, Charge charge, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
@@ -85,5 +92,22 @@ public class ChargeNotificationProcessor {
                     kv(PROVIDER, gatewayAccount.getGatewayName()));
             return false;
         }
+    }
+    
+    public void processCaptureNotificationForExpungedCharge(GatewayAccountEntity gatewayAccount, String gatewayTransactionId, Charge charge, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
+        logger.info(String.format("Received capture notification for charge that was already expunged from Connector"),
+                kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
+                kv(PROVIDER, gatewayAccount.getGatewayName()));
+        
+        Event event = new CaptureConfirmedByGatewayNotification(charge.getExternalId(), gatewayEventDate);
+
+        logger.info(format("Force state transition from [%s] to [%s]", charge.getStatus(),  newStatus.getValue()),
+                List.of(kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                        kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
+                        kv(PROVIDER, gatewayAccount.getGatewayName())));
+        
+         eventService.emitEvent(event);
     }
 }

@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
@@ -41,9 +42,9 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
-
+    
     @Test
-    public void givenAChargeCapturedNotification_chargeNotificationProcessorShouldNotBeInvokedIfChargeIsHistoric() {
+    public void givenChargeCapturedNotification_chargeNotificationProcessorShouldBeInvokedIfChargeIsHistoric() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
@@ -52,12 +53,13 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
                 .build());
         charge.setHistoric(true);
 
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockRefundNotificationProcessor);
-        verifyNoInteractions(mockChargeNotificationProcessor);
+        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED, null);
     }
 
     @Test

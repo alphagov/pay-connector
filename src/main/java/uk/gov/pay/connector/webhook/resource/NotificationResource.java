@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.epdq.EpdqNotificationService;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
+import uk.gov.pay.connector.queue.QueueException;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;

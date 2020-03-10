@@ -21,7 +21,15 @@ public class EventService {
         this.eventQueue = eventQueue;
         this.emittedEventDao = emittedEventDao;
     }
-
+    
+    public void emitEvent(Event event) {
+        try {
+            eventQueue.emitEvent(event);
+        } catch (QueueException e) {
+            logger.error("Failed to emit event {} due to {} [externalId={}]", event.getEventType(), e.getMessage(), event.getResourceExternalId());
+        }
+    }
+    
     public void emitAndRecordEvent(Event event, ZonedDateTime doNotRetryEmitUntilDate) {
         try {
             eventQueue.emitEvent(event);

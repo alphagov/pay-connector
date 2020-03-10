@@ -25,6 +25,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -72,7 +73,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
     @Test
     public void shouldForceCaptureForChargeInErrorState() {
         String transactionId = "transaction-id";
-        String chargeId = createNewChargeWith(ChargeStatus.AUTHORISATION_ERROR, transactionId);
+        String chargeId = createNewChargeWith(AUTHORISATION_ERROR, transactionId);
 
         String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
@@ -84,6 +85,32 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
+    @Test
+    public void shouldForceCaptureForExpungedChargeInErrorState() throws JsonProcessingException {
+        String gatewayTransactionId = "123456";
+        String payIdSub = "2";
+        String chargeExternalId = randomAlphanumeric(26);
+
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(getTestAccount())
+                .withExternalChargeId(chargeExternalId)
+                .withTransactionId(gatewayTransactionId)
+                .withChargeStatus(AUTHORISATION_ERROR);
+
+        ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
+        
+        String response = notifyConnector(gatewayTransactionId, payIdSub, "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        Map<String, Object> chargeFromDB = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        assertThat(chargeFromDB, is(nullValue()));
+    }
+    
     @Test
     public void shouldNotForceCaptureForChargeForOtherNotification() {
         String transactionId = "transaction-id";
