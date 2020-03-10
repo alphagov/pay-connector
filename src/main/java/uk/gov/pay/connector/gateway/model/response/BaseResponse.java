@@ -5,4 +5,6 @@ public interface BaseResponse {
     String getErrorCode();
 
     String getErrorMessage();
+    
+    String toString();
 }

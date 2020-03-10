@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
@@ -17,7 +18,9 @@ import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -43,8 +46,8 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,10 +57,10 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -80,6 +83,9 @@ public class EpdqPaymentProviderTest {
 
     @Mock
     private Histogram mockHistogram;
+    
+    @Mock
+    private Counter mockCounter;
 
     @Mock
     private Environment mockEnvironment;
@@ -101,8 +107,9 @@ public class EpdqPaymentProviderTest {
         when(mockConnectorConfiguration.getLinks()).thenReturn(mockLinksConfig);
         when(mockConnectorConfiguration.getGatewayConfigFor(EPDQ)).thenReturn(mockGatewayConfig);
         when(mockLinksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-        when(mockGatewayConfig.getUrls()).thenReturn(Collections.emptyMap());
+        when(mockGatewayConfig.getUrls()).thenReturn(Map.of(TEST.toString(), url));
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
         Client client = TestClientFactory.createJerseyClient();
@@ -236,6 +243,27 @@ public class EpdqPaymentProviderTest {
         assertThat(refundResponse.isSuccessful(), is(true));
     }
 
+    @Test
+    public void shouldQueryPaymentStatusSuccessfully() throws Exception {
+        setUpAndCheckThatEpdqIsUp();
+
+        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeEntity);
+        assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
+        assertThat(chargeQueryResponse.foundCharge(), is(true));
+    }
+
+    @Test
+    public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
+        setUpAndCheckThatEpdqIsUp();
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeEntity);
+        assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.empty()));
+        assertThat(chargeQueryResponse.foundCharge(), is(false));
+    }
+
     private static CardAuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
@@ -263,6 +291,8 @@ public class EpdqPaymentProviderTest {
                     "username", username,
                     "password", password,
                     "sha_in_passphrase", shaInPassphrase);
+            
+            gatewayAccountEntity = new GatewayAccountEntity();
             gatewayAccountEntity.setId(123L);
             gatewayAccountEntity.setGatewayName("epdq");
             gatewayAccountEntity.setCredentials(validEpdqCredentials);

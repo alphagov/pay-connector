@@ -122,6 +122,9 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_REFUND_ERROR_RESPONSE = EPDQ_BASE_NAME + "/refund-error-response.xml";
 
     public static final String EPDQ_DELETE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/delete-success-response.xml";
+    
+    public static final String EPDQ_QUERY_PAYMENT_STATUS_AUTHORISED_RESPONSE = EPDQ_BASE_NAME + "/query-payment-status-authorised-response.xml";
+    public static final String EPDQ_QUERY_PAYMENT_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/query-payment-status-error-response.xml";
 
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
