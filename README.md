@@ -127,10 +127,12 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 
 ### Tasks namespace
 
-| Path                          | Supported Methods | Description                        |
-| ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 90 minutes|
-|[```/v1/tasks/emitted-events-sweep```](docs/api_specification.md#post-v1tasksemitted-events-sweep)  | POST    |  Spawns a task to verify whether all the events from the state transition in-memory queue have been processed|
+| Path                                                                                                 | Supported Methods | Description                                                                                                                      |
+|:-----------------------------------------------------------------------------------------------------|:------------------|:---------------------------------------------------------------------------------------------------------------------------------|
+| [```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep) | POST              | Spawns a task to expire charges with a default window of 90 minutes                                                              |
+| [```/v1/tasks/emitted-events-sweep```](docs/api_specification.md#post-v1tasksemitted-events-sweep)   | POST              | Spawns a task to verify whether all the events from the state transition in-memory queue have been processed                     |
+| [```/v1/tasks/gateway-cleanup-sweep```](docs/api_specification.md#post-v1tasksgateway-cleanup-sweep) | POST              | Spawns a task to check ePDQ charges in an authorisation error state with the gateway and cancel them on the gateway if necessary |
+
 
 ### Command line tasks
 

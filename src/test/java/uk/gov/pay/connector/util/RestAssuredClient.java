@@ -116,6 +116,12 @@ public class RestAssuredClient {
                 .post("/v1/tasks/emitted-events-sweep")
                 .then();
     }
+    
+    public ValidatableResponse postGatewayCleanupTask() {
+        return given().port(port)
+                .post("/v1/tasks/gateway-cleanup-sweep")
+                .then();
+    }
 
     public ValidatableResponse putChargeStatus(String putBody) {
         String requestPath = "/v1/frontend/charges/{chargeId}"

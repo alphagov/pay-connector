@@ -31,6 +31,7 @@ import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAcco
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
+import uk.gov.pay.connector.charge.resource.GatewayCleanupResource;
 import uk.gov.pay.connector.chargeevent.resource.ChargeEventsResource;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
@@ -141,6 +142,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
         environment.jersey().register(injector.getInstance(EmittedEventResource.class));
         environment.jersey().register(injector.getInstance(GatewayAccount3dsFlexCredentialsResource.class));
+        environment.jersey().register(injector.getInstance(GatewayCleanupResource.class));
         environment.jersey().register(injector.getInstance(LoggingMDCRequestFilter.class));
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
 

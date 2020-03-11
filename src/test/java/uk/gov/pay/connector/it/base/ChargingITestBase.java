@@ -24,6 +24,7 @@ import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
@@ -328,6 +329,10 @@ public class ChargingITestBase {
         return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
     }
 
+    protected String addCharge(ChargeStatus status) {
+        return addCharge(status, "ref", ZonedDateTime.now(), RandomIdGenerator.newId());
+    }
+    
     protected String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String transactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
