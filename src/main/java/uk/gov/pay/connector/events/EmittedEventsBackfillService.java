@@ -82,21 +82,21 @@ public class EmittedEventsBackfillService {
     @Transactional
     public void backfillEvent(EmittedEventEntity event) {
         try {
-            Optional<ChargeEntity> charge = Optional.empty();
+            ChargeEntity charge = null;
 
             if (ResourceType.valueOf(event.getResourceType().toUpperCase()).equals(ResourceType.PAYMENT)) {
-                charge = Optional.of(chargeService.findChargeByExternalId(event.getResourceExternalId()));
+                charge = chargeService.findChargeByExternalId(event.getResourceExternalId());
             } else {
                 Optional<RefundEntity> refundEntity = refundDao.findByExternalId(event.getResourceExternalId())
                         .stream()
                         .findFirst();
                 if (refundEntity.isPresent()) {
-                    charge = Optional.ofNullable(chargeService.findChargeByExternalId(refundEntity.get().getChargeExternalId()));
+                    charge = chargeService.findChargeByExternalId(refundEntity.get().getChargeExternalId());
                 }
             }
 
-            charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
-            charge.ifPresent(historicalEventEmitter::processPaymentAndRefundEvents);
+            MDC.put("chargeId", charge.getExternalId());
+            historicalEventEmitter.processPaymentAndRefundEvents(charge);
             event.setEmittedDate(now(ZoneId.of("UTC")));
         } finally {
             MDC.remove("chargeId");
