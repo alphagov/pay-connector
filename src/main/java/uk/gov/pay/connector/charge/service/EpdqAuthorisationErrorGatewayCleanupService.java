@@ -33,13 +33,13 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static final String CLEANUP_SUCCESS = "cleanup-success";
-    public static final String CLEANUP_FAILED = "cleanup-failed";
+    static final String CLEANUP_SUCCESS = "cleanup-success";
+    static final String CLEANUP_FAILED = "cleanup-failed";
 
-    private ChargeDao chargeDao;
-    private ChargeService chargeService;
-    private QueryService queryService;
-    private PaymentProviders providers;
+    private final ChargeDao chargeDao;
+    private final ChargeService chargeService;
+    private final QueryService queryService;
+    private final PaymentProviders providers;
 
     @Inject
     public EpdqAuthorisationErrorGatewayCleanupService(ChargeDao chargeDao,
@@ -137,7 +137,7 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 return true;
             }).orElseGet(() -> {
                 cancelResponse.getGatewayError().ifPresent(
-                        e -> logger.info(format("Could not cancel charge. Gateway error: %s", e.getMessage()), 
+                        e -> logger.info(format("Could not cancel charge. Gateway error: %s", e.getMessage()),
                                 chargeEntity.getStructuredLoggingArgs()));
                 return false;
             });
