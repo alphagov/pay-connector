@@ -67,18 +67,11 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/refunds", 200);
     }
 
-
-    public void mockTransferSuccess(String idempotencyKey) {
+    public void mockTransferSuccess() {
         String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
         MappingBuilder builder = post(urlPathEqualTo("/v1/transfers"))
                 .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
-                .withHeader("Idempotency-Key", equalTo(idempotencyKey));
-
-        Optional.ofNullable(idempotencyKey)
-                .ifPresentOrElse(
-                        key -> builder.withHeader("Idempotency-Key", equalTo(key)),
-                        () -> builder.withHeader("Idempotency-Key", matching(".*"))
-                );
+                .withHeader("Idempotency-Key", matching(".*"));
 
         stubFor(builder
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
