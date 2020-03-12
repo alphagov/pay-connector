@@ -52,12 +52,12 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
         this.providers = providers;
     }
 
-    public Map<String, Integer> sweepAndCleanupAuthorisationErrors() {
+    public Map<String, Integer> sweepAndCleanupAuthorisationErrors(int limit) {
         List<ChargeEntity> chargesToCleanUp = chargeDao.findWithPaymentProviderAndStatusIn(EPDQ.getName(), List.of(
                 AUTHORISATION_ERROR,
                 AUTHORISATION_TIMEOUT,
                 AUTHORISATION_UNEXPECTED_ERROR
-        ));
+        ), limit);
 
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
