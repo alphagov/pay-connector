@@ -59,6 +59,8 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 AUTHORISATION_UNEXPECTED_ERROR
         ), limit);
 
+        logger.info("Found {} epdq charges to clean up.", chargesToCleanUp.size());
+        
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
 
@@ -78,6 +80,9 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
             }
         });
 
+        logger.info("Epdq charges cleaned up successfully: {}; epdq charges cleaned up failed: {}", 
+                successes.intValue(), failures.intValue());
+        
         return ImmutableMap.of(
                 CLEANUP_SUCCESS, successes.intValue(),
                 CLEANUP_FAILED, failures.intValue()
