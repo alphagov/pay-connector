@@ -10,16 +10,21 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -48,6 +53,10 @@ public class ChargeExpungeService {
         ChargeStatus status = ChargeStatus.fromString(chargeEntity.getStatus());
         if (chargeIsHistoric && status.equals(ChargeStatus.CAPTURE_SUBMITTED)) {
             return true;
+        }
+        if (chargeEntity.getPaymentGatewayName().equals(PaymentGatewayName.EPDQ) && 
+                List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR).contains(status)) {
+            return false;
         }
         return status.isExpungeable();
     }
