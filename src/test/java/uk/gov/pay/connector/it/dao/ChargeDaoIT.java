@@ -739,41 +739,16 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldFindChargesWithPaymentProviderAndStatuses() {
-        DatabaseFixtures databaseFixtures = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper);
+        DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
+        DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
 
-        DatabaseFixtures.TestAccount epdqAccount = databaseFixtures.aTestAccount()
-                .withAccountId(nextLong())
-                .withPaymentProvider("epdq")
-                .insert();
-
-        DatabaseFixtures.TestAccount worldpayAccount = databaseFixtures.aTestAccount()
-                .withAccountId(nextLong())
-                .withPaymentProvider("worldpay")
-                .insert();
-
-        TestCharge epdqCreatedCharge = databaseFixtures.aTestCharge()
-                .withTestAccount(epdqAccount)
-                .withChargeStatus(CREATED)
-                .insert();
-
-        databaseFixtures.aTestCharge()
-                .withTestAccount(worldpayAccount)
-                .withChargeStatus(CREATED)
-                .insert();
-
-        TestCharge epdqEnteringCardDetailsCharge = databaseFixtures.aTestCharge()
-                .withTestAccount(epdqAccount)
-                .withChargeStatus(ENTERING_CARD_DETAILS)
-                .insert();
-
-        databaseFixtures.aTestCharge()
-                .withTestAccount(epdqAccount)
-                .withChargeStatus(AUTHORISATION_SUCCESS)
-                .insert();
+        TestCharge epdqCreatedCharge = insertTestChargeWithStatus(epdqAccount, CREATED);
+        insertTestChargeWithStatus(worldpayAccount, CREATED);
+        TestCharge epdqEnteringCardDetailsCharge = insertTestChargeWithStatus(epdqAccount, ENTERING_CARD_DETAILS);
+        insertTestChargeWithStatus(epdqAccount, AUTHORISATION_SUCCESS);
 
         List<ChargeEntity> charges = chargeDao.findWithPaymentProviderAndStatusIn("epdq",
-                List.of(CREATED, ENTERING_CARD_DETAILS));
+                List.of(CREATED, ENTERING_CARD_DETAILS), 10);
 
         assertThat(charges, hasSize(2));
         assertThat(charges, containsInAnyOrder(
@@ -782,11 +757,31 @@ public class ChargeDaoIT extends DaoITestBase {
         ));
     }
 
+    @Test
+    public void shouldFindChargesWithPaymentProviderAndStatusesWithLimit() {
+        DatabaseFixtures.TestAccount testAccount = insertTestAccountWithProvider("epdq");
+        insertTestChargeWithStatus(testAccount, CREATED);
+        insertTestChargeWithStatus(testAccount, CREATED);
+        insertTestChargeWithStatus(testAccount, CREATED);
+
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProviderAndStatusIn("epdq", List.of(CREATED), 2);
+        assertThat(charges, hasSize(2));
+    }
+
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(nextLong())
+                .insert();
+    }
+
+    private DatabaseFixtures.TestAccount insertTestAccountWithProvider(String provider) {
+        return DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(nextLong())
+                .withPaymentProvider(provider)
                 .insert();
     }
 
@@ -799,6 +794,14 @@ public class ChargeDaoIT extends DaoITestBase {
         defaultTestCardDetails
                 .withChargeId(defaultTestCharge.chargeId)
                 .update();
+    }
+
+    private TestCharge insertTestChargeWithStatus(DatabaseFixtures.TestAccount epdqAccount, ChargeStatus created) {
+        return DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper).aTestCharge()
+                .withTestAccount(epdqAccount)
+                .withChargeStatus(created)
+                .insert();
     }
 
     private void insertTestRefund() {

@@ -71,10 +71,18 @@ The job will move the charge into one of three statuses when it has successfully
 - `AUTHORISATION ERROR REJECTED` - the authorisation was rejected on the gateway and no action needed to be taken to clean up.
 - `AUTHORISATION ERROR CHARGE MISSING` - the charge was not found on the gateway, most likely because the error was before the gateway processed the authorisation.
 
+
+### Request query parameters
+
+| Field   | Required | Description                                                                        |
+|:--------|:--------:|:-----------------------------------------------------------------------------------|
+| `limit` |    X     | The maximum number of charges in an error state that will be processed by the job. |
+
+
 ### Request example
 
 ```
-POST /v1/tasks/gateway-cleanup-sweep
+POST /v1/tasks/gateway-cleanup-sweep?limit=50
 ```
 
 ### Response example

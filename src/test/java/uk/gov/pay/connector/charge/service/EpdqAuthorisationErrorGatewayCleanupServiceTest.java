@@ -46,7 +46,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
-    
+
     @Mock
     private ChargeDao mockChargeDao;
 
@@ -61,13 +61,13 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
 
     @Mock
     private QueryService mockQueryService;
-    
+
     @Mock
     private BaseInquiryResponse mockQueryResponse;
-    
+
     @Mock
     private EpdqCancelResponse epdqCancelResponse;
-    
+
     @InjectMocks
     private EpdqAuthorisationErrorGatewayCleanupService cleanupService;
     private ChargeEntity charge;
@@ -84,11 +84,14 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
                 .withStatus(ChargeStatus.AUTHORISATION_ERROR)
                 .build();
 
-        when(mockChargeDao.findWithPaymentProviderAndStatusIn(EPDQ.getName(), List.of(
-                AUTHORISATION_ERROR,
-                AUTHORISATION_TIMEOUT,
-                AUTHORISATION_UNEXPECTED_ERROR
-        ))).thenReturn(List.of(charge));
+        when(mockChargeDao.findWithPaymentProviderAndStatusIn(
+                eq(EPDQ.getName()),
+                eq(List.of(
+                        AUTHORISATION_ERROR,
+                        AUTHORISATION_TIMEOUT,
+                        AUTHORISATION_UNEXPECTED_ERROR
+                )),
+                any(Integer.class))).thenReturn(List.of(charge));
     }
 
     @Test
@@ -96,16 +99,16 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         when(mockQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, mockQueryResponse);
         when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
-        
+
         when(epdqCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
         GatewayResponse cancelResponse = responseBuilder().withResponse(epdqCancelResponse).build();
         when(mockPaymentProvider.cancel(any())).thenReturn(cancelResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
-        
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
+
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
-        
+
         verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CANCELLED));
     }
 
@@ -115,7 +118,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_REJECTED, mockQueryResponse);
         when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
@@ -129,7 +132,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(null, mockQueryResponse);
         when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
@@ -147,7 +150,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         GatewayResponse cancelResponse = responseBuilder().withResponse(epdqCancelResponse).build();
         when(mockPaymentProvider.cancel(any())).thenReturn(cancelResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
         assertThat(result.get(CLEANUP_SUCCESS), is(0));
         assertThat(result.get(CLEANUP_FAILED), is(1));
@@ -161,7 +164,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_UNEXPECTED_ERROR, mockQueryResponse);
         when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
         assertThat(result.get(CLEANUP_SUCCESS), is(0));
         assertThat(result.get(CLEANUP_FAILED), is(1));
@@ -169,14 +172,14 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         verify(mockPaymentProvider, never()).cancel(any());
         verify(mockChargeService, never()).transitionChargeState(eq(charge), any());
     }
-    
+
     @Test
     public void shouldReportFailureWhenGatewayStatusDoesNotMapToInternalStatus() throws Exception {
         when(mockQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(null, mockQueryResponse);
         when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
 
-        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors();
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
         assertThat(result.get(CLEANUP_SUCCESS), is(0));
         assertThat(result.get(CLEANUP_FAILED), is(1));
