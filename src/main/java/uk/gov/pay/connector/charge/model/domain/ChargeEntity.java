@@ -144,7 +144,6 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     @Column(name = "external_metadata", columnDefinition = "jsonb")
     @Convert(converter = ExternalMetadataConverter.class)
-    @Valid
     private ExternalMetadata externalMetadata;
 
     @Column(name = "parity_check_status")

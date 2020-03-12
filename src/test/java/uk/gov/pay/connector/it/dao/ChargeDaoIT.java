@@ -246,23 +246,6 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldNotSaveChargeWithInvalidExternalMetadata() {
-        var metaDataWithAnObject = new ExternalMetadata(
-                Map.of("key_1", Map.of("key_1_a", "some value")));
-
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalMetadata(metaDataWithAnObject)
-                .build();
-        try {
-            chargeDao.persist(chargeEntity);
-            fail("Persist should throw a ConstraintViolationException");
-        } catch (ConstraintViolationException ex) {
-            assertThat(ex.getConstraintViolations().size(), is(1));
-            assertThat(ex.getConstraintViolations().iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
-        }
-    }
-
-    @Test
     public void shouldCreateNewChargeWithParityCheckStatus() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());

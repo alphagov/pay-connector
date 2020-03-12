@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.IntStream;
 
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
@@ -63,6 +64,7 @@ public class ChargeExpungeService {
                 chargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, createdWithinLast)
                         .ifPresent(chargeEntity -> {
                             MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+                            logger.info(format("Attempting to expunge charge %s", chargeEntity.getExternalId()));
                             try {
                                 parityCheckAndExpungeIfMet(chargeEntity);
                             } catch (OptimisticLockException error) {
