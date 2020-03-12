@@ -158,7 +158,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Column(name = "source")
     @Enumerated(EnumType.STRING)
     private Source source;
-    
+
     @Column(name = "moto")
     private boolean moto;
 
@@ -301,12 +301,13 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.status = targetStatus.getValue();
     }
 
-    public List<StructuredArgument> getStructuredLoggingArgs() {
-        return List.of(
+    public Object[] getStructuredLoggingArgs() {
+        return new StructuredArgument[]{
                 kv(PAYMENT_EXTERNAL_ID, externalId),
                 kv(GATEWAY_ACCOUNT_ID, getGatewayAccount().getId()),
                 kv(PROVIDER, getGatewayAccount().getGatewayName()),
-                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType()));
+                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType())
+        };
     }
 
     public void setAmount(Long amount) {
@@ -500,7 +501,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             this.source = source;
             return this;
         }
-        
+
         public WebChargeEntityBuilder withMoto(boolean moto) {
             this.moto = moto;
             return this;

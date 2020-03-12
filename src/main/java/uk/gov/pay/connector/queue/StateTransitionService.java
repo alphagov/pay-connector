@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -68,10 +69,11 @@ public class StateTransitionService {
 
         var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
                 fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
-        var structuredArgs = Stream.concat(
-                chargeEventEntity.getChargeEntity().getStructuredLoggingArgs().stream(),
-                List.of(kv("from_state", fromChargeState), kv("to_state", targetChargeState)).stream())
-                .toArray();
+
+        Object[] structuredArgs = ArrayUtils.addAll(
+                chargeEventEntity.getChargeEntity().getStructuredLoggingArgs(),
+                kv("from_state", fromChargeState),
+                kv("to_state", targetChargeState));
 
         logger.info(logMessage, structuredArgs);
 
