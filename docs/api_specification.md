@@ -59,6 +59,37 @@ curl -v -XPOST '127.0.0.1:9300/v1/tasks/emitted-events-sweep'
 ```
 -----------------------------------------------------------------------------------------------------------
 
+## POST /v1/tasks/gateway-cleanup-sweep
+
+Finds all ePDQ charges which have a status of `AUTHORISATION ERROR`, `AUTHORISATION UNEXPECTED ERROR`,
+`AUTHORISATION TIMEOUT` and checks what their status is with the payment gateway. If the charges exist on the gateway
+and are in a non-terminal state, e.g. `AUTHORISATION SUCCESS`, a request is sent to cancel the charge on the gateway.
+
+The job will move the charge into one of three statuses when it has successfully handled it:
+
+- `AUTHORISATION ERROR CANCELLED` - the charge was authorised on the gateway but has now been cancelled.
+- `AUTHORISATION ERROR REJECTED` - the authorisation was rejected on the gateway and no action needed to be taken to clean up.
+- `AUTHORISATION ERROR CHARGE MISSING` - the charge was not found on the gateway, most likely because the error was before the gateway processed the authorisation.
+
+### Request example
+
+```
+POST /v1/tasks/gateway-cleanup-sweep
+```
+
+### Response example
+
+```
+200 OK
+Content-Type: application/json
+{
+"cleanup-success": 0
+"cleanup-failed": 0
+}
+```
+
+-----------------------------------------------------------------------------------------------------------
+
 ## POST /v1/api/accounts
 
 This endpoint creates a new account in this connector.
