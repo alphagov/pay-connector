@@ -22,10 +22,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    private static final Map<Auth3dsDetails.Auth3dsResult, String> statusTo3dsResultMapping = ImmutableMap.of(
-            Auth3dsDetails.Auth3dsResult.AUTHORISED, AUTHORISED,
-            Auth3dsDetails.Auth3dsResult.DECLINED, REJECTED,
-            Auth3dsDetails.Auth3dsResult.ERROR, "ERROR");
+    private static final Map<Auth3dsDetails.Auth3dsResultOutcome, String> statusTo3dsResultMapping = ImmutableMap.of(
+            Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED, AUTHORISED,
+            Auth3dsDetails.Auth3dsResultOutcome.DECLINED, REJECTED,
+            Auth3dsDetails.Auth3dsResultOutcome.ERROR, "ERROR");
 
     private String status;
     private String htmlAnswer;
@@ -84,7 +84,7 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         this.status = status;
     }
 
-    public void setStatusFromAuth3dsResult(Auth3dsDetails.Auth3dsResult result) {
+    public void setStatusFromAuth3dsResult(Auth3dsDetails.Auth3dsResultOutcome result) {
         this.status = statusTo3dsResultMapping.get(result);
     }
 

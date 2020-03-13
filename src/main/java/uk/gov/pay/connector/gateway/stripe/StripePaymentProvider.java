@@ -107,9 +107,9 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
 
-        if (request.getAuth3DsDetails() != null && request.getAuth3DsDetails().getAuth3DsResult() != null) {
+        if (request.getAuth3DsDetails() != null && request.getAuth3DsDetails().getAuth3dsResultOutcome() != null) {
 
-            switch (request.getAuth3DsDetails().getAuth3DsResult()) {
+            switch (request.getAuth3DsDetails().getAuth3dsResultOutcome()) {
                 case CANCELED:
                     return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.CANCELLED);
                 case ERROR:

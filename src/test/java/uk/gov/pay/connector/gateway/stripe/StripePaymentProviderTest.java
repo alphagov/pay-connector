@@ -177,7 +177,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.DECLINED);
+                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResultOutcome.DECLINED);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -188,7 +188,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.CANCELED);
+                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResultOutcome.CANCELED);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -198,7 +198,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.ERROR);
+                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResultOutcome.ERROR);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -207,7 +207,7 @@ public class StripePaymentProviderTest {
 
     @Test
     public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws Exception {
-        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED);
 
         when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
@@ -227,10 +227,10 @@ public class StripePaymentProviderTest {
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
     }
 
-    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult auth3dsResult) {
+    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResultOutcome auth3DsResultOutcome) {
         Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
-        if (auth3dsResult != null) {
-            auth3dsDetails.setAuth3dsResult(auth3dsResult.toString());
+        if (auth3DsResultOutcome != null) {
+            auth3dsDetails.setAuth3dsResult(auth3DsResultOutcome.toString());
         }
         ChargeEntity chargeEntity = buildTestCharge();
 

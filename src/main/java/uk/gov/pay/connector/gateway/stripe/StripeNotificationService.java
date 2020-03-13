@@ -225,14 +225,14 @@ public class StripeNotificationService {
         switch (type) {
             case SOURCE_CHARGEABLE:
             case PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED:
-                return Auth3dsDetails.Auth3dsResult.AUTHORISED.toString();
+                return Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED.toString();
             case SOURCE_CANCELED:
-                return Auth3dsDetails.Auth3dsResult.CANCELED.toString();
+                return Auth3dsDetails.Auth3dsResultOutcome.CANCELED.toString();
             case SOURCE_FAILED:
             case PAYMENT_INTENT_PAYMENT_FAILED:
-                return Auth3dsDetails.Auth3dsResult.DECLINED.toString();
+                return Auth3dsDetails.Auth3dsResultOutcome.DECLINED.toString();
             default:
-                return Auth3dsDetails.Auth3dsResult.ERROR.toString();
+                return Auth3dsDetails.Auth3dsResultOutcome.ERROR.toString();
         }
     }
 

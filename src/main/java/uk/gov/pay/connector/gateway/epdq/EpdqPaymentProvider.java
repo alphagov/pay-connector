@@ -9,13 +9,20 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResultOutcome;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -188,16 +195,16 @@ public class EpdqPaymentProvider implements PaymentProvider {
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
-            Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
-                    Auth3dsResult.ERROR : // we treat no result from frontend as an error
-                    request.getAuth3DsDetails().getAuth3DsResult();
+            Auth3dsResultOutcome auth3DResult = request.getAuth3DsDetails().getAuth3dsResultOutcome() == null ?
+                    Auth3dsResultOutcome.ERROR : // we treat no result from frontend as an error
+                    request.getAuth3DsDetails().getAuth3dsResultOutcome();
             
             if (responseDoesNotMatchWithUserResult(authoriseStatus, auth3DResult)) {
                 LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, gatewayAccountId={}, frontendstatus={}, gatewaystatus={}",
                         request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
                 metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
                         request.getGatewayAccount().getGatewayName(),
-                        request.getAuth3DsDetails().getAuth3DsResult(),
+                        request.getAuth3DsDetails().getAuth3dsResultOutcome(),
                         authoriseStatus.name()))
                         .inc();
                 gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
@@ -238,15 +245,15 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private GatewayResponse<BaseAuthoriseResponse> reconstructErrorBiasedGatewayResponse(
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse,
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus,
-            Auth3dsResult auth3DResult) throws GenericGatewayException {
+            Auth3dsResultOutcome auth3dsResultOutcome) throws GenericGatewayException {
 
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
-        if (auth3DResult.equals(Auth3dsResult.ERROR)) {
+        if (auth3dsResultOutcome.equals(Auth3dsResultOutcome.ERROR)) {
             throw new GenericGatewayException(
-                    format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsResult.ERROR, authoriseStatus.name()));
-        } else if (auth3DResult.equals(Auth3dsResult.DECLINED)) {
+                    format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsResultOutcome.ERROR, authoriseStatus.name()));
+        } else if (auth3dsResultOutcome.equals(Auth3dsResultOutcome.DECLINED)) {
             EpdqAuthorisationResponse epdqAuthorisationResponse = new EpdqAuthorisationResponse();
-            epdqAuthorisationResponse.setStatusFromAuth3dsResult(auth3DResult);
+            epdqAuthorisationResponse.setStatusFromAuth3dsResult(auth3dsResultOutcome);
             return responseBuilder
                     .withResponse(epdqAuthorisationResponse)
                     .build();
@@ -255,10 +262,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         }
     }
 
-    private static boolean responseDoesNotMatchWithUserResult(BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsResult auth3DResult) {
-        boolean respondMatches = (authoriseStatus.equals(ERROR) && auth3DResult.equals(Auth3dsResult.ERROR)) ||
-                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED) && auth3DResult.equals(Auth3dsResult.AUTHORISED)) ||
-                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.REJECTED) && auth3DResult.equals(Auth3dsResult.DECLINED));
+    private static boolean responseDoesNotMatchWithUserResult(BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsResultOutcome auth3DResult) {
+        boolean respondMatches = (authoriseStatus.equals(ERROR) && auth3DResult.equals(Auth3dsResultOutcome.ERROR)) ||
+                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED) && auth3DResult.equals(Auth3dsResultOutcome.AUTHORISED)) ||
+                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.REJECTED) && auth3DResult.equals(Auth3dsResultOutcome.DECLINED));
         return !respondMatches;
     }
 
