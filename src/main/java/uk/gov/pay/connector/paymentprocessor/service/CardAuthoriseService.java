@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -146,7 +146,7 @@ public class CardAuthoriseService {
     private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         return operationResponse.getBaseResponse()
                 .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(GatewayParamsFor3ds::toAuth3dsRequiredEntity);
+                .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

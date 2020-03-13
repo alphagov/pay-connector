@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
+import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
 
 import java.util.Objects;
@@ -51,9 +51,9 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     }
 
     @Override
-    public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         return Optional.ofNullable(redirectUrl)
-                .map(StripeParamsFor3ds::new);
+                .map(Stripe3dsRequiredParams::new);
     }
 
     @Override

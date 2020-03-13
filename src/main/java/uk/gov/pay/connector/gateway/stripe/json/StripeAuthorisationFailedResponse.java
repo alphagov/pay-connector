@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Optional;
@@ -28,7 +28,7 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
     }
 
     @Override
-    public Optional<? extends GatewayParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<? extends Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         return Optional.empty();
     }
 

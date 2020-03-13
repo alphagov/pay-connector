@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
@@ -135,12 +135,12 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return trim(errorMessage);
     }
 
-    public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         if (is3dsVersionOneRequired()) {
-            return Optional.of(new WorldpayParamsFor3ds(issuerUrl, paRequest));
+            return Optional.of(new Worldpay3dsRequiredParams(issuerUrl, paRequest));
         }
         if (is3dsFlexChallengeRequired()) {
-            return Optional.of(new WorldpayParamsFor3dsFlex(
+            return Optional.of(new Worldpay3dsFlexRequiredParams(
                     challengeAcsUrl,
                     challengeTransactionId,
                     challengePayload,

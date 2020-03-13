@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.gateway.stripe.response;
 
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
-public class StripeParamsFor3ds implements GatewayParamsFor3ds {
+public class Stripe3dsRequiredParams implements Gateway3dsRequiredParams {
 
     private final String issuerUrl;
 
-    public StripeParamsFor3ds(String issuerUrl) {
+    public Stripe3dsRequiredParams(String issuerUrl) {
         this.issuerUrl = issuerUrl;
     }
 

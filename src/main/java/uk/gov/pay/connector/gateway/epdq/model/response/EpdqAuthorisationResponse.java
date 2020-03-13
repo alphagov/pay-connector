@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.model.response;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.epdq.model.EpdqParamsFor3ds;
+import uk.gov.pay.connector.gateway.epdq.model.Epdq3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
@@ -54,9 +54,9 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     }
 
     @Override
-    public Optional<EpdqParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<Epdq3dsRequiredParams> getGatewayParamsFor3ds() {
         if (htmlAnswer != null) {
-            return Optional.of(new EpdqParamsFor3ds(htmlAnswer));
+            return Optional.of(new Epdq3dsRequiredParams(htmlAnswer));
         }
         return Optional.empty();
     }
