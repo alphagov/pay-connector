@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 
 import java.util.Objects;
@@ -23,8 +23,8 @@ public class WorldpayParamsFor3dsFlex implements GatewayParamsFor3ds {
     }
 
     @Override
-    public Auth3dsDetailsEntity toAuth3dsDetailsEntity() {
-        var auth3dsDetailsEntity = new Auth3dsDetailsEntity();
+    public Auth3dsRequiredEntity toAuth3dsRequiredEntity() {
+        var auth3dsDetailsEntity = new Auth3dsRequiredEntity();
         auth3dsDetailsEntity.setWorldpayChallengeAcsUrl(challengeAcsUrl);
         auth3dsDetailsEntity.setWorldpayChallengeTransactionId(challengeTransactionId);
         auth3dsDetailsEntity.setWorldpayChallengePayload(challengePayload);

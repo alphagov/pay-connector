@@ -138,10 +138,10 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         response.getBaseResponse().ifPresent(res -> {
             assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeAcsUrl(), is(notNullValue()));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeTransactionId(), is(notNullValue()));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengePayload(), is(notNullValue()));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getThreeDsVersion(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengeAcsUrl(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengeTransactionId(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengePayload(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getThreeDsVersion(), is(notNullValue()));
         });
     }
 
@@ -177,8 +177,8 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
             assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getPaRequest(), is(notNullValue()));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getIssuerUrl(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getPaRequest(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getIssuerUrl(), is(notNullValue()));
         });
     }
 
@@ -197,8 +197,8 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
             assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getPaRequest(), is(notNullValue()));
-            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getIssuerUrl(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getPaRequest(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getIssuerUrl(), is(notNullValue()));
         });
     }
 

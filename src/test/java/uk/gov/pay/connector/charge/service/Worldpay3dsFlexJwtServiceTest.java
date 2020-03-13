@@ -16,7 +16,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtCredentialsException;
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtPaymentProviderException;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAuth3dsDetailsEntity;
+import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class Worldpay3dsFlexJwtServiceTest {
@@ -115,7 +115,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void shouldNotReturnChallengeTokenIfChargeInWrongState() {
-        Auth3dsDetailsEntity auth3dsDetailsEntity = anAuth3dsDetailsEntity()
+        Auth3dsRequiredEntity auth3DsRequiredEntity = anAuth3dsRequiredEntity()
                 .withWorldpayChallengeAcsUrl("http://www.example.com")
                 .withWorldpayChallengePayload("a-payload")
                 .withWorldpayChallengeTransactionId("a-transaction-id")
@@ -123,7 +123,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
-                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
+                .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .build();
 
         Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
@@ -133,11 +133,11 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void shouldNotReturnChallengeTokenIfChallengeDataNotPresent() {
-        Auth3dsDetailsEntity auth3dsDetailsEntity = anAuth3dsDetailsEntity().build();
+        Auth3dsRequiredEntity auth3DsRequiredEntity = anAuth3dsRequiredEntity().build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
+                .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .build();
 
         Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
@@ -304,7 +304,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     }
 
     private ChargeEntity createValidChargeEntityForChallengeToken(GatewayAccountEntity gatewayAccountEntity) {
-        Auth3dsDetailsEntity auth3dsDetailsEntity = anAuth3dsDetailsEntity()
+        Auth3dsRequiredEntity auth3DsRequiredEntity = anAuth3dsRequiredEntity()
                 .withWorldpayChallengeAcsUrl(WORLDPAY_CHALLENGE_ACS_URL)
                 .withWorldpayChallengePayload(WORLDPAY_CHALLENGE_PAYLOAD)
                 .withWorldpayChallengeTransactionId(WORLDPAY_CHALLENGE_TRANSACTION_ID)
@@ -313,7 +313,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         return ChargeEntityFixture.aValidChargeEntity()
                 .withExternalId(CHARGE_EXTERNAL_ID)
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
+                .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
     }

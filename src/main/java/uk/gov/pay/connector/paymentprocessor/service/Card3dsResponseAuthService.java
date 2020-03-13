@@ -7,7 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 
@@ -34,33 +34,33 @@ public class Card3dsResponseAuthService {
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
     }
 
-    public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
+    public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsResult auth3DsResult) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
-            return authoriseAndProcess3DS(auth3DsDetails, charge);
+            return authoriseAndProcess3DS(auth3DsResult, charge);
         });
     }
 
-    public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
+    public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsResult auth3DsResult) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
-            return authoriseAndProcess3DS(auth3DsDetails, charge);
+            return authoriseAndProcess3DS(auth3DsResult, charge);
         });
     }
 
-    private Gateway3DSAuthorisationResponse authoriseAndProcess3DS(Auth3dsDetails auth3DsDetails, ChargeEntity charge) {
+    private Gateway3DSAuthorisationResponse authoriseAndProcess3DS(Auth3dsResult auth3dsResult, ChargeEntity charge) {
         Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse = providers
                 .byName(charge.getPaymentGatewayName())
-                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
+                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3dsResult));
 
-        if (auth3DsDetails != null && StringUtils.isNotBlank(auth3DsDetails.getPaResponse())) {
-            if (auth3DsDetails.getPaResponse().length() <= 50) {
-                LOGGER.info("3DS authorisation - PaRes '{}'", auth3DsDetails.getPaResponse());
+        if (auth3dsResult != null && StringUtils.isNotBlank(auth3dsResult.getPaResponse())) {
+            if (auth3dsResult.getPaResponse().length() <= 50) {
+                LOGGER.info("3DS authorisation - PaRes '{}'", auth3dsResult.getPaResponse());
             } else {
                 LOGGER.info("3DS authorisation - PaRes starts with '{}' and ending '{}'",
-                        auth3DsDetails.getPaResponse().substring(0, 50),
-                        auth3DsDetails.getPaResponse().substring(auth3DsDetails.getPaResponse().length() - 50));
+                        auth3dsResult.getPaResponse().substring(0, 50),
+                        auth3dsResult.getPaResponse().substring(auth3dsResult.getPaResponse().length() - 50));
             }
         }
 

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -115,7 +115,7 @@ public class StripeNotificationServiceTest {
 
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
 
     @Test
@@ -125,7 +125,7 @@ public class StripeNotificationServiceTest {
 
         notificationService.handleNotificationFor(payload, signPayloadWithTestSecret(payload));
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class StripeNotificationServiceTest {
                 sourceId, SOURCE_FAILED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class StripeNotificationServiceTest {
                 sourceId, SOURCE_CANCELED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.CANCELED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.CANCELED));
     } 
     
     @Test
@@ -155,7 +155,7 @@ public class StripeNotificationServiceTest {
         
         notificationService.handleNotificationFor(payload, signPayload(payload));
         
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
     
     @Test
@@ -178,7 +178,7 @@ public class StripeNotificationServiceTest {
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
     @Test
@@ -247,7 +247,7 @@ public class StripeNotificationServiceTest {
         assertTrue(instantAfterInvocation.isAfter(instantBeforeInvocation.plusSeconds(1)));
         assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(1500))); //includes additional overhead to complete handleNotificationFor() 
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class StripeNotificationServiceTest {
         Instant instantAfterInvocation = Instant.now();
         assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(300))); // plus 300 to consider the time to process handleNotificationFor()
 
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
     @Test(expected = WebApplicationException.class)
@@ -280,9 +280,9 @@ public class StripeNotificationServiceTest {
                 .replace("{{type}}", stripeNotificationType.getType());
     }
 
-    private Auth3dsDetails getAuth3dsDetails(Auth3dsDetails.Auth3dsResult auth3dsResult) {
-        Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
-        auth3dsDetails.setAuth3dsResult(auth3dsResult.toString());
-        return auth3dsDetails;
+    private Auth3dsResult getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome) {
+        Auth3dsResult auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
+        return auth3dsResult;
     }
 }

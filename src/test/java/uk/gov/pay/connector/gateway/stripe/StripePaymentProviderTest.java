@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -135,7 +135,7 @@ public class StripePaymentProviderTest {
 
         Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
         assertThat(stripeParamsFor3ds.isPresent(), is(true));
-        assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
+        assertThat(stripeParamsFor3ds.get().toAuth3dsRequiredEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
     }
 
 
@@ -177,7 +177,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.DECLINED);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -188,7 +188,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.CANCELED);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -198,7 +198,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.ERROR);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -207,7 +207,7 @@ public class StripePaymentProviderTest {
 
     @Test
     public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws Exception {
-        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED);
 
         when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
@@ -227,14 +227,14 @@ public class StripePaymentProviderTest {
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
     }
 
-    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult auth3dsResult) {
-        Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
-        if (auth3dsResult != null) {
-            auth3dsDetails.setAuth3dsResult(auth3dsResult.toString());
+    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome) {
+        Auth3dsResult auth3dsResult = new Auth3dsResult();
+        if (auth3dsResultOutcome != null) {
+            auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
         }
         ChargeEntity chargeEntity = buildTestCharge();
 
-        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails);
+        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
 
     private String successCreatePaymentMethodResponse() {

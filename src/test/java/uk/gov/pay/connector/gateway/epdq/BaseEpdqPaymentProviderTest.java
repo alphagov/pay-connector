@@ -17,7 +17,7 @@ import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -228,9 +228,9 @@ public abstract class BaseEpdqPaymentProviderTest {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("payId")
                 .build();
-        Auth3dsDetails auth3DsDetails = new Auth3dsDetails();
-        auth3DsDetails.setAuth3dsResult(auth3dsFrontendResult);
-        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsDetails);
+        Auth3dsResult auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setAuth3dsResult(auth3dsFrontendResult);
+        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
 
     CancelGatewayRequest buildTestCancelRequest() {

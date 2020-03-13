@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class Auth3dsDetailsEntity {
+public class Auth3dsRequiredEntity {
 
     @Column(name = "pa_request_3ds")
     private String paRequest;

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -60,7 +60,7 @@ public class CardAuthoriseService {
             ChargeStatus newStatus;
             Optional<String> transactionId = Optional.empty();
             Optional<String> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
 
             try {
                 operationResponse = authorise(charge, authCardDetails);
@@ -69,7 +69,7 @@ public class CardAuthoriseService {
 
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                 transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
-                auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
+                auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
                 sessionIdentifier = operationResponse.getSessionIdentifier();
 
             } catch (GatewayException e) {
@@ -143,10 +143,10 @@ public class CardAuthoriseService {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 
-    private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         return operationResponse.getBaseResponse()
                 .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(GatewayParamsFor3ds::toAuth3dsDetailsEntity);
+                .map(GatewayParamsFor3ds::toAuth3dsRequiredEntity);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

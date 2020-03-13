@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.epdq.model;
 
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 
 public class EpdqParamsFor3ds implements GatewayParamsFor3ds {
 
@@ -12,9 +12,9 @@ public class EpdqParamsFor3ds implements GatewayParamsFor3ds {
     }
 
     @Override
-    public Auth3dsDetailsEntity toAuth3dsDetailsEntity() {
-        Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
-        auth3dsDetailsEntity.setHtmlOut(htmlOut);
-        return auth3dsDetailsEntity;
+    public Auth3dsRequiredEntity toAuth3dsRequiredEntity() {
+        Auth3dsRequiredEntity auth3DsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3DsRequiredEntity.setHtmlOut(htmlOut);
+        return auth3DsRequiredEntity;
     }
 }

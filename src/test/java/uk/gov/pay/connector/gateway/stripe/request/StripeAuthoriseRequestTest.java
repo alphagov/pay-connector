@@ -11,7 +11,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -92,7 +92,7 @@ public class StripeAuthoriseRequestTest {
 
     @Test
     public void shouldSetCorrectOrderRequestTypeForAuthorisationWith3DS() {
-        Auth3dsResponseGatewayRequest authorisationGatewayRequest = new Auth3dsResponseGatewayRequest(charge, new Auth3dsDetails());
+        Auth3dsResponseGatewayRequest authorisationGatewayRequest = new Auth3dsResponseGatewayRequest(charge, new Auth3dsResult());
 
         assertThat(StripeAuthoriseRequest
                         .of(stripeSourceId, authorisationGatewayRequest, stripeGatewayConfig)

@@ -44,7 +44,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.validation.Valid;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     private CardDetailsEntity cardDetails;
 
     @Embedded
-    private Auth3dsDetailsEntity auth3dsDetails;
+    private Auth3dsRequiredEntity auth3dsRequiredDetails;
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
@@ -370,12 +369,12 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return PaymentGatewayName.valueFrom(gatewayAccount.getGatewayName());
     }
 
-    public Auth3dsDetailsEntity get3dsDetails() {
-        return auth3dsDetails;
+    public Auth3dsRequiredEntity get3dsRequiredDetails() {
+        return auth3dsRequiredDetails;
     }
 
-    public void set3dsDetails(Auth3dsDetailsEntity auth3dsDetails) {
-        this.auth3dsDetails = auth3dsDetails;
+    public void set3dsRequiredDetails(Auth3dsRequiredEntity auth3dsRequiredDetails) {
+        this.auth3dsRequiredDetails = auth3dsRequiredDetails;
     }
 
     public SupportedLanguage getLanguage() {
