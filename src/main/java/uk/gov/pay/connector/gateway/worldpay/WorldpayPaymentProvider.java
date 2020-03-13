@@ -158,7 +158,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         try {
             List<HttpCookie> cookies = request.getProviderSessionId()
-                    .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId)))
+                    .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId.toString())))
                     .orElse(emptyList());
 
             GatewayClient.Response response = authoriseClient.postRequestFor(
@@ -216,7 +216,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 request.getGatewayAccount().isRequires3ds();
 
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(request.getChargeExternalId())
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .with3dsRequired(is3dsRequired)
                 .withDate(DateTime.now(DateTimeZone.UTC));
 
@@ -244,7 +244,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
-                .withSessionId(request.getChargeExternalId())
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();

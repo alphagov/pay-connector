@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Optional;
@@ -30,8 +31,8 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
         return String.valueOf(charge.getExternalId());
     }
 
-    public Optional<String> getProviderSessionId() {
-        return Optional.ofNullable(charge.getProviderSessionId());
+    public Optional<ProviderSessionIdentifier> getProviderSessionId() {
+        return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
 
     @Override

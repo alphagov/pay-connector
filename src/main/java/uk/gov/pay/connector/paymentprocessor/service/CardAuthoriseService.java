@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -59,7 +60,7 @@ public class CardAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             ChargeStatus newStatus;
             Optional<String> transactionId = Optional.empty();
-            Optional<String> sessionIdentifier = Optional.empty();
+            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
 
             try {

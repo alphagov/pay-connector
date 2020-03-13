@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -49,7 +50,7 @@ public class WalletAuthoriseService {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             Optional<String> transactionId = Optional.empty();
-            Optional<String> sessionIdentifier = Optional.empty();
+            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
             ChargeStatus chargeStatus = null;
             String responseFromPaymentGateway = null;
             String requestStatus = "failure";
@@ -133,7 +134,7 @@ public class WalletAuthoriseService {
             WalletAuthorisationData walletAuthorisationData,
             String responseFromGateway,
             Optional<String> transactionId,
-            Optional<String> sessionIdentifier,
+            Optional<ProviderSessionIdentifier> sessionIdentifier,
             ChargeStatus status) {
 
         logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());

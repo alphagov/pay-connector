@@ -50,7 +50,7 @@ public class WorldpayOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -72,7 +72,7 @@ public class WorldpayOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .with3dsRequired(true)
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -95,7 +95,7 @@ public class WorldpayOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -117,7 +117,7 @@ public class WorldpayOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -136,7 +136,7 @@ public class WorldpayOrderRequestBuilderTest {
         AuthCardDetails authCardDetails = getValidTestCard(null);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -152,11 +152,9 @@ public class WorldpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
-
-        String providerSessionId = "provider-session-id";
         GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withTransactionId("MyUniqueTransactionId!")
                 .withMerchantCode("MERCHANTCODE")
                 .build();
@@ -169,7 +167,7 @@ public class WorldpayOrderRequestBuilderTest {
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
                 .withWalletTemplateData(validData)
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -194,7 +192,7 @@ public class WorldpayOrderRequestBuilderTest {
                         .build();
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
                 .withWalletTemplateData(validData)
-                .withSessionId("uniqueSessionId")
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")

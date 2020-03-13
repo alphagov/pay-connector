@@ -19,6 +19,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -133,8 +134,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     public void doAuthorise_shouldPopulateTheProviderSessionId() {
 
         Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
-        String providerSessionId = "provider-session-id";
-        charge.setProviderSessionId(providerSessionId);
+        ProviderSessionIdentifier providerSessionId = ProviderSessionIdentifier.of("provider-session-id");
+        charge.setProviderSessionId(providerSessionId.toString());
 
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 

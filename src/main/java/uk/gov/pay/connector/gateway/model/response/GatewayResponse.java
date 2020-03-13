@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 
 import java.util.Optional;
 
@@ -18,9 +19,9 @@ public class GatewayResponse<T extends BaseResponse> {
     private GatewayError gatewayError;
     private T baseResponse;
 
-    private String sessionIdentifier;
+    private ProviderSessionIdentifier sessionIdentifier;
 
-    private GatewayResponse(T baseResponse, String sessionIdentifier) {
+    private GatewayResponse(T baseResponse, ProviderSessionIdentifier sessionIdentifier) {
         this.baseResponse = baseResponse;
         this.sessionIdentifier = sessionIdentifier;
     }
@@ -39,7 +40,7 @@ public class GatewayResponse<T extends BaseResponse> {
         return gatewayError != null;
     }
 
-    public Optional<String> getSessionIdentifier() {
+    public Optional<ProviderSessionIdentifier> getSessionIdentifier() {
         return Optional.ofNullable(sessionIdentifier);
     }
 
@@ -73,7 +74,7 @@ public class GatewayResponse<T extends BaseResponse> {
 
     public static class GatewayResponseBuilder<T extends BaseResponse> {
         private T response;
-        private String sessionIdentifier;
+        private ProviderSessionIdentifier sessionIdentifier;
         private GatewayError gatewayError;
 
         private GatewayResponseBuilder() {
@@ -88,7 +89,7 @@ public class GatewayResponse<T extends BaseResponse> {
             return this;
         }
 
-        public GatewayResponseBuilder withSessionIdentifier(String responseIdentifier) {
+        public GatewayResponseBuilder withSessionIdentifier(ProviderSessionIdentifier responseIdentifier) {
             this.sessionIdentifier = responseIdentifier;
             return this;
         }
