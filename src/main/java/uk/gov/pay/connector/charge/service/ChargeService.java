@@ -24,7 +24,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -412,10 +412,10 @@ public class ChargeService {
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;
-        if (chargeEntity.get3dsDetails() != null) {
+        if (chargeEntity.get3dsRequiredDetails() != null) {
             auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(chargeEntity.get3dsDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(chargeEntity.get3dsDetails().getIssuerUrl());
+            auth3dsData.setPaRequest(chargeEntity.get3dsRequiredDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(chargeEntity.get3dsRequiredDetails().getIssuerUrl());
         }
         ExternalChargeState externalChargeState = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal();
 
@@ -476,10 +476,10 @@ public class ChargeService {
     public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
                                                           ChargeStatus status,
                                                           Optional<String> transactionId,
-                                                          Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                          Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
                                                           Optional<String> sessionIdentifier,
                                                           AuthCardDetails authCardDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsDetails, sessionIdentifier,
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
                 Optional.empty(), Optional.empty());
 
     }
@@ -499,12 +499,12 @@ public class ChargeService {
                                                                   ChargeStatus status,
                                                                   AuthCardDetails authCardDetails,
                                                                   Optional<String> transactionId,
-                                                                  Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                                  Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
                                                                   Optional<String> sessionIdentifier,
                                                                   Optional<WalletType> walletType,
                                                                   Optional<String> emailAddress) {
         updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
-                auth3dsDetails, sessionIdentifier, walletType, emailAddress);
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
 
         eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
@@ -518,14 +518,14 @@ public class ChargeService {
                                                       ChargeStatus status,
                                                       AuthCardDetails authCardDetails,
                                                       Optional<String> transactionId,
-                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                      Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
                                                       Optional<String> sessionIdentifier,
                                                       Optional<WalletType> walletType,
                                                       Optional<String> emailAddress) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
-            auth3dsDetails.ifPresent(charge::set3dsDetails);
+            auth3dsRequiredDetails.ifPresent(charge::set3dsRequiredDetails);
             walletType.ifPresent(charge::setWalletType);
             emailAddress.ifPresent(charge::setEmail);
 

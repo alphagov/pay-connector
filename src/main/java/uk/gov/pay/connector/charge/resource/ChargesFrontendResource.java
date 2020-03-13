@@ -182,12 +182,12 @@ public class ChargesFrontendResource {
             responseBuilder.withCardDetails(persistedCard);
         }
         
-        if (charge.get3dsDetails() != null) {
+        if (charge.get3dsRequiredDetails() != null) {
             var auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
-            auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
-            auth3dsData.setMd(charge.get3dsDetails().getMd());
+            auth3dsData.setPaRequest(charge.get3dsRequiredDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.get3dsRequiredDetails().getIssuerUrl());
+            auth3dsData.setHtmlOut(charge.get3dsRequiredDetails().getHtmlOut());
+            auth3dsData.setMd(charge.get3dsRequiredDetails().getMd());
 
             if (charge.getGatewayAccount().getGatewayName().equals(WORLDPAY.getName())) {
                 worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(

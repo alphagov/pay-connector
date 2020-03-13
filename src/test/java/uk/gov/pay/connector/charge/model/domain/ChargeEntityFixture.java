@@ -41,7 +41,7 @@ public class ChargeEntityFixture {
     private String transactionId;
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<ChargeEventEntity> events = new ArrayList<>();
-    private Auth3dsDetailsEntity auth3dsDetailsEntity;
+    private Auth3dsRequiredEntity auth3DsRequiredEntity;
     private String providerSessionId;
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
@@ -126,7 +126,7 @@ public class ChargeEntityFixture {
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.setProviderSessionId(providerSessionId);
-        chargeEntity.set3dsDetails(auth3dsDetailsEntity);
+        chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setSource(source);
         chargeEntity.setWalletType(walletType);
 
@@ -202,8 +202,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withAuth3dsDetailsEntity(Auth3dsDetailsEntity auth3dsDetailsEntity) {
-        this.auth3dsDetailsEntity = auth3dsDetailsEntity;
+    public ChargeEntityFixture withAuth3dsDetailsEntity(Auth3dsRequiredEntity auth3DsRequiredEntity) {
+        this.auth3DsRequiredEntity = auth3DsRequiredEntity;
         return this;
     }
 

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 
 public class WorldpayParamsFor3ds implements GatewayParamsFor3ds {
 
@@ -14,10 +14,10 @@ public class WorldpayParamsFor3ds implements GatewayParamsFor3ds {
     }
 
     @Override
-    public Auth3dsDetailsEntity toAuth3dsDetailsEntity() {
-        Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
-        auth3dsDetailsEntity.setPaRequest(paRequest);
-        auth3dsDetailsEntity.setIssuerUrl(issuerUrl);
-        return auth3dsDetailsEntity;
+    public Auth3dsRequiredEntity toAuth3dsRequiredEntity() {
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setPaRequest(paRequest);
+        auth3dsRequiredEntity.setIssuerUrl(issuerUrl);
+        return auth3dsRequiredEntity;
     }
 }

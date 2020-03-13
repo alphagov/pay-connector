@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -53,8 +53,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -134,10 +134,10 @@ public class SmartpayPaymentProviderTest {
         CardAuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
-        Auth3dsDetailsEntity auth3dsDetailsEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity();
-        assertThat(auth3dsDetailsEntity.getIssuerUrl(), is(notNullValue()));
-        assertThat(auth3dsDetailsEntity.getMd(), is(notNullValue()));
-        assertThat(auth3dsDetailsEntity.getPaRequest(), is(notNullValue()));
+        Auth3dsRequiredEntity auth3dsRequiredEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity();
+        assertThat(auth3dsRequiredEntity.getIssuerUrl(), is(notNullValue()));
+        assertThat(auth3dsRequiredEntity.getMd(), is(notNullValue()));
+        assertThat(auth3dsRequiredEntity.getPaRequest(), is(notNullValue()));
     }
 
     @Test
@@ -153,10 +153,10 @@ public class SmartpayPaymentProviderTest {
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
-        Auth3dsDetailsEntity auth3dsDetailsEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity();
-        assertThat(auth3dsDetailsEntity.getIssuerUrl(), is(notNullValue()));
-        assertThat(auth3dsDetailsEntity.getMd(), is(notNullValue()));
-        assertThat(auth3dsDetailsEntity.getPaRequest(), is(notNullValue()));
+        Auth3dsRequiredEntity auth3dsRequiredEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity();
+        assertThat(auth3dsRequiredEntity.getIssuerUrl(), is(notNullValue()));
+        assertThat(auth3dsRequiredEntity.getMd(), is(notNullValue()));
+        assertThat(auth3dsRequiredEntity.getPaRequest(), is(notNullValue()));
     }
 
     @Test

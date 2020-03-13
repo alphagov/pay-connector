@@ -19,7 +19,6 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -54,7 +53,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAuth3dsDetailsEntity;
+import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 
 public class ChargeDaoIT extends DaoITestBase {
 
@@ -153,7 +152,7 @@ public class ChargeDaoIT extends DaoITestBase {
         String worldpayChallengePayload = "{\"payload\": {\"key1\":\"value\"}}";
         String threeDsVersion = "2.0";
 
-        var auth3dsDetailsEntity = anAuth3dsDetailsEntity()
+        var auth3dsDetailsEntity = anAuth3dsRequiredEntity()
                 .withPaRequest(paRequest)
                 .withIssuerUrl(issuerUrl)
                 .withHtmlOut(htmlOut)
@@ -175,14 +174,14 @@ public class ChargeDaoIT extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
-        assertThat(charge.get().get3dsDetails().getPaRequest(), is(paRequest));
-        assertThat(charge.get().get3dsDetails().getIssuerUrl(), is(issuerUrl));
-        assertThat(charge.get().get3dsDetails().getHtmlOut(), is(htmlOut));
-        assertThat(charge.get().get3dsDetails().getMd(), is(md));
-        assertThat(charge.get().get3dsDetails().getWorldpayChallengeAcsUrl(), is(worldpayChallengeAcsUrl));
-        assertThat(charge.get().get3dsDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
-        assertThat(charge.get().get3dsDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
-        assertThat(charge.get().get3dsDetails().getThreeDsVersion(), is(threeDsVersion));
+        assertThat(charge.get().get3dsRequiredDetails().getPaRequest(), is(paRequest));
+        assertThat(charge.get().get3dsRequiredDetails().getIssuerUrl(), is(issuerUrl));
+        assertThat(charge.get().get3dsRequiredDetails().getHtmlOut(), is(htmlOut));
+        assertThat(charge.get().get3dsRequiredDetails().getMd(), is(md));
+        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengeAcsUrl(), is(worldpayChallengeAcsUrl));
+        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
+        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
+        assertThat(charge.get().get3dsRequiredDetails().getThreeDsVersion(), is(threeDsVersion));
     }
 
     @Test
