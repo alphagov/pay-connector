@@ -54,6 +54,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.LedgerService;
@@ -477,7 +478,7 @@ public class ChargeService {
                                                           ChargeStatus status,
                                                           Optional<String> transactionId,
                                                           Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
-                                                          Optional<String> sessionIdentifier,
+                                                          Optional<ProviderSessionIdentifier> sessionIdentifier,
                                                           AuthCardDetails authCardDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
                 Optional.empty(), Optional.empty());
@@ -487,7 +488,7 @@ public class ChargeService {
     public ChargeEntity updateChargePostWalletAuthorisation(String chargeExternalId,
                                                             ChargeStatus status,
                                                             Optional<String> transactionId,
-                                                            Optional<String> sessionIdentifier,
+                                                            Optional<ProviderSessionIdentifier> sessionIdentifier,
                                                             AuthCardDetails authCardDetails,
                                                             WalletType walletType,
                                                             String emailAddress) {
@@ -500,7 +501,7 @@ public class ChargeService {
                                                                   AuthCardDetails authCardDetails,
                                                                   Optional<String> transactionId,
                                                                   Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
-                                                                  Optional<String> sessionIdentifier,
+                                                                  Optional<ProviderSessionIdentifier> sessionIdentifier,
                                                                   Optional<WalletType> walletType,
                                                                   Optional<String> emailAddress) {
         updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
@@ -519,12 +520,12 @@ public class ChargeService {
                                                       AuthCardDetails authCardDetails,
                                                       Optional<String> transactionId,
                                                       Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
-                                                      Optional<String> sessionIdentifier,
+                                                      Optional<ProviderSessionIdentifier> sessionIdentifier,
                                                       Optional<WalletType> walletType,
                                                       Optional<String> emailAddress) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
-            sessionIdentifier.ifPresent(charge::setProviderSessionId);
+            sessionIdentifier.map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
             auth3dsRequiredDetails.ifPresent(charge::set3dsRequiredDetails);
             walletType.ifPresent(charge::setWalletType);
             emailAddress.ifPresent(charge::setEmail);

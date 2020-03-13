@@ -33,6 +33,7 @@ import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -86,7 +87,7 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 @RunWith(MockitoJUnitRunner.class)
 public class WalletAuthoriseServiceTest extends CardServiceTest {
 
-    private static final String SESSION_IDENTIFIER = "session-identifier";
+    private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
@@ -181,7 +182,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -214,7 +215,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -311,7 +312,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
     }
 
     @Test

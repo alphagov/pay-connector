@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -56,7 +57,7 @@ public class ApplePayServiceTest {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
-                .withSessionIdentifier("234")
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
         when(mockedApplePayDecrypter.performDecryptOperation(applePayAuthRequest)).thenReturn(validData);
@@ -76,7 +77,7 @@ public class ApplePayServiceTest {
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)
-                .withSessionIdentifier("234")
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");

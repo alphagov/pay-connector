@@ -152,8 +152,6 @@ public class WorldpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
-
-        String providerSessionId = "provider-session-id";
         GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
                 .withSessionId("uniqueSessionId")

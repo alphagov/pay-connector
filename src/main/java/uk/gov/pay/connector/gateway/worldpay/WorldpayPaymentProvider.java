@@ -158,7 +158,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         try {
             List<HttpCookie> cookies = request.getProviderSessionId()
-                    .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId)))
+                    .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId.toString())))
                     .orElse(emptyList());
 
             GatewayClient.Response response = authoriseClient.postRequestFor(
