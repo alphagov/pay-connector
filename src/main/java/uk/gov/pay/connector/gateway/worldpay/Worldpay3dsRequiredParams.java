@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
-public class WorldpayParamsFor3ds implements GatewayParamsFor3ds {
+public class Worldpay3dsRequiredParams implements Gateway3dsRequiredParams {
 
     private final String issuerUrl;
     private final String paRequest;
 
-    public WorldpayParamsFor3ds(String issuerUrl, String paRequest) {
+    public Worldpay3dsRequiredParams(String issuerUrl, String paRequest) {
         this.issuerUrl = issuerUrl;
         this.paRequest = paRequest;
     }

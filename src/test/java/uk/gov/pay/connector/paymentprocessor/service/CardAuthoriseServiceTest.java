@@ -15,6 +15,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -27,19 +28,18 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
+import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayParamsFor3ds;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayParamsFor3dsFlex;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.StateTransitionService;
@@ -342,7 +342,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() throws Exception {
         String issuerUrl = "an-issuer-url";
         String paRequest = "a-pa-request";
-        WorldpayParamsFor3ds worldpayParamsFor3ds = new WorldpayParamsFor3ds(issuerUrl, paRequest);
+        Worldpay3dsRequiredParams worldpayParamsFor3ds = new Worldpay3dsRequiredParams(issuerUrl, paRequest);
         worldpayProviderWillRequire3ds(null, worldpayParamsFor3ds);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -363,7 +363,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String challengeTransactionId = "a-transaction-id";
         String challengePayload = "a-payload";
         String threeDsVersion = "a-version";
-        WorldpayParamsFor3dsFlex worldpayParamsFor3dsFlex = new WorldpayParamsFor3dsFlex(challengeAcsUrl, challengeTransactionId, challengePayload, threeDsVersion);
+        Worldpay3dsFlexRequiredParams worldpayParamsFor3dsFlex = new Worldpay3dsFlexRequiredParams(challengeAcsUrl, challengeTransactionId, challengePayload, threeDsVersion);
         worldpayProviderWillRequire3ds(null, worldpayParamsFor3dsFlex);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -400,7 +400,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() throws Exception {
         String issuerUrl = "an-issuer-url";
         String paRequest = "a-pa-request";
-        WorldpayParamsFor3ds worldpayParamsFor3ds = new WorldpayParamsFor3ds(issuerUrl, paRequest);
+        Worldpay3dsRequiredParams worldpayParamsFor3ds = new Worldpay3dsRequiredParams(issuerUrl, paRequest);
         worldpayProviderWillRequire3ds(SESSION_IDENTIFIER, worldpayParamsFor3ds);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -709,7 +709,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void worldpayProviderWillRequire3ds(String sessionIdentifier, GatewayParamsFor3ds worldpayParamsFor3ds) throws GatewayException {
+    private void worldpayProviderWillRequire3ds(String sessionIdentifier, Gateway3dsRequiredParams worldpayParamsFor3ds) throws GatewayException {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         
         var mockWorldpayResponse = mock(WorldpayOrderStatusResponse.class);

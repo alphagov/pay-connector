@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.smartpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Optional;
@@ -35,7 +35,7 @@ public class Smartpay3dsAuthorisationResponse extends SmartpayBaseResponse imple
     }
 
     @Override
-    public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         return Optional.empty();
     }
 

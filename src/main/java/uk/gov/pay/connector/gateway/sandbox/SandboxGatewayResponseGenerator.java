@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
@@ -59,7 +59,7 @@ public interface SandboxGatewayResponseGenerator {
             }
 
             @Override
-            public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
+            public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
                 return Optional.empty();
             }
 

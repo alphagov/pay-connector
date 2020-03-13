@@ -1,21 +1,21 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
 import java.util.Objects;
 
-public class WorldpayParamsFor3dsFlex implements GatewayParamsFor3ds {
+public class Worldpay3dsFlexRequiredParams implements Gateway3dsRequiredParams {
     
     private final String challengeAcsUrl;
     private final String challengeTransactionId;
     private final String challengePayload;
     private final String threeDsVersion;
 
-    public WorldpayParamsFor3dsFlex(String challengeAcsUrl,
-                                    String challengeTransactionId,
-                                    String challengePayload,
-                                    String threeDsVersion) {
+    public Worldpay3dsFlexRequiredParams(String challengeAcsUrl,
+                                         String challengeTransactionId,
+                                         String challengePayload,
+                                         String threeDsVersion) {
         this.challengeAcsUrl = Objects.requireNonNull(challengeAcsUrl);
         this.challengeTransactionId = Objects.requireNonNull(challengeTransactionId);
         this.challengePayload = Objects.requireNonNull(challengePayload);
