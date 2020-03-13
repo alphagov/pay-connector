@@ -216,7 +216,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 request.getGatewayAccount().isRequires3ds();
 
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(request.getChargeExternalId())
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .with3dsRequired(is3dsRequired)
                 .withDate(DateTime.now(DateTimeZone.UTC));
 
@@ -244,7 +244,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
-                .withSessionId(request.getChargeExternalId())
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();

@@ -57,8 +57,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             return sessionId;
         }
 
-        public void setSessionId(String sessionId) {
-            this.sessionId = sessionId;
+        public void setSessionId(WorldpayAuthoriseOrderSessionId sessionId) {
+            this.sessionId = sessionId.toString();
         }
 
         public String getAcceptHeader() {
@@ -161,7 +161,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withSessionId(String sessionId) {
+    public WorldpayOrderRequestBuilder withSessionId(WorldpayAuthoriseOrderSessionId sessionId) {
         worldpayTemplateData.setSessionId(sessionId);
         return this;
     }
