@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Auth3dsDetails implements AuthorisationDetails {
+public class Auth3dsResult implements AuthorisationDetails {
 
     public enum Auth3dsResultOutcome {
         AUTHORISED, DECLINED, ERROR, CANCELED
@@ -55,7 +55,7 @@ public class Auth3dsDetails implements AuthorisationDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Auth3dsDetails that = (Auth3dsDetails) o;
+        Auth3dsResult that = (Auth3dsResult) o;
 
         if (paResponse != null ? !paResponse.equals(that.paResponse) : that.paResponse != null) return false;
         if (auth3dsResultOutcome != that.auth3dsResultOutcome) return false;

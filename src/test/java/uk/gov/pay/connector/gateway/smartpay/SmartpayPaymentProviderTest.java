@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -21,8 +21,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
@@ -95,10 +95,10 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        Auth3dsDetails auth3dsDetails = AuthUtils.buildAuth3dsDetails();
-        auth3dsDetails.setMd("Some smart text here");
+        Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
+        auth3dsResult.setMd("Some smart text here");
 
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails));
+        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult));
 
         assertTrue(response.isSuccessful());
     }

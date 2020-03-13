@@ -243,7 +243,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
-                .withPaResponse3ds(request.getAuth3DsDetails().getPaResponse())
+                .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
                 .withSessionId(request.getChargeExternalId())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))

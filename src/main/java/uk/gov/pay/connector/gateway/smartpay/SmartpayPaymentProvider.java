@@ -173,8 +173,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private GatewayOrder build3dsResponseAuthOrderFor(Auth3dsResponseGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder()
-                .withPaResponse(request.getAuth3DsDetails().getPaResponse())
-                .withMd(request.getAuth3DsDetails().getMd())
+                .withPaResponse(request.getAuth3dsResult().getPaResponse())
+                .withMd(request.getAuth3dsResult().getMd())
                 .withMerchantCode(getMerchantCode(request))
                 .build();
     }

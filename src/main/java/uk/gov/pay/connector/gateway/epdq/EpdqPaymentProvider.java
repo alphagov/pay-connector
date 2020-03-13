@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResultOutcome;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult.Auth3dsResultOutcome;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -195,16 +195,16 @@ public class EpdqPaymentProvider implements PaymentProvider {
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
-            Auth3dsResultOutcome auth3DResult = request.getAuth3DsDetails().getAuth3dsResultOutcome() == null ?
+            Auth3dsResultOutcome auth3DResult = request.getAuth3dsResult().getAuth3dsResultOutcome() == null ?
                     Auth3dsResultOutcome.ERROR : // we treat no result from frontend as an error
-                    request.getAuth3DsDetails().getAuth3dsResultOutcome();
+                    request.getAuth3dsResult().getAuth3dsResultOutcome();
             
             if (responseDoesNotMatchWithUserResult(authoriseStatus, auth3DResult)) {
                 LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, gatewayAccountId={}, frontendstatus={}, gatewaystatus={}",
                         request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
                 metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
                         request.getGatewayAccount().getGatewayName(),
-                        request.getAuth3DsDetails().getAuth3dsResultOutcome(),
+                        request.getAuth3dsResult().getAuth3dsResultOutcome(),
                         authoriseStatus.name()))
                         .inc();
                 gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);

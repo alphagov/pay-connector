@@ -26,7 +26,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -175,7 +175,7 @@ public class EpdqPaymentProviderTest {
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
 
-        Gateway3DSAuthorisationResponse queryResponse = paymentProvider.authorise3dsResponse(buildQueryRequest(chargeEntity, Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED.name()));
+        Gateway3DSAuthorisationResponse queryResponse = paymentProvider.authorise3dsResponse(buildQueryRequest(chargeEntity, Auth3dsResult.Auth3dsResultOutcome.AUTHORISED.name()));
         assertThat(queryResponse.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
     }
@@ -270,9 +270,9 @@ public class EpdqPaymentProviderTest {
     }
 
     private static Auth3dsResponseGatewayRequest buildQueryRequest(ChargeEntity chargeEntity, String auth3DResult) {
-        Auth3dsDetails auth3DsDetails = new Auth3dsDetails();
-        auth3DsDetails.setAuth3dsResult(auth3DResult);
-        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsDetails);
+        Auth3dsResult auth3DsResult = new Auth3dsResult();
+        auth3DsResult.setAuth3dsResult(auth3DResult);
+        return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsResult);
     }
 
     private void setUpFor3dsAndCheckThatEpdqIsUp() {

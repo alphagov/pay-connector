@@ -12,7 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
@@ -182,11 +182,11 @@ public class StripeNotificationService {
         try {
             final StripeNotificationType type = StripeNotificationType.byType(notificationEventType);
 
-            Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
-            auth3dsDetails.setAuth3dsResult(getMappedAuth3dsResult(type));
+            Auth3dsResult auth3DsResult = new Auth3dsResult();
+            auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
 
             delayFor3dsReady(charge);
-            card3dsResponseAuthService.process3DSecureAuthorisationWithoutLocking(charge.getExternalId(), auth3dsDetails);
+            card3dsResponseAuthService.process3DSecureAuthorisationWithoutLocking(charge.getExternalId(), auth3DsResult);
         } catch (OperationAlreadyInProgressRuntimeException e) {
             // CardExecutorService is asynchronous and sends back 'OperationAlreadyInProgressRuntimeException' 
             // exception while the charge is being authorised. Catch this exception to send a response with 
@@ -225,14 +225,14 @@ public class StripeNotificationService {
         switch (type) {
             case SOURCE_CHARGEABLE:
             case PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED:
-                return Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED.toString();
+                return Auth3dsResult.Auth3dsResultOutcome.AUTHORISED.toString();
             case SOURCE_CANCELED:
-                return Auth3dsDetails.Auth3dsResultOutcome.CANCELED.toString();
+                return Auth3dsResult.Auth3dsResultOutcome.CANCELED.toString();
             case SOURCE_FAILED:
             case PAYMENT_INTENT_PAYMENT_FAILED:
-                return Auth3dsDetails.Auth3dsResultOutcome.DECLINED.toString();
+                return Auth3dsResult.Auth3dsResultOutcome.DECLINED.toString();
             default:
-                return Auth3dsDetails.Auth3dsResultOutcome.ERROR.toString();
+                return Auth3dsResult.Auth3dsResultOutcome.ERROR.toString();
         }
     }
 

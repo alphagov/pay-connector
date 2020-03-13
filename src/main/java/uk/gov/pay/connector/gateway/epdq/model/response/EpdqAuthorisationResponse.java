@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gateway.epdq.model.response;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.epdq.model.EpdqParamsFor3ds;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -22,10 +22,10 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
     private static final String WAITING = "51";
     private static final String REJECTED = "2";
 
-    private static final Map<Auth3dsDetails.Auth3dsResultOutcome, String> statusTo3dsResultMapping = ImmutableMap.of(
-            Auth3dsDetails.Auth3dsResultOutcome.AUTHORISED, AUTHORISED,
-            Auth3dsDetails.Auth3dsResultOutcome.DECLINED, REJECTED,
-            Auth3dsDetails.Auth3dsResultOutcome.ERROR, "ERROR");
+    private static final Map<Auth3dsResult.Auth3dsResultOutcome, String> statusTo3dsResultMapping = ImmutableMap.of(
+            Auth3dsResult.Auth3dsResultOutcome.AUTHORISED, AUTHORISED,
+            Auth3dsResult.Auth3dsResultOutcome.DECLINED, REJECTED,
+            Auth3dsResult.Auth3dsResultOutcome.ERROR, "ERROR");
 
     private String status;
     private String htmlAnswer;
@@ -84,7 +84,7 @@ public class EpdqAuthorisationResponse extends EpdqBaseResponse implements BaseA
         this.status = status;
     }
 
-    public void setStatusFromAuth3dsResult(Auth3dsDetails.Auth3dsResultOutcome result) {
+    public void setStatusFromAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome result) {
         this.status = statusTo3dsResultMapping.get(result);
     }
 
