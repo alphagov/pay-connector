@@ -19,7 +19,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -44,7 +44,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -55,6 +55,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAuth3dsDetailsEntity;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 public class ChargeDaoIT extends DaoITestBase {
 
@@ -226,6 +227,38 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getExternalMetadata().get().getMetadata(), equalTo(expectedExternalMetadata.getMetadata()));
+    }
+
+    @Test
+    public void shouldNotCreateNewChargeWithInvalidExternalMetadata() {
+        ExternalMetadata invalidMetadata = new ExternalMetadata(Map.of("cannot_be_nested", Map.of("nested_key", "nested_value")));
+        String expectedErrorMessage = "Cannot set invalid ExternalMetadata when creating a new ChargeEntity: Field [metadata] values must be of type String, Boolean or Number";
+        try {
+            aWebChargeEntity().withExternalMetadata(invalidMetadata).build();
+        } catch (ValidationException ex) {
+            assertThat(ex.getMessage(), is(expectedErrorMessage));
+        }
+    }
+
+    @Test
+    public void shouldUpdateAChargeThatAlreadyHasInvalidExternalMetadata() {
+        Long testChargeId = 20071969L;
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+        ExternalMetadata invalidMetadata = new ExternalMetadata(Map.of("cannot_be_nested", Map.of("nested_key", "nested_value")));
+
+        databaseTestHelper.addCharge(
+                anAddChargeParams()
+                        .withGatewayAccountId(String.valueOf(gatewayAccount.getId()))
+                        .withStatus(CREATED)
+                        .withChargeId(testChargeId)
+                        .withExternalMetadata(invalidMetadata).build());
+
+        ChargeEntity charge = chargeDao.findById(testChargeId).get();
+        charge.setStatus(ChargeStatus.EXPIRED);
+        chargeDao.flush();
+
+        assertThat(charge.getStatus(), equalTo(ChargeStatus.EXPIRED.toString()));
     }
 
     @Test

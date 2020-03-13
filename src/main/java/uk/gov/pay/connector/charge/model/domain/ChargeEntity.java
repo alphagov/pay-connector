@@ -44,13 +44,18 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.validation.Valid;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.ValidationException;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -72,6 +77,8 @@ import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
 public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     private static final Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
+    private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    private static final Validator validator = factory.getValidator();
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_charge_id_seq")
@@ -194,11 +201,32 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.email = email;
         this.language = language;
         this.delayedCapture = delayedCapture;
-        this.externalMetadata = externalMetadata;
         this.source = source;
         this.gatewayTransactionId = gatewayTransactionId;
         this.cardDetails = cardDetails;
         this.moto = moto;
+        setExternalMetadata(externalMetadata);
+    }
+
+    private void setExternalMetadata(ExternalMetadata externalMetadata) {
+        validateExternalMetadata(externalMetadata);
+        this.externalMetadata = externalMetadata;
+    }
+
+    private void validateExternalMetadata(ExternalMetadata externalMetadata) {
+        if (externalMetadata == null) {
+            return;
+        }
+
+        String violationMessages = validator.validate(externalMetadata).stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+
+        if (violationMessages.isEmpty()) {
+            return;
+        }
+
+        throw new ValidationException("Cannot set invalid ExternalMetadata when creating a new ChargeEntity: " + violationMessages);
     }
 
     public Long getId() {
