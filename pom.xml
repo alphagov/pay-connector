@@ -23,7 +23,7 @@
         <jooq.version>3.13.1</jooq.version>
         <postgresql.version>42.2.10</postgresql.version>
         <commons-lang3.version>3.9</commons-lang3.version>
-        <jjwt.version>0.11.0</jjwt.version>
+        <jjwt.version>0.11.1</jjwt.version>
     </properties>
     <repositories>
         <repository>
