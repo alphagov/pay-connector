@@ -116,7 +116,7 @@ public class EpdqNotificationService {
 
         if (newChargeStatus.isPresent()) {
             if(charge.isHistoric()){
-                if (CAPTURED.getValue().equals(newChargeStatus.get().getValue())) {
+                if (CAPTURED.equals(newChargeStatus.get())) {
                     chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, notification.getTransactionId(), charge, newChargeStatus.get(), null);
                     return;
                 }

@@ -21,15 +21,26 @@ public class EventService {
         this.eventQueue = eventQueue;
         this.emittedEventDao = emittedEventDao;
     }
-    
+
+    /**
+     * This method is used principally for emitting events for expunged entities. As the entities are no longer in the
+     * connector database it does not record the event using the EmittedEventDao.
+     */
     public void emitEvent(Event event) {
         try {
             eventQueue.emitEvent(event);
         } catch (QueueException e) {
+            /* 
+            In the event of a QueueException we have taken the decision not to retry the emitted event because:
+            - the likelihood of failing to send a message to the highly available SQS service is very low.
+            - emitted events are tightly coupled to entities in the database and doing the work to re-send an event for 
+              an expunged entity is more work that doesn't justify the problem we're trying to solve, namely processing 
+              notifications from ePDQ where a state transition has to be forced (PP-6201)
+            */
             logger.error("Failed to emit event {} due to {} [externalId={}]", event.getEventType(), e.getMessage(), event.getResourceExternalId());
         }
     }
-    
+
     public void emitAndRecordEvent(Event event, ZonedDateTime doNotRetryEmitUntilDate) {
         try {
             eventQueue.emitEvent(event);
