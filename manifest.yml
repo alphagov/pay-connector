@@ -20,6 +20,8 @@ applications:
 
       # Provided by the app-catalog service - see src/main/resources/env-map.yml
       FRONTEND_URL: ""
+      METRICS_HOST: ""
+      METRICS_PORT: ""
 
       # Provided by card-connector-secret-service - see src/main/resource/env-map.yml
       SENTRY_DSN: ""
