@@ -371,7 +371,7 @@ public class ChargeServiceTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("1234567890");
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
-                authCardDetails, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+                authCardDetails, null, null, null, null, null);
 
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
     }

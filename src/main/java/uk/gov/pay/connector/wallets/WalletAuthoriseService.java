@@ -89,8 +89,8 @@ public class WalletAuthoriseService {
                     ChargeStatus.fromString(charge.getStatus()),
                     walletAuthorisationData,
                     responseFromPaymentGateway,
-                    transactionId,
-                    sessionIdentifier,
+                    transactionId.orElse(null),
+                    sessionIdentifier.orElse(null),
                     chargeStatus);
 
             // Used by Sumo Logic saved search
@@ -133,8 +133,8 @@ public class WalletAuthoriseService {
             ChargeStatus oldChargeStatus,
             WalletAuthorisationData walletAuthorisationData,
             String responseFromGateway,
-            Optional<String> transactionId,
-            Optional<ProviderSessionIdentifier> sessionIdentifier,
+            String transactionId,
+            ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status) {
 
         logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
@@ -150,7 +150,7 @@ public class WalletAuthoriseService {
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId.orElse("missing transaction ID"),
+                transactionId != null ? transactionId : "missing transaction ID",
                 updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
                 responseFromGateway, oldChargeStatus, status);
 
