@@ -38,6 +38,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.service.EpdqAuthorisationErrorGatewayCleanupService.CLEANUP_FAILED;
 import static uk.gov.pay.connector.charge.service.EpdqAuthorisationErrorGatewayCleanupService.CLEANUP_SUCCESS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -124,6 +125,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
         verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_REJECTED));
+        verify(mockPaymentProvider, never()).cancel(any());
     }
 
     @Test
@@ -138,6 +140,22 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
         verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CHARGE_MISSING));
+        verify(mockPaymentProvider, never()).cancel(any());
+    }
+
+    @Test
+    public void shouldTransitionChargeStateToErrorCancelledWhenAlreadyCancelledOnGateway() throws Exception {
+        when(mockQueryResponse.getTransactionId()).thenReturn("order-code");
+        ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(USER_CANCELLED, mockQueryResponse);
+        when(mockQueryService.getChargeGatewayStatus(eq(charge))).thenReturn(chargeQueryResponse);
+
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
+
+        assertThat(result.get(CLEANUP_SUCCESS), is(1));
+        assertThat(result.get(CLEANUP_FAILED), is(0));
+
+        verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CANCELLED));
+        verify(mockPaymentProvider, never()).cancel(any());
     }
 
     @Test

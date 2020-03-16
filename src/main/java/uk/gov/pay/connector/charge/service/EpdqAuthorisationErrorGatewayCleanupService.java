@@ -27,6 +27,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
 public class EpdqAuthorisationErrorGatewayCleanupService {
@@ -113,6 +114,12 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
             // These are terminal states with the gateway for which no cleanup is required
             if (mappedStatus == AUTHORISATION_REJECTED || mappedStatus == AUTHORISATION_ERROR) {
                 chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_REJECTED);
+                return true;
+            }
+            
+            if (mappedStatus == USER_CANCELLED) {
+                // The charge has already been cancelled with the gateway, probably manually
+                chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_CANCELLED);
                 return true;
             }
 
