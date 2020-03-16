@@ -670,7 +670,7 @@ public class ChargeService {
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
-
+    
     @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
