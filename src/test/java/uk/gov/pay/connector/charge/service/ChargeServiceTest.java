@@ -22,6 +22,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -67,12 +68,15 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -80,6 +84,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeServiceTest {
@@ -389,4 +394,56 @@ public class ChargeServiceTest {
         thrown.expectMessage("HTTP 409 Conflict");
         service.markDelayedCaptureChargeAsCaptureApproved(chargeEntityExternalId);
     }
+
+    @Test
+    public void shouldUpdateChargePost3dsAuthorisationWithoutTransactionId() {
+        ChargeEntity chargeSpy = spy(aValidChargeEntity()
+                .withStatus(AUTHORISATION_3DS_READY)
+                .build());
+
+        final String chargeEntityExternalId = chargeSpy.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
+
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null, null);
+
+        verify(chargeSpy, never()).setGatewayTransactionId(anyString());
+        verify(chargeSpy).setStatus(AUTHORISATION_REJECTED);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+    }
+
+    @Test
+    public void shouldUpdateChargePost3dsAuthorisationWithTransactionId() {
+        ChargeEntity chargeSpy = spy(aValidChargeEntity()
+                .withStatus(AUTHORISATION_3DS_READY)
+                .build());
+
+        final String chargeEntityExternalId = chargeSpy.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
+        
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id", null);
+
+        verify(chargeSpy).setGatewayTransactionId("transaction-id");
+        verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+    }
+
+    @Test
+    public void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
+        ChargeEntity chargeSpy = spy(aValidChargeEntity()
+                .withStatus(AUTHORISATION_3DS_READY)
+                .build());
+
+        final String chargeEntityExternalId = chargeSpy.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
+
+        final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
+        
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, "transaction-id",
+                mockedAuth3dsRequiredEntity);
+
+        verify(chargeSpy).setGatewayTransactionId("transaction-id");
+        verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+    }
+ 
 }

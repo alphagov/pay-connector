@@ -543,11 +543,13 @@ public class ChargeService {
     @Transactional
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          OperationType operationType,
-                                                         String transactionId) {
+                                                         String transactionId,
+                                                         Auth3dsRequiredEntity auth3dsRequiredDetails) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
                 setTransactionId(charge, transactionId);
                 transitionChargeState(charge, status);
+                Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
