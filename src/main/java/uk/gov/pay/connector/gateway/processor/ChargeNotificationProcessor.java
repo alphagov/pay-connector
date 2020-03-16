@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -26,8 +25,9 @@ import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 
 public class ChargeNotificationProcessor {
 
-    private ChargeService chargeService;
-    private EventService eventService;
+    private final ChargeService chargeService;
+    private final EventService eventService;
+    
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
@@ -48,7 +48,7 @@ public class ChargeNotificationProcessor {
         try {
             chargeService.transitionChargeState(chargeEntity, newStatus, gatewayEventDate);
         } catch (InvalidStateTransitionException e) {
-            logger.error(String.format("%s (%s) notification '%s' could not be used to update charge: %s",
+            logger.error(format("%s (%s) notification '%s' could not be used to update charge: %s",
                     gatewayAccount.getGatewayName(), gatewayAccount.getId(), gatewayTransactionId, e.getMessage()),
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                     kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
@@ -84,7 +84,7 @@ public class ChargeNotificationProcessor {
             chargeService.forceTransitionChargeState(chargeEntity, newStatus);
             return true;
         } catch (InvalidForceStateTransitionException ie) {
-            logger.error(String.format("%s (%s) notification '%s' could not force transition from %s to %s",
+            logger.error(format("%s (%s) notification '%s' could not force transition from %s to %s",
                     gatewayAccount.getGatewayName(), gatewayAccount.getId(), gatewayTransactionId, oldStatus, newStatus),
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                     kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
@@ -94,20 +94,19 @@ public class ChargeNotificationProcessor {
         }
     }
     
-    public void processCaptureNotificationForExpungedCharge(GatewayAccountEntity gatewayAccount, String gatewayTransactionId, Charge charge, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
-        logger.info(String.format("Received capture notification for charge that was already expunged from Connector"),
+    public void processCaptureNotificationForExpungedCharge(GatewayAccountEntity gatewayAccount, 
+                                                            String gatewayTransactionId, 
+                                                            Charge charge, 
+                                                            ChargeStatus newStatus, 
+                                                            ZonedDateTime gatewayEventDate) {
+        logger.info(format("Received capture notification for charge that was already expunged from Connector. " +
+                        "Transitioning state from [%s] to [%s].", charge.getStatus(), newStatus.getValue()),
                 kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                 kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
                 kv(PROVIDER, gatewayAccount.getGatewayName()));
         
         Event event = new CaptureConfirmedByGatewayNotification(charge.getExternalId(), gatewayEventDate);
-
-        logger.info(format("Force state transition from [%s] to [%s]", charge.getStatus(),  newStatus.getValue()),
-                List.of(kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
-                        kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
-                        kv(PROVIDER, gatewayAccount.getGatewayName())));
-        
-         eventService.emitEvent(event);
+        eventService.emitEvent(event);
     }
 }
