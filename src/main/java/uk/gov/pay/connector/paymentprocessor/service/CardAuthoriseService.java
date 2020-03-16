@@ -81,9 +81,9 @@ public class CardAuthoriseService {
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     charge.getExternalId(),
                     newStatus,
-                    transactionId,
-                    auth3dsDetailsEntity,
-                    sessionIdentifier,
+                    transactionId.orElse(null),
+                    auth3dsDetailsEntity.orElse(null),
+                    sessionIdentifier.orElse(null),
                     authCardDetails);
 
             boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();

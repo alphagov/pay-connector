@@ -90,7 +90,7 @@ public class Card3dsResponseAuthService {
                 chargeExternalId,
                 operationResponse.getMappedChargeStatus(),
                 AUTHORISATION_3DS,
-                transactionId
+                transactionId.orElse(null)
         );
 
         LOGGER.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
