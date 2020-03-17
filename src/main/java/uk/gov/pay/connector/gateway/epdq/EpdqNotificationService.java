@@ -95,10 +95,11 @@ public class EpdqNotificationService {
                 gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
 
         if (mayBeGatewayAccountEntity.isEmpty()) {
-            logger.error("{} notification {} could not be processed (associated gateway account [{}] not found for charge [{}] {}, {})",
-                    PAYMENT_GATEWAY_NAME, notification,
+            logger.error(format("%s notification %s could not be processed (associated gateway account [%s] not found for charge [%s])",
+                    PAYMENT_GATEWAY_NAME, 
+                    notification,
                     charge.getGatewayAccountId(),
-                    charge.getExternalId(),
+                    charge.getExternalId()),
                     kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                     kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
             return;
@@ -121,9 +122,11 @@ public class EpdqNotificationService {
                     return;
                 }
                 
-                logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
-                        PAYMENT_GATEWAY_NAME, notification,
+                logger.error(format("%s notification %s could not be processed as the charge [%s] has been expunged from connector and it is not possible to move the charge to state %s.",
+                        PAYMENT_GATEWAY_NAME, 
+                        notification,
                         charge.getExternalId(),
+                        newChargeStatus.get().name()),
                         kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                         kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
                 return;
