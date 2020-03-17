@@ -30,6 +30,10 @@ public class EpdqMockClient {
     public void mockAuthorisationQuerySuccessAuthFailed() {
         paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_FAILED_RESPONSE));
     }
+    
+    public void mockAuthorisationQuerySuccessCaptured() {
+        paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_CAPTURE_SUCCESS_RESPONSE));
+    }
 
     public void mockCancelQuerySuccess() {
         paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE));
