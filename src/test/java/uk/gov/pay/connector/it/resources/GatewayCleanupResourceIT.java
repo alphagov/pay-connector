@@ -66,6 +66,16 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
                 .body("cleanup-success", is(3))
                 .body("cleanup-failed", is(0));
 
+        String chargeStatus1 = databaseTestHelper.getChargeStatusByExternalId(chargeId1);
+        String chargeStatus2 = databaseTestHelper.getChargeStatusByExternalId(chargeId2);
+        String chargeStatus3 = databaseTestHelper.getChargeStatusByExternalId(chargeId3);
+        String chargeStatus4 = databaseTestHelper.getChargeStatusByExternalId(chargeId4);
+        
+        assertThat(chargeStatus1, is(AUTHORISATION_REJECTED.getValue()));
+        assertThat(chargeStatus2, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
+        assertThat(chargeStatus3, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
+        assertThat(chargeStatus4, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
+
         List<String> events1 = databaseTestHelper.getInternalEvents(chargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeId2);
         List<String> events3 = databaseTestHelper.getInternalEvents(chargeId3);

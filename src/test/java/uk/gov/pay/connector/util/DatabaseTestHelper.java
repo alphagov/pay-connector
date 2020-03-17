@@ -515,6 +515,15 @@ public class DatabaseTestHelper {
         );
     }
 
+    public String getChargeStatusByExternalId(String externalId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT status from charges where external_id = :externalId")
+                        .bind("externalId", externalId)
+                        .mapTo(String.class)
+                        .first()
+        );
+    }
+
     public String getChargeCardBrand(Long chargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT card_brand from charges WHERE id = :charge_id")

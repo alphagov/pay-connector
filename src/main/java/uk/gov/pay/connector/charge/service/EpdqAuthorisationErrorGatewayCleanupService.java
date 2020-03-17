@@ -89,7 +89,7 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 CLEANUP_FAILED, failures.intValue()
         );
     }
-
+    
     private boolean cleanUpChargeWithGateway(ChargeEntity chargeEntity, ChargeQueryResponse chargeQueryResponse) {
         if (!chargeQueryResponse.foundCharge()) {
             // The charge might not be found with the gateway when the authorisation failed due to an error with ePDQ
@@ -97,7 +97,7 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
             logger.info("Charge was not found on the gateway. Gateway response was: " +
                             chargeQueryResponse.getRawGatewayResponseString(),
                     chargeEntity.getStructuredLoggingArgs());
-            chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_CHARGE_MISSING);
+            chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CHARGE_MISSING);
             return true;
         }
 
@@ -105,7 +105,7 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
             // Attempt to cancel the charge with the gateway if it is not in a terminal state with them
             if (!mappedStatus.toExternal().isFinished()) {
                 if (attemptCancelWithGateway(chargeEntity)) {
-                    chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_CANCELLED);
+                    chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CANCELLED);
                     return true;
                 }
                 return false;
@@ -113,13 +113,13 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
 
             // These are terminal states with the gateway for which no cleanup is required
             if (mappedStatus == AUTHORISATION_REJECTED || mappedStatus == AUTHORISATION_ERROR) {
-                chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_REJECTED);
+                chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_REJECTED);
                 return true;
             }
             
             if (mappedStatus == USER_CANCELLED) {
                 // The charge has already been cancelled with the gateway, probably manually
-                chargeService.transitionChargeState(chargeEntity, AUTHORISATION_ERROR_CANCELLED);
+                chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CANCELLED);
                 return true;
             }
 
