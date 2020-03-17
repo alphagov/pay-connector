@@ -34,6 +34,8 @@ import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
@@ -86,9 +88,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 
 public class PaymentGatewayStateTransitions {
     private static PaymentGatewayStateTransitions instance;
-    
+
     private static Map<ChargeStatus, ModelledTypedEvent> eventsForForceUpdatingStatus = Map.of(
-            CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class));
+            CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class),
+            AUTHORISATION_REJECTED, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class),
+            AUTHORISATION_ERROR, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class)
+    );
 
     public static PaymentGatewayStateTransitions getInstance() {
         if (instance == null) {
@@ -211,7 +216,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_CANCELLED, ModelledEvent.of(CancelledWithGatewayAfterAuthorisationError.class));
         graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_REJECTED, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasRejected.class));
         graph.putEdgeValue(AUTHORISATION_TIMEOUT, AUTHORISATION_ERROR_CHARGE_MISSING, ModelledEvent.of(AuthorisationErrorCheckedWithGatewayChargeWasMissing.class));
-        
+
 
         return ImmutableValueGraph.copyOf(graph);
     }
@@ -246,7 +251,7 @@ public class PaymentGatewayStateTransitions {
     public <T extends Event> List<ChargeStatus> getNextStatus(ChargeStatus fromStatus) {
         return new ArrayList<>(graph.successors(fromStatus));
     }
-    
+
     public static List<Class> getAllEventsResultingInTerminalState() {
         return getInstance().graph.edges()
                 .stream()
@@ -263,23 +268,23 @@ public class PaymentGatewayStateTransitions {
     }
 
     public Optional<ChargeStatus> getIntermediateChargeStatus(ChargeStatus fromStatus, ChargeStatus toStatus) {
-        
+
         // Multiple intermediate states possible : (EXPIRE CANCEL READY, AUTHORISATION 3DS READY)
         if (fromStatus.equals(AUTHORISATION_3DS_REQUIRED) && toStatus.equals(EXPIRED)) {
             return Optional.of(EXPIRE_CANCEL_READY);
         }
-        
+
         // Multiple intermediate states possible : (CAPTURE READY, CAPTURE APPROVED)
         if (fromStatus.equals(AUTHORISATION_SUCCESS) && toStatus.equals(CAPTURE_ERROR)) {
             return Optional.of(CAPTURE_READY);
-        } 
-        
+        }
+
         return graph.successors(fromStatus)
                 .stream()
                 .filter(chargeStatus -> graph.predecessors(toStatus).contains(chargeStatus))
                 .findFirst();
     }
-    
+
     public static <T extends Event> Optional<Class<T>> getEventForForceUpdate(ChargeStatus targetChargeStatus) {
         return Optional.ofNullable(eventsForForceUpdatingStatus.get(targetChargeStatus))
                 .map(modelledTypedEvent -> modelledTypedEvent.getClazz());

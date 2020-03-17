@@ -37,6 +37,8 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -76,6 +78,7 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBui
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -247,10 +250,54 @@ public class ChargeServiceTest {
                 chargeEventEntity, 
                 StatusCorrectedToCapturedToMatchGatewayStatus.class);
     }
+
+    @Test
+    public void forcingChargeToAuthorisationError_shouldSucceedAndEmitEvent() {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
+
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_ERROR).build();
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_ERROR);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(AUTHORISATION_ERROR.getValue()));
+        assertThat(updatedCharge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(
+                charge.getExternalId(),
+                AUTHORISATION_SUCCESS,
+                AUTHORISATION_ERROR,
+                chargeEventEntity,
+                StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class);
+    }
+
+
+    @Test
+    public void forcingChargeToAuthorisationRejected_shouldSucceedAndEmitEvent() {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
+
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_REJECTED).build();
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_REJECTED);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+        assertThat(updatedCharge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(
+                charge.getExternalId(),
+                AUTHORISATION_SUCCESS,
+                AUTHORISATION_REJECTED,
+                chargeEventEntity,
+                StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class);
+    }
     
     @Test(expected = InvalidForceStateTransitionException.class)
     @Parameters({
-            "AUTHORISATION ERROR",
             "USER CANCELLED",
             "USER CANCEL SUBMITTED",
             "CAPTURE APPROVED RETRY"
