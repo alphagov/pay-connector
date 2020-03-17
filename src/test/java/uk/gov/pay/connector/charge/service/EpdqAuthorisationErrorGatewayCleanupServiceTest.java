@@ -110,7 +110,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
-        verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CANCELLED));
+        verify(mockChargeService).transitionChargeState(eq(charge.getExternalId()), eq(AUTHORISATION_ERROR_CANCELLED));
     }
 
     @Test
@@ -124,7 +124,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
-        verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_REJECTED));
+        verify(mockChargeService).transitionChargeState(eq(charge.getExternalId()), eq(AUTHORISATION_ERROR_REJECTED));
         verify(mockPaymentProvider, never()).cancel(any());
     }
 
@@ -139,7 +139,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
-        verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CHARGE_MISSING));
+        verify(mockChargeService).transitionChargeState(eq(charge.getExternalId()), eq(AUTHORISATION_ERROR_CHARGE_MISSING));
         verify(mockPaymentProvider, never()).cancel(any());
     }
 
@@ -154,7 +154,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_SUCCESS), is(1));
         assertThat(result.get(CLEANUP_FAILED), is(0));
 
-        verify(mockChargeService).transitionChargeState(eq(charge), eq(AUTHORISATION_ERROR_CANCELLED));
+        verify(mockChargeService).transitionChargeState(eq(charge.getExternalId()), eq(AUTHORISATION_ERROR_CANCELLED));
         verify(mockPaymentProvider, never()).cancel(any());
     }
 
@@ -173,7 +173,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_SUCCESS), is(0));
         assertThat(result.get(CLEANUP_FAILED), is(1));
 
-        verify(mockChargeService, never()).transitionChargeState(eq(charge), any());
+        verify(mockChargeService, never()).transitionChargeState(eq(charge.getExternalId()), any());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_FAILED), is(1));
 
         verify(mockPaymentProvider, never()).cancel(any());
-        verify(mockChargeService, never()).transitionChargeState(eq(charge), any());
+        verify(mockChargeService, never()).transitionChargeState(eq(charge.getExternalId()), any());
     }
 
     @Test
@@ -203,6 +203,6 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
         assertThat(result.get(CLEANUP_FAILED), is(1));
 
         verify(mockPaymentProvider, never()).cancel(any());
-        verify(mockChargeService, never()).transitionChargeState(eq(charge), any());
+        verify(mockChargeService, never()).transitionChargeState(eq(charge.getExternalId()), any());
     }
 }
