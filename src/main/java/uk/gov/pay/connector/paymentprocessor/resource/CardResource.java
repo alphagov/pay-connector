@@ -30,6 +30,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -110,17 +111,21 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsResult auth3DsResult) {
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsResult);
-        
+
         if (response.isSuccessful()) {
             return ResponseUtil.successResponseWithEntity(
-                    ImmutableMap.of(
+                    Map.of(
                             "status", response.getMappedChargeStatus().toString()
                     ));
         }
         if (response.isException()) {
             return serviceErrorResponse("There was an error when attempting to authorise the transaction.");
         }
-        return badRequestResponse("This transaction was declined.");
+        return ResponseUtil.badRequestResponseWithEntity(
+                Map.of(
+                        "status", response.getMappedChargeStatus().toString()
+                )
+        );
     }
 
     @POST

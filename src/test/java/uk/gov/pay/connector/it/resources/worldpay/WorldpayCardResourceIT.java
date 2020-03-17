@@ -258,7 +258,6 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     public void shouldReturnStatus400_WhenAuthorisationFails() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
-        String expectedErrorMessage = "This transaction was declined.";
         worldpayMockClient.mockAuthorisationFailure();
 
         givenSetup()
@@ -267,8 +266,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", contains(expectedErrorMessage))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("status", is(AUTHORISATION_REJECTED.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
