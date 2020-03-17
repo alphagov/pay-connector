@@ -74,7 +74,7 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 } else {
                     failures.getAndIncrement();
                 }
-            } catch (WebApplicationException | GatewayException e) {
+            } catch (WebApplicationException | GatewayException | IllegalArgumentException e) {
                 logger.info("Error when querying charge status with gateway: " + e.getMessage(),
                         chargeEntity.getStructuredLoggingArgs());
                 failures.getAndIncrement();
