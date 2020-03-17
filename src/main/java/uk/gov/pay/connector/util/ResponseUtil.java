@@ -99,6 +99,10 @@ public class ResponseUtil {
         return responseWithEntity(OK, entity);
     }
 
+    public static Response badRequestResponseWithEntity(Object entity) {
+        return responseWithEntity(BAD_REQUEST, entity);
+    }
+
     private static Response responseWithEntity(Status status, Object entity) {
         return status(status).entity(entity).build();
     }
