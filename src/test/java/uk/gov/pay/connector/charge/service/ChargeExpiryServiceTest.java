@@ -272,8 +272,8 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity updatedCharge = mock(ChargeEntity.class);
         when(updatedCharge.getStatus()).thenReturn(CAPTURED.toString());
-        when(mockChargeService.transitionChargeState(chargeEntity, CAPTURED)).thenThrow(InvalidStateTransitionException.class);
-        when(mockChargeService.forceTransitionChargeState(chargeEntity, CAPTURED)).thenReturn(updatedCharge);
+        when(mockChargeService.transitionChargeState(chargeEntity.getExternalId(), CAPTURED)).thenThrow(InvalidStateTransitionException.class);
+        when(mockChargeService.forceTransitionChargeState(chargeEntity.getExternalId(), CAPTURED)).thenReturn(updatedCharge);
 
         Map<String, Integer> sweepResult = chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -281,7 +281,7 @@ public class ChargeExpiryServiceTest {
         assertThat(sweepResult.get("expiry-failed"), is(0));
 
         verify(mockPaymentProvider, never()).cancel(any());
-        verify(mockChargeService).forceTransitionChargeState(chargeEntity, CAPTURED);
+        verify(mockChargeService).forceTransitionChargeState(chargeEntity.getExternalId(), CAPTURED);
     }
 
     @Test
@@ -298,7 +298,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity updatedCharge = mock(ChargeEntity.class);
         when(updatedCharge.getStatus()).thenReturn(AUTHORISATION_REJECTED.toString());
-        when(mockChargeService.transitionChargeState(chargeEntity, AUTHORISATION_REJECTED)).thenReturn(updatedCharge);
+        when(mockChargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_REJECTED)).thenReturn(updatedCharge);
 
         Map<String, Integer> sweepResult = chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -306,7 +306,7 @@ public class ChargeExpiryServiceTest {
         assertThat(sweepResult.get("expiry-failed"), is(0));
 
         verify(mockPaymentProvider, never()).cancel(any());
-        verify(mockChargeService).transitionChargeState(chargeEntity, AUTHORISATION_REJECTED);
+        verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_REJECTED);
     }
 
     @Test

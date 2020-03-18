@@ -73,6 +73,20 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
                         .body(JSON_CHARGE_KEY, is(chargeId))
                         .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus())));
 
+        String chargeStatus1 = databaseTestHelper.getChargeStatusByExternalId(extChargeId1);
+        String chargeStatus2 = databaseTestHelper.getChargeStatusByExternalId(extChargeId2);
+        String chargeStatus3 = databaseTestHelper.getChargeStatusByExternalId(extChargeId3);
+        String chargeStatus4 = databaseTestHelper.getChargeStatusByExternalId(extChargeId4);
+        String chargeStatus5 = databaseTestHelper.getChargeStatusByExternalId(extChargeId5);
+        String chargeStatus6 = databaseTestHelper.getChargeStatusByExternalId(extChargeId6);
+        
+        assertThat(chargeStatus1, is(EXPIRED.getValue()));
+        assertThat(chargeStatus2, is(EXPIRED.getValue()));
+        assertThat(chargeStatus3, is(EXPIRED.getValue()));
+        assertThat(chargeStatus4, is(EXPIRED.getValue()));
+        assertThat(chargeStatus5, is(EXPIRED.getValue()));
+        assertThat(chargeStatus6, is(EXPIRED.getValue()));
+
         List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
         List<String> events3 = databaseTestHelper.getInternalEvents(extChargeId3);

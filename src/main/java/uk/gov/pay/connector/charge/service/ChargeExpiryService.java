@@ -210,7 +210,7 @@ public class ChargeExpiryService {
                             // first try to transition to the terminal state gracefully if allowed, otherwise force the
                             // transition
                             try {
-                                chargeService.transitionChargeState(chargeEntity, status);
+                                chargeService.transitionChargeState(chargeEntity.getExternalId(), status);
                                 expireCancelled.getAndIncrement();
                             } catch (InvalidStateTransitionException e) {
                                 if (forceTransitionChargeState(chargeEntity, status)) {
@@ -247,7 +247,7 @@ public class ChargeExpiryService {
     
     private boolean forceTransitionChargeState(ChargeEntity chargeEntity, ChargeStatus status) {
         try {
-            chargeService.forceTransitionChargeState(chargeEntity, status);
+            chargeService.forceTransitionChargeState(chargeEntity.getExternalId(), status);
             return true;
         } catch (InvalidForceStateTransitionException e) {
             logger.error(format("Cannot expire charge as it is in a terminal state of [%s] with " +

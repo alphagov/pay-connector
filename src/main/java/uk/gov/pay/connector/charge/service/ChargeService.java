@@ -641,14 +641,21 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
+    public ChargeEntity transitionChargeState(String chargeExternalId, ChargeStatus targetChargeState) {
+        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity ->
                 transitionChargeState(chargeEntity, targetChargeState)
-        ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+    }
+
+    @Transactional
+    public ChargeEntity forceTransitionChargeState(String chargeExternalId, ChargeStatus targetChargeState) {
+        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity -> 
+                forceTransitionChargeState(chargeEntity, targetChargeState))
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
     
     @Transactional
-    public <T extends Event> ChargeEntity forceTransitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+    public ChargeEntity forceTransitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
         ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
 
         return PaymentGatewayStateTransitions.getEventForForceUpdate(targetChargeState).map(eventClass -> {
