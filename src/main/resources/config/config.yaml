@@ -239,3 +239,6 @@ expungeConfig:
   numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGE_PER_TASK_RUN:-25000}
   expungeChargesEnabled: ${EXPUNGE_CHARGES_ENABLED:-false}
   minimumAgeForHistoricChargeExceptions: ${EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS:-90}
+
+authorisation3dsConfig:
+  maximumNumberOfTimesToAllowUserToAttempt3ds: ${MAXIMUM_NO_USER_3DS_ATTEMPTS:-3}

@@ -3,6 +3,8 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -15,6 +17,8 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import javax.inject.Inject;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
 
 public class Card3dsResponseAuthService {
@@ -24,15 +28,17 @@ public class Card3dsResponseAuthService {
     private final ChargeService chargeService;
     private final CardAuthoriseBaseService cardAuthoriseBaseService;
     private final PaymentProviders providers;
+    private final Authorisation3dsConfig authorisation3dsConfig;
 
     @Inject
     public Card3dsResponseAuthService(PaymentProviders providers,
                                       ChargeService chargeService,
-                                      CardAuthoriseBaseService cardAuthoriseBaseService
-    ) {
+                                      CardAuthoriseBaseService cardAuthoriseBaseService,
+                                      ConnectorConfiguration config) {
         this.providers = providers;
         this.chargeService = chargeService;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.authorisation3dsConfig = config.getAuthorisation3dsConfig();
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsResult auth3DsResult) {
@@ -65,31 +71,35 @@ public class Card3dsResponseAuthService {
             }
         }
 
-        processGateway3DSecureResponse(
-                charge.getExternalId(),
-                ChargeStatus.fromString(charge.getStatus()),
-                gateway3DSAuthorisationResponse
-        );
-
+        processGateway3DSecureResponse(charge.getExternalId(), ChargeStatus.fromString(charge.getStatus()), gateway3DSAuthorisationResponse);
         return gateway3DSAuthorisationResponse;
     }
 
-    private void processGateway3DSecureResponse(
-            String chargeExternalId,
-            ChargeStatus oldChargeStatus,
-            Gateway3DSAuthorisationResponse operationResponse
-    ) {
+    private void processGateway3DSecureResponse(String chargeExternalId, ChargeStatus oldChargeStatus, Gateway3DSAuthorisationResponse operationResponse) {
         Optional<String> transactionId = operationResponse.getTransactionId();
+
+        ChargeStatus newStatus = operationResponse.getMappedChargeStatus();
+        if (newStatus == AUTHORISATION_3DS_REQUIRED) {
+            int numberOf3dsRequiredEventsRecorded = chargeService.count3dsRequiredEvents(chargeExternalId);
+            if (numberOf3dsRequiredEventsRecorded < authorisation3dsConfig.getMaximumNumberOfTimesToAllowUserToAttempt3ds()){
+                LOGGER.info("Gateway instructed us to send the user through 3DS again for {} — this will be attempt {} of {}",
+                        chargeExternalId, numberOf3dsRequiredEventsRecorded + 1, authorisation3dsConfig.getMaximumNumberOfTimesToAllowUserToAttempt3ds());
+            } else {
+                newStatus = AUTHORISATION_REJECTED;
+                LOGGER.info("Gateway instructed us to send the user through 3DS again for {} but there have already been {} attempts in total, "
+                        + "so treating authorisation as rejected", chargeExternalId, numberOf3dsRequiredEventsRecorded);
+            }
+        }
 
         LOGGER.info("3DS response authorisation for {} - {} .'. about to attempt charge update from {} -> {}",
                 chargeExternalId,
                 operationResponse,
                 oldChargeStatus,
-                operationResponse.getMappedChargeStatus());
+                newStatus);
 
         ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(
                 chargeExternalId,
-                operationResponse.getMappedChargeStatus(),
+                newStatus,
                 AUTHORISATION_3DS,
                 transactionId.orElse(null),
                 operationResponse.getGateway3dsRequiredParams().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity).orElse(null)

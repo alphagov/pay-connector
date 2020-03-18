@@ -78,6 +78,7 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBui
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -387,6 +388,15 @@ public class ChargeServiceTest {
     }
 
     @Test
+    public void shouldReturnNumberOf3dsRequiredEvents() {
+        when(mockedChargeDao.count3dsRequiredEventsForChargeExternalId(EXTERNAL_CHARGE_ID[0])).thenReturn(42);
+
+        int authorisation3dsRequiredEvents = service.count3dsRequiredEvents(EXTERNAL_CHARGE_ID[0]);
+
+        assertThat(authorisation3dsRequiredEvents, is(42));
+    }
+
+    @Test
     public void shouldUpdateChargeEntityAndPersistChargeEventForAValidStateTransition() {
         ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
 
@@ -485,7 +495,7 @@ public class ChargeServiceTest {
 
         final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
         
-        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, "transaction-id",
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
                 mockedAuth3dsRequiredEntity);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
