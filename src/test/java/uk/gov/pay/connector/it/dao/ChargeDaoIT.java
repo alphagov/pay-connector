@@ -43,8 +43,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -577,6 +578,37 @@ public class ChargeDaoIT extends DaoITestBase {
                 .insert();
 
         assertThat(chargeDao.countCaptureRetriesForChargeExternalId(externalChargeId), is(2));
+    }
+
+    @Test
+    public void count3dsRequiredEventsForChargeExternalId() {
+        long chargeId = nextLong();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(AUTHORISATION_3DS_READY)
+                .insert();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                .insert();
+
+        assertThat(chargeDao.count3dsRequiredEventsForChargeExternalId(externalChargeId), is(2));
     }
 
     @Test

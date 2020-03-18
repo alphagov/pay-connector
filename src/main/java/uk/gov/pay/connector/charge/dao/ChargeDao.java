@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
@@ -160,6 +161,18 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("externalId", externalId)
                 .setParameter("captureApprovedStatus", CAPTURE_APPROVED)
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
+                .getSingleResult()).intValue();
+    }
+
+    public int count3dsRequiredEventsForChargeExternalId(String externalId) {
+        String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity.externalId = :externalId AND " +
+                "    (ce.status = :authorisation3dsRequiredStatus)";
+
+        return ((Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("externalId", externalId)
+                .setParameter("authorisation3dsRequiredStatus", AUTHORISATION_3DS_REQUIRED)
                 .getSingleResult()).intValue();
     }
 

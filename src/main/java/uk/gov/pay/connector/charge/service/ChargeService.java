@@ -732,6 +732,10 @@ public class ChargeService {
         return status == CAPTURED || status == CAPTURE_SUBMITTED;
     }
 
+    public int count3dsRequiredEvents(String externalId) {
+        return chargeDao.count3dsRequiredEventsForChargeExternalId(externalId);
+    }
+
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
