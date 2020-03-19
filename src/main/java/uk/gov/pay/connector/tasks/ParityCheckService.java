@@ -18,7 +18,7 @@ import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
@@ -61,15 +61,18 @@ public class ParityCheckService {
     private ChargeService chargeService;
     private RefundDao refundDao;
     private HistoricalEventEmitter historicalEventEmitter;
+    private final PaymentProviders providers;
 
     @Inject
     public ParityCheckService(LedgerService ledgerService, ChargeService chargeService,
                               RefundDao refundDao,
-                              HistoricalEventEmitter historicalEventEmitter) {
+                              HistoricalEventEmitter historicalEventEmitter,
+                              PaymentProviders providers) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
         this.refundDao = refundDao;
         this.historicalEventEmitter = historicalEventEmitter;
+        this.providers = providers;
     }
 
     public ParityCheckStatus getChargeParityCheckStatus(ChargeEntity chargeEntity) {
@@ -311,8 +314,8 @@ public class ParityCheckService {
     private boolean matchRefundSummary(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         List<RefundEntity> refundsList = refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId());
 
-        DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        ExternalChargeRefundAvailability refundAvailability = defaultExternalRefundAvailabilityCalculator.calculate(Charge.from(chargeEntity), refundsList);
+        ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName())
+                .getExternalChargeRefundAvailability(Charge.from(chargeEntity), refundsList);
 
         return isEquals(refundAvailability.getStatus(),
                 ofNullable(transaction.getRefundSummary()).map(refundSummary -> refundSummary.getStatus()).orElse(null), "refund_summary.status");
