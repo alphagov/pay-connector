@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.eclipse.persistence.exceptions.QueryException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,7 +11,6 @@ import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.queue.QueueException;
 
 import java.util.Optional;
@@ -92,8 +90,9 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
         notificationService.handleNotificationFor(payload);
+        
 
-        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED, null);
+        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
 
     @Test

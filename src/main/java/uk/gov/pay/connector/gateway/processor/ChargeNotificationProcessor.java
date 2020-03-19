@@ -97,8 +97,7 @@ public class ChargeNotificationProcessor {
     public void processCaptureNotificationForExpungedCharge(GatewayAccountEntity gatewayAccount, 
                                                             String gatewayTransactionId, 
                                                             Charge charge, 
-                                                            ChargeStatus newStatus, 
-                                                            ZonedDateTime gatewayEventDate) {
+                                                            ChargeStatus newStatus) {
         logger.info(format("Received capture notification for charge that was already expunged from Connector. " +
                         "Transitioning state from [%s] to [%s].", charge.getStatus(), newStatus.getValue()),
                 kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
@@ -106,7 +105,7 @@ public class ChargeNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
                 kv(PROVIDER, gatewayAccount.getGatewayName()));
         
-        Event event = new CaptureConfirmedByGatewayNotification(charge.getExternalId(), gatewayEventDate);
+        Event event = new CaptureConfirmedByGatewayNotification(charge.getExternalId(), ZonedDateTime.now());
         eventService.emitEvent(event);
     }
 }
