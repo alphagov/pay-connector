@@ -9,6 +9,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
@@ -51,6 +53,8 @@ public class ParityCheckServiceTest {
     private RefundDao mockRefundDao;
     @Mock
     private HistoricalEventEmitter mockHistoricalEventEmitter;
+    @Mock
+    private PaymentProviders mockProviders;
     private ChargeEntity chargeEntity;
     private List<RefundEntity> refundEntities = List.of();
 
@@ -75,8 +79,9 @@ public class ParityCheckServiceTest {
                 .build();
 
         when(mockRefundDao.findRefundsByChargeExternalId(any())).thenReturn(refundEntities);
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockRefundDao,
-                mockHistoricalEventEmitter);
+                mockHistoricalEventEmitter, mockProviders);
     }
 
     @Test
@@ -167,7 +172,7 @@ public class ParityCheckServiceTest {
         verify(mockHistoricalEventEmitter).processPaymentEvents(chargeEntity, true);
         verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
     }
-    
+
     @Test
     public void parityCheckChargeForExpunger_shouldReturnFalseIfChargeDoesNotMatchWithLedger() {
         LedgerTransaction transaction = aValidLedgerTransaction().withStatus("pending").build();

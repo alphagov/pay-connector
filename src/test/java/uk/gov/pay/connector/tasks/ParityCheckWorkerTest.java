@@ -15,6 +15,8 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.StateTransitionService;
@@ -60,6 +62,8 @@ public class ParityCheckWorkerTest {
     private RefundDao refundDao;
     @Mock
     private LedgerService ledgerService;
+    @Mock
+    private PaymentProviders mockProviders;
 
     private ParityCheckWorker worker;
     private ChargeEntity chargeEntity;
@@ -68,6 +72,8 @@ public class ParityCheckWorkerTest {
 
     @Before
     public void setUp() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        
         worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
                 stateTransitionService, eventService, refundDao, parityCheckService);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
