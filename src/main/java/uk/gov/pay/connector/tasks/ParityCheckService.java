@@ -40,6 +40,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -194,7 +195,8 @@ public class ParityCheckService {
                     ledgerCardDetails.getFirstDigitsCardNumber(), "first_digits_card_number");
             fieldsMatch = fieldsMatch && isEquals(
                     cardDetailsEntity.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
-                    ledgerCardDetails.getCardBrand(), "card_brand");
+                    isEmpty(ledgerCardDetails.getCardBrand()) ? null : ledgerCardDetails.getCardBrand(),
+                    "card_brand");
             fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getExpiryDate(), ledgerCardDetails.getExpiryDate(), "expiry_date");
 
             String cardType = null;
