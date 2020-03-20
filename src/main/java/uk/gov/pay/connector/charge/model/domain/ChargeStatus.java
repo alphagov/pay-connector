@@ -78,7 +78,7 @@ public enum ChargeStatus implements Status {
         return value;
     }
 
-    public boolean  isExpungeable() {
+    public boolean isExpungeable() {
         return expungeable;
     }
 

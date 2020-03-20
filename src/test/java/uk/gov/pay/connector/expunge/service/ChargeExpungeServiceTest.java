@@ -1,15 +1,20 @@
 package uk.gov.pay.connector.expunge.service;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
@@ -28,8 +33,11 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class ChargeExpungeServiceTest {
+
+    @Rule
+    public MockitoRule rule = MockitoJUnit.rule();
 
     private ChargeEntityFixture chargeEntity = new ChargeEntityFixture();
     private ChargeExpungeService chargeExpungeService;
@@ -139,6 +147,45 @@ public class ChargeExpungeServiceTest {
         when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
 
         chargeExpungeService.expunge(2);
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+    }
+
+    @Test
+    @Parameters({"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
+    public void shouldNotExpungeEpdqChargeWithState(String state) {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withStatus(ChargeStatus.valueOf(state))
+                .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
+                .build();
+
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
+        verify(mockChargeDao, never()).expungeCharge(any(), any());
+    }
+    
+    @Test
+    @Parameters({"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
+    public void shouldExpungeEpdqChargesWithState(String state) {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withStatus(ChargeStatus.valueOf(state))
+                .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
+                .build();
+
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+
+        chargeExpungeService.expunge(1);
         verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 }
