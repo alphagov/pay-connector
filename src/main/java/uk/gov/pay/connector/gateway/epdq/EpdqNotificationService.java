@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -118,7 +119,7 @@ public class EpdqNotificationService {
         if (newChargeStatus.isPresent()) {
             if(charge.isHistoric()){
                 if (CAPTURED.equals(newChargeStatus.get())) {
-                    chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, notification.getTransactionId(), charge, newChargeStatus.get(), null);
+                    chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, notification.getTransactionId(), charge, newChargeStatus.get());
                     return;
                 }
                 

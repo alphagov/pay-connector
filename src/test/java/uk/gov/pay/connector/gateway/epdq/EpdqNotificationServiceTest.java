@@ -7,7 +7,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
@@ -59,7 +58,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockRefundNotificationProcessor);
-        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED, null);
+        
+        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
 
     @Test

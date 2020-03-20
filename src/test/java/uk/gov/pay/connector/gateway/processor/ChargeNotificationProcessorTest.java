@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.processor;
 
 import junitparams.JUnitParamsRunner;
+import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +20,8 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -64,7 +67,7 @@ public class ChargeNotificationProcessorTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_ERROR).build();
         Charge charge = Charge.from(chargeEntity);
         
-        chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccount, charge.getGatewayTransactionId(), charge,  CAPTURED, null);
+        chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccount, charge.getGatewayTransactionId(), charge,  CAPTURED);
         
         ArgumentCaptor<Event> eventArgumentCaptor = ArgumentCaptor.forClass(Event.class);
         
@@ -72,7 +75,7 @@ public class ChargeNotificationProcessorTest {
         Event event = eventArgumentCaptor.getValue();
 
         assertThat(event.getEventType(), is("CAPTURE_CONFIRMED_BY_GATEWAY_NOTIFICATION"));
-        assertThat(event.getTimestamp(), is(nullValue()));
+        assertThat(event.getTimestamp(), ZonedDateTimeMatchers.within(5, ChronoUnit.SECONDS, ZonedDateTime.now()));
         assertThat(event.getResourceType(), is(ResourceType.PAYMENT));
     }
 }
