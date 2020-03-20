@@ -25,6 +25,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final boolean live;
     private final String paymentProvider;
     private final Map<String, Object> externalMetadata;
+    private final String language;
     private Source source;
 
     private PaymentNotificationCreatedEventDetails(Long gatewayAccountId, Long amount, String reference,
@@ -33,7 +34,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                                                    String cardholderName, String email, String expiryDate,
                                                    String cardBrand, String cardBrandLabel, boolean live,
                                                    String paymentProvider, Map<String, Object> externalMetadata,
-                                                   Source source) {
+                                                   Source source, String language) {
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
         this.reference = reference;
@@ -50,6 +51,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         this.externalMetadata = externalMetadata;
         this.paymentProvider = paymentProvider;
         this.source = source;
+        this.language = language;
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
@@ -89,7 +91,8 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                     charge.getGatewayAccount().isLive(),
                     charge.getGatewayAccount().getGatewayName(),
                     charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null),
-                    charge.getSource());
+                    charge.getSource(),
+                    charge.getLanguage().toString());
     }
 
     @Override
@@ -111,14 +114,15 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 Objects.equals(cardBrandLabel, that.cardBrandLabel) &&
                 Objects.equals(live, that.live) &&
                 Objects.equals(externalMetadata, that.externalMetadata) &&
-                Objects.equals(source, that.source);
+                Objects.equals(source, that.source) &&
+                Objects.equals(language, that.language);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
                 firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, expiryDate,
-                cardBrand, cardBrandLabel, live, externalMetadata, source);
+                cardBrand, cardBrandLabel, live, externalMetadata, source, language);
     }
 
     public Long getGatewayAccountId() {
@@ -183,5 +187,9 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
     public Source getSource() {
         return source;
+    }
+
+    public String getLanguage() {
+        return language;
     }
 }
