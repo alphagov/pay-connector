@@ -17,8 +17,8 @@ import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
@@ -127,6 +127,8 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
         DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
         Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId);
         Long chargeId = Long.parseLong(chargeDetails.get("id").toString());
+        assertThat(chargeDetails.get("language"), is("en"));
+
         List<Map<String, Object>> chargeEvents = testHelper.getChargeEvents(chargeId);
 
         assertThat(chargeEvents, hasEvent(PAYMENT_NOTIFICATION_CREATED));
