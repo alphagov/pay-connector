@@ -15,7 +15,7 @@
         <liquibase.version>3.7.0</liquibase.version>
         <wiremock.version>2.26.3</wiremock.version>
         <eclipselink.version>2.7.6</eclipselink.version>
-        <guice.version>4.2.2</guice.version>
+        <guice.version>4.2.3</guice.version>
         <jackson.version>2.10.3</jackson.version>
         <pay-java-commons.version>1.0.20200316101949</pay-java-commons.version>
         <surefire.version>3.0.0-M4</surefire.version>
