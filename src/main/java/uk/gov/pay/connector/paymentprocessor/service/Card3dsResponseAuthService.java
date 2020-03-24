@@ -102,7 +102,8 @@ public class Card3dsResponseAuthService {
                 newStatus,
                 AUTHORISATION_3DS,
                 transactionId.orElse(null),
-                operationResponse.getGateway3dsRequiredParams().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity).orElse(null)
+                operationResponse.getGateway3dsRequiredParams().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity).orElse(null),
+                operationResponse.getProviderSessionIdentifier().orElse(null)
         );
 
         LOGGER.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",

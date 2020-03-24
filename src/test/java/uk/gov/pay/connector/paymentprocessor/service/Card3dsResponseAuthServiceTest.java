@@ -104,9 +104,11 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, Gateway3dsRequiredParams gateway3dsRequiredParams,
-                                          ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
-        Gateway3DSAuthorisationResponse authorisationResponse = Gateway3DSAuthorisationResponse.of(authoriseStatus, transactionId, gateway3dsRequiredParams);
-        when(mockedPaymentProvider.authorise3dsResponse(argumentCaptor.capture())).thenReturn(authorisationResponse);
+                                          ProviderSessionIdentifier providerSessionIdentifier,
+                                          ArgumentCaptor<Auth3dsResponseGatewayRequest> auth3dsResponseGatewayRequestArgumentCaptor) {
+        Gateway3DSAuthorisationResponse authorisationResponse = Gateway3DSAuthorisationResponse.of(authoriseStatus, transactionId, gateway3dsRequiredParams,
+                providerSessionIdentifier);
+        when(mockedPaymentProvider.authorise3dsResponse(auth3dsResponseGatewayRequestArgumentCaptor.capture())).thenReturn(authorisationResponse);
     }
 
     @Test
@@ -119,7 +121,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, null,
+                argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -163,7 +166,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -221,7 +224,9 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         Gateway3dsRequiredParams gateway3dsRequiredParams = new Worldpay3dsRequiredParams(REQUIRES_3DS_ISSUER_URL, REQUIRES_3DS_PA_REQUEST);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams,
+                ProviderSessionIdentifier.of("provider-session-identifier"),
+                argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -232,6 +237,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails().getIssuerUrl(), is(REQUIRES_3DS_ISSUER_URL));
         assertThat(charge.get3dsRequiredDetails().getPaRequest(), is(REQUIRES_3DS_PA_REQUEST));
+        assertThat(charge.getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
@@ -250,7 +256,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams,
+                ProviderSessionIdentifier.of("provider-session-identifier"), argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -263,6 +270,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengePayload(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_PAYLOAD));
         assertThat(charge.get3dsRequiredDetails().getThreeDsVersion(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION));
+        assertThat(charge.getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
@@ -280,7 +288,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         Gateway3dsRequiredParams gateway3dsRequiredParams = new Worldpay3dsRequiredParams(REQUIRES_3DS_ISSUER_URL, REQUIRES_3DS_PA_REQUEST);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams,
+                ProviderSessionIdentifier.of("provider-session-identifier"), argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -302,7 +311,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         Gateway3dsRequiredParams gateway3dsRequiredParams = new Worldpay3dsRequiredParams(REQUIRES_3DS_ISSUER_URL, REQUIRES_3DS_PA_REQUEST);
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.REQUIRES_3DS, gateway3dsRequiredParams,
+                ProviderSessionIdentifier.of("provider-session-identifier"), argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -392,7 +402,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, authoriseStatus, null, argumentCaptor);
+        setupPaymentProviderMock(transactionId, authoriseStatus, null, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
@@ -404,7 +414,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, null, argumentCaptor);
+        setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, null, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 

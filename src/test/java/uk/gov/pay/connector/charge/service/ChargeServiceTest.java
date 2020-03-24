@@ -44,6 +44,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.LedgerService;
@@ -461,7 +462,8 @@ public class ChargeServiceTest {
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
 
-        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null, null);
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
+                null, null);
 
         verify(chargeSpy, never()).setGatewayTransactionId(anyString());
         verify(chargeSpy).setStatus(AUTHORISATION_REJECTED);
@@ -477,7 +479,8 @@ public class ChargeServiceTest {
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
         
-        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id", null);
+        service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
+                null, null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
@@ -496,10 +499,11 @@ public class ChargeServiceTest {
         final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
         
         service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
-                mockedAuth3dsRequiredEntity);
+                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"));
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
+        verify(chargeSpy).setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
  
