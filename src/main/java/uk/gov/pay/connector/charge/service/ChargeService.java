@@ -49,7 +49,6 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -544,12 +543,14 @@ public class ChargeService {
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          OperationType operationType,
                                                          String transactionId,
-                                                         Auth3dsRequiredEntity auth3dsRequiredDetails) {
+                                                         Auth3dsRequiredEntity auth3dsRequiredDetails,
+                                                         ProviderSessionIdentifier sessionIdentifier) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
                 setTransactionId(charge, transactionId);
                 transitionChargeState(charge, status);
                 Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
+                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
