@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_CREATED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeNotificationServiceTest {
@@ -107,7 +108,22 @@ public class StripeNotificationServiceTest {
         assertThat(loggingEvent.getMessage()).contains("Received an account.updated event for stripe account");
         assertThat(loggingEvent.getArgumentArray()).hasSize(3);
     }
-    
+
+    @Test
+    public void shouldLogTheIdOfThePayoutCreatedEvent_whenItIsReceived() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getMessage()).contains("payout created notification with id [{}] and body [{}] was received");
+        assertThat(loggingEvent.getArgumentArray()).hasSize(3);
+    }
+
     @Test
     public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,

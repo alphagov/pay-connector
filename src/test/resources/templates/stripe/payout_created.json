@@ -1,0 +1,32 @@
+{
+  "id": "evt_aaaaaaaaaaaaaaaaaaaaa",
+  "type": "payout.created",
+  "object": "event",
+  "api_version": "2019-02-19",
+  "created": 1567622603,
+  "data": {
+    "object": {
+      "id": "po_aaaaaaaaaaaaaaaaaaaaa",
+      "object": "payout",
+      "amount": 1337702,
+      "arrival_date": 1585094400,
+      "automatic": true,
+      "balance_transaction": "txn_aaaaaaaaaaaaaaaaaaaaa",
+      "created": 1585013446,
+      "currency": "gbp",
+      "description": "STRIPE PAYOUT",
+      "destination": "ba_aaaaaaaaaaaaaaaaaaaaa",
+      "failure_balance_transaction": null,
+      "failure_code": null,
+      "failure_message": null,
+      "livemode": true,
+      "metadata": {
+      },
+      "method": "standard",
+      "source_type": "card",
+      "statement_descriptor": null,
+      "status": "in_transit",
+      "type": "bank_account"
+    }
+  }
+}

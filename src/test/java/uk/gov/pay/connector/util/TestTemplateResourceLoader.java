@@ -142,6 +142,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";
+    public static final String STRIPE_PAYOUT_CREATED = TEMPLATE_BASE_NAME + "/stripe/payout_created.json";
 
     public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
     public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";
