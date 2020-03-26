@@ -44,6 +44,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.Valid;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -141,6 +142,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Enumerated(EnumType.STRING)
     private WalletType walletType;
 
+    @Valid
     @Column(name = "external_metadata", columnDefinition = "jsonb")
     @Convert(converter = ExternalMetadataConverter.class)
     private ExternalMetadata externalMetadata;

@@ -19,6 +19,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -32,6 +33,7 @@ import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.fail;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -243,6 +245,23 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getSource(), equalTo(Source.CARD_API));
+    }
+
+    @Test
+    public void shouldNotSaveChargeWithInvalidExternalMetadata() {
+        var metaDataWithAnObject = new ExternalMetadata(
+                Map.of("key_1", Map.of("key_1_a", "some value")));
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalMetadata(metaDataWithAnObject)
+                .build();
+        try {
+            chargeDao.persist(chargeEntity);
+            fail("Persist should throw a ConstraintViolationException");
+        } catch (ConstraintViolationException ex) {
+            assertThat(ex.getConstraintViolations().size(), is(1));
+            assertThat(ex.getConstraintViolations().iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
+        }
     }
 
     @Test
