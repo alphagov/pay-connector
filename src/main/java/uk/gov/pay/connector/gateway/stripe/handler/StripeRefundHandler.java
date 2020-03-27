@@ -54,10 +54,10 @@ public class StripeRefundHandler {
             } else {
                 stripeChargeId = request.getTransactionId();
             }
-            StripeRefund refundResponse = refundCharge(request, stripeChargeId);
-            transferFromConnectAccount(request, stripeChargeId);
+            refundCharge(request, stripeChargeId);
+            StripeTransferResponse transferResponse = transferFromConnectAccount(request, stripeChargeId);
 
-            return fromBaseRefundResponse(StripeRefundResponse.of(refundResponse.getId()), GatewayRefundResponse.RefundState.COMPLETE);
+            return fromBaseRefundResponse(StripeRefundResponse.of(transferResponse.getId()), GatewayRefundResponse.RefundState.COMPLETE);
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {

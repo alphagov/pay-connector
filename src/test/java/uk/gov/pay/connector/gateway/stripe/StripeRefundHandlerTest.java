@@ -87,7 +87,7 @@ public class StripeRefundHandlerTest {
         assertNotNull(refund);
         assertTrue(refund.isSuccessful());
         assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
-        assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+        assertThat(refund.getReference().get(), is("transfer_id"));
     }
 @Test
     public void shouldRefundSuccessfully_usingChargeId() throws Exception {
@@ -99,7 +99,7 @@ public class StripeRefundHandlerTest {
         assertNotNull(refund);
         assertTrue(refund.isSuccessful());
         assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
-        assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+        assertThat(refund.getReference().get(), is("transfer_id"));
     }
 
     @Test
