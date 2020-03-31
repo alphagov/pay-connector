@@ -155,6 +155,9 @@ public class ChargeServiceTest {
 
     @Mock
     protected RefundDao mockRefundDao;
+
+    @Mock
+    protected CaptureProcessConfig mockedCaptureProcessConfig;
     
     @Captor
     protected ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
@@ -192,33 +195,11 @@ public class ChargeServiceTest {
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
-        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(mockChargeEvent);
-        
-        // Populate ChargeEntity with ID when persisting
-        doAnswer(invocation -> {
-            ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
-            chargeEntityBeingPersisted.setId(CHARGE_ENTITY_ID);
-            EXTERNAL_CHARGE_ID[0] = chargeEntityBeingPersisted.getExternalId();
-            return null;
-        }).when(mockedChargeDao).persist(any(ChargeEntity.class));
 
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);
 
-        CaptureProcessConfig mockedCaptureProcessConfig = mock(CaptureProcessConfig.class);
-        when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
         when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
-        when(mockedLinksConfig.getFrontendUrl())
-                .thenReturn("http://payments.com");
-
-        doAnswer(invocation -> fromUri(SERVICE_HOST))
-                .when(this.mockedUriInfo)
-                .getBaseUriBuilder();
-
-        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
@@ -331,6 +312,12 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
@@ -377,6 +364,7 @@ public class ChargeServiceTest {
     @Test
     public void shouldBeRetriableGivenChargeHasNotExceededMaxNumberOfCaptureAttempts() {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS);
+        when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
 
         assertThat(service.isChargeRetriable(anyString()), is(true));
     }
@@ -506,5 +494,4 @@ public class ChargeServiceTest {
         verify(chargeSpy).setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
- 
 }

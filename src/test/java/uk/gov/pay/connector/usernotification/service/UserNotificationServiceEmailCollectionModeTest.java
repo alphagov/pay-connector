@@ -54,30 +54,32 @@ public class UserNotificationServiceEmailCollectionModeTest {
 
     @Mock
     private SendEmailResponse mockNotificationCreatedResponse;
+
+    @Mock
+    private MetricRegistry metricRegistry;
+
+    @Mock
+    private ExecutorServiceConfig mockExecutorConfiguration;
+
+    @Mock
+    private NotifyConfiguration notifyConfiguration;
     
     private UserNotificationService userNotificationService;
     
     @Before
     public void setUp() {
-        NotifyConfiguration notifyConfiguration = mock(NotifyConfiguration.class);
         when(connectorConfig.getNotifyConfiguration()).thenReturn(notifyConfiguration);
         when(notifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
         when(notifyConfiguration.getRefundIssuedEmailTemplateId()).thenReturn("another-template");
         when(notifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
 
-        when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
-
-        ExecutorServiceConfig mockExecutorConfiguration = mock(ExecutorServiceConfig.class);
         when(connectorConfig.getExecutorServiceConfig()).thenReturn(mockExecutorConfiguration);
         when(mockExecutorConfiguration.getThreadsPerCpu()).thenReturn(2);
 
-        MetricRegistry metricRegistry = mock(MetricRegistry.class);
         when(environment.metrics()).thenReturn(metricRegistry);
-        when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
 
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(UUID.randomUUID());
-        
         userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment);
+
     }
     
     @Test
@@ -91,7 +93,14 @@ public class UserNotificationServiceEmailCollectionModeTest {
                                                           @Nullable String emailAddress, 
                                                           boolean shouldEmailBeSent) throws Exception {
 
-        when(notificationClient.sendEmail(anyString(), anyString(), anyMap(), isNull())).thenReturn(mockNotificationCreatedResponse);
+        if ("OPTIONAL".equals(emailCollectionMode) && "email@example.com".equals(emailAddress) && shouldEmailBeSent) {
+            when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
+            when(notificationClient.sendEmail(anyString(), anyString(), anyMap(), isNull())).thenReturn(mockNotificationCreatedResponse);
+            when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
+            when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
+            when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(UUID.randomUUID());
+            when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(UUID.randomUUID());
+        }
 
         var gatewayAccount = defaultGatewayAccountEntity();
         gatewayAccount.setEmailCollectionMode(EmailCollectionMode.fromString(emailCollectionMode));
