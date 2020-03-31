@@ -28,7 +28,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -105,8 +108,8 @@ public class StripeNotificationServiceTest {
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage()).contains("Received an account.updated event for stripe account");
-        assertThat(loggingEvent.getArgumentArray()).hasSize(3);
+        assertThat(loggingEvent.getMessage(), containsString("Received an account.updated event for stripe account"));
+        assertThat(loggingEvent.getArgumentArray().length, is(3));
     }
 
     @Test
@@ -120,8 +123,8 @@ public class StripeNotificationServiceTest {
 
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage()).contains("payout created notification with id [{}] and body [{}] was received");
-        assertThat(loggingEvent.getArgumentArray()).hasSize(3);
+        assertThat(loggingEvent.getMessage(), containsString("payout created notification with id [{}] and body [{}] was received"));
+        assertThat(loggingEvent.getArgumentArray().length, is(3));
     }
 
     @Test
