@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.assertj.core.util.Lists;
 import org.junit.ClassRule;
 import org.junit.Test;
 import uk.gov.pay.commons.model.ErrorIdentifier;
@@ -17,6 +16,7 @@ import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuil
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.core.Is.is;
@@ -33,8 +33,8 @@ public class GatewayAccountResourceValidationTest {
     private static GatewayConfig mockGatewayConfig = mock(GatewayConfig.class);
 
     static {
-        when(mockWorldpayConfig.getCredentials()).thenReturn(Lists.emptyList());
-        when(mockGatewayConfig.getCredentials()).thenReturn(Lists.emptyList());
+        when(mockWorldpayConfig.getCredentials()).thenReturn(List.of());
+        when(mockGatewayConfig.getCredentials()).thenReturn(List.of());
 
         when(mockConnectorConfiguration.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
         when(mockConnectorConfiguration.getSmartpayConfig()).thenReturn(mockGatewayConfig);

@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
-    private static final Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
+    private static final Logger logger = LoggerFactory.getLogger(WorldpayOrderRequestBuilder.class);
 
     static public class WorldpayTemplateData extends TemplateData {
         private String reference;
