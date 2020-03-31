@@ -39,10 +39,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeCancelServiceTest {
@@ -101,7 +101,6 @@ public class ChargeCancelServiceTest {
                 .withStatus(status)
                 .build();
 
-        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
@@ -131,14 +130,16 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
-        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+        if ("AUTHORISATION SUCCESS".equals(chargeStatus)) {
+            when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+            when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        }
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
-
-        verify(mockPaymentProvider).cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)));
+        if ("AUTHORISATION SUCCESS".equals(chargeStatus)) {
+            verify(mockPaymentProvider).cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)));
+        }
         verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
     }
 
@@ -156,7 +157,6 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
-        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
@@ -211,7 +211,6 @@ public class ChargeCancelServiceTest {
                 .withStatus(status)
                 .build();
 
-        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
 
         chargeCancelService.doUserCancel(externalChargeId);
@@ -240,14 +239,17 @@ public class ChargeCancelServiceTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
-        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+        if ("AUTHORISATION SUCCESS".equals(chargeStatus)) {
+            when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+            when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
+        }
 
         chargeCancelService.doUserCancel(externalChargeId);
 
-        verify(mockPaymentProvider).cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)));
+        if ("AUTHORISATION SUCCESS".equals(chargeStatus)) {
+            verify(mockPaymentProvider).cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)));
+        }
         verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
     }
 

@@ -17,10 +17,7 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
-import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
 public abstract class BaseEpdqNotificationServiceTest {
@@ -55,9 +52,6 @@ public abstract class BaseEpdqNotificationServiceTest {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
-
-//        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
     }
 
     String notificationPayloadForTransaction(String payId, EpdqNotification.StatusCode statusCode) {

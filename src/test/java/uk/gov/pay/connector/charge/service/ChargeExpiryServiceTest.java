@@ -115,7 +115,6 @@ public class ChargeExpiryServiceTest {
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
         chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeService, mockTokenDao, mockPaymentProviders, mockQueryService, mockedConfig);
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
         gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
@@ -198,6 +197,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
@@ -236,6 +236,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
@@ -271,7 +272,6 @@ public class ChargeExpiryServiceTest {
         when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(CAPTURED));
 
         ChargeEntity updatedCharge = mock(ChargeEntity.class);
-        when(updatedCharge.getStatus()).thenReturn(CAPTURED.toString());
         when(mockChargeService.transitionChargeState(chargeEntity.getExternalId(), CAPTURED)).thenThrow(InvalidStateTransitionException.class);
         when(mockChargeService.forceTransitionChargeState(chargeEntity.getExternalId(), CAPTURED)).thenReturn(updatedCharge);
 
@@ -297,7 +297,6 @@ public class ChargeExpiryServiceTest {
         when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(AUTHORISATION_REJECTED));
 
         ChargeEntity updatedCharge = mock(ChargeEntity.class);
-        when(updatedCharge.getStatus()).thenReturn(AUTHORISATION_REJECTED.toString());
         when(mockChargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_REJECTED)).thenReturn(updatedCharge);
 
         Map<String, Integer> sweepResult = chargeExpiryService.expire(singletonList(chargeEntity));
@@ -324,6 +323,7 @@ public class ChargeExpiryServiceTest {
         ChargeEntity expireFailedCharge = mock(ChargeEntity.class);
         when(expireFailedCharge.getStatus()).thenReturn(EXPIRE_CANCEL_FAILED.toString());
         when(mockChargeService.transitionChargeState(eq(chargeEntity.getExternalId()), any())).thenReturn(expireFailedCharge);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
 
         chargeExpiryService.expire(singletonList(chargeEntity));
 
@@ -351,12 +351,13 @@ public class ChargeExpiryServiceTest {
         when(mockChargeDao.findByExternalId(chargeEntityAwaitingCapture.getExternalId())).thenReturn(Optional.of(chargeEntityAwaitingCapture));
         when(mockChargeDao.findByExternalId(chargeEntityAuthorisationSuccess.getExternalId())).thenReturn(Optional.of(chargeEntityAuthorisationSuccess));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
-
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
+
         chargeExpiryService.sweepAndExpireChargesAndTokens();
 
         verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), EXPIRED);
@@ -373,14 +374,6 @@ public class ChargeExpiryServiceTest {
                 .build();
 
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
-        when(expiredCharge.getStatus()).thenReturn(EXPIRED.toString());
-
-        when(mockChargeDao.findByExternalId(preAuthorisationCharge.getExternalId())).thenReturn(Optional.of(preAuthorisationCharge));
-
-        when(mockQueryService.isTerminableWithGateway(preAuthorisationCharge)).thenReturn(true);
-        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
-
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(preAuthorisationCharge));
 
@@ -403,6 +396,7 @@ public class ChargeExpiryServiceTest {
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
 
         Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
 
@@ -419,6 +413,7 @@ public class ChargeExpiryServiceTest {
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.SUBMITTED);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
 
         Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
 
@@ -435,6 +430,7 @@ public class ChargeExpiryServiceTest {
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.ERROR);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
 
         Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
 
@@ -454,6 +450,7 @@ public class ChargeExpiryServiceTest {
         when(mockGatewayResponse.getBaseResponse()).thenReturn(Optional.empty());
         when(mockGatewayResponse.getGatewayError()).thenReturn(Optional.of(GatewayError.genericGatewayError("Error")));
         when(mockPaymentProvider.cancel(any())).thenReturn(mockGatewayResponse);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
 
         Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
 
