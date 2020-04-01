@@ -138,7 +138,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithDefaults() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -172,7 +172,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -186,7 +186,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithDelayedCaptureFalse() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -200,7 +200,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithExternalMetadata() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -221,7 +221,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithNonDefaultLanguage() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -239,7 +239,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateChargeWithZeroAmountIfGatewayAccountAllowsIt() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -269,7 +269,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateMotoChargeIfGatewayAccountAllowsIt() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -299,7 +299,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithAllPrefilledCardHolderDetails() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -328,7 +328,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithPrefilledCardHolderDetailsAndSomeAddressMissing() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -360,7 +360,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithNoCountryWhenPrefilledAddressCountryIsMoreThanTwoCharacters() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -391,7 +391,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithPrefilledCardHolderDetailsCardholderNameOnly() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -413,7 +413,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWhenPrefilledCardHolderDetailsCardholderNameAndSomeAddressNotPresent() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -443,7 +443,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWhenPrefilledCardHolderDetailsAreNotPresent() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -459,7 +459,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAChargeWithSource() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -836,7 +836,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAResponse() throws Exception {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -855,8 +855,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0]));
         expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0] + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        expectedChargeResponse.withLink("next_url", GET, new URI("http://frontend.test/secure/" + tokenEntity.getToken()));
+        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://frontend.test/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
@@ -866,7 +866,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     @Test
     public void shouldCreateAToken() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://payments.com");
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
