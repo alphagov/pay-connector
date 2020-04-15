@@ -62,7 +62,7 @@ public class CardCaptureProcess {
             CaptureResponse gatewayResponse = cardCaptureService.doCapture(externalChargeId);
 
             if (gatewayResponse.isSuccessful()) {
-                captureQueue.markMessageAsProcessed(captureMessage);
+                captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
             } else {
                 LOGGER.info(
                         "Failed to capture [externalChargeId={}] due to: {}",
@@ -81,10 +81,10 @@ public class CardCaptureProcess {
 
         if (shouldRetry) {
             LOGGER.info("Charge capture message [{}] scheduled for retry.", captureMessage.getChargeId());
-            captureQueue.scheduleMessageForRetry(captureMessage);
+            captureQueue.scheduleMessageForRetry(captureMessage.getQueueMessage());
         } else {
             cardCaptureService.markChargeAsCaptureError(captureMessage.getChargeId());
-            captureQueue.markMessageAsProcessed(captureMessage);
+            captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
         }
     }
 
@@ -94,7 +94,7 @@ public class CardCaptureProcess {
                     "Charge capture message [{}] already captured - marking as processed. [chargeId={}]",
                     captureMessage.getQueueMessageId(),
                     captureMessage.getChargeId());
-            captureQueue.markMessageAsProcessed(captureMessage);
+            captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
             return;
         }
 

@@ -4,7 +4,6 @@ public class ChargeCaptureMessage {
     private CaptureCharge captureCharge;
     private QueueMessage queueMessage;
 
-
     private ChargeCaptureMessage(CaptureCharge captureCharge, QueueMessage queueMessage) {
         this.captureCharge = captureCharge;
         this.queueMessage = queueMessage;
@@ -24,5 +23,9 @@ public class ChargeCaptureMessage {
 
     public Object getQueueMessageId() {
         return queueMessage.getMessageId();
+    }
+
+    public QueueMessage getQueueMessage() {
+        return queueMessage;
     }
 }
