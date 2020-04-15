@@ -14,6 +14,7 @@ public class SqsConfig extends Configuration {
     private String endpoint;
     @NotNull
     private String captureQueueUrl;
+    private String payoutReconcileQueueUrl;
     @NotNull
     private String region;
     private String accessKey;
@@ -59,5 +60,9 @@ public class SqsConfig extends Configuration {
 
     public String getEventQueueUrl() {
         return eventQueueUrl;
+    }
+
+    public String getPayoutReconcileQueueUrl() {
+        return payoutReconcileQueueUrl;
     }
 }

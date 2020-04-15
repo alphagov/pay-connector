@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
+import uk.gov.pay.connector.app.config.PayoutReconcileProcessConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
@@ -27,6 +28,10 @@ public class ConnectorConfiguration extends Configuration {
     @Valid
     @NotNull
     private CaptureProcessConfig captureProcessConfig;
+
+    @Valid
+    @NotNull
+    private PayoutReconcileProcessConfig payoutReconcileProcessConfig;
 
     @Valid
     @NotNull
@@ -234,5 +239,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public Authorisation3dsConfig getAuthorisation3dsConfig() {
         return authorisation3dsConfig;
+    }
+
+    public PayoutReconcileProcessConfig getPayoutReconcileProcessConfig() {
+        return payoutReconcileProcessConfig;
     }
 }
