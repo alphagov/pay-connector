@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.capture;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -7,6 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.queue.AbstractQueue;
+import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.QueueMessage;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
 import javax.inject.Inject;

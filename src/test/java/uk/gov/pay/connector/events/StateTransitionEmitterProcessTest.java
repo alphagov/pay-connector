@@ -11,9 +11,9 @@ import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
-import uk.gov.pay.connector.queue.PaymentStateTransition;
+import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import java.time.ZonedDateTime;
 import java.util.List;

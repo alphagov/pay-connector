@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.statetransition;
 
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.ArrayUtils;
@@ -17,8 +17,6 @@ import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;

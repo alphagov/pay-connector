@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.StateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.statetransition.StateTransition;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import javax.inject.Inject;
 import java.util.Optional;

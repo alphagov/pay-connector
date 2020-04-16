@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.statetransition;
 
 public final class PaymentStateTransition extends StateTransition {
     private final long chargeEventId; 

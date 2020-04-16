@@ -12,6 +12,10 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
+import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
+import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 

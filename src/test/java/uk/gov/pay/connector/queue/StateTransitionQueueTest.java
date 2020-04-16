@@ -2,6 +2,8 @@ package uk.gov.pay.connector.queue;
 
 import org.junit.Test;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
+import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;

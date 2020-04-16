@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.statetransition;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
