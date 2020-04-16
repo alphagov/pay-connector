@@ -33,7 +33,7 @@ public class PayoutReconcileProcess {
                         payoutReconcileMessage.getGatewayPayoutId(),
                         payoutReconcileMessage.getConnectAccountId());
 
-                payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage);
+                payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
             } catch (Exception e) {
                 LOGGER.warn("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
                         payoutReconcileMessage.getQueueMessageId(),

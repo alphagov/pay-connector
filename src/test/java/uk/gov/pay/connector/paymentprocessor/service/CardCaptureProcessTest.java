@@ -23,26 +23,19 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
 
+    private static final String chargeExternalId = "some-charge-id";
     @Mock
     CaptureQueue captureQueue;
-
     @Mock
     CardCaptureService cardCaptureService;
-
     @Mock
     CaptureResponse captureResponse;
-
     @Mock
     ChargeCaptureMessage chargeCaptureMessage;
-
     @Mock
     ChargeService chargeService;
-
     @Mock
     ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter;
-
-    private static final String chargeExternalId = "some-charge-id";
-
     CardCaptureProcess cardCaptureProcess;
 
     @Before
@@ -63,7 +56,7 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.handleCaptureMessages();
 
-        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage);
+        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage.getQueueMessage());
     }
 
     @Test
@@ -73,7 +66,7 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.handleCaptureMessages();
 
-        verify(captureQueue).scheduleMessageForRetry(chargeCaptureMessage);
+        verify(captureQueue).scheduleMessageForRetry(chargeCaptureMessage.getQueueMessage());
     }
 
     @Test
@@ -84,7 +77,7 @@ public class CardCaptureProcessTest {
         cardCaptureProcess.handleCaptureMessages();
 
         verify(cardCaptureService).markChargeAsCaptureError(chargeExternalId);
-        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage);
+        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage.getQueueMessage());
     }
 
     @Test
@@ -94,6 +87,6 @@ public class CardCaptureProcessTest {
 
         cardCaptureProcess.handleCaptureMessages();
 
-        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage);
+        verify(captureQueue).markMessageAsProcessed(chargeCaptureMessage.getQueueMessage());
     }
 }

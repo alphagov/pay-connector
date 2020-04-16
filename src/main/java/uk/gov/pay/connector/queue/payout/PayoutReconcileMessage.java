@@ -30,4 +30,8 @@ public class PayoutReconcileMessage {
     public Object getQueueMessageId() {
         return queueMessage.getMessageId();
     }
+
+    public QueueMessage getQueueMessage() {
+        return queueMessage;
+    }
 }

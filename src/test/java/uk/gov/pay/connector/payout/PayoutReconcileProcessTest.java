@@ -37,6 +37,6 @@ public class PayoutReconcileProcessTest {
     public void shouldMarkMessageAsProcessedIfPayoutIsProcessedSuccessfully() throws QueueException {
         payoutReconcileProcess.processPayouts();
 
-        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage);
+        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 }
