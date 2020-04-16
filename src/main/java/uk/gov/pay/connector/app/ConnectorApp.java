@@ -54,7 +54,8 @@ import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
-import uk.gov.pay.connector.queue.managed.QueueMessageReceiver;
+import uk.gov.pay.connector.queue.managed.CaptureMessageReceiver;
+import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
 import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterByDateRangeTask;
@@ -212,6 +213,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(Environment environment, Injector injector) {
-        environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
+        environment.lifecycle().manage(injector.getInstance(CaptureMessageReceiver.class));
+        environment.lifecycle().manage(injector.getInstance(StateTransitionMessageReceiver.class));
     }
 }
