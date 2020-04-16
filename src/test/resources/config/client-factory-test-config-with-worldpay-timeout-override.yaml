@@ -114,7 +114,7 @@ eventQueue:
   paymentStateTransitionPollerNumberOfThreads: ${PAYMENT_STATE_TRANSITION_POLLER_NUMBER_OF_THREADS:-1}
 
 payoutReconcileProcessConfig:
-  payoutReconcileQueueEnabled: ${PAYOUT_RECONCILE_QUEUE_ENABLED:-true}
+  payoutReconcileQueueEnabled: ${PAYOUT_RECONCILE_QUEUE_ENABLED:-false}
   failedPayoutReconcileMessageRetryDelayInSeconds: ${PAYOUT_RECONCILE_PROCESS_RETRY_FAILED_IN_SECONDS:-3600}
   queueSchedulerThreadDelayInSeconds: ${PAYOUT_RECONCILE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${PAYOUT_RECONCILE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
