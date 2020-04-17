@@ -15,7 +15,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.queue.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;

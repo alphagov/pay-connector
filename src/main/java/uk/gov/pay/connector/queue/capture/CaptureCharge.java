@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.capture;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

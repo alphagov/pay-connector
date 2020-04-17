@@ -36,9 +36,9 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.queue.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.StateTransitionService;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 

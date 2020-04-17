@@ -28,7 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.queue.StateTransitionService;
+import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import java.util.Optional;

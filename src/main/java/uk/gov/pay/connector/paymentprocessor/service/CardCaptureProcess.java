@@ -7,8 +7,8 @@ import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.queue.CaptureQueue;
-import uk.gov.pay.connector.queue.ChargeCaptureMessage;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
 import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
