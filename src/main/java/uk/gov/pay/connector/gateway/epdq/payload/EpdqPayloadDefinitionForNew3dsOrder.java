@@ -6,7 +6,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 
 import java.util.List;
 
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder {
 

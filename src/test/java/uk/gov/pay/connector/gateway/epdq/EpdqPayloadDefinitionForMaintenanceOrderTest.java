@@ -13,10 +13,10 @@ import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertThat;
 
 public class EpdqPayloadDefinitionForMaintenanceOrderTest {
-    private EpdqOrderRequestBuilder.EpdqTemplateData templateData;
+    private EpdqTemplateData templateData;
     @Before
     public void setUp() {
-        templateData = new EpdqOrderRequestBuilder.EpdqTemplateData();
+        templateData = new EpdqTemplateData();
         templateData.setOperationType("Operation-value");
         templateData.setTransactionId("Transaction-id");
         templateData.setMerchantCode("Merchant-code");
@@ -68,7 +68,7 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
 
     @Test
     public void testThatOrderIdIsSentIfTransactionIsNotAvailable() {
-        EpdqOrderRequestBuilder.EpdqTemplateData templateData = new EpdqOrderRequestBuilder.EpdqTemplateData();
+        EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setOperationType("Operation-value");
         templateData.setOrderId("Order-Id");
         templateData.setMerchantCode("Merchant-code");

@@ -71,7 +71,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
 
     @Mock
-    private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
+    private EpdqTemplateData mockTemplateData;
 
     @Mock
     private AuthCardDetails mockAuthCardDetails;

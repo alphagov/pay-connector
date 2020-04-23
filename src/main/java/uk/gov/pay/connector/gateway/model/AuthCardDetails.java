@@ -25,6 +25,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private Boolean corporateCard;
     private String worldpay3dsFlexDdcResult;
     private String ipAddress;
+    private String jsScreenColorDepth;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -155,5 +156,14 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getIpAddress() {
         return Optional.ofNullable(ipAddress);
+    }
+
+    public Optional<String> getJsScreenColorDepth() {
+        return Optional.ofNullable(jsScreenColorDepth);
+    }
+
+    @JsonProperty("js_screen_color_depth")
+    public void setJsScreenColorDepth(String jsScreenColorDepth) {
+        this.jsScreenColorDepth = jsScreenColorDepth;
     }
 }

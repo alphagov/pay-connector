@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 import java.util.List;
 
@@ -24,9 +24,10 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String PSPID_KEY = "PSPID";
     public final static String PSWD_KEY = "PSWD";
     public final static String USERID_KEY = "USERID";
+    public final static String BROWSER_COLOR_DEPTH = "browserColorDepth";
 
     @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
@@ -37,6 +38,10 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
+        
+        if (templateData.getAuthCardDetails().getJsScreenColorDepth().isPresent()) {
+            parameterBuilder.add(BROWSER_COLOR_DEPTH, templateData.getAuthCardDetails().getJsScreenColorDepth().get());
+        }
 
         if (templateData.getAuthCardDetails().getAddress().isPresent()) {
             Address address = templateData.getAuthCardDetails().getAddress().get();

@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 

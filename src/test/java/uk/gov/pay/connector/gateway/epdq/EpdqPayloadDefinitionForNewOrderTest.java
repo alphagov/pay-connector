@@ -6,19 +6,19 @@ import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.util.List;
-import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.AMOUNT_KEY;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.CARDHOLDER_NAME_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.CARD_NO_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.CURRENCY_KEY;
@@ -58,44 +58,54 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     private static final String PASSWORD = "password";
     private static final String USER_ID = "User";
 
-    @Mock
-    private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
-
-    @Mock
-    private AuthCardDetails mockAuthCardDetails;
-
-    @Mock
-    private Address mockAddress;
+    private EpdqTemplateData epdqTemplateData;
+    private AuthCardDetails authCardDetails;
+    private Address address;
 
     private final EpdqPayloadDefinitionForNewOrder epdqPayloadDefinitionForNewOrder = new EpdqPayloadDefinitionForNewOrder();
 
     @Before
     public void setUp() {
-        when(mockTemplateData.getMerchantCode()).thenReturn(PSP_ID);
-        when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
-        when(mockTemplateData.getUserId()).thenReturn(USER_ID);
-        when(mockTemplateData.getOperationType()).thenReturn(OPERATION_TYPE);
-        when(mockTemplateData.getOrderId()).thenReturn(ORDER_ID);
-        when(mockTemplateData.getAmount()).thenReturn(AMOUNT);
+        epdqTemplateData = new EpdqTemplateData();
+        authCardDetails = new AuthCardDetails();
+        address = new Address();
+        
+        epdqTemplateData.setMerchantCode(PSP_ID);
+        epdqTemplateData.setPassword(PASSWORD);
+        epdqTemplateData.setUserId(USER_ID);
+        epdqTemplateData.setOperationType(OPERATION_TYPE);
+        epdqTemplateData.setOrderId(ORDER_ID);
+        epdqTemplateData.setAmount(AMOUNT);
+        epdqTemplateData.setAuthCardDetails(authCardDetails);
+        
+        authCardDetails.setCardNo(CARD_NO);
+        authCardDetails.setCvc(CVC);
+        authCardDetails.setEndDate(END_DATE);
+        authCardDetails.setCardHolder(CARDHOLDER_NAME);
+        authCardDetails.setAddress(address);
+        
+        address.setCity(CITY);
+        address.setPostcode(POSTCODE);
+        address.setCountry(COUNTRY_CODE);
+    }
+    
+    @Test
+    public void shouldExtract_js_screen_color_depth_ifPresent() {
+        authCardDetails.setJsScreenColorDepth("1");
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, "1")));
+    }
 
-        when(mockTemplateData.getAuthCardDetails()).thenReturn(mockAuthCardDetails);
-        when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
-        when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
-        when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
-        when(mockAuthCardDetails.getCardHolder()).thenReturn(CARDHOLDER_NAME);
-
-        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.of(mockAddress));
-        when(mockAddress.getCity()).thenReturn(CITY);
-        when(mockAddress.getPostcode()).thenReturn(POSTCODE);
-        when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
+    @Test
+    public void shouldNotExtract_js_screen_color_depth_ifNotPresent() {
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(epdqTemplateData);
+        assertEquals(0, result.stream().filter(nameValuePair -> nameValuePair.getName().equals(BROWSER_COLOR_DEPTH)).count());
     }
 
     @Test
     public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
-        when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
-
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
-
+        address.setLine1(ADDRESS_LINE_1);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(epdqTemplateData);
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
@@ -117,11 +127,9 @@ public class EpdqPayloadDefinitionForNewOrderTest {
 
     @Test
     public void shouldExtractParametersFromTemplateWithTwoLineStreetAddress() {
-        when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
-        when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
-
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
-
+        address.setLine1(ADDRESS_LINE_1);
+        address.setLine2(ADDRESS_LINE_2);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(epdqTemplateData);
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
@@ -143,10 +151,8 @@ public class EpdqPayloadDefinitionForNewOrderTest {
 
     @Test
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
-        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
-
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
-
+        authCardDetails.setAddress(null);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(epdqTemplateData);
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),

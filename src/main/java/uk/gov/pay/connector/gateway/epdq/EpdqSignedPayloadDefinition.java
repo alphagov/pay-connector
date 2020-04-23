@@ -34,7 +34,7 @@ public class EpdqSignedPayloadDefinition extends EpdqPayloadDefinition {
     }
 
     @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
         List<NameValuePair> parameters = payloadDefinition.extract(templateData);
         return ImmutableList.<NameValuePair>builder()
                 .addAll(parameters)

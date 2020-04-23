@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,5 +34,5 @@ public abstract class EpdqPayloadDefinition {
         
     }
     
-    public abstract List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData);
+    public abstract List<NameValuePair> extract(EpdqTemplateData templateData);
 }

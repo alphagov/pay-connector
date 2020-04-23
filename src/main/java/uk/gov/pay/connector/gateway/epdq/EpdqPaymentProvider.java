@@ -122,8 +122,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_NEW_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), 
-                buildAuthoriseOrder(request, frontendUrl), getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+        GatewayClient.Response response = authoriseClient.postRequestFor(
+                url, 
+                request.getGatewayAccount(), 
+                buildAuthoriseOrder(request, frontendUrl), 
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
@@ -300,8 +303,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         return epdqOrderRequestBuilder
                 .withOrderId(request.getChargeExternalId())
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
+                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())

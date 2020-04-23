@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 
 import java.nio.charset.Charset;
@@ -24,7 +24,7 @@ public class FormUrlEncodedStringBuilderTest {
     private EpdqPayloadDefinition mockPayloadDefinition;
 
     @Mock
-    private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
+    private EpdqTemplateData mockTemplateData;
 
     private final ImmutableList<NameValuePair> nameValuePairsList = ImmutableList.of(
             new BasicNameValuePair("first parameter", "this has spaces"),

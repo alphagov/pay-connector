@@ -25,7 +25,7 @@ public class EpdqPayloadDefinitionMaintenanceOrderTest {
     private static final String USER_ID = "User";
 
     @Mock
-    private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
+    private EpdqTemplateData mockTemplateData;
 
     private final EpdqPayloadDefinitionForMaintenanceOrder epdqPayloadDefinitionForMaintenanceOrder = new EpdqPayloadDefinitionForMaintenanceOrder();
 

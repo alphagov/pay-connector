@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 import java.util.List;
 import java.util.Optional;
 
 public class EpdqPayloadDefinitionForMaintenanceOrder extends EpdqPayloadDefinition {
     @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder();
         Optional.ofNullable(templateData.getAmount()).ifPresent(amount -> parameterBuilder.add("AMOUNT", amount));

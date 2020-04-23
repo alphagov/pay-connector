@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
@@ -14,93 +13,12 @@ import uk.gov.pay.connector.gateway.templates.FormUrlEncodedStringBuilder;
 import javax.ws.rs.core.MediaType;
 
 public class EpdqOrderRequestBuilder {
-    private final FormUrlEncodedStringBuilder payloadBuilder;
-    private OrderRequestType orderRequestType;
-
-    public GatewayOrder build() { 
-        final String payload = payloadBuilder.buildWith(epdqTemplateData);
-        return new GatewayOrder(
-                orderRequestType,
-                payload,
-                MediaType.APPLICATION_FORM_URLENCODED_TYPE
-        );
-    }
-
-    public static class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
-        private String operationType;
-        private String orderId;
-        private String password;
-        private String userId;
-        private String shaInPassphrase;
-        private String amount;
-        private String frontendBaseUrl;
-
-        public String getOperationType() {
-            return operationType;
-        }
-
-        public void setOperationType(String operationType) {
-            this.operationType = operationType;
-        }
-
-        public String getOrderId() {
-            return orderId;
-        }
-
-        public void setOrderId(String orderId) {
-            this.orderId = orderId;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public String getUserId() {
-            return userId;
-        }
-
-        public void setUserId(String userId) {
-            this.userId = userId;
-        }
-
-        public String getShaInPassphrase() {
-            return shaInPassphrase;
-        }
-
-        public void setShaInPassphrase(String shaInPassphrase) {
-            this.shaInPassphrase = shaInPassphrase;
-        }
-
-        @Override
-        public String getAmount() {
-            return amount;
-        }
-
-        @Override
-        public void setAmount(String amount) {
-            this.amount = amount;
-        }
-
-        public void setFrontendUrl(String frontendUrl) {
-            this.frontendBaseUrl = frontendUrl;
-        }
-
-        public String getFrontendUrl() {
-            return frontendBaseUrl;
-        }
-    }
 
     private static final String AUTHORISE_OPERATION_TYPE = "RES";
     private static final String CAPTURE_OPERATION_TYPE = "SAS";
     private static final String REFUND_OPERATION_TYPE = "RFD";
     private static final String CANCEL_OPERATION_TYPE = "DES";
-
-    private static EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
-
+    private static final EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
     private static final FormUrlEncodedStringBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
     private static final FormUrlEncodedStringBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
     private static final FormUrlEncodedStringBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
@@ -108,7 +26,9 @@ public class EpdqOrderRequestBuilder {
     private static final FormUrlEncodedStringBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
     private static final FormUrlEncodedStringBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
-    private EpdqTemplateData epdqTemplateData;
+    private final FormUrlEncodedStringBuilder payloadBuilder;
+    private final OrderRequestType orderRequestType;
+    private final EpdqTemplateData epdqTemplateData;
 
     private static FormUrlEncodedStringBuilder createPayloadBuilderForQueryOrder() {
         EpdqPayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForQueryOrder());
@@ -210,5 +130,14 @@ public class EpdqOrderRequestBuilder {
     EpdqOrderRequestBuilder withDescription(String description) {
         epdqTemplateData.setDescription(description);
         return this;
+    }
+    
+    public GatewayOrder build() {
+        final String payload = payloadBuilder.buildWith(epdqTemplateData);
+        return new GatewayOrder(
+                orderRequestType,
+                payload,
+                MediaType.APPLICATION_FORM_URLENCODED_TYPE
+        );
     }
 }
