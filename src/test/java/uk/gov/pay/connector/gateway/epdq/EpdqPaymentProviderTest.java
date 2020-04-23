@@ -7,10 +7,12 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Optional;
 
@@ -33,6 +35,15 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
+    @Test
+    public void doNotInclude_js_screen_color_depth_inAuthoriseOrderIf3ds2NotEnabled() throws Exception {
+        mockPaymentProviderResponse(200, successAuthResponse());
+        CardAuthorisationGatewayRequest request = buildTestAuthorisationRequest();
+        request.getAuthCardDetails().setJsScreenColorDepth("1");
+        provider.authorise(request);
+        verifyPaymentProviderRequest(successAuthRequest());
+    }
+    
     @Test
     public void shouldAuthorise() throws Exception {
         mockPaymentProviderResponse(200, successAuthResponse());

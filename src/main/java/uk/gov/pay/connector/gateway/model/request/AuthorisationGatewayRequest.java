@@ -43,4 +43,12 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     public GatewayOperation getRequestType() {
         return GatewayOperation.AUTHORISE;
     }
+
+    public int getIntegrationVersion3ds() {
+        return charge.getGatewayAccount().getIntegrationVersion3ds();
+    }
+
+    public boolean isRequires3ds() {
+        return charge.getGatewayAccount().isRequires3ds();
+    }
 }

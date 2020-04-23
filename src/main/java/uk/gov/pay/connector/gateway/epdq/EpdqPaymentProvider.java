@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationRespons
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult.Auth3dsResultOutcome;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -300,6 +301,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
                         anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :
                         anEpdqAuthoriseOrderRequestBuilder();
 
+        AuthCardDetails authCardDetails = request.getAuthCardDetails();
+        if (request.getIntegrationVersion3ds() != 2 && !request.isRequires3ds()) {
+            authCardDetails.setJsScreenColorDepth(null);
+        }
+
         return epdqOrderRequestBuilder
                 .withOrderId(request.getChargeExternalId())
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
@@ -308,7 +314,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
+                .withAuthorisationDetails(authCardDetails)
                 .build();
     }
 
