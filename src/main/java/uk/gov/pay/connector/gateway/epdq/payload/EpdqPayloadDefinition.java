@@ -16,9 +16,21 @@ public abstract class EpdqPayloadDefinition {
         return new ParameterBuilder();
     }
 
+    static ParameterBuilder newParameterBuilder(List<NameValuePair> params) {
+        return new ParameterBuilder(params);
+    }
+
     public static class ParameterBuilder {
 
-        private List<BasicNameValuePair> parameters = new ArrayList<>();
+        private List<NameValuePair> parameters;
+
+        public ParameterBuilder(List<NameValuePair> parameters) {
+            this.parameters = new ArrayList<>(parameters);
+        }
+        
+        public ParameterBuilder() {
+            this.parameters = new ArrayList<>();
+        }
 
         public ParameterBuilder add(String name, String value) {
             if (!isEmpty(value)) {
@@ -28,7 +40,7 @@ public abstract class EpdqPayloadDefinition {
         }
 
         public List<NameValuePair> build() {
-            parameters.sort(Comparator.comparing(BasicNameValuePair::getName));
+            parameters.sort(Comparator.comparing(NameValuePair::getName));
             return List.copyOf(parameters);
         }
         
