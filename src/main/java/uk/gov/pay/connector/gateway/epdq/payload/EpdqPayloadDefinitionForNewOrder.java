@@ -3,9 +3,12 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
+
+import static uk.gov.pay.connector.gateway.epdq.payload.ParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
@@ -26,9 +29,9 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String USERID_KEY = "USERID";
 
     @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
-        EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
+        ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
@@ -53,6 +56,16 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(USERID_KEY, templateData.getUserId());
 
         return parameterBuilder.build();
+    }
+
+    @Override
+    protected String getOperationType() {
+        return "RES";
+    }
+
+    @Override
+    protected OrderRequestType getOrderRequestType() {
+        return OrderRequestType.AUTHORISE;
     }
 
     private static String concatAddressLines(String addressLine1, String addressLine2) {
