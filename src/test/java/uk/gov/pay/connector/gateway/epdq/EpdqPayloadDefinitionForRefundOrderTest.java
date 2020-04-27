@@ -12,7 +12,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_R
 public class EpdqPayloadDefinitionForRefundOrderTest {
 
     @Test
-    public void assertGatewayOrder() {
+    public void assert_payload_and_order_request_type_are_as_expected() {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setPassword("password");
         templateData.setUserId("username");

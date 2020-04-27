@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import java.util.List;
 import java.util.Set;
 
-import static uk.gov.pay.connector.gateway.epdq.payload.ParameterBuilder.newParameterBuilder;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionForNew3dsOrder {
 

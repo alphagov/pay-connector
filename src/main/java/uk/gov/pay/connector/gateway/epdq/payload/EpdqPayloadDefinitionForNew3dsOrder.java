@@ -9,7 +9,7 @@ import java.util.List;
 
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
-import static uk.gov.pay.connector.gateway.epdq.payload.ParameterBuilder.newParameterBuilder;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder {
 
@@ -35,7 +35,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
         templateData.setFrontendUrl(frontendUrl);
         String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/epdq", templateData.getFrontendUrl(), templateData.getOrderId());
 
-        ParameterBuilder parameterBuilder = newParameterBuilder()
+        EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
                 .add(ACCEPTURL_KEY, frontend3dsIncomingUrl)
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
@@ -57,19 +57,19 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
             Address address = templateData.getAuthCardDetails().getAddress().get();
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
 
-            parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
+            epdqParameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
                     .add(OWNER_COUNTRY_CODE_KEY, address.getCountry())
                     .add(OWNER_TOWN_KEY, address.getCity())
                     .add(OWNER_ZIP_KEY, address.getPostcode());
         }
 
-        parameterBuilder.add(PARAMPLUS_URL, "")
+        epdqParameterBuilder.add(PARAMPLUS_URL, "")
                 .add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId())
                 .add(WIN3DS_URL, "MAINW");
 
-        return parameterBuilder.build();
+        return epdqParameterBuilder.build();
     }
 
     private static String concatAddressLines(String addressLine1, String addressLine2) {

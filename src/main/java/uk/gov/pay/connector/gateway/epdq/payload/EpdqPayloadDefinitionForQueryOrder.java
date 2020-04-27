@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
 
-import static uk.gov.pay.connector.gateway.epdq.payload.ParameterBuilder.newParameterBuilder;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     

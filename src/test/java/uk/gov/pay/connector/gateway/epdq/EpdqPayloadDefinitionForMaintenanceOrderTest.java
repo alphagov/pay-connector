@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EpdqPayloadDefinitionMaintenanceOrderTest {
+public class EpdqPayloadDefinitionForMaintenanceOrderTest {
 
     private static final String OPERATION_TYPE = "RES";
     private static final String PAY_ID = "PayId";

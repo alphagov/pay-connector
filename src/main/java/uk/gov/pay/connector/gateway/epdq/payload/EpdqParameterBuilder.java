@@ -9,19 +9,19 @@ import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
-public class ParameterBuilder {
+public class EpdqParameterBuilder {
 
     private List<NameValuePair> parameters;
 
-    public ParameterBuilder(List<NameValuePair> parameters) {
+    public EpdqParameterBuilder(List<NameValuePair> parameters) {
         this.parameters = new ArrayList<>(parameters);
     }
 
-    public ParameterBuilder() {
+    public EpdqParameterBuilder() {
         this.parameters = new ArrayList<>();
     }
 
-    public ParameterBuilder add(String name, String value) {
+    public EpdqParameterBuilder add(String name, String value) {
         if (!isEmpty(value)) {
             parameters.add(new BasicNameValuePair(name, value));
         }
@@ -33,11 +33,11 @@ public class ParameterBuilder {
         return List.copyOf(parameters);
     }
 
-    static ParameterBuilder newParameterBuilder() {
-        return new ParameterBuilder();
+    static EpdqParameterBuilder newParameterBuilder() {
+        return new EpdqParameterBuilder();
     }
 
-    static ParameterBuilder newParameterBuilder(List<NameValuePair> params) {
-        return new ParameterBuilder(params);
+    static EpdqParameterBuilder newParameterBuilder(List<NameValuePair> params) {
+        return new EpdqParameterBuilder(params);
     }
 }

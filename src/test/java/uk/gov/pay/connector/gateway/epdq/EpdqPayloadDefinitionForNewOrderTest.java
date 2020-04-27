@@ -97,7 +97,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     }
     
     @Test
-    public void assertGatewayOrder() {
+    public void assert_payload_and_order_request_type_are_as_expected() {
         AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
         
         EpdqTemplateData templateData = new EpdqTemplateData();

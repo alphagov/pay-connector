@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
 
-import static uk.gov.pay.connector.gateway.epdq.payload.ParameterBuilder.newParameterBuilder;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
@@ -31,7 +31,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     @Override
     public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
-        ParameterBuilder parameterBuilder = newParameterBuilder()
+        EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
@@ -45,17 +45,17 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
             Address address = templateData.getAuthCardDetails().getAddress().get();
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
 
-            parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
+            epdqParameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
                     .add(OWNER_COUNTRY_CODE_KEY, address.getCountry())
                     .add(OWNER_TOWN_KEY, address.getCity())
                     .add(OWNER_ZIP_KEY, address.getPostcode());
         }
 
-        parameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
+        epdqParameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId());
 
-        return parameterBuilder.build();
+        return epdqParameterBuilder.build();
     }
 
     @Override

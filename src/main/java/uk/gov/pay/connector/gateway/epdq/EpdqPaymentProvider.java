@@ -82,7 +82,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
      * fact that ’ (that’s U+2019 right single quotation mark in Unicode
      * parlance) seems to encode to %92 — makes us believe that they do
      */
-    static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
+    public static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
 
     private final String frontendUrl;
     private final MetricRegistry metricRegistry;
