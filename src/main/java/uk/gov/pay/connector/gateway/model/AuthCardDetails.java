@@ -173,7 +173,7 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.jsNavigatorLanguage = jsNavigatorLanguage;
     }
 
-    public String getJsNavigatorLanguage() {
-        return jsNavigatorLanguage;
+    public Optional<String> getJsNavigatorLanguage() {
+        return Optional.ofNullable(jsNavigatorLanguage);
     }
 }
