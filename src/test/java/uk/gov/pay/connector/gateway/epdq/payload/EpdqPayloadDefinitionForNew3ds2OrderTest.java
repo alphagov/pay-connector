@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
@@ -9,11 +8,17 @@ import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_COLOR_DEPTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2OrderTest.ParameterBuilder.aParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.EXCEPTIONURL_KEY;
@@ -76,32 +81,20 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
     
     @Test
+    public void should_include_browserLanguage() {
+        authCardDetails.setJsNavigatorLanguage("en-GB");
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder()
+                .withBrowserLanguage(Locale.forLanguageTag("en-GB").toLanguageTag())
+                .build()));
+    }
+
+
+    @Test
     public void should_include_browserColorDepth() {
         authCardDetails.setJsScreenColorDepth("1");
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
-        assertThat(result, is(ImmutableList.builder().add(
-                new BasicNameValuePair(ACCEPTURL_KEY, expectedFrontend3dsIncomingUrl),
-                new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
-                new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
-                new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
-                new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
-                new BasicNameValuePair(CVC_KEY, CVC),
-                new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
-                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
-                new BasicNameValuePair(FLAG3D_KEY, "Y"),
-                new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
-                new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
-                new BasicNameValuePair(LANGUAGE_URL, "en_GB"),
-                new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
-                new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
-                new BasicNameValuePair(PSPID_KEY, PSP_ID),
-                new BasicNameValuePair(PSWD_KEY, PASSWORD),
-                new BasicNameValuePair(USERID_KEY, USER_ID),
-                new BasicNameValuePair(WIN3DS_URL, "MAINW"),
-                new BasicNameValuePair(BROWSER_COLOR_DEPTH, "1"))
-                .build()));
+        assertThat(result, is(aParameterBuilder().withBrowserColorDepth("1").build()));
     }
     
     @Test
@@ -127,4 +120,51 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, "24")));
     }
 
+    static class ParameterBuilder {
+        private Optional<String> browserLanguage = Optional.empty();
+        private Optional<String> browserColorDepth = Optional.empty();
+        
+        public static ParameterBuilder aParameterBuilder() {
+            return new ParameterBuilder();
+        }
+
+        public ParameterBuilder withBrowserLanguage(String browserLanguage) {
+            this.browserLanguage = Optional.ofNullable(browserLanguage);
+            return this;
+        }
+
+        public ParameterBuilder withBrowserColorDepth(String browserColorDepth) {
+            this.browserColorDepth = Optional.ofNullable(browserColorDepth);
+            return this;
+        }
+
+        public List<NameValuePair> build() {
+            String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
+            EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
+                    .add(ACCEPTURL_KEY, expectedFrontend3dsIncomingUrl)
+                    .add(AMOUNT_KEY, AMOUNT)
+                    .add(CARD_NO_KEY, CARD_NO)
+                    .add(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME)
+                    .add(CURRENCY_KEY, CURRENCY)
+                    .add(CVC_KEY, CVC)
+                    .add(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined")
+                    .add(EXPIRY_DATE_KEY, END_DATE)
+                    .add(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error")
+                    .add(FLAG3D_KEY, "Y")
+                    .add(HTTPACCEPT_URL, ACCEPT_HEADER)
+                    .add(HTTPUSER_AGENT_URL, USER_AGENT_HEADER)
+                    .add(LANGUAGE_URL, "en_GB")
+                    .add(OPERATION_KEY, OPERATION_TYPE)
+                    .add(ORDER_ID_KEY, ORDER_ID)
+                    .add(PSPID_KEY, PSP_ID)
+                    .add(PSWD_KEY, PASSWORD)
+                    .add(USERID_KEY, USER_ID)
+                    .add(WIN3DS_URL, "MAINW")
+                    .add(BROWSER_COLOR_DEPTH, browserColorDepth.orElse(DEFAULT_BROWSER_COLOR_DEPTH));
+            
+            browserLanguage.ifPresent(x -> epdqParameterBuilder.add(BROWSER_LANGUAGE, x));
+            
+            return epdqParameterBuilder.build();
+        }
+    }
 }
