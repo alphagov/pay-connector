@@ -26,6 +26,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String worldpay3dsFlexDdcResult;
     private String ipAddress;
     private String jsScreenColorDepth;
+    private String jsNavigatorLanguage;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -165,5 +166,14 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getIpAddress() {
         return Optional.ofNullable(ipAddress);
+    }
+
+    @JsonProperty("js_navigator_language")
+    public void setJsNavigatorLanguage(String jsNavigatorLanguage) {
+        this.jsNavigatorLanguage = jsNavigatorLanguage;
+    }
+
+    public String getJsNavigatorLanguage() {
+        return jsNavigatorLanguage;
     }
 }
