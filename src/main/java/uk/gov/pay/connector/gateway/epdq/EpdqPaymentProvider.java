@@ -22,6 +22,11 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCancelOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult.Auth3dsResultOutcome;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -42,7 +47,6 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,10 +58,6 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqQueryOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -72,16 +72,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
     public static final String ROUTE_FOR_NEW_ORDER = "orderdirect.asp";
     public static final String ROUTE_FOR_MAINTENANCE_ORDER = "maintenancedirect.asp";
     public static final String ROUTE_FOR_QUERY_ORDER = "querydirect.asp";
-
-    /**
-     * ePDQ have never confirmed that they use Windows-1252 to decode
-     * application/x-www-form-urlencoded payloads sent by us to them and use
-     * Windows-1252 to encode application/x-www-form-urlencoded notification
-     * payloads sent from them to us but experimentation — and specifically the
-     * fact that ’ (that’s U+2019 right single quotation mark in Unicode
-     * parlance) seems to encode to %92 — makes us believe that they do
-     */
-    static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
 
     private final String frontendUrl;
     private final MetricRegistry metricRegistry;
@@ -273,61 +263,61 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private GatewayOrder buildQueryOrderRequestFor(Auth3dsResponseGatewayRequest request) {
-        return anEpdqQueryOrderRequestBuilder()
-                .withOrderId(request.getChargeExternalId())
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .build();
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setOrderId(request.getChargeExternalId());
+        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+
+        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
+        return epdqPayloadDefinitionForQueryOrder.createGatewayOrder(templateData);
     }
 
     private GatewayOrder buildQueryOrderRequestFor(ChargeEntity charge) {
-        return anEpdqQueryOrderRequestBuilder()
-                .withOrderId(charge.getExternalId())
-                .withPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(charge.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .build();
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setOrderId(charge.getExternalId());
+        templateData.setPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        templateData.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        templateData.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        templateData.setMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+
+        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
+        return epdqPayloadDefinitionForQueryOrder.createGatewayOrder(templateData);
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request, String frontendUrl) {
-        EpdqOrderRequestBuilder epdqOrderRequestBuilder =
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setOrderId(request.getChargeExternalId());
+        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        templateData.setDescription(request.getDescription());
+        templateData.setAmount(request.getAmount());
+        templateData.setAuthCardDetails(request.getAuthCardDetails());
+        
+        EpdqPayloadDefinition epdqPayloadDefinition = 
                 request.getGatewayAccount().isRequires3ds() ?
-                        anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :
-                        anEpdqAuthoriseOrderRequestBuilder();
-
-        return epdqOrderRequestBuilder
-                .withOrderId(request.getChargeExternalId())
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withDescription(request.getDescription())
-                .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
-                .build();
+                        new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl) :
+                        new EpdqPayloadDefinitionForNewOrder();
+        
+        return epdqPayloadDefinition.createGatewayOrder(templateData);
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
-        EpdqOrderRequestBuilder cancelRequestBuilder = anEpdqCancelOrderRequestBuilder()
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+
         Optional.ofNullable(request.getTransactionId())
                 .ifPresentOrElse(
-                        cancelRequestBuilder::withTransactionId,
-                        () -> cancelRequestBuilder.withOrderId(request.getExternalChargeId())
+                        templateData::setTransactionId,
+                        () -> templateData.setOrderId(request.getExternalChargeId())
                 );
         
-        return cancelRequestBuilder
-                .build();
+        return new EpdqPayloadDefinitionForCancelOrder().createGatewayOrder(templateData);
     }
 }

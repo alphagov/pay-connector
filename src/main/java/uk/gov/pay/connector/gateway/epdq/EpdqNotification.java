@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.toMap;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET;
 
 public class EpdqNotification implements ChargeStatusRequest {
 
@@ -63,7 +64,7 @@ public class EpdqNotification implements ChargeStatusRequest {
 
     public EpdqNotification(String payload) throws EpdqParseException {
         try {
-            paramsList = URLEncodedUtils.parse(payload, EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
+            paramsList = URLEncodedUtils.parse(payload, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
 
             Map<String, String> params = paramsList.stream()
                     .collect(toMap(NameValuePair::getName, NameValuePair::getValue));

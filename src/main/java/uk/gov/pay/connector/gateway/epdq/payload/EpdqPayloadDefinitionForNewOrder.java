@@ -3,9 +3,12 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
+
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
@@ -26,9 +29,9 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String USERID_KEY = "USERID";
 
     @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
-        EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
+        EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
@@ -42,17 +45,27 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
             Address address = templateData.getAuthCardDetails().getAddress().get();
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
 
-            parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
+            epdqParameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
                     .add(OWNER_COUNTRY_CODE_KEY, address.getCountry())
                     .add(OWNER_TOWN_KEY, address.getCity())
                     .add(OWNER_ZIP_KEY, address.getPostcode());
         }
 
-        parameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
+        epdqParameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
                 .add(USERID_KEY, templateData.getUserId());
 
-        return parameterBuilder.build();
+        return epdqParameterBuilder.build();
+    }
+
+    @Override
+    protected String getOperationType() {
+        return "RES";
+    }
+
+    @Override
+    protected OrderRequestType getOrderRequestType() {
+        return OrderRequestType.AUTHORISE;
     }
 
     private static String concatAddressLines(String addressLine1, String addressLine2) {

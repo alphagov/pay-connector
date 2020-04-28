@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 import java.net.URI;
@@ -13,7 +14,6 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -47,13 +47,13 @@ public class EpdqCaptureHandler implements CaptureHandler {
     }
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
-        return anEpdqCaptureOrderRequestBuilder()
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withTransactionId(request.getTransactionId())
-                .build();
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        templateData.setTransactionId(request.getTransactionId());
+        
+        return new EpdqPayloadDefinitionForCaptureOrder().createGatewayOrder(templateData);
     }
 }

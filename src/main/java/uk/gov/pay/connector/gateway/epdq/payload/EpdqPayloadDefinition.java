@@ -1,50 +1,49 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
+import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
+import javax.ws.rs.core.MediaType;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public abstract class EpdqPayloadDefinition {
 
-    static ParameterBuilder newParameterBuilder() {
-        return new ParameterBuilder();
-    }
+    private static final SignatureGenerator SIGNATURE_GENERATOR = new EpdqSha512SignatureGenerator();
 
-    static ParameterBuilder newParameterBuilder(List<NameValuePair> params) {
-        return new ParameterBuilder(params);
-    }
-
-    public static class ParameterBuilder {
-
-        private List<NameValuePair> parameters;
-
-        public ParameterBuilder(List<NameValuePair> parameters) {
-            this.parameters = new ArrayList<>(parameters);
-        }
-        
-        public ParameterBuilder() {
-            this.parameters = new ArrayList<>();
-        }
-
-        public ParameterBuilder add(String name, String value) {
-            if (!isEmpty(value)) {
-                parameters.add(new BasicNameValuePair(name, value));
-            }
-            return this;
-        }
-
-        public List<NameValuePair> build() {
-            parameters.sort(Comparator.comparing(NameValuePair::getName));
-            return List.copyOf(parameters);
-        }
-        
-    }
+    /**
+     * ePDQ have never confirmed that they use Windows-1252 to decode
+     * application/x-www-form-urlencoded payloads sent by us to them and use
+     * Windows-1252 to encode application/x-www-form-urlencoded notification
+     * payloads sent from them to us but experimentation — and specifically the
+     * fact that ’ (that’s U+2019 right single quotation mark in Unicode
+     * parlance) seems to encode to %92 — makes us believe that they do
+     */
+    public static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
     
-    public abstract List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData);
+    protected abstract List<NameValuePair> extract(EpdqTemplateData templateData);
+
+    public GatewayOrder createGatewayOrder(EpdqTemplateData templateData) {
+        templateData.setOperationType(getOperationType());
+        ArrayList<NameValuePair> params = new ArrayList<>(extract(templateData));
+        String signature = SIGNATURE_GENERATOR.sign(params, templateData.getShaInPassphrase());
+        params.add(new BasicNameValuePair("SHASIGN", signature));
+        String payload = URLEncodedUtils.format(params, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
+        return new GatewayOrder(
+                getOrderRequestType(),
+                payload,
+                MediaType.APPLICATION_FORM_URLENCODED_TYPE
+        );
+    }
+
+    protected abstract String getOperationType();
+
+    protected abstract OrderRequestType getOrderRequestType();
 }

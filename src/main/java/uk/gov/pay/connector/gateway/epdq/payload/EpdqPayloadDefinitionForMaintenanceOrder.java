@@ -1,25 +1,28 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 import java.util.List;
 import java.util.Optional;
 
-public class EpdqPayloadDefinitionForMaintenanceOrder extends EpdqPayloadDefinition {
-    @Override
-    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
-        EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder();
-        Optional.ofNullable(templateData.getAmount()).ifPresent(amount -> parameterBuilder.add("AMOUNT", amount));
+public abstract class EpdqPayloadDefinitionForMaintenanceOrder extends EpdqPayloadDefinition {
+    
+    @Override
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
+
+        EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder();
+        Optional.ofNullable(templateData.getAmount()).ifPresent(amount -> epdqParameterBuilder.add("AMOUNT", amount));
         Optional.ofNullable(templateData.getTransactionId()).ifPresent(
-                transactionId -> parameterBuilder.add("PAYID", transactionId)
+                transactionId -> epdqParameterBuilder.add("PAYID", transactionId)
         );
         Optional.ofNullable(templateData.getOrderId()).ifPresent(
-                orderId -> parameterBuilder.add("ORDERID", orderId)
+                orderId -> epdqParameterBuilder.add("ORDERID", orderId)
         );
         
-        return parameterBuilder
+        return epdqParameterBuilder
                 .add("OPERATION", templateData.getOperationType())
                 .add("PSPID", templateData.getMerchantCode())
                 .add("PSWD", templateData.getPassword())

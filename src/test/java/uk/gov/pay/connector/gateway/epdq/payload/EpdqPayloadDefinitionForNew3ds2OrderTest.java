@@ -5,7 +5,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.util.List;
@@ -51,9 +51,9 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String ACCEPT_HEADER = "Test Accept Header";
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
 
-    private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order();
+    private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL);
 
-    private EpdqOrderRequestBuilder.EpdqTemplateData epdqTemplateData = new EpdqOrderRequestBuilder.EpdqTemplateData();
+    private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
     
     @Before

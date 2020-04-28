@@ -9,14 +9,19 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
@@ -41,6 +46,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.PSPID_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.PSWD_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.USERID_KEY;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS_REQUEST;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPayloadDefinitionForNew3dsOrderTest {
@@ -71,7 +77,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
 
     @Mock
-    private EpdqOrderRequestBuilder.EpdqTemplateData mockTemplateData;
+    private EpdqTemplateData mockTemplateData;
 
     @Mock
     private AuthCardDetails mockAuthCardDetails;
@@ -79,7 +85,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     @Mock
     private Address mockAddress;
 
-    private final EpdqPayloadDefinitionForNew3dsOrder epdqPayloadDefinitionFor3dsNewOrder = new EpdqPayloadDefinitionForNew3dsOrder();
+    private final EpdqPayloadDefinitionForNew3dsOrder epdqPayloadDefinitionFor3dsNewOrder = new EpdqPayloadDefinitionForNew3dsOrder(FRONTEND_URL);
 
     @Before
     public void setUp() {
@@ -103,6 +109,38 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         when(mockAddress.getCity()).thenReturn(CITY);
         when(mockAddress.getPostcode()).thenReturn(POSTCODE);
         when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
+    }
+
+    @Test
+    public void assert_payload_and_order_request_type_are_as_expected() {
+        AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
+
+        EpdqTemplateData templateData = new EpdqTemplateData();
+        templateData.setOrderId("mq4ht90j2oir6am585afk58kml");
+        templateData.setPassword("password");
+        templateData.setUserId("username");
+        templateData.setShaInPassphrase("sha-passphrase");
+        templateData.setMerchantCode("merchant-id");
+        templateData.setDescription("MyDescription");
+        templateData.setAmount("500");
+        templateData.setAuthCardDetails(authCardDetails);
+        
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionFor3dsNewOrder.createGatewayOrder(templateData);
+        assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_3DS_REQUEST), gatewayOrder.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_3DS, gatewayOrder.getOrderRequestType());
+    }
+
+    private AuthCardDetails aValidEpdqAuthCardDetails() {
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
+
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("5555444433331111")
+                .withCvc("737")
+                .withEndDate("08/18")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 
     @Test
