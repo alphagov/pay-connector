@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import junitparams.converters.Nullable;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
@@ -13,7 +14,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -21,7 +21,9 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2OrderTest.ParameterBuilder.aParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
@@ -87,6 +89,23 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
     
     @Test
+    @Parameters({"0", "999999", "100"})
+    public void should_include_browserScreenHeight(String screenHeight) {
+        authCardDetails.setJsScreenHeight(screenHeight);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserScreenHeight(screenHeight).build()));
+    }
+    
+    @Test
+    @Parameters({"null", "-1", "1000000", "invalid", "0x6", "123L", "1.2"})
+    public void should_include_default_browserScreenHeight_when_screen_height_provided_is_invalid
+            (@Nullable String screenHeight) {
+        authCardDetails.setJsScreenHeight(screenHeight);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().build()));
+    }
+    
+    @Test
     public void should_include_browserLanguage() {
         authCardDetails.setJsNavigatorLanguage("de");
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
@@ -134,7 +153,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     
     static class ParameterBuilder {
         private String browserLanguage = "en-GB";
-        private Optional<String> browserColorDepth = Optional.empty();
+        private String browserScreenHeight = DEFAULT_BROWSER_SCREEN_HEIGHT;
+        private String browserColorDepth = DEFAULT_BROWSER_COLOR_DEPTH;
         
         public static ParameterBuilder aParameterBuilder() {
             return new ParameterBuilder();
@@ -146,7 +166,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         }
 
         public ParameterBuilder withBrowserColorDepth(String browserColorDepth) {
-            this.browserColorDepth = Optional.ofNullable(browserColorDepth);
+            this.browserColorDepth = browserColorDepth;
             return this;
         }
 
@@ -172,10 +192,16 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(PSWD_KEY, PASSWORD)
                     .add(USERID_KEY, USER_ID)
                     .add(WIN3DS_URL, "MAINW")
-                    .add(BROWSER_COLOR_DEPTH, browserColorDepth.orElse(DEFAULT_BROWSER_COLOR_DEPTH))
-                    .add(BROWSER_LANGUAGE, browserLanguage);
+                    .add(BROWSER_COLOR_DEPTH, browserColorDepth)
+                    .add(BROWSER_LANGUAGE, browserLanguage)
+                    .add(BROWSER_SCREEN_HEIGHT, browserScreenHeight);
             
             return epdqParameterBuilder.build();
+        }
+
+        public ParameterBuilder withBrowserScreenHeight(String browserScreenHeight) {
+            this.browserScreenHeight = browserScreenHeight;
+            return this;
         }
     }
 }

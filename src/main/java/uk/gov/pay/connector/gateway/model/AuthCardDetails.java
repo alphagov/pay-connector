@@ -27,9 +27,19 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String ipAddress;
     private String jsScreenColorDepth;
     private String jsNavigatorLanguage;
+    private String jsScreenHeight;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
+    }
+
+    public Optional<String> getJsScreenHeight() {
+        return Optional.ofNullable(jsScreenHeight);
+    }
+
+    @JsonProperty("js_screen_height")
+    public void setJsScreenHeight(String jsScreenHeight) {
+        this.jsScreenHeight = jsScreenHeight;
     }
 
     public Optional<String> getJsScreenColorDepth() {
