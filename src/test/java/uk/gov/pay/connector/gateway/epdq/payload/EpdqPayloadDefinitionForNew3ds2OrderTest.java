@@ -1,9 +1,13 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
@@ -39,6 +43,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.PSWD_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.USERID_KEY;
 
+@RunWith(JUnitParamsRunner.class)
 public class EpdqPayloadDefinitionForNew3ds2OrderTest {
 
     private static final String OPERATION_TYPE = "RES";
@@ -56,7 +61,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String ACCEPT_HEADER = "Test Accept Header";
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
 
-    private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL);
+    private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = 
+            new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH);
 
     private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
@@ -82,28 +88,27 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     
     @Test
     public void should_include_browserLanguage() {
-        authCardDetails.setJsNavigatorLanguage("en-GB");
+        authCardDetails.setJsNavigatorLanguage("de");
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder()
-                .withBrowserLanguage(Locale.forLanguageTag("en-GB").toLanguageTag())
+                .withBrowserLanguage(Locale.forLanguageTag("de").toLanguageTag())
                 .build()));
     }
 
-
     @Test
-    public void should_include_browserColorDepth() {
-        authCardDetails.setJsScreenColorDepth("1");
+    @Parameters({"ENGLISH, en-GB", "WELSH, cy"})
+    public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, language);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        assertThat(result, is(aParameterBuilder().withBrowserColorDepth("1").build()));
+        assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
     
     @Test
-    public void should_include_accepted_browserColorDepths() {
-        List.of("1", "2", "4", "8", "15", "16", "24", "32").forEach(colorDepthValue -> {
-            authCardDetails.setJsScreenColorDepth(colorDepthValue);
-            List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-            assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, colorDepthValue)));
-        });
+    @Parameters({"1", "2", "4", "8", "15", "16", "24", "32"})
+    public void should_include_accepted_browserColorDepths(String colorDepthValue) {
+        authCardDetails.setJsScreenColorDepth(colorDepthValue);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, colorDepthValue)));
     }
     
     @Test
@@ -120,8 +125,15 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, "24")));
     }
 
+    @Test
+    public void should_include_browserColorDepth() {
+        authCardDetails.setJsScreenColorDepth("1");
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserColorDepth("1").build()));
+    }
+    
     static class ParameterBuilder {
-        private Optional<String> browserLanguage = Optional.empty();
+        private String browserLanguage = "en-GB";
         private Optional<String> browserColorDepth = Optional.empty();
         
         public static ParameterBuilder aParameterBuilder() {
@@ -129,7 +141,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         }
 
         public ParameterBuilder withBrowserLanguage(String browserLanguage) {
-            this.browserLanguage = Optional.ofNullable(browserLanguage);
+            this.browserLanguage = browserLanguage;
             return this;
         }
 
@@ -160,9 +172,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(PSWD_KEY, PASSWORD)
                     .add(USERID_KEY, USER_ID)
                     .add(WIN3DS_URL, "MAINW")
-                    .add(BROWSER_COLOR_DEPTH, browserColorDepth.orElse(DEFAULT_BROWSER_COLOR_DEPTH));
-            
-            browserLanguage.ifPresent(x -> epdqParameterBuilder.add(BROWSER_LANGUAGE, x));
+                    .add(BROWSER_COLOR_DEPTH, browserColorDepth.orElse(DEFAULT_BROWSER_COLOR_DEPTH))
+                    .add(BROWSER_LANGUAGE, browserLanguage);
             
             return epdqParameterBuilder.build();
         }
