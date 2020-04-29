@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -46,7 +47,7 @@ public class EpdqCaptureHandlerTest {
 
     @Before
     public void setup() {
-        epdqCaptureHandler = new EpdqCaptureHandler(client, emptyMap());
+        epdqCaptureHandler = new EpdqCaptureHandler(client, emptyMap(), new EpdqPayloadDefinitionForCaptureOrder());
     }
 
     @Test

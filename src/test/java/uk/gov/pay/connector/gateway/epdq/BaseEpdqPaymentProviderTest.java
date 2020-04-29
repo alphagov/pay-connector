@@ -17,6 +17,10 @@ import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCancelOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -111,7 +115,14 @@ public abstract class BaseEpdqPaymentProviderTest {
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
 
-        provider = new EpdqPaymentProvider(configuration, gatewayClientFactory, environment);
+        provider = new EpdqPaymentProvider(
+                configuration, 
+                gatewayClientFactory, 
+                environment,
+                new EpdqPayloadDefinitionForCancelOrder(),
+                new EpdqPayloadDefinitionForCaptureOrder(),
+                new EpdqPayloadDefinitionForNewOrder(),
+                new EpdqPayloadDefinitionForQueryOrder());
     }
 
     private Invocation.Builder mockClientInvocationBuilder() {

@@ -6,10 +6,12 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
+import javax.inject.Singleton;
 import java.util.List;
 
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
+@Singleton
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
     public final static String AMOUNT_KEY = "AMOUNT";
