@@ -4,10 +4,12 @@ import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
+import javax.inject.Singleton;
 import java.util.List;
 
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
+@Singleton
 public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     
     public final static String ORDER_ID_KEY = "ORDERID";

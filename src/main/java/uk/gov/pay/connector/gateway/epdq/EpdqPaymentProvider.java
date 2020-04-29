@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCancelOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
@@ -79,15 +80,25 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private final GatewayClient cancelClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final Map<String, String> gatewayUrlMap;
+    private final EpdqPayloadDefinitionForCancelOrder epdqPayloadDefinitionForCancelOrder;
+    private final EpdqPayloadDefinitionForNewOrder epdqPayloadDefinitionForNewOrder;
+    private final EpdqPayloadDefinitionForQueryOrder epdqPayloadDefinitionForQueryOrder;
     private final EpdqCaptureHandler epdqCaptureHandler;
     private final EpdqRefundHandler epdqRefundHandler;
 
     @Inject
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
                                GatewayClientFactory gatewayClientFactory,
-                               Environment environment) {
+                               Environment environment,
+                               EpdqPayloadDefinitionForCancelOrder epdqPayloadDefinitionForCancelOrder,
+                               EpdqPayloadDefinitionForCaptureOrder epdqPayloadDefinitionForCaptureOrder,
+                               EpdqPayloadDefinitionForNewOrder epdqPayloadDefinitionForNewOrder,
+                               EpdqPayloadDefinitionForQueryOrder epdqPayloadDefinitionForQueryOrder) {
         
         gatewayUrlMap = configuration.getGatewayConfigFor(EPDQ).getUrls();
+        this.epdqPayloadDefinitionForCancelOrder = epdqPayloadDefinitionForCancelOrder;
+        this.epdqPayloadDefinitionForNewOrder = epdqPayloadDefinitionForNewOrder;
+        this.epdqPayloadDefinitionForQueryOrder = epdqPayloadDefinitionForQueryOrder;
         authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, environment.metrics());
         GatewayClient captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, environment.metrics());
@@ -95,7 +106,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         frontendUrl = configuration.getLinks().getFrontendUrl();
         metricRegistry = environment.metrics();
         externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
-        epdqCaptureHandler = new EpdqCaptureHandler(captureClient, gatewayUrlMap);
+        epdqCaptureHandler = new EpdqCaptureHandler(captureClient, gatewayUrlMap, epdqPayloadDefinitionForCaptureOrder);
         epdqRefundHandler = new EpdqRefundHandler(refundClient, gatewayUrlMap);
     }
 
@@ -121,13 +132,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
     }
     
     private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.buildUninterpreted();
     }
@@ -140,7 +151,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
-        GatewayClient.Response response = cancelClient.postRequestFor(url, request.getGatewayAccount(), buildCancelOrder(request),
+        GatewayClient.Response response = cancelClient.postRequestFor(
+                url, 
+                request.getGatewayAccount(), 
+                buildCancelOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
@@ -152,7 +166,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(charge.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(url, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge),
+        GatewayClient.Response response = authoriseClient.postRequestFor(
+                url, 
+                charge.getGatewayAccount(), 
+                buildQueryOrderRequestFor(charge),
                 getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount()));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
@@ -183,7 +200,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-            GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), buildQueryOrderRequestFor(request),
+            GatewayClient.Response response = authoriseClient.postRequestFor(
+                    url, 
+                    request.getGatewayAccount(), 
+                    buildQueryOrderRequestFor(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
@@ -240,7 +260,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus,
             Auth3dsResultOutcome auth3dsResultOutcome) throws GenericGatewayException {
 
-        GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3dsResultOutcome.equals(Auth3dsResultOutcome.ERROR)) {
             throw new GenericGatewayException(
                     format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsResultOutcome.ERROR, authoriseStatus.name()));
@@ -269,8 +289,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-
-        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder(templateData);
     }
 
@@ -281,8 +299,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-
-        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder(templateData);
     }
 
@@ -297,10 +313,9 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setAmount(request.getAmount());
         templateData.setAuthCardDetails(request.getAuthCardDetails());
         
-        EpdqPayloadDefinition epdqPayloadDefinition = 
-                request.getGatewayAccount().isRequires3ds() ?
+        var epdqPayloadDefinition = request.getGatewayAccount().isRequires3ds() ?
                         new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl) :
-                        new EpdqPayloadDefinitionForNewOrder();
+                        epdqPayloadDefinitionForNewOrder;
         
         return epdqPayloadDefinition.createGatewayOrder(templateData);
     }
@@ -315,9 +330,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
         Optional.ofNullable(request.getTransactionId())
                 .ifPresentOrElse(
                         templateData::setTransactionId,
-                        () -> templateData.setOrderId(request.getExternalChargeId())
-                );
+                        () -> templateData.setOrderId(request.getExternalChargeId()));
         
-        return new EpdqPayloadDefinitionForCancelOrder().createGatewayOrder(templateData);
+        return epdqPayloadDefinitionForCancelOrder.createGatewayOrder(templateData);
     }
 }
