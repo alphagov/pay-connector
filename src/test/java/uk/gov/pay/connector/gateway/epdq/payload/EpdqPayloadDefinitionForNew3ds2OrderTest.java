@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import junitparams.converters.Nullable;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
@@ -22,6 +23,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2OrderTest.ParameterBuilder.aParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
@@ -87,10 +89,20 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
     
     @Test
-    public void should_include_browserScreenHeight() {
-        authCardDetails.setJsScreenHeight("100");
+    @Parameters({"0", "999999", "100"})
+    public void should_include_browserScreenHeight(String screenHeight) {
+        authCardDetails.setJsScreenHeight(screenHeight);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        assertThat(result, is(aParameterBuilder().withBrowserScreenHeight("100").build()));
+        assertThat(result, is(aParameterBuilder().withBrowserScreenHeight(screenHeight).build()));
+    }
+    
+    @Test
+    @Parameters({"null", "-1", "1000000", "invalid", "0x6", "123L", "1.2"})
+    public void should_include_default_browserScreenHeight_when_screen_height_provided_is_invalid
+            (@Nullable String screenHeight) {
+        authCardDetails.setJsScreenHeight(screenHeight);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().build()));
     }
     
     @Test
@@ -141,7 +153,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     
     static class ParameterBuilder {
         private String browserLanguage = "en-GB";
-        private String browserScreenHeight = "480";
+        private String browserScreenHeight = DEFAULT_BROWSER_SCREEN_HEIGHT;
         private String browserColorDepth = DEFAULT_BROWSER_COLOR_DEPTH;
         
         public static ParameterBuilder aParameterBuilder() {

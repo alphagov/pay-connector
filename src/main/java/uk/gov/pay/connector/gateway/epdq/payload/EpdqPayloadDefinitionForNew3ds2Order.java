@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
@@ -17,7 +18,8 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_SCREEN_HEIGHT = "browserScreenHeight";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
-
+    
+    private final static Pattern NUMBER_FROM_0_TO_999999 = Pattern.compile("0|[1-9][0-9]{0,5}");
     private final static Set<String> VALID_SCREEN_COLOR_DEPTHS = Set.of("1", "2", "4", "8", "15", "16", "24", "32");
     
     private final SupportedLanguage paymentLanguage;
@@ -39,7 +41,12 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     }
 
     private String getBrowserScreenHeight(EpdqTemplateData templateData) {
-        return templateData.getAuthCardDetails().getJsScreenHeight().orElse(DEFAULT_BROWSER_SCREEN_HEIGHT);
+        return templateData.getAuthCardDetails().getJsScreenHeight()
+                .filter(screenHeight -> NUMBER_FROM_0_TO_999999.matcher(screenHeight).matches())
+                .map(Integer::parseInt)
+                .filter(screenHeight -> screenHeight >= 0 && screenHeight <= 999999)
+                .map(screenHeight -> Integer.toString(screenHeight))
+                .orElse(DEFAULT_BROWSER_SCREEN_HEIGHT);
     }
 
     private String getBrowserLanguage(EpdqTemplateData templateData) {
