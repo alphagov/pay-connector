@@ -16,8 +16,10 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_COLOR_DEPTH = "browserColorDepth";
     public final static String BROWSER_LANGUAGE = "browserLanguage";
     public final static String BROWSER_SCREEN_HEIGHT = "browserScreenHeight";
+    public final static String BROWSER_SCREEN_WIDTH = "browserScreenWidth";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
+    public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
     
     private final static Pattern NUMBER_FROM_0_TO_999999 = Pattern.compile("0|[1-9][0-9]{0,5}");
     private final static Set<String> VALID_SCREEN_COLOR_DEPTHS = Set.of("1", "2", "4", "8", "15", "16", "24", "32");
@@ -35,9 +37,19 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
         EpdqParameterBuilder parameterBuilder = newParameterBuilder(nameValuePairs)
                 .add(BROWSER_COLOR_DEPTH, getBrowserColorDepth(templateData))
                 .add(BROWSER_LANGUAGE, getBrowserLanguage(templateData))
-                .add(BROWSER_SCREEN_HEIGHT, getBrowserScreenHeight(templateData));
+                .add(BROWSER_SCREEN_HEIGHT, getBrowserScreenHeight(templateData))
+                .add(BROWSER_SCREEN_WIDTH, getBrowserScreenWidth(templateData));
 
         return parameterBuilder.build();
+    }
+
+    private String getBrowserScreenWidth(EpdqTemplateData templateData) {
+        return templateData.getAuthCardDetails().getJsScreenWidth()
+                .filter(screenWidth -> NUMBER_FROM_0_TO_999999.matcher(screenWidth).matches())
+                .map(Integer::parseInt)
+                .filter(screenWidth -> screenWidth >= 0 && screenWidth <= 999999)
+                .map(screenWidth -> Integer.toString(screenWidth))
+                .orElse(DEFAULT_BROWSER_SCREEN_WIDTH);
     }
 
     private String getBrowserScreenHeight(EpdqTemplateData templateData) {
