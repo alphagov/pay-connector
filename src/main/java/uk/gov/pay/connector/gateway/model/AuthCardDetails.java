@@ -28,6 +28,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String jsScreenColorDepth;
     private String jsNavigatorLanguage;
     private String jsScreenHeight;
+    private String jsScreenWidth;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -40,6 +41,15 @@ public class AuthCardDetails implements AuthorisationDetails {
     @JsonProperty("js_screen_height")
     public void setJsScreenHeight(String jsScreenHeight) {
         this.jsScreenHeight = jsScreenHeight;
+    }
+
+    public Optional<String> getJsScreenWidth() {
+        return Optional.ofNullable(jsScreenWidth);
+    }
+
+    @JsonProperty("js_screen_width")
+    public void setJsScreenWidth(String jsScreenWidth) {
+        this.jsScreenWidth = jsScreenWidth;
     }
 
     public Optional<String> getJsScreenColorDepth() {
