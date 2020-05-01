@@ -2,6 +2,7 @@
   "id": "evt_aaaaaaaaaaaaaaaaaaaaa",
   "type": "payout.created",
   "object": "event",
+  "account": "connect_account_id",
   "api_version": "2019-02-19",
   "created": 1567622603,
   "data": {

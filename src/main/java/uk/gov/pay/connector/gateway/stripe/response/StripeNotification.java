@@ -11,6 +11,8 @@ public class StripeNotification {
     private String id;
     @JsonProperty("type")
     private String type;
+    @JsonProperty("account")
+    private String account;
     @JsonProperty("data")
     private StripeEventData data;
 
@@ -28,6 +30,10 @@ public class StripeNotification {
 
     public String getObject() {
         return data.getObject().toString();
+    }
+
+    public String getAccount() {
+        return account;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

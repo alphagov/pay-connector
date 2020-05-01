@@ -110,7 +110,9 @@ public class StripeNotificationService {
     }
 
     private void processPayoutNotification(StripeNotification notification) {
-        logger.info("{} payout created notification with id [{}] and body [{}] was received", PAYMENT_GATEWAY_NAME, notification.getId(), notification.getObject());
+        logger.info("{} payout created notification with id [{}], connect account [{}] and body [{}] was received",
+                PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount(),
+                notification.getObject());
     }
 
     private void processPaymentIntentNotification(StripeNotification notification) {
