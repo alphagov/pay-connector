@@ -29,9 +29,19 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String jsNavigatorLanguage;
     private String jsScreenHeight;
     private String jsScreenWidth;
+    private String jsTimezoneOffsetMins;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
+    }
+
+    public Optional<String> getJsTimezoneOffsetMins() {
+        return Optional.ofNullable(jsTimezoneOffsetMins);
+    }
+
+    @JsonProperty("js_timezone_offset_min")
+    public void setJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
+        this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
     }
 
     public Optional<String> getJsScreenHeight() {
