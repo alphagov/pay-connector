@@ -123,8 +123,13 @@ public class StripeNotificationServiceTest {
 
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage(), containsString("payout created notification with id [{}] and body [{}] was received"));
-        assertThat(loggingEvent.getArgumentArray().length, is(3));
+        assertThat(loggingEvent.getMessage(),
+                containsString("payout created notification with id [{}], connect account [{}] and body [{}] was received"));
+
+        Object[] arguments = loggingEvent.getArgumentArray();
+        assertThat(arguments.length, is(4));
+        assertThat(arguments[1], is("evt_aaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(arguments[2], is("connect_account_id"));
     }
 
     @Test
