@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.stripe.exception.SignatureVerificationException;
@@ -14,9 +15,13 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.payout.Payout;
+import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.List;
@@ -62,6 +67,7 @@ public class StripeNotificationService {
     private final ObjectMapper objectMapper;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
+    private final PayoutReconcileQueue payoutReconcileQueue;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
     private static final long DEFAULT_TOLERANCE = 300L;
@@ -69,11 +75,13 @@ public class StripeNotificationService {
     @Inject
     public StripeNotificationService(Card3dsResponseAuthService card3dsResponseAuthService,
                                      ChargeService chargeService,
-                                     StripeGatewayConfig stripeGatewayConfig, 
-                                     StripeAccountUpdatedHandler stripeAccountUpdatedHandler) {
+                                     StripeGatewayConfig stripeGatewayConfig,
+                                     StripeAccountUpdatedHandler stripeAccountUpdatedHandler,
+                                     PayoutReconcileQueue payoutReconcileQueue) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
+        this.payoutReconcileQueue = payoutReconcileQueue;
         objectMapper = new ObjectMapper();
         this.stripeGatewayConfig = stripeGatewayConfig;
     }
@@ -110,9 +118,26 @@ public class StripeNotificationService {
     }
 
     private void processPayoutNotification(StripeNotification notification) {
-        logger.info("{} payout created notification with id [{}], connect account [{}] and body [{}] was received",
-                PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount(),
-                notification.getObject());
+        logger.info("Processing {} payout created notification with id [{}] for connect account [{}]",
+                PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount());
+        try {
+            StripePayout stripePayout = toPayout(notification.getObject());
+            Payout payout = new Payout(stripePayout.getId(), notification.getAccount());
+
+            sendToPayoutReconcileQueue(notification.getAccount(), payout);
+        } catch (StripeParseException e ) {
+            logger.error("{} payout notification parsing failed for connect account [{}]: {}",
+                    PAYMENT_GATEWAY_NAME, notification.getAccount(), e);
+        }
+    }
+
+    private void sendToPayoutReconcileQueue(String connectAccount, Payout payout) {
+        try {
+            payoutReconcileQueue.sendPayout(payout);
+        } catch (QueueException | JsonProcessingException e) {
+            logger.error("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]",
+                    connectAccount, payout.getGatewayPayoutId(), e.getMessage(), e);
+        }
     }
 
     private void processPaymentIntentNotification(StripeNotification notification) {
@@ -153,6 +178,14 @@ public class StripeNotificationService {
     private StripePaymentIntent toPaymentIntent(String payload) throws StripeParseException {
         try {
             return objectMapper.readValue(payload, StripePaymentIntent.class);
+        } catch (Exception e) {
+            throw new StripeParseException(e.getMessage());
+        }
+    }
+
+    private StripePayout toPayout(String payload) throws StripeParseException {
+        try {
+            return objectMapper.readValue(payload, StripePayout.class);
         } catch (Exception e) {
             throw new StripeParseException(e.getMessage());
         }
