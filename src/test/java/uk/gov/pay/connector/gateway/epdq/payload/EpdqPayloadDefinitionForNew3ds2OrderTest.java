@@ -12,6 +12,9 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,6 +26,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_WIDTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_TIMEZONE_OFFSET_MINS;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_WIDTH;
@@ -64,9 +68,11 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String FRONTEND_URL = "http://www.frontend.example.com";
     private static final String ACCEPT_HEADER = "Test Accept Header";
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
-
+    private static final Clock BRITISH_SUMMER_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-05-06T10:10:10.100Z"), ZoneOffset.UTC);
+    private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+    
     private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = 
-            new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH);
+            new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
 
     private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
@@ -136,7 +142,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Test
     @Parameters({"ENGLISH, en-GB", "WELSH, cy"})
     public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
-        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, language);
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, language, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
@@ -169,12 +175,41 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserColorDepth("1").build()));
     }
+
+    @Test
+    @Parameters({"-840", "720", "500"})
+    public void should_include_browserTimezoneOffSetMins(String timeZoneOffsetMins) {
+        authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins(timeZoneOffsetMins).build()));
+    }
+
+    @Test
+    @Parameters({"null", "-900", "800", "invalid", "0x6", "123L", "1.2"})
+    public void should_include_default_browserTimezoneOffsetMins_for_summer_time_when_timezone_offset_provided_is_invalid
+            (@Nullable String timeZoneOffsetMins) {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+        authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("-60").build()));
+    }
+
+    @Test
+    @Parameters({"null", "-900", "800", "invalid", "0x6", "123L", "1.2"})
+    public void should_include_default_browserTimezoneOffsetMins_for_Gmt_when_timezone_offset_provided_is_invalid
+            (@Nullable String timeZoneOffsetMins) {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
+        authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("0").build()));
+    }
     
     static class ParameterBuilder {
         private String browserLanguage = "en-GB";
         private String browserScreenHeight = DEFAULT_BROWSER_SCREEN_HEIGHT;
         private String browserScreenWidth = DEFAULT_BROWSER_SCREEN_WIDTH;
         private String browserColorDepth = DEFAULT_BROWSER_COLOR_DEPTH;
+        private String browserTimezoneOffsetMins = "-60";
         
         public static ParameterBuilder aParameterBuilder() {
             return new ParameterBuilder();
@@ -199,7 +234,12 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             this.browserScreenWidth = browserScreenWidth;
             return this;
         }
-
+        
+        public ParameterBuilder withBrowserTimezoneOffsetMins(String browserTimezoneOffsetMins) {
+            this.browserTimezoneOffsetMins = browserTimezoneOffsetMins;
+            return this;
+        }
+        
         public List<NameValuePair> build() {
             String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
             EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
@@ -225,8 +265,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(BROWSER_COLOR_DEPTH, browserColorDepth)
                     .add(BROWSER_LANGUAGE, browserLanguage)
                     .add(BROWSER_SCREEN_HEIGHT, browserScreenHeight)
-                    .add(BROWSER_SCREEN_WIDTH, browserScreenWidth);
-            
+                    .add(BROWSER_SCREEN_WIDTH, browserScreenWidth)
+                    .add(BROWSER_TIMEZONE_OFFSET_MINS, browserTimezoneOffsetMins);
             return epdqParameterBuilder.build();
         }
     }
