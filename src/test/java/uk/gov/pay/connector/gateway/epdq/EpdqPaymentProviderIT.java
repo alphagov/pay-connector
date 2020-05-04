@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
+public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
 
     @Test
     public void shouldGetPaymentProviderName() {

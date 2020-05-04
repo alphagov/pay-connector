@@ -50,6 +50,9 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 
@@ -131,7 +134,8 @@ public class EpdqPaymentProviderTest {
                 new EpdqPayloadDefinitionForCancelOrder(),
                 new EpdqPayloadDefinitionForCaptureOrder(),
                 new EpdqPayloadDefinitionForNewOrder(),
-                new EpdqPayloadDefinitionForQueryOrder());
+                new EpdqPayloadDefinitionForQueryOrder(),
+                Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC));
     }
 
     @Test
