@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +22,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.WebApplicationException;
@@ -31,10 +34,10 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,12 +70,15 @@ public class StripeNotificationServiceTest {
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
     @Mock
+    private PayoutReconcileQueue mockPayoutReconcileQueue;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
+
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-    
+
     private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(new ObjectMapper());
-    
+
     private final String externalId = "external-id";
     private final String sourceId = "source-id";
     private final String webhookTestSigningSecret = "whtest";
@@ -81,7 +87,7 @@ public class StripeNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
-                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler);
+                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue);
 
         when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
         when(mockCharge.getExternalId()).thenReturn(externalId);
@@ -124,12 +130,41 @@ public class StripeNotificationServiceTest {
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
-                containsString("payout created notification with id [{}], connect account [{}] and body [{}] was received"));
+                containsString("Processing {} payout created notification with id [{}] for connect account [{}]"));
 
         Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(4));
+        assertThat(arguments.length, is(3));
         assertThat(arguments[1], is("evt_aaaaaaaaaaaaaaaaaaaaa"));
         assertThat(arguments[2], is("connect_account_id"));
+    }
+
+    @Test
+    public void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        verify(mockPayoutReconcileQueue).sendPayout(any());
+    }
+
+    @Test
+    public void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.ERROR);
+        root.addAppender(mockAppender);
+
+        doThrow(new QueueException("Failed to send to queue")).when(mockPayoutReconcileQueue).sendPayout(any());
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getMessage(),
+                containsString("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]"));
+
+        Object[] arguments = loggingEvent.getArgumentArray();
+        assertThat(arguments.length, is(3));
+        assertThat(arguments[0], is("connect_account_id"));
+        assertThat(arguments[1], is("po_aaaaaaaaaaaaaaaaaaaaa"));
     }
 
     @Test
@@ -168,27 +203,27 @@ public class StripeNotificationServiceTest {
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.CANCELED));
-    } 
-    
+    }
+
     @Test
     public void shouldUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdated() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
         when(mockCharge.getAmount()).thenReturn(1000L);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
-        
+
         notificationService.handleNotificationFor(payload, signPayload(payload));
-        
+
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
-    
+
     @Test
     public void shouldNotUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdatedButAmountsDontMatch() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
         when(mockCharge.getAmount()).thenReturn(500L);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
-        
+
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(any(), any());
