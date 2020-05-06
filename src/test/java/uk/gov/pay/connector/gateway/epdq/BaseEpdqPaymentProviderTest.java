@@ -40,6 +40,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -113,7 +114,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         when(gatewayConfig.getUrls()).thenReturn(ImmutableMap.of(TEST.toString(), "http://epdq.url"));
 
         when(configuration.getLinks()).thenReturn(linksConfig);
-        when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
+        when(linksConfig.getFrontendUrl()).thenReturn("http://www.frontend.example.com");
 
         provider = new EpdqPaymentProvider(
                 configuration, 
@@ -139,6 +140,10 @@ public abstract class BaseEpdqPaymentProviderTest {
     void verifyPaymentProviderRequest(String requestPayload) {
         verify(mockClientInvocationBuilder).post(Entity.entity(requestPayload,
                 MediaType.APPLICATION_FORM_URLENCODED));
+    }
+    
+    String successAuth3dsRequest() {
+        return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS_REQUEST);
     }
 
     String successAuthRequest() {
@@ -219,7 +224,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("epdq");
         gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of(
+        gatewayAccount.setCredentials(Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "username",
                 CREDENTIALS_PASSWORD, "password",
@@ -229,13 +234,33 @@ public abstract class BaseEpdqPaymentProviderTest {
         return gatewayAccount;
     }
 
+    private GatewayAccountEntity buildTestGatewayAccountWith3DSEntity() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(1L);
+        gatewayAccount.setGatewayName("epdq");
+        gatewayAccount.setRequires3ds(true);
+        gatewayAccount.setIntegrationVersion3ds(1);
+        gatewayAccount.setCredentials(Map.of(
+                CREDENTIALS_MERCHANT_ID, "merchant-id",
+                CREDENTIALS_USERNAME, "username",
+                CREDENTIALS_PASSWORD, "password",
+                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
+        ));
+        gatewayAccount.setType(TEST);
+        return gatewayAccount;
+    }
+
+    CardAuthorisationGatewayRequest buildTestAuthorisation3DSRequest() {
+        return buildTestAuthorisation3DSRequest(buildTestGatewayAccountWith3DSEntity());
+    }
+
     CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
     Auth3dsResponseGatewayRequest buildTestAuthorisation3dsVerifyRequest(String auth3dsFrontendResult) {
         ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .withGatewayAccountEntity(buildTestGatewayAccountWith3DSEntity())
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("payId")
                 .build();
@@ -245,11 +270,19 @@ public abstract class BaseEpdqPaymentProviderTest {
     }
 
     CancelGatewayRequest buildTestCancelRequest() {
-        return buildTestCancelRequest(buildTestGatewayAccountEntity());
+        return buildTestCancelRequest(buildTestGatewayAccountWith3DSEntity());
     }
 
     RefundGatewayRequest buildTestRefundRequest() {
-        return buildTestRefundRequest(buildTestGatewayAccountEntity());
+        return buildTestRefundRequest(buildTestGatewayAccountWith3DSEntity());
+    }
+
+    private CardAuthorisationGatewayRequest buildTestAuthorisation3DSRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
@@ -271,7 +304,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     }
 
     protected ChargeEntity buildChargeEntity() {
-        GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountEntity();
+        GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountWith3DSEntity();
         return buildChargeEntity(gatewayAccountEntity);
     }
 
