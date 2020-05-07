@@ -20,7 +20,7 @@
         <pay-java-commons.version>1.0.20200504084752</pay-java-commons.version>
         <surefire.version>3.0.0-M4</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
-        <jooq.version>3.13.1</jooq.version>
+        <jooq.version>3.13.2</jooq.version>
         <postgresql.version>42.2.12</postgresql.version>
         <commons-lang3.version>3.10</commons-lang3.version>
         <jjwt.version>0.11.1</jjwt.version>
