@@ -20,12 +20,13 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     public static final String EXCEPTIONURL_KEY = "EXCEPTIONURL";
     public static final String FLAG3D_KEY = "FLAG3D";
     public static final String HTTPACCEPT_KEY = "HTTP_ACCEPT";
-    public static final String HTTPUSER_AGENT_URL = "HTTP_USER_AGENT";
+    public static final String HTTPUSER_AGENT_KEY = "HTTP_USER_AGENT";
     public static final String LANGUAGE_URL = "LANGUAGE";
     public static final String PARAMPLUS_URL = "PARAMPLUS";
     public static final String WIN3DS_URL = "WIN3DS";
     
     public static final String DEFAULT_BROWSER_ACCEPT_HEADER = "*/*";
+    public final static String DEFAULT_BROWSER_USER_AGENT = "Mozilla/5.0";
     
     private final String frontendUrl;
 
@@ -51,7 +52,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(FLAG3D_KEY, "Y")
                 .add(HTTPACCEPT_KEY, getBrowserAcceptHeader(templateData))
-                .add(HTTPUSER_AGENT_URL, templateData.getAuthCardDetails().getUserAgentHeader())
+                .add(HTTPUSER_AGENT_KEY, getBrowserUserAgent(templateData))
                 .add(LANGUAGE_URL, "en_GB")
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
@@ -93,5 +94,11 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
         return Optional.ofNullable(templateData.getAuthCardDetails().getAcceptHeader())
                 .filter(not(String::isEmpty))
                 .orElse(DEFAULT_BROWSER_ACCEPT_HEADER);
+    }
+
+    String getBrowserUserAgent(EpdqTemplateData templateData) {
+        return Optional.ofNullable(templateData.getAuthCardDetails().getUserAgentHeader())
+                .filter(not(String::isEmpty))
+                .orElse(DEFAULT_BROWSER_USER_AGENT);
     }
 }

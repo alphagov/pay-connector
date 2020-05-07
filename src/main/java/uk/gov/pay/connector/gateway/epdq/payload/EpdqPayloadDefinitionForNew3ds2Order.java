@@ -24,6 +24,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_SCREEN_WIDTH = "browserScreenWidth";
     public final static String BROWSER_TIMEZONE_OFFSET_MINS = "browserTimezoneOffsetMins";
     public final static String BROWSER_ACCEPT_HEADER = "browserAcceptHeader";
+    public final static String BROWSER_USER_AGENT = "browserUserAgent";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
     public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
@@ -50,7 +51,8 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .add(BROWSER_SCREEN_HEIGHT, getBrowserScreenHeight(templateData))
                 .add(BROWSER_SCREEN_WIDTH, getBrowserScreenWidth(templateData))
                 .add(BROWSER_TIMEZONE_OFFSET_MINS, getBrowserTimezoneOffsetMins(templateData))
-                .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData));
+                .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData))
+                .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData));
 
         return parameterBuilder.build();
     }
@@ -109,8 +111,12 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
         int currentUkOffsetMinsInJavaScriptFormatWithAheadOfUtcNegative = -currentUkOffsetMinsInJavaFormatWithAheadOfUtcPositive;
         return String.valueOf(currentUkOffsetMinsInJavaScriptFormatWithAheadOfUtcNegative);
     }
-
+    
     String getBrowserAcceptHeader(EpdqTemplateData templateData) {
         return super.getBrowserAcceptHeader(templateData);
+    }
+
+    String getBrowserUserAgent(EpdqTemplateData templateData) {
+        return super.getBrowserUserAgent(templateData);
     }
 }
