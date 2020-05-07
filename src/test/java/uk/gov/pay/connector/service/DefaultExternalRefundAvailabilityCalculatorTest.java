@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.service;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -13,8 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static java.time.ZonedDateTime.now;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -43,9 +47,9 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_FULL;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_PENDING;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
+@RunWith(JUnitParamsRunner.class)
 public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     private final DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
@@ -110,17 +114,95 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     }
 
-    private static Charge chargeEntity(ChargeStatus status) {
+    @Test
+    @Parameters({"created", "started", "submitted", "capturable", "success"})
+    public void shouldReturnRefundAvailabilityAsPendingIfChargeIsHistoricButNotRefundable(String status) {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, status, null, null),
+                List.of()), is(EXTERNAL_PENDING));
+    }
+
+    @Test
+    public void shouldReturnRefundAvailabilityAsAvailableIfChargeIsHistoricAndCaptured() {
+        List<RefundEntity> refunds = Arrays.asList(
+                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
+                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
+        );
+        // partially refunded charge
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, "success", "2019-11-11", "2019-11-11T13:01:40.844Z"),
+                refunds), is(EXTERNAL_AVAILABLE));
+        // charge without any refunds
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, "success", "2019-11-11", "2019-11-11T13:01:40.844Z"),
+                List.of()), is(EXTERNAL_AVAILABLE));
+    }
+
+    @Test
+    public void shouldReturnRefundAvailabilityAsFullIfChargeIsHistoricAndFullyRefunded() {
+        List<RefundEntity> refunds = Arrays.asList(
+                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(100L).build(),
+                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(400L).build()
+        );
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, "success", null, "2019-11-11T13:01:40.844Z"),
+                refunds), is(EXTERNAL_FULL));
+    }
+
+    @Test
+    public void shouldReturnRefundAvailabilityAsAvailableIfChargeIsHistoricAndRefundableAfterCaptureSubmitted() {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculateForHistoricCharge(
+                getCharge(true, "success", "2019-11-11", null),
+                List.of(), true), is(EXTERNAL_AVAILABLE));
+    }
+
+    @Test
+    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndNotRefundableWhenInCaptureSubmittedState() {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculateForHistoricCharge(
+                getCharge(true, "success", "2019-11-11", null),
+                List.of(), false), is(EXTERNAL_PENDING));
+    }
+
+    @Test
+    @Parameters({"declined", "timedout", "cancelled", "error"})
+    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndFailed(String status) {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, status, null, null),
+                List.of()), is(EXTERNAL_UNAVAILABLE));
+    }
+
+    @Test
+    @Parameters({"", "unknown", "undefined"})
+    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndExternalStatusIsUnknown(String status) {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, status, null, null),
+                List.of()), is(EXTERNAL_UNAVAILABLE));
+    }
+
+    @Test
+    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndExternalStatusIsEmpty() {
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
+                getCharge(true, null, null, null),
+                List.of()), is(EXTERNAL_UNAVAILABLE));
+    }
+
+    private Charge chargeEntity(ChargeStatus status) {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
-    private static Charge chargeEntity(ChargeStatus status, long amount) {
+    private Charge chargeEntity(ChargeStatus status, long amount) {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );
+    }
+
+    private Charge getCharge(boolean isHistoric, String externalStatus, String captureSubmitTime, String capturedDate) {
+        return new Charge("external-id", 500L, null, externalStatus, "transaction-id",
+                0L, null, "ref-1", "desc", now(),
+                "test@example.org", 123L, "epdq", isHistoric, captureSubmitTime, capturedDate);
     }
 }

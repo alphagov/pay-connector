@@ -236,13 +236,9 @@ public class ChargeRefundService {
                                                      List<RefundEntity> refundEntityList) {
         ExternalChargeRefundAvailability refundAvailability;
 
-        if(charge.isHistoric()) {
-            refundAvailability = ExternalChargeRefundAvailability.from(charge.getRefundAvailabilityStatus());
-        } else {
-            refundAvailability = providers
-                    .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
-                    .getExternalChargeRefundAvailability(charge, refundEntityList);
-        }
+        refundAvailability = providers
+                .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
+                .getExternalChargeRefundAvailability(charge, refundEntityList);
         checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
 
         List<RefundEntity> refundEntities = refundDao.findRefundsByChargeExternalId(charge.getExternalId());

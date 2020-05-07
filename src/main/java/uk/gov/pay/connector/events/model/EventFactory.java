@@ -161,13 +161,9 @@ public class EventFactory {
                         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(c.getExternalId());
                         ExternalChargeRefundAvailability refundAvailability;
 
-                        if(charge.isHistoric()) {
-                            refundAvailability = ExternalChargeRefundAvailability.from(charge.getRefundAvailabilityStatus());
-                        } else {
-                            refundAvailability = paymentProviders
-                                    .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                                    .getExternalChargeRefundAvailability(charge, refundEntityList);
-                        }
+                        refundAvailability = paymentProviders
+                                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+                                .getExternalChargeRefundAvailability(charge, refundEntityList);
 
                         return new RefundAvailabilityUpdated(
                                         c.getExternalId(),
