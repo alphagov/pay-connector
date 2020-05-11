@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class StripeCredentials {
 
+    public static final String STRIPE_ACCOUNT_ID = "stripe_account_id";
     private String accountId;
 
     public StripeCredentials(@JsonProperty("stripe_account_id") String accountId) {
@@ -14,6 +15,6 @@ public class StripeCredentials {
     }
 
     public Map<String, String> toMap() {
-        return ImmutableMap.of("stripe_account_id", accountId);
+        return ImmutableMap.of(STRIPE_ACCOUNT_ID, accountId);
     }
 }
