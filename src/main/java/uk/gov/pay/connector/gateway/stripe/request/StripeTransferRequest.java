@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe.request;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,12 +32,12 @@ public abstract class StripeTransferRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        return Map.of(
-                "amount", amount,
-                "currency", "GBP",
-                "metadata[stripe_charge_id]", stripeChargeId,
-                "metadata[reconciliation_transaction_id]", reconciliationTransactionId
-        );
+        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(this.stripeChargeId, this.reconciliationTransactionId);
+        Map<String, String> baseParams = new HashMap<>();
+        baseParams.put("amount", amount);
+        baseParams.put("currency", "GBP");
+        baseParams.putAll(stripeTransferMetadata.format());
+        return baseParams;
     }
     
     @Override
