@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -33,6 +34,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
     }
 
     @Test
+    @Ignore
     public void shouldRequire3dsFor3ds2AuthoriseRequestWithDefaultParameters() throws Exception {
         mockPaymentProviderResponse(200, successAuth3dResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisation3ds2Request());
@@ -42,6 +44,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
     }
 
     @Test
+    @Ignore
     public void shouldRequire3dsFor3ds2AuthoriseRequestWithProvidedParameters() throws Exception {
         mockPaymentProviderResponse(200, successAuth3dResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisation3ds2RequestWithProvidedParameters());
