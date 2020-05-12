@@ -5,6 +5,7 @@ import junitparams.Parameters;
 import junitparams.converters.Nullable;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +70,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String CURRENCY = "GBP";
     private static final String CARDHOLDER_NAME = "Ms Making A Payment";
     private static final String ADDRESS_CITY = "London";
+    private static final String ADDRESS_COUNTRY = "GB";
     private static final String PSP_ID = "PspId";
     private static final String PASSWORD = "password";
     private static final String USER_ID = "User";
@@ -104,6 +106,12 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         authCardDetails.setUserAgentHeader(USER_AGENT_HEADER);
     }
     
+    @After
+    public void tearDown() {
+        address.setCity(null);
+        address.setCountry(null);
+    }
+
     @Test
     @Parameters({"0", "999999", "100"})
     public void should_include_browserScreenHeight(String screenHeight) {
@@ -257,10 +265,25 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
 
     @Test
-    public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_provided() {
+    public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_not_provided() {
         authCardDetails.setAddress(address);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY, "London"))));
+    }
+
+    @Test
+    public void should_include_ECOM_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_provided() {
+        address.setCountry(ADDRESS_COUNTRY);
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE, "GB")));
+    }
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_not_provided() {
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE, "GB"))));
     }
     
     static class ParameterBuilder {
