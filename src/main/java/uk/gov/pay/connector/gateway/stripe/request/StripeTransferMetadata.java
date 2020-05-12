@@ -4,24 +4,24 @@ import java.util.Map;
 
 public class StripeTransferMetadata {
     public static final String STRIPE_CHARGE_ID_KEY = "stripe_charge_id";
-    public static final String RECONCILIATION_TRANSACTION_ID_KEY = "reconciliation_transaction_id";
+    public static final String GOVUK_PAY_TRANSACTION_EXTERNAL_ID = "govuk_pay_transaction_external_id";
 
     private final String stripeChargeId;
-    private final String reconciliationTransactionId;
+    private final String govukPayTransactionExternalId;
 
     public StripeTransferMetadata(String stripeChargeId, String reconciliationTransactionId) {
         this.stripeChargeId = stripeChargeId;
-        this.reconciliationTransactionId = reconciliationTransactionId;
+        this.govukPayTransactionExternalId = reconciliationTransactionId;
     }
 
     public static StripeTransferMetadata from(Map<String, String> metadata) {
-        return new StripeTransferMetadata(metadata.get(STRIPE_CHARGE_ID_KEY), metadata.get(RECONCILIATION_TRANSACTION_ID_KEY));
+        return new StripeTransferMetadata(metadata.get(STRIPE_CHARGE_ID_KEY), metadata.get(GOVUK_PAY_TRANSACTION_EXTERNAL_ID));
     }
 
     public Map<String, String> format() {
         return Map.of(
                 formatMetadataRequestKey(STRIPE_CHARGE_ID_KEY), this.stripeChargeId,
-                formatMetadataRequestKey(RECONCILIATION_TRANSACTION_ID_KEY), this.reconciliationTransactionId
+                formatMetadataRequestKey(GOVUK_PAY_TRANSACTION_EXTERNAL_ID), this.govukPayTransactionExternalId
         );
     }
     
@@ -33,7 +33,7 @@ public class StripeTransferMetadata {
         return stripeChargeId;
     }
 
-    public String getReconciliationTransactionId() {
-        return reconciliationTransactionId;
+    public String getGovukPayTransactionExternalId() {
+        return govukPayTransactionExternalId;
     }
 }

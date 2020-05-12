@@ -22,9 +22,9 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             String idempotencyKey,
             String transferGroup,
             StripeGatewayConfig stripeGatewayConfig,
-            String reconciliationTransactionId
+            String govukPayTransactionExternalId
     ) {
-        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig, reconciliationTransactionId);
+        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig, govukPayTransactionExternalId);
         this.transferGroup = transferGroup;
     }
 

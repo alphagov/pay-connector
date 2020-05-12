@@ -16,11 +16,11 @@ public class StripeTransferMetadataTest {
     public void shouldDeserialiseFromMetadata() {
         Map<String, String> stripeObjectMetadata = Map.of(
                 "stripe_charge_id", "some-charge-id",
-                "reconciliation_transaction_id", "some-reconciliation-transaction-id"
+                "govuk_pay_transaction_external_id", "some-reconciliation-transaction-id"
         );
         var stripeTransferMetadata = StripeTransferMetadata.from(stripeObjectMetadata);
         assertThat(stripeTransferMetadata.getStripeChargeId(), is("some-charge-id"));
-        assertThat(stripeTransferMetadata.getReconciliationTransactionId(),is("some-reconciliation-transaction-id"));
+        assertThat(stripeTransferMetadata.getGovukPayTransactionExternalId(),is("some-reconciliation-transaction-id"));
     }
 
     @Test
@@ -28,6 +28,6 @@ public class StripeTransferMetadataTest {
         var stripeTransferMetadata = new StripeTransferMetadata("some-charge-id", "some-reconciliation-transaction-id");
         var requestMap = stripeTransferMetadata.format();
         assertThat(requestMap.get("metadata[stripe_charge_id]"), is("some-charge-id"));
-        assertThat(requestMap.get("metadata[reconciliation_transaction_id]"), is("some-reconciliation-transaction-id"));
+        assertThat(requestMap.get("metadata[govuk_pay_transaction_external_id]"), is("some-reconciliation-transaction-id"));
     }
 }

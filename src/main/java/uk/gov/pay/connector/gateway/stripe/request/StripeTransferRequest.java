@@ -10,7 +10,7 @@ import java.util.Map;
 public abstract class StripeTransferRequest extends StripeRequest {
     protected String amount;
     protected String stripeChargeId;
-    protected String reconciliationTransactionId;
+    protected String govukPayTransactionExternalId;
 
     protected StripeTransferRequest(
             String amount,
@@ -18,12 +18,12 @@ public abstract class StripeTransferRequest extends StripeRequest {
             String stripeChargeId,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            String reconciliationTransactionId
+            String govukPayTransactionExternalId
     ) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;
-        this.reconciliationTransactionId = reconciliationTransactionId;
+        this.govukPayTransactionExternalId = govukPayTransactionExternalId;
     }
 
     public String urlPath() {
@@ -32,7 +32,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(this.stripeChargeId, this.reconciliationTransactionId);
+        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(this.stripeChargeId, this.govukPayTransactionExternalId);
         Map<String, String> baseParams = new HashMap<>();
         baseParams.put("amount", amount);
         baseParams.put("currency", "GBP");
