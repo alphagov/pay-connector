@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.service;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -49,7 +47,6 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
-@RunWith(JUnitParamsRunner.class)
 public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     private final DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
@@ -111,79 +108,33 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
         );
 
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L), refunds), is(EXTERNAL_FULL));
-
     }
 
     @Test
-    @Parameters({"created", "started", "submitted", "capturable", "success"})
-    public void shouldReturnRefundAvailabilityAsPendingIfChargeIsHistoricButNotRefundable(String status) {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, status, null, null),
-                List.of()), is(EXTERNAL_PENDING));
-    }
-
-    @Test
-    public void shouldReturnRefundAvailabilityAsAvailableIfChargeIsHistoricAndCaptured() {
-        List<RefundEntity> refunds = Arrays.asList(
+    public void historicCharge_shouldRecalculateAvailabilityIfCurrentAvailabilityIsMutable() {
+        List<RefundEntity> fullRefunds = Arrays.asList(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
+                aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
         );
-        // partially refunded charge
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, "success", "2019-11-11", "2019-11-11T13:01:40.844Z"),
-                refunds), is(EXTERNAL_AVAILABLE));
-        // charge without any refunds
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, "success", "2019-11-11", "2019-11-11T13:01:40.844Z"),
-                List.of()), is(EXTERNAL_AVAILABLE));
-    }
-
-    @Test
-    public void shouldReturnRefundAvailabilityAsFullIfChargeIsHistoricAndFullyRefunded() {
-        List<RefundEntity> refunds = Arrays.asList(
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(100L).build(),
-                aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(400L).build()
+        List<RefundEntity> previouslyFullNowErroredRefunds = Arrays.asList(
+                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
+                aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
+                aValidRefundEntity().withStatus(RefundStatus.REFUND_ERROR).withAmount(200L).build()
         );
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, "success", null, "2019-11-11T13:01:40.844Z"),
-                refunds), is(EXTERNAL_FULL));
+
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_AVAILABLE), fullRefunds), is(EXTERNAL_FULL));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_FULL), previouslyFullNowErroredRefunds), is(EXTERNAL_AVAILABLE));
     }
 
     @Test
-    public void shouldReturnRefundAvailabilityAsAvailableIfChargeIsHistoricAndRefundableAfterCaptureSubmitted() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculateForHistoricCharge(
-                getCharge(true, "success", "2019-11-11", null),
-                List.of(), true), is(EXTERNAL_AVAILABLE));
-    }
+    public void historicCharge_shouldNotRecalculateAvailabilityIfCurrentAvailabilityIsTerminal() {
+        List<RefundEntity> refunds = Arrays.asList(
+                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build()
+        );
 
-    @Test
-    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndNotRefundableWhenInCaptureSubmittedState() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculateForHistoricCharge(
-                getCharge(true, "success", "2019-11-11", null),
-                List.of(), false), is(EXTERNAL_PENDING));
-    }
-
-    @Test
-    @Parameters({"declined", "timedout", "cancelled", "error"})
-    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndFailed(String status) {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, status, null, null),
-                List.of()), is(EXTERNAL_UNAVAILABLE));
-    }
-
-    @Test
-    @Parameters({"", "unknown", "undefined"})
-    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndExternalStatusIsUnknown(String status) {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, status, null, null),
-                List.of()), is(EXTERNAL_UNAVAILABLE));
-    }
-
-    @Test
-    public void shouldReturnRefundAvailabilityAsUnavailableIfChargeIsHistoricAndExternalStatusIsEmpty() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(
-                getCharge(true, null, null, null),
-                List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_UNAVAILABLE), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_PENDING), refunds), is(EXTERNAL_PENDING));
     }
 
     private Charge chargeEntity(ChargeStatus status) {
@@ -200,9 +151,9 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
         );
     }
 
-    private Charge getCharge(boolean isHistoric, String externalStatus, String captureSubmitTime, String capturedDate) {
-        return new Charge("external-id", 500L, null, externalStatus, "transaction-id",
-                0L, null, "ref-1", "desc", now(),
-                "test@example.org", 123L, "epdq", isHistoric, captureSubmitTime, capturedDate);
+    private Charge getHistoricCharge(ExternalChargeRefundAvailability availability) {
+        return new Charge("external-id", 500L, null, "success", "transaction-id",
+                0L, availability.getStatus(), "ref-1", "desc", now(),
+                "test@example.org", 123L, "epdq", true);
     }
 }

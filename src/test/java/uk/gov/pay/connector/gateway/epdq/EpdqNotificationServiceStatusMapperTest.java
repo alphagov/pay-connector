@@ -90,7 +90,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
         notificationService.handleNotificationFor(payload);
-
+        
 
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
@@ -237,10 +237,10 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         notificationService.handleNotificationFor(payload);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
-
-    private Charge getCharge(boolean isHistoric) {
+    
+    private Charge getCharge(boolean isHistoric){
         return new Charge("external-id", 10L, null, null, "transaction-id",
                 10L, null, "ref-1", "desc", now(),
-                "test@example.org", 123L, "epdq", isHistoric, null, null);
+                "test@example.org", 123L, "epdq", isHistoric);
     }
 }

@@ -1,13 +1,10 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
-import uk.gov.pay.connector.paritycheck.SettlementSummary;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
 
 public class Charge {
 
@@ -25,14 +22,10 @@ public class Charge {
     private Long gatewayAccountId;
     private String paymentGatewayName;
     private boolean historic;
-    private String captureSubmitTime;
-    private String capturedDate;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   Long corporateSurcharge, String refundAvailabilityStatus, String reference,
-                  String description, ZonedDateTime createdDate, String email, Long gatewayAccountId,
-                  String paymentGatewayName, boolean historic, String captureSubmitTime,
-                  String capturedDate) {
+                  String description, ZonedDateTime createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -47,8 +40,6 @@ public class Charge {
         this.gatewayAccountId = gatewayAccountId;
         this.paymentGatewayName = paymentGatewayName;
         this.historic = historic;
-        this.captureSubmitTime = captureSubmitTime;
-        this.capturedDate = capturedDate;
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
@@ -58,26 +49,24 @@ public class Charge {
                 chargeEntity.getExternalId(),
                 chargeEntity.getAmount(),
                 chargeEntity.getStatus(),
-                chargeStatus.toExternal().getStatus(),
+                chargeStatus.toExternal().toString(),
                 chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getCorporateSurcharge().orElse(null),
-                null,
+                null, 
                 chargeEntity.getReference().toString(),
                 chargeEntity.getDescription(),
                 chargeEntity.getCreatedDate(),
                 chargeEntity.getEmail(),
                 chargeEntity.getGatewayAccount().getId(),
                 chargeEntity.getPaymentGatewayName().getName(),
-                false,
-                null,
-                null);
+                false);
     }
 
     public static Charge from(LedgerTransaction transaction) {
         String externalRefundState = null;
         String externalStatus = null;
 
-        if (transaction.getRefundSummary() != null) {
+        if (transaction.getRefundSummary() != null ) {
             externalRefundState = transaction.getRefundSummary().getStatus();
         }
 
@@ -99,9 +88,7 @@ public class Charge {
                 transaction.getEmail(),
                 Long.valueOf(transaction.getGatewayAccountId()),
                 transaction.getPaymentProvider(),
-                true,
-                ofNullable(transaction.getSettlementSummary()).map(SettlementSummary::getCaptureSubmitTime).orElse(null),
-                ofNullable(transaction.getSettlementSummary()).map(SettlementSummary::getCapturedDate).orElse(null)
+                true
         );
     }
 
@@ -186,21 +173,5 @@ public class Charge {
 
     public void setHistoric(boolean historic) {
         this.historic = historic;
-    }
-
-    public String getCaptureSubmitTime() {
-        return captureSubmitTime;
-    }
-
-    public void setCaptureSubmitTime(String captureSubmitTime) {
-        this.captureSubmitTime = captureSubmitTime;
-    }
-
-    public String getCapturedDate() {
-        return capturedDate;
-    }
-
-    public void setCapturedDate(String capturedDate) {
-        this.capturedDate = capturedDate;
     }
 }
