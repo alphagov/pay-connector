@@ -26,6 +26,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_USER_AGENT = "browserUserAgent";
     public final static String BROWSER_JAVA_ENABLED = "browserJavaEnabled";
     public final static String ECOM_BILLTO_POSTAL_STREET_LINE1 = "ECOM_BILLTO_POSTAL_STREET_LINE1";
+    public final static String ECOM_BILLTO_POSTAL_STREET_LINE2 = "ECOM_BILLTO_POSTAL_STREET_LINE2";
     public final static String ECOM_BILLTO_POSTAL_CITY = "ECOM_BILLTO_POSTAL_CITY";
     public final static String ECOM_BILLTO_POSTAL_COUNTRYCODE = "ECOM_BILLTO_POSTAL_COUNTRYCODE";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
@@ -61,6 +62,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
         templateData.getAuthCardDetails().getAddress().map(Address::getCity).ifPresent(city -> parameterBuilder.add(ECOM_BILLTO_POSTAL_CITY, city));
         templateData.getAuthCardDetails().getAddress().map(Address::getCountry).ifPresent(country -> parameterBuilder.add(ECOM_BILLTO_POSTAL_COUNTRYCODE, country));
         templateData.getAuthCardDetails().getAddress().map(Address::getLine1).ifPresent(addressLine1 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE1, addressLine1));
+        templateData.getAuthCardDetails().getAddress().map(Address::getLine2).ifPresent(addressLine2 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE2, addressLine2));
         
         return parameterBuilder.build();
     }
