@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
@@ -20,6 +21,7 @@ import java.util.Locale;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_ACCEPT_HEADER;
@@ -66,6 +68,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String AMOUNT = "500";
     private static final String CURRENCY = "GBP";
     private static final String CARDHOLDER_NAME = "Ms Making A Payment";
+    private static final String ADDRESS_CITY = "London";
     private static final String PSP_ID = "PspId";
     private static final String PASSWORD = "password";
     private static final String USER_ID = "User";
@@ -80,6 +83,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
 
     private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
+    private Address address = new Address();
     
     @Before
     public void setup() {
@@ -244,6 +248,21 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         assertThat(result, is(aParameterBuilder().withBrowserJavaEnabled("false").build()));
     }
     
+    @Test
+    public void should_include_ECOM_BILLTO_POSTAL_CITY_if_city_provided() {
+        address.setCity(ADDRESS_CITY);
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY, "London")));
+    }
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_provided() {
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY, "London"))));
+    }
+    
     static class ParameterBuilder {
         private String browserLanguage = "en-GB";
         private String browserScreenHeight = DEFAULT_BROWSER_SCREEN_HEIGHT;
@@ -294,7 +313,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         }
 
         public ParameterBuilder withBrowserJavaEnabled(String browserJavaEnabled) {
-            this.browserAcceptHeader = browserAcceptHeader;
+            this.browserJavaEnabled = browserJavaEnabled;
             return this;
         }
         

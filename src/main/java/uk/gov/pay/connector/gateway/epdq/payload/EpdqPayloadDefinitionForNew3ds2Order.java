@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 
 import java.time.Clock;
@@ -24,6 +25,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_ACCEPT_HEADER = "browserAcceptHeader";
     public final static String BROWSER_USER_AGENT = "browserUserAgent";
     public final static String BROWSER_JAVA_ENABLED = "browserJavaEnabled";
+    public final static String ECOM_BILLTO_POSTAL_CITY = "ECOM_BILLTO_POSTAL_CITY";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
     public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
@@ -53,6 +55,9 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData))
                 .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData))
                 .add(BROWSER_JAVA_ENABLED, "false");
+        
+        templateData.getAuthCardDetails().getAddress().map(Address::getCity).ifPresent(city -> parameterBuilder.add(ECOM_BILLTO_POSTAL_CITY, city));
+        
         return parameterBuilder.build();
     }
 
