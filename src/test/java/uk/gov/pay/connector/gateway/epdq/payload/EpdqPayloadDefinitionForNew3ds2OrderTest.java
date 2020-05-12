@@ -73,6 +73,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String ADDRESS_LINE_1 = "The Money Pool";
     private static final String ADDRESS_LINE_2 = "1 Gold Way";
     private static final String ADDRESS_CITY = "London";
+    private static final String ADDRESS_POSTCODE = "DO11 4RS";
     private static final String ADDRESS_COUNTRY = "GB";
     private static final String PSP_ID = "PspId";
     private static final String PASSWORD = "password";
@@ -115,6 +116,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         address.setCountry(null);
         address.setLine1(null);
         address.setLine2(null);
+        address.setPostcode(null);
     }
 
     @Test
@@ -319,6 +321,21 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         authCardDetails.setAddress(address);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2)));
+    }
+    
+    @Test
+    public void should_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_provided() {
+        address.setPostcode(ADDRESS_POSTCODE);
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE, "DO11 4RS")));
+    }
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_not_provided() {
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));
     }
     
     static class ParameterBuilder {
