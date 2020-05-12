@@ -24,6 +24,7 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_ACCEPT_HEADER;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_COLOR_DEPTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_JAVA_ENABLED;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_WIDTH;
@@ -215,18 +216,18 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
     
     @Test
-    public void should_include_provided_browserAgentHeader() {
-        authCardDetails.setUserAgentHeader("Opera/9.8");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Opera/9.8").build()));
-    }
-
-    @Test
     @Parameters({"null", ""})
     public void browserAcceptHeader_should_include_default_if_browser_accept_header_not_provided(@Nullable String browserAcceptHeader) {
         authCardDetails.setAcceptHeader(browserAcceptHeader);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserAcceptHeader(DEFAULT_BROWSER_ACCEPT_HEADER).build()));
+    }
+
+    @Test
+    public void should_include_provided_browserAgentHeader() {
+        authCardDetails.setUserAgentHeader("Opera/9.8");
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Opera/9.8").build()));
     }
     
     @Test
@@ -235,6 +236,12 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         authCardDetails.setUserAgentHeader(browserAgentHeader);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Mozilla/5.0").build()));
+    }
+
+    @Test
+    public void should_include_browserJavaEnabled_parameter() {
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserJavaEnabled("false").build()));
     }
     
     static class ParameterBuilder {
@@ -245,6 +252,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         private String browserTimezoneOffsetMins = "-60";
         private String browserAcceptHeader = ACCEPT_HEADER;
         private String browserUserAgent = USER_AGENT_HEADER;
+        private String browserJavaEnabled = "false";
         
         public static ParameterBuilder aParameterBuilder() {
             return new ParameterBuilder();
@@ -284,6 +292,11 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             this.browserAcceptHeader = browserAcceptHeader;
             return this;
         }
+
+        public ParameterBuilder withBrowserJavaEnabled(String browserJavaEnabled) {
+            this.browserAcceptHeader = browserAcceptHeader;
+            return this;
+        }
         
         public List<NameValuePair> build() {
             String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
@@ -313,7 +326,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(BROWSER_SCREEN_WIDTH, browserScreenWidth)
                     .add(BROWSER_TIMEZONE_OFFSET_MINS, browserTimezoneOffsetMins)
                     .add(BROWSER_ACCEPT_HEADER, browserAcceptHeader)
-                    .add(BROWSER_USER_AGENT, browserUserAgent);
+                    .add(BROWSER_USER_AGENT, browserUserAgent)
+                    .add(BROWSER_JAVA_ENABLED, browserJavaEnabled);
             return epdqParameterBuilder.build();
         }
     }

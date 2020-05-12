@@ -9,11 +9,9 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static java.util.function.Predicate.not;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionForNew3dsOrder {
@@ -25,6 +23,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_TIMEZONE_OFFSET_MINS = "browserTimezoneOffsetMins";
     public final static String BROWSER_ACCEPT_HEADER = "browserAcceptHeader";
     public final static String BROWSER_USER_AGENT = "browserUserAgent";
+    public final static String BROWSER_JAVA_ENABLED = "browserJavaEnabled";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
     public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
@@ -52,8 +51,8 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .add(BROWSER_SCREEN_WIDTH, getBrowserScreenWidth(templateData))
                 .add(BROWSER_TIMEZONE_OFFSET_MINS, getBrowserTimezoneOffsetMins(templateData))
                 .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData))
-                .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData));
-
+                .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData))
+                .add(BROWSER_JAVA_ENABLED, "false");
         return parameterBuilder.build();
     }
 
