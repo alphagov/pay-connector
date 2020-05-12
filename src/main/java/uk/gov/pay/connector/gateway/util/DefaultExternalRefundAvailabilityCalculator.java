@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.util;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -45,6 +44,7 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
             CAPTURE_SUBMITTED
     );
     private static final List<ChargeStatus> STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL = ImmutableList.of(CAPTURED);
+    private static final List<ExternalChargeRefundAvailability> MUTABLE_REFUND_STATES = ImmutableList.of(EXTERNAL_AVAILABLE, EXTERNAL_FULL);
 
     @Override
     public ExternalChargeRefundAvailability calculate(Charge charge, List<RefundEntity> refundEntityList) {
@@ -54,16 +54,31 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
     protected ExternalChargeRefundAvailability calculate(Charge charge, List<ChargeStatus> statusesThatMapToExternalPending,
                                                          List<ChargeStatus> statusesThatMapToExternalAvailableOrExternalFull,
                                                          List<RefundEntity> refundEntityList) {
-        if (chargeIsPending(charge, statusesThatMapToExternalPending)) {
-            return EXTERNAL_PENDING;
-        } else if (chargeIsAvailableOrFull(charge, statusesThatMapToExternalAvailableOrExternalFull)) {
-            if (RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList) > 0) {
-                return EXTERNAL_AVAILABLE;
+        if (charge.isHistoric()) {
+            ExternalChargeRefundAvailability currentChargeRefundAvailability = ExternalChargeRefundAvailability.from(charge.getRefundAvailabilityStatus());
+
+            if (MUTABLE_REFUND_STATES.contains(currentChargeRefundAvailability)) {
+                return calculateRefundAvailability(charge, refundEntityList);
             } else {
-                return EXTERNAL_FULL;
+                return currentChargeRefundAvailability;
             }
+        } else {
+            if (chargeIsPending(charge, statusesThatMapToExternalPending)) {
+                return EXTERNAL_PENDING;
+            } else if (chargeIsAvailableOrFull(charge, statusesThatMapToExternalAvailableOrExternalFull)) {
+                return calculateRefundAvailability(charge, refundEntityList);
+            }
+            return EXTERNAL_UNAVAILABLE;
         }
-        return EXTERNAL_UNAVAILABLE;
+    }
+
+    private ExternalChargeRefundAvailability calculateRefundAvailability(Charge charge, List<RefundEntity> refundEntityList) {
+        long amountAvailableToBeRefunded = RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList);
+        if (amountAvailableToBeRefunded > 0) {
+            return EXTERNAL_AVAILABLE;
+        } else {
+            return EXTERNAL_FULL;
+        }
     }
 
     private boolean chargeIsAvailableOrFull(Charge charge, List<ChargeStatus> statusesThatMapToExternalAvailableOrExternalFull) {
