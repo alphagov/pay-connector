@@ -18,7 +18,7 @@ public class StripeTransferMetadata {
         return new StripeTransferMetadata(metadata.get(STRIPE_CHARGE_ID_KEY), metadata.get(GOVUK_PAY_TRANSACTION_EXTERNAL_ID));
     }
 
-    public Map<String, String> format() {
+    public Map<String, String> getParams() {
         return Map.of(
                 formatMetadataRequestKey(STRIPE_CHARGE_ID_KEY), this.stripeChargeId,
                 formatMetadataRequestKey(GOVUK_PAY_TRANSACTION_EXTERNAL_ID), this.govukPayTransactionExternalId
@@ -26,7 +26,7 @@ public class StripeTransferMetadata {
     }
     
     private String formatMetadataRequestKey(String key) {
-        return "metadata[" + key + "]";
+        return String.format("metadata[%s]", key);
     }
 
     public String getStripeChargeId() {

@@ -36,7 +36,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
         Map<String, String> baseParams = new HashMap<>();
         baseParams.put("amount", amount);
         baseParams.put("currency", "GBP");
-        baseParams.putAll(stripeTransferMetadata.format());
+        baseParams.putAll(stripeTransferMetadata.getParams());
         return baseParams;
     }
     

@@ -82,6 +82,7 @@ public class StripeTransferInRequestTest {
         assertThat(payload, containsString("expand%5B%5D=destination_payment"));
         assertThat(payload, containsString("currency=GBP"));
         assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + stripeChargeId));
+        assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + refundExternalId));
     }
     
     @Test

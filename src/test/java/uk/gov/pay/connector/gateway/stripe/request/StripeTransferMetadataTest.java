@@ -26,7 +26,7 @@ public class StripeTransferMetadataTest {
     @Test
     public void shouldSeraliseToMetadata() {
         var stripeTransferMetadata = new StripeTransferMetadata("some-charge-id", "some-reconciliation-transaction-id");
-        var requestMap = stripeTransferMetadata.format();
+        var requestMap = stripeTransferMetadata.getParams();
         assertThat(requestMap.get("metadata[stripe_charge_id]"), is("some-charge-id"));
         assertThat(requestMap.get("metadata[govuk_pay_transaction_external_id]"), is("some-reconciliation-transaction-id"));
     }
