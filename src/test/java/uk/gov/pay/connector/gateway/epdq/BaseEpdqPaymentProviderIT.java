@@ -256,6 +256,7 @@ public abstract class BaseEpdqPaymentProviderIT {
     private GatewayAccountEntity buildTestGatewayAccountWith3ds2Entity() {
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountWith3dsEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
+        gatewayAccount.setSendPayerIpAddressToGateway(true);
         return gatewayAccount;
     }
 
@@ -316,13 +317,24 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .build();
-
+        
+        Address address = new Address();
+        address.setLine1("The Money Pool");
+        address.setLine2("1 Gold Way");
+        address.setPostcode("DO11 4RS");
+        address.setCity("London");
+        address.setCountry("GB");
+        
         AuthCardDetails authCardDetails = buildTestAuthCardDetails();
         authCardDetails.setJsScreenColorDepth("15");
         authCardDetails.setJsScreenHeight("1500");
         authCardDetails.setJsScreenWidth("1000");
         authCardDetails.setJsTimezoneOffsetMins("3");
         authCardDetails.setJsNavigatorLanguage("cy");
+        authCardDetails.setAcceptHeader("text/html");
+        authCardDetails.setUserAgentHeader("Opera/9.0");
+        authCardDetails.setIpAddress("8.8.8.8");
+        authCardDetails.setAddress(address);
         
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
