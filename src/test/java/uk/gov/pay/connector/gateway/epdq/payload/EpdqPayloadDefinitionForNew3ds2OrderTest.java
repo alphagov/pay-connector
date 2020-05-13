@@ -75,17 +75,19 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String ADDRESS_CITY = "London";
     private static final String ADDRESS_POSTCODE = "DO11 4RS";
     private static final String ADDRESS_COUNTRY = "GB";
+    private static final String IP_ADDRESS = "8.8.8.8";
     private static final String PSP_ID = "PspId";
     private static final String PASSWORD = "password";
     private static final String USER_ID = "User";
     private static final String FRONTEND_URL = "http://www.frontend.example.com";
     private static final String ACCEPT_HEADER = "image/*";
     private static final String USER_AGENT_HEADER = "Chrome/9.0";
+    private static final boolean SEND_PAYER_IP_ADDRESS_TO_GATEWAY = false;
     private static final Clock BRITISH_SUMMER_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-05-06T10:10:10.100Z"), ZoneOffset.UTC);
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
     
     private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = 
-            new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+            new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
 
     private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
@@ -117,6 +119,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         address.setLine1(null);
         address.setLine2(null);
         address.setPostcode(null);
+        authCardDetails.setIpAddress(null);
     }
 
     @Test
@@ -165,7 +168,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Test
     @Parameters({"ENGLISH, en-GB", "WELSH, cy"})
     public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
-        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, language, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
@@ -211,7 +214,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"null", "-900", "800", "invalid", "0x6", "123L", "1.2"})
     public void should_include_default_browserTimezoneOffsetMins_for_summer_time_when_timezone_offset_provided_is_invalid
             (@Nullable String timeZoneOffsetMins) {
-        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("-60").build()));
@@ -221,7 +224,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"null", "-900", "800", "invalid", "0x6", "123L", "1.2"})
     public void should_include_default_browserTimezoneOffsetMins_for_Gmt_when_timezone_offset_provided_is_invalid
             (@Nullable String timeZoneOffsetMins) {
-        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("0").build()));
@@ -336,6 +339,30 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         authCardDetails.setAddress(address);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));
+    }
+
+    @Test
+    public void should_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_enabled_on_gateway() {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
+        authCardDetails.setIpAddress(IP_ADDRESS);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR, "8.8.8.8")));
+    }
+
+    @Test
+    public void should_not_include_REMOTE_ADDR_if_Ip_address_not_provided_and_sending_Ip_enabled_on_gateway() {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
+        authCardDetails.setIpAddress(null);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
+    }
+
+    @Test
+    public void should_not_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_not_enabled_on_gateway() {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
+        authCardDetails.setIpAddress(IP_ADDRESS);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
     }
     
     static class ParameterBuilder {

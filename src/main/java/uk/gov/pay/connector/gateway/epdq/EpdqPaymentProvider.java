@@ -322,7 +322,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         
         if (request.getGatewayAccount().isRequires3ds()) {
             if (request.getGatewayAccount().getIntegrationVersion3ds() == 2) {
-                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3ds2Order(frontendUrl, request.getCharge().getLanguage(), clock);
+                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3ds2Order(frontendUrl, request.getGatewayAccount().isSendPayerIpAddressToGateway(), request.getCharge().getLanguage(), clock);
             } else {
                 epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl);
             }

@@ -30,6 +30,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String ECOM_BILLTO_POSTAL_CITY = "ECOM_BILLTO_POSTAL_CITY";
     public final static String ECOM_BILLTO_POSTAL_COUNTRYCODE = "ECOM_BILLTO_POSTAL_COUNTRYCODE";
     public final static String ECOM_BILLTO_POSTAL_POSTALCODE = "ECOM_BILLTO_POSTAL_POSTALCODE";
+    public final static String REMOTE_ADDR = "REMOTE_ADDR";
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
     public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
@@ -38,11 +39,13 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     private final static Pattern NUMBER_FROM_MINUS_999_TO_999 = Pattern.compile("-[1-9][0-9]{0,2}|0|[1-9][0-9]{0,2}");
     private final static Set<String> VALID_SCREEN_COLOR_DEPTHS = Set.of("1", "2", "4", "8", "15", "16", "24", "32");
     
+    private final boolean sendPayerIpAddressToGateway;
     private final SupportedLanguage paymentLanguage;
     private final Clock clock;
 
-    public EpdqPayloadDefinitionForNew3ds2Order(String frontendUrl, SupportedLanguage paymentLanguage, Clock clock) {
+    public EpdqPayloadDefinitionForNew3ds2Order(String frontendUrl, boolean sendPayerIpAddressToGateway, SupportedLanguage paymentLanguage, Clock clock) {
         super(frontendUrl);
+        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
         this.paymentLanguage = paymentLanguage;
         this.clock = clock;
     }
@@ -66,6 +69,10 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
         templateData.getAuthCardDetails().getAddress().map(Address::getLine2).ifPresent(addressLine2 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE2, addressLine2));
         templateData.getAuthCardDetails().getAddress().map(Address::getPostcode).ifPresent(addressPostCode -> parameterBuilder.add(ECOM_BILLTO_POSTAL_POSTALCODE, addressPostCode));
         
+        if (sendPayerIpAddressToGateway) {
+            templateData.getAuthCardDetails().getIpAddress().ifPresent(ipAddress -> parameterBuilder.add(REMOTE_ADDR, ipAddress));
+        }
+
         return parameterBuilder.build();
     }
 
