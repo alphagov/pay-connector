@@ -25,6 +25,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
 | `DISABLE_INTERNAL_HTTPS` | false | disable secure connection for calls to internal APIs |
 | `DEFAULT_DO_NOT_RETRY_EMITTING_EVENT_UNTIL_DURATION_IN_SECONDS` | 7200 | Sets the default duration in seconds for events (emitted by parity checker worker) until which the emitted events sweeper ignores to re-emit. Value can be overridden by passing `do_not_retry_emit_until` query parameter to parity checker worker or historical event emitter tasks |
+| `EMIT_PAYOUT_EVENTS` | false | enable or disable emitting payout specific events to payment queue |
 
 
 ### Queues
