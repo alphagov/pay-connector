@@ -100,7 +100,7 @@ public class PayoutReconcileProcess {
     }
 
     private String getStripeApiKey(String stripeAccountId) {
-        return gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID, stripeAccountId)
+        return gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId)
                 .map(gatewayAccountEntity ->
                         gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest())
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account with Stripe connect account ID %s not found.", stripeAccountId)));

@@ -13,7 +13,6 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.queue.QueueMessage;
 import uk.gov.pay.connector.queue.payout.Payout;
@@ -58,7 +57,7 @@ public class PayoutReconcileProcessTest {
     @Before
     public void setUp() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(GatewayAccountEntity.Type.TEST).build();
-        when(gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID, stripeAccountId))
+        when(gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId))
                 .thenReturn(Optional.of(gatewayAccountEntity));
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getTest()).thenReturn(stripeApiKey);
