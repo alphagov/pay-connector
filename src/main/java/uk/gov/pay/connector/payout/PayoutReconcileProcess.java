@@ -75,7 +75,7 @@ public class PayoutReconcileProcess {
                                 case "payout":
                                     break;
                                 default:
-                                    LOGGER.warn("Payout [{}] for connect account [{}] contains balance transfer of type [{}], which is unexpected",
+                                    LOGGER.error("Payout [{}] for connect account [{}] contains balance transfer of type [{}], which is unexpected.",
                                             payoutReconcileMessage.getGatewayPayoutId(),
                                             payoutReconcileMessage.getConnectAccountId(),
                                             balanceTransaction.getType());
@@ -83,13 +83,18 @@ public class PayoutReconcileProcess {
                             }
                         });
 
-                LOGGER.info("Finished processing payout [{}] for connect account [{}]. Emitted events for {} payments and {} refunds.",
-                        payoutReconcileMessage.getGatewayPayoutId(),
-                        payoutReconcileMessage.getConnectAccountId(),
-                        payments,
-                        refunds);
+                if (payments.intValue() == 0 && refunds.intValue() == 0) {
+                    LOGGER.error("No payments or refunds retrieved for payout [{}] for connect account [{}]. Requires investigation.", 
+                            payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId());
+                } else {
+                    LOGGER.info("Finished processing payout [{}] for connect account [{}]. Emitted events for {} payments and {} refunds.",
+                            payoutReconcileMessage.getGatewayPayoutId(),
+                            payoutReconcileMessage.getConnectAccountId(),
+                            payments.intValue(),
+                            refunds.intValue());
 
-                payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+                    payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+                }
             } catch (Exception e) {
                 LOGGER.warn("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
                         payoutReconcileMessage.getQueueMessageId(),
