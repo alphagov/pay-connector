@@ -9,4 +9,8 @@ public class GatewayAccountNotFoundException extends WebApplicationException {
     public GatewayAccountNotFoundException(Long accountId) {
         super(notFoundResponse(format("Gateway Account with id [%s] not found.", accountId)));
     }
+    
+    public GatewayAccountNotFoundException(String message) {
+        super(notFoundResponse(format(message)));
+    }
 }
