@@ -163,6 +163,7 @@ graphitePort: ${METRICS_PORT:-8092}
 
 xrayEnabled: false
 emitPaymentStateTransitionEvents: ${EMIT_PAYMENT_STATE_TRANSITION_EVENTS:-true}
+emitPayoutEvents: ${EMIT_PAYOUT_EVENTS:-false}
 
 chargesSweepConfig:
   defaultChargeExpiryThreshold: ${CHARGE_EXPIRY_WINDOW_SECONDS:-5400}
