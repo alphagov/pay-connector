@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
+import uk.gov.pay.connector.events.model.ResourceType;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -239,7 +240,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         entityManager.get()
                 .createNativeQuery("delete from emitted_events where resource_type = ?1 AND resource_external_id = ?2")
-                .setParameter(1, "PAYMENT")
+                .setParameter(1, ResourceType.PAYMENT.getLowercase())
                 .setParameter(2, externalId)
                 .executeUpdate();
 
