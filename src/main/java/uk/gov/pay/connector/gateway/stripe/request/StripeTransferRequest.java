@@ -3,23 +3,27 @@ package uk.gov.pay.connector.gateway.stripe.request;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class StripeTransferRequest extends StripeRequest {
     protected String amount;
     protected String stripeChargeId;
+    protected String govukPayTransactionExternalId;
 
     protected StripeTransferRequest(
             String amount,
             GatewayAccountEntity gatewayAccount,
             String stripeChargeId,
             String idempotencyKey,
-            StripeGatewayConfig stripeGatewayConfig
+            StripeGatewayConfig stripeGatewayConfig,
+            String govukPayTransactionExternalId
     ) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;
+        this.govukPayTransactionExternalId = govukPayTransactionExternalId;
     }
 
     public String urlPath() {
@@ -28,11 +32,12 @@ public abstract class StripeTransferRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        return Map.of(
-                "amount", amount,
-                "currency", "GBP",
-                "metadata[stripe_charge_id]", stripeChargeId
-        );
+        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(this.stripeChargeId, this.govukPayTransactionExternalId);
+        Map<String, String> baseParams = new HashMap<>();
+        baseParams.put("amount", amount);
+        baseParams.put("currency", "GBP");
+        baseParams.putAll(stripeTransferMetadata.getParams());
+        return baseParams;
     }
     
     @Override

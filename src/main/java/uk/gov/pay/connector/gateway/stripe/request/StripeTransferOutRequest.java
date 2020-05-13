@@ -14,9 +14,10 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
                                      GatewayAccountEntity gatewayAccount,
                                      String sourceTransactionId,
                                      String idempotencyKey,
-                                     StripeGatewayConfig stripeGatewayConfig
+                                     StripeGatewayConfig stripeGatewayConfig,
+                                     String govukPayTransactionExternalId
     ) {
-        super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig);
+        super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig, govukPayTransactionExternalId);
     }
 
     public static StripeTransferOutRequest of(String amount, String stripeChargeId, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
@@ -25,7 +26,8 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
                 request.getGatewayAccount(),
                 stripeChargeId,
                 request.getExternalId(),
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                request.getExternalId()
         );
     }
 
