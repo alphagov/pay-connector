@@ -239,7 +239,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .executeUpdate();
 
         entityManager.get()
-                .createNativeQuery("delete from emitted_events where resource_type = ?1 AND resource_external_id = ?2")
+                .createNativeQuery("delete from emitted_events_swp where resource_type = ?1 AND resource_external_id = ?2")
                 .setParameter(1, ResourceType.PAYMENT.getLowercase())
                 .setParameter(2, externalId)
                 .executeUpdate();
