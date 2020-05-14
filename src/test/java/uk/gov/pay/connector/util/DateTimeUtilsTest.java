@@ -9,9 +9,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.core.StringEndsWith.endsWith;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DateTimeUtilsTest {
@@ -72,5 +73,22 @@ public class DateTimeUtilsTest {
         ZonedDateTime now2 = ZonedDateTime.of(LocalDate.of(2016, 6, 19), LocalTime.of(0, 22), ZoneId.of("Europe/London"));
         String output2 = DateTimeUtils.toUTCDateString(now2);
         assertThat(output2, is("2016-06-18"));
+    }
+
+    @Test
+    public void shouldConvertUnixEpochTimeToUTCZonedDateTime() {
+        ZonedDateTime zonedDateTime1 = DateTimeUtils.toUTCZonedDateTime(1L);
+        assertThat(zonedDateTime1.toString(), is("1970-01-01T00:00:01Z"));
+
+        ZonedDateTime zonedDateTime2 = DateTimeUtils.toUTCZonedDateTime(1589395533L);
+        assertThat(zonedDateTime2.toString(), is("2020-05-13T18:45:33Z"));
+    }
+
+    @Test
+    public void shouldReturnNullIfUnixEpochTimeIsNull() {
+        Long epochTime = null;
+        ZonedDateTime zonedDateTime = DateTimeUtils.toUTCZonedDateTime(epochTime);
+
+        assertThat(zonedDateTime, is(nullValue()));
     }
 }
