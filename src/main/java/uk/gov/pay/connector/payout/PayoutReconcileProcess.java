@@ -1,9 +1,16 @@
 package uk.gov.pay.connector.payout;
 
+import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
+import com.stripe.model.Transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
+import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
@@ -23,17 +30,23 @@ public class PayoutReconcileProcess {
     private PayoutReconcileQueue payoutReconcileQueue;
     private StripeClientWrapper stripeClientWrapper;
     private StripeGatewayConfig stripeGatewayConfig;
+    private ConnectorConfiguration connectorConfiguration;
     private GatewayAccountDao gatewayAccountDao;
+    private EventService eventService;
 
     @Inject
     public PayoutReconcileProcess(PayoutReconcileQueue payoutReconcileQueue,
                                   StripeClientWrapper stripeClientWrapper,
                                   StripeGatewayConfig stripeGatewayConfig,
-                                  GatewayAccountDao gatewayAccountDao) {
+                                  ConnectorConfiguration connectorConfiguration,
+                                  GatewayAccountDao gatewayAccountDao,
+                                  EventService eventService) {
         this.payoutReconcileQueue = payoutReconcileQueue;
         this.stripeClientWrapper = stripeClientWrapper;
         this.stripeGatewayConfig = stripeGatewayConfig;
+        this.connectorConfiguration = connectorConfiguration;
         this.gatewayAccountDao = gatewayAccountDao;
+        this.eventService = eventService;
     }
 
     public void processPayouts() throws QueueException {
@@ -48,27 +61,19 @@ public class PayoutReconcileProcess {
 
                 AtomicInteger payments = new AtomicInteger();
                 AtomicInteger refunds = new AtomicInteger();
-                
+
                 stripeClientWrapper.getBalanceTransactionsForPayout(payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId(), apiKey)
                         .forEach(balanceTransaction -> {
                             switch (balanceTransaction.getType()) {
                                 case "payment":
-                                    var paymentSource = (Charge) balanceTransaction.getSourceObject();
-                                    var paymentSourceTransfer = paymentSource.getSourceTransferObject();
-                                    String paymentExternalId = paymentSourceTransfer.getTransferGroup();
-                                    
-                                    // TODO emit transaction event
-                                    LOGGER.info("Payout [{}] includes payment [{}]", payoutReconcileMessage.getGatewayPayoutId(), paymentExternalId);
+                                    emitPaymentEvent(payoutReconcileMessage, balanceTransaction);
                                     payments.getAndIncrement();
                                     break;
                                 // Refunds have a balance transaction of type "transfer" as refunds are made from our 
                                 // Platform Stripe account, and then a transfer is made for the amount from the connect
                                 // account.
                                 case "transfer":
-                                    String transferId = balanceTransaction.getSource();
-                                    
-                                    // TODO emit transaction event
-                                    LOGGER.info("Payout [{}] includes transfer (refund) [{}]", payoutReconcileMessage.getGatewayPayoutId(), transferId);
+                                    emitRefundEvent(payoutReconcileMessage, balanceTransaction);
                                     refunds.getAndIncrement();
                                     break;
                                 // There is a balance transaction for the payout itself, ignore this.
@@ -84,7 +89,7 @@ public class PayoutReconcileProcess {
                         });
 
                 if (payments.intValue() == 0 && refunds.intValue() == 0) {
-                    LOGGER.error("No payments or refunds retrieved for payout [{}] for connect account [{}]. Requires investigation.", 
+                    LOGGER.error("No payments or refunds retrieved for payout [{}] for connect account [{}]. Requires investigation.",
                             payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId());
                 } else {
                     LOGGER.info("Finished processing payout [{}] for connect account [{}]. Emitted events for {} payments and {} refunds.",
@@ -109,5 +114,46 @@ public class PayoutReconcileProcess {
                 .map(gatewayAccountEntity ->
                         gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest())
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account with Stripe connect account ID %s not found.", stripeAccountId)));
+    }
+
+    private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
+        var paymentSource = (Charge) balanceTransaction.getSourceObject();
+        var paymentSourceTransfer = paymentSource.getSourceTransferObject();
+        var metadata = StripeTransferMetadata.from(paymentSourceTransfer.getMetadata());
+        var paymentExternalId = metadata.getGovukPayTransactionExternalId();
+        
+        if (connectorConfiguration.getEmitPayoutEvents()) {
+            var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
+                    payoutReconcileMessage.getGatewayPayoutId(),
+                    payoutReconcileMessage.getCreatedDate());
+            try {
+                eventService.emitEvent(paymentEvent, false);
+            } catch (QueueException e) {
+                throw new RuntimeException(format("Error sending event for payment [%s] included in payout [%s] to event queue: %s", 
+                        paymentExternalId, payoutReconcileMessage.getGatewayPayoutId(), e.getMessage()), e);
+            }
+        }
+
+        LOGGER.info("Emitted event for payment [{}] included in payout [{}]", paymentExternalId, payoutReconcileMessage.getGatewayPayoutId());
+    }
+
+    private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
+        var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
+        var metadata = StripeTransferMetadata.from(sourceTransfer.getMetadata());
+        var refundExternalId = metadata.getGovukPayTransactionExternalId();
+        
+        if (connectorConfiguration.getEmitPayoutEvents()) {
+            var refundEvent = new RefundIncludedInPayout(refundExternalId,
+                    payoutReconcileMessage.getGatewayPayoutId(),
+                    payoutReconcileMessage.getCreatedDate());
+            try {
+                eventService.emitEvent(refundEvent, false);
+            } catch (QueueException e) {
+                throw new RuntimeException(format("Error sending event for refund [%s] included in payout [%s] to event queue: %s",
+                        refundExternalId, payoutReconcileMessage.getGatewayPayoutId(), e.getMessage()), e);
+            }
+        }
+
+        LOGGER.info("Emitted event for refund [{}] included in payout [{}]", refundExternalId, payoutReconcileMessage.getGatewayPayoutId());
     }
 }
