@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -7,6 +8,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+
+import static java.time.Instant.ofEpochSecond;
+import static java.time.ZonedDateTime.ofInstant;
+import static java.util.Objects.isNull;
 
 public class DateTimeUtils {
 
@@ -35,6 +40,26 @@ public class DateTimeUtils {
             return Optional.of(utcDateTime);
         } catch (DateTimeParseException ex) {
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Converts Epoch time (number of seconds that have elapsed since Unix epoch time which is 00:00:00 UTC on 1 January 1970)
+     * to a UTC ZonedDateTime
+     * <p>
+     * e.g. <br/>
+     * 1) 1 ==>  ZonedDateTime("1970-01-01T00:00:01Z"). 1 Second from Unix epoch time<br/>
+     * 2) 1000 ==>  ZonedDateTime("1970-01-01T00:16:40Z"). 1000 seconds from Unix epoch time<br/>
+     * </p>
+     * @param epochSecond
+     * @return @ZonedDateTime instance represented by dateString in UTC ("Z") or null if `epochSecond` is null
+     */
+    public static ZonedDateTime toUTCZonedDateTime(Long epochSecond) {
+        if (isNull(epochSecond)) {
+            return null;
+        } else {
+            Instant instant = ofEpochSecond(epochSecond);
+            return ofInstant(instant, UTC);
         }
     }
 
