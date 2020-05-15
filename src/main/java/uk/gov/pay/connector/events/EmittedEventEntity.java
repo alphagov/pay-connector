@@ -13,7 +13,7 @@ import javax.persistence.Table;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "emitted_events_swp")
+@Table(name = "emitted_events")
 @SequenceGenerator(name = "emitted_events_id_seq",
         sequenceName = "emitted_events_id_seq", allocationSize = 1)
 public class EmittedEventEntity {
