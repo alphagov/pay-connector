@@ -379,7 +379,7 @@ public class DatabaseTestHelper {
 
     public boolean containsEmittedEventWithExternalId(String externalId) {
         var result = jdbi.withHandle(h ->
-                h.createQuery("SELECT count(*) FROM emitted_events WHERE resource_external_id = :external_id")
+                h.createQuery("SELECT count(*) FROM emitted_events_swp WHERE resource_external_id = :external_id")
                         .bind("external_id", externalId)
                         .mapTo(Integer.class)
                         .first());
@@ -747,12 +747,12 @@ public class DatabaseTestHelper {
     }
 
     public void truncateEmittedEvents() {
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events_swp").execute());
     }
 
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE gateway_accounts CASCADE").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events_swp CASCADE").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE tokens").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds_history").execute());
@@ -798,7 +798,7 @@ public class DatabaseTestHelper {
                                 Instant emittedDate, Instant doNotRetryEmitUntil) {
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("INSERT INTO emitted_events(resource_type, resource_external_id, event_date, " +
+                        .createUpdate("INSERT INTO emitted_events_swp(resource_type, resource_external_id, event_date, " +
                                 " event_type, emitted_date, do_not_retry_emit_until) VALUES (:resourceType, :externalId, :eventDate, " +
                                 " :eventType, :emittedDate, :doNotRetryEmitUntil)")
                         .bind("resourceType", resourceType)
@@ -813,7 +813,7 @@ public class DatabaseTestHelper {
 
     public Map<String, Object> readEmittedEvent(Long id) {
         return jdbi.withHandle(handle ->
-                handle.createQuery("SELECT * from emitted_events WHERE id = :id")
+                handle.createQuery("SELECT * from emitted_events_swp WHERE id = :id")
                         .bind("id", id)
                         .mapToMap()
                         .first()
@@ -822,7 +822,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> readEmittedEvents() {
         return jdbi.withHandle(handle ->
-                handle.createQuery("SELECT * from emitted_events")
+                handle.createQuery("SELECT * from emitted_events_swp")
                         .mapToMap()
                         .list()
         );
