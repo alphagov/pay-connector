@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.dropwizard.jackson.Jackson;
-import uk.gov.pay.connector.events.serializer.MicrosecondPrecisionDateTimeSerializer;
+import uk.gov.pay.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
