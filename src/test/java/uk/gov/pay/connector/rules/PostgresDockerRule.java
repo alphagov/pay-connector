@@ -47,11 +47,6 @@ public class PostgresDockerRule implements TestRule {
         return container.getPassword();
     }
 
-    public void stop() {
-        container.stop();
-        container = null;
-    }
-
     public String getDriverClass() {
         return "org.postgresql.Driver";
     }
