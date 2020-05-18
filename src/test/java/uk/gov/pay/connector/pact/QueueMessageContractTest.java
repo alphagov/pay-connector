@@ -186,7 +186,7 @@ public class QueueMessageContractTest {
     public String verifyPayoutCreatedEvent() throws JsonProcessingException {
         StripePayout payout = new StripePayout("po_1234567890", 1000L, 1589395533L,
                 1589395500L, "pending", "bank_account", "SERVICE NAME");
-        PayoutCreated payoutCreated = from(payout);
+        PayoutCreated payoutCreated = from(123456789L, payout);
 
         return payoutCreated.toJsonString();
     }

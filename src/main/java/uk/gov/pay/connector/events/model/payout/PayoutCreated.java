@@ -11,10 +11,11 @@ public class PayoutCreated extends PayoutEvent {
         super(resourceExternalId, eventDetails, timestamp);
     }
 
-    public static PayoutCreated from(StripePayout payout) {
+    public static PayoutCreated from(Long gatewayAccountId, StripePayout payout) {
         return new PayoutCreated(
                 payout.getId(),
                 new PayoutCreatedEventDetails(
+                        gatewayAccountId,
                         payout.getAmount(),
                         payout.getArrivalDate(),
                         payout.getStatus(),
