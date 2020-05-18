@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events;
+package uk.gov.pay.connector.events.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;

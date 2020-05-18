@@ -122,7 +122,7 @@ public class StripeNotificationService {
                 PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount());
         try {
             StripePayout stripePayout = toPayout(notification.getObject());
-            Payout payout = new Payout(stripePayout.getId(), notification.getAccount());
+            Payout payout = new Payout(stripePayout.getId(), notification.getAccount(), stripePayout.getCreated());
 
             sendToPayoutReconcileQueue(notification.getAccount(), payout);
         } catch (StripeParseException e ) {
