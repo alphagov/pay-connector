@@ -61,16 +61,7 @@ abstract public class DaoITestBase {
 
     @AfterClass
     public static void tearDown() {
-//        Connection connection;
-        try {
-            Connection connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword());
-            Liquibase migrator = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
-            migrator.dropAll();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        env.stop();
+        databaseTestHelper.truncateAllData();
     }
 
 }
