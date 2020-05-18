@@ -23,11 +23,13 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,6 +78,9 @@ public class StripeNotificationServiceTest {
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    
+    @Captor
+    private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
     private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(new ObjectMapper());
 
@@ -142,8 +147,12 @@ public class StripeNotificationServiceTest {
     public void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
-
-        verify(mockPayoutReconcileQueue).sendPayout(any());
+        
+        verify(mockPayoutReconcileQueue).sendPayout(payoutArgumentCaptor.capture());
+        Payout payout = payoutArgumentCaptor.getValue();
+        assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(payout.getConnectAccountId(), is("connect_account_id"));
+        assertThat(payout.getCreatedDate(), is(ZonedDateTime.parse("2020-03-24T01:30:46Z")));
     }
 
     @Test

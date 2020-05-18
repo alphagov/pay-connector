@@ -19,6 +19,7 @@ import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,7 +66,7 @@ public class PayoutReconcileProcessTest {
     @Test
     public void shouldMarkMessageAsProcessedIfPayoutIsProcessedSuccessfully() throws Exception {
         String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
-        Payout payout = new Payout(payoutId, stripeAccountId);
+        Payout payout = new Payout(payoutId, stripeAccountId, ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
         PayoutReconcileMessage payoutReconcileMessage = PayoutReconcileMessage.of(payout, mockQueueMessage);
         when(payoutReconcileQueue.retrievePayoutMessages()).thenReturn(List.of(payoutReconcileMessage));
@@ -93,7 +94,7 @@ public class PayoutReconcileProcessTest {
     @Test
     public void shouldNotMarkMessageAsSuccessfullyProcessedIfNoPaymentsOrRefundsFound() throws Exception {
         String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
-        Payout payout = new Payout(payoutId, stripeAccountId);
+        Payout payout = new Payout(payoutId, stripeAccountId, ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
         PayoutReconcileMessage payoutReconcileMessage = PayoutReconcileMessage.of(payout, mockQueueMessage);
         when(payoutReconcileQueue.retrievePayoutMessages()).thenReturn(List.of(payoutReconcileMessage));
@@ -109,7 +110,7 @@ public class PayoutReconcileProcessTest {
     @Test
     public void shouldNotMarkMessageAsSuccessfullyProcessedIfExceptionThrown() throws Exception {
         String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
-        Payout payout = new Payout(payoutId, "non-existent-connect-account-id");
+        Payout payout = new Payout(payoutId, "non-existent-connect-account-id", ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
         PayoutReconcileMessage payoutReconcileMessage = PayoutReconcileMessage.of(payout, mockQueueMessage);
         when(payoutReconcileQueue.retrievePayoutMessages()).thenReturn(List.of(payoutReconcileMessage));

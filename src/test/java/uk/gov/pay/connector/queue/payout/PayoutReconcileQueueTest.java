@@ -15,6 +15,7 @@ import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class PayoutReconcileQueueTest {
 
     @Test
     public void shouldParsePayoutFromQueueGivenWellFormattedJSON() throws QueueException {
-        String validJsonMessage = "{ \"gateway_payout_id\": \"payout-id\", \"connect_account_id\": \"connect-accnt-id\"}";
+        String validJsonMessage = "{ \"gateway_payout_id\": \"payout-id\", \"connect_account_id\": \"connect-accnt-id\",\"created_date\":\"2020-05-01T10:30:00.000000Z\"}";
         SendMessageResult messageResult = mock(SendMessageResult.class);
 
         List<QueueMessage> messages = Arrays.asList(
@@ -61,16 +62,17 @@ public class PayoutReconcileQueueTest {
         assertNotNull(payoutReconcileMessages);
         assertEquals("payout-id", payoutReconcileMessages.get(0).getGatewayPayoutId());
         assertEquals("connect-accnt-id", payoutReconcileMessages.get(0).getConnectAccountId());
+        assertEquals(ZonedDateTime.parse("2020-05-01T10:30:00.000Z"), payoutReconcileMessages.get(0).getCreatedDate());
     }
 
     @Test
     public void shouldSendValidSerialisedPayoutToQueue() throws QueueException, JsonProcessingException {
-        Payout payout = new Payout("payout-id", "connect-accnt-id");
+        Payout payout = new Payout("payout-id", "connect-accnt-id", ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
         when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
 
         payoutReconcileQueue.sendPayout(payout);
 
         verify(sqsQueueService).sendMessage(connectorConfiguration.getSqsConfig().getPayoutReconcileQueueUrl(),
-                "{\"gateway_payout_id\":\"payout-id\",\"connect_account_id\":\"connect-accnt-id\"}");
+                "{\"gateway_payout_id\":\"payout-id\",\"connect_account_id\":\"connect-accnt-id\",\"created_date\":\"2020-05-01T10:30:00.000000Z\"}");
     }
 }
