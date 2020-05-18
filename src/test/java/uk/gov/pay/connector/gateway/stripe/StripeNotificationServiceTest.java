@@ -20,8 +20,11 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
@@ -74,6 +77,8 @@ public class StripeNotificationServiceTest {
     @Mock
     private PayoutReconcileQueue mockPayoutReconcileQueue;
     @Mock
+    private PayoutEmitterService mockPayoutEmitterService;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     @Captor
@@ -92,7 +97,8 @@ public class StripeNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
-                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue);
+                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue,
+                mockPayoutEmitterService);
 
         when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
         when(mockCharge.getExternalId()).thenReturn(externalId);
@@ -113,7 +119,7 @@ public class StripeNotificationServiceTest {
         Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
-        
+
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
@@ -153,6 +159,18 @@ public class StripeNotificationServiceTest {
         assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
         assertThat(payout.getConnectAccountId(), is("connect_account_id"));
         assertThat(payout.getCreatedDate(), is(ZonedDateTime.parse("2020-03-24T01:30:46Z")));
+    }
+
+    @Test
+    public void shouldSendThePayoutCreatedEventToEventQueue() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        StripePayout payout = new StripePayout("po_aaaaaaaaaaaaaaaaaaaaa", 1337702L, 1585094400L,
+                1585013446L, "in_transit", "bank_account", null);
+
+        verify(mockPayoutEmitterService).emitPayoutEvent(PayoutCreated.class,
+                "connect_account_id", payout);
     }
 
     @Test
