@@ -29,11 +29,34 @@ public class EventServiceTest {
 
     @InjectMocks
     EventService eventService;
-    
+
     @Test
     public void emitEvent() throws QueueException {
         Event event = new PaymentEvent("external-id", now());
         eventService.emitEvent(event);
+        verify(eventQueue).emitEvent(event);
+    }
+
+    @Test
+    public void emitEventShouldRecordEvent() throws QueueException {
+        Event event = new PaymentEvent("external-id", now());
+        eventService.emitEvent(event, false);
+
+        verify(eventQueue).emitEvent(event);
+    }
+
+    @Test(expected = QueueException.class)
+    public void emitEventShouldThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
+        Event event = new PaymentEvent("external-id", now());
+        doThrow(QueueException.class).when(eventQueue).emitEvent(event);
+        eventService.emitEvent(event, false);
+    }
+
+    @Test
+    public void emitEventShouldNotThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
+        Event event = new PaymentEvent("external-id", now());
+        doThrow(QueueException.class).when(eventQueue).emitEvent(event);
+        eventService.emitEvent(event, true);
         verify(eventQueue).emitEvent(event);
     }
 
