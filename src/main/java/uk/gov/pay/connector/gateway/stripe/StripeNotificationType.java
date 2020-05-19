@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import uk.gov.pay.connector.events.model.payout.PayoutCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutEvent;
+
 import java.util.Arrays;
+import java.util.Optional;
 
 public enum StripeNotificationType {
 
@@ -10,13 +14,22 @@ public enum StripeNotificationType {
     SOURCE_FAILED("source.failed"),
     PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED("payment_intent.amount_capturable_updated"),
     PAYMENT_INTENT_PAYMENT_FAILED("payment_intent.payment_failed"),
-    PAYOUT_CREATED("payout.created"),
+    PAYOUT_CREATED("payout.created", PayoutCreated.class),
+    PAYOUT_PAID("payout.paid"),
+    PAYOUT_UPDATED("payout.updated"),
+    PAYOUT_FAILED("payout.failed"),
     UNKNOWN("");
 
     private final String type;
+    private final Class<? extends PayoutEvent> eventClass;
 
     StripeNotificationType(final String type) {
+        this(type, null);
+    }
+
+    <T extends PayoutEvent> StripeNotificationType(final String type, Class<T> eventClass) {
         this.type = type;
+        this.eventClass = eventClass;
     }
 
     public static StripeNotificationType byType(String type) {
@@ -28,6 +41,10 @@ public enum StripeNotificationType {
 
     public String getType() {
         return type;
+    }
+
+    public Optional<Class<? extends PayoutEvent>> getEventClass() {
+        return Optional.ofNullable(eventClass);
     }
 
     @Override
