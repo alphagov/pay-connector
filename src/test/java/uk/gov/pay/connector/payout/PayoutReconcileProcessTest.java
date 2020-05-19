@@ -169,7 +169,7 @@ public class PayoutReconcileProcessTest {
         payoutReconcileProcess.processPayouts();
 
         verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Error sending event"));
+        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Error sending PAYMENT_INCLUDED_IN_PAYOUT event"));
 
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
@@ -191,7 +191,7 @@ public class PayoutReconcileProcessTest {
 
         verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Transaction external ID missing in metadata"));
-        
+
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 

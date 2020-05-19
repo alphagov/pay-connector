@@ -8,11 +8,11 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
@@ -119,53 +119,48 @@ public class PayoutReconcileProcess {
     private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
         var paymentSource = (Charge) balanceTransaction.getSourceObject();
         var paymentSourceTransfer = paymentSource.getSourceTransferObject();
-        var metadata = StripeTransferMetadata.from(paymentSourceTransfer.getMetadata());
-        var paymentExternalId = metadata.getGovukPayTransactionExternalId();
-        if (paymentExternalId == null) {
-            throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for " +
-                            "payment balance transaction [%s] for payout [%s] for gateway account [%s]",
-                    balanceTransaction.getId(), payoutReconcileMessage.getGatewayPayoutId(),
-                    payoutReconcileMessage.getConnectAccountId()));
-        }
-        
-        if (connectorConfiguration.getEmitPayoutEvents()) {
-            var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
-                    payoutReconcileMessage.getGatewayPayoutId(),
-                    payoutReconcileMessage.getCreatedDate());
-            try {
-                eventService.emitEvent(paymentEvent, false);
-            } catch (QueueException e) {
-                throw new RuntimeException(format("Error sending event for payment [%s] included in payout [%s] to event queue: %s", 
-                        paymentExternalId, payoutReconcileMessage.getGatewayPayoutId(), e.getMessage()), e);
-            }
-        }
+        String paymentExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, paymentSourceTransfer);
+
+        var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
+                payoutReconcileMessage.getGatewayPayoutId(),
+                payoutReconcileMessage.getCreatedDate());
+        emitEvent(paymentEvent, payoutReconcileMessage, paymentExternalId);
 
         LOGGER.info("Emitted event for payment [{}] included in payout [{}]", paymentExternalId, payoutReconcileMessage.getGatewayPayoutId());
     }
 
     private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
         var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
+        String refundExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, sourceTransfer);
+
+        var refundEvent = new RefundIncludedInPayout(refundExternalId,
+                payoutReconcileMessage.getGatewayPayoutId(),
+                payoutReconcileMessage.getCreatedDate());
+        emitEvent(refundEvent, payoutReconcileMessage, refundExternalId);
+
+        LOGGER.info("Emitted event for refund [{}] included in payout [{}]", refundExternalId, payoutReconcileMessage.getGatewayPayoutId());
+    }
+
+    private String resolveTransactionExternalId(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction, Transfer sourceTransfer) {
         var metadata = StripeTransferMetadata.from(sourceTransfer.getMetadata());
-        var refundExternalId = metadata.getGovukPayTransactionExternalId();
-        if (refundExternalId == null) {
-            throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for" +
-                            " refund balance transaction [%s] for payout [%s] for gateway account [%s]",
+        var transactionExternalId = metadata.getGovukPayTransactionExternalId();
+        if (transactionExternalId == null) {
+            throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for " +
+                            "balance transaction [%s] for payout [%s] for gateway account [%s]",
                     balanceTransaction.getId(), payoutReconcileMessage.getGatewayPayoutId(),
                     payoutReconcileMessage.getConnectAccountId()));
         }
-        
+        return transactionExternalId;
+    }
+
+    private void emitEvent(Event event, PayoutReconcileMessage payoutReconcileMessage, String transactionExternalId) {
         if (connectorConfiguration.getEmitPayoutEvents()) {
-            var refundEvent = new RefundIncludedInPayout(refundExternalId,
-                    payoutReconcileMessage.getGatewayPayoutId(),
-                    payoutReconcileMessage.getCreatedDate());
             try {
-                eventService.emitEvent(refundEvent, false);
+                eventService.emitEvent(event, false);
             } catch (QueueException e) {
-                throw new RuntimeException(format("Error sending event for refund [%s] included in payout [%s] to event queue: %s",
-                        refundExternalId, payoutReconcileMessage.getGatewayPayoutId(), e.getMessage()), e);
+                throw new RuntimeException(format("Error sending %s event for transaction [%s] included in payout [%s] to event queue: %s",
+                        event.getEventType(), transactionExternalId, payoutReconcileMessage.getGatewayPayoutId(), e.getMessage()), e);
             }
         }
-
-        LOGGER.info("Emitted event for refund [{}] included in payout [{}]", refundExternalId, payoutReconcileMessage.getGatewayPayoutId());
     }
 }
