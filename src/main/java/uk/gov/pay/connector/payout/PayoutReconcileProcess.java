@@ -101,7 +101,7 @@ public class PayoutReconcileProcess {
                     payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
                 }
             } catch (Exception e) {
-                LOGGER.warn("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
+                LOGGER.error("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
                         payoutReconcileMessage.getQueueMessageId(),
                         e.getMessage()
                 );
@@ -113,7 +113,7 @@ public class PayoutReconcileProcess {
         return gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId)
                 .map(gatewayAccountEntity ->
                         gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest())
-                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account with Stripe connect account ID %s not found.", stripeAccountId)));
+                .orElseThrow(() -> new RuntimeException(format("Gateway account with Stripe connect account ID [%s] not found.", stripeAccountId)));
     }
 
     private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
@@ -121,6 +121,12 @@ public class PayoutReconcileProcess {
         var paymentSourceTransfer = paymentSource.getSourceTransferObject();
         var metadata = StripeTransferMetadata.from(paymentSourceTransfer.getMetadata());
         var paymentExternalId = metadata.getGovukPayTransactionExternalId();
+        if (paymentExternalId == null) {
+            throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for " +
+                            "payment balance transaction [%s] for payout [%s] for gateway account [%s]",
+                    balanceTransaction.getId(), payoutReconcileMessage.getGatewayPayoutId(),
+                    payoutReconcileMessage.getConnectAccountId()));
+        }
         
         if (connectorConfiguration.getEmitPayoutEvents()) {
             var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
@@ -141,6 +147,12 @@ public class PayoutReconcileProcess {
         var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
         var metadata = StripeTransferMetadata.from(sourceTransfer.getMetadata());
         var refundExternalId = metadata.getGovukPayTransactionExternalId();
+        if (refundExternalId == null) {
+            throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for" +
+                            " refund balance transaction [%s] for payout [%s] for gateway account [%s]",
+                    balanceTransaction.getId(), payoutReconcileMessage.getGatewayPayoutId(),
+                    payoutReconcileMessage.getConnectAccountId()));
+        }
         
         if (connectorConfiguration.getEmitPayoutEvents()) {
             var refundEvent = new RefundIncludedInPayout(refundExternalId,

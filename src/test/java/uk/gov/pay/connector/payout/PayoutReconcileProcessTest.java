@@ -1,16 +1,23 @@
 package uk.gov.pay.connector.payout;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
 import com.stripe.model.Transfer;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -31,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -66,8 +75,14 @@ public class PayoutReconcileProcessTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private Appender<ILoggingEvent> logAppender;
+
     @InjectMocks
     private PayoutReconcileProcess payoutReconcileProcess;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private final String stripeAccountId = "acct_2RDpWRLXEC2XwBWp";
     private final String stripeApiKey = "a-fake-api-key";
@@ -85,6 +100,10 @@ public class PayoutReconcileProcessTest {
         when(stripeAuthTokens.getTest()).thenReturn(stripeApiKey);
 
         setupMockBalanceTransactions();
+
+        Logger errorLogger = (Logger) LoggerFactory.getLogger(PayoutReconcileProcess.class);
+        errorLogger.setLevel(Level.ERROR);
+        errorLogger.addAppender(logAppender);
     }
 
     @Test
@@ -133,6 +152,9 @@ public class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
+        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Gateway account with Stripe connect account ID [non-existent-connect-account-id] not found"));
+
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
@@ -146,6 +168,30 @@ public class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
+        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Error sending event"));
+
+        verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldNotMarkMessageAsSuccessfullyProcessedIfStripeTransferMetadataMissing() throws Exception {
+        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage(stripeAccountId);
+
+        BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
+        Transfer refundTransferSource = mock(Transfer.class);
+        when(refundBalanceTransaction.getType()).thenReturn("transfer");
+        when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
+        when(refundTransferSource.getMetadata()).thenReturn(Map.of());
+
+        when(stripeClientWrapper.getBalanceTransactionsForPayout(eq(payoutId), eq(stripeAccountId), eq(stripeApiKey)))
+                .thenReturn(List.of(refundBalanceTransaction));
+
+        payoutReconcileProcess.processPayouts();
+
+        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Transaction external ID missing in metadata"));
+        
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
