@@ -15,6 +15,10 @@ public abstract class RefundEvent extends Event {
         this.parentResourceExternalId = parentResourceExternalId;
     }
 
+    public RefundEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(resourceExternalId, eventDetails, timestamp);
+    }
+
     public RefundEvent(String resourceExternalId, String parentResourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
         this.parentResourceExternalId = parentResourceExternalId;
