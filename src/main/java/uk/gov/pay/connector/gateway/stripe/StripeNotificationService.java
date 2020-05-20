@@ -12,7 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.events.model.payout.PayoutCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
@@ -41,6 +41,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
@@ -119,7 +120,7 @@ public class StripeNotificationService {
     }
 
     private boolean isAnAccountUpdatedNotification(StripeNotification notification) {
-        return StripeNotificationType.byType(notification.getType()) == ACCOUNT_UPDATED;
+        return byType(notification.getType()) == ACCOUNT_UPDATED;
     }
 
     private void processPayoutNotification(StripeNotification notification) {
@@ -127,11 +128,22 @@ public class StripeNotificationService {
                 PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount());
         try {
             StripePayout stripePayout = toPayout(notification.getObject());
-            Payout payout = new Payout(stripePayout.getId(), notification.getAccount(), stripePayout.getCreated());
+            StripeNotificationType stripeNotificationType = byType(notification.getType());
 
-            sendToPayoutReconcileQueue(notification.getAccount(), payout);
+            if (PAYOUT_CREATED.equals(stripeNotificationType)) {
+                Payout payout = new Payout(stripePayout.getId(), notification.getAccount(), stripePayout.getCreated());
+                sendToPayoutReconcileQueue(notification.getAccount(), payout);
+            }
 
-            payoutEmitterService.emitPayoutEvent(PayoutCreated.class, notification.getAccount(), stripePayout);
+            Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripeNotificationType.getEventClass();
+
+            if (mayBeEventClass.isEmpty()) {
+                logger.warn("Event class is not assigned for Stripe payout type [{}] - payout [{}]",
+                        notification.getType(), stripePayout.getId());
+            } else {
+                payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(),
+                        notification.getAccount(), stripePayout);
+            }
         } catch (StripeParseException e) {
             logger.error("{} payout notification parsing failed for connect account [{}]: {}",
                     PAYMENT_GATEWAY_NAME, notification.getAccount(), e);
@@ -234,7 +246,7 @@ public class StripeNotificationService {
 
     private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType) {
         try {
-            final StripeNotificationType type = StripeNotificationType.byType(notificationEventType);
+            final StripeNotificationType type = byType(notificationEventType);
 
             Auth3dsResult auth3DsResult = new Auth3dsResult();
             auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
@@ -268,15 +280,15 @@ public class StripeNotificationService {
     }
 
     private boolean isASourceNotification(StripeNotification notification) {
-        return sourceTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return sourceTypes.contains(byType(notification.getType()));
     }
 
     private boolean isAPaymentIntentNotification(StripeNotification notification) {
-        return paymentIntentTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return paymentIntentTypes.contains(byType(notification.getType()));
     }
 
     private boolean isAPayoutNotification(StripeNotification notification) {
-        return payoutTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return payoutTypes.contains(byType(notification.getType()));
     }
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {
