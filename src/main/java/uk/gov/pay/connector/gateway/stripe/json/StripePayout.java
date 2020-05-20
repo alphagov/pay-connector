@@ -19,6 +19,9 @@ public class StripePayout {
     String status;
     String type;
     String statementDescriptor;
+    private String failureCode;
+    private String failureBalanceTransaction;
+    private String failureMessage;
 
     public StripePayout() {
     }
@@ -31,6 +34,14 @@ public class StripePayout {
         this.status = status;
         this.type = type;
         this.statementDescriptor = statementDescriptor;
+    }
+
+    public StripePayout(String id, String status, String failureCode, String failureMessage, String failureBalanceTransaction) {
+        this.id = id;
+        this.status = status;
+        this.failureCode = failureCode;
+        this.failureBalanceTransaction = failureBalanceTransaction;
+        this.failureMessage = failureMessage;
     }
 
     public String getId() {
@@ -59,6 +70,18 @@ public class StripePayout {
 
     public String getStatementDescriptor() {
         return statementDescriptor;
+    }
+
+    public String getFailureCode() {
+        return failureCode;
+    }
+
+    public String getFailureBalanceTransaction() {
+        return failureBalanceTransaction;
+    }
+
+    public String getFailureMessage() {
+        return failureMessage;
     }
 
     @Override
