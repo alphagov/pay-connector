@@ -9,6 +9,11 @@ public class TransactionIncludedInPayoutEventDetails extends EventDetails {
         this.gatewayPayoutId = gatewayPayoutId;
     }
 
+    // for jackson
+    public String getGatewayPayoutId() {
+        return gatewayPayoutId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
