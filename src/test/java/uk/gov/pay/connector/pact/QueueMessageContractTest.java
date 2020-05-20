@@ -26,9 +26,11 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
+import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
@@ -189,5 +191,19 @@ public class QueueMessageContractTest {
         PayoutCreated payoutCreated = from(123456789L, payout);
 
         return payoutCreated.toJsonString();
+    }
+    
+    @PactVerifyProvider("a payment included in payout message")
+    public String verifyPaymentIncludedInPayoutEvent() throws JsonProcessingException {
+        PaymentIncludedInPayout event = new PaymentIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+        
+        return event.toJsonString();
+    }
+
+    @PactVerifyProvider("a refund included in payout message")
+    public String verifyRefundIncludedInPayoutEvent() throws JsonProcessingException {
+        RefundIncludedInPayout event = new RefundIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+
+        return event.toJsonString();
     }
 }
