@@ -2,6 +2,9 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
+import uk.gov.pay.connector.events.model.payout.PayoutFailed;
+import uk.gov.pay.connector.events.model.payout.PayoutPaid;
+import uk.gov.pay.connector.events.model.payout.PayoutUpdated;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -15,9 +18,9 @@ public enum StripeNotificationType {
     PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED("payment_intent.amount_capturable_updated"),
     PAYMENT_INTENT_PAYMENT_FAILED("payment_intent.payment_failed"),
     PAYOUT_CREATED("payout.created", PayoutCreated.class),
-    PAYOUT_PAID("payout.paid"),
-    PAYOUT_UPDATED("payout.updated"),
-    PAYOUT_FAILED("payout.failed"),
+    PAYOUT_PAID("payout.paid", PayoutPaid.class),
+    PAYOUT_UPDATED("payout.updated", PayoutUpdated.class),
+    PAYOUT_FAILED("payout.failed", PayoutFailed.class),
     UNKNOWN("");
 
     private final String type;
