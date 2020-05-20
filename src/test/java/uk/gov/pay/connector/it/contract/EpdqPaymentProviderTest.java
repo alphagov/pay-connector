@@ -76,6 +76,8 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
 
+    private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ = "4000000000000002";
+
     private String url = "https://mdepayments.epdq.co.uk/ncol/test";
     private String merchantId = envOrThrow("GDS_CONNECTOR_EPDQ_MERCHANT_ID");
     private String username = envOrThrow("GDS_CONNECTOR_EPDQ_USER");
@@ -162,7 +164,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = buildAuthorisationRequestThatWillRequire3ds1(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
@@ -173,6 +175,7 @@ public class EpdqPaymentProviderTest {
         setUpFor3dsAndCheckThatEpdqIsUp();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ)
                 .withAddress(null)
                 .build();
 
@@ -281,6 +284,13 @@ public class EpdqPaymentProviderTest {
 
     private static CardAuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+    private static CardAuthorisationGatewayRequest buildAuthorisationRequestThatWillRequire3ds1(ChargeEntity chargeEntity) {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ)
+                .build();
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
