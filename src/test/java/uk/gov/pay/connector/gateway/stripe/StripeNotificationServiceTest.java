@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
@@ -44,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,14 +53,17 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_CREATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeNotificationServiceTest {
@@ -83,7 +86,7 @@ public class StripeNotificationServiceTest {
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-    
+
     @Captor
     private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
@@ -135,7 +138,8 @@ public class StripeNotificationServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
 
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
@@ -151,9 +155,10 @@ public class StripeNotificationServiceTest {
 
     @Test
     public void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
-        
+
         verify(mockPayoutReconcileQueue).sendPayout(payoutArgumentCaptor.capture());
         Payout payout = payoutArgumentCaptor.getValue();
         assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
@@ -162,20 +167,29 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldSendThePayoutCreatedEventToEventQueue() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
-
+    public void shouldSendAllPayoutEventsToEventQueue() {
+        List<String> types = List.of("payout.created", "payout.updated", "payout.paid", "payout.failed");
         StripePayout payout = new StripePayout("po_aaaaaaaaaaaaaaaaaaaaa", 1337702L, 1585094400L,
                 1585013446L, "in_transit", "bank_account", null);
 
-        verify(mockPayoutEmitterService).emitPayoutEvent(PayoutCreated.class,
-                "connect_account_id", payout);
+        types.forEach(type -> {
+            StripeNotificationType stripeNotificationType = byType(type);
+            String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                    "evt_id", stripeNotificationType);
+
+            notificationService.handleNotificationFor(payload, signPayload(payload));
+
+            verify(mockPayoutEmitterService).emitPayoutEvent(stripeNotificationType.getEventClass().get(),
+                    toUTCZonedDateTime(1567622603L), "connect_account_id", payout);
+
+            reset(mockPayoutEmitterService);
+        });
     }
 
     @Test
     public void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
 
         Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
         root.setLevel(Level.ERROR);
@@ -359,10 +373,10 @@ public class StripeNotificationServiceTest {
     }
 
     private static String sampleStripeNotification(String location,
-                                                   String sourceId,
+                                                   String eventId,
                                                    StripeNotificationType stripeNotificationType) {
         return TestTemplateResourceLoader.load(location)
-                .replace("{{id}}", sourceId)
+                .replace("{{id}}", eventId)
                 .replace("{{type}}", stripeNotificationType.getType());
     }
 

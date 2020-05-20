@@ -38,6 +38,9 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.ACCOUNT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_PAID;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
@@ -60,7 +63,7 @@ public class StripeNotificationService {
     );
 
     private final List<StripeNotificationType> payoutTypes = List.of(
-            PAYOUT_CREATED
+            PAYOUT_CREATED, PAYOUT_UPDATED, PAYOUT_FAILED, PAYOUT_PAID
     );
 
     private final List<ChargeStatus> threeDSAuthorisableStates = List.of(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS_READY);
@@ -141,7 +144,7 @@ public class StripeNotificationService {
                 logger.warn("Event class is not assigned for Stripe payout type [{}] - payout [{}]",
                         notification.getType(), stripePayout.getId());
             } else {
-                payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(),
+                payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
                         notification.getAccount(), stripePayout);
             }
         } catch (StripeParseException e) {
