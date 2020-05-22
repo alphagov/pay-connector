@@ -53,6 +53,8 @@ public class PayoutEmitterService {
         try {
             if (shouldEmitPayoutEvents) {
                 eventService.emitEvent(event, false);
+                logger.info("Payout event sent to event queue: event type [{}], payout id [{}]",
+                        event.getEventType(), event.getResourceExternalId());
             }
         } catch (QueueException e) {
             logger.error("Error sending payout event to event queue: event type [{}], payout id [{}] : exception [{}]",
