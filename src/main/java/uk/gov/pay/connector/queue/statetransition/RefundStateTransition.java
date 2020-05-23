@@ -42,4 +42,12 @@ public class RefundStateTransition extends StateTransition {
     public RefundStateTransition getNext() {
         return new RefundStateTransition(refundExternalId, refundStatus, getStateTransitionEventClass(), getAttempts() + 1, getDelayDurationInMilliseconds());
     }
+
+    @Override
+    public String toString() {
+        return "RefundStateTransition{" +
+                "refundExternalId='" + refundExternalId + '\'' +
+                ", refundStatus=" + refundStatus +
+                '}';
+    }
 }

@@ -92,4 +92,17 @@ public class EmittedEventEntity {
     public void setId(Long id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return "EmittedEventEntity{" +
+                "id=" + id +
+                ", resourceType='" + resourceType + '\'' +
+                ", resourceExternalId='" + resourceExternalId + '\'' +
+                ", eventType='" + eventType + '\'' +
+                ", eventDate=" + eventDate +
+                ", emittedDate=" + emittedDate +
+                ", doNotRetryEmitUntil=" + doNotRetryEmitUntil +
+                '}';
+    }
 }

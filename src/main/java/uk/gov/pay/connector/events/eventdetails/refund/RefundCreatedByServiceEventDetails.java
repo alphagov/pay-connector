@@ -5,4 +5,9 @@ public class RefundCreatedByServiceEventDetails extends RefundCreatedEventDetail
     public RefundCreatedByServiceEventDetails(Long refundAmount, String gatewayAccountId) {
         super(refundAmount, gatewayAccountId);
     }
+
+    @Override
+    public String toString() {
+        return "RefundCreatedByServiceEventDetails{} " + super.toString();
+    }
 }
