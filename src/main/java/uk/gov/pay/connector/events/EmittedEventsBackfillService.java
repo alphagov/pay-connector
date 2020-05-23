@@ -19,7 +19,6 @@ import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 
@@ -68,10 +67,10 @@ public class EmittedEventsBackfillService {
     @Transactional
     public void backfillEvent(EmittedEventEntity event) {
         try {
-            Optional<ChargeEntity> charge = Optional.ofNullable(chargeService.findChargeByExternalId(chargeIdForEvent(event)));
-
-            charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
-            charge.ifPresent(historicalEventEmitter::processPaymentAndRefundEvents);
+            String chargeId = chargeIdForEvent(event);
+            ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
+            MDC.put("chargeId", charge.getExternalId());
+            historicalEventEmitter.processPaymentAndRefundEvents(charge);
             event.setEmittedDate(now(ZoneId.of("UTC")));
         } catch (Exception e) {
             logger.error(
