@@ -95,7 +95,6 @@ public class EmittedEventsBackfillService {
                     .stream().findFirst()
                     .map(RefundEntity::getChargeExternalId)
                     .orElse("");
-//                .orElseThrow(() -> new RuntimeException("Refund not found"));
         }
     }
 
