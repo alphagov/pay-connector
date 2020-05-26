@@ -21,7 +21,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String BROWSER_LANGUAGE = "browserLanguage";
     public final static String BROWSER_SCREEN_HEIGHT = "browserScreenHeight";
     public final static String BROWSER_SCREEN_WIDTH = "browserScreenWidth";
-    public final static String BROWSER_TIMEZONE_OFFSET_MINS = "browserTimezoneOffsetMins";
+    public final static String BROWSER_TIMEZONE = "browserTimezone";
     public final static String BROWSER_ACCEPT_HEADER = "browserAcceptHeader";
     public final static String BROWSER_USER_AGENT = "browserUserAgent";
     public final static String BROWSER_JAVA_ENABLED = "browserJavaEnabled";
@@ -58,7 +58,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .add(BROWSER_LANGUAGE, getBrowserLanguage(templateData))
                 .add(BROWSER_SCREEN_HEIGHT, getBrowserScreenHeight(templateData))
                 .add(BROWSER_SCREEN_WIDTH, getBrowserScreenWidth(templateData))
-                .add(BROWSER_TIMEZONE_OFFSET_MINS, getBrowserTimezoneOffsetMins(templateData))
+                .add(BROWSER_TIMEZONE, getBrowserTimezone(templateData))
                 .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData))
                 .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData))
                 .add(BROWSER_JAVA_ENABLED, "false");
@@ -76,7 +76,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
         return parameterBuilder.build();
     }
 
-    private String getBrowserTimezoneOffsetMins(EpdqTemplateData templateData) {
+    private String getBrowserTimezone(EpdqTemplateData templateData) {
         return templateData.getAuthCardDetails().getJsTimezoneOffsetMins()
                 .filter(timezoneOffsetMins -> NUMBER_FROM_MINUS_999_TO_999.matcher(timezoneOffsetMins).matches())
                 .map(Integer::parseInt)

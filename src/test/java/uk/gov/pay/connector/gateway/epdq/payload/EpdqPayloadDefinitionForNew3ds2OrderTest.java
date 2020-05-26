@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_WIDTH;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_TIMEZONE_OFFSET_MINS;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_TIMEZONE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_USER_AGENT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_ACCEPT_HEADER;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
@@ -445,7 +445,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(BROWSER_LANGUAGE, browserLanguage)
                     .add(BROWSER_SCREEN_HEIGHT, browserScreenHeight)
                     .add(BROWSER_SCREEN_WIDTH, browserScreenWidth)
-                    .add(BROWSER_TIMEZONE_OFFSET_MINS, browserTimezoneOffsetMins)
+                    .add(BROWSER_TIMEZONE, browserTimezoneOffsetMins)
                     .add(BROWSER_ACCEPT_HEADER, browserAcceptHeader)
                     .add(BROWSER_USER_AGENT, browserUserAgent)
                     .add(BROWSER_JAVA_ENABLED, browserJavaEnabled);
