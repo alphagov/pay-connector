@@ -52,7 +52,7 @@ import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundH
 
 @RunWith(PactRunner.class)
 @Provider("connector")
-@PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}"},
+@PactBroker(scheme = "https", host = "${PACT_BROKER_URL:pact-broker-test.cloudapps.digital}", tags = {"${PACT_CONSUMER_TAG}"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"ledger"})
 @IgnoreNoPactsToVerify
