@@ -46,19 +46,19 @@ public class PayoutEmitterService {
         Event event = getPayoutEvent(eventClass, connectAccount, eventDate, payout);
 
         Optional.ofNullable(event)
-                .ifPresent(this::sendToEventQueue);
+                .ifPresent(payoutEvent -> sendToEventQueue(payoutEvent, connectAccount));
     }
 
-    private void sendToEventQueue(Event event) {
+    private void sendToEventQueue(Event event, String connectAccount) {
         try {
             if (shouldEmitPayoutEvents) {
                 eventService.emitEvent(event, false);
-                logger.info("Payout event sent to event queue: event type [{}], payout id [{}]",
+                logger.info("Payout event sent to event queue: event_type [{}], gateway_payout_id [{}]",
                         event.getEventType(), event.getResourceExternalId());
             }
         } catch (QueueException e) {
-            logger.error("Error sending payout event to event queue: event type [{}], payout id [{}] : exception [{}]",
-                    event.getEventType(), event.getResourceExternalId(), e.getMessage(), e);
+            logger.error("Error sending payout event to event queue: event_type [{}], gateway_payout_id [{}], connect_account_id [{}]: exception [{}]",
+                    event.getEventType(), event.getResourceExternalId(), connectAccount, e.getMessage(), e);
         }
     }
 
@@ -74,7 +74,7 @@ public class PayoutEmitterService {
             return PayoutUpdated.from(eventDate, payout);
         }
 
-        logger.warn("Unsupported payout event class [{}] for payout [{}] ", eventClass,
+        logger.warn("Unsupported payout event class [{}] for gateway_payout_id [{}] ", eventClass,
                 payout.getId());
         return null;
     }
@@ -86,7 +86,7 @@ public class PayoutEmitterService {
         if (mayBeGatewayAccount.isPresent()) {
             return PayoutCreated.from(mayBeGatewayAccount.get().getId(), payout);
         } else {
-            logger.error("Gateway account with Stripe connect account ID {} not found", connectAccount);
+            logger.error("Gateway account with Stripe connect account not found: connect_account_id [{}] ", connectAccount);
             throw new GatewayAccountNotFoundException(
                     format("Gateway account with Stripe connect account ID %s not found.", connectAccount));
 

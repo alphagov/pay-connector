@@ -159,6 +159,8 @@ public class StripeNotificationServiceTest {
                 "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        verify(mockPayoutEmitterService, never()).emitPayoutEvent(any(), any(), any(), any());
+
         verify(mockPayoutReconcileQueue).sendPayout(payoutArgumentCaptor.capture());
         Payout payout = payoutArgumentCaptor.getValue();
         assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
@@ -167,8 +169,8 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldSendAllPayoutEventsToEventQueue() {
-        List<String> types = List.of("payout.created", "payout.updated", "payout.paid", "payout.failed");
+    public void shouldSendAllExceptPayoutCreatedEventToEventQueue() {
+        List<String> types = List.of("payout.updated", "payout.paid", "payout.failed");
         StripePayout payout = new StripePayout("po_aaaaaaaaaaaaaaaaaaaaa", 1337702L, 1585094400L,
                 1585013446L, "in_transit", "bank_account", null);
 

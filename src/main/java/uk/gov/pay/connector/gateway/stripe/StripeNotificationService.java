@@ -136,16 +136,16 @@ public class StripeNotificationService {
             if (PAYOUT_CREATED.equals(stripeNotificationType)) {
                 Payout payout = new Payout(stripePayout.getId(), notification.getAccount(), stripePayout.getCreated());
                 sendToPayoutReconcileQueue(notification.getAccount(), payout);
-            }
-
-            Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripeNotificationType.getEventClass();
-
-            if (mayBeEventClass.isEmpty()) {
-                logger.warn("Event class is not assigned for Stripe payout type [{}] - payout [{}]",
-                        notification.getType(), stripePayout.getId());
             } else {
-                payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
-                        notification.getAccount(), stripePayout);
+                Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripeNotificationType.getEventClass();
+
+                if (mayBeEventClass.isEmpty()) {
+                    logger.warn("Event class is not assigned for Stripe payout type [{}] - payout [{}]",
+                            notification.getType(), stripePayout.getId());
+                } else {
+                    payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
+                            notification.getAccount(), stripePayout);
+                }
             }
         } catch (StripeParseException e) {
             logger.error("{} payout notification parsing failed for connect account [{}]: {}",

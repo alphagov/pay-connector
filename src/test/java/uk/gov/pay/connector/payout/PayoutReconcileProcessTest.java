@@ -23,7 +23,9 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
+import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
@@ -62,7 +64,7 @@ public class PayoutReconcileProcessTest {
 
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
-    
+
     @Mock
     private ConnectorConfiguration connectorConfiguration;
 
@@ -71,9 +73,12 @@ public class PayoutReconcileProcessTest {
 
     @Mock
     private GatewayAccountDao gatewayAccountDao;
-    
+
     @Mock
     private EventService eventService;
+
+    @Mock
+    private PayoutEmitterService payoutEmitterService;
 
     @Mock
     private Appender<ILoggingEvent> logAppender;
@@ -113,12 +118,17 @@ public class PayoutReconcileProcessTest {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage(stripeAccountId);
 
         payoutReconcileProcess.processPayouts();
-        
+
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate);
         var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
-        
+        StripePayout stripePayout = new StripePayout("po_123", 1213L, 1589395533L,
+                1589395500L, "pending", "card", "statement_desc");
+
         verify(eventService).emitEvent(eq(paymentEvent), eq(false));
         verify(eventService).emitEvent(eq(refundEvent), eq(false));
+        verify(payoutEmitterService).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
+                stripeAccountId, stripePayout);
+
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
@@ -129,7 +139,7 @@ public class PayoutReconcileProcessTest {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage(stripeAccountId);
 
         payoutReconcileProcess.processPayouts();
-        
+
         verify(eventService, never()).emitEvent(any(), anyBoolean());
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
@@ -218,7 +228,19 @@ public class PayoutReconcileProcessTest {
         when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
         when(refundTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId));
 
+        BalanceTransaction payoutBalanceTransaction = mock(BalanceTransaction.class);
+        com.stripe.model.Payout payoutSource = mock(com.stripe.model.Payout.class);
+        when(payoutSource.getId()).thenReturn("po_123");
+        when(payoutSource.getAmount()).thenReturn(1213L);
+        when(payoutSource.getArrivalDate()).thenReturn(1589395533L);
+        when(payoutSource.getCreated()).thenReturn(1589395500L);
+        when(payoutSource.getStatus()).thenReturn("pending");
+        when(payoutSource.getType()).thenReturn("card");
+        when(payoutSource.getStatementDescriptor()).thenReturn("statement_desc");
+        when(payoutBalanceTransaction.getType()).thenReturn("payout");
+        when(payoutBalanceTransaction.getSourceObject()).thenReturn(payoutSource);
+
         when(stripeClientWrapper.getBalanceTransactionsForPayout(eq(payoutId), eq(stripeAccountId), eq(stripeApiKey)))
-                .thenReturn(List.of(paymentBalanceTransaction, refundBalanceTransaction));
+                .thenReturn(List.of(paymentBalanceTransaction, refundBalanceTransaction, payoutBalanceTransaction));
     }
 }

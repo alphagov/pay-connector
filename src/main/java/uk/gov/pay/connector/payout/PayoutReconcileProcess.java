@@ -2,6 +2,7 @@ package uk.gov.pay.connector.payout;
 
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
+import com.stripe.model.Payout;
 import com.stripe.model.Transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,9 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
+import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
@@ -33,6 +36,7 @@ public class PayoutReconcileProcess {
     private ConnectorConfiguration connectorConfiguration;
     private GatewayAccountDao gatewayAccountDao;
     private EventService eventService;
+    private PayoutEmitterService payoutEmitterService;
 
     @Inject
     public PayoutReconcileProcess(PayoutReconcileQueue payoutReconcileQueue,
@@ -40,13 +44,15 @@ public class PayoutReconcileProcess {
                                   StripeGatewayConfig stripeGatewayConfig,
                                   ConnectorConfiguration connectorConfiguration,
                                   GatewayAccountDao gatewayAccountDao,
-                                  EventService eventService) {
+                                  EventService eventService,
+                                  PayoutEmitterService payoutEmitterService) {
         this.payoutReconcileQueue = payoutReconcileQueue;
         this.stripeClientWrapper = stripeClientWrapper;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.connectorConfiguration = connectorConfiguration;
         this.gatewayAccountDao = gatewayAccountDao;
         this.eventService = eventService;
+        this.payoutEmitterService = payoutEmitterService;
     }
 
     public void processPayouts() throws QueueException {
@@ -78,6 +84,7 @@ public class PayoutReconcileProcess {
                                     break;
                                 // There is a balance transaction for the payout itself, ignore this.
                                 case "payout":
+                                    emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
                                     break;
                                 default:
                                     LOGGER.error("Payout [{}] for connect account [{}] contains balance transfer of type [{}], which is unexpected.",
@@ -107,6 +114,14 @@ public class PayoutReconcileProcess {
                 );
             }
         }
+    }
+
+    private void emitPayoutCreatedEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
+        Payout payoutObject = (Payout) balanceTransaction.getSourceObject();
+        StripePayout stripePayout = StripePayout.from(payoutObject);
+        
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
+                payoutReconcileMessage.getConnectAccountId(), stripePayout);
     }
 
     private String getStripeApiKey(String stripeAccountId) {

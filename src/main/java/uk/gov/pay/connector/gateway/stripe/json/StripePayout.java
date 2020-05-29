@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.stripe.model.Payout;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -42,6 +43,13 @@ public class StripePayout {
         this.failureCode = failureCode;
         this.failureBalanceTransaction = failureBalanceTransaction;
         this.failureMessage = failureMessage;
+    }
+
+    public static StripePayout from(Payout payoutObject) {
+        return new StripePayout(payoutObject.getId(), payoutObject.getAmount(),
+                payoutObject.getArrivalDate(), payoutObject.getCreated(),
+                payoutObject.getStatus(), payoutObject.getType(),
+                payoutObject.getStatementDescriptor());
     }
 
     public String getId() {
