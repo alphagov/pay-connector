@@ -12,8 +12,10 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayoutStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
@@ -23,8 +25,10 @@ import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 
 public class PayoutReconcileProcess {
@@ -119,9 +123,31 @@ public class PayoutReconcileProcess {
     private void emitPayoutCreatedEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
         Payout payoutObject = (Payout) balanceTransaction.getSourceObject();
         StripePayout stripePayout = StripePayout.from(payoutObject);
-        
+
         payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
                 payoutReconcileMessage.getConnectAccountId(), stripePayout);
+
+        emitTerminalPayoutEvent(payoutReconcileMessage.getConnectAccountId(), stripePayout);
+    }
+
+    /**
+     * Payout events (except PAYOUT_CREATED) are usually emitted to event queue from StripeNotificationService
+     * as soon as a notification is received.
+     * This method will provide a mechanism (send payout info to reconcile queue) to emit payout events which are not
+     * emitted from StripeNotificationService for reasons out of control, for example, event queue not available.
+     */
+    private void emitTerminalPayoutEvent(String connectAccountId, StripePayout stripePayout) {
+        StripePayoutStatus stripePayoutStatus = StripePayoutStatus.fromString(stripePayout.getStatus());
+        if (stripePayoutStatus.isTerminal()) {
+            Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripePayoutStatus.getEventClass();
+            mayBeEventClass.ifPresentOrElse(
+                    eventClass -> payoutEmitterService.emitPayoutEvent(eventClass, stripePayout.getCreated(),
+                            connectAccountId, stripePayout),
+                    () -> LOGGER.warn("Event class is not available for a payout in terminal status. " +
+                                    "gateway_payout_id [{}], connect_account_id [{}], status [{}]",
+                            stripePayout.getId(), connectAccountId, stripePayout.getStatus())
+            );
+        }
     }
 
     private String getStripeApiKey(String stripeAccountId) {
@@ -169,7 +195,7 @@ public class PayoutReconcileProcess {
     }
 
     private void emitEvent(Event event, PayoutReconcileMessage payoutReconcileMessage, String transactionExternalId) {
-        if (connectorConfiguration.getEmitPayoutEvents()) {
+        if (TRUE.equals(connectorConfiguration.getEmitPayoutEvents())) {
             try {
                 eventService.emitEvent(event, false);
             } catch (QueueException e) {
