@@ -30,6 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class PayoutReconcileProcess {
 
@@ -91,31 +96,35 @@ public class PayoutReconcileProcess {
                                     emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
                                     break;
                                 default:
-                                    LOGGER.error("Payout [{}] for connect account [{}] contains balance transfer of type [{}], which is unexpected.",
-                                            payoutReconcileMessage.getGatewayPayoutId(),
-                                            payoutReconcileMessage.getConnectAccountId(),
-                                            balanceTransaction.getType());
+                                    LOGGER.error(format("Payout contains balance transfer of type [%s], which is unexpected.",
+                                            balanceTransaction.getType()),
+                                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
                                     break;
                             }
                         });
 
                 if (payments.intValue() == 0 && refunds.intValue() == 0) {
-                    LOGGER.error("No payments or refunds retrieved for payout [{}] for connect account [{}]. Requires investigation.",
-                            payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId());
+                    LOGGER.error(format("No payments or refunds retrieved for payout [%s]. Requires investigation.",
+                            payoutReconcileMessage.getGatewayPayoutId()),
+                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
                 } else {
-                    LOGGER.info("Finished processing payout [{}] for connect account [{}]. Emitted events for {} payments and {} refunds.",
+                    LOGGER.info(format("Finished processing payout [%s]. Emitted events for %s payments and %s refunds.",
                             payoutReconcileMessage.getGatewayPayoutId(),
-                            payoutReconcileMessage.getConnectAccountId(),
                             payments.intValue(),
-                            refunds.intValue());
+                            refunds.intValue()),
+                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
 
                     payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
                 }
             } catch (Exception e) {
-                LOGGER.error("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
+                LOGGER.error(format("Error processing payout from SQS message [queueMessageId=%s] [errorMessage=%s]",
                         payoutReconcileMessage.getQueueMessageId(),
-                        e.getMessage()
-                );
+                        e.getMessage()),
+                        kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                        kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
             }
         }
     }
@@ -167,7 +176,12 @@ public class PayoutReconcileProcess {
                 payoutReconcileMessage.getCreatedDate());
         emitEvent(paymentEvent, payoutReconcileMessage, paymentExternalId);
 
-        LOGGER.info("Emitted event for payment [{}] included in payout [{}]", paymentExternalId, payoutReconcileMessage.getGatewayPayoutId());
+        LOGGER.info(format("Emitted event for payment [%s] included in payout [%s]",
+                paymentExternalId,
+                payoutReconcileMessage.getGatewayPayoutId()),
+                kv(PAYMENT_EXTERNAL_ID, paymentExternalId),
+                kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
     }
 
     private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
@@ -179,7 +193,12 @@ public class PayoutReconcileProcess {
                 payoutReconcileMessage.getCreatedDate());
         emitEvent(refundEvent, payoutReconcileMessage, refundExternalId);
 
-        LOGGER.info("Emitted event for refund [{}] included in payout [{}]", refundExternalId, payoutReconcileMessage.getGatewayPayoutId());
+        LOGGER.info(format("Emitted event for refund [%s] included in payout [%s]",
+                refundExternalId,
+                payoutReconcileMessage.getGatewayPayoutId()),
+                kv(REFUND_EXTERNAL_ID, refundExternalId),
+                kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
+                kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
     }
 
     private String resolveTransactionExternalId(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction, Transfer sourceTransfer) {

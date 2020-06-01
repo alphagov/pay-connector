@@ -21,7 +21,11 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeCredentials.STRIPE_ACCOUNT_ID_KEY;
+import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
+import static uk.gov.pay.logging.LoggingKeys.LEDGER_EVENT_TYPE;
 
 public class PayoutEmitterService {
 
@@ -53,12 +57,16 @@ public class PayoutEmitterService {
         try {
             if (shouldEmitPayoutEvents) {
                 eventService.emitEvent(event, false);
-                logger.info("Payout event sent to event queue: event_type [{}], gateway_payout_id [{}]",
-                        event.getEventType(), event.getResourceExternalId());
+                logger.info("Payout event sent to event queue",
+                        kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                        kv(GATEWAY_PAYOUT_ID, event.getResourceExternalId()),
+                        kv(CONNECT_ACCOUNT_ID, connectAccount));
             }
         } catch (QueueException e) {
-            logger.error("Error sending payout event to event queue: event_type [{}], gateway_payout_id [{}], connect_account_id [{}]: exception [{}]",
-                    event.getEventType(), event.getResourceExternalId(), connectAccount, e.getMessage(), e);
+            logger.error(format("Error sending payout event to event queue: exception [%s]", e.getMessage()),
+                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                    kv(GATEWAY_PAYOUT_ID, event.getResourceExternalId()),
+                    kv(CONNECT_ACCOUNT_ID, connectAccount));
         }
     }
 
@@ -74,8 +82,9 @@ public class PayoutEmitterService {
             return PayoutUpdated.from(eventDate, payout);
         }
 
-        logger.warn("Unsupported payout event class [{}] for gateway_payout_id [{}] ", eventClass,
-                payout.getId());
+        logger.warn(format("Unsupported payout event class [%s]", eventClass),
+                kv(GATEWAY_PAYOUT_ID, payout.getId()),
+                kv(CONNECT_ACCOUNT_ID, connectAccount));
         return null;
     }
 
@@ -86,7 +95,9 @@ public class PayoutEmitterService {
         if (mayBeGatewayAccount.isPresent()) {
             return PayoutCreated.from(mayBeGatewayAccount.get().getId(), payout);
         } else {
-            logger.error("Gateway account with Stripe connect account not found: connect_account_id [{}] ", connectAccount);
+            logger.error(format("Gateway account with Stripe connect account not found: connect_account_id [%s] ", connectAccount),
+                    kv(GATEWAY_PAYOUT_ID, payout.getId()),
+                    kv(CONNECT_ACCOUNT_ID, connectAccount));
             throw new GatewayAccountNotFoundException(
                     format("Gateway account with Stripe connect account ID %s not found.", connectAccount));
 
