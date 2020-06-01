@@ -8,6 +8,7 @@ import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import net.logstash.logback.marker.ObjectAppendingMarker;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,7 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItemInArray;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -145,12 +147,11 @@ public class StripeNotificationServiceTest {
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
-                containsString("Processing {} payout created notification with id [{}] for connect account [{}]"));
+                containsString("Processing stripe payout created notification with id [evt_aaaaaaaaaaaaaaaaaaaaa]"));
 
         Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(3));
-        assertThat(arguments[1], is("evt_aaaaaaaaaaaaaaaaaaaaa"));
-        assertThat(arguments[2], is("connect_account_id"));
+        assertThat(arguments.length, is(1));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
     }
 
     @Test
@@ -202,12 +203,12 @@ public class StripeNotificationServiceTest {
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
-                containsString("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]"));
+                containsString("Error sending payout to payout reconcile queue: exception [Failed to send to queue]"));
 
         Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(3));
-        assertThat(arguments[0], is("connect_account_id"));
-        assertThat(arguments[1], is("po_aaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(arguments.length, is(2));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("gateway_payout_id", "po_aaaaaaaaaaaaaaaaaaaaa")));
     }
 
     @Test

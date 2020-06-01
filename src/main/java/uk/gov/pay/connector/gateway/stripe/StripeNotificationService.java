@@ -45,6 +45,8 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
+import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
@@ -127,8 +129,9 @@ public class StripeNotificationService {
     }
 
     private void processPayoutNotification(StripeNotification notification) {
-        logger.info("Processing {} payout created notification with id [{}] for connect account [{}]",
-                PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount());
+        logger.info(format("Processing %s payout created notification with id [%s]", PAYMENT_GATEWAY_NAME,
+                notification.getId()),
+                kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
         try {
             StripePayout stripePayout = toPayout(notification.getObject());
             StripeNotificationType stripeNotificationType = byType(notification.getType());
@@ -140,16 +143,19 @@ public class StripeNotificationService {
                 Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripeNotificationType.getEventClass();
 
                 if (mayBeEventClass.isEmpty()) {
-                    logger.warn("Event class is not assigned for Stripe payout type [{}] - payout [{}]",
-                            notification.getType(), stripePayout.getId());
+                    logger.warn(format("Event class is not assigned for Stripe payout type [%s]",
+                            notification.getType()),
+                            kv(GATEWAY_PAYOUT_ID, stripePayout.getId()),
+                            kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
                 } else {
                     payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
                             notification.getAccount(), stripePayout);
                 }
             }
         } catch (StripeParseException e) {
-            logger.error("{} payout notification parsing failed for connect account [{}]: {}",
-                    PAYMENT_GATEWAY_NAME, notification.getAccount(), e);
+            logger.error(format("%s payout notification parsing failed for notification with id [%s]: %s",
+                    PAYMENT_GATEWAY_NAME, notification.getId(), e),
+                    kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
         }
     }
 
@@ -157,8 +163,9 @@ public class StripeNotificationService {
         try {
             payoutReconcileQueue.sendPayout(payout);
         } catch (QueueException | JsonProcessingException e) {
-            logger.error("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]",
-                    connectAccount, payout.getGatewayPayoutId(), e.getMessage(), e);
+            logger.error(format("Error sending payout to payout reconcile queue: exception [%s]", e.getMessage()),
+                    kv(GATEWAY_PAYOUT_ID, payout.getGatewayPayoutId()),
+                    kv(CONNECT_ACCOUNT_ID, connectAccount));
         }
     }
 
