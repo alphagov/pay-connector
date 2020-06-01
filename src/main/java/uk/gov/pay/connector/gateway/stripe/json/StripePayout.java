@@ -46,10 +46,15 @@ public class StripePayout {
     }
 
     public static StripePayout from(Payout payoutObject) {
-        return new StripePayout(payoutObject.getId(), payoutObject.getAmount(),
+        StripePayout stripePayout = new StripePayout(payoutObject.getId(), payoutObject.getAmount(),
                 payoutObject.getArrivalDate(), payoutObject.getCreated(),
                 payoutObject.getStatus(), payoutObject.getType(),
                 payoutObject.getStatementDescriptor());
+        stripePayout.failureMessage = payoutObject.getFailureMessage();
+        stripePayout.failureCode = payoutObject.getFailureCode();
+        stripePayout.failureBalanceTransaction = payoutObject.getFailureBalanceTransaction();
+
+        return stripePayout;
     }
 
     public String getId() {

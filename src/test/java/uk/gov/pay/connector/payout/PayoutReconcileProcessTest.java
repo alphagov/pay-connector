@@ -24,6 +24,9 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutEvent;
+import uk.gov.pay.connector.events.model.payout.PayoutFailed;
+import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -42,12 +45,14 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.GOVUK_PAY_TRANSACTION_EXTERNAL_ID;
@@ -104,7 +109,7 @@ public class PayoutReconcileProcessTest {
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getTest()).thenReturn(stripeApiKey);
 
-        setupMockBalanceTransactions();
+        setupMockBalanceTransactions("pending");
 
         Logger errorLogger = (Logger) LoggerFactory.getLogger(PayoutReconcileProcess.class);
         errorLogger.setLevel(Level.ERROR);
@@ -128,6 +133,48 @@ public class PayoutReconcileProcessTest {
         verify(eventService).emitEvent(eq(refundEvent), eq(false));
         verify(payoutEmitterService).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
                 stripeAccountId, stripePayout);
+
+        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldEmitAdditionalPayoutPaidEventIfPayoutStatusIsPaid() throws Exception {
+        setupMockBalanceTransactions("paid");
+        when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
+
+        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage(stripeAccountId);
+        payoutReconcileProcess.processPayouts();
+
+        ArgumentCaptor<Class<? extends PayoutEvent>> captor = ArgumentCaptor.forClass(Class.class);
+        verify(payoutEmitterService, times(2)).emitPayoutEvent(
+                captor.capture(), any(), any(), any());
+
+        assertThat(captor.getAllValues().get(0), is(PayoutCreated.class));
+        assertThat(captor.getAllValues().get(1), is(PayoutPaid.class));
+
+        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldEmitAdditionalPayoutFailedEventIfPayoutStatusIsFailed() throws Exception {
+        setupMockBalanceTransactions("failed");
+        when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
+
+        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage(stripeAccountId);
+        payoutReconcileProcess.processPayouts();
+
+        ArgumentCaptor<Class<? extends PayoutEvent>> captor = ArgumentCaptor.forClass(Class.class);
+        ArgumentCaptor<StripePayout> captorForStripePayout = ArgumentCaptor.forClass(StripePayout.class);
+        verify(payoutEmitterService, times(2)).emitPayoutEvent(
+                captor.capture(), any(), any(), captorForStripePayout.capture());
+
+        assertThat(captor.getAllValues().get(0), is(PayoutCreated.class));
+        assertThat(captor.getAllValues().get(1), is(PayoutFailed.class));
+
+        StripePayout stripePayoutForFailedEvent = captorForStripePayout.getAllValues().get(1);
+        assertThat(stripePayoutForFailedEvent.getFailureCode(), is("account_closed"));
+        assertThat(stripePayoutForFailedEvent.getFailureMessage(), is("The bank account has been closed"));
+        assertThat(stripePayoutForFailedEvent.getFailureBalanceTransaction(), is("ba_1GkZtqDv3CZEaFO2CQhLrluk"));
 
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
@@ -213,7 +260,7 @@ public class PayoutReconcileProcessTest {
         return payoutReconcileMessage;
     }
 
-    private void setupMockBalanceTransactions() throws StripeException {
+    private void setupMockBalanceTransactions(String payoutStatus) throws StripeException {
         BalanceTransaction paymentBalanceTransaction = mock(BalanceTransaction.class);
         Charge paymentSource = mock(Charge.class);
         Transfer paymentTransferSource = mock(Transfer.class);
@@ -234,9 +281,16 @@ public class PayoutReconcileProcessTest {
         when(payoutSource.getAmount()).thenReturn(1213L);
         when(payoutSource.getArrivalDate()).thenReturn(1589395533L);
         when(payoutSource.getCreated()).thenReturn(1589395500L);
-        when(payoutSource.getStatus()).thenReturn("pending");
+        when(payoutSource.getStatus()).thenReturn(payoutStatus);
         when(payoutSource.getType()).thenReturn("card");
         when(payoutSource.getStatementDescriptor()).thenReturn("statement_desc");
+
+        if ("failed".equals(payoutStatus)) {
+            when(payoutSource.getFailureCode()).thenReturn("account_closed");
+            when(payoutSource.getFailureMessage()).thenReturn("The bank account has been closed");
+            when(payoutSource.getFailureBalanceTransaction()).thenReturn("ba_1GkZtqDv3CZEaFO2CQhLrluk");
+        }
+
         when(payoutBalanceTransaction.getType()).thenReturn("payout");
         when(payoutBalanceTransaction.getSourceObject()).thenReturn(payoutSource);
 
