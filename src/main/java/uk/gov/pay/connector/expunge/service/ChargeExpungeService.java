@@ -99,17 +99,17 @@ public class ChargeExpungeService {
 
         if (!inTerminalState(chargeEntity)) {
             chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
-            logger.info("Charge not expunged because it is not in a terminal state {}",
+            logger.info("Charge not expunged because it is not in a terminal state",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
             expungeCharge(chargeEntity);
             logger.info("Charge expunged from connector {}", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else {
             if (hasChargeBeenParityCheckedBefore) {
-                logger.error("Charge cannot be expunged because parity check with ledger repeatedly failed {}",
+                logger.error("Charge cannot be expunged because parity check with ledger repeatedly failed",
                         kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             } else {
-                logger.info("Charge cannot be expunged because parity check with ledger failed {}",
+                logger.info("Charge cannot be expunged because parity check with ledger failed",
                         kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             }
         }
