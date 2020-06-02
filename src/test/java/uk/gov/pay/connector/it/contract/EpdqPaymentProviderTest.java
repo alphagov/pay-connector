@@ -19,6 +19,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -77,6 +78,13 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class EpdqPaymentProviderTest {
 
     private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ = "4000000000000002";
+    private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ = "4874970686672022";
+    private static final String ADDRESS_LINE_1 = "The Money Pool";
+    private static final String ADDRESS_LINE_2 = "1 Gold Way";
+    private static final String ADDRESS_CITY = "London";
+    private static final String ADDRESS_POSTCODE = "DO11 4RS";
+    private static final String ADDRESS_COUNTRY = "GB";
+    private static final String IP_ADDRESS = "8.8.8.8";
 
     private String url = "https://mdepayments.epdq.co.uk/ncol/test";
     private String merchantId = envOrThrow("GDS_CONNECTOR_EPDQ_MERCHANT_ID");
@@ -118,7 +126,6 @@ public class EpdqPaymentProviderTest {
         when(mockLinksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
         when(mockGatewayConfig.getUrls()).thenReturn(Map.of(TEST.toString(), url));
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
         Client client = TestClientFactory.createJerseyClient();
@@ -165,6 +172,15 @@ public class EpdqPaymentProviderTest {
     public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequestThatWillRequire3ds1(chargeEntity);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+    
+    @Test
+    public void shouldAuthoriseWith3ds2OnSuccessfully() throws Exception {
+        setUpFor3ds2AndCheckThatEpdqIsUp();
+        CardAuthorisationGatewayRequest request = buildAuthorisationRequestThatWillRequire3ds2(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
@@ -294,21 +310,41 @@ public class EpdqPaymentProviderTest {
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
+    private static CardAuthorisationGatewayRequest buildAuthorisationRequestThatWillRequire3ds2(ChargeEntity chargeEntity) {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ)
+                .withAddress(new Address(
+                        ADDRESS_LINE_1,
+                        ADDRESS_LINE_2,
+                        ADDRESS_POSTCODE,
+                        ADDRESS_CITY,
+                        null,
+                        ADDRESS_COUNTRY
+                ))
+                .withIpAddress(IP_ADDRESS)
+                .build();
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
     private static Auth3dsResponseGatewayRequest buildQueryRequest(ChargeEntity chargeEntity, String auth3DResult) {
         Auth3dsResult auth3DsResult = new Auth3dsResult();
         auth3DsResult.setAuth3dsResult(auth3DResult);
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsResult);
     }
 
+    private void setUpFor3ds2AndCheckThatEpdqIsUp() {
+        epdqSetupWithStatusCheck(true, true);
+    }
+    
     private void setUpFor3dsAndCheckThatEpdqIsUp() {
-        epdqSetupWithStatusCheck(true);
+        epdqSetupWithStatusCheck(true, false);
     }
-
+    
     private void setUpAndCheckThatEpdqIsUp() {
-        epdqSetupWithStatusCheck(false);
+        epdqSetupWithStatusCheck(false, false);
     }
 
-    private void epdqSetupWithStatusCheck(boolean require3ds) {
+    private void epdqSetupWithStatusCheck(boolean require3ds, boolean requires3ds2) {
         try {
             new URL(url).openConnection().connect();
             Map<String, String> validEpdqCredentials = ImmutableMap.of(
@@ -323,6 +359,11 @@ public class EpdqPaymentProviderTest {
             gatewayAccountEntity.setCredentials(validEpdqCredentials);
             gatewayAccountEntity.setType(TEST);
             gatewayAccountEntity.setRequires3ds(require3ds);
+            
+            if(requires3ds2) {
+                gatewayAccountEntity.setIntegrationVersion3ds(2);
+                gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
+            }
 
             chargeEntity = aValidChargeEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
