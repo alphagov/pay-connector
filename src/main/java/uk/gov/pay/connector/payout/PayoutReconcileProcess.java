@@ -91,7 +91,6 @@ public class PayoutReconcileProcess {
                                     emitRefundEvent(payoutReconcileMessage, balanceTransaction);
                                     refunds.getAndIncrement();
                                     break;
-                                // There is a balance transaction for the payout itself, ignore this.
                                 case "payout":
                                     emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
                                     break;
