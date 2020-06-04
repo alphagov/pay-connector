@@ -52,14 +52,13 @@ applications:
       GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET: ""
 
       # Provided by the sqs service - see src/main/resources/env-map.yml
+      AWS_SQS_REGION: ""
       AWS_SQS_CAPTURE_QUEUE_URL: ""
-      AWS_SQS_ENDPOINT: ""
       AWS_SQS_PAYMENT_EVENT_QUEUE_URL: ""
+      AWS_SQS_PAYOUT_RECONCILE_QUEUE_URL: ""
 
       # Other sqs settings
       AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS: '20'
-      AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT: 'true'
-      AWS_SQS_REGION: region-1
 
       # Provided by the card-connector-db service - see src/main/resources/env-map.yml
       DB_HOST: ""
