@@ -11,16 +11,16 @@
     </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.0.8</dropwizard.version>
         <liquibase.version>3.8.9</liquibase.version>
+        <dropwizard.version>2.0.10</dropwizard.version>
         <wiremock.version>2.26.3</wiremock.version>
-        <eclipselink.version>2.7.6</eclipselink.version>
+        <eclipselink.version>2.7.7</eclipselink.version>
         <guice.version>4.2.3</guice.version>
         <jackson.version>2.11.0</jackson.version>
-        <pay-java-commons.version>1.0.20200420080241</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20200601131959</pay-java-commons.version>
         <surefire.version>3.0.0-M4</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
-        <jooq.version>3.13.1</jooq.version>
+        <jooq.version>3.13.2</jooq.version>
         <postgresql.version>42.2.12</postgresql.version>
         <commons-lang3.version>3.10</commons-lang3.version>
         <jjwt.version>0.11.1</jjwt.version>
@@ -218,7 +218,7 @@
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-graphite</artifactId>
-            <version>4.1.6</version>
+            <version>4.1.9</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -308,7 +308,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-io</artifactId>
-            <version>9.4.28.v20200408</version>
+            <version>9.4.29.v20200521</version>
         </dependency>
         <dependency>
             <groupId>black.door</groupId>
@@ -332,7 +332,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>19.7.0</version>
+            <version>19.20.0</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -471,7 +471,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.14.1</version>
+            <version>1.14.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -584,7 +584,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.2.4</version>
                 <configuration>
                     <outputFile>target/${project.artifactId}-${project.version}-allinone.jar</outputFile>
                     <filters>
@@ -618,7 +618,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.6.0</version>
+                <version>3.0.0</version>
                 <configuration>
                     <mainClass>uk.gov.pay.connector.app.ConnectorApp</mainClass>
                     <arguments>

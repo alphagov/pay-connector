@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import uk.gov.pay.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.MicrosecondPrecisionDateTimeSerializer;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.time.ZonedDateTime;

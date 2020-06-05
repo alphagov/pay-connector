@@ -2,6 +2,8 @@ package uk.gov.pay.connector.queue.payout;
 
 import uk.gov.pay.connector.queue.QueueMessage;
 
+import java.time.ZonedDateTime;
+
 public class PayoutReconcileMessage {
     private Payout payout;
     private QueueMessage queueMessage;
@@ -22,6 +24,8 @@ public class PayoutReconcileMessage {
     public String getConnectAccountId() {
         return payout.getConnectAccountId();
     }
+    
+    public ZonedDateTime getCreatedDate() { return payout.getCreatedDate(); }
 
     public String getQueueMessageReceiptHandle() {
         return queueMessage.getReceiptHandle();

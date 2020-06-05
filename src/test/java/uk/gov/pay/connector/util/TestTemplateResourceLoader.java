@@ -102,6 +102,8 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_OTHER_RESPONSE = EPDQ_BASE_NAME + "/authorisation-other-response.xml";
     public static final String EPDQ_AUTHORISATION_REQUEST = EPDQ_BASE_NAME + "/authorisation-request.txt";
     public static final String EPDQ_AUTHORISATION_3DS_REQUEST = EPDQ_BASE_NAME + "/authorisation-3ds-request.txt";
+    public static final String EPDQ_AUTHORISATION_3DS2_REQUEST = EPDQ_BASE_NAME + "/authorisation-3ds2-request.txt";
+    public static final String EPDQ_AUTHORISATION_3DS2_REQUEST_WITH_PROVIDED_PARAMETERS = EPDQ_BASE_NAME + "/authorisation-3ds2-request-with-provided-parameters.txt";
     public static final String EPDQ_AUTHORISATION_STATUS_REQUEST = EPDQ_BASE_NAME + "/authorisation-status-request.txt";
     public static final String EPDQ_AUTHORISATION_STATUS_DECLINED_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-declined-response.xml";
     public static final String EPDQ_AUTHORISATION_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-error-response.xml";
@@ -142,7 +144,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";
-    public static final String STRIPE_PAYOUT_CREATED = TEMPLATE_BASE_NAME + "/stripe/payout_created.json";
+    public static final String STRIPE_PAYOUT_NOTIFICATION = TEMPLATE_BASE_NAME + "/stripe/payout_notification.json";
 
     public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
     public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";

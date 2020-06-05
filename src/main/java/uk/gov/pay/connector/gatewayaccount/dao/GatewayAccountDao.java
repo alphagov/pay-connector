@@ -34,6 +34,16 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .getResultList().stream().findFirst();
     }
 
+    public Optional<GatewayAccountEntity> findByCredentialsKeyValue(String key, String value) {
+        String query = "SELECT * FROM gateway_accounts where credentials->>?1 = ?2";
+
+        return entityManager.get()
+                .createNativeQuery(query, GatewayAccountEntity.class)
+                .setParameter(1, key)
+                .setParameter(2, value)
+                .getResultList().stream().findFirst();
+    }
+
     public List<GatewayAccountEntity> search(GatewayAccountSearchParams params) {
         List<String> filterTemplates = params.getFilterTemplates();
         String whereClause = filterTemplates.isEmpty() ?

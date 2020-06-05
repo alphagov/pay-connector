@@ -98,6 +98,16 @@ public class EmittedEventsBackfillService {
             charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
             charge.ifPresent(historicalEventEmitter::processPaymentAndRefundEvents);
             event.setEmittedDate(now(ZoneId.of("UTC")));
+        } catch (Exception e) {
+            logger.error(
+                    "Failed to process backfill for event {} due to {} [externalId={}] [event_type={}] [event_date={}]",
+                    event.getId(),
+                    e.getMessage(),
+                    event.getResourceExternalId(),
+                    event.getEventType(),
+                    event.getEventDate()
+            );
+            throw e;
         } finally {
             MDC.remove("chargeId");
         }

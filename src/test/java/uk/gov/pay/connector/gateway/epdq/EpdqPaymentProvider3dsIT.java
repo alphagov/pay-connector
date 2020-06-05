@@ -21,17 +21,35 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
-
+public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
+    
     @Test
     public void shouldRequire3dsAuthoriseRequest() throws Exception {
         mockPaymentProviderResponse(200, successAuth3dResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
-        verifyPaymentProviderRequest(successAuthRequest());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisation3dsRequest());
+        verifyPaymentProviderRequest(successAuth3dsRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
     }
 
+    @Test
+    public void shouldRequire3dsFor3ds2AuthoriseRequestWithDefaultParameters() throws Exception {
+        mockPaymentProviderResponse(200, successAuth3dResponse());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisation3ds2Request());
+        verifyPaymentProviderRequest(successAuth3ds2Request());
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+
+    @Test
+    public void shouldRequire3dsFor3ds2AuthoriseRequestWithProvidedParameters() throws Exception {
+        mockPaymentProviderResponse(200, successAuth3dResponse());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisation3ds2RequestWithProvidedParameters());
+        verifyPaymentProviderRequest(successAuth3ds2RequestWithProvidedParameters());
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+    
     @Test
     public void shouldAuthorise3dsResponseIfMatchesWithEpdqStatus() {
         mockPaymentProviderResponse(200, successAuthorisedQueryResponse());

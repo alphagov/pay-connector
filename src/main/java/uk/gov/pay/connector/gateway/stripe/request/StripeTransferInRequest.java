@@ -21,9 +21,10 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             String stripeChargeId,
             String idempotencyKey,
             String transferGroup,
-            StripeGatewayConfig stripeGatewayConfig
+            StripeGatewayConfig stripeGatewayConfig,
+            String govukPayTransactionExternalId
     ) {
-        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig);
+        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig, govukPayTransactionExternalId);
         this.transferGroup = transferGroup;
     }
 
@@ -34,7 +35,8 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 stripeChargeId,
                 request.getRefundExternalId(),
                 request.getChargeExternalId(),
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                request.getRefundExternalId()
         );
     }
 

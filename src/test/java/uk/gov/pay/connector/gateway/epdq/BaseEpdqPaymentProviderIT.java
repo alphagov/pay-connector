@@ -40,6 +40,10 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -73,7 +77,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_E
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
 
-public abstract class BaseEpdqPaymentProviderTest {
+public abstract class BaseEpdqPaymentProviderIT {
     protected EpdqPaymentProvider provider;
 
     @Mock
@@ -113,7 +117,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         when(gatewayConfig.getUrls()).thenReturn(ImmutableMap.of(TEST.toString(), "http://epdq.url"));
 
         when(configuration.getLinks()).thenReturn(linksConfig);
-        when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
+        when(linksConfig.getFrontendUrl()).thenReturn("http://www.frontend.example.com");
 
         provider = new EpdqPaymentProvider(
                 configuration, 
@@ -122,7 +126,8 @@ public abstract class BaseEpdqPaymentProviderTest {
                 new EpdqPayloadDefinitionForCancelOrder(),
                 new EpdqPayloadDefinitionForCaptureOrder(),
                 new EpdqPayloadDefinitionForNewOrder(),
-                new EpdqPayloadDefinitionForQueryOrder());
+                new EpdqPayloadDefinitionForQueryOrder(),
+                Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC));
     }
 
     private Invocation.Builder mockClientInvocationBuilder() {
@@ -139,6 +144,18 @@ public abstract class BaseEpdqPaymentProviderTest {
     void verifyPaymentProviderRequest(String requestPayload) {
         verify(mockClientInvocationBuilder).post(Entity.entity(requestPayload,
                 MediaType.APPLICATION_FORM_URLENCODED));
+    }
+
+    String successAuth3ds2Request() {
+        return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS2_REQUEST);
+    }
+    
+    String successAuth3ds2RequestWithProvidedParameters() {
+        return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS2_REQUEST_WITH_PROVIDED_PARAMETERS);
+    }
+    
+    String successAuth3dsRequest() {
+        return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS_REQUEST);
     }
 
     String successAuthRequest() {
@@ -219,7 +236,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("epdq");
         gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of(
+        gatewayAccount.setCredentials(Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "username",
                 CREDENTIALS_PASSWORD, "password",
@@ -229,13 +246,39 @@ public abstract class BaseEpdqPaymentProviderTest {
         return gatewayAccount;
     }
 
+    private GatewayAccountEntity buildTestGatewayAccountWith3dsEntity() {
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        gatewayAccount.setRequires3ds(true);
+        gatewayAccount.setIntegrationVersion3ds(1);
+        return gatewayAccount;
+    }
+
+    private GatewayAccountEntity buildTestGatewayAccountWith3ds2Entity() {
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountWith3dsEntity();
+        gatewayAccount.setIntegrationVersion3ds(2);
+        gatewayAccount.setSendPayerIpAddressToGateway(true);
+        return gatewayAccount;
+    }
+
+    CardAuthorisationGatewayRequest buildTestAuthorisation3dsRequest() {
+        return buildTestAuthorisation3dsRequest(buildTestGatewayAccountWith3dsEntity());
+    }
+
+    CardAuthorisationGatewayRequest buildTestAuthorisation3ds2Request() {
+        return buildTestAuthorisation3ds2Request(buildTestGatewayAccountWith3ds2Entity());
+    }
+
+    CardAuthorisationGatewayRequest buildTestAuthorisation3ds2RequestWithProvidedParameters() {
+        return buildTestAuthorisation3ds2RequestWithProvidedParameters(buildTestGatewayAccountWith3ds2Entity());
+    }
+
     CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
     Auth3dsResponseGatewayRequest buildTestAuthorisation3dsVerifyRequest(String auth3dsFrontendResult) {
         ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .withGatewayAccountEntity(buildTestGatewayAccountWith3dsEntity())
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("payId")
                 .build();
@@ -245,11 +288,55 @@ public abstract class BaseEpdqPaymentProviderTest {
     }
 
     CancelGatewayRequest buildTestCancelRequest() {
-        return buildTestCancelRequest(buildTestGatewayAccountEntity());
+        return buildTestCancelRequest(buildTestGatewayAccountWith3dsEntity());
     }
 
     RefundGatewayRequest buildTestRefundRequest() {
-        return buildTestRefundRequest(buildTestGatewayAccountEntity());
+        return buildTestRefundRequest(buildTestGatewayAccountWith3dsEntity());
+    }
+
+    private CardAuthorisationGatewayRequest buildTestAuthorisation3dsRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+    }
+    
+    private CardAuthorisationGatewayRequest buildTestAuthorisation3ds2Request(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+    }
+
+    private CardAuthorisationGatewayRequest buildTestAuthorisation3ds2RequestWithProvidedParameters(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        
+        Address address = new Address();
+        address.setLine1("The Money Pool");
+        address.setLine2("1 Gold Way");
+        address.setPostcode("DO11 4RS");
+        address.setCity("London");
+        address.setCountry("GB");
+        
+        AuthCardDetails authCardDetails = buildTestAuthCardDetails();
+        authCardDetails.setJsScreenColorDepth("15");
+        authCardDetails.setJsScreenHeight("1500");
+        authCardDetails.setJsScreenWidth("1000");
+        authCardDetails.setJsTimezoneOffsetMins("3");
+        authCardDetails.setJsNavigatorLanguage("cy");
+        authCardDetails.setAcceptHeader("text/html");
+        authCardDetails.setUserAgentHeader("Opera/9.0");
+        authCardDetails.setIpAddress("8.8.8.8");
+        authCardDetails.setAddress(address);
+        
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
@@ -271,7 +358,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     }
 
     protected ChargeEntity buildChargeEntity() {
-        GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountEntity();
+        GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountWith3dsEntity();
         return buildChargeEntity(gatewayAccountEntity);
     }
 

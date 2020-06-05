@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
@@ -36,9 +38,15 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.ACCOUNT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_PAID;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
+import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
@@ -50,14 +58,14 @@ public class StripeNotificationService {
             SOURCE_CHARGEABLE,
             SOURCE_FAILED
     );
-    
+
     private final List<StripeNotificationType> paymentIntentTypes = List.of(
-            PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED, 
+            PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED,
             PAYMENT_INTENT_PAYMENT_FAILED
     );
 
     private final List<StripeNotificationType> payoutTypes = List.of(
-            PAYOUT_CREATED
+            PAYOUT_CREATED, PAYOUT_UPDATED, PAYOUT_FAILED, PAYOUT_PAID
     );
 
     private final List<ChargeStatus> threeDSAuthorisableStates = List.of(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS_READY);
@@ -68,6 +76,7 @@ public class StripeNotificationService {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
     private final PayoutReconcileQueue payoutReconcileQueue;
+    private final PayoutEmitterService payoutEmitterService;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
     private static final long DEFAULT_TOLERANCE = 300L;
@@ -77,13 +86,15 @@ public class StripeNotificationService {
                                      ChargeService chargeService,
                                      StripeGatewayConfig stripeGatewayConfig,
                                      StripeAccountUpdatedHandler stripeAccountUpdatedHandler,
-                                     PayoutReconcileQueue payoutReconcileQueue) {
+                                     PayoutReconcileQueue payoutReconcileQueue,
+                                     PayoutEmitterService payoutEmitterService) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
         this.payoutReconcileQueue = payoutReconcileQueue;
         objectMapper = new ObjectMapper();
         this.stripeGatewayConfig = stripeGatewayConfig;
+        this.payoutEmitterService = payoutEmitterService;
     }
 
     public void handleNotificationFor(String payload, String signatureHeader) {
@@ -114,20 +125,37 @@ public class StripeNotificationService {
     }
 
     private boolean isAnAccountUpdatedNotification(StripeNotification notification) {
-        return StripeNotificationType.byType(notification.getType()) == ACCOUNT_UPDATED;
+        return byType(notification.getType()) == ACCOUNT_UPDATED;
     }
 
     private void processPayoutNotification(StripeNotification notification) {
-        logger.info("Processing {} payout created notification with id [{}] for connect account [{}]",
-                PAYMENT_GATEWAY_NAME, notification.getId(), notification.getAccount());
+        logger.info(format("Processing %s payout created notification with id [%s]", PAYMENT_GATEWAY_NAME,
+                notification.getId()),
+                kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
         try {
             StripePayout stripePayout = toPayout(notification.getObject());
-            Payout payout = new Payout(stripePayout.getId(), notification.getAccount());
+            StripeNotificationType stripeNotificationType = byType(notification.getType());
 
-            sendToPayoutReconcileQueue(notification.getAccount(), payout);
-        } catch (StripeParseException e ) {
-            logger.error("{} payout notification parsing failed for connect account [{}]: {}",
-                    PAYMENT_GATEWAY_NAME, notification.getAccount(), e);
+            if (PAYOUT_CREATED.equals(stripeNotificationType)) {
+                Payout payout = new Payout(stripePayout.getId(), notification.getAccount(), stripePayout.getCreated());
+                sendToPayoutReconcileQueue(notification.getAccount(), payout);
+            } else {
+                Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripeNotificationType.getEventClass();
+
+                if (mayBeEventClass.isEmpty()) {
+                    logger.warn(format("Event class is not assigned for Stripe payout type [%s]",
+                            notification.getType()),
+                            kv(GATEWAY_PAYOUT_ID, stripePayout.getId()),
+                            kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
+                } else {
+                    payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
+                            notification.getAccount(), stripePayout);
+                }
+            }
+        } catch (StripeParseException e) {
+            logger.error(format("%s payout notification parsing failed for notification with id [%s]: %s",
+                    PAYMENT_GATEWAY_NAME, notification.getId(), e),
+                    kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
         }
     }
 
@@ -135,8 +163,9 @@ public class StripeNotificationService {
         try {
             payoutReconcileQueue.sendPayout(payout);
         } catch (QueueException | JsonProcessingException e) {
-            logger.error("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]",
-                    connectAccount, payout.getGatewayPayoutId(), e.getMessage(), e);
+            logger.error(format("Error sending payout to payout reconcile queue: exception [%s]", e.getMessage()),
+                    kv(GATEWAY_PAYOUT_ID, payout.getGatewayPayoutId()),
+                    kv(CONNECT_ACCOUNT_ID, connectAccount));
         }
     }
 
@@ -148,7 +177,7 @@ public class StripeNotificationService {
                 logger.warn("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
                 return;
             }
-            
+
             Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, paymentIntent.getId());
 
             if (maybeCharge.isEmpty()) {
@@ -227,7 +256,7 @@ public class StripeNotificationService {
 
     private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType) {
         try {
-            final StripeNotificationType type = StripeNotificationType.byType(notificationEventType);
+            final StripeNotificationType type = byType(notificationEventType);
 
             Auth3dsResult auth3DsResult = new Auth3dsResult();
             auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
@@ -261,15 +290,15 @@ public class StripeNotificationService {
     }
 
     private boolean isASourceNotification(StripeNotification notification) {
-        return sourceTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return sourceTypes.contains(byType(notification.getType()));
     }
-    
+
     private boolean isAPaymentIntentNotification(StripeNotification notification) {
-        return paymentIntentTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return paymentIntentTypes.contains(byType(notification.getType()));
     }
 
     private boolean isAPayoutNotification(StripeNotification notification) {
-        return payoutTypes.contains(StripeNotificationType.byType(notification.getType()));
+        return payoutTypes.contains(byType(notification.getType()));
     }
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {
@@ -318,7 +347,7 @@ public class StripeNotificationService {
             return false;
         }
     }
-    
+
     private boolean isValidNotificationSignature(String payload, String signatureHeader, String secret) {
         try {
             return Webhook.Signature.verifyHeader(payload,

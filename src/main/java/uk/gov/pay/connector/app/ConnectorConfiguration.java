@@ -104,6 +104,9 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private Boolean emitPaymentStateTransitionEvents;
 
+    @NotNull
+    private Boolean emitPayoutEvents;
+
     @Valid
     @NotNull
     @JsonProperty("sqsConfig")
@@ -219,6 +222,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public Boolean getEmitPaymentStateTransitionEvents() {
         return emitPaymentStateTransitionEvents;
+    }
+
+    public Boolean getEmitPayoutEvents() {
+        return emitPayoutEvents;
     }
 
     public RestClientConfig getRestClientConfig() {

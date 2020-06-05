@@ -8,6 +8,7 @@ import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import net.logstash.logback.marker.ObjectAppendingMarker;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,24 +22,30 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
+import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItemInArray;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,14 +55,17 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_CREATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeNotificationServiceTest {
@@ -72,10 +82,15 @@ public class StripeNotificationServiceTest {
     @Mock
     private PayoutReconcileQueue mockPayoutReconcileQueue;
     @Mock
+    private PayoutEmitterService mockPayoutEmitterService;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
     private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(new ObjectMapper());
 
@@ -87,7 +102,8 @@ public class StripeNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
-                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue);
+                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue,
+                mockPayoutEmitterService);
 
         when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
         when(mockCharge.getExternalId()).thenReturn(externalId);
@@ -108,7 +124,7 @@ public class StripeNotificationServiceTest {
         Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
-        
+
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
@@ -124,31 +140,59 @@ public class StripeNotificationServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
 
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
-                containsString("Processing {} payout created notification with id [{}] for connect account [{}]"));
+                containsString("Processing stripe payout created notification with id [evt_aaaaaaaaaaaaaaaaaaaaa]"));
 
         Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(3));
-        assertThat(arguments[1], is("evt_aaaaaaaaaaaaaaaaaaaaa"));
-        assertThat(arguments[2], is("connect_account_id"));
+        assertThat(arguments.length, is(1));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
     }
 
     @Test
     public void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
-        verify(mockPayoutReconcileQueue).sendPayout(any());
+        verify(mockPayoutEmitterService, never()).emitPayoutEvent(any(), any(), any(), any());
+
+        verify(mockPayoutReconcileQueue).sendPayout(payoutArgumentCaptor.capture());
+        Payout payout = payoutArgumentCaptor.getValue();
+        assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(payout.getConnectAccountId(), is("connect_account_id"));
+        assertThat(payout.getCreatedDate(), is(ZonedDateTime.parse("2020-03-24T01:30:46Z")));
+    }
+
+    @Test
+    public void shouldSendAllExceptPayoutCreatedEventToEventQueue() {
+        List<String> types = List.of("payout.updated", "payout.paid", "payout.failed");
+        StripePayout payout = new StripePayout("po_aaaaaaaaaaaaaaaaaaaaa", 1337702L, 1585094400L,
+                1585013446L, "in_transit", "bank_account", null);
+
+        types.forEach(type -> {
+            StripeNotificationType stripeNotificationType = byType(type);
+            String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                    "evt_id", stripeNotificationType);
+
+            notificationService.handleNotificationFor(payload, signPayload(payload));
+
+            verify(mockPayoutEmitterService).emitPayoutEvent(stripeNotificationType.getEventClass().get(),
+                    toUTCZonedDateTime(1567622603L), "connect_account_id", payout);
+
+            reset(mockPayoutEmitterService);
+        });
     }
 
     @Test
     public void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
-        String payload = TestTemplateResourceLoader.load(STRIPE_PAYOUT_CREATED);
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
 
         Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
         root.setLevel(Level.ERROR);
@@ -159,12 +203,12 @@ public class StripeNotificationServiceTest {
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
-                containsString("Error sending payout to payout reconcile queue: connect account id [{}], payout id [{}] : exception [{}]"));
+                containsString("Error sending payout to payout reconcile queue: exception [Failed to send to queue]"));
 
         Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(3));
-        assertThat(arguments[0], is("connect_account_id"));
-        assertThat(arguments[1], is("po_aaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(arguments.length, is(2));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
+        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("gateway_payout_id", "po_aaaaaaaaaaaaaaaaaaaaa")));
     }
 
     @Test
@@ -332,10 +376,10 @@ public class StripeNotificationServiceTest {
     }
 
     private static String sampleStripeNotification(String location,
-                                                   String sourceId,
+                                                   String eventId,
                                                    StripeNotificationType stripeNotificationType) {
         return TestTemplateResourceLoader.load(location)
-                .replace("{{id}}", sourceId)
+                .replace("{{id}}", eventId)
                 .replace("{{type}}", stripeNotificationType.getType());
     }
 

@@ -1470,4 +1470,12 @@
         <dropColumn tableName="refunds_history" columnName="charge_id"/>
     </changeSet>
 
+    <changeSet id="add swap table in order to truncate emitted events safely" author="">
+        <sql>CREATE TABLE emitted_events_swp (LIKE emitted_events INCLUDING ALL);</sql>
+    </changeSet>
+
+    <changeSet id="remove emitted events swap table following use" author="">
+        <dropTable tableName="emitted_events_swp" />
+    </changeSet>
+
 </databaseChangeLog>

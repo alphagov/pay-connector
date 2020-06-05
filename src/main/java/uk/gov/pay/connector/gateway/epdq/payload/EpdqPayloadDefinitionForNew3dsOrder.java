@@ -3,12 +3,13 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
+import java.util.Optional;
 
-import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
-
+import static java.util.function.Predicate.not;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
 public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder {
@@ -18,11 +19,14 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     public static final String DECLINEURL_KEY = "DECLINEURL";
     public static final String EXCEPTIONURL_KEY = "EXCEPTIONURL";
     public static final String FLAG3D_KEY = "FLAG3D";
-    public static final String HTTPACCEPT_URL = "HTTP_ACCEPT";
-    public static final String HTTPUSER_AGENT_URL = "HTTP_USER_AGENT";
+    public static final String HTTPACCEPT_KEY = "HTTP_ACCEPT";
+    public static final String HTTPUSER_AGENT_KEY = "HTTP_USER_AGENT";
     public static final String LANGUAGE_URL = "LANGUAGE";
     public static final String PARAMPLUS_URL = "PARAMPLUS";
     public static final String WIN3DS_URL = "WIN3DS";
+    
+    public static final String DEFAULT_BROWSER_ACCEPT_HEADER = "*/*";
+    public final static String DEFAULT_BROWSER_USER_AGENT = "Mozilla/5.0";
     
     private final String frontendUrl;
 
@@ -47,12 +51,12 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(EXCEPTIONURL_KEY, frontend3dsIncomingUrl + "?status=error")
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(FLAG3D_KEY, "Y")
-                .add(HTTPACCEPT_URL, templateData.getAuthCardDetails().getAcceptHeader())
-                .add(HTTPUSER_AGENT_URL, templateData.getAuthCardDetails().getUserAgentHeader())
+                .add(HTTPACCEPT_KEY, getBrowserAcceptHeader(templateData))
+                .add(HTTPUSER_AGENT_KEY, getBrowserUserAgent(templateData))
                 .add(LANGUAGE_URL, "en_GB")
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
-
+        
         if (templateData.getAuthCardDetails().getAddress().isPresent()) {
             Address address = templateData.getAuthCardDetails().getAddress().get();
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
@@ -84,5 +88,17 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     @Override
     protected OrderRequestType getOrderRequestType() {
         return OrderRequestType.AUTHORISE_3DS;
+    }
+
+    String getBrowserAcceptHeader(EpdqTemplateData templateData) {
+        return Optional.ofNullable(templateData.getAuthCardDetails().getAcceptHeader())
+                .filter(not(String::isEmpty))
+                .orElse(DEFAULT_BROWSER_ACCEPT_HEADER);
+    }
+
+    String getBrowserUserAgent(EpdqTemplateData templateData) {
+        return Optional.ofNullable(templateData.getAuthCardDetails().getUserAgentHeader())
+                .filter(not(String::isEmpty))
+                .orElse(DEFAULT_BROWSER_USER_AGENT);
     }
 }

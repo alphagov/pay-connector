@@ -30,6 +30,7 @@ import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
 import javax.ws.rs.client.Client;
+import java.time.Clock;
 import java.util.Properties;
 
 public class ConnectorModule extends AbstractModule {
@@ -120,6 +121,12 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     public Client provideClient() {
         return RestClientFactory.buildClient(configuration.getRestClientConfig());
+    }
+    
+    @Provides
+    @Singleton
+    public Clock systemUtcClock() {
+        return Clock.systemUTC();
     }
 
     @Provides

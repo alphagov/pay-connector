@@ -27,8 +27,8 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.EXCEPTIONURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.FLAG3D_KEY;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.HTTPACCEPT_URL;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.HTTPUSER_AGENT_URL;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.HTTPACCEPT_KEY;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.HTTPUSER_AGENT_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.LANGUAGE_URL;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.WIN3DS_URL;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.AMOUNT_KEY;
@@ -162,8 +162,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
-                new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
-                new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
+                new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),
+                new BasicNameValuePair(HTTPUSER_AGENT_KEY, USER_AGENT_HEADER),
                 new BasicNameValuePair(LANGUAGE_URL, "en_GB"),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
@@ -198,8 +198,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
-                new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
-                new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
+                new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),
+                new BasicNameValuePair(HTTPUSER_AGENT_KEY, USER_AGENT_HEADER),
                 new BasicNameValuePair(LANGUAGE_URL, "en_GB"),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
@@ -233,8 +233,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
-                new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
-                new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
+                new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),
+                new BasicNameValuePair(HTTPUSER_AGENT_KEY, USER_AGENT_HEADER),
                 new BasicNameValuePair(LANGUAGE_URL, "en_GB"),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),

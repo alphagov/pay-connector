@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCancelOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
@@ -48,6 +49,7 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.net.URI;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +87,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private final EpdqPayloadDefinitionForQueryOrder epdqPayloadDefinitionForQueryOrder;
     private final EpdqCaptureHandler epdqCaptureHandler;
     private final EpdqRefundHandler epdqRefundHandler;
+    private final Clock clock;
 
     @Inject
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
@@ -93,7 +96,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
                                EpdqPayloadDefinitionForCancelOrder epdqPayloadDefinitionForCancelOrder,
                                EpdqPayloadDefinitionForCaptureOrder epdqPayloadDefinitionForCaptureOrder,
                                EpdqPayloadDefinitionForNewOrder epdqPayloadDefinitionForNewOrder,
-                               EpdqPayloadDefinitionForQueryOrder epdqPayloadDefinitionForQueryOrder) {
+                               EpdqPayloadDefinitionForQueryOrder epdqPayloadDefinitionForQueryOrder,
+                               Clock clock) {
         
         gatewayUrlMap = configuration.getGatewayConfigFor(EPDQ).getUrls();
         this.epdqPayloadDefinitionForCancelOrder = epdqPayloadDefinitionForCancelOrder;
@@ -108,6 +112,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
         epdqCaptureHandler = new EpdqCaptureHandler(captureClient, gatewayUrlMap, epdqPayloadDefinitionForCaptureOrder);
         epdqRefundHandler = new EpdqRefundHandler(refundClient, gatewayUrlMap);
+        this.clock = clock;
     }
 
     @Override
@@ -312,10 +317,18 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setDescription(request.getDescription());
         templateData.setAmount(request.getAmount());
         templateData.setAuthCardDetails(request.getAuthCardDetails());
+
+        EpdqPayloadDefinition epdqPayloadDefinition;
         
-        var epdqPayloadDefinition = request.getGatewayAccount().isRequires3ds() ?
-                        new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl) :
-                        epdqPayloadDefinitionForNewOrder;
+        if (request.getGatewayAccount().isRequires3ds()) {
+            if (request.getGatewayAccount().getIntegrationVersion3ds() == 2) {
+                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3ds2Order(frontendUrl, request.getGatewayAccount().isSendPayerIpAddressToGateway(), request.getCharge().getLanguage(), clock);
+            } else {
+                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl);
+            }
+        } else {
+            epdqPayloadDefinition = epdqPayloadDefinitionForNewOrder;
+        }
         
         return epdqPayloadDefinition.createGatewayOrder(templateData);
     }

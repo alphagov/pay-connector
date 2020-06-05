@@ -109,10 +109,6 @@ abstract public class AppWithPostgresRule implements TestRule {
         return databaseTestHelper;
     }
 
-    public void stopPostgres() {
-        postgres.stop();
-    }
-
     private ConfigOverride[] overrideDatabaseConfig(ConfigOverride[] configOverrides, PostgresDockerRule postgresDockerRule) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("database.url", postgresDockerRule.getConnectionUrl()));

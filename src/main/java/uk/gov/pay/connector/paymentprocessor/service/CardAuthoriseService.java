@@ -133,11 +133,7 @@ public class CardAuthoriseService {
     }
 
     private boolean cardBrandRequires3ds(String cardBrand) {
-        List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand(cardBrand).stream()
-                .filter(cardTypeEntity -> cardTypeEntity.getBrand().equals(cardBrand))
-                .collect(Collectors.toList());
-
-        return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
+        return cardTypeDao.findByBrand(cardBrand).stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {

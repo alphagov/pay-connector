@@ -29,7 +29,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
@@ -133,6 +132,22 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                         hasProperty("type", is(visaCardDebit.getType())),
                         hasProperty("brand", is(visaCardDebit.getBrand()))
                 )));
+    }
+
+    @Test
+    public void findByCredentialsKeyValue_shouldFindGatewayAccount() {
+        var credMap = Map.of("some_payment_provider_account_id", "accountid");
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("test provider")
+                .withServiceName("service name")
+                .withCredentials(credMap)
+                .build());
+        
+        Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
+        assertThat(maybeGatewayAccount.isPresent(), is(true));
+        Map<String, String> credentialsMap = maybeGatewayAccount.get().getCredentials();
+        assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
     }
 
     @Test

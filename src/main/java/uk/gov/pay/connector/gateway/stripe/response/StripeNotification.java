@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.time.ZonedDateTime;
+
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeNotification {
 
@@ -13,6 +17,8 @@ public class StripeNotification {
     private String type;
     @JsonProperty("account")
     private String account;
+    @JsonProperty("created")
+    private Long created;
     @JsonProperty("data")
     private StripeEventData data;
 
@@ -34,6 +40,10 @@ public class StripeNotification {
 
     public String getAccount() {
         return account;
+    }
+
+    public ZonedDateTime getCreated() {
+        return toUTCZonedDateTime(created);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

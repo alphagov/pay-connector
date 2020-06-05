@@ -15,6 +15,7 @@ import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
@@ -25,25 +26,33 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutCreated;
+import uk.gov.pay.connector.events.model.payout.PayoutFailed;
+import uk.gov.pay.connector.events.model.payout.PayoutPaid;
+import uk.gov.pay.connector.events.model.payout.PayoutUpdated;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
+import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static java.time.ZonedDateTime.parse;
 import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
+import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
-@PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}"},
+@PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker-test.cloudapps.digital}", tags = {"${PACT_CONSUMER_TAG}"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"ledger"})
 @IgnoreNoPactsToVerify
@@ -177,5 +186,55 @@ public class QueueMessageContractTest {
         PaymentNotificationCreated paymentNotificationCreated = PaymentNotificationCreated.from(chargeEventEntity);
 
         return paymentNotificationCreated.toJsonString();
+    }
+
+    @PactVerifyProvider("a payout created message")
+    public String verifyPayoutCreatedEvent() throws JsonProcessingException {
+        StripePayout payout = new StripePayout("po_1234567890", 1000L, 1589395533L,
+                1589395500L, "pending", "bank_account", "SERVICE NAME");
+        PayoutCreated payoutCreated = from(123456789L, payout);
+
+        return payoutCreated.toJsonString();
+    }
+
+    @PactVerifyProvider("a payout failed message")
+    public String verifyPayoutFailedEvent() throws JsonProcessingException {
+        StripePayout payout = new StripePayout("po_failed_1234567890", "failed", "account_closed",
+                "The bank account has been closed", "ba_aaaaaaaaaa");
+        PayoutFailed payoutFailed = PayoutFailed.from(parse("2020-05-13T18:50:00Z"), payout);
+
+        return payoutFailed.toJsonString();
+    }
+
+    @PactVerifyProvider("a payout paid message")
+    public String verifyPayoutPaidEvent() throws JsonProcessingException {
+        StripePayout payout = new StripePayout("po_paid_1234567890", 1000L, 1589395533L,
+                1589395500L, "paid", "bank_account", "SERVICE NAME");
+        PayoutPaid payoutPaid = PayoutPaid.from(parse("2020-05-13T18:50:00Z"), payout);
+
+        return payoutPaid.toJsonString();
+    }
+
+    @PactVerifyProvider("a payout updated message")
+    public String verifyPayoutUpdatedEvent() throws JsonProcessingException {
+        StripePayout payout = new StripePayout("po_updated_1234567890", 1000L, 1589395533L,
+                1589395500L, "pending", "bank_account", "SERVICE NAME");
+        PayoutUpdated payoutPaid = PayoutUpdated.from(parse("2020-05-13T18:50:00Z"), payout);
+
+        return payoutPaid.toJsonString();
+    }
+
+    @PactVerifyProvider("a payment included in payout message")
+    public String verifyPaymentIncludedInPayoutEvent() throws JsonProcessingException {
+        PaymentIncludedInPayout event = new PaymentIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+
+        return event.toJsonString();
+    }
+
+    @PactVerifyProvider("a refund included in payout message")
+    public String verifyRefundIncludedInPayoutEvent() throws JsonProcessingException {
+        RefundIncludedInPayout event = new RefundIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+
+        return event.toJsonString();
     }
 }

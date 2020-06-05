@@ -25,6 +25,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
 | `DISABLE_INTERNAL_HTTPS` | false | disable secure connection for calls to internal APIs |
 | `DEFAULT_DO_NOT_RETRY_EMITTING_EVENT_UNTIL_DURATION_IN_SECONDS` | 7200 | Sets the default duration in seconds for events (emitted by parity checker worker) until which the emitted events sweeper ignores to re-emit. Value can be overridden by passing `do_not_retry_emit_until` query parameter to parity checker worker or historical event emitter tasks |
+| `EMIT_PAYOUT_EVENTS` | false | enable or disable emitting payout specific events to payment queue |
 
 
 ### Queues
@@ -32,6 +33,8 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 |---------|---------|---------|
 | `AWS_SQS_REGION`            | - | SQS capture queue region |
 | `AWS_SQS_CAPTURE_QUEUE_URL` | - | SQS capture queue URL  |
+| `AWS_SQS_EVENT_QUEUE_URL`   | - | SQS event queue URL    |
+| `AWS_SQS_PAYOUT_RECONCILE_QUEUE_URL` | - | SQS payout reconcile queue URL | 
 | `AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT`  | false | Set to true to use non standard (eg: http://my-own-sqs-endpoint) SQS endpoint |
 | `AWS_SQS_ENDPOINT`          | - |  URL that is the entry point for SQS. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
 | `AWS_SECRET_KEY`            | - | Secret key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |

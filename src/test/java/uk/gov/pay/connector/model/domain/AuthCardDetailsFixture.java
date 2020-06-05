@@ -25,6 +25,11 @@ public final class AuthCardDetailsFixture {
     private Boolean corporateCard = Boolean.FALSE;
     private String worldpay3dsFlexDdcResult;
     private String ipAddress;
+    private String jsScreenColorDepth;
+    private String jsNavigatorLanguage;
+    private String jsScreenHeight;
+    private String jsScreenWidth;
+    private String jsTimezoneOffsetMins;
 
     private AuthCardDetailsFixture() {
     }
@@ -93,6 +98,36 @@ public final class AuthCardDetailsFixture {
         return this;
     }
 
+    public AuthCardDetailsFixture withIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+        return this;
+    }
+
+    public AuthCardDetailsFixture withJsScreenColorDepth(String jsScreenColorDepth) {
+        this.jsScreenColorDepth = jsScreenColorDepth;
+        return this;
+    }
+
+    public AuthCardDetailsFixture withJsNavigatorLanguage(String jsNavigatorLanguage) {
+        this.jsNavigatorLanguage = jsNavigatorLanguage;
+        return this;
+    }
+
+    public AuthCardDetailsFixture withJsScreenHeight(String jsScreenHeight) {
+        this.jsScreenHeight = jsScreenHeight;
+        return this;
+    }
+
+    public AuthCardDetailsFixture withJsScreenWidth(String jsScreenWidth) {
+        this.jsScreenWidth = jsScreenWidth;
+        return this;
+    }
+
+    public AuthCardDetailsFixture withJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
+        this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
+        return this;
+    }
+    
     public CardDetailsEntity getCardDetailsEntity() {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardBrand(cardBrand);
@@ -133,11 +168,11 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setCorporateCard(corporateCard);
         authCardDetails.setWorldpay3dsFlexDdcResult(worldpay3dsFlexDdcResult);
         authCardDetails.setIpAddress(ipAddress);
+        authCardDetails.setJsScreenColorDepth(jsScreenColorDepth);
+        authCardDetails.setJsNavigatorLanguage(jsNavigatorLanguage);
+        authCardDetails.setJsScreenHeight(jsScreenHeight);
+        authCardDetails.setJsScreenWidth(jsScreenWidth);
+        authCardDetails.setJsTimezoneOffsetMins(jsTimezoneOffsetMins);
         return authCardDetails;
-    }
-
-    public AuthCardDetailsFixture withIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-        return this;
     }
 }
