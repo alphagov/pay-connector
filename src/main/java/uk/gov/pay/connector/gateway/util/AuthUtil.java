@@ -15,7 +15,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 
 public class AuthUtil {
     private static final String STRIPE_VERSION_HEADER = "Stripe-Version";
-    private static final String STRIPE_API_VERSION = "2019-05-16";
+    private static final String STRIPE_API_VERSION = "2020-03-02";
 
     private static String encode(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
