@@ -12,4 +12,7 @@ cache:
 env:
   - LOGGING_LEVEL="ERROR"
 
-script: mvn clean verify -q
+script: mvn clean verify
+
+services:
+  - docker
