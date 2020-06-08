@@ -13,3 +13,6 @@ env:
   - LOGGING_LEVEL="ERROR"
 
 script: mvn clean verify -q
+
+services:
+  - docker
