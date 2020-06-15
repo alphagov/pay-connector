@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -73,7 +74,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
+//@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest {
 
@@ -202,6 +203,15 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthoriseWith3ds2WithCharacterLengthsForFieldsExceeded() throws Exception {
+        setUpFor3ds2AndCheckThatEpdqIsUp();
+        CardAuthorisationGatewayRequest request = buildAuthorisationRequestWithExceededCharacterLengthThatWillRequire3ds2(chargeEntity);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+    
+    @Test
     public void shouldCheckAuthorisationStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
@@ -311,6 +321,25 @@ public class EpdqPaymentProviderTest {
     }
 
     private static CardAuthorisationGatewayRequest buildAuthorisationRequestThatWillRequire3ds2(ChargeEntity chargeEntity) {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ)
+                .withAddress(new Address(
+                        ADDRESS_LINE_1,
+                        ADDRESS_LINE_2,
+                        ADDRESS_POSTCODE,
+                        ADDRESS_CITY,
+                        null,
+                        ADDRESS_COUNTRY
+                ))
+                .withCardHolder(StringUtils.repeat("*", 36))
+                .withAcceptHeader(StringUtils.repeat("*", 2049))
+                .withUserAgentHeader(StringUtils.repeat("*", 2049))
+                .withIpAddress(IP_ADDRESS)
+                .build();
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+    private static CardAuthorisationGatewayRequest buildAuthorisationRequestWithExceededCharacterLengthThatWillRequire3ds2(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ)
                 .withAddress(new Address(
