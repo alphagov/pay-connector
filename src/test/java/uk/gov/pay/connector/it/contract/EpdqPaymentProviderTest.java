@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.core.Is;
 import org.junit.Assume;
 import org.junit.Before;
@@ -150,7 +151,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
     }
@@ -162,7 +163,7 @@ public class EpdqPaymentProviderTest {
                 .withAddress(null)
                 .build();
 
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -171,16 +172,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequestThatWillRequire3ds1(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
-    }
-    
-    @Test
-    public void shouldAuthoriseWith3ds2OnSuccessfully() throws Exception {
-        setUpFor3ds2AndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequestThatWillRequire3ds2(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds1().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
@@ -195,7 +187,33 @@ public class EpdqPaymentProviderTest {
                 .withAddress(null)
                 .build();
 
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+
+    @Test
+    public void shouldAuthoriseWith3ds2OnSuccessfully() throws Exception {
+        setUpFor3ds2AndCheckThatEpdqIsUp();
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds2().build());
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+
+    @Test
+    public void shouldAuthoriseWith3ds2OnAndMaxLengthsExceededOnSuccessfully() throws Exception {
+        String acceptHeaderLongerThanEpdq3ds2LimitOf2048Characters = "application/" + RandomStringUtils.randomAlphabetic(2048);
+        String userAgentHeaderLongerThanEpdq3ds2LimitOf2048Characters = RandomStringUtils.randomAlphabetic(2048) + "/1.0";
+        String languageTagLongerThanEpdq3ds2LimitOf8Characters = "en-GB-cockney";
+
+        setUpFor3ds2AndCheckThatEpdqIsUp();
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds2()
+                .withAcceptHeader(acceptHeaderLongerThanEpdq3ds2LimitOf2048Characters)
+                .withUserAgentHeader(userAgentHeaderLongerThanEpdq3ds2LimitOf2048Characters)
+                .withJsNavigatorLanguage(languageTagLongerThanEpdq3ds2LimitOf8Characters)
+                .build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
@@ -204,7 +222,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCheckAuthorisationStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
@@ -223,7 +241,7 @@ public class EpdqPaymentProviderTest {
                 .withCardHolder(cardholderName)
                 .build();
 
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
     }
@@ -232,7 +250,7 @@ public class EpdqPaymentProviderTest {
     public void shouldCaptureSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
@@ -247,7 +265,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCancelSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
@@ -262,7 +280,7 @@ public class EpdqPaymentProviderTest {
     public void shouldRefundSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
@@ -281,7 +299,7 @@ public class EpdqPaymentProviderTest {
     public void shouldQueryPaymentStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
-        CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
@@ -298,20 +316,16 @@ public class EpdqPaymentProviderTest {
         assertThat(chargeQueryResponse.foundCharge(), is(false));
     }
 
-    private static CardAuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    private static AuthCardDetailsFixture authCardDetailsFixture() {
+        return AuthCardDetailsFixture.anAuthCardDetails();
     }
 
-    private static CardAuthorisationGatewayRequest buildAuthorisationRequestThatWillRequire3ds1(ChargeEntity chargeEntity) {
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ)
-                .build();
-        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+    private static AuthCardDetailsFixture authCardDetailsFixtureThatWillRequire3ds1() {
+        return authCardDetailsFixture().withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ);
     }
 
-    private static CardAuthorisationGatewayRequest buildAuthorisationRequestThatWillRequire3ds2(ChargeEntity chargeEntity) {
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+    private static AuthCardDetailsFixture authCardDetailsFixtureThatWillRequire3ds2() {
+        return authCardDetailsFixture()
                 .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ)
                 .withAddress(new Address(
                         ADDRESS_LINE_1,
@@ -321,9 +335,7 @@ public class EpdqPaymentProviderTest {
                         null,
                         ADDRESS_COUNTRY
                 ))
-                .withIpAddress(IP_ADDRESS)
-                .build();
-        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+                .withIpAddress(IP_ADDRESS);
     }
 
     private static Auth3dsResponseGatewayRequest buildQueryRequest(ChargeEntity chargeEntity, String auth3DResult) {
@@ -360,7 +372,7 @@ public class EpdqPaymentProviderTest {
             gatewayAccountEntity.setType(TEST);
             gatewayAccountEntity.setRequires3ds(require3ds);
             
-            if(requires3ds2) {
+            if (requires3ds2) {
                 gatewayAccountEntity.setIntegrationVersion3ds(2);
                 gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
             }
