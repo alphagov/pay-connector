@@ -18,14 +18,15 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Locale;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_ACCEPT_HEADER;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_ACCEPT_MAX_LENGTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_JAVA_ENABLED;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_LANGUAGE;
@@ -33,6 +34,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_SCREEN_WIDTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_TIMEZONE;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_USER_AGENT;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.BROWSER_USER_AGENT_MAX_LENGTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_ACCEPT_HEADER;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_HEIGHT;
@@ -40,6 +42,7 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2OrderTest.ParameterBuilder.aParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DEFAULT_BROWSER_USER_AGENT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.EXCEPTIONURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.FLAG3D_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.HTTPACCEPT_KEY;
@@ -160,19 +163,28 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_browserLanguage() {
         authCardDetails.setJsNavigatorLanguage("de");
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        assertThat(result, is(aParameterBuilder()
-                .withBrowserLanguage(Locale.forLanguageTag("de").toLanguageTag())
-                .build()));
+        assertThat(result, is(aParameterBuilder().withBrowserLanguage("de").build()));
     }
 
     @Test
     @Parameters({"ENGLISH, en-GB", "WELSH, cy"})
     public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
-        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
+                BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
-    
+
+    @Test
+    @Parameters({"ENGLISH, en-GB", "WELSH, cy"})
+    public void should_include_payment_browserLanguage_when_provided_browser_language_too_long(SupportedLanguage language, String expectedBrowserLanguage) {
+        var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
+                BRITISH_SUMMER_TIME_OFFSET_CLOCK);
+        authCardDetails.setJsNavigatorLanguage("x-this-is-too-long");
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
+    }
+
     @Test
     @Parameters({"1", "2", "4", "8", "15", "16", "24", "32"})
     public void should_include_accepted_browserColorDepths(String colorDepthValue) {
@@ -246,7 +258,15 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
 
     @Test
-    public void should_include_provided_browserAgentHeader() {
+    public void browserAcceptHeader_should_include_default_when_browser_accept_header_too_long() {
+        var veryLongAcceptHeader = randomAlphanumeric(BROWSER_ACCEPT_MAX_LENGTH + 1);
+        authCardDetails.setAcceptHeader(veryLongAcceptHeader);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserAcceptHeader(DEFAULT_BROWSER_ACCEPT_HEADER).build()));
+    }
+
+    @Test
+    public void should_include_provided_userAgentHeader() {
         authCardDetails.setUserAgentHeader("Opera/9.8");
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Opera/9.8").build()));
@@ -254,10 +274,18 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     
     @Test
     @Parameters({"null", ""})
-    public void browserAgentHeader_should_include_default_if_browser_agent_header_not_provided(@Nullable String browserAgentHeader) {
+    public void browserUserAgentHeader_should_include_default_if_user_agent_header_not_provided(@Nullable String browserAgentHeader) {
         authCardDetails.setUserAgentHeader(browserAgentHeader);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
-        assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Mozilla/5.0").build()));
+        assertThat(result, is(aParameterBuilder().withBrowserUserAgent(DEFAULT_BROWSER_USER_AGENT).build()));
+    }
+
+    @Test
+    public void browserUserAgentHeader_should_include_default_when_user_agent_header_too_long() {
+        var veryLongUserAgentHeader = randomAlphanumeric(BROWSER_USER_AGENT_MAX_LENGTH + 1);
+        authCardDetails.setUserAgentHeader(veryLongUserAgentHeader);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, is(aParameterBuilder().withBrowserUserAgent(DEFAULT_BROWSER_USER_AGENT).build()));
     }
 
     @Test

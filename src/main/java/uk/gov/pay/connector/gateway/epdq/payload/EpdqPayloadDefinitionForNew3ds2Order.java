@@ -31,9 +31,14 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public final static String ECOM_BILLTO_POSTAL_COUNTRYCODE = "ECOM_BILLTO_POSTAL_COUNTRYCODE";
     public final static String ECOM_BILLTO_POSTAL_POSTALCODE = "ECOM_BILLTO_POSTAL_POSTALCODE";
     public final static String REMOTE_ADDR = "REMOTE_ADDR";
+
     public final static String DEFAULT_BROWSER_COLOR_DEPTH = "24";
     public final static String DEFAULT_BROWSER_SCREEN_HEIGHT = "480";
     public final static String DEFAULT_BROWSER_SCREEN_WIDTH = "320";
+
+    public static final int BROWSER_ACCEPT_MAX_LENGTH = 2048;
+    public static final int BROWSER_USER_AGENT_MAX_LENGTH = 2048;
+    public static final int BROWSER_LANGUAGE_MAX_LENGTH = 8;
     
     private final static Pattern NUMBER_FROM_0_TO_999999 = Pattern.compile("0|[1-9][0-9]{0,5}");
     private final static Pattern NUMBER_FROM_MINUS_999_TO_999 = Pattern.compile("-[1-9][0-9]{0,2}|0|[1-9][0-9]{0,2}");
@@ -82,7 +87,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .map(Integer::parseInt)
                 .filter(timezoneOffsetMins -> timezoneOffsetMins >= -840 && timezoneOffsetMins <= 720)
                 .map(timezoneOffsetMins -> Integer.toString(timezoneOffsetMins))
-                .orElseGet(() -> getDefaultBrowserOffsetInMinutes());
+                .orElseGet(this::getDefaultBrowserOffsetInMinutes);
     }
 
     private String getBrowserScreenWidth(EpdqTemplateData templateData) {
@@ -109,6 +114,7 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .getJsNavigatorLanguage()
                 .map(Locale::forLanguageTag)
                 .map(Locale::toLanguageTag)
+                .filter(languageTag -> languageTag.length() <= BROWSER_LANGUAGE_MAX_LENGTH)
                 .orElse(getDefaultBrowserLanguage());
     }
 
@@ -132,10 +138,12 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     }
     
     String getBrowserAcceptHeader(EpdqTemplateData templateData) {
-        return super.getBrowserAcceptHeader(templateData);
+        String acceptHeader = super.getBrowserAcceptHeader(templateData);
+        return acceptHeader.length() > BROWSER_ACCEPT_MAX_LENGTH ? DEFAULT_BROWSER_ACCEPT_HEADER : acceptHeader;
     }
 
     String getBrowserUserAgent(EpdqTemplateData templateData) {
-        return super.getBrowserUserAgent(templateData);
+        String userAgent = super.getBrowserUserAgent(templateData);
+        return userAgent.length() > BROWSER_USER_AGENT_MAX_LENGTH ? DEFAULT_BROWSER_USER_AGENT : userAgent;
     }
 }
