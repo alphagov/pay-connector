@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -39,6 +40,11 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_COLOR_DEPTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_HEIGHT;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.DEFAULT_BROWSER_SCREEN_WIDTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY_MAX_LENGTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE_MAX_LENGTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE_MAX_LENGTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE1_MAX_LENGTH;
+import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2_MAX_LENGTH;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3ds2OrderTest.ParameterBuilder.aParameterBuilder;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
@@ -310,6 +316,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
 
     @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_too_long() {
+        address.setCity(randomAlphabetic(ECOM_BILLTO_POSTAL_CITY_MAX_LENGTH + 1));
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY)));
+    }
+
+    @Test
     public void should_include_ECOM_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_provided() {
         address.setCountry(ADDRESS_COUNTRY);
         authCardDetails.setAddress(address);
@@ -319,6 +333,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_not_provided() {
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE)));
+    }
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_too_long() {
+        address.setLine2(randomAlphabetic( ECOM_BILLTO_POSTAL_COUNTRYCODE_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE)));
@@ -340,6 +362,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     }
 
     @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_STREET_LINE1_if_address_line1_too_long() {
+        address.setLine1(randomAlphanumeric(ECOM_BILLTO_POSTAL_STREET_LINE1_MAX_LENGTH + 1));
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE1)));
+    }
+
+    @Test
     public void should_include_ECOM_ECOM_BILLTO_POSTAL_STREET_LINE_2_if_address_line2_provided() {
         address.setLine2(ADDRESS_LINE_2);
         authCardDetails.setAddress(address);
@@ -353,7 +383,15 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2)));
     }
-    
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_STREET_LINE2_if_address_line2_too_long() {
+        address.setLine2(randomAlphanumeric(ECOM_BILLTO_POSTAL_STREET_LINE2_MAX_LENGTH + 1));
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2)));
+    }
+
     @Test
     public void should_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_provided() {
         address.setPostcode(ADDRESS_POSTCODE);
@@ -364,6 +402,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_not_provided() {
+        authCardDetails.setAddress(address);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));
+    }
+
+    @Test
+    public void should_not_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_too_long() {
+        address.setPostcode(randomAlphanumeric(ECOM_BILLTO_POSTAL_POSTALCODE_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));

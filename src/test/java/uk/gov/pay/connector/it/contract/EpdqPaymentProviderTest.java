@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
@@ -101,9 +100,6 @@ public class EpdqPaymentProviderTest {
 
     @Mock
     private Histogram mockHistogram;
-    
-    @Mock
-    private Counter mockCounter;
 
     @Mock
     private Environment mockEnvironment;
@@ -159,7 +155,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+        AuthCardDetails authCardDetails = authCardDetailsFixture()
                 .withAddress(null)
                 .build();
 
@@ -182,7 +178,7 @@ public class EpdqPaymentProviderTest {
     public void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
 
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+        AuthCardDetails authCardDetails = authCardDetailsFixture()
                 .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ)
                 .withAddress(null)
                 .build();
@@ -204,12 +200,23 @@ public class EpdqPaymentProviderTest {
 
     @Test
     public void shouldAuthoriseWith3ds2OnAndMaxLengthsExceededOnSuccessfully() throws Exception {
+        String addressLine1LongerThanEpdq3ds2LimitOf35Characters = "1001 Periphrastic Circuitous Crescent";
+        String addressLine2LongerThanEpdq3ds2LimitOf35Characters = "Discursive Prolix Multiloquent Wittering";
+        String addressCityLongerThanEpdq3ds2LimitOf25Characters = "Prolonged Longhampton-upon-Sea";
         String acceptHeaderLongerThanEpdq3ds2LimitOf2048Characters = "application/" + RandomStringUtils.randomAlphabetic(2048);
         String userAgentHeaderLongerThanEpdq3ds2LimitOf2048Characters = RandomStringUtils.randomAlphabetic(2048) + "/1.0";
         String languageTagLongerThanEpdq3ds2LimitOf8Characters = "en-GB-cockney";
 
         setUpFor3ds2AndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds2()
+                .withAddress(new Address(
+                        addressLine1LongerThanEpdq3ds2LimitOf35Characters,
+                        addressLine2LongerThanEpdq3ds2LimitOf35Characters,
+                        ADDRESS_POSTCODE,
+                        addressCityLongerThanEpdq3ds2LimitOf25Characters,
+                        null,
+                        ADDRESS_COUNTRY
+                ))
                 .withAcceptHeader(acceptHeaderLongerThanEpdq3ds2LimitOf2048Characters)
                 .withUserAgentHeader(userAgentHeaderLongerThanEpdq3ds2LimitOf2048Characters)
                 .withJsNavigatorLanguage(languageTagLongerThanEpdq3ds2LimitOf8Characters)
@@ -237,7 +244,7 @@ public class EpdqPaymentProviderTest {
         setUpAndCheckThatEpdqIsUp();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
 
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+        AuthCardDetails authCardDetails = authCardDetailsFixture()
                 .withCardHolder(cardholderName)
                 .build();
 
@@ -317,7 +324,15 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthCardDetailsFixture authCardDetailsFixture() {
-        return AuthCardDetailsFixture.anAuthCardDetails();
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(new Address(
+                        ADDRESS_LINE_1,
+                        ADDRESS_LINE_2,
+                        ADDRESS_POSTCODE,
+                        ADDRESS_CITY,
+                        null,
+                        ADDRESS_COUNTRY
+                ));
     }
 
     private static AuthCardDetailsFixture authCardDetailsFixtureThatWillRequire3ds1() {
@@ -327,14 +342,6 @@ public class EpdqPaymentProviderTest {
     private static AuthCardDetailsFixture authCardDetailsFixtureThatWillRequire3ds2() {
         return authCardDetailsFixture()
                 .withCardNo(VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ)
-                .withAddress(new Address(
-                        ADDRESS_LINE_1,
-                        ADDRESS_LINE_2,
-                        ADDRESS_POSTCODE,
-                        ADDRESS_CITY,
-                        null,
-                        ADDRESS_COUNTRY
-                ))
                 .withIpAddress(IP_ADDRESS);
     }
 
