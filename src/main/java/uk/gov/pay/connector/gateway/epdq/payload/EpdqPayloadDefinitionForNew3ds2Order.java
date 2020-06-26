@@ -39,7 +39,12 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     public static final int BROWSER_ACCEPT_MAX_LENGTH = 2048;
     public static final int BROWSER_USER_AGENT_MAX_LENGTH = 2048;
     public static final int BROWSER_LANGUAGE_MAX_LENGTH = 8;
-    
+    public static final int ECOM_BILLTO_POSTAL_CITY_MAX_LENGTH = 25;
+    public static final int ECOM_BILLTO_POSTAL_COUNTRYCODE_MAX_LENGTH = 2;
+    public static final int ECOM_BILLTO_POSTAL_STREET_LINE1_MAX_LENGTH = 35;
+    public static final int ECOM_BILLTO_POSTAL_STREET_LINE2_MAX_LENGTH = 35;
+    public static final int ECOM_BILLTO_POSTAL_POSTALCODE_MAX_LENGTH = 25;
+
     private final static Pattern NUMBER_FROM_0_TO_999999 = Pattern.compile("0|[1-9][0-9]{0,5}");
     private final static Pattern NUMBER_FROM_MINUS_999_TO_999 = Pattern.compile("-[1-9][0-9]{0,2}|0|[1-9][0-9]{0,2}");
     private final static Set<String> VALID_SCREEN_COLOR_DEPTHS = Set.of("1", "2", "4", "8", "15", "16", "24", "32");
@@ -67,13 +72,27 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
                 .add(BROWSER_ACCEPT_HEADER, getBrowserAcceptHeader(templateData))
                 .add(BROWSER_USER_AGENT, getBrowserUserAgent(templateData))
                 .add(BROWSER_JAVA_ENABLED, "false");
-        
-        templateData.getAuthCardDetails().getAddress().map(Address::getCity).ifPresent(city -> parameterBuilder.add(ECOM_BILLTO_POSTAL_CITY, city));
-        templateData.getAuthCardDetails().getAddress().map(Address::getCountry).ifPresent(country -> parameterBuilder.add(ECOM_BILLTO_POSTAL_COUNTRYCODE, country));
-        templateData.getAuthCardDetails().getAddress().map(Address::getLine1).ifPresent(addressLine1 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE1, addressLine1));
-        templateData.getAuthCardDetails().getAddress().map(Address::getLine2).ifPresent(addressLine2 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE2, addressLine2));
-        templateData.getAuthCardDetails().getAddress().map(Address::getPostcode).ifPresent(addressPostCode -> parameterBuilder.add(ECOM_BILLTO_POSTAL_POSTALCODE, addressPostCode));
-        
+
+        templateData.getAuthCardDetails().getAddress().map(Address::getCity)
+                .filter(city -> city.length() <= ECOM_BILLTO_POSTAL_CITY_MAX_LENGTH)
+                .ifPresent(city -> parameterBuilder.add(ECOM_BILLTO_POSTAL_CITY, city));
+
+        templateData.getAuthCardDetails().getAddress().map(Address::getCountry)
+                .filter(country -> country.length() <= ECOM_BILLTO_POSTAL_COUNTRYCODE_MAX_LENGTH)
+                .ifPresent(country -> parameterBuilder.add(ECOM_BILLTO_POSTAL_COUNTRYCODE, country));
+
+        templateData.getAuthCardDetails().getAddress().map(Address::getLine1)
+                .filter(addressLine1 -> addressLine1.length() <= ECOM_BILLTO_POSTAL_STREET_LINE1_MAX_LENGTH)
+                .ifPresent(addressLine1 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE1, addressLine1));
+
+        templateData.getAuthCardDetails().getAddress().map(Address::getLine2)
+                .filter(addressLine2 -> addressLine2.length() <= ECOM_BILLTO_POSTAL_STREET_LINE2_MAX_LENGTH)
+                .ifPresent(addressLine2 -> parameterBuilder.add(ECOM_BILLTO_POSTAL_STREET_LINE2, addressLine2));
+
+        templateData.getAuthCardDetails().getAddress().map(Address::getPostcode)
+                .filter(addressPostCode -> addressPostCode.length() <= ECOM_BILLTO_POSTAL_POSTALCODE_MAX_LENGTH)
+                .ifPresent(addressPostCode -> parameterBuilder.add(ECOM_BILLTO_POSTAL_POSTALCODE, addressPostCode));
+
         if (sendPayerIpAddressToGateway) {
             templateData.getAuthCardDetails().getIpAddress().ifPresent(ipAddress -> parameterBuilder.add(REMOTE_ADDR, ipAddress));
         }
