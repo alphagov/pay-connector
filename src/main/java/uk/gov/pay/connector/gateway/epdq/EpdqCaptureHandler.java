@@ -25,14 +25,10 @@ public class EpdqCaptureHandler implements CaptureHandler {
 
     private final GatewayClient client;
     private final Map<String, String> gatewayUrlMap;
-    private final EpdqPayloadDefinitionForCaptureOrder epdqPayloadDefinitionForCaptureOrder;
 
-    public EpdqCaptureHandler(GatewayClient client, 
-                              Map<String, String> gatewayUrlMap, 
-                              EpdqPayloadDefinitionForCaptureOrder epdqPayloadDefinitionForCaptureOrder) {
+    public EpdqCaptureHandler(GatewayClient client, Map<String, String> gatewayUrlMap) {
         this.client = client;
         this.gatewayUrlMap = gatewayUrlMap;
-        this.epdqPayloadDefinitionForCaptureOrder = epdqPayloadDefinitionForCaptureOrder;
     }
 
     @Override
@@ -58,6 +54,6 @@ public class EpdqCaptureHandler implements CaptureHandler {
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         templateData.setTransactionId(request.getTransactionId());
         
-        return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder(templateData);
+        return new EpdqPayloadDefinitionForCaptureOrder().createGatewayOrder(templateData);
     }
 }
