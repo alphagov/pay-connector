@@ -7,10 +7,9 @@ import org.apache.http.message.BasicNameValuePair;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.StringJoiner;
 
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.joining;
 
 public class EpdqSha512SignatureGenerator implements SignatureGenerator {
 
@@ -20,15 +19,14 @@ public class EpdqSha512SignatureGenerator implements SignatureGenerator {
             throw new IllegalArgumentException("Passphrase must not be blank.");
         }
 
-        List<NameValuePair> normalisedParams = params.stream()
+        String stringToBeHashed = params.stream()
                 .filter(param -> StringUtils.isNotEmpty(param.getValue()))
                 .map(param -> new BasicNameValuePair(param.getName().toUpperCase(Locale.ENGLISH), param.getValue()))
-                .sorted(comparing(BasicNameValuePair::getName))
-                .collect(toList());
+                .sorted(comparing(NameValuePair::getName))
+                .map(param -> param.getName() + "=" + param.getValue())
+                .collect(joining(passphrase, "", passphrase));
 
-        StringJoiner input = new StringJoiner(passphrase, "", passphrase);
-        normalisedParams.forEach(param -> input.add(param.getName() + "=" + param.getValue()));
-        return DigestUtils.sha512Hex(input.toString());
+        return DigestUtils.sha512Hex(stringToBeHashed);
     }
 
 }
