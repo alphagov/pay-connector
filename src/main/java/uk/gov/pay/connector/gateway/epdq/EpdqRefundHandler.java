@@ -56,7 +56,9 @@ public class EpdqRefundHandler implements RefundHandler {
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         templateData.setTransactionId(request.getTransactionId());
         templateData.setAmount(request.getAmount());
-        
-        return new EpdqPayloadDefinitionForRefundOrder().createGatewayOrder(templateData);
+
+        var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
+        epdqPayloadDefinitionForRefundOrder.setEpdqTemplateData(templateData);
+        return epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
     }
 }

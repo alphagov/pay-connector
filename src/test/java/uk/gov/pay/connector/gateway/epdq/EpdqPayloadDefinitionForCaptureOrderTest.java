@@ -20,7 +20,10 @@ public class EpdqPayloadDefinitionForCaptureOrderTest {
         templateData.setMerchantCode("merchant-id");
         templateData.setTransactionId("payId");
 
-        GatewayOrder gatewayOrder = new EpdqPayloadDefinitionForCaptureOrder().createGatewayOrder(templateData);
+        var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
+        epdqPayloadDefinitionForCaptureOrder.setEpdqTemplateData(templateData);
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
+
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.CAPTURE, gatewayOrder.getOrderRequestType());
     }

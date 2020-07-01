@@ -48,7 +48,8 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
     @Test
     public void shouldExtractParametersFromTemplate() {
         Set.of(cancelOrder, captureOrder, refundOrder).forEach(order -> {
-            List<NameValuePair> result = order.extract(epdqTemplateData);
+            order.setEpdqTemplateData(epdqTemplateData);
+            List<NameValuePair> result = order.extract();
             assertThat(result, is(ImmutableList.builder().add(
                     new BasicNameValuePair("AMOUNT", "400"),
                     new BasicNameValuePair("OPERATION", OPERATION_TYPE),
@@ -63,7 +64,8 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
     @Test
     public void testOnlyTransactionIdIsSentIfBothTransactionIdAndOrderIdAvailable() {
         epdqTemplateData.setOrderId("Order-Id");
-        List<NameValuePair> extractPairs = captureOrder.extract(epdqTemplateData);
+        captureOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> extractPairs = captureOrder.extract();
         assertThat(extractPairs, hasItem(new BasicNameValuePair("PAYID", PAY_ID)));
     }
 
@@ -71,7 +73,8 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
     public void testThatOrderIdIsSentIfTransactionIsNotAvailable() {
         epdqTemplateData.setTransactionId(null);
         epdqTemplateData.setOrderId("Order-Id");
-        List<NameValuePair> extractPairs = refundOrder.extract(epdqTemplateData);
+        refundOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> extractPairs = refundOrder.extract();
         assertThat(extractPairs, hasItem(new BasicNameValuePair("ORDERID", "Order-Id")));
     }
 }

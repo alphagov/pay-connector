@@ -104,6 +104,13 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     
     @Before
     public void setup() {
+        authCardDetails.setCardNo(CARD_NO);
+        authCardDetails.setCvc(CVC);
+        authCardDetails.setEndDate(END_DATE);
+        authCardDetails.setCardHolder(CARDHOLDER_NAME);
+        authCardDetails.setAcceptHeader(ACCEPT_HEADER);
+        authCardDetails.setUserAgentHeader(USER_AGENT_HEADER);
+
         epdqTemplateData.setMerchantCode(PSP_ID);
         epdqTemplateData.setPassword(PASSWORD);
         epdqTemplateData.setUserId(USER_ID);
@@ -112,13 +119,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         epdqTemplateData.setAmount(AMOUNT);
         epdqTemplateData.setFrontendUrl(FRONTEND_URL);
         epdqTemplateData.setAuthCardDetails(authCardDetails);
-        
-        authCardDetails.setCardNo(CARD_NO);
-        authCardDetails.setCvc(CVC);
-        authCardDetails.setEndDate(END_DATE);
-        authCardDetails.setCardHolder(CARDHOLDER_NAME);
-        authCardDetails.setAcceptHeader(ACCEPT_HEADER);
-        authCardDetails.setUserAgentHeader(USER_AGENT_HEADER);
+
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
     }
     
     @After
@@ -135,7 +137,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"0", "999999", "100"})
     public void should_include_browserScreenHeight(String screenHeight) {
         authCardDetails.setJsScreenHeight(screenHeight);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserScreenHeight(screenHeight).build()));
     }
     
@@ -144,7 +146,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_default_browserScreenHeight_when_screen_height_provided_is_invalid
             (@Nullable String screenHeight) {
         authCardDetails.setJsScreenHeight(screenHeight);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().build()));
     }
 
@@ -152,7 +154,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"0", "999999", "100"})
     public void should_include_browserScreenWidth(String screenWidth) {
         authCardDetails.setJsScreenWidth(screenWidth);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserScreenWidth(screenWidth).build()));
     }
 
@@ -161,14 +163,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_default_browserScreenWidth_when_screen_width_provided_is_invalid
             (@Nullable String screenWidth) {
         authCardDetails.setJsScreenWidth(screenWidth);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().build()));
     }
     
     @Test
     public void should_include_browserLanguage() {
         authCardDetails.setJsNavigatorLanguage("de");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserLanguage("de").build()));
     }
 
@@ -177,7 +179,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
                 BRITISH_SUMMER_TIME_OFFSET_CLOCK);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
 
@@ -187,7 +190,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
                 BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         authCardDetails.setJsNavigatorLanguage("x-this-is-too-long");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
 
@@ -195,28 +199,28 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"1", "2", "4", "8", "15", "16", "24", "32"})
     public void should_include_accepted_browserColorDepths(String colorDepthValue) {
         authCardDetails.setJsScreenColorDepth(colorDepthValue);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, colorDepthValue)));
     }
     
     @Test
     public void browserColorDepth_should_default_to_24_if_js_screen_color_depth_not_provided() {
         authCardDetails.setJsScreenColorDepth(null);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, "24")));
     }
 
     @Test
     public void browserColorDepth_should_default_to_24_if_js_screen_color_depth_is_not_in_the_range_of_accepted_values() {
         authCardDetails.setJsScreenColorDepth("100");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(BROWSER_COLOR_DEPTH, "24")));
     }
 
     @Test
     public void should_include_browserColorDepth() {
         authCardDetails.setJsScreenColorDepth("1");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserColorDepth("1").build()));
     }
 
@@ -224,7 +228,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"-840", "720", "500"})
     public void should_include_browserTimezoneOffSetMins(String timeZoneOffsetMins) {
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins(timeZoneOffsetMins).build()));
     }
 
@@ -234,7 +238,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             (@Nullable String timeZoneOffsetMins) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("-60").build()));
     }
 
@@ -244,14 +249,15 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             (@Nullable String timeZoneOffsetMins) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("0").build()));
     }
 
     @Test
     public void should_include_accepted_browserAcceptHeader() {
         authCardDetails.setAcceptHeader("text/html");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserAcceptHeader("text/html").build()));
     }
     
@@ -259,7 +265,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"null", ""})
     public void browserAcceptHeader_should_include_default_if_browser_accept_header_not_provided(@Nullable String browserAcceptHeader) {
         authCardDetails.setAcceptHeader(browserAcceptHeader);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserAcceptHeader(DEFAULT_BROWSER_ACCEPT_HEADER).build()));
     }
 
@@ -267,14 +273,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void browserAcceptHeader_should_include_default_when_browser_accept_header_too_long() {
         var veryLongAcceptHeader = randomAlphanumeric(BROWSER_ACCEPT_MAX_LENGTH + 1);
         authCardDetails.setAcceptHeader(veryLongAcceptHeader);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserAcceptHeader(DEFAULT_BROWSER_ACCEPT_HEADER).build()));
     }
 
     @Test
     public void should_include_provided_userAgentHeader() {
         authCardDetails.setUserAgentHeader("Opera/9.8");
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserUserAgent("Opera/9.8").build()));
     }
     
@@ -282,7 +288,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     @Parameters({"null", ""})
     public void browserUserAgentHeader_should_include_default_if_user_agent_header_not_provided(@Nullable String browserAgentHeader) {
         authCardDetails.setUserAgentHeader(browserAgentHeader);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserUserAgent(DEFAULT_BROWSER_USER_AGENT).build()));
     }
 
@@ -290,13 +296,13 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void browserUserAgentHeader_should_include_default_when_user_agent_header_too_long() {
         var veryLongUserAgentHeader = randomAlphanumeric(BROWSER_USER_AGENT_MAX_LENGTH + 1);
         authCardDetails.setUserAgentHeader(veryLongUserAgentHeader);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserUserAgent(DEFAULT_BROWSER_USER_AGENT).build()));
     }
 
     @Test
     public void should_include_browserJavaEnabled_parameter() {
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserJavaEnabled("false").build()));
     }
     
@@ -304,14 +310,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_ECOM_BILLTO_POSTAL_CITY_if_city_provided() {
         address.setCity(ADDRESS_CITY);
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY, "London")));
     }
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_not_provided() {
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY)));
     }
 
@@ -319,7 +325,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_ECOM_BILLTO_POSTAL_CITY_if_city_too_long() {
         address.setCity(randomAlphabetic(ECOM_BILLTO_POSTAL_CITY_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_CITY)));
     }
 
@@ -327,14 +333,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_ECOM_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_provided() {
         address.setCountry(ADDRESS_COUNTRY);
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE, "GB")));
     }
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_not_provided() {
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE)));
     }
 
@@ -342,7 +348,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_ECOM_BILLTO_POSTAL_COUNTRYCODE_if_country_too_long() {
         address.setLine2(randomAlphabetic( ECOM_BILLTO_POSTAL_COUNTRYCODE_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_COUNTRYCODE)));
     }
 
@@ -350,14 +356,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_ECOM_BILLTO_POSTAL_STREET_LINE1_if_address_line1_provided() {
         address.setLine1(ADDRESS_LINE_1);
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE1, "The Money Pool")));
     }
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_STREET_LINE1_if_address_line1_not_provided() {
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE1)));
     }
 
@@ -365,7 +371,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_ECOM_BILLTO_POSTAL_STREET_LINE1_if_address_line1_too_long() {
         address.setLine1(randomAlphanumeric(ECOM_BILLTO_POSTAL_STREET_LINE1_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE1)));
     }
 
@@ -373,14 +379,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_ECOM_ECOM_BILLTO_POSTAL_STREET_LINE_2_if_address_line2_provided() {
         address.setLine2(ADDRESS_LINE_2);
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2, "1 Gold Way")));
     }
 
     @Test
     public void should_not_include_ECOM_ECOM_BILLTO_POSTAL_STREET_LINE_2_if_address_line2_not_provided() {
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2)));
     }
 
@@ -388,7 +394,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_ECOM_BILLTO_POSTAL_STREET_LINE2_if_address_line2_too_long() {
         address.setLine2(randomAlphanumeric(ECOM_BILLTO_POSTAL_STREET_LINE2_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_STREET_LINE2)));
     }
 
@@ -396,14 +402,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_provided() {
         address.setPostcode(ADDRESS_POSTCODE);
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE, "DO11 4RS")));
     }
 
     @Test
     public void should_not_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_not_provided() {
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));
     }
 
@@ -411,7 +417,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_ECOM_BILLTO_POSTAL_POSTALCODE_if_address_postcode_too_long() {
         address.setPostcode(randomAlphanumeric(ECOM_BILLTO_POSTAL_POSTALCODE_MAX_LENGTH + 1));
         authCardDetails.setAddress(address);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.ECOM_BILLTO_POSTAL_POSTALCODE)));
     }
 
@@ -419,7 +425,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(IP_ADDRESS);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR, "8.8.8.8")));
     }
 
@@ -427,7 +434,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_REMOTE_ADDR_if_Ip_address_not_provided_and_sending_Ip_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(null);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
     }
 
@@ -435,7 +443,8 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_not_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(IP_ADDRESS);
-        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract(epdqTemplateData);
+        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
     }
     

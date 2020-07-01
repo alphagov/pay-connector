@@ -124,8 +124,9 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         templateData.setDescription("MyDescription");
         templateData.setAmount("500");
         templateData.setAuthCardDetails(authCardDetails);
-        
-        GatewayOrder gatewayOrder = epdqPayloadDefinitionFor3dsNewOrder.createGatewayOrder(templateData);
+
+        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(templateData);
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionFor3dsNewOrder.createGatewayOrder();
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_3DS_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, gatewayOrder.getOrderRequestType());
     }
@@ -147,7 +148,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
@@ -183,7 +185,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
@@ -218,7 +221,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 

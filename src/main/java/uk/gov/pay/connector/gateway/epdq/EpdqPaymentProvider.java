@@ -278,7 +278,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        return new EpdqPayloadDefinitionForQueryOrder().createGatewayOrder(templateData);
+
+        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
+        epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
     private GatewayOrder buildQueryOrderRequestFor(ChargeEntity charge) {
@@ -288,7 +291,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         templateData.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        return new EpdqPayloadDefinitionForQueryOrder().createGatewayOrder(templateData);
+
+        var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
+        epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request, String frontendUrl) {
@@ -314,7 +320,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
             epdqPayloadDefinition = new EpdqPayloadDefinitionForNewOrder();
         }
 
-        return epdqPayloadDefinition.createGatewayOrder(templateData);
+        epdqPayloadDefinition.setEpdqTemplateData(templateData);
+        return epdqPayloadDefinition.createGatewayOrder();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
@@ -328,7 +335,9 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 .ifPresentOrElse(
                         templateData::setTransactionId,
                         () -> templateData.setOrderId(request.getExternalChargeId()));
-        
-        return new EpdqPayloadDefinitionForCancelOrder().createGatewayOrder(templateData);
+
+        var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
+        epdqPayloadDefinitionForCancelOrder.setEpdqTemplateData(templateData);
+        return epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
     }
 }

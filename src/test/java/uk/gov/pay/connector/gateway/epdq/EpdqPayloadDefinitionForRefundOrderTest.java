@@ -21,7 +21,10 @@ public class EpdqPayloadDefinitionForRefundOrderTest {
         templateData.setTransactionId("payId");
         templateData.setAmount("400");
 
-        GatewayOrder gatewayOrder = new EpdqPayloadDefinitionForRefundOrder().createGatewayOrder(templateData);
+        var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
+        epdqPayloadDefinitionForRefundOrder.setEpdqTemplateData(templateData);
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
+
         assertEquals(TestTemplateResourceLoader.load(EPDQ_REFUND_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.REFUND, gatewayOrder.getOrderRequestType());
     }

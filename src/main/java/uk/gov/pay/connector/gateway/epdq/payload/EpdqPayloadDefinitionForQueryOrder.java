@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
-import javax.inject.Singleton;
 import java.util.List;
 
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
-@Singleton
 public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     
     public final static String ORDER_ID_KEY = "ORDERID";
@@ -18,7 +15,8 @@ public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     public final static String USERID_KEY = "USERID";
 
     @Override
-    public List<NameValuePair> extract(EpdqTemplateData templateData) {
+    public List<NameValuePair> extract() {
+        var templateData = getEpdqTemplateData();
         return newParameterBuilder()
                 .add(ORDER_ID_KEY, templateData.getOrderId())
                 .add(PSPID_KEY, templateData.getMerchantCode())
@@ -36,4 +34,5 @@ public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     protected OrderRequestType getOrderRequestType() {
         return OrderRequestType.AUTHORISE;
     }
+
 }

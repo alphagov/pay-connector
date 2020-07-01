@@ -20,7 +20,9 @@ public class EpdqPayloadDefinitionForCancelOrderTest {
         templateData.setMerchantCode("merchant-id");
         templateData.setTransactionId("payId");
 
-        GatewayOrder gatewayOrder = new EpdqPayloadDefinitionForCancelOrder().createGatewayOrder(templateData);
+        var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
+        epdqPayloadDefinitionForCancelOrder.setEpdqTemplateData(templateData);
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.CANCEL, gatewayOrder.getOrderRequestType());
     }
