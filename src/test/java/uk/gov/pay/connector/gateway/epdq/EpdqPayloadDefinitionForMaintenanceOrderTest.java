@@ -21,7 +21,6 @@ import static org.hamcrest.core.Is.is;
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPayloadDefinitionForMaintenanceOrderTest {
 
-    private static final String OPERATION_TYPE = "RES";
     private static final String PAY_ID = "PayId";
     private static final String PSP_ID = "PspId";
     private static final String PASSWORD = "password";
@@ -36,8 +35,6 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
     @Before
     public void setup() {
         epdqTemplateData = new EpdqTemplateData();
-
-        epdqTemplateData.setOperationType(OPERATION_TYPE);
         epdqTemplateData.setTransactionId(PAY_ID);
         epdqTemplateData.setMerchantCode(PSP_ID);
         epdqTemplateData.setPassword(PASSWORD);
@@ -50,14 +47,14 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
         Set.of(cancelOrder, captureOrder, refundOrder).forEach(order -> {
             order.setEpdqTemplateData(epdqTemplateData);
             List<NameValuePair> result = order.extract();
-            assertThat(result, is(ImmutableList.builder().add(
+            assertThat(result, is(List.of(
                     new BasicNameValuePair("AMOUNT", "400"),
-                    new BasicNameValuePair("OPERATION", OPERATION_TYPE),
+                    new BasicNameValuePair("OPERATION", order.getOperationType()),
                     new BasicNameValuePair("PAYID", PAY_ID),
                     new BasicNameValuePair("PSPID", PSP_ID),
                     new BasicNameValuePair("PSWD", PASSWORD),
-                    new BasicNameValuePair("USERID", USER_ID))
-                    .build()));
+                    new BasicNameValuePair("USERID", USER_ID)
+                    )));
         });
     }
 
@@ -77,4 +74,5 @@ public class EpdqPayloadDefinitionForMaintenanceOrderTest {
         List<NameValuePair> extractPairs = refundOrder.extract();
         assertThat(extractPairs, hasItem(new BasicNameValuePair("ORDERID", "Order-Id")));
     }
+    
 }

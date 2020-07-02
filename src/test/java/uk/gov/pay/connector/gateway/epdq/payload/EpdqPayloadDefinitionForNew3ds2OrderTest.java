@@ -114,7 +114,6 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         epdqTemplateData.setMerchantCode(PSP_ID);
         epdqTemplateData.setPassword(PASSWORD);
         epdqTemplateData.setUserId(USER_ID);
-        epdqTemplateData.setOperationType(OPERATION_TYPE);
         epdqTemplateData.setOrderId(ORDER_ID);
         epdqTemplateData.setAmount(AMOUNT);
         epdqTemplateData.setFrontendUrl(FRONTEND_URL);

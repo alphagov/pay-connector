@@ -5,7 +5,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 public class EpdqPayloadDefinitionForCancelOrder extends EpdqPayloadDefinitionForMaintenanceOrder {
 
     @Override
-    protected String getOperationType() {
+    public String getOperationType() {
         return "DES";
     }
 
