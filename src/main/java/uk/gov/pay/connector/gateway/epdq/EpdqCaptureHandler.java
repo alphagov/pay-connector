@@ -50,12 +50,12 @@ public class EpdqCaptureHandler implements CaptureHandler {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         templateData.setTransactionId(request.getTransactionId());
 
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
         epdqPayloadDefinitionForCaptureOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }
 }

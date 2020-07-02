@@ -103,14 +103,15 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         templateData.setOrderId("mq4ht90j2oir6am585afk58kml");
         templateData.setPassword("password");
         templateData.setUserId("username");
-        templateData.setShaInPassphrase("sha-passphrase");
         templateData.setMerchantCode("merchant-id");
         templateData.setDescription("MyDescription");
         templateData.setAmount("500");
         templateData.setAuthCardDetails(authCardDetails);
 
         epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForNewOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForNewOrder.createGatewayOrder();
+
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, gatewayOrder.getOrderRequestType());
     }

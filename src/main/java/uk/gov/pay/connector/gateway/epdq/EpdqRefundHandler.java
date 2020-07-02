@@ -52,13 +52,13 @@ public class EpdqRefundHandler implements RefundHandler {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         templateData.setTransactionId(request.getTransactionId());
         templateData.setAmount(request.getAmount());
 
         var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
         epdqPayloadDefinitionForRefundOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
     }
 }

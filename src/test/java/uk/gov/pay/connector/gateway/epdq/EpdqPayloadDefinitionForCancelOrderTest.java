@@ -16,13 +16,14 @@ public class EpdqPayloadDefinitionForCancelOrderTest {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setPassword("password");
         templateData.setUserId("username");
-        templateData.setShaInPassphrase("sha-passphrase");
         templateData.setMerchantCode("merchant-id");
         templateData.setTransactionId("payId");
 
         var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
         epdqPayloadDefinitionForCancelOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
+
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.CANCEL, gatewayOrder.getOrderRequestType());
     }

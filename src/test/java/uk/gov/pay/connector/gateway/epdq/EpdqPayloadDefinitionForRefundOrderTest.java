@@ -16,13 +16,13 @@ public class EpdqPayloadDefinitionForRefundOrderTest {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setPassword("password");
         templateData.setUserId("username");
-        templateData.setShaInPassphrase("sha-passphrase");
         templateData.setMerchantCode("merchant-id");
         templateData.setTransactionId("payId");
         templateData.setAmount("400");
 
         var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
         epdqPayloadDefinitionForRefundOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_REFUND_REQUEST), gatewayOrder.getPayload());

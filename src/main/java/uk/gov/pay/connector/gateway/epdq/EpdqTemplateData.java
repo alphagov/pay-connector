@@ -7,7 +7,6 @@ public class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
     private String orderId;
     private String password;
     private String userId;
-    private String shaInPassphrase;
     private String amount;
     private String frontendBaseUrl;
 
@@ -33,14 +32,6 @@ public class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public String getShaInPassphrase() {
-        return shaInPassphrase;
-    }
-
-    public void setShaInPassphrase(String shaInPassphrase) {
-        this.shaInPassphrase = shaInPassphrase;
     }
 
     @Override

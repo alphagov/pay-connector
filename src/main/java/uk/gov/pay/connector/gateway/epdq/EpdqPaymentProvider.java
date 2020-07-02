@@ -275,12 +275,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setOrderId(request.getChargeExternalId());
         templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
 
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
@@ -288,12 +289,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setOrderId(charge.getExternalId());
         templateData.setPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
 
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
@@ -301,7 +302,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setOrderId(request.getChargeExternalId());
         templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         templateData.setDescription(request.getDescription());
@@ -321,6 +321,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         }
 
         epdqPayloadDefinition.setEpdqTemplateData(templateData);
+        epdqPayloadDefinition.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinition.createGatewayOrder();
     }
 
@@ -328,7 +329,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
         templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
 
         Optional.ofNullable(request.getTransactionId())
@@ -338,6 +338,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
         var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
         epdqPayloadDefinitionForCancelOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
     }
 }
