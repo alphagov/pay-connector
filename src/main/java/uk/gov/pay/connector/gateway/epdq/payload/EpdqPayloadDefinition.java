@@ -34,7 +34,6 @@ public abstract class EpdqPayloadDefinition {
 
     public GatewayOrder createGatewayOrder() {
         EpdqTemplateData templateData = getEpdqTemplateData();
-        templateData.setOperationType(getOperationType());
         ArrayList<NameValuePair> params = new ArrayList<>(extract());
         String signature = SIGNATURE_GENERATOR.sign(params, templateData.getShaInPassphrase());
         params.add(new BasicNameValuePair("SHASIGN", signature));
@@ -46,7 +45,7 @@ public abstract class EpdqPayloadDefinition {
         );
     }
 
-    protected abstract String getOperationType();
+    public abstract String getOperationType();
 
     protected abstract OrderRequestType getOrderRequestType();
 

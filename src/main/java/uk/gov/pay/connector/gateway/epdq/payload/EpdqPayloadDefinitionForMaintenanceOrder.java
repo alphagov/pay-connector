@@ -22,7 +22,7 @@ public abstract class EpdqPayloadDefinitionForMaintenanceOrder extends EpdqPaylo
         );
         
         return epdqParameterBuilder
-                .add("OPERATION", templateData.getOperationType())
+                .add("OPERATION", getOperationType())
                 .add("PSPID", templateData.getMerchantCode())
                 .add("PSWD", templateData.getPassword())
                 .add("USERID", templateData.getUserId())

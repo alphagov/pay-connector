@@ -37,7 +37,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
-                .add(OPERATION_KEY, templateData.getOperationType())
+                .add(OPERATION_KEY, getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
 
         if (templateData.getAuthCardDetails().getAddress().isPresent()) {
@@ -58,7 +58,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     }
 
     @Override
-    protected String getOperationType() {
+    public String getOperationType() {
         return "RES";
     }
 

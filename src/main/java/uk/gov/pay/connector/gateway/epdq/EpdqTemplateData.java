@@ -3,21 +3,13 @@ package uk.gov.pay.connector.gateway.epdq;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 public class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
-    private String operationType;
+
     private String orderId;
     private String password;
     private String userId;
     private String shaInPassphrase;
     private String amount;
     private String frontendBaseUrl;
-
-    public String getOperationType() {
-        return operationType;
-    }
-
-    public void setOperationType(String operationType) {
-        this.operationType = operationType;
-    }
 
     public String getOrderId() {
         return orderId;

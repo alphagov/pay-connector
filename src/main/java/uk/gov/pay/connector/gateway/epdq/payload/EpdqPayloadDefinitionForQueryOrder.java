@@ -26,7 +26,7 @@ public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     }
 
     @Override
-    protected String getOperationType() {
+    public String getOperationType() {
         return "RES";
     }
 

@@ -55,7 +55,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(HTTPACCEPT_KEY, getBrowserAcceptHeader(templateData))
                 .add(HTTPUSER_AGENT_KEY, getBrowserUserAgent(templateData))
                 .add(LANGUAGE_URL, "en_GB")
-                .add(OPERATION_KEY, templateData.getOperationType())
+                .add(OPERATION_KEY, getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
         
         if (templateData.getAuthCardDetails().getAddress().isPresent()) {
@@ -82,7 +82,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     }
 
     @Override
-    protected String getOperationType() {
+    public String getOperationType() {
         return "RES";
     }
 
