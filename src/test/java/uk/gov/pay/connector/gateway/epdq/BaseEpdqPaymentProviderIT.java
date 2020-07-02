@@ -64,7 +64,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORIS
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST_WITH_PAYID;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_QUERY_PAYMENT_STATUS_AUTHORISED_RESPONSE;
@@ -191,7 +191,7 @@ public abstract class BaseEpdqPaymentProviderIT {
     }
 
     String successCancelRequest() {
-        return TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST);
+        return TestTemplateResourceLoader.load(EPDQ_CANCEL_REQUEST_WITH_PAYID);
     }
 
     String successRefundResponse() {

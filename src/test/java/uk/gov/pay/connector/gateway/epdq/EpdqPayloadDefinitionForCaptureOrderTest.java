@@ -13,18 +13,16 @@ public class EpdqPayloadDefinitionForCaptureOrderTest {
 
     @Test
     public void assert_payload_and_order_request_type_are_as_expected() {
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setPassword("password");
-        templateData.setUserId("username");
-        templateData.setMerchantCode("merchant-id");
-        templateData.setTransactionId("payId");
-
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-        epdqPayloadDefinitionForCaptureOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCaptureOrder.setPassword("password");
+        epdqPayloadDefinitionForCaptureOrder.setUserId("username");
+        epdqPayloadDefinitionForCaptureOrder.setPspId("merchant-id");
+        epdqPayloadDefinitionForCaptureOrder.setPayId("payId");
         epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.CAPTURE, gatewayOrder.getOrderRequestType());
     }
+
 }
