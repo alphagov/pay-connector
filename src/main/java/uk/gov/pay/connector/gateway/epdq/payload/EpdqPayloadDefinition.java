@@ -29,13 +29,14 @@ public abstract class EpdqPayloadDefinition {
     public static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
     
     protected EpdqTemplateData epdqTemplateData;
+    
+    protected String shaInPassphrase;
 
     protected abstract List<NameValuePair> extract();
 
     public GatewayOrder createGatewayOrder() {
-        EpdqTemplateData templateData = getEpdqTemplateData();
         ArrayList<NameValuePair> params = new ArrayList<>(extract());
-        String signature = SIGNATURE_GENERATOR.sign(params, templateData.getShaInPassphrase());
+        String signature = SIGNATURE_GENERATOR.sign(params, getShaInPassphrase());
         params.add(new BasicNameValuePair("SHASIGN", signature));
         String payload = URLEncodedUtils.format(params, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
         return new GatewayOrder(
@@ -53,8 +54,16 @@ public abstract class EpdqPayloadDefinition {
         this.epdqTemplateData = epdqTemplateData;
     }
 
-    public EpdqTemplateData getEpdqTemplateData() {
+    protected EpdqTemplateData getEpdqTemplateData() {
         return epdqTemplateData;
+    }
+
+    public void setShaInPassphrase(String shaInPassphrase) {
+        this.shaInPassphrase = shaInPassphrase;
+    }
+
+    public String getShaInPassphrase() {
+        return shaInPassphrase;
     }
 
 }

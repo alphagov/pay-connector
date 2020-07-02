@@ -16,12 +16,12 @@ public class EpdqPayloadDefinitionForCaptureOrderTest {
         EpdqTemplateData templateData = new EpdqTemplateData();
         templateData.setPassword("password");
         templateData.setUserId("username");
-        templateData.setShaInPassphrase("sha-passphrase");
         templateData.setMerchantCode("merchant-id");
         templateData.setTransactionId("payId");
 
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
         epdqPayloadDefinitionForCaptureOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_CAPTURE_REQUEST), gatewayOrder.getPayload());

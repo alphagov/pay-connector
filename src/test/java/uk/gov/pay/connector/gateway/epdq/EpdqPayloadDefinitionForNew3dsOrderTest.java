@@ -118,14 +118,15 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         templateData.setOrderId("mq4ht90j2oir6am585afk58kml");
         templateData.setPassword("password");
         templateData.setUserId("username");
-        templateData.setShaInPassphrase("sha-passphrase");
         templateData.setMerchantCode("merchant-id");
         templateData.setDescription("MyDescription");
         templateData.setAmount("500");
         templateData.setAuthCardDetails(authCardDetails);
 
         epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionFor3dsNewOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionFor3dsNewOrder.createGatewayOrder();
+
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_3DS_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, gatewayOrder.getOrderRequestType());
     }
