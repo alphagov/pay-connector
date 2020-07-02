@@ -14,15 +14,35 @@ public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     public final static String PSWD_KEY = "PSWD";
     public final static String USERID_KEY = "USERID";
 
+    private String orderId;
+    private String pspId;
+    private String userId;
+    private String password;
+
     @Override
     public List<NameValuePair> extract() {
-        var templateData = getEpdqTemplateData();
         return newParameterBuilder()
-                .add(ORDER_ID_KEY, templateData.getOrderId())
-                .add(PSPID_KEY, templateData.getMerchantCode())
-                .add(PSWD_KEY, templateData.getPassword())
-                .add(USERID_KEY, templateData.getUserId())
+                .add(ORDER_ID_KEY, orderId)
+                .add(PSPID_KEY, pspId)
+                .add(PSWD_KEY, password)
+                .add(USERID_KEY, userId)
                 .build();
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public void setPspId(String pspId) {
+        this.pspId = pspId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override

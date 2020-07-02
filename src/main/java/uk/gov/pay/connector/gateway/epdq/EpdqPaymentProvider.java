@@ -272,28 +272,21 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private GatewayOrder buildQueryOrderRequestFor(Auth3dsResponseGatewayRequest request) {
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setOrderId(request.getChargeExternalId());
-        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
-        epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForQueryOrder.setOrderId(request.getChargeExternalId());
+        epdqPayloadDefinitionForQueryOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForQueryOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForQueryOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
-
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
     private GatewayOrder buildQueryOrderRequestFor(ChargeEntity charge) {
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setOrderId(charge.getExternalId());
-        templateData.setPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        templateData.setMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
-        epdqPayloadDefinitionForQueryOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForQueryOrder.setOrderId(charge.getExternalId());
+        epdqPayloadDefinitionForQueryOrder.setPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForQueryOrder.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForQueryOrder.setPspId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
