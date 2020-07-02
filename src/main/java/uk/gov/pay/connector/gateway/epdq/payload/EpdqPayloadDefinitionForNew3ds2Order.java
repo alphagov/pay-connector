@@ -61,8 +61,9 @@ public class EpdqPayloadDefinitionForNew3ds2Order extends EpdqPayloadDefinitionF
     }
 
     @Override
-    public List<NameValuePair> extract(EpdqTemplateData templateData) {
-        List<NameValuePair> nameValuePairs = super.extract(templateData);
+    public List<NameValuePair> extract() {
+        List<NameValuePair> nameValuePairs = super.extract();
+        var templateData = getEpdqTemplateData();
         EpdqParameterBuilder parameterBuilder = newParameterBuilder(nameValuePairs)
                 .add(BROWSER_COLOR_DEPTH, getBrowserColorDepth(templateData))
                 .add(BROWSER_LANGUAGE, getBrowserLanguage(templateData))

@@ -109,8 +109,9 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         templateData.setDescription("MyDescription");
         templateData.setAmount("500");
         templateData.setAuthCardDetails(authCardDetails);
-        
-        GatewayOrder gatewayOrder = epdqPayloadDefinitionForNewOrder.createGatewayOrder(templateData);
+
+        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(templateData);
+        GatewayOrder gatewayOrder = epdqPayloadDefinitionForNewOrder.createGatewayOrder();
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, gatewayOrder.getOrderRequestType());
     }
@@ -132,7 +133,8 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
@@ -158,7 +160,8 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
@@ -183,7 +186,8 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),

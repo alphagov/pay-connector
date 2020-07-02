@@ -35,7 +35,8 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     }
 
     @Override
-    public List<NameValuePair> extract(EpdqTemplateData templateData) {
+    public List<NameValuePair> extract() {
+        var templateData = getEpdqTemplateData();
         templateData.setFrontendUrl(frontendUrl);
         String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/epdq", templateData.getFrontendUrl(), templateData.getOrderId());
 

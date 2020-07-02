@@ -28,11 +28,14 @@ public abstract class EpdqPayloadDefinition {
      */
     public static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
     
-    protected abstract List<NameValuePair> extract(EpdqTemplateData templateData);
+    protected EpdqTemplateData epdqTemplateData;
 
-    public GatewayOrder createGatewayOrder(EpdqTemplateData templateData) {
+    protected abstract List<NameValuePair> extract();
+
+    public GatewayOrder createGatewayOrder() {
+        EpdqTemplateData templateData = getEpdqTemplateData();
         templateData.setOperationType(getOperationType());
-        ArrayList<NameValuePair> params = new ArrayList<>(extract(templateData));
+        ArrayList<NameValuePair> params = new ArrayList<>(extract());
         String signature = SIGNATURE_GENERATOR.sign(params, templateData.getShaInPassphrase());
         params.add(new BasicNameValuePair("SHASIGN", signature));
         String payload = URLEncodedUtils.format(params, EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
@@ -46,4 +49,13 @@ public abstract class EpdqPayloadDefinition {
     protected abstract String getOperationType();
 
     protected abstract OrderRequestType getOrderRequestType();
+
+    public void setEpdqTemplateData(EpdqTemplateData epdqTemplateData) {
+        this.epdqTemplateData = epdqTemplateData;
+    }
+
+    public EpdqTemplateData getEpdqTemplateData() {
+        return epdqTemplateData;
+    }
+
 }

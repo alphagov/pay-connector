@@ -3,15 +3,12 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
-import javax.inject.Singleton;
 import java.util.List;
 
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqParameterBuilder.newParameterBuilder;
 
-@Singleton
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
     public final static String AMOUNT_KEY = "AMOUNT";
@@ -31,8 +28,8 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String USERID_KEY = "USERID";
 
     @Override
-    public List<NameValuePair> extract(EpdqTemplateData templateData) {
-
+    public List<NameValuePair> extract() {
+        var templateData = getEpdqTemplateData();
         EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
