@@ -43,8 +43,6 @@ public abstract class EpdqPayloadDefinition {
         );
     }
 
-    public abstract String getOperationType();
-
     protected abstract OrderRequestType getOrderRequestType();
 
     public void setShaInPassphrase(String shaInPassphrase) {

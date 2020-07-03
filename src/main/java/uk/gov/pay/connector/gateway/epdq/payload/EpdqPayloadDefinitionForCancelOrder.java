@@ -39,18 +39,13 @@ public class EpdqPayloadDefinitionForCancelOrder extends EpdqPayloadDefinition {
     @Override
     public List<NameValuePair> extract() {
         EpdqParameterBuilder parameterBuilder = newParameterBuilder()
-                .add("OPERATION", getOperationType())
+                .add("OPERATION", "DES")
                 .add("PSPID", pspId)
                 .add("PSWD", password)
                 .add("USERID", userId);
         Optional.ofNullable(payId).ifPresent(payId -> parameterBuilder.add("PAYID", payId));
         Optional.ofNullable(orderId).ifPresent(orderId -> parameterBuilder.add("ORDERID", orderId));
         return parameterBuilder.build();
-    }
-
-    @Override
-    public String getOperationType() {
-        return "DES";
     }
 
     @Override

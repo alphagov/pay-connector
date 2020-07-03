@@ -38,18 +38,13 @@ public class EpdqPayloadDefinitionForRefundOrder extends EpdqPayloadDefinition {
     @Override
     public List<NameValuePair> extract() {
         return newParameterBuilder()
-                .add("OPERATION", getOperationType())
+                .add("OPERATION", "RFD")
                 .add("PSPID", pspId)
                 .add("PSWD", password)
                 .add("USERID", userId)
                 .add("PAYID", payId)
                 .add("AMOUNT", amount)
                 .build();
-    }
-    
-    @Override
-    public String getOperationType() {
-        return "RFD";
     }
 
     @Override
