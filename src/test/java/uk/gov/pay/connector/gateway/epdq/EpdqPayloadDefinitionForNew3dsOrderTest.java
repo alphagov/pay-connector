@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
@@ -77,9 +76,6 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     private static final String USER_AGENT_HEADER = "Test User Agent Header";
 
     @Mock
-    private EpdqTemplateData mockTemplateData;
-
-    @Mock
     private AuthCardDetails mockAuthCardDetails;
 
     @Mock
@@ -89,14 +85,13 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
 
     @Before
     public void setUp() {
-        when(mockTemplateData.getMerchantCode()).thenReturn(PSP_ID);
-        when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
-        when(mockTemplateData.getUserId()).thenReturn(USER_ID);
-        when(mockTemplateData.getOrderId()).thenReturn(ORDER_ID);
-        when(mockTemplateData.getAmount()).thenReturn(AMOUNT);
-        when(mockTemplateData.getFrontendUrl()).thenReturn(FRONTEND_URL);
+        epdqPayloadDefinitionFor3dsNewOrder.setPspId(PSP_ID);
+        epdqPayloadDefinitionFor3dsNewOrder.setPassword(PASSWORD);
+        epdqPayloadDefinitionFor3dsNewOrder.setUserId(USER_ID);
+        epdqPayloadDefinitionFor3dsNewOrder.setOrderId(ORDER_ID);
+        epdqPayloadDefinitionFor3dsNewOrder.setAmount(AMOUNT);
 
-        when(mockTemplateData.getAuthCardDetails()).thenReturn(mockAuthCardDetails);
+        epdqPayloadDefinitionFor3dsNewOrder.setAuthCardDetails(mockAuthCardDetails);
         when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
         when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
         when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
@@ -112,18 +107,12 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
 
     @Test
     public void assert_payload_and_order_request_type_are_as_expected() {
-        AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
-
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setOrderId("mq4ht90j2oir6am585afk58kml");
-        templateData.setPassword("password");
-        templateData.setUserId("username");
-        templateData.setMerchantCode("merchant-id");
-        templateData.setDescription("MyDescription");
-        templateData.setAmount("500");
-        templateData.setAuthCardDetails(authCardDetails);
-
-        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionFor3dsNewOrder.setOrderId("mq4ht90j2oir6am585afk58kml");
+        epdqPayloadDefinitionFor3dsNewOrder.setPassword("password");
+        epdqPayloadDefinitionFor3dsNewOrder.setUserId("username");
+        epdqPayloadDefinitionFor3dsNewOrder.setPspId("merchant-id");
+        epdqPayloadDefinitionFor3dsNewOrder.setAmount("500");
+        epdqPayloadDefinitionFor3dsNewOrder.setAuthCardDetails(aValidEpdqAuthCardDetails());
         epdqPayloadDefinitionFor3dsNewOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionFor3dsNewOrder.createGatewayOrder();
 
@@ -145,15 +134,14 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     }
 
     @Test
-    public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
+    public void shouldExtractParametersWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(ACCEPTURL_KEY, expectedFrontend3dsIncomingUrl),
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
@@ -177,20 +165,19 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID),
                 new BasicNameValuePair(WIN3DS_URL, "MAINW"))
-                .build()));
+                ));
     }
 
     @Test
-    public void shouldExtractParametersFromTemplateWithTwoLineStreetAddress() {
+    public void shouldExtractParametersWithTwoLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(ACCEPTURL_KEY, expectedFrontend3dsIncomingUrl),
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
@@ -214,19 +201,18 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID),
                 new BasicNameValuePair(WIN3DS_URL, "MAINW"))
-                .build()));
+                ));
     }
 
     @Test
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        epdqPayloadDefinitionFor3dsNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(ACCEPTURL_KEY, expectedFrontend3dsIncomingUrl),
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
@@ -246,6 +232,6 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID),
                 new BasicNameValuePair(WIN3DS_URL, "MAINW"))
-                .build()));
+                ));
     }
 }

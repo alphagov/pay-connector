@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.time.Clock;
@@ -94,16 +93,19 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final boolean SEND_PAYER_IP_ADDRESS_TO_GATEWAY = false;
     private static final Clock BRITISH_SUMMER_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-05-06T10:10:10.100Z"), ZoneOffset.UTC);
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
-    
+
     private EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionFor3ds2NewOrder = 
             new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
 
-    private EpdqTemplateData epdqTemplateData = new EpdqTemplateData();
     private AuthCardDetails authCardDetails = new AuthCardDetails();
     private Address address = new Address();
     
     @Before
     public void setup() {
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
+    }
+
+    private static void setDefaultTestValues(EpdqPayloadDefinitionForNew3ds2Order epdqPayloadDefinitionForNew3ds2Order, AuthCardDetails authCardDetails) {
         authCardDetails.setCardNo(CARD_NO);
         authCardDetails.setCvc(CVC);
         authCardDetails.setEndDate(END_DATE);
@@ -111,17 +113,14 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         authCardDetails.setAcceptHeader(ACCEPT_HEADER);
         authCardDetails.setUserAgentHeader(USER_AGENT_HEADER);
 
-        epdqTemplateData.setMerchantCode(PSP_ID);
-        epdqTemplateData.setPassword(PASSWORD);
-        epdqTemplateData.setUserId(USER_ID);
-        epdqTemplateData.setOrderId(ORDER_ID);
-        epdqTemplateData.setAmount(AMOUNT);
-        epdqTemplateData.setFrontendUrl(FRONTEND_URL);
-        epdqTemplateData.setAuthCardDetails(authCardDetails);
-
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        epdqPayloadDefinitionForNew3ds2Order.setPspId(PSP_ID);
+        epdqPayloadDefinitionForNew3ds2Order.setPassword(PASSWORD);
+        epdqPayloadDefinitionForNew3ds2Order.setUserId(USER_ID);
+        epdqPayloadDefinitionForNew3ds2Order.setOrderId(ORDER_ID);
+        epdqPayloadDefinitionForNew3ds2Order.setAmount(AMOUNT);
+        epdqPayloadDefinitionForNew3ds2Order.setAuthCardDetails(authCardDetails);
     }
-    
+
     @After
     public void tearDown() {
         address.setCity(null);
@@ -178,7 +177,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_payment_browserLanguage_if_none_provided(SupportedLanguage language, String expectedBrowserLanguage) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
                 BRITISH_SUMMER_TIME_OFFSET_CLOCK);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
@@ -189,7 +188,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, language,
                 BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         authCardDetails.setJsNavigatorLanguage("x-this-is-too-long");
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserLanguage(expectedBrowserLanguage).build()));
     }
@@ -237,7 +236,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             (@Nullable String timeZoneOffsetMins) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, BRITISH_SUMMER_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("-60").build()));
     }
@@ -248,7 +247,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
             (@Nullable String timeZoneOffsetMins) {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setJsTimezoneOffsetMins(timeZoneOffsetMins);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, is(aParameterBuilder().withBrowserTimezoneOffsetMins("0").build()));
     }
@@ -424,7 +423,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(IP_ADDRESS);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, hasItem(new BasicNameValuePair(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR, "8.8.8.8")));
     }
@@ -433,7 +432,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_REMOTE_ADDR_if_Ip_address_not_provided_and_sending_Ip_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, true, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(null);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
     }
@@ -442,7 +441,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     public void should_not_include_REMOTE_ADDR_if_Ip_address_provided_and_sending_Ip_not_enabled_on_gateway() {
         var epdqPayloadDefinitionFor3ds2NewOrder = new EpdqPayloadDefinitionForNew3ds2Order(FRONTEND_URL, SEND_PAYER_IP_ADDRESS_TO_GATEWAY, SupportedLanguage.ENGLISH, GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK);
         authCardDetails.setIpAddress(IP_ADDRESS);
-        epdqPayloadDefinitionFor3ds2NewOrder.setEpdqTemplateData(epdqTemplateData);
+        setDefaultTestValues(epdqPayloadDefinitionFor3ds2NewOrder, authCardDetails);
         List<NameValuePair> result = epdqPayloadDefinitionFor3ds2NewOrder.extract();
         assertThat(result, not(containsNameValuePairWithName(EpdqPayloadDefinitionForNew3ds2Order.REMOTE_ADDR)));
     }

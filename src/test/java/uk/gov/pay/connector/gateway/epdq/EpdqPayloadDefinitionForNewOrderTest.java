@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
@@ -65,9 +64,6 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     private static final String USER_ID = "User";
 
     @Mock
-    private EpdqTemplateData mockTemplateData;
-
-    @Mock
     private AuthCardDetails mockAuthCardDetails;
 
     @Mock
@@ -77,13 +73,13 @@ public class EpdqPayloadDefinitionForNewOrderTest {
 
     @Before
     public void setUp() {
-        when(mockTemplateData.getMerchantCode()).thenReturn(PSP_ID);
-        when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
-        when(mockTemplateData.getUserId()).thenReturn(USER_ID);
-        when(mockTemplateData.getOrderId()).thenReturn(ORDER_ID);
-        when(mockTemplateData.getAmount()).thenReturn(AMOUNT);
+        epdqPayloadDefinitionForNewOrder.setPspId(PSP_ID);
+        epdqPayloadDefinitionForNewOrder.setPassword(PASSWORD);
+        epdqPayloadDefinitionForNewOrder.setUserId(USER_ID);
+        epdqPayloadDefinitionForNewOrder.setOrderId(ORDER_ID);
+        epdqPayloadDefinitionForNewOrder.setAmount(AMOUNT);
 
-        when(mockTemplateData.getAuthCardDetails()).thenReturn(mockAuthCardDetails);
+        epdqPayloadDefinitionForNewOrder.setAuthCardDetails(mockAuthCardDetails);
         when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
         when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
         when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
@@ -94,21 +90,15 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         when(mockAddress.getPostcode()).thenReturn(POSTCODE);
         when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
     }
-    
+
     @Test
     public void assert_payload_and_order_request_type_are_as_expected() {
-        AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
-        
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setOrderId("mq4ht90j2oir6am585afk58kml");
-        templateData.setPassword("password");
-        templateData.setUserId("username");
-        templateData.setMerchantCode("merchant-id");
-        templateData.setDescription("MyDescription");
-        templateData.setAmount("500");
-        templateData.setAuthCardDetails(authCardDetails);
-
-        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForNewOrder.setOrderId("mq4ht90j2oir6am585afk58kml");
+        epdqPayloadDefinitionForNewOrder.setPassword("password");
+        epdqPayloadDefinitionForNewOrder.setUserId("username");
+        epdqPayloadDefinitionForNewOrder.setPspId("merchant-id");
+        epdqPayloadDefinitionForNewOrder.setAmount("500");
+        epdqPayloadDefinitionForNewOrder.setAuthCardDetails(aValidEpdqAuthCardDetails());
         epdqPayloadDefinitionForNewOrder.setShaInPassphrase("sha-passphrase");
         GatewayOrder gatewayOrder = epdqPayloadDefinitionForNewOrder.createGatewayOrder();
 
@@ -130,13 +120,12 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     }
 
     @Test
-    public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
+    public void shouldExtractParametersWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
@@ -152,18 +141,17 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(PSPID_KEY, PSP_ID),
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID))
-                .build()));
+                ));
     }
 
     @Test
-    public void shouldExtractParametersFromTemplateWithTwoLineStreetAddress() {
+    public void shouldExtractParametersWithTwoLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
@@ -179,17 +167,16 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(PSPID_KEY, PSP_ID),
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID))
-                .build()));
+                ));
     }
 
     @Test
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        epdqPayloadDefinitionForNewOrder.setEpdqTemplateData(mockTemplateData);
         List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract();
 
-        assertThat(result, is(ImmutableList.builder().add(
+        assertThat(result, is(List.of(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
                 new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
@@ -201,6 +188,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(PSPID_KEY, PSP_ID),
                 new BasicNameValuePair(PSWD_KEY, PASSWORD),
                 new BasicNameValuePair(USERID_KEY, USER_ID))
-                .build()));
+                ));
     }
+
 }

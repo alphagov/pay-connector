@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import java.util.List;
@@ -27,32 +27,84 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String PSWD_KEY = "PSWD";
     public final static String USERID_KEY = "USERID";
 
+    private String pspId;
+    private String orderId;
+    private String userId;
+    private String password;
+    private String amount;
+    private AuthCardDetails authCardDetails;
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    protected String getOrderId() {
+        return orderId;
+    }
+
+    public void setPspId(String pspId) {
+        this.pspId = pspId;
+    }
+
+    protected String getPspId() {
+        return pspId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    protected String getUserId() {
+        return userId;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    protected String getPassword() {
+        return password;
+    }
+
+    public void setAmount(String amount) {
+        this.amount = amount;
+    }
+
+    protected String getAmount() {
+        return amount;
+    }
+
+    public void setAuthCardDetails(AuthCardDetails authCardDetails) {
+        this.authCardDetails = authCardDetails;
+    }
+
+    protected AuthCardDetails getAuthCardDetails() {
+        return authCardDetails;
+    }
+
     @Override
     public List<NameValuePair> extract() {
-        var templateData = getEpdqTemplateData();
         EpdqParameterBuilder epdqParameterBuilder = newParameterBuilder()
-                .add(AMOUNT_KEY, templateData.getAmount())
-                .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
-                .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
+                .add(AMOUNT_KEY, amount)
+                .add(CARD_NO_KEY, authCardDetails.getCardNo())
+                .add(CARDHOLDER_NAME_KEY, authCardDetails.getCardHolder())
                 .add(CURRENCY_KEY, "GBP")
-                .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
-                .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
+                .add(CVC_KEY, authCardDetails.getCvc())
+                .add(EXPIRY_DATE_KEY, authCardDetails.getEndDate())
                 .add(OPERATION_KEY, getOperationType())
-                .add(ORDER_ID_KEY, templateData.getOrderId());
+                .add(ORDER_ID_KEY, orderId);
 
-        if (templateData.getAuthCardDetails().getAddress().isPresent()) {
-            Address address = templateData.getAuthCardDetails().getAddress().get();
+        authCardDetails.getAddress().ifPresent(address -> {
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
-
             epdqParameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
                     .add(OWNER_COUNTRY_CODE_KEY, address.getCountry())
                     .add(OWNER_TOWN_KEY, address.getCity())
                     .add(OWNER_ZIP_KEY, address.getPostcode());
-        }
+        });
 
-        epdqParameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
-                .add(PSWD_KEY, templateData.getPassword())
-                .add(USERID_KEY, templateData.getUserId());
+        epdqParameterBuilder.add(PSPID_KEY, pspId)
+                .add(PSWD_KEY, password)
+                .add(USERID_KEY, userId);
 
         return epdqParameterBuilder.build();
     }
@@ -67,7 +119,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
         return OrderRequestType.AUTHORISE;
     }
 
-    private static String concatAddressLines(String addressLine1, String addressLine2) {
+    protected static String concatAddressLines(String addressLine1, String addressLine2) {
         return StringUtils.isBlank(addressLine2) ? addressLine1 : addressLine1 + ", " + addressLine2;
     }
 

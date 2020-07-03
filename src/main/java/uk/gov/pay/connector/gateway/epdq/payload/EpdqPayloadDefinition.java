@@ -5,7 +5,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
-import uk.gov.pay.connector.gateway.epdq.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
@@ -27,9 +26,7 @@ public abstract class EpdqPayloadDefinition {
      * parlance) seems to encode to %92 — makes us believe that they do
      */
     public static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
-    
-    protected EpdqTemplateData epdqTemplateData;
-    
+
     protected String shaInPassphrase;
 
     protected abstract List<NameValuePair> extract();
@@ -49,14 +46,6 @@ public abstract class EpdqPayloadDefinition {
     public abstract String getOperationType();
 
     protected abstract OrderRequestType getOrderRequestType();
-
-    public void setEpdqTemplateData(EpdqTemplateData epdqTemplateData) {
-        this.epdqTemplateData = epdqTemplateData;
-    }
-
-    protected EpdqTemplateData getEpdqTemplateData() {
-        return epdqTemplateData;
-    }
 
     public void setShaInPassphrase(String shaInPassphrase) {
         this.shaInPassphrase = shaInPassphrase;
