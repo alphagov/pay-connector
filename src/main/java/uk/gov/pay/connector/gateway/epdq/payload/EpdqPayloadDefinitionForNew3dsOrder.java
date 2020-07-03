@@ -50,7 +50,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(HTTPACCEPT_KEY, getBrowserAcceptHeader())
                 .add(HTTPUSER_AGENT_KEY, getBrowserUserAgent())
                 .add(LANGUAGE_URL, "en_GB")
-                .add(OPERATION_KEY, getOperationType())
+                .add(OPERATION_KEY, "RES")
                 .add(ORDER_ID_KEY, getOrderId());
 
         getAuthCardDetails().getAddress().ifPresent(address -> {
@@ -68,11 +68,6 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(WIN3DS_URL, "MAINW");
 
         return epdqParameterBuilder.build();
-    }
-
-    @Override
-    public String getOperationType() {
-        return "RES";
     }
 
     @Override

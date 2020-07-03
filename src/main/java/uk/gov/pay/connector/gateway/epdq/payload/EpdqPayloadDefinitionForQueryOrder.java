@@ -46,11 +46,6 @@ public class EpdqPayloadDefinitionForQueryOrder extends EpdqPayloadDefinition {
     }
 
     @Override
-    public String getOperationType() {
-        return "RES";
-    }
-
-    @Override
     protected OrderRequestType getOrderRequestType() {
         return OrderRequestType.AUTHORISE;
     }

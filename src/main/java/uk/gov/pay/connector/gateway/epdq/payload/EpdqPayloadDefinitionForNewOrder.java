@@ -91,7 +91,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, authCardDetails.getCvc())
                 .add(EXPIRY_DATE_KEY, authCardDetails.getEndDate())
-                .add(OPERATION_KEY, getOperationType())
+                .add(OPERATION_KEY, "RES")
                 .add(ORDER_ID_KEY, orderId);
 
         authCardDetails.getAddress().ifPresent(address -> {
@@ -107,11 +107,6 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(USERID_KEY, userId);
 
         return epdqParameterBuilder.build();
-    }
-
-    @Override
-    public String getOperationType() {
-        return "RES";
     }
 
     @Override
