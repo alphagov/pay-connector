@@ -47,14 +47,11 @@ public class EpdqCaptureHandler implements CaptureHandler {
     }
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        templateData.setTransactionId(request.getTransactionId());
-
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-        epdqPayloadDefinitionForCaptureOrder.setEpdqTemplateData(templateData);
+        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForCaptureOrder.setPayId(request.getTransactionId());
         epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }

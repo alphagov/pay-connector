@@ -114,7 +114,8 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/capture-success-response.xml";
     public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/capture-error-response.xml";
 
-    public static final String EPDQ_CANCEL_REQUEST = EPDQ_BASE_NAME + "/cancel-request.txt";
+    public static final String EPDQ_CANCEL_REQUEST_WITH_PAYID = EPDQ_BASE_NAME + "/cancel-request-with-PAYID.txt";
+    public static final String EPDQ_CANCEL_REQUEST_WITH_ORDERID = EPDQ_BASE_NAME + "/cancel-request-with-ORDERID.txt";
     public static final String EPDQ_CANCEL_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/cancel-success-response.xml";
     static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";

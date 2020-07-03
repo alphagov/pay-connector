@@ -125,7 +125,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
     }
-    
+
     private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
@@ -319,18 +319,14 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
-        EpdqTemplateData templateData = new EpdqTemplateData();
-        templateData.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        templateData.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        templateData.setMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-
+        var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
         Optional.ofNullable(request.getTransactionId())
                 .ifPresentOrElse(
-                        templateData::setTransactionId,
-                        () -> templateData.setOrderId(request.getExternalChargeId()));
-
-        var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
-        epdqPayloadDefinitionForCancelOrder.setEpdqTemplateData(templateData);
+                        epdqPayloadDefinitionForCancelOrder::setPayId,
+                        () -> epdqPayloadDefinitionForCancelOrder.setOrderId(request.getExternalChargeId()));
+        epdqPayloadDefinitionForCancelOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCancelOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCancelOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
     }
