@@ -8,10 +8,15 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.logging.LoggingKeys;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
+
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 public class QueryService {
     private final PaymentProviders providers;
@@ -34,7 +39,12 @@ public class QueryService {
         try {
             return getChargeGatewayStatus(charge).getMappedStatus();
         } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
-            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
+            logger.info(String.format("Unable to retrieve status for charge %s for gateway %s: %s",
+                    charge.getExternalId(),
+                    charge.getPaymentGatewayName().toString(),
+                    e.getMessage()),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(PROVIDER, charge.getPaymentGatewayName().toString()));
             return Optional.empty();
         }
     }
@@ -46,7 +56,12 @@ public class QueryService {
                     .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
                     .orElse(false);
         } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
-            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
+            logger.info(String.format("Unable to retrieve status for charge %s for gateway %s: %s",
+                    charge.getExternalId(),
+                    charge.getPaymentGatewayName().toString(),
+                    e.getMessage()),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(PROVIDER, charge.getPaymentGatewayName().toString()));
             return false;
         }
     }
