@@ -9,7 +9,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
-import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
 
@@ -17,15 +16,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,6 +46,10 @@ public class StripeAccountSetupServiceTest {
     private StripeAccountSetupTaskEntity mockResponsiblePersonCompletedTaskEntity;
     @Mock
     private StripeAccountSetupTaskEntity mockOrganisationDetailsCompletedTaskEntity;
+    @Mock
+    private StripeAccountSetupTaskEntity mockVatNumberCompletedTaskEntity;
+    @Mock
+    private StripeAccountSetupTaskEntity mockCompanyNumberCompletedTaskEntity;
 
     private StripeAccountSetupService stripeAccountSetupService;
 
@@ -53,8 +58,10 @@ public class StripeAccountSetupServiceTest {
         given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
 
         given(mockBankDetailsCompletedTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
-        given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(StripeAccountSetupTask.RESPONSIBLE_PERSON);
-        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER);
+        given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
+        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER_COMPANY_NUMBER);
+        given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
+        given(mockCompanyNumberCompletedTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
 
         this.stripeAccountSetupService = new StripeAccountSetupService(mockStripeAccountSetupDao);
     }
@@ -69,19 +76,23 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isBankAccountCompleted(), is(false));
         assertThat(tasks.isResponsiblePersonCompleted(), is(false));
         assertThat(tasks.isVatNumberCompanyNumberCompleted(), is(false));
+        assertThat(tasks.isVatNumberCompleted(), is(false));
+        assertThat(tasks.isCompanyNumberCompleted(), is(false));
     }
 
     @Test
     public void shouldReturnStripeAccountSetupWithAllTasksCompleted() {
         given(mockStripeAccountSetupDao.findByGatewayAccountId(GATEWAY_ACCOUNT_ID))
                 .willReturn(Arrays.asList(mockOrganisationDetailsCompletedTaskEntity, mockResponsiblePersonCompletedTaskEntity,
-                        mockBankDetailsCompletedTaskEntity));
+                        mockBankDetailsCompletedTaskEntity, mockVatNumberCompletedTaskEntity, mockCompanyNumberCompletedTaskEntity));
 
         StripeAccountSetup tasks = stripeAccountSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
         assertThat(tasks.isBankAccountCompleted(), is(true));
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
         assertThat(tasks.isVatNumberCompanyNumberCompleted(), is(true));
+        assertThat(tasks.isVatNumberCompleted(), is(true));
+        assertThat(tasks.isCompanyNumberCompleted(), is(true));
     }
 
     @Test

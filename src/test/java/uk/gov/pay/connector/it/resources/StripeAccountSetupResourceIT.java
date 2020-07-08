@@ -37,7 +37,9 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(false))
                 .body("responsible_person", is(false))
-                .body("vat_number_company_number", is(false));
+                .body("vat_number_company_number", is(false))
+                .body("vat_number", is(false))
+                .body("company_number", is(false));
     }
 
     @Test
@@ -111,6 +113,14 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                         ImmutableMap.of(
                                 "op", "replace",
                                 "path", "vat_number_company_number",
+                                "value", true),
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "vat_number",
+                                "value", true),
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "company_number",
                                 "value", true)
                 )))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -123,7 +133,9 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(true))
-                .body("vat_number_company_number", is(true));
+                .body("vat_number_company_number", is(true))
+                .body("vat_number", is(true))
+                .body("company_number", is(true));
     }
 
     @Test
