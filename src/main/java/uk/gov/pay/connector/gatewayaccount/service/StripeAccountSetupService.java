@@ -34,6 +34,12 @@ public class StripeAccountSetupService {
                         case VAT_NUMBER_COMPANY_NUMBER:
                             stripeAccountSetup.setVatNumberCompanyNumberCompleted(true);
                             break;
+                        case VAT_NUMBER:
+                            stripeAccountSetup.setVatNumberCompleted(true);
+                            break;
+                        case COMPANY_NUMBER:
+                            stripeAccountSetup.setCompanyNumberCompleted(true);
+                            break;
                         default:
                             // Code doesn’t handle this task
                     }
