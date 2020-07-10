@@ -14,9 +14,6 @@ public class StripeAccountSetup {
     @JsonProperty("responsible_person")
     private boolean responsiblePersonCompleted = false;
 
-    @JsonProperty("vat_number_company_number")
-    private boolean vatNumberCompanyNumberCompleted = false;
-
     @JsonProperty("vat_number")
     private boolean vatNumberCompleted = false;
 
@@ -37,14 +34,6 @@ public class StripeAccountSetup {
 
     public void setResponsiblePersonCompleted(boolean responsiblePersonCompleted) {
         this.responsiblePersonCompleted = responsiblePersonCompleted;
-    }
-
-    public boolean isVatNumberCompanyNumberCompleted() {
-        return vatNumberCompanyNumberCompleted;
-    }
-
-    public void setVatNumberCompanyNumberCompleted(boolean vatNumberCompanyNumberCompleted) {
-        this.vatNumberCompanyNumberCompleted = vatNumberCompanyNumberCompleted;
     }
 
     public void setVatNumberCompleted(boolean vatNumberCompleted) {

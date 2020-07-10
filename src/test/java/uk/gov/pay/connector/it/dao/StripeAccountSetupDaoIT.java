@@ -8,14 +8,13 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
 
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
-import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
@@ -51,7 +50,6 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, VAT_NUMBER_COMPANY_NUMBER);
 
         List<StripeAccountSetupTaskEntity> tasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
         assertThat(tasks, hasSize(2));
