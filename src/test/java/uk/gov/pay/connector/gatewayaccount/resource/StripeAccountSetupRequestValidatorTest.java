@@ -31,8 +31,6 @@ public class StripeAccountSetupRequestValidatorTest {
             "replace, bank_account, false",
             "replace, responsible_person, true",
             "replace, responsible_person, false",
-            "replace, vat_number_company_number, true",
-            "replace, vat_number_company_number, false",
             "replace, vat_number, true",
             "replace, vat_number, false",
             "replace, company_number, true",
@@ -53,7 +51,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 Map.of("operation", "add", "path", "bank_account", "value", true,
                         "expectedErrorMessage", "Operation [add] not supported for path [bank_account]"),
                 Map.of("operation", "add", "path", "blood_sample_deposited", "value", true,
-                        "expectedErrorMessage", "Field [path] must be one of [bank_account, company_number, responsible_person, vat_number, vat_number_company_number]"),
+                        "expectedErrorMessage", "Field [path] must be one of [bank_account, company_number, responsible_person, vat_number]"),
 
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "value", true),
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "path", "", "value", true),
@@ -110,7 +108,7 @@ public class StripeAccountSetupRequestValidatorTest {
                         "value", false),
                 ImmutableMap.of(
                         "op", "replace",
-                        "path", "vat_number_company_number",
+                        "path", "vat_number",
                         "value", true)
         ));
 

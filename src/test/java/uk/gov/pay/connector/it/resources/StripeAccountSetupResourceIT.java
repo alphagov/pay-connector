@@ -37,7 +37,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(false))
                 .body("responsible_person", is(false))
-                .body("vat_number_company_number", is(false))
                 .body("vat_number", is(false))
                 .body("company_number", is(false));
     }
@@ -46,7 +45,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
     public void getStripeSetupWithSomeTasksCompletedReturnsAppropriateFlags() {
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
-        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -54,7 +53,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("vat_number_company_number", is(true));
+                .body("vat_number", is(true));
     }
 
     @Test
@@ -94,7 +93,8 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("vat_number_company_number", is(false));
+                .body("vat_number", is(false))
+                .body("company_number", is(false));
     }
 
     @Test
@@ -109,10 +109,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                         ImmutableMap.of(
                                 "op", "replace",
                                 "path", "responsible_person",
-                                "value", true),
-                        ImmutableMap.of(
-                                "op", "replace",
-                                "path", "vat_number_company_number",
                                 "value", true),
                         ImmutableMap.of(
                                 "op", "replace",
@@ -133,7 +129,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(true))
-                .body("vat_number_company_number", is(true))
                 .body("vat_number", is(true))
                 .body("company_number", is(true));
     }
