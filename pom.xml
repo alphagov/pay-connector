@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase.version>3.10.1</liquibase.version>
-        <dropwizard.version>2.0.10</dropwizard.version>
+        <dropwizard.version>2.0.11</dropwizard.version>
         <wiremock.version>2.27.1</wiremock.version>
         <eclipselink.version>2.7.7</eclipselink.version>
         <guice.version>4.2.3</guice.version>
