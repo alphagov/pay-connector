@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.events.model.refund;
 
 import org.hamcrest.core.Is;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -192,6 +191,7 @@ public class EventFactoryTest {
                 .withUserExternalId("user_external_id")
                 .withChargeExternalId(charge.getExternalId())
                 .withAmount(charge.getAmount())
+                .withReference("reference")
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundErrorHistory.getExternalId(),
@@ -212,6 +212,7 @@ public class EventFactoryTest {
                 .findFirst().get();
         assertThat(refundError.getParentResourceExternalId(), is(charge.getExternalId()));
         assertThat(((RefundEventWithReferenceDetails) refundError.getEventDetails()).getReference(), is(refundErrorHistory.getReference()));
+        assertThat(((RefundEventWithReferenceDetails) refundError.getEventDetails()).getGatewayTransactionId(), is(refundErrorHistory.getReference()));
         assertThat(refundError.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundError.getEventDetails(), is(instanceOf(RefundEventWithReferenceDetails.class)));
 
@@ -240,13 +241,13 @@ public class EventFactoryTest {
 
         assertThat(events.size(), is(2));
         PaymentCreated event = (PaymentCreated) events.get(0); 
-        Assert.assertThat(event, instanceOf(PaymentCreated.class));
-        Assert.assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
-        Assert.assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
+        assertThat(event, instanceOf(PaymentCreated.class));
+        assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
+        assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
 
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 
     @Test
@@ -265,8 +266,8 @@ public class EventFactoryTest {
 
         assertThat(events.size(), is(1));
         CancelByExternalServiceSubmitted event = (CancelByExternalServiceSubmitted) events.get(0);
-        Assert.assertThat(event, instanceOf(CancelByExternalServiceSubmitted.class));
-        Assert.assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
+        assertThat(event, instanceOf(CancelByExternalServiceSubmitted.class));
+        assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
     }
 
     @Test
@@ -286,12 +287,12 @@ public class EventFactoryTest {
 
         assertThat(events.size(), is(2));
         CaptureConfirmed event1 = (CaptureConfirmed) events.get(0);
-        Assert.assertThat(event1, instanceOf(CaptureConfirmed.class));
-        Assert.assertThat(event1.getEventDetails(), instanceOf(CaptureConfirmedEventDetails.class));
+        assertThat(event1, instanceOf(CaptureConfirmed.class));
+        assertThat(event1.getEventDetails(), instanceOf(CaptureConfirmedEventDetails.class));
 
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 
     @Test
@@ -352,11 +353,11 @@ public class EventFactoryTest {
 
         assertThat(events.size(), is(2));
         CaptureSubmitted event1 = (CaptureSubmitted) events.get(0);
-        Assert.assertThat(event1, instanceOf(CaptureSubmitted.class));
+        assertThat(event1, instanceOf(CaptureSubmitted.class));
 
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 
     @Test
@@ -376,12 +377,12 @@ public class EventFactoryTest {
 
         assertThat(events.size(), is(2));
         CaptureAbandonedAfterTooManyRetries event = (CaptureAbandonedAfterTooManyRetries) events.get(0);
-        Assert.assertThat(event, instanceOf(CaptureAbandonedAfterTooManyRetries.class));
-        Assert.assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
+        assertThat(event, instanceOf(CaptureAbandonedAfterTooManyRetries.class));
+        assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
 
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 
     @Test

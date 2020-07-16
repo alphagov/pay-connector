@@ -143,7 +143,7 @@ public class EventFactory {
                 return eventClass.getConstructor(String.class, String.class, RefundEventWithReferenceDetails.class, ZonedDateTime.class).newInstance(
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
-                        new RefundEventWithReferenceDetails(refundHistory.getReference()),
+                        new RefundEventWithReferenceDetails(refundHistory.getReference(), refundHistory.getReference()),
                         refundHistory.getHistoryStartDate()
                 );
             }

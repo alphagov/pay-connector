@@ -70,4 +70,9 @@ public class RefundHistoryEntityFixture {
         this.userEmail = userEmail;
         return this;
     }
+
+    public RefundHistoryEntityFixture withGatewayTransactionId(String gatewayTransactionId) {
+        this.gatewayTransactionId = gatewayTransactionId;
+        return this;
+    }
 }

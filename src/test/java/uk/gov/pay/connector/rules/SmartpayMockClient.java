@@ -86,8 +86,10 @@ public class SmartpayMockClient {
         );
     }
 
-    public void mockRefundSuccess() {
-        String refundResponse = TestTemplateResourceLoader.load(SMARTPAY_REFUND_SUCCESS_RESPONSE);
+    public void mockRefundSuccess(String... pspReference) {
+        String pspReferenceToUse = (pspReference != null && pspReference.length == 1) ? pspReference[0] : "8514774917520978";
+        String refundResponse = TestTemplateResourceLoader.load(SMARTPAY_REFUND_SUCCESS_RESPONSE)
+                .replace("{{pspReference}}", pspReferenceToUse);
         paymentServiceResponse(refundResponse);
     }
 

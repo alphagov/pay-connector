@@ -195,7 +195,8 @@ public abstract class BaseEpdqPaymentProviderIT {
     }
 
     String successRefundResponse() {
-        return TestTemplateResourceLoader.load(EPDQ_REFUND_SUCCESS_RESPONSE);
+        return TestTemplateResourceLoader.load(EPDQ_REFUND_SUCCESS_RESPONSE)
+                .replace("{{payIdSub}}", "1");
     }
 
     String errorRefundResponse() {
