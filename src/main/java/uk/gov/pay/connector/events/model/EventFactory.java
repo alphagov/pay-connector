@@ -7,7 +7,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
-import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -140,10 +140,10 @@ public class EventFactory {
             } else if (eventClass == RefundCreatedByUser.class) {
                 return RefundCreatedByUser.from(refundHistory, gatewayAccountId);
             } else {
-                return eventClass.getConstructor(String.class, String.class, RefundEventWithReferenceDetails.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
-                        new RefundEventWithReferenceDetails(refundHistory.getReference(), refundHistory.getReference()),
+                        new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),
                         refundHistory.getHistoryStartDate()
                 );
             }

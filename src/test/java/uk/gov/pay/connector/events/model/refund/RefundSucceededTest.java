@@ -38,8 +38,7 @@ public class RefundSucceededTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(refundHistory.getExternalId())));
         assertThat(actual, hasJsonPath("$.parent_resource_external_id", equalTo(charge.getExternalId())));
 
-        assertThat(actual, hasJsonPath("$.event_details.reference", equalTo("reference")));
-        assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo("reference")));
+        assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo("gateway_transaction_id")));
     }
 
 }
