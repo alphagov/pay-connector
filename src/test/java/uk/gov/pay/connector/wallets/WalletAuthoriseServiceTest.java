@@ -234,6 +234,76 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess_whenCardNumberIsEmptyString() throws Exception {
+        providerWillAuthorise();
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+        var validApplePayDetailsWithEmptyStringCardNumber = anApplePayDecryptedPaymentData()
+                .withApplePaymentInfo(anApplePayPaymentInfo().withLastDigitsCardNumber("").build())
+                .build();
+
+        GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetailsWithEmptyStringCardNumber);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(validApplePayDetailsWithEmptyStringCardNumber.getPaymentInfo().getEmail()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+    }
+
+    @Test
+    public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess_whenCardNumberIsEmptyString() throws Exception {
+        providerWillAuthorise();
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+
+        WalletAuthorisationData authorisationData =
+                Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
+        
+        GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+    }
+
+    @Test
     public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
         providerWillReject();
 
