@@ -152,9 +152,11 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a refund succeeded message")
     public String verifyRefundedEvent() throws JsonProcessingException {
+        String gatewayTransactionId = RandomStringUtils.randomAlphanumeric(14);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
-                .withReference(RandomStringUtils.randomAlphanumeric(14))
+                .withReference(gatewayTransactionId)
+                .withGatewayTransactionId(gatewayTransactionId)
                 .build();
         RefundSucceeded refundSucceeded = RefundSucceeded.from(refundHistory);
 

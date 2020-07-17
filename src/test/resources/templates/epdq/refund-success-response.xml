@@ -2,7 +2,7 @@
 <ncresponse
         orderID="ABREF1245"
         PAYID="3014644340"
-        PAYIDSUB="1"
+        PAYIDSUB="{{payIdSub}}"
         NCSTATUS="0"
         NCERROR="0"
         NCERRORPLUS="!"

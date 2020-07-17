@@ -293,7 +293,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefundsByChargeExternalId(String chargeExternalId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, reference, amount, status, created_date, user_external_id, user_email, charge_external_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, user_external_id, user_email, charge_external_id, gateway_transaction_id " +
                         "FROM refunds r " +
                         "WHERE charge_external_id = :charge_external_id")
                         .bind("charge_external_id", chargeExternalId)

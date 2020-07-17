@@ -9,11 +9,20 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CANCEL_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_REFUND_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_REFUND_SUCCESS_RESPONSE;
 
 public class SmartpayXMLUnmarshallerTest {
 
@@ -98,11 +107,13 @@ public class SmartpayXMLUnmarshallerTest {
 
     @Test
     public void shouldUnmarshallARefundSuccessResponse() throws Exception {
-        String successPayload = TestTemplateResourceLoader.load(SMARTPAY_REFUND_SUCCESS_RESPONSE);
+        String pspReference = randomNumeric(16);
+        String successPayload = TestTemplateResourceLoader.load(SMARTPAY_REFUND_SUCCESS_RESPONSE)
+                .replace("{{pspReference}}", pspReference);
         SmartpayRefundResponse response = XMLUnmarshaller.unmarshall(successPayload, SmartpayRefundResponse.class);
 
         assertThat(response.getReference(), is(notNullValue()));
-        assertThat(response.getReference().get(), is("8514774917520978"));
+        assertThat(response.getReference().get(), is(pspReference));
         assertThat(response.getErrorCode(), is(nullValue()));
         assertThat(response.getErrorMessage(), is(nullValue()));
     }

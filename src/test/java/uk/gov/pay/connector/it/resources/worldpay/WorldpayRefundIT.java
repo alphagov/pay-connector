@@ -99,6 +99,7 @@ public class WorldpayRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+        assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", refundId));
     }
 
     @Test

@@ -129,7 +129,11 @@ public class ChargeRefundService {
                 userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
             }
 
-            getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
+            getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(gatewayTransactionId -> {
+                refundEntity.setReference(gatewayTransactionId);
+                refundEntity.setGatewayTransactionId(gatewayTransactionId);
+            });
+
             transitionRefundState(refundEntity, refundStatus);
         });
 

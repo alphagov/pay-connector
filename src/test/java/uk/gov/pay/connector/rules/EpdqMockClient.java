@@ -79,8 +79,12 @@ public class EpdqMockClient {
         paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER, TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE));
     }
 
-    public void mockRefundSuccess() {
-        paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER, TestTemplateResourceLoader.load(EPDQ_REFUND_SUCCESS_RESPONSE));
+    public void mockRefundSuccess(String... payIdSub) {
+        String payIdSubToUse = (payIdSub != null && payIdSub.length == 1) ? payIdSub[0] : "1";
+        paymentServiceResponse(ROUTE_FOR_MAINTENANCE_ORDER,
+                TestTemplateResourceLoader.load(EPDQ_REFUND_SUCCESS_RESPONSE)
+                        .replace("{{payIdSub}}", payIdSubToUse)
+        );
     }
 
     public void mockRefundError() {
