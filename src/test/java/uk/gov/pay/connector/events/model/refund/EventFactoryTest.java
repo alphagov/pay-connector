@@ -20,7 +20,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetail
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
-import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.ResourceType;
@@ -149,7 +149,7 @@ public class EventFactoryTest {
         assertThat(refundSubmitted.getParentResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundSubmitted.getResourceExternalId(), is(refundSubmittedHistory.getExternalId()));
         assertThat(refundSubmitted.getResourceType(), is(ResourceType.REFUND));
-        assertThat(refundSubmitted.getEventDetails(), is(instanceOf(RefundEventWithReferenceDetails.class)));
+        assertThat(refundSubmitted.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class EventFactoryTest {
         assertThat(refundSucceeded.getParentResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundSucceeded.getResourceExternalId(), is(refundSucceededHistory.getExternalId()));
         assertThat(refundSucceeded.getResourceType(), is(ResourceType.REFUND));
-        assertThat(refundSucceeded.getEventDetails(), is(instanceOf(RefundEventWithReferenceDetails.class)));
+        assertThat(refundSucceeded.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
     }
 
     @Test
@@ -211,10 +211,9 @@ public class EventFactoryTest {
                 .filter(e -> ResourceType.REFUND.equals(e.getResourceType()))
                 .findFirst().get();
         assertThat(refundError.getParentResourceExternalId(), is(charge.getExternalId()));
-        assertThat(((RefundEventWithReferenceDetails) refundError.getEventDetails()).getReference(), is(refundErrorHistory.getReference()));
-        assertThat(((RefundEventWithReferenceDetails) refundError.getEventDetails()).getGatewayTransactionId(), is(refundErrorHistory.getReference()));
+        assertThat(((RefundEventWithGatewayTransactionIdDetails) refundError.getEventDetails()).getGatewayTransactionId(), is(refundErrorHistory.getGatewayTransactionId()));
         assertThat(refundError.getResourceType(), is(ResourceType.REFUND));
-        assertThat(refundError.getEventDetails(), is(instanceOf(RefundEventWithReferenceDetails.class)));
+        assertThat(refundError.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = (RefundAvailabilityUpdated) refundEvents.stream()
                 .filter(e -> ResourceType.PAYMENT.equals(e.getResourceType()))

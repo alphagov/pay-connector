@@ -140,7 +140,7 @@ public class StateTransitionsIT extends ChargingITestBase {
 
         assertThat(message4.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
         assertThat(message4.get("resource_external_id").getAsString(), is(refundId));
-        assertThat(message4.get("event_details").getAsJsonObject().get("reference").getAsString(), is(notNullValue()));
+        assertThat(message4.get("event_details").getAsJsonObject().get("gateway_transaction_id").getAsString(), is(notNullValue()));
     }
 
     private ZonedDateTime getTimestampFromMessage(Message message) {
