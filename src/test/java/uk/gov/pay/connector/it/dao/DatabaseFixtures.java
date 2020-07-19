@@ -126,8 +126,8 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByExternalId, String userEmail) {
-            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
+        public TestRefundHistory insert(RefundStatus status, String gatewayTransactionId, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByExternalId, String userEmail) {
+            databaseTestHelper.addRefundHistory(id, externalId, gatewayTransactionId, amount, status.toString(), createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
             return this;
         }
 
@@ -706,7 +706,6 @@ public class DatabaseFixtures {
     public class TestRefund {
         int id;
         String externalRefundId = RandomIdGenerator.newId();
-        String reference;
         long amount = 101L;
         RefundStatus status = CREATED;
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -728,11 +727,6 @@ public class DatabaseFixtures {
 
         public TestRefund withType(RefundStatus status) {
             this.status = status;
-            return this;
-        }
-
-        public TestRefund withReference(String reference) {
-            this.reference = reference;
             return this;
         }
 
@@ -774,7 +768,7 @@ public class DatabaseFixtures {
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, gatewayTransactionId,
+            id = databaseTestHelper.addRefund(externalRefundId, amount, status, gatewayTransactionId,
                     createdDate, submittedByUserExternalId, userEmail,
                     chargeExternalId == null ? testCharge.getExternalChargeId() : chargeExternalId);
             return this;
@@ -786,10 +780,6 @@ public class DatabaseFixtures {
 
         public String getExternalRefundId() {
             return externalRefundId;
-        }
-
-        public String getReference() {
-            return reference;
         }
 
         public long getAmount() {

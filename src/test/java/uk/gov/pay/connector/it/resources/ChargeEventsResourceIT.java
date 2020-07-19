@@ -43,6 +43,7 @@ public class ChargeEventsResourceIT {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
+    public String gatewayRefundTransactionId;
 
     @DropwizardTestContext
     private TestContext testContext;
@@ -60,6 +61,7 @@ public class ChargeEventsResourceIT {
                 .withServiceName("a cool service")
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        gatewayRefundTransactionId = RandomStringUtils.randomAlphanumeric(30);
     }
 
     @After
@@ -120,13 +122,12 @@ public class ChargeEventsResourceIT {
         createTestChargeEvent(testCharge)
                 .withChargeStatus(CAPTURED).withDate(createdDate.plusSeconds(6)).insert();
 
-        String testReferenceRefund1 = RandomStringUtils.randomAlphanumeric(10);
-        String testReferenceRefund2 = RandomStringUtils.randomAlphanumeric(10);
+        String testGatewayReferenceRefund2 = RandomStringUtils.randomAlphanumeric(10);
 
         ZonedDateTime refundTest1RefundedDate = createdDate.plusSeconds(9);
         DatabaseFixtures.TestRefund refundedTestRefund1 = createTestRefund(testCharge)
                 .withAmount(10L)
-                .withReference(testReferenceRefund1)
+                .withGatewayTransactionId(gatewayRefundTransactionId)
                 .withType(RefundStatus.REFUNDED)
                 .withCreatedDate(refundTest1RefundedDate)
                 .withSubmittedBy(SUBMITTED_BY)
@@ -137,7 +138,7 @@ public class ChargeEventsResourceIT {
         DatabaseFixtures.TestRefund refundedTestRefund2 = createTestRefund(testCharge)
                 .withAmount(90L)
                 .withType(RefundStatus.REFUNDED)
-                .withReference(testReferenceRefund2)
+                .withGatewayTransactionId(testGatewayReferenceRefund2)
                 .withCreatedDate(refundTest2RefundedDate)
                 .withChargeExternalId(testCharge.getExternalChargeId())
                 .insert();
@@ -145,14 +146,14 @@ public class ChargeEventsResourceIT {
         ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
         createTestRefundHistory(refundedTestRefund1)
                 .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY, USER_EMAIL)
-                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY, USER_EMAIL)
-                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate, SUBMITTED_BY, testCharge.getExternalChargeId());
+                .insert(RefundStatus.REFUND_SUBMITTED, gatewayRefundTransactionId, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY, USER_EMAIL)
+                .insert(RefundStatus.REFUNDED, gatewayRefundTransactionId, refundTest1RefundedDate, SUBMITTED_BY, testCharge.getExternalChargeId());
 
         ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
         createTestRefundHistory(refundedTestRefund2)
                 .insert(RefundStatus.CREATED, createdDate.plusSeconds(10), historyRefund2SubmittedStartDate)
-                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund2, historyRefund2SubmittedStartDate, refundTest2RefundedDate)
-                .insert(RefundStatus.REFUNDED, testReferenceRefund2, refundTest2RefundedDate);
+                .insert(RefundStatus.REFUND_SUBMITTED, testGatewayReferenceRefund2, historyRefund2SubmittedStartDate, refundTest2RefundedDate)
+                .insert(RefundStatus.REFUNDED, testGatewayReferenceRefund2, refundTest2RefundedDate);
 
         List<Map<String, Object>> charges = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
         List<Map<String, Object>> refunds = databaseTestHelper.getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId());
@@ -163,10 +164,10 @@ public class ChargeEventsResourceIT {
                 .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
                 .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
                 .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, testReferenceRefund1, SUBMITTED_BY))
-                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, testReferenceRefund1, SUBMITTED_BY))
-                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testReferenceRefund2, null))
-                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testReferenceRefund2, null));
+                .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, gatewayRefundTransactionId, SUBMITTED_BY))
+                .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", refundTest1RefundedDate, gatewayRefundTransactionId, SUBMITTED_BY))
+                .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, testGatewayReferenceRefund2, null))
+                .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", refundTest2RefundedDate, testGatewayReferenceRefund2, null));
     }
 
     @Test

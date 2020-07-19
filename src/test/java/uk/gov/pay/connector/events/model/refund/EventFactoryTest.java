@@ -49,6 +49,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -190,8 +191,8 @@ public class EventFactoryTest {
                 .withStatus(RefundStatus.REFUND_ERROR.getValue())
                 .withUserExternalId("user_external_id")
                 .withChargeExternalId(charge.getExternalId())
+                .withGatewayTransactionId(randomAlphanumeric(30))
                 .withAmount(charge.getAmount())
-                .withReference("reference")
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundErrorHistory.getExternalId(),

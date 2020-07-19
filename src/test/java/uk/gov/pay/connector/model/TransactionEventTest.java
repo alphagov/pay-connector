@@ -35,7 +35,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenFieldsRefundReferenceIsDifferent() {
+    public void equals_shouldReturnFalse_whenFieldsRefundTransactionIdIsDifferent() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", "success", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(), USER_EXTERNAL_ID);
         TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
@@ -44,7 +44,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenFirstObjectRefundReferenceIsNull() {
+    public void equals_shouldReturnFalse_whenFirstObjectRefundTransactionIdIsNull() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
         TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
@@ -53,7 +53,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenSecondObjectRefundReferenceIsNull() {
+    public void equals_shouldReturnFalse_whenSecondObjectRefundTransactionIdIsNull() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, null, "success", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
         TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);

@@ -29,7 +29,6 @@ public class RefundEntityFixture {
         RefundEntity refundEntity = new RefundEntity(amount, userExternalId, userEmail, chargeExternalId);
         refundEntity.setId(id);
         refundEntity.setStatus(status);
-        refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
         refundEntity.setUserExternalId(userExternalId);
         refundEntity.setCreatedDate(createdDate);

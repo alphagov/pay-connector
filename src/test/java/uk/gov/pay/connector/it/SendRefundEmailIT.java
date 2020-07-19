@@ -25,7 +25,6 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -84,8 +83,8 @@ public class SendRefundEmailIT {
         String refundExternalId = "999999";
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub,
-                100,  REFUND_SUBMITTED, randomAlphanumeric(10),
+        databaseTestHelper.addRefund(refundExternalId,
+                100,  REFUND_SUBMITTED, transactionId + "/" + payIdSub,
                 ZonedDateTime.now(), chargeId.toString());
 
         given().port(testContext.getPort())

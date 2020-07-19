@@ -85,7 +85,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
     private final Type type;
     private String extChargeId;
-    private String extRefundReference;
+    private String refundGatewayTransactionId;
     private String userExternalId;
     private State state;
     private Long amount;
@@ -99,9 +99,9 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         this.updated = updated;
     }
 
-    public TransactionEvent(Type type, String extChargeId, String extRefundReference, State state, Long amount, ZonedDateTime updated, String userExternalId) {
+    public TransactionEvent(Type type, String extChargeId, String refundGatewayTransactionId, State state, Long amount, ZonedDateTime updated, String userExternalId) {
         this.type = type;
-        this.extRefundReference = extRefundReference;
+        this.refundGatewayTransactionId = refundGatewayTransactionId;
         this.extChargeId = extChargeId;
         this.state = state;
         this.amount = amount;
@@ -116,7 +116,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
     @JsonProperty("refund_reference")
     public String getRefundId() {
-        return extRefundReference;
+        return refundGatewayTransactionId;
     }
 
     @JsonProperty("submitted_by")
@@ -169,7 +169,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         TransactionEvent that = (TransactionEvent) o;
 
         if (type != that.type) return false;
-        if (extRefundReference != null ? !extRefundReference.equals(that.extRefundReference) : that.extRefundReference != null) return false;
+        if (refundGatewayTransactionId != null ? !refundGatewayTransactionId.equals(that.refundGatewayTransactionId) : that.refundGatewayTransactionId != null) return false;
         if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null) return false;
         if (state != null ? !state.equals(that.state) : that.state != null) return false;
         if (userExternalId != null ? !userExternalId.equals(that.userExternalId) : that.userExternalId != null) return false;
@@ -180,7 +180,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     @Override
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
-        result = 31 * result + (extRefundReference != null ? extRefundReference.hashCode() : 0);
+        result = 31 * result + (refundGatewayTransactionId != null ? refundGatewayTransactionId.hashCode() : 0);
         result = 31 * result + (extChargeId != null ? extChargeId.hashCode() : 0);
         result = 31 * result + (state != null ? state.hashCode() : 0);
         result = 31 * result + (amount != null ? amount.hashCode() : 0);

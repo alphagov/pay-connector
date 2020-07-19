@@ -170,8 +170,8 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         int refundAmount = 1000;
 
         ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,
-                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+        databaseTestHelper.addRefund(refundExternalId, 1000,
+                REFUND_SUBMITTED, transactionId + "/" + payIdSub, ZonedDateTime.now(),
                 externalChargeId.toString());
 
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
@@ -202,8 +202,8 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         
         ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
 
-        databaseTestHelper.addRefund(refundExternalId, refundReference, refundAmount,
-                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+        databaseTestHelper.addRefund(refundExternalId, refundAmount,
+                REFUND_SUBMITTED, refundReference, ZonedDateTime.now(),
                 chargeExternalId);
 
         String response = notifyConnector(gatewayTransactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
@@ -219,7 +219,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         List<Map<String, Object>> refundsByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
         assertThat(refundsByChargeExternalId.size(), is(1));
         assertThat(refundsByChargeExternalId.get(0).get("charge_external_id"), is(chargeExternalId));
-        assertThat(refundsByChargeExternalId.get(0).get("reference"), is(refundReference));
+        assertThat(refundsByChargeExternalId.get(0).get("gateway_transaction_id"), is(refundReference));
         assertThat(refundsByChargeExternalId.get(0).get("status"), is("REFUNDED"));
     }
 

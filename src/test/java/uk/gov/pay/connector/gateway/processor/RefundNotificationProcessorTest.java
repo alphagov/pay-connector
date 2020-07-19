@@ -46,12 +46,13 @@ public class RefundNotificationProcessorTest {
     RefundEntity refundEntity;
 
     private static final PaymentGatewayName paymentGatewayName = PaymentGatewayName.WORLDPAY;
-    private static final String reference = "reference";
+    private static final String paymentReference = "payment-reference";
+    private static final String refundGatewayTransactionId = "refund-gateway-tx-id";
     private static final String transactionId = "transactionId";
     private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
     private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(gatewayAccountEntity)
-            .withReference(ServicePaymentReference.of(reference))
+            .withReference(ServicePaymentReference.of(paymentReference))
             .withTransactionId(transactionId)
             .build();
     private Charge charge;
@@ -68,7 +69,7 @@ public class RefundNotificationProcessorTest {
         refundEntity = aValidRefundEntity().build();
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
 
-        when(refundService.findByChargeExternalIdAndReference(charge.getExternalId(), reference)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
 
         refundNotificationProcessor = new RefundNotificationProcessor(refundService, userNotificationService);
 
@@ -79,18 +80,18 @@ public class RefundNotificationProcessorTest {
 
     @Test
     public void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, reference, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     public void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, reference, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
-    public void shouldLogError_whenReferenceIsNotAvailable() {
+    public void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
         
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());

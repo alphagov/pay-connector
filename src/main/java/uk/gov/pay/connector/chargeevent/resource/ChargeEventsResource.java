@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import javax.ws.rs.GET;
@@ -79,7 +79,7 @@ public class ChargeEventsResource {
                 .map(event -> new TransactionEvent(
                         REFUND,
                         event.getChargeExternalId(),
-                        event.getReference(),
+                        event.getGatewayTransactionId(),
                         extractState(event.getStatus().toExternal()),
                         event.getAmount(),
                         event.getHistoryStartDate(),

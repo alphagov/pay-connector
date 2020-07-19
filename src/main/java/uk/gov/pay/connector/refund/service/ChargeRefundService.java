@@ -91,8 +91,8 @@ public class ChargeRefundService {
         return refundEntity;
     }
 
-    public Optional<RefundEntity> findByChargeExternalIdAndReference(String chargeExternalId, String reference) {
-        return refundDao.findByChargeExternalIdAndReference(chargeExternalId, reference);
+    public Optional<RefundEntity> findByChargeExternalIdAndGatewayTransactionId(String chargeExternalId, String gatewayTransactionId) {
+        return refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeExternalId, gatewayTransactionId);
     }
 
     private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
@@ -118,8 +118,8 @@ public class ChargeRefundService {
         Optional<RefundEntity> refund = refundDao.findById(refundEntityId);
 
         refund.ifPresent(refundEntity -> {
-            logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                    refundEntity.getExternalId(), gatewayAccountEntity.getGatewayName(), refundEntity.getReference(),
+            logger.info("Refund {} ({}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                    refundEntity.getExternalId(), gatewayAccountEntity.getGatewayName(),
                     refundEntity.getChargeExternalId(), gatewayAccountEntity.getGatewayName(),
                     refundEntity.getGatewayTransactionId(),
                     gatewayAccountEntity.getAnalyticsId(), gatewayAccountEntity.getId(),
@@ -129,10 +129,7 @@ public class ChargeRefundService {
                 userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
             }
 
-            getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(gatewayTransactionId -> {
-                refundEntity.setReference(gatewayTransactionId);
-                refundEntity.setGatewayTransactionId(gatewayTransactionId);
-            });
+            getTransactionId(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setGatewayTransactionId);
 
             transitionRefundState(refundEntity, refundStatus);
         });
@@ -227,7 +224,7 @@ public class ChargeRefundService {
      *
      * @see RefundGatewayRequest valueOf()
      */
-    private Optional<String> getRefundReference(RefundEntity refundEntity, GatewayRefundResponse gatewayRefundResponse) {
+    private Optional<String> getTransactionId(RefundEntity refundEntity, GatewayRefundResponse gatewayRefundResponse) {
 
         if (gatewayRefundResponse.isSuccessful()) {
             return Optional.ofNullable(gatewayRefundResponse.getReference().orElse(refundEntity.getExternalId()));
