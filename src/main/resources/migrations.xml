@@ -1486,4 +1486,8 @@
         <dropColumn tableName="refunds_history" columnName="reference"/>
     </changeSet>
 
+    <changeSet id="drop gateway_processing_details from refunds table" runInTransaction="false" author="">
+        <dropColumn tableName="refunds" columnName="gateway_processing_details"/>
+    </changeSet>
+
 </databaseChangeLog>
