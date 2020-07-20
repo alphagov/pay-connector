@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.resources;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import fj.data.Either;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
@@ -38,12 +37,12 @@ public class ApiValidatorsTest {
     public void shouldValidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
+                Map.of(
                         "op", "replace",
                         "path", "email",
                         "value", "test@example.com"))
                 .withValidOps(singletonList("replace"))
-                .withValidPaths(ImmutableSet.of("email"))
+                .withValidPaths(Set.of("email"))
                 .build();
         assertThat(validateChargePatchParams(request), is(true));
     }
@@ -52,12 +51,12 @@ public class ApiValidatorsTest {
     public void shouldInvalidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
+                Map.of(
                         "op", "replace",
                         "path", "email",
                         "value", randomAlphanumeric(255) + "@example.com"))
                 .withValidOps(singletonList("replace"))
-                .withValidPaths(ImmutableSet.of("email"))
+                .withValidPaths(Set.of("email"))
                 .build();
         assertThat(validateChargePatchParams(request), is(false));
     }

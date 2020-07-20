@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.charge.resource;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +35,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
@@ -99,7 +99,7 @@ public class ChargesFrontendResource {
         try {
             chargePatchRequest = aPatchRequestBuilder(chargePatchMap)
                     .withValidOps(Collections.singletonList("replace"))
-                    .withValidPaths(ImmutableSet.of(EMAIL_KEY))
+                    .withValidPaths(Set.of(EMAIL_KEY))
                     .build();
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.usernotification.resource;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
@@ -38,7 +37,7 @@ public class EmailNotificationResource {
     private static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
     private static final String FORMATTER = "/%s/%s";
-    private static final Set<String> VALID_PATHS = ImmutableSet.of(
+    private static final Set<String> VALID_PATHS = Set.of(
             format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
             format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
             format(FORMATTER, EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),

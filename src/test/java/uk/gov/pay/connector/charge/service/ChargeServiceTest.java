@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.junit.After;
@@ -59,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Collections.singletonList;
@@ -299,12 +298,12 @@ public class ChargeServiceTest {
 
         final String expectedEmail = "test@examplecom";
         PatchRequestBuilder.PatchRequest patchRequest = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
+                Map.of(
                         "op", "replace",
                         "path", "email",
                         "value", expectedEmail))
                 .withValidOps(singletonList("replace"))
-                .withValidPaths(ImmutableSet.of("email"))
+                .withValidPaths(Set.of("email"))
                 .build();
 
         service.updateCharge(chargeEntityExternalId, patchRequest);

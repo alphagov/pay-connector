@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.smartpay;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.usernotification.model.ChargeStatusRequest;
@@ -15,7 +14,7 @@ import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SmartpayNotification implements ChargeStatusRequest, Comparable<SmartpayNotification> {
-    private final static Set<String> MANDATORY_FIELDS = ImmutableSet.of("eventCode", "eventDate", "pspReference");
+    private final static Set<String> MANDATORY_FIELDS = Set.of("eventCode", "eventDate", "pspReference");
 
     private final ZonedDateTime eventDate;
     private String eventCode;
