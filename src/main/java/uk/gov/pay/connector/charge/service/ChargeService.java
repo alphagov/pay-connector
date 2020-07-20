@@ -745,8 +745,11 @@ public class ChargeService {
         if (hasFullCardNumber(authCardDetails)) { // Apple Pay etc. don’t give us a full card number, just the last four digits here
             detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         }
-        detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
-
+        
+        if (hasLastFourCharactersCardNumber(authCardDetails)) {
+            detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
+        }
+        
         if (authCardDetails.getAddress().isPresent())
             detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress().get()));
 
@@ -757,6 +760,10 @@ public class ChargeService {
 
     private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() > 6;
+    }
+    
+    private boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
+        return authCardDetails.getCardNo().length() >= 4;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {

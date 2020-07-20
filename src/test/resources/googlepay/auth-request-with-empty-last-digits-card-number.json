@@ -1,0 +1,13 @@
+{
+  "payment_info": {
+    "last_digits_card_number": "",
+    "brand": "visa",
+    "cardholder_name": "Example Name",
+    "email": "example@test.example"
+  },
+  "encrypted_payment_data": {
+    "signature": "MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl",
+    "protocol_version": "ECv1",
+    "signed_message": "aSignedMessage"
+  }
+}

@@ -20,7 +20,6 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Map;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.pact.util.GatewayAccountUtil.setUpGatewayAccount;
