@@ -44,8 +44,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
@@ -57,6 +57,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -64,7 +65,6 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
@@ -150,7 +150,7 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(argThat(aRefundRequestWith(chargeEntity, refundAmount)));
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
-        verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
+        verify(spiedRefundEntity).setGatewayTransactionId(refundEntity.getExternalId());
 
         verifyNoMoreInteractions(mockChargeDao);
     }
@@ -206,7 +206,7 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(any(RefundGatewayRequest.class));
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
-        verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
+        verify(spiedRefundEntity).setGatewayTransactionId(refundEntity.getExternalId());
 
         verifyNoMoreInteractions(mockChargeService);
     }
@@ -285,7 +285,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity, never()).setStatus(RefundStatus.REFUNDED);
-        verify(spiedRefundEntity).setReference(reference);
+        verify(spiedRefundEntity).setGatewayTransactionId(reference);
 
         verifyNoMoreInteractions(mockChargeDao);
     }
@@ -329,7 +329,7 @@ public class ChargeRefundServiceTest {
 
         assertThat(gatewayResponse.getGatewayRefundResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
-        verify(spiedRefundEntity).setReference(providerReference);
+        verify(spiedRefundEntity).setGatewayTransactionId(providerReference);
 
     }
 
@@ -369,8 +369,7 @@ public class ChargeRefundServiceTest {
         ChargeRefundResponse gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(amount, chargeEntity.getAmount(), userExternalId));
         assertThat(gatewayResponse.getGatewayRefundResponse().isSuccessful(), is(false));
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
-        verify(spiedRefundEntity, never()).setReference(anyString());
-
+        verify(spiedRefundEntity, never()).setGatewayTransactionId(anyString());
     }
 
     @Test

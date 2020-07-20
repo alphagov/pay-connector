@@ -88,8 +88,8 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
 
         ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
 
-        databaseTestHelper.addRefund(refundExternalId, refundExternalId, 1000,
-                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+        databaseTestHelper.addRefund(refundExternalId, 1000,
+                REFUND_SUBMITTED, refundExternalId, ZonedDateTime.now(),
                 chargeExternalId);
 
         String response = notifyConnector(gatewayTransactionId, "REFUNDED", refundExternalId)
@@ -105,7 +105,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
         List<Map<String, Object>> refundsByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
         assertThat(refundsByChargeExternalId.size(), is(1));
         assertThat(refundsByChargeExternalId.get(0).get("charge_external_id"), is(chargeExternalId));
-        assertThat(refundsByChargeExternalId.get(0).get("reference"), is(refundExternalId));
+        assertThat(refundsByChargeExternalId.get(0).get("gateway_transaction_id"), is(refundExternalId));
         assertThat(refundsByChargeExternalId.get(0).get("status"), is("REFUNDED"));
     }
 
@@ -142,7 +142,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturnNon2xxStatusIfChargeIsNotFoundForTransaction() throws Exception {
-        ledgerStub.returnNotFoundForFindByProviderAndGatewayTransactionId("worldpay", 
+        ledgerStub.returnNotFoundForFindByProviderAndGatewayTransactionId("worldpay",
                 "unknown-transaction-id");
         notifyConnector("unknown-transaction-id", "GARBAGE")
                 .statusCode(403)
@@ -228,8 +228,8 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
-        databaseTestHelper.addRefund(refundExternalId, refundExternalId, refundAmount, REFUND_SUBMITTED,
-                randomAlphanumeric(10), ZonedDateTime.now(),
+        databaseTestHelper.addRefund(refundExternalId, refundAmount, REFUND_SUBMITTED,
+                refundExternalId, ZonedDateTime.now(),
                 externalChargeId);
         return externalChargeId;
     }

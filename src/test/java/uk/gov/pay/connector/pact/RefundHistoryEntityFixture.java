@@ -15,7 +15,6 @@ public class RefundHistoryEntityFixture {
     private String status = RefundStatus.CREATED.getValue();
     private ZonedDateTime createdDate = ZonedDateTime.now().minusSeconds(5L);
     private Long version = 1L;
-    private String reference;
     private ZonedDateTime historyStartDate = createdDate.plusSeconds(2L);
     private ZonedDateTime historyEndDate = createdDate.plusSeconds(3L);
     private String userExternalId;
@@ -32,7 +31,7 @@ public class RefundHistoryEntityFixture {
 
     public RefundHistory build() {
         return new RefundHistory(id, externalId, amount, status, Timestamp.valueOf(createdDate.toLocalDateTime()),
-                version, reference, Timestamp.valueOf(historyStartDate.toLocalDateTime()), Timestamp.valueOf(historyEndDate.toLocalDateTime()),
+                version, Timestamp.valueOf(historyStartDate.toLocalDateTime()), Timestamp.valueOf(historyEndDate.toLocalDateTime()),
                 userExternalId, gatewayTransactionId, chargeExternalId, userEmail);
     }
 
@@ -48,11 +47,6 @@ public class RefundHistoryEntityFixture {
 
     public RefundHistoryEntityFixture withUserExternalId(String userExternalId) {
         this.userExternalId = userExternalId;
-        return this;
-    }
-
-    public RefundHistoryEntityFixture withReference(String reference) {
-        this.reference = reference;
         return this;
     }
 

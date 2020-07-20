@@ -28,7 +28,7 @@ public class RefundEntityTest {
         RefundEntity refundEntity = new RefundEntity(amount, userExternalId, userEmail, chargeEntity.getExternalId());
 
         assertNotNull(refundEntity.getExternalId());
-        assertThat(refundEntity.getReference(), is(nullValue()));
+        assertThat(refundEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(refundEntity.getAmount(), is(amount));
         assertThat(refundEntity.getUserExternalId(), is(userExternalId));
         assertThat(refundEntity.getChargeExternalId(), is(chargeEntity.getExternalId()));

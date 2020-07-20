@@ -131,15 +131,15 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        String reference = randomId();
+        String gatewayTransactionId = randomId();
         String transactionId = randomId();
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String externalRefundId = "refund-" + RandomUtils.nextInt();
-        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L,
-                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+        int refundId = databaseTestHelper.addRefund(externalRefundId, 10L,
+                REFUND_SUBMITTED, gatewayTransactionId, ZonedDateTime.now(),
                 externalChargeId);
 
-        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
+        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, gatewayTransactionId, "notification-refund"))
                 .then()
                 .statusCode(200)
                 .extract().body().asString();
@@ -151,7 +151,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
 
     @Test
     public void shouldHandleARefundNotification_forAnExpungedCharge() throws JsonProcessingException {
-        String reference = randomId();
+        String refundTransactionId = randomId();
         String transactionId = randomId();
         String externalChargeId = randomAlphanumeric(26);
         String externalRefundId = "refund-" + RandomUtils.nextInt();
@@ -169,11 +169,11 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
                 .withTransactionId(transactionId);
         ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
 
-        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L,
-                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+        int refundId = databaseTestHelper.addRefund(externalRefundId, 10L,
+                REFUND_SUBMITTED, refundTransactionId, ZonedDateTime.now(),
                 externalChargeId);
 
-        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
+        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, refundTransactionId, "notification-refund"))
                 .then()
                 .statusCode(200)
                 .extract().body().asString();

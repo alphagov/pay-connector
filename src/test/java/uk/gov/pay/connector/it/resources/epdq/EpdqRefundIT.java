@@ -296,7 +296,7 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .aTestRefund()
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
-                .withReference(randomAlphanumeric(10))
+                .withGatewayTransactionId(randomAlphanumeric(10))
                 .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 

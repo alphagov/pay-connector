@@ -155,7 +155,6 @@ public class QueueMessageContractTest {
         String gatewayTransactionId = RandomStringUtils.randomAlphanumeric(14);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
-                .withReference(gatewayTransactionId)
                 .withGatewayTransactionId(gatewayTransactionId)
                 .build();
         RefundSucceeded refundSucceeded = RefundSucceeded.from(refundHistory);

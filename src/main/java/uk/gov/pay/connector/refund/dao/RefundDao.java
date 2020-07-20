@@ -15,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-
 @Transactional
 public class RefundDao extends JpaDao<RefundEntity> {
 
@@ -28,21 +27,21 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return super.findById(RefundEntity.class, refundId);
     }
 
-    public Optional<RefundEntity> findByChargeExternalIdAndReference(String chargeExternalId, String reference) {
+    public Optional<RefundEntity> findByChargeExternalIdAndGatewayTransactionId(String chargeExternalId, String gatewayTransactionId) {
 
         String query = "SELECT refund FROM RefundEntity refund " +
-                "WHERE refund.reference = :reference AND refund.chargeExternalId = :chargeExternalId";
+                "WHERE refund.gatewayTransactionId = :gatewayTransactionId AND refund.chargeExternalId = :chargeExternalId";
 
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)
-                .setParameter("reference", reference)
+                .setParameter("gatewayTransactionId", gatewayTransactionId)
                 .setParameter("chargeExternalId", chargeExternalId)
                 .getResultList().stream().findFirst();
     }
 
     public Optional<RefundHistory> getRefundHistoryByRefundExternalIdAndRefundStatus(String refundExternalId, RefundStatus refundStatus) {
         String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.created_date, " +
-                "rh.version, rh.reference, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
+                "rh.version, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
                 "rh.gateway_transaction_id, rh.charge_external_id, rh.user_email " +
                 "FROM refunds_history rh " +
                 "WHERE rh.external_id = ?1 AND rh.status = ?2";
@@ -59,7 +58,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundHistory> searchHistoryByChargeExternalId(String chargeExternalId) {
 
-        String query = "SELECT id, external_id, amount, status, created_date, version, reference, " +
+        String query = "SELECT id, external_id, amount, status, created_date, version, " +
                 "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email, charge_external_id " +
                 "FROM refunds_history r " +
                 "WHERE charge_external_id = ?1 AND status != ?2";
@@ -73,7 +72,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundHistory> searchAllHistoryByChargeExternalId(String chargeExternalId) {
         String query = "SELECT r.id, r.external_id, r.amount, r.status, r.created_date, r.version, " +
-                "r.reference, history_start_date, history_end_date, user_external_id, r.gateway_transaction_id, " +
+                "history_start_date, history_end_date, user_external_id, r.gateway_transaction_id, " +
                 "r.charge_external_id AS charge_external_id, r.user_email " +
                 " FROM refunds_history r " +
                 " WHERE charge_external_id = ?1";
@@ -96,7 +95,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundHistory> getRefundHistoryByDateRange(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
 
-        String query = "SELECT id, external_id, amount, status, created_date, version, reference, " +
+        String query = "SELECT id, external_id, amount, status, created_date, version, " +
                 "       history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email " +
                 " FROM refunds_history rh " +
                 " WHERE rh.history_start_date >= ?1 AND rh.history_start_date <= ?2" +

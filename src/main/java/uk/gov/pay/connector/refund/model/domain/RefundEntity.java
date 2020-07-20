@@ -2,7 +2,6 @@ package uk.gov.pay.connector.refund.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -17,8 +16,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
@@ -40,7 +37,6 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "status", type = String.class),
                         @ColumnResult(name = "created_date", type = Timestamp.class),
                         @ColumnResult(name = "version", type=Long.class),
-                        @ColumnResult(name = "reference", type = String.class),
                         @ColumnResult(name = "history_start_date", type = Timestamp.class),
                         @ColumnResult(name = "history_end_date", type = Timestamp.class),
                         @ColumnResult(name = "user_external_id", type = String.class),
@@ -63,9 +59,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "external_id")
     private String externalId;
-
-    @Column(name = "reference")
-    private String reference;
 
     private Long amount;
 
@@ -108,10 +101,6 @@ public class RefundEntity extends AbstractVersionedEntity {
         return gatewayTransactionId;
     }
 
-    public String getReference() {
-        return reference;
-    }
-
     public Long getAmount() {
         return amount;
     }
@@ -122,10 +111,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public ZonedDateTime getCreatedDate() {
         return createdDate;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
     }
 
     public void setAmount(Long amount) {
@@ -184,7 +169,6 @@ public class RefundEntity extends AbstractVersionedEntity {
     public String toString() {
         return "RefundEntity{" +
                 "externalId='" + externalId + '\'' +
-                ", reference='" + reference + '\'' +
                 ", amount=" + amount +
                 ", status='" + status + '\'' +
                 ", userExternalId='" + userExternalId + '\'' +

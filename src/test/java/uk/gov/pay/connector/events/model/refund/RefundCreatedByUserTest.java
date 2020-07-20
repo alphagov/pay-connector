@@ -2,9 +2,9 @@ package uk.gov.pay.connector.events.model.refund;
 
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
@@ -22,7 +22,7 @@ public class RefundCreatedByUserTest {
 
     private RefundHistory refundHistory = new RefundHistory(1L, "external_id", 50L, RefundStatus.CREATED.getValue(),
             timeConverter.convertToDatabaseColumn(createdDate), 1L,
-            "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
+            timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
             "user-external-id", "gateway_transaction_id", charge.getExternalId(),
             "test@example.com"

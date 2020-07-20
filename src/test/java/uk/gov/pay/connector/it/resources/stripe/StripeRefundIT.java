@@ -102,7 +102,6 @@ public class StripeRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
-        MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("reference", "re_1DRiccHj08j21DRiccHj08j2_test"));
         MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
         String refundId = response.extract().path("refund_id");
         
