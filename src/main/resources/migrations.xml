@@ -1478,4 +1478,12 @@
         <dropTable tableName="emitted_events_swp" />
     </changeSet>
 
+    <changeSet id="drop reference from refunds table" runInTransaction="false" author="">
+        <dropColumn tableName="refunds" columnName="reference"/>
+    </changeSet>
+
+    <changeSet id="drop reference from refunds_history table" runInTransaction="false" author="">
+        <dropColumn tableName="refunds_history" columnName="reference"/>
+    </changeSet>
+
 </databaseChangeLog>
