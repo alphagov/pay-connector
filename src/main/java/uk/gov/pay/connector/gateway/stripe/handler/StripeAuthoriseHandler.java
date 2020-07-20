@@ -71,8 +71,20 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
             if (e.getFamily() == CLIENT_ERROR) {
                 StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                logger.info("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+
+                switch(stripeErrorResponse.getError().getCode()) {
+                    /**
+                     * Stripe clients throw well formed errors for different scenarios, as we are directly POSTing, handle
+                     * the card_error token as business as usual and alert about everything else.
+                     * https://stripe.com/docs/api/errors
+                     */
+                    case "card_error":
+                        logger.info("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                                chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+                    default:
+                        logger.error("Authorisation rejected for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                                chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+                }
     
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
             }
