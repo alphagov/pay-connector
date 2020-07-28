@@ -1,7 +1,8 @@
 {
   "error": {
+    "charge": "ch_1DX3j5C6H5MjhE5YhPcLhENF",
     "code": "resource_missing",
     "message": "No such charge: ch_123456 or something similar",
-    "type": "invalid_request_error"
+    "type": "{{type}}"
   }
 }

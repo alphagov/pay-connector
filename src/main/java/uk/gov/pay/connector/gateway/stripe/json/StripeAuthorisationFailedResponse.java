@@ -4,6 +4,10 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Optional;
+import java.util.StringJoiner;
+
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
 
 public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse {
 
@@ -24,7 +28,14 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
 
     @Override
     public AuthoriseStatus authoriseStatus() {
-        return AuthoriseStatus.REJECTED;
+        /* only `card_error` type is to be treated as REJECTED. Rest of the error types are unexpected and categorised as ERROR
+           (https://stripe.com/docs/api/errors#errors-card_error)
+         */
+        if (errorResponse != null && errorResponse.getError() != null
+                && "card_error".equals(errorResponse.getError().getType())) {
+            return REJECTED;
+        }
+        return ERROR;
     }
 
     @Override
@@ -40,5 +51,15 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
     @Override
     public String getErrorMessage() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(", ", "Stripe authorisation failed response (", ")");
+        if (errorResponse != null && errorResponse.getError() != null) {
+            joiner.add(errorResponse.getError().toString());
+        }
+
+        return joiner.toString();
     }
 }

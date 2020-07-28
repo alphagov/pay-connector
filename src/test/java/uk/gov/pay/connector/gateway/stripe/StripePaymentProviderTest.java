@@ -45,6 +45,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
@@ -98,14 +100,10 @@ public class StripePaymentProviderTest {
         assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
-
     @Test
     public void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
-
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
-
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
@@ -116,14 +114,12 @@ public class StripePaymentProviderTest {
         assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
     }
 
-
     @Test
     public void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
         when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
 
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
-
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
@@ -137,7 +133,6 @@ public class StripePaymentProviderTest {
         assertThat(stripeParamsFor3ds.isPresent(), is(true));
         assertThat(stripeParamsFor3ds.get().toAuth3dsRequiredEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
     }
-
 
     @Test
     public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
@@ -153,6 +148,36 @@ public class StripePaymentProviderTest {
         assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
                 authoriseResponse.getGatewayError().get().getMessage());
         assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
+    }
+
+    @Test
+    public void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
+
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+        assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+    }
+
+    @Test
+    public void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
+
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
+        assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -182,7 +207,7 @@ public class StripePaymentProviderTest {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_REJECTED));
+        assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
     }
 
     @Test
@@ -213,7 +238,7 @@ public class StripePaymentProviderTest {
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
-        assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_REJECTED));
+        assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
     }
 
     @Test
@@ -249,8 +274,12 @@ public class StripePaymentProviderTest {
         return load(STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE);
     }
 
-    private String errorResponse() {
-        return load(STRIPE_ERROR_RESPONSE);
+    private String errorResponse(String... errorType) {
+        String type = (errorType == null || errorType.length == 0)
+                ? "invalid_request_error"
+                : errorType[0];
+
+        return load(STRIPE_ERROR_RESPONSE).replace("{{type}}", type);
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
