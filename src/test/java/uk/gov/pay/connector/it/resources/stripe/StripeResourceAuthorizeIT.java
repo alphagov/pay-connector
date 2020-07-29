@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.collection.IsIn;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -44,7 +45,11 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
@@ -76,14 +81,14 @@ public class StripeResourceAuthorizeIT {
     private RestAssuredClient connectorRestApiClient;
 
     private String stripeAccountId;
-    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
+    private final String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
             EXP_MONTH + "/" + EXP_YEAR, CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
             "London", ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
-    private String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
-    private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
-    private String paymentProvider = PaymentGatewayName.STRIPE.getName();
+    private final String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
+    private final String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
+    private final String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
-    private StripeMockClient stripeMockClient = new StripeMockClient();
+    private final StripeMockClient stripeMockClient = new StripeMockClient();
     private DatabaseTestHelper databaseTestHelper;
 
     @DropwizardTestContext
@@ -255,7 +260,25 @@ public class StripeResourceAuthorizeIT {
                 .post(captureChargeUrlFor(externalChargeId))
                 .then().statusCode(NO_CONTENT_204);
 
-        assertFrontendChargeStatusIs(externalChargeId, CAPTURE_APPROVED.getValue());
+
+        assertConnectorHasRecordedChargeAsReadyForCapture(externalChargeId);
+    }
+
+    private void assertConnectorHasRecordedChargeAsReadyForCapture(String externalChargeId) {
+        /*
+         * There's a race condition where the background capture queue may attempt to capture the charge before we check
+         * the status. We care whether it has progressed to CAPTURE_APPROVED or beyond.  
+         */
+        connectorRestApiClient
+                .withChargeId(externalChargeId)
+                .getFrontendCharge()
+                .body("status", IsIn.oneOf(
+                        CAPTURE_APPROVED.getValue(),
+                        CAPTURE_APPROVED_RETRY.getValue(),
+                        CAPTURE_READY.getValue(),
+                        CAPTURED.getValue(),
+                        CAPTURE_SUBMITTED.getValue()
+                        ));
     }
 
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
