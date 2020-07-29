@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.queue.statetransition;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -28,12 +29,14 @@ public class StateTransitionService {
 
     private StateTransitionQueue stateTransitionQueue;
     private EventService eventService;
+    private MetricRegistry metricRegistry;
 
     @Inject
     public StateTransitionService(StateTransitionQueue stateTransitionQueue,
-                                  EventService eventService) {
+                                  EventService eventService, MetricRegistry metricRegistry) {
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventService = eventService;
+        this.metricRegistry = metricRegistry;
     }
 
     @Transactional
@@ -67,6 +70,13 @@ public class StateTransitionService {
 
         var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
                 fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
+
+        metricRegistry.counter(String.format(
+                "state-transition.%s.%s.%s.to.%s",
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
+                targetChargeState)).inc();
 
         Object[] structuredArgs = ArrayUtils.addAll(
                 chargeEventEntity.getChargeEntity().getStructuredLoggingArgs(),
