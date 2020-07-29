@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.queue;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,9 +29,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.events.model.ResourceType.PAYMENT;
@@ -48,10 +52,15 @@ public class StateTransitionServiceTest {
     StateTransitionQueue mockStateTransitionQueue;
     @Mock
     EventService mockEventService;
+    @Mock
+    MetricRegistry metricRegistry;
+    @Mock
+    Counter counter;
 
     @Before
     public void setUp() {
-        stateTransitionService = new StateTransitionService(mockStateTransitionQueue, mockEventService);
+        when(metricRegistry.counter(anyString())).thenReturn(counter);
+        stateTransitionService = new StateTransitionService(mockStateTransitionQueue, mockEventService, metricRegistry);
     }
 
     @Test
