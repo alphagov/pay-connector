@@ -2,6 +2,7 @@ package uk.gov.pay.connector.queue.statetransition;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
+import static net.logstash.logback.argument.StructuredArguments.e;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
 public class StateTransitionService {
@@ -33,10 +35,11 @@ public class StateTransitionService {
 
     @Inject
     public StateTransitionService(StateTransitionQueue stateTransitionQueue,
-                                  EventService eventService, MetricRegistry metricRegistry) {
+                                  EventService eventService, 
+                                  Environment environment) {
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventService = eventService;
-        this.metricRegistry = metricRegistry;
+        this.metricRegistry = environment.metrics();
     }
 
     @Transactional
