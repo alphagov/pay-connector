@@ -74,12 +74,8 @@ public class StateTransitionService {
         var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
                 fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
 
-        metricRegistry.counter(String.format(
-                "state-transition.%s.%s.%s.to.%s",
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
-                targetChargeState)).inc();
+        incrementPerGatewayStateTransitionCounter(targetChargeState, chargeEventEntity);
+        incrementPerGatewayAccountStateTransitionCounter(targetChargeState, chargeEventEntity);
 
         Object[] structuredArgs = ArrayUtils.addAll(
                 chargeEventEntity.getChargeEntity().getStructuredLoggingArgs(),
@@ -92,6 +88,23 @@ public class StateTransitionService {
                 externalId,
                 Event.eventTypeForClass(eventClass),
                 chargeEventEntity.getUpdated());
+    }
+
+    private void incrementPerGatewayAccountStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        metricRegistry.counter(String.format(
+                "state-transition.%s.%s.%s.to.%s",
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
+                targetChargeState)).inc();
+    }
+
+    private void incrementPerGatewayStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        metricRegistry.counter(String.format(
+                "state-transition.%s.%s.to.%s",
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                targetChargeState)).inc();
     }
 
     @Transactional
