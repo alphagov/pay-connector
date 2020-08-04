@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
@@ -59,11 +60,14 @@ public class StateTransitionServiceTest {
     MetricRegistry metricRegistry;
     @Mock
     Counter counter;
+    @Mock
+    Meter meter;
 
     @Before
     public void setUp() {
         when(environment.metrics()).thenReturn(metricRegistry);
         when(metricRegistry.counter(anyString())).thenReturn(counter);
+        when(metricRegistry.meter(anyString())).thenReturn(meter);
         stateTransitionService = new StateTransitionService(mockStateTransitionQueue, mockEventService, environment);
     }
 

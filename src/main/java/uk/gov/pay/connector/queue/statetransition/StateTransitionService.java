@@ -75,6 +75,7 @@ public class StateTransitionService {
                 fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
 
         incrementPerGatewayStateTransitionCounter(targetChargeState, chargeEventEntity);
+        incrementPerGatewayStateTransitionMeter(targetChargeState, chargeEventEntity);
         incrementPerGatewayAccountStateTransitionCounter(targetChargeState, chargeEventEntity);
 
         Object[] structuredArgs = ArrayUtils.addAll(
@@ -97,6 +98,14 @@ public class StateTransitionService {
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
                 targetChargeState)).inc();
+    }
+    
+    private void incrementPerGatewayStateTransitionMeter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        metricRegistry.meter(String.format(
+                "state-transition.%s.%s.to.%s.rate",
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                targetChargeState)).mark();
     }
 
     private void incrementPerGatewayStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
