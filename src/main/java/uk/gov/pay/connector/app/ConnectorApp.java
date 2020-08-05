@@ -205,6 +205,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.parseInt(configuration.getGraphitePort()));
         GraphiteReporter.forRegistry(environment.metrics())
                 .prefixedWith(SERVICE_METRICS_NODE)
+                .convertRatesTo(TimeUnit.MINUTES)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build(graphiteUDP)
                 .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
 
