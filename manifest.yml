@@ -17,6 +17,7 @@ applications:
       - card-connector-db
     env:
       ENV_MAP_BP_USE_APP_PROFILE_DIR: true
+      NOTIFY_BASE_URL: ((notify_base_url))
 
       # Provided by the app-catalog service - see src/main/resources/env-map.yml
       FRONTEND_URL: ""
@@ -27,7 +28,6 @@ applications:
       SENTRY_DSN: ""
       CAPTURE_USING_SQS_FEATURE_FLAG: ""
       EVENT_QUEUE_ENABLED: ""
-      NOTIFY_BASE_URL: ""
       NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID: ""
       NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID: ""
       STRIPE_TRANSACTION_FEE_PERCENTAGE: ""
