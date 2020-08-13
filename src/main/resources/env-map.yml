@@ -14,7 +14,6 @@ env_vars:
 
   CAPTURE_USING_SQS_FEATURE_FLAG:           '.[][] | select(.name == "card-connector-secret-service")       | .credentials.sqs_enabled'
   EVENT_QUEUE_ENABLED:                      '.[][] | select(.name == "card-connector-secret-service")       | .credentials.sqs_enabled'
-  NOTIFY_BASE_URL:                          '.[][] | select(.name == "card-connector-secret-service")       | .credentials.notify_base_url'
   NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID: '.[][] | select(.name == "card-connector-secret-service")       | .credentials.notify_payment_receipt_email_template_id'
   NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID:   '.[][] | select(.name == "card-connector-secret-service")       | .credentials.notify_refund_email_template_id'
   STRIPE_TRANSACTION_FEE_PERCENTAGE:        '.[][] | select(.name == "card-connector-secret-service")       | .credentials.stripe_transaction_fee_percentage'
