@@ -1490,4 +1490,11 @@
         <dropColumn tableName="refunds" columnName="gateway_processing_details"/>
     </changeSet>
 
+    <changeSet id="add address_state_province column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="address_state_province" type="varchar(2)">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
