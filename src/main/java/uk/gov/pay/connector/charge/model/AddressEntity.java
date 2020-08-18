@@ -22,6 +22,8 @@ public class AddressEntity {
     private String county;
     @Column(name = "address_country")
     private String country;
+    @Column(name = "address_state_province")
+    private String stateOrProvince;
 
     public AddressEntity() {
         //for jpa
@@ -70,6 +72,14 @@ public class AddressEntity {
 
     public String getCountry() {
         return country;
+    }
+
+    public String getStateOrProvince() {
+        return stateOrProvince;
+    }
+
+    public void setStateOrProvince(String stateOrProvince) {
+        this.stateOrProvince = stateOrProvince;
     }
 
     public String getCounty() {
