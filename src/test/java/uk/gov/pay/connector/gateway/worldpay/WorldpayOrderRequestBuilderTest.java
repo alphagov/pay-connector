@@ -24,10 +24,12 @@ import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixt
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
@@ -84,6 +86,51 @@ public class WorldpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
+
+        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
+
+        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() throws Exception {
+
+        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
+
+        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .with3dsRequired(true)
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 

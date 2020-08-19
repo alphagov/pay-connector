@@ -91,6 +91,30 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldStoreAddressStateProvinceForAuthorisedChargeFromUnitedStates() {
+        String cardBrand = "visa";
+        String validUsCardDetails = buildJsonAuthorisationDetailsFor(
+                "Mr. Name",
+                "4444333322221111",
+                "123",
+                "10/99",
+                "visa",
+                "CREDIT",
+                "Line1",
+                "Line2",
+                "Washington D.C.",
+                null,
+                "20500",
+                "US"
+        );
+        String externalChargeId = shouldAuthoriseChargeFor(validUsCardDetails);
+        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        assertThat(chargeCardDetails, hasEntry("address_state_province", "DC"));
+        assertThat(databaseTestHelper.getChargeCardBrand(chargeId), is(cardBrand));
+    }
+
+    @Test
     public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() {
         String sanitizedValue = "r-**-**-*  Ju&^****-**";
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";

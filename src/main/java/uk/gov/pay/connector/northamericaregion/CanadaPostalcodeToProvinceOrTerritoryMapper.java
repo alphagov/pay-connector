@@ -21,11 +21,11 @@ import static uk.gov.pay.connector.northamericaregion.CanadaProvinceOrTerritory.
 
 public class CanadaPostalcodeToProvinceOrTerritoryMapper {
 
-    private static final Pattern WELL_FORMED_POSTAL_CODE = Pattern.compile("([A-Z])[0-9][A-Z][0-9][A-Z][0-9]");
-    private static final Pattern WELL_FORMED_X_POSTAL_CODE = Pattern.compile("(X[0-9][A-Z])[0-9][A-Z][0-9]");
-    private static final String SANTA_CLAUS_POSTAL_CODE = "H0H0H0";
+    private final Pattern WELL_FORMED_POSTAL_CODE = Pattern.compile("([A-Z])[0-9][A-Z][0-9][A-Z][0-9]");
+    private final Pattern WELL_FORMED_X_POSTAL_CODE = Pattern.compile("(X[0-9][A-Z])[0-9][A-Z][0-9]");
+    private final String SANTA_CLAUS_POSTAL_CODE = "H0H0H0";
 
-    public static final Map<String, CanadaProvinceOrTerritory> NON_X_POSTAL_CODE_TERRITORY_PROVINCE_MAP = Map.ofEntries(
+    public final Map<String, CanadaProvinceOrTerritory> NON_X_POSTAL_CODE_TERRITORY_PROVINCE_MAP = Map.ofEntries(
             entry("A", NEWFOUNDLAND_AND_LABRADOR),
             entry("B", NOVA_SCOTIA),
             entry("C", PRINCE_EDWARD_ISLAND),
@@ -45,15 +45,15 @@ public class CanadaPostalcodeToProvinceOrTerritoryMapper {
             entry("Y", YUKON)
     );
 
-    public static final Map<String, CanadaProvinceOrTerritory> X_POSTAL_CODE_TERRITORY_MAP = Map.ofEntries(
+    public final Map<String, CanadaProvinceOrTerritory> X_POSTAL_CODE_TERRITORY_MAP = Map.ofEntries(
             entry("X0A", NUNAVUT),
             entry("X0B", NUNAVUT),
             entry("X0C", NUNAVUT),
             entry("X0E", NORTHWEST_TERRITORIES),
             entry("X0G", NORTHWEST_TERRITORIES)
     );
-    
-    public static Optional<CanadaProvinceOrTerritory> getProvinceOrTerritory(String normalisedPostalCode) {
+
+    public Optional<CanadaProvinceOrTerritory> getProvinceOrTerritory(String normalisedPostalCode) {
         var xPostalCodeMatcher = WELL_FORMED_X_POSTAL_CODE.matcher(normalisedPostalCode);
         var postalCodeMatcher = WELL_FORMED_POSTAL_CODE.matcher(normalisedPostalCode);
 

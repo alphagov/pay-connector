@@ -95,6 +95,46 @@ public class StripePaymentMethodRequestTest {
         assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=" + country));
         assertThat(payload, containsString("billing_details%5Baddress%5Bpostal_code%5D%5D=" + postcode));
     }
+    
+    @Test
+    public void shouldHaveCanadianProvinceOrTerritoryInBillingDetailsWhenProvided() {
+        Address address = new Address();
+        address.setLine1(line1);
+        address.setLine2(line2);
+        address.setCity(city);
+        address.setCountry("CA");
+        address.setPostcode("X0A0A0");
+        authCardDetails.setAddress(address);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
+        stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
+
+        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("billing_details%5Baddress%5Bstate%5D%5D=Nunavut"));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=CA"));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bpostal_code%5D%5D=X0A0A0"));
+    }
+
+    @Test
+    public void shouldHaveUsStateInBillingDetailsWhenProvided() {
+        Address address = new Address();
+        address.setLine1(line1);
+        address.setLine2(line2);
+        address.setCity(city);
+        address.setCountry("US");
+        address.setPostcode("90210");
+        authCardDetails.setAddress(address);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
+        stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
+
+        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("billing_details%5Baddress%5Bstate%5D%5D=California"));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=US"));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bpostal_code%5D%5D=90210"));
+    }
 
     @Test
     public void shouldHaveCorrectParametersWithoutAddress() {

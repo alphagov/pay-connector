@@ -22,9 +22,11 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_SPEC
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_SPECIAL_CHAR_VALID_CAPTURE_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST;
@@ -48,7 +50,7 @@ public class SmartpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
@@ -82,7 +84,7 @@ public class SmartpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestWithSpecialCharactersInUserInput() throws Exception {
-        Address address = new Address("41", "Scala & Haskell Rocks", "EC2A 1AE", "London <!-- ", "London -->", "GB");
+        Address address = new Address("41", "Scala & Haskell Rocks", "EC2A 1AE", "London <!-- ", null, "GB -->");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
@@ -118,8 +120,27 @@ public class SmartpayOrderRequestBuilderTest {
     }
 
     @Test
+    public void shouldGenerateValidAuthoriseOrderRequestForUsAddress() throws Exception {
+
+        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
+
+        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+
+        GatewayOrder actualRequest = aSmartpayAuthoriseOrderRequestBuilder()
+                .withMerchantCode("MerchantAccount")
+                .withDescription("MyDescription")
+                .withPaymentPlatformReference("MyPlatformReference")
+                .withAmount("2000")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
     public void shouldGenerateValidAuthorise3dsRequiredOrderRequestForAddressWithAllFields() throws Exception {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
@@ -153,7 +174,7 @@ public class SmartpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthorise3dsRequiredOrderRequestWithSpecialCharactersInUserInput() throws Exception {
-        Address address = new Address("41", "Scala & Haskell Rocks", "EC2A 1AE", "London <!-- ", "London -->", "GB");
+        Address address = new Address("41", "Scala & Haskell Rocks", "EC2A 1AE", "London <!-- ", null, "GB -->");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
@@ -185,6 +206,25 @@ public class SmartpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthorise3dsRequiredOrderRequestForUsAddress() throws Exception {
+
+        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
+
+        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+
+        GatewayOrder actualRequest = aSmartpay3dsRequiredOrderRequestBuilder()
+                .withMerchantCode("MerchantAccount")
+                .withDescription("MyDescription")
+                .withPaymentPlatformReference("MyPlatformReference")
+                .withAmount("2000")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
     }
 

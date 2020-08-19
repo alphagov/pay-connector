@@ -4,13 +4,19 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
+import uk.gov.pay.connector.northamericaregion.CanadaPostalcodeToProvinceOrTerritoryMapper;
+import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
+import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.northamericaregion.UsZipCodeToStateMapper;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.ws.rs.core.MediaType;
+import java.util.Locale;
 import java.util.Optional;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
@@ -27,6 +33,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private boolean requires3ds;
         private String paResponse3ds;
         private String payerIpAddress;
+        private String state;
 
         public String getReference() {
             return reference;
@@ -101,6 +108,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setPayerIpAddress(String payerIpAddress) {
             this.payerIpAddress = payerIpAddress;
         }
+
+        public String getState() {
+            return state;
+        }
+
+        public void setState(String state) {
+            this.state = state;
+        }
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
@@ -113,6 +128,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static final TemplateBuilder INQUIRY_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayInquiryOrderTemplate.xml");
 
     private final WorldpayTemplateData worldpayTemplateData;
+    private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
@@ -144,6 +160,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
         super(worldpayTemplateData, payloadBuilder, orderRequestType);
+        this.northAmericanRegionMapper = new NorthAmericanRegionMapper();
         this.worldpayTemplateData = worldpayTemplateData;
     }
 
@@ -191,6 +208,16 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public WorldpayOrderRequestBuilder withPayerIpAddress(String payerIpAddress) {
         worldpayTemplateData.setPayerIpAddress(payerIpAddress);
         return this;
+    }
+
+    @Override
+    public OrderRequestBuilder withAuthorisationDetails(AuthCardDetails authCardDetails) {
+        OrderRequestBuilder orderRequestBuilder = super.withAuthorisationDetails(authCardDetails);
+        authCardDetails.getAddress()
+                .flatMap(northAmericanRegionMapper::getNorthAmericanRegionForCountry)
+                .map(NorthAmericaRegion::getAbbreviation)
+                .ifPresent(worldpayTemplateData::setState);
+        return orderRequestBuilder;
     }
 
     public WorldpayOrderRequestBuilder withPaResponse3ds(String paResponse) {
