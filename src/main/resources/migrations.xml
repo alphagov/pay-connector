@@ -1497,4 +1497,20 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add moto_mask_card_number_input column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="moto_mask_card_number_input" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add moto_mask_card_security_code_input column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="moto_mask_card_security_code_input" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
