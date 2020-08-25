@@ -100,6 +100,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "allow_moto")
     private boolean allowMoto;
 
+    @Column(name = "moto_mask_card_number_input")
+    private boolean motoMaskCardNumberInput;
+
+    @Column(name = "moto_mask_card_security_code_input")
+    private boolean motoMaskCardSecurityCodeInput;
+
     @Column(name = "integration_version_3ds")
     private int integrationVersion3ds;
 
@@ -253,6 +259,18 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return allowMoto;
     }
 
+    @JsonProperty("moto_mask_card_number_input")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isMotoMaskCardNumberInput() {
+        return motoMaskCardNumberInput;
+    }
+
+    @JsonProperty("moto_mask_card_security_code_input")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isMotoMaskCardSecurityCodeInput() {
+        return motoMaskCardSecurityCodeInput;
+    }
+
     @JsonProperty("corporate_credit_card_surcharge_amount")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporateNonPrepaidCreditCardSurchargeAmount() {
@@ -386,6 +404,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setAllowMoto(boolean allowMoto) {
         this.allowMoto = allowMoto;
+    }
+
+    public void setMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
+        this.motoMaskCardNumberInput = motoMaskCardNumberInput;
+    }
+
+    public void setMotoMaskCardSecurityCodeInput(boolean motoMaskCardSecurityCodeInput) {
+        this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
     }
 
     public void setIntegrationVersion3ds(int integrationVersion3ds) {
