@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
@@ -40,8 +39,11 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_INTEGRATION_VERSION_3DS = "integration_version_3ds";
     public static final String FIELD_BLOCK_PREPAID_CARDS = "block_prepaid_cards";
     public static final String FIELD_ALLOW_MOTO = "allow_moto";
+    public static final String FIELD_MOTO_MASK_CARD_NUMBER_INPUT = "moto_mask_card_number_input";
+    public static final String FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT = "moto_mask_card_security_code_input";
 
-    private static final List<String> VALID_PATHS = asList(
+
+    private static final List<String> VALID_PATHS = List.of(
             CREDENTIALS_GATEWAY_MERCHANT_ID,
             FIELD_NOTIFY_SETTINGS,
             FIELD_EMAIL_COLLECTION_MODE,
@@ -54,7 +56,9 @@ public class GatewayAccountRequestValidator {
             FIELD_ALLOW_ZERO_AMOUNT,
             FIELD_INTEGRATION_VERSION_3DS,
             FIELD_BLOCK_PREPAID_CARDS,
-            FIELD_ALLOW_MOTO);
+            FIELD_ALLOW_MOTO,
+            FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
+            FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT);
 
     private final RequestValidator requestValidator;
 
@@ -87,6 +91,8 @@ public class GatewayAccountRequestValidator {
             case FIELD_ALLOW_ZERO_AMOUNT:
             case FIELD_ALLOW_APPLE_PAY:
             case FIELD_ALLOW_MOTO:
+            case FIELD_MOTO_MASK_CARD_NUMBER_INPUT:
+            case FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:

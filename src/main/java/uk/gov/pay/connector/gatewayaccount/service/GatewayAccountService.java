@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import static java.util.Map.entry;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
@@ -38,6 +39,8 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_INTEGRATION_VERSION_3DS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
 public class GatewayAccountService {
@@ -88,50 +91,83 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
 
-    private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<>() {{
-                put(CREDENTIALS_GATEWAY_MERCHANT_ID,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> {
-                            Map<String, String> credentials = gatewayAccountEntity.getCredentials();
-                            if (credentials.isEmpty()) {
-                                throw new MerchantIdWithoutCredentialsException();
-                            }
-                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                            Map<String, String> updatedCredentials = new HashMap<>(credentials);
-                            updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
-                            gatewayAccountEntity.setCredentials(updatedCredentials);
-                        });
-                put(FIELD_ALLOW_GOOGLE_PAY,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> {
-                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                            gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
-                        });
-                put(FIELD_ALLOW_APPLE_PAY,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> {
-                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                            gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
-                        });
-                put(FIELD_NOTIFY_SETTINGS,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
-                put(FIELD_EMAIL_COLLECTION_MODE,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString())));
-                put(FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
-                put(FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
-                put(FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
-                put(FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
-                put(FIELD_ALLOW_ZERO_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.parseBoolean(gatewayAccountRequest.valueAsString())));
-                put(FIELD_INTEGRATION_VERSION_3DS,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt()));
-                put(FIELD_BLOCK_PREPAID_CARDS,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean()));
-                put(FIELD_ALLOW_MOTO,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowMoto(gatewayAccountRequest.valueAsBoolean()));
-            }};
+    private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater = Map.ofEntries(
+            entry(
+                CREDENTIALS_GATEWAY_MERCHANT_ID,
+                (gatewayAccountRequest, gatewayAccountEntity) -> {
+                    Map<String, String> credentials = gatewayAccountEntity.getCredentials();
+                    if (credentials.isEmpty()) {
+                        throw new MerchantIdWithoutCredentialsException();
+                    }
+                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                    Map<String, String> updatedCredentials = new HashMap<>(credentials);
+                    updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
+                    gatewayAccountEntity.setCredentials(updatedCredentials);
+                }
+            ),
+            entry(
+                FIELD_ALLOW_GOOGLE_PAY,
+                (gatewayAccountRequest, gatewayAccountEntity) -> {
+                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                    gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
+                }
+            ),
+            entry(
+                FIELD_ALLOW_APPLE_PAY,
+                (gatewayAccountRequest, gatewayAccountEntity) -> {
+                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                    gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
+                }
+            ),
+            entry(
+                FIELD_NOTIFY_SETTINGS,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject())
+            ),
+            entry(
+                FIELD_EMAIL_COLLECTION_MODE,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString()))
+            ),
+            entry(
+                FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                FIELD_ALLOW_ZERO_AMOUNT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()))
+            ),
+            entry(
+                FIELD_INTEGRATION_VERSION_3DS,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt())
+            ),
+            entry(
+                FIELD_BLOCK_PREPAID_CARDS,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_ALLOW_MOTO,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowMoto(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardNumberInput(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
+            )
+    );
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
         if (!PaymentGatewayName.WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
