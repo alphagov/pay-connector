@@ -72,7 +72,13 @@ public class GatewayAccountResourceDTO {
     
     @JsonProperty("allow_moto")
     private boolean allowMoto;
-    
+
+    @JsonProperty("moto_mask_card_number_input")
+    private boolean motoMaskCardNumberInput;
+
+    @JsonProperty("moto_mask_card_security_code_input")
+    private boolean motoMaskCardSecurityCodeInput;
+
     public GatewayAccountResourceDTO() {
     }
 
@@ -94,7 +100,9 @@ public class GatewayAccountResourceDTO {
                                      boolean requires3ds,
                                      boolean allowZeroAmount,
                                      int integrationVersion3ds,
-                                     boolean allowMoto) {
+                                     boolean allowMoto,
+                                     boolean motoMaskCardNumberInput,
+                                     boolean motoMaskCardSecurityCodeInput) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -114,6 +122,8 @@ public class GatewayAccountResourceDTO {
         this.allowZeroAmount = allowZeroAmount;
         this.integrationVersion3ds = integrationVersion3ds;
         this.allowMoto = allowMoto;
+        this.motoMaskCardNumberInput = motoMaskCardNumberInput;
+        this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -136,7 +146,9 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.isRequires3ds(),
                 gatewayAccountEntity.isAllowZeroAmount(),
                 gatewayAccountEntity.getIntegrationVersion3ds(),
-                gatewayAccountEntity.isAllowMoto()
+                gatewayAccountEntity.isAllowMoto(),
+                gatewayAccountEntity.isMotoMaskCardNumberInput(),
+                gatewayAccountEntity.isMotoMaskCardSecurityCodeInput()
         );
     }
 
@@ -223,4 +235,13 @@ public class GatewayAccountResourceDTO {
     public boolean isAllowMoto() {
         return allowMoto;
     }
+
+    public boolean isMotoMaskCardNumberInput() {
+        return motoMaskCardNumberInput;
+    }
+
+    public boolean isMotoMaskCardSecurityCodeInput() {
+        return motoMaskCardSecurityCodeInput;
+    }
+
 }

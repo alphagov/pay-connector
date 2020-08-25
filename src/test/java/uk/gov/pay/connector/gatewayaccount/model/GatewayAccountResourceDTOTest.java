@@ -36,6 +36,8 @@ public class GatewayAccountResourceDTOTest {
         entity.setIntegrationVersion3ds(2);
         entity.setBlockPrepaidCards(true);
         entity.setAllowMoto(true);
+        entity.setMotoMaskCardNumberInput(true);
+        entity.setMotoMaskCardSecurityCodeInput(true);
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -62,5 +64,7 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.getIntegrationVersion3ds(), is(entity.getIntegrationVersion3ds()));
         assertThat(dto.isBlockPrepaidCards(), is(entity.isBlockPrepaidCards()));
         assertThat(dto.isAllowMoto(), is(entity.isAllowMoto()));
+        assertThat(dto.isMotoMaskCardNumberInput(), is(entity.isMotoMaskCardNumberInput()));
+        assertThat(dto.isMotoMaskCardSecurityCodeInput(), is(entity.isMotoMaskCardSecurityCodeInput()));
     }
 }
