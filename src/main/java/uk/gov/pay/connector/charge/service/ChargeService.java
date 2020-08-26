@@ -63,6 +63,8 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.pay.connector.northamericaregion.CanadaPostalcodeToProvinceOrTerritoryMapper;
+import uk.gov.pay.connector.northamericaregion.UsZipCodeToStateMapper;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
@@ -73,6 +75,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -750,8 +753,11 @@ public class ChargeService {
             detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
         }
         
-        if (authCardDetails.getAddress().isPresent())
-            detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress().get()));
+        authCardDetails.getAddress().ifPresent(address -> {
+            AddressEntity addressEntity = new AddressEntity(authCardDetails.getAddress().get());
+            processRegionForCanadaOrUs(addressEntity);
+            detailsEntity.setBillingAddress(addressEntity);
+        });
 
         detailsEntity.setCardType(PayersCardType.toCardType(authCardDetails.getPayersCardType()));
 
@@ -764,6 +770,23 @@ public class ChargeService {
     
     private boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() >= 4;
+    }
+    
+    private void processRegionForCanadaOrUs(AddressEntity addressEntity) {
+        switch (addressEntity.getCountry()) {
+            case "US":
+                Optional.of(UsZipCodeToStateMapper.getState(getNormalisedPostalCode(addressEntity)));
+                break;
+            case "CA":
+                Optional.of(CanadaPostalcodeToProvinceOrTerritoryMapper.getProvinceOrTerritory(getNormalisedPostalCode(addressEntity)));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private String getNormalisedPostalCode(AddressEntity addressEntity) {
+        return addressEntity.getPostcode().replaceAll("\\s", "").toUpperCase(Locale.ENGLISH);
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
