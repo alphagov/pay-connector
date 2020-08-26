@@ -193,6 +193,9 @@ Content-Type: application/json
     "allow_zero_amount": false,
     "email_collection_mode": "MANDATORY",
     "toggle_3ds": false,
+    "allow_moto": false,
+    "moto_mask_card_number_input": false,
+    "moto_mask_card_security_code_input": false,
     "email_notifications": {
         "REFUND_ISSUED": {
             "version": 1,
@@ -228,6 +231,9 @@ Content-Type: application/json
 | `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                        |
 | `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                  |
 | `toggle_3ds`                                     | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
+| `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.             |
+| `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
+| `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
 
 ---------------------------------------------------------------------------------------------------------------
@@ -275,6 +281,9 @@ Content-Type: application/json
       "allow_zero_amount": false,
       "email_collection_mode": "MANDATORY",
       "toggle_3ds": false,
+      "allow_moto": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -310,6 +319,9 @@ Content-Type: application/json
       "allow_zero_amount": false,
       "email_collection_mode": "MANDATORY",
       "toggle_3ds": false,
+      "allow_moto": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -344,6 +356,9 @@ Content-Type: application/json
       "allow_zero_amount": false,
       "email_collection_mode": "MANDATORY",
       "toggle_3ds": false,
+      "allow_moto": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -387,6 +402,9 @@ Content-Type: application/json
 | `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                        |
 | `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                  |
 | `toggle_3ds`                                     | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
+| `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.             |
+| `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
+| `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
 | `_links.self`                                    | X              | A self link to get this account resource by account-id.                                                       |
 
