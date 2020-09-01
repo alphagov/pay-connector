@@ -71,7 +71,7 @@ public class UsZipCodeToStateMap {
         put("005", NEW_YORK);
         put("006", PUERTO_RICO);
         put("007", PUERTO_RICO);
-        put("008", VIRGIN_ISLANDS);
+        put("008", VIRGINIA);
         put("009", PUERTO_RICO);
         put("010", MASSACHUSETTS);
         put("011", MASSACHUSETTS);

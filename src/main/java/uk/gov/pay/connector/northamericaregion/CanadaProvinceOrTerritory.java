@@ -19,7 +19,7 @@ public enum CanadaProvinceOrTerritory implements NorthAmericaRegion {
 
     private final String abbreviation;
     private final String fullName;
-
+    
     CanadaProvinceOrTerritory(String abbreviation, String provinceOrTerritory) {
         this.abbreviation = Objects.requireNonNull(abbreviation);
         this.fullName = Objects.requireNonNull(provinceOrTerritory);

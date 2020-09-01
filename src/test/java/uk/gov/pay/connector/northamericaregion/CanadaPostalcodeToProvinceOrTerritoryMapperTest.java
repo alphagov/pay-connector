@@ -32,9 +32,9 @@ public class CanadaPostalcodeToProvinceOrTerritoryMapperTest {
         assertThat(canadaProvinceTerritory.isPresent(), is (true));
         assertThat(canadaProvinceTerritory.get(), is (CanadaProvinceOrTerritory.NORTHWEST_TERRITORIES));
     }
-    
+
     @Test
-    public void shouldNotReturnAStateForSantaPostalCode() {
+    public void shouldNotReturnAStateForSantaPostCode() {
         Optional<CanadaProvinceOrTerritory> canadaProvinceTerritory = CanadaPostalcodeToProvinceOrTerritoryMapper.getProvinceOrTerritory("H0H0H0");
 
         assertThat(canadaProvinceTerritory.isEmpty(), is (true));

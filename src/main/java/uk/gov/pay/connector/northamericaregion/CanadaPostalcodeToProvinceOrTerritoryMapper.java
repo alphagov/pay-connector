@@ -20,7 +20,7 @@ import static uk.gov.pay.connector.northamericaregion.CanadaProvinceOrTerritory.
 import static uk.gov.pay.connector.northamericaregion.CanadaProvinceOrTerritory.NORTHWEST_TERRITORIES;
 
 public class CanadaPostalcodeToProvinceOrTerritoryMapper {
-    
+
     private static final Pattern WELL_FORMED_POSTAL_CODE = Pattern.compile("([A-Z])[0-9][A-Z][0-9][A-Z][0-9]");
     private static final Pattern WELL_FORMED_X_POSTAL_CODE = Pattern.compile("(X[0-9][A-Z])[0-9][A-Z][0-9]");
     private static final String SANTA_CLAUS_POSTAL_CODE = "H0H0H0";
