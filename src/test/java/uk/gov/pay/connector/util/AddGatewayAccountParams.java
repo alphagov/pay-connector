@@ -23,6 +23,8 @@ public class AddGatewayAccountParams {
     private long corporatePrepaidDebitCardSurchargeAmount;
     private int integrationVersion3ds;
     private boolean allowMoto;
+    private boolean motoMaskCardNumberInput;
+    private boolean motoMaskCardSecurityCodeInput;
     private boolean allowApplePay;
     private boolean allowGooglePay;
     private boolean requires3ds;
@@ -83,6 +85,14 @@ public class AddGatewayAccountParams {
         return allowMoto;
     }
 
+    public boolean isMotoMaskCardNumberInput() {
+        return motoMaskCardNumberInput;
+    }
+
+    public boolean isMotoMaskCardSecurityCodeInput() {
+        return motoMaskCardSecurityCodeInput;
+    }
+
     public boolean isAllowApplePay() {
         return allowApplePay;
     }
@@ -110,6 +120,8 @@ public class AddGatewayAccountParams {
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
+        private boolean motoMaskCardNumberInput;
+        private boolean motoMaskCardSecurityCodeInput;
         private boolean allowApplePay;
         private boolean allowGooglePay;
         private boolean requires3ds;
@@ -185,6 +197,16 @@ public class AddGatewayAccountParams {
             this.allowMoto = allowMoto;
             return this;
         }
+
+        public AddGatewayAccountParamsBuilder withMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
+            this.motoMaskCardNumberInput = motoMaskCardNumberInput;
+            return this;
+        }
+
+        public AddGatewayAccountParamsBuilder withMotoMaskCardSecurityCodeInput(boolean motoMaskCardSecurityCodeInput) {
+            this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
+            return this;
+        }
         
         public AddGatewayAccountParamsBuilder withAllowApplePay(boolean allowApplePay) {
             this.allowApplePay = allowApplePay;
@@ -217,6 +239,8 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.corporateDebitCardSurchargeAmount = this.corporateDebitCardSurchargeAmount;
             addGatewayAccountParams.integrationVersion3ds = this.integrationVersion3ds;
             addGatewayAccountParams.allowMoto = this.allowMoto;
+            addGatewayAccountParams.motoMaskCardNumberInput = this.motoMaskCardNumberInput;
+            addGatewayAccountParams.motoMaskCardSecurityCodeInput = this.motoMaskCardSecurityCodeInput;
             addGatewayAccountParams.allowApplePay = this.allowApplePay;
             addGatewayAccountParams.allowGooglePay = this.allowGooglePay;
             addGatewayAccountParams.requires3ds = this.requires3ds;
