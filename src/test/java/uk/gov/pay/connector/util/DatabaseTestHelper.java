@@ -303,7 +303,7 @@ public class DatabaseTestHelper {
 
     public Map<String, Object> getChargeCardDetailsByChargeId(Long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_state_province, address_country " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)

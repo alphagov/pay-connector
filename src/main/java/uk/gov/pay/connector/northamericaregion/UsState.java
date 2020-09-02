@@ -60,7 +60,6 @@ public enum UsState implements NorthAmericaRegion {
     WEST_VIRGINIA("WV", "West Virginia"),
     WISCONSIN("WI", "Wisconsin"),
     WYOMING("WY", "Wyoming");
-    
 
     private final String abbreviation;
     private final String fullName;

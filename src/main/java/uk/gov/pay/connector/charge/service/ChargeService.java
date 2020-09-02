@@ -56,6 +56,8 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
+import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -120,13 +122,14 @@ public class ChargeService {
     private final Boolean shouldEmitPaymentStateTransitionEvents;
     private final RefundDao refundDao;
     private EventService eventService;
+    private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
                          StateTransitionService stateTransitionService, LedgerService ledgerService, EventService eventService,
-                         RefundDao refundDao) {
+                         RefundDao refundDao, NorthAmericanRegionMapper northAmericanRegionMapper) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -140,6 +143,7 @@ public class ChargeService {
         this.ledgerService = ledgerService;
         this.eventService = eventService;
         this.refundDao = refundDao;
+        this.northAmericanRegionMapper = northAmericanRegionMapper;
     }
 
     @Transactional
@@ -752,10 +756,14 @@ public class ChargeService {
         if (hasLastFourCharactersCardNumber(authCardDetails)) {
             detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
         }
-        
+
         authCardDetails.getAddress().ifPresent(address -> {
-            AddressEntity addressEntity = new AddressEntity(authCardDetails.getAddress().get());
-            processRegionForCanadaOrUs(addressEntity);
+            var addressEntity = new AddressEntity(address);
+            northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
+                    .map(NorthAmericaRegion::getAbbreviation)
+                    .ifPresent(stateOrProvinceAbbreviation -> {
+                        addressEntity.setStateOrProvince(stateOrProvinceAbbreviation);
+                    });
             detailsEntity.setBillingAddress(addressEntity);
         });
 
@@ -770,23 +778,6 @@ public class ChargeService {
     
     private boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() >= 4;
-    }
-    
-    private void processRegionForCanadaOrUs(AddressEntity addressEntity) {
-        switch (addressEntity.getCountry()) {
-            case "US":
-                Optional.of(UsZipCodeToStateMapper.getState(getNormalisedPostalCode(addressEntity)));
-                break;
-            case "CA":
-                Optional.of(CanadaPostalcodeToProvinceOrTerritoryMapper.getProvinceOrTerritory(getNormalisedPostalCode(addressEntity)));
-                break;
-            default:
-                break;
-        }
-    }
-
-    private String getNormalisedPostalCode(AddressEntity addressEntity) {
-        return addressEntity.getPostcode().replaceAll("\\s", "").toUpperCase(Locale.ENGLISH);
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {

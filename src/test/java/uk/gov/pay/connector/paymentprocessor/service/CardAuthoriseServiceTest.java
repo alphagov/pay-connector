@@ -41,6 +41,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -108,8 +109,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private EventQueue eventQueue;
+
     @Mock
     private EventService mockEventService;
+
+    @Mock
+    private NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
 
     private CardAuthoriseService cardAuthorisationService;
 
@@ -121,7 +126,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
-                stateTransitionService, ledgerService, mockEventService, mockedRefundDao);
+                stateTransitionService, ledgerService, mockEventService, mockedRefundDao, mockNorthAmericanRegionMapper);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(

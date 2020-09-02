@@ -13,13 +13,18 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import static org.hamcrest.CoreMatchers.nullValue;
+
+import org.mockito.stubbing.Answer;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
@@ -34,6 +39,7 @@ import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -47,6 +53,9 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
+import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -157,6 +166,9 @@ public class ChargeServiceTest {
     protected RefundDao mockRefundDao;
 
     @Mock
+    protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
+
+    @Mock
     protected CaptureProcessConfig mockedCaptureProcessConfig;
     
     @Captor
@@ -204,7 +216,7 @@ public class ChargeServiceTest {
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockEventService, mockRefundDao);
+                mockStateTransitionService, ledgerService, mockEventService, mockRefundDao, mockNorthAmericanRegionMapper);
     }
 
     @After
@@ -425,6 +437,77 @@ public class ChargeServiceTest {
                 authCardDetails, null, null, null, null, null);
 
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
+    }
+
+    @Test
+    public void updateChargeAndEmitEventPostAuthorisation_shouldEmitEventWhenCountryIsInUnitedStates() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        Address address = new Address();
+        address.setCountry("US");
+        address.setPostcode("20500");
+        authCardDetails.setAddress(address);
+        authCardDetails.setCardNo("1234567890");
+
+        when(chargeEvent.getStatus()).thenReturn(ENTERING_CARD_DETAILS);
+        when(chargeEvent.getUpdated()).thenReturn(now());
+        when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+        when(mockedChargeDao.findByExternalId(chargeSpy.getExternalId())).thenReturn(Optional.of(chargeSpy));
+        when(mockNorthAmericanRegionMapper.getNorthAmericanRegionForCountry(any(Address.class))).thenAnswer((Answer<Optional<? extends NorthAmericaRegion>>) invocationOnMock -> Optional.of(UsState.WASHINGTON_DC));
+        when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
+
+        service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
+                authCardDetails, null, null, null, null, null);
+
+        verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
+    }
+
+    @Test
+    public void shouldUpdateStateOrProvinceForChargeWhenCountryIsUs() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        Address address = new Address();
+        address.setCountry("US");
+        address.setPostcode("20500");
+        authCardDetails.setAddress(address);
+        authCardDetails.setCardNo("1234567890");
+
+        when(chargeEvent.getStatus()).thenReturn(ENTERING_CARD_DETAILS);
+        when(chargeEvent.getUpdated()).thenReturn(now());
+        when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+        when(mockedChargeDao.findByExternalId(chargeSpy.getExternalId())).thenReturn(Optional.of(chargeSpy));
+        when(mockNorthAmericanRegionMapper.getNorthAmericanRegionForCountry(any(Address.class))).thenAnswer((Answer<Optional<? extends NorthAmericaRegion>>) invocationOnMock -> Optional.of(UsState.WASHINGTON_DC));
+        when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
+
+        service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
+                authCardDetails, null, null, null, null, null);
+
+        assertThat(chargeSpy.getCardDetails().getBillingAddress().get().getStateOrProvince(), is("DC"));
+    }
+
+    @Test
+    public void shouldNotUpdateStateOrProvinceForChargeWhenCountryIsNotInNorthAmerica() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        Address address = new Address();
+        address.setCountry("GB");
+        address.setPostcode("C48 4AJ");
+        authCardDetails.setAddress(address);
+        authCardDetails.setCardNo("1234567890");
+
+        when(chargeEvent.getStatus()).thenReturn(ENTERING_CARD_DETAILS);
+        when(chargeEvent.getUpdated()).thenReturn(now());
+        when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+        when(mockedChargeDao.findByExternalId(chargeSpy.getExternalId())).thenReturn(Optional.of(chargeSpy));
+        when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
+
+        service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
+                authCardDetails, null, null, null, null, null);
+
+        assertThat(chargeSpy.getCardDetails().getBillingAddress().get().getStateOrProvince(), is(nullValue()));
     }
 
     @Test

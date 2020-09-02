@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
@@ -81,6 +82,21 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.event_details.address_country", equalTo("GB")));
         assertThat(actual, hasJsonPath("$.event_details.wallet", equalTo("APPLE_PAY")));
     }
+    
+    @Test
+    public void whenAllTheDataIsAvailableForUsCountry() throws JsonProcessingException {
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        chargeEntity.getCardDetails().getBillingAddress().ifPresent(address -> address.setStateOrProvince(UsState.VERMONT.getAbbreviation()));
+        String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
+
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_ENTERED")));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.title", equalTo("Payment details entered event")));
+        assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
+        assertThat(actual, hasJsonPath("$.event_details.address_state_province", equalTo(UsState.VERMONT.getAbbreviation())));
+    }
 
     @Test
     public void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
@@ -115,6 +131,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasNoJsonPath("$.event_details.address_city"));
         assertThat(actual, hasNoJsonPath("$.event_details.address_county"));
         assertThat(actual, hasNoJsonPath("$.event_details.address_country"));
+        assertThat(actual, hasNoJsonPath("$.event_details.address_state_province"));
         assertThat(actual, hasNoJsonPath("$.event_details.wallet"));
     }
 }

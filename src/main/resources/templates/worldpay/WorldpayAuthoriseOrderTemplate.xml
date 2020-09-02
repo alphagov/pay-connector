@@ -23,8 +23,8 @@
                             </#if>
                             <postalCode>${authCardDetails.address.get().postcode?xml}</postalCode>
                             <city>${authCardDetails.address.get().city?xml}</city>
-                            <#if authCardDetails.address.get().county??>
-                            <state>${authCardDetails.address.get().county?xml}</state>
+                            <#if state??>
+                            <state>${state?xml}</state>
                             </#if>
                             <countryCode>${authCardDetails.address.get().country?xml}</countryCode>
                         </address>
