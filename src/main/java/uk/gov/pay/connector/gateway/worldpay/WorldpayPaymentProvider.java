@@ -141,11 +141,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
-        GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 request.getGatewayAccount(),
-                gatewayOrder,
+                buildAuthoriseOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
 
         if (response.getEntity().contains("request3DSecure")) {

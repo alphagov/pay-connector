@@ -10,12 +10,12 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public class UsZipCodeToStateMapper {
 
-    private static final Pattern WELL_FORMED_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR = Pattern.compile("([0-9]{3})[0-9]{2}(?:-[0-9]{4})?");
-    private static final Pattern WELL_FORMED_STATE_WITH_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR = Pattern.compile("([A-Z]{2})[0-9]{5}(?:-[0-9]{4})?");
-    private static final Map<String, UsState> US_STATE_ABBREVIATIONS_MAPPING = Arrays.stream(UsState.values()).collect(
-            toUnmodifiableMap(UsState::getAbbreviation, identity())); 
+    private final Pattern WELL_FORMED_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR = Pattern.compile("([0-9]{3})[0-9]{2}(?:-[0-9]{4})?");
+    private final Pattern WELL_FORMED_STATE_WITH_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR = Pattern.compile("([A-Z]{2})[0-9]{5}(?:-[0-9]{4})?");
+    private final Map<String, UsState> US_STATE_ABBREVIATIONS_MAPPING = Arrays.stream(UsState.values()).collect(
+            toUnmodifiableMap(NorthAmericaRegion::getAbbreviation, identity())); 
 
-    public static Optional<UsState> getState(String normalisedZipCode) {
+    public Optional<UsState> getState(String normalisedZipCode) {
         var wellFormedZipCodeAndOptionalPlusFourMatcher = WELL_FORMED_STATE_WITH_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR.matcher(normalisedZipCode);
         var wellFormedStateWithZipAndOptionalPlusFourMatcher = WELL_FORMED_ZIP_CODE_AND_OPTIONAL_PLUS_FOUR.matcher(normalisedZipCode);
 

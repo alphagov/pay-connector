@@ -50,14 +50,15 @@ public class DatabaseTestHelper {
                             "service_name, type, description, analytics_id, email_collection_mode, " +
                             "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                             "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
-                            "corporate_prepaid_debit_card_surcharge_amount, allow_moto, allow_apple_pay, " +
-                            "allow_google_pay, requires_3ds) " +
+                            "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
+                            "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds) " +
                             "VALUES (:id, :payment_provider, :credentials, :service_name, :type, " +
                             ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                             ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                             ":corporate_prepaid_credit_card_surcharge_amount, " +
-                            ":corporate_prepaid_debit_card_surcharge_amount, :allow_moto, :allow_apple_pay, " +
-                            ":allow_google_pay, :requires_3ds)")
+                            ":corporate_prepaid_debit_card_surcharge_amount, "+
+                            ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, "+
+                            ":allow_apple_pay, :allow_google_pay, :requires_3ds)")
                             .bind("id", Long.valueOf(params.getAccountId()))
                             .bind("payment_provider", params.getPaymentGateway())
                             .bindBySqlType("credentials", jsonObject, OTHER)
@@ -72,6 +73,8 @@ public class DatabaseTestHelper {
                             .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
                             .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
                             .bind("allow_moto", params.isAllowMoto())
+                            .bind("moto_mask_card_number_input", params.isMotoMaskCardNumberInput())
+                            .bind("moto_mask_card_security_code_input", params.isMotoMaskCardSecurityCodeInput())
                             .bind("allow_apple_pay", params.isAllowApplePay())
                             .bind("allow_google_pay", params.isAllowGooglePay())
                             .bind("requires_3ds", params.isRequires3ds())
@@ -303,7 +306,7 @@ public class DatabaseTestHelper {
 
     public Map<String, Object> getChargeCardDetailsByChargeId(Long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_state_province, address_country " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)

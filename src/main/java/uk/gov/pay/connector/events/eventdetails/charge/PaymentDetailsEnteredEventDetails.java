@@ -28,6 +28,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final String addressPostcode;
     private final String addressCity;
     private final String addressCounty;
+    private final String addressStateProvince;
     private final String addressCountry;
     private final String wallet;
     private final Long totalAmount;
@@ -49,6 +50,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         this.addressPostcode = builder.addressPostcode;
         this.addressCity = builder.addressCity;
         this.addressCounty = builder.addressCounty;
+        this.addressStateProvince = builder.addressStateProvince;
         this.addressCountry = builder.addressCountry;
         this.wallet = builder.wallet;
         this.totalAmount = builder.totalAmount;
@@ -82,6 +84,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                             .withAddressCity(cardDetails.getBillingAddress().map(AddressEntity::getCity).orElse(null))
                             .withAddressCountry(cardDetails.getBillingAddress().map(AddressEntity::getCountry).orElse(null))
                             .withAddressCounty(cardDetails.getBillingAddress().map(AddressEntity::getCounty).orElse(null))
+                            .withAddressStateProvince(cardDetails.getBillingAddress().map(AddressEntity::getStateOrProvince).orElse(null))
                             .withAddressPostcode(cardDetails.getBillingAddress().map(AddressEntity::getPostcode).orElse(null)));
                 
         return builder.build();
@@ -151,6 +154,10 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         return addressCountry;
     }
 
+    public String getAddressStateProvince() {
+        return addressStateProvince;
+    }
+
     public String getWallet() {
         return wallet;
     }
@@ -178,6 +185,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 Objects.equals(addressPostcode, that.addressPostcode) &&
                 Objects.equals(addressCity, that.addressCity) &&
                 Objects.equals(addressCounty, that.addressCounty) &&
+                Objects.equals(addressStateProvince, that.addressStateProvince) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
                 Objects.equals(wallet, that.wallet) &&
                 Objects.equals(totalAmount, that.totalAmount);
@@ -187,7 +195,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     public int hashCode() {
         return Objects.hash(corporateSurcharge, email, cardType, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
                 gatewayTransactionId, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode,
-                addressCounty, addressCountry, wallet, totalAmount);
+                addressCounty, addressStateProvince, addressCountry, wallet, totalAmount);
     }
 
     private static class Builder {
@@ -207,6 +215,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         private String addressCity;
         private String addressCounty;
         private String addressCountry;
+        private String addressStateProvince;
         private String wallet;
         private Long totalAmount;
 
@@ -282,6 +291,11 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
         Builder withAddressCounty(String addressCounty) {
             this.addressCounty = addressCounty;
+            return this;
+        }
+
+        Builder withAddressStateProvince(String addressStateProvince) {
+            this.addressStateProvince = addressStateProvince;
             return this;
         }
 

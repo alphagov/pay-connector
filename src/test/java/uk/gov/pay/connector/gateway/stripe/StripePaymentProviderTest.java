@@ -115,6 +115,20 @@ public class StripePaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthorise_ForAddressInUs() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        gatewayAccount.setIntegrationVersion3ds(2);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(gatewayAccount));
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+    }
+
+    @Test
     public void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
         when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
@@ -295,6 +309,14 @@ public class StripePaymentProviderTest {
         return buildTestAuthorisationRequest(chargeEntity);
     }
 
+    private CardAuthorisationGatewayRequest buildTestUsAuthorisationRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        return buildTestUsAuthorisationRequest(chargeEntity);
+    }
+
     private ChargeEntity buildTestCharge() {
         ChargeEntity mq4ht90j2oir6am585afk58kml = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
@@ -308,8 +330,24 @@ public class StripePaymentProviderTest {
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
+    private CardAuthorisationGatewayRequest buildTestUsAuthorisationRequest(ChargeEntity chargeEntity) {
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestUsAuthCardDetails());
+    }
+
     private AuthCardDetails buildTestAuthCardDetails() {
         Address address = new Address("10", "Wxx", "E1 8xx", "London", null, "GB");
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("4242424242424242")
+                .withCvc("111")
+                .withEndDate("08/99")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
+    }
+
+    private AuthCardDetails buildTestUsAuthCardDetails() {
+        Address address = new Address("10", "Wxx", "90210", "Washington D.C.", null, "US");
         return AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("Mr. Payment")
                 .withCardNo("4242424242424242")

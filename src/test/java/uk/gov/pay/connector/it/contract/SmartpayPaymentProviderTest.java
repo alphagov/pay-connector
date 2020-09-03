@@ -16,6 +16,7 @@ import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -119,6 +120,48 @@ public class SmartpayPaymentProviderTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
                 .withAddress(null)
+                .build();
+
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+
+        GatewayResponse response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldSendSuccessfullyAnOrderForMerchantWithUsAddressInRequest() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        Address usAddress = new Address();
+        usAddress.setLine1("125 Kingsway");
+        usAddress.setLine2("Aviation House");
+        usAddress.setPostcode("90210");
+        usAddress.setCity("Washington D.C.");
+        usAddress.setCountry("US");
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
+                .withAddress(usAddress)
+                .build();
+
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+
+        GatewayResponse response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldSendSuccessfullyAnOrderForMerchantWithCanadaAddressInRequest() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        Address canadaAddress = new Address();
+        canadaAddress.setLine1("125 Kingsway");
+        canadaAddress.setLine2("Aviation House");
+        canadaAddress.setPostcode("X0A0A0");
+        canadaAddress.setCity("Arctic Bay");
+        canadaAddress.setCountry("CA");
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
+                .withAddress(canadaAddress)
                 .build();
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);

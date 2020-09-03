@@ -83,8 +83,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
-        GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), buildAuthoriseOrderFor(request), 
+        GatewayClient.Response response = client.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                request.getGatewayAccount(), 
+                buildAuthoriseOrderFor(request), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }

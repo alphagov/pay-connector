@@ -1,19 +1,15 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -36,15 +32,15 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 
 /**
  * This is an integration test with Stripe that should be run manually. In order to make it work you need to set
- * a valid stripe.authToken in the test-it-config.yaml and a valid stripeAccountId (a field in the test).
+ * a valid stripe.authToken and platformAccountId in the test-it-config.yaml and a valid stripeAccountId (a field in the test).
  * This test will hit the external https://api.stripe.com which is set in in stripe.url in the test-it-config.yaml.
  */
 @Ignore
@@ -61,11 +57,7 @@ public class StripePaymentProviderTest {
 
     @Before
     public void setup() {
-        ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
-        MetricRegistry metricRegistry = app.getInstanceFromGuiceContainer(Environment.class).metrics();
-        GatewayClientFactory gatewayClientFactory = app.getInstanceFromGuiceContainer(GatewayClientFactory.class);
-        Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
-        stripePaymentProvider = new StripePaymentProvider(gatewayClientFactory, connectorConfig, objectMapper, environment);
+        stripePaymentProvider = app.getInstanceFromGuiceContainer(StripePaymentProvider.class);
         gatewayAccountEntity = new GatewayAccountEntity();
     }
 
@@ -77,18 +69,54 @@ public class StripePaymentProviderTest {
 
     @Test
     public void shouldAuthoriseSuccessfully_WithNoBillingAddress() {
-
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
                 .withEndDate("01/30")
                 .build();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
+
         assertTrue(gatewayResponse.isSuccessful());
     }
 
     @Test
-    public void cancelCharge() throws GatewayException {
+    public void shouldAuthoriseSuccessfully_WithUsAddress() {
+        Address usAddress = new Address();
+        usAddress.setLine1("125 Kingsway");
+        usAddress.setLine2("Aviation House");
+        usAddress.setCity("Washington D.C.");
+        usAddress.setPostcode("20500");
+        usAddress.setCountry("US");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(usAddress)
+                .withEndDate("01/30")
+                .build();
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
+        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
+
+        assertTrue(gatewayResponse.isSuccessful());
+    }
+
+    @Test
+    public void shouldAuthoriseSuccessfully_WithCanadaAddress() {
+        Address canadaAddress = new Address();
+        canadaAddress.setLine1("125 Kingsway");
+        canadaAddress.setLine2("Aviation House");
+        canadaAddress.setPostcode("X0A0A0");
+        canadaAddress.setCity("Arctic Bay");
+        canadaAddress.setCountry("CA");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(canadaAddress)
+                .withEndDate("01/30")
+                .build();
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
+        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
+
+        assertTrue(gatewayResponse.isSuccessful());
+    }
+
+    @Test
+    public void cancelCharge() {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
         ChargeEntity chargeEntity = getCharge();
         chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());

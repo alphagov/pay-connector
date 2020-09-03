@@ -12,6 +12,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -158,6 +159,36 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(null).build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+    }
+
+    @Test
+    public void shouldBeAbleToSendAuthorisationRequestForMerchantWithUsAddress() throws Exception {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        Address usAddress = new Address();
+        usAddress.setLine1("125 Kingsway");
+        usAddress.setLine2("Aviation House");
+        usAddress.setPostcode("90210");
+        usAddress.setCity("Washington D.C.");
+        usAddress.setCountry("US");
+        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(usAddress).build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+    }
+
+    @Test
+    public void shouldBeAbleToSendAuthorisationRequestForMerchantWithCanadaAddress() throws Exception {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        Address canadaAddress = new Address();
+        canadaAddress.setLine1("125 Kingsway");
+        canadaAddress.setLine2("Aviation House");
+        canadaAddress.setPostcode("X0A0A0");
+        canadaAddress.setCity("Arctic Bay");
+        canadaAddress.setCountry("CA");
+        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(canadaAddress).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
