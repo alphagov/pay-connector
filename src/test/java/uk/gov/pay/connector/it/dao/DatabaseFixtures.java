@@ -330,6 +330,9 @@ public class DatabaseFixtures {
         private long corporatePrepaidCreditCardSurchargeAmount;
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
+        private boolean allowMoto;
+        private boolean motoMaskCardNumberInput;
+        private boolean motoMaskCardSecurityCodeInput;
 
         public long getAccountId() {
             return accountId;
@@ -455,6 +458,21 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withAllowMoto(boolean allowMoto) {
+            this.allowMoto = allowMoto;
+            return this;
+        }
+
+        public TestAccount withMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
+            this.motoMaskCardNumberInput = motoMaskCardNumberInput;
+            return this;
+        }
+
+        public TestAccount withMotoMaskCardSecurityCodeInput(boolean motoMaskCardSecurityCodeInput) {
+            this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
@@ -470,6 +488,9 @@ public class DatabaseFixtures {
                     .withCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount)
                     .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
                     .withIntegrationVersion3ds(integrationVersion3ds)
+                    .withAllowMoto(allowMoto)
+                    .withMotoMaskCardNumberInput(motoMaskCardNumberInput)
+                    .withMotoMaskCardSecurityCodeInput(motoMaskCardSecurityCodeInput)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
@@ -533,7 +554,7 @@ public class DatabaseFixtures {
             this.returnUrl = returnUrl;
             return this;
         }
-        
+
         public TestCharge withChargeStatus(ChargeStatus chargeStatus) {
             this.chargeStatus = chargeStatus;
             return this;

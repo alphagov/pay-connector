@@ -195,6 +195,18 @@ public class ContractTest {
                 .withPaymentProvider(aDigitalWalletSupportedPaymentProvider)
                 .insert();
     }
+    
+    @State("a gateway account with MOTO enabled and an external id 667 exists in the database")
+    public void anAccountExistsWithMotoEnableAndMaskCardNumberAndSecurityCode() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(667L)
+                .withAllowMoto(true)
+                .withMotoMaskCardNumberInput(true)
+                .withMotoMaskCardSecurityCodeInput(true)
+                .insert();
+    }
 
     @State("gateway accounts with ids 111, 222 exist in the database")
     public void multipleGatewayAccountsExist() {
