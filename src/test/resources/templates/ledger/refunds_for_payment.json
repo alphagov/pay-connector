@@ -1,0 +1,62 @@
+{
+  "parent_transaction_id": "650516the13q5jpfo435f1m1fm",
+  "transactions": [
+    {
+      "gateway_account_id": "152",
+      "amount": 100,
+      "state": {
+        "finished": true,
+        "status": "success"
+      },
+      "created_date": "2019-12-23T15:24:07.061Z",
+      "gateway_transaction_id": "ff3f12da-fa4e-4f2c-8460-fa80d20b3e97",
+      "refunded_by": "refunded_by_user1",
+      "transaction_type": "REFUND",
+      "payment_details": {
+        "description": "An example payment description",
+        "reference": "V58CDG66T2",
+        "email": "test@example.org",
+        "card_details": {
+          "cardholder_name": "test",
+          "card_brand": "Visa",
+          "last_digits_card_number": "4242",
+          "first_digits_card_number": "424242",
+          "expiry_date": "11/21",
+          "card_type": "credit"
+        },
+        "transaction_type": "PAYMENT"
+      },
+      "transaction_id": "nklfm1pk9flpu91j815kp2835o",
+      "parent_transaction_id": "650516the13q5jpfo435f1m1fm"
+    },
+    {
+      "gateway_account_id": "152",
+      "amount": 110,
+      "state": {
+        "finished": true,
+        "status": "failed"
+      },
+      "created_date": "2019-12-23T16:20:12.343Z",
+      "gateway_transaction_id": "0ecb93b8-2db6-41b1-a63d-5438ab7cf0ba",
+      "refunded_by": "refunded_by_user1",
+      "refunded_by_user_email": "test@example.org",
+      "transaction_type": "REFUND",
+      "payment_details": {
+        "description": "An example payment description",
+        "reference": "V58CDG66T2",
+        "email": "test@example.org",
+        "card_details": {
+          "cardholder_name": "test",
+          "card_brand": "Visa",
+          "last_digits_card_number": "4242",
+          "first_digits_card_number": "424242",
+          "expiry_date": "11/21",
+          "card_type": "credit"
+        },
+        "transaction_type": "PAYMENT"
+      },
+      "transaction_id": "migtkmlt6gvm16sim5h0p7oeje",
+      "parent_transaction_id": "650516the13q5jpfo435f1m1fm"
+    }
+  ]
+}

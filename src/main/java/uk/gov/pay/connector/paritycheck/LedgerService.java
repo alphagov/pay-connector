@@ -1,8 +1,11 @@
 package uk.gov.pay.connector.paritycheck;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.inject.Inject;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -10,9 +13,14 @@ import javax.ws.rs.core.UriBuilder;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_OK;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class LedgerService {
+
+    private final Logger logger = LoggerFactory.getLogger(LedgerService.class);
 
     private final Client client;
     private final String ledgerUrl;
@@ -51,18 +59,47 @@ public class LedgerService {
         return getTransactionFromLedger(uri);
     }
 
+    public RefundTransactionsForPayment getRefundsForPayment(Long gatewayAccountId, String paymentExternalId) {
+        var uri = UriBuilder
+                .fromPath(ledgerUrl)
+                .path(format("/v1/transaction/%s/transaction", paymentExternalId))
+                .queryParam("gateway_account_id", gatewayAccountId);
+
+        Response response = getResponse(uri);
+
+        if (response.getStatus() == SC_OK) {
+            try {
+                return response.readEntity(RefundTransactionsForPayment.class);
+            } catch (ProcessingException exception) {
+                logger.error("Error processing response from ledger for payment refunds: {} {}",
+                        kv(GATEWAY_ACCOUNT_ID, gatewayAccountId),
+                        kv(PAYMENT_EXTERNAL_ID, paymentExternalId));
+                throw new LedgerException(exception);
+            }
+        } else {
+            logger.error("Received non-success status code for get refunds for payment from Ledger: {}, {}",
+                    kv(GATEWAY_ACCOUNT_ID, gatewayAccountId),
+                    kv(PAYMENT_EXTERNAL_ID, paymentExternalId));
+            throw new GetRefundsForPaymentException(response);
+        }
+    }
+
     private Optional<LedgerTransaction> getTransactionFromLedger(UriBuilder uri) {
-        Response response = client
-                .target(uri)
-                .request()
-                .accept(MediaType.APPLICATION_JSON)
-                .get();
+        Response response = getResponse(uri);
 
         if (response.getStatus() == SC_OK) {
             return Optional.of(response.readEntity(LedgerTransaction.class));
         }
 
         return Optional.empty();
+    }
+
+    private Response getResponse(UriBuilder uri) {
+        return client
+                .target(uri)
+                .request()
+                .accept(MediaType.APPLICATION_JSON)
+                .get();
     }
 
 }
