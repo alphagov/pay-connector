@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.model.domain;
 
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;

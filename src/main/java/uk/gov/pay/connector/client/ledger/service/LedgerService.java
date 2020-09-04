@@ -1,8 +1,12 @@
-package uk.gov.pay.connector.paritycheck;
+package uk.gov.pay.connector.client.ledger.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentException;
+import uk.gov.pay.connector.client.ledger.exception.LedgerException;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;

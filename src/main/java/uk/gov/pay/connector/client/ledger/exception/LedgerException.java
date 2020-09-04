@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.paritycheck;
+package uk.gov.pay.connector.client.ledger.exception;
 
 import javax.ws.rs.core.Response;
 

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.paritycheck;
+package uk.gov.pay.connector.client.ledger.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,6 +10,7 @@ import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
