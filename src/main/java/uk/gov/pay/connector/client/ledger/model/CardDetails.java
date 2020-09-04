@@ -1,5 +1,4 @@
-package uk.gov.pay.connector.paritycheck;
-
+package uk.gov.pay.connector.client.ledger.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;

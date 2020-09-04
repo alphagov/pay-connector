@@ -9,11 +9,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.client.ledger.model.CardDetails;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.paritycheck.CardDetails;
-import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 

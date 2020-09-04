@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.paritycheck;
+package uk.gov.pay.connector.client.ledger.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +7,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentException;
+import uk.gov.pay.connector.client.ledger.exception.LedgerException;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
