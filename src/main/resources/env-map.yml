@@ -2,7 +2,7 @@ env_vars:
   DB_HOST:                            '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_host                           '
   DB_NAME:                            '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_name                           '
   DB_PASSWORD:                        '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_password                       '
-  DB_USER:                            '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_username                       '
+  DB_USER:                            '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_user                           '
   DB_SSL_OPTION:                      '.[][] | select(.name == "card-connector-secret-service") | .credentials.db_ssl_option        // "ssl=true"'
   FRONTEND_URL:                       '.[][] | select(.name == "app-catalog")       | .credentials.card_frontend_url              '
   METRICS_HOST:                       '.[][] | select(.name == "app-catalog")       | .credentials.carbon_relay_route             '
