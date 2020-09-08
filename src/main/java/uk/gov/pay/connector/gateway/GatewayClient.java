@@ -66,7 +66,7 @@ public class GatewayClient {
 
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
-            cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
+            cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
             response = requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
             int statusCode = response.getStatus();
             Response gatewayResponse = new Response(response);
