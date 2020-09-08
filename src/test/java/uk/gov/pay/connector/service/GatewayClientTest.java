@@ -108,7 +108,7 @@ public class GatewayClientTest {
                 ImmutableList.of(new HttpCookie("machine", "value")), emptyMap());
 
         InOrder inOrder = Mockito.inOrder(mockBuilder);
-        inOrder.verify(mockBuilder).cookie("machine", "value");
+        inOrder.verify(mockBuilder).header("Cookie", "machine=value");
         inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, mediaType));
     }
 }
