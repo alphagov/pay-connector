@@ -5,11 +5,11 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.northamericaregion.UsState.ALABAMA;
 import static uk.gov.pay.connector.northamericaregion.UsState.ALASKA;
-import static uk.gov.pay.connector.northamericaregion.UsState.ARMED_FORCES_AMERICAS;
 import static uk.gov.pay.connector.northamericaregion.UsState.ARIZONA;
 import static uk.gov.pay.connector.northamericaregion.UsState.ARKANSAS;
-import static uk.gov.pay.connector.northamericaregion.UsState.ARMED_FORCES_PACIFIC;
+import static uk.gov.pay.connector.northamericaregion.UsState.ARMED_FORCES_AMERICAS;
 import static uk.gov.pay.connector.northamericaregion.UsState.ARMED_FORCES_EUROPE;
+import static uk.gov.pay.connector.northamericaregion.UsState.ARMED_FORCES_PACIFIC;
 import static uk.gov.pay.connector.northamericaregion.UsState.CALIFORNIA;
 import static uk.gov.pay.connector.northamericaregion.UsState.COLORADO;
 import static uk.gov.pay.connector.northamericaregion.UsState.CONNECTICUT;
@@ -64,10 +64,10 @@ import static uk.gov.pay.connector.northamericaregion.UsState.WYOMING;
 public class UsZipCodeToStateMap {
     
     /**
-    We have to use this initializiation method because using 'Map.ofEntries(...)' with hundreds of arguments is excessively slow to compile. See https://youtrack.jetbrains.com/issue/IDEA-245963
-     */
-
-    public final static Map<String, UsState> ZIP_CODE_TO_US_STATE_ABBREVIATIONS = Map.copyOf(new HashMap<>() {{
+     * We have to use this initializiation method because using 'Map.ofEntries(...)' with hundreds of arguments is excessively slow to compile.
+     * See https://youtrack.jetbrains.com/issue/IDEA-245963
+    **/
+    public static final Map<String, UsState> ZIP_CODE_TO_US_STATE_ABBREVIATIONS = Map.copyOf(new HashMap<>() {{
         put("005", NEW_YORK);
         put("006", PUERTO_RICO);
         put("007", PUERTO_RICO);
