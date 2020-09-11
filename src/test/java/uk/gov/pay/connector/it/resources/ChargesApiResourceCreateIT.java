@@ -29,10 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -693,8 +695,8 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         metadata.put("key2", new HashMap<>());
         metadata.put("", "validValue");
         metadata.put("key3", "");
-        metadata.put("key4", "This value is too long because it is over fifty characters!");
-        metadata.put("This is key number 5 and it is too long", "This is valid");
+        metadata.put("key4", IntStream.rangeClosed(1, ExternalMetadata.MAX_VALUE_LENGTH + 1).mapToObj(i -> "v").collect(joining()));
+        metadata.put(IntStream.rangeClosed(1, ExternalMetadata.MAX_KEY_LENGTH + 1).mapToObj(i -> "k").collect(joining()), "This is valid");
 
         String postBody = toJsonWithNulls(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -711,9 +713,10 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, containsInAnyOrder(
                         "Field [metadata] values must be of type String, Boolean or Number",
-                        "Field [metadata] keys must be between 1 and 30 characters long",
+                        "Field [metadata] keys must be between " + ExternalMetadata.MIN_KEY_LENGTH + " and " + ExternalMetadata.MAX_KEY_LENGTH
+                                + " characters long",
                         "Field [metadata] must not have null values",
-                        "Field [metadata] values must be no greater than 50 characters long"));
+                        "Field [metadata] values must be no greater than " + ExternalMetadata.MAX_VALUE_LENGTH + " characters long"));
     }
 
     @Test
