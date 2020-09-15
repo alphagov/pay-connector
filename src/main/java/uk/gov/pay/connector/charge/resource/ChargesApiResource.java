@@ -88,8 +88,7 @@ public class ChargesApiResource {
     ) {
         return chargeService.findCharge(telephoneChargeCreateRequest)
                 .map(response -> Response.status(200).entity(response).build())
-                .orElse(Response.status(201).entity(chargeService.create(telephoneChargeCreateRequest, accountId).get())
-                .build());
+                .orElseGet(() -> Response.status(201).entity(chargeService.create(telephoneChargeCreateRequest, accountId).get()).build());
     }
 
     @POST
