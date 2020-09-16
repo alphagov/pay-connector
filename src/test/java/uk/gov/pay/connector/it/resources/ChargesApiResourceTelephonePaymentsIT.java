@@ -125,7 +125,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("state.finished", is(true));
 
         DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
-        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId);
+        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId).get(0);
         Long chargeId = Long.parseLong(chargeDetails.get("id").toString());
         assertThat(chargeDetails.get("language"), is("en"));
 
@@ -311,7 +311,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .contentType(JSON);
 
         DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
-        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId);
+        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId).get(0);
 
         assertThat(chargeDetails.get("source"), is(CARD_EXTERNAL_TELEPHONE.toString()));
     }
@@ -344,6 +344,11 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
+
+        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        List<Map<String, Object>> chargesByGatewayTransactionId = testHelper.getChargeByGatewayTransactionId(providerId);
+
+        assertThat(chargesByGatewayTransactionId.size(), is(1));
     }
 
     @Test

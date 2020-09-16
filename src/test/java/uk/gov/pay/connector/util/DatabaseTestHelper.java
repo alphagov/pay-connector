@@ -388,12 +388,12 @@ public class DatabaseTestHelper {
         return result > 0;
     }
 
-    public Map<String, Object> getChargeByGatewayTransactionId(String gatewayTransactionId) {
+    public List<Map<String, Object>> getChargeByGatewayTransactionId(String gatewayTransactionId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE gateway_transaction_id = :gatewayTransactionId")
                         .bind("gatewayTransactionId", gatewayTransactionId)
                         .mapToMap()
-                        .first());
+                        .list());
     }
 
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
