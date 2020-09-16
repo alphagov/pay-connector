@@ -672,6 +672,36 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void findByGatewayTransactionIdAndAccount() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withExternalChargeId("some-external-id")
+                .withTransactionId("gateway-transaction-id")
+                .insert();
+
+        DatabaseFixtures.TestAccount anotherGatewayAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(nextLong())
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(anotherGatewayAccount)
+                .withExternalChargeId("some-external-id2")
+                .withTransactionId("gateway-transaction-id")
+                .insert();
+
+        ChargeEntity chargeEntity = chargeDao.
+                findByGatewayTransactionIdAndAccount(defaultTestAccount.getAccountId(), "gateway-transaction-id")
+                .get();
+
+        assertThat(chargeEntity.getExternalId(), is("some-external-id"));
+    }
+
+    @Test
     public void getChargeWithAFee_shouldReturnFeeOnCharge() {
         insertTestCharge();
 

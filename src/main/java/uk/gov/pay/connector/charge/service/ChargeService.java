@@ -144,13 +144,12 @@ public class ChargeService {
     }
 
     @Transactional
-    public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
-        return chargeDao.findByGatewayTransactionId(telephoneChargeRequest.getProviderId())
+    public Optional<ChargeResponse> findCharge(Long gatewayAccountId, TelephoneChargeCreateRequest telephoneChargeRequest) {
+        return chargeDao.findByGatewayTransactionIdAndAccount(gatewayAccountId, telephoneChargeRequest.getProviderId())
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId) {
-
         return createCharge(telephoneChargeCreateRequest, accountId)
                 .map(charge ->
                         populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());

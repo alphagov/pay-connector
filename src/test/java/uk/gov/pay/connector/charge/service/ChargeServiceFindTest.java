@@ -32,6 +32,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -56,10 +57,10 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .build();
 
-        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(1234L, telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> gatewayTransactionIdArgumentCaptor = forClass(String.class);
-        verify(mockedChargeDao).findByGatewayTransactionId(gatewayTransactionIdArgumentCaptor.capture());
+        verify(mockedChargeDao).findByGatewayTransactionIdAndAccount(anyLong(), gatewayTransactionIdArgumentCaptor.capture());
 
         String providerId = gatewayTransactionIdArgumentCaptor.getValue();
         assertThat(providerId, is("new"));

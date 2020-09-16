@@ -47,6 +47,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -102,14 +103,15 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withCardDetails(cardDetails)
                 .build();
 
-        when(mockedChargeDao.findByGatewayTransactionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
+        when(mockedChargeDao.findByGatewayTransactionIdAndAccount(gatewayAccount.getId(), "1PROV"))
+                .thenReturn(Optional.of(returnedChargeEntity));
 
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
 
-        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(gatewayAccount.getId(), telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> gatewayTransactionIdArgumentCaptor = forClass(String.class);
-        verify(mockedChargeDao).findByGatewayTransactionId(gatewayTransactionIdArgumentCaptor.capture());
+        verify(mockedChargeDao).findByGatewayTransactionIdAndAccount(anyLong(), gatewayTransactionIdArgumentCaptor.capture());
 
         String providerId = gatewayTransactionIdArgumentCaptor.getValue();
         assertThat(providerId, is("1PROV"));

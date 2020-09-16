@@ -86,7 +86,7 @@ public class ChargesApiResource {
             @NotNull @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
-        return chargeService.findCharge(telephoneChargeCreateRequest)
+        return chargeService.findCharge(accountId, telephoneChargeCreateRequest)
                 .map(response -> Response.status(200).entity(response).build())
                 .orElseGet(() -> Response.status(201).entity(chargeService.create(telephoneChargeCreateRequest, accountId).get()).build());
     }
