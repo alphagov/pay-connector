@@ -5,14 +5,14 @@ import java.util.Objects;
 public class Refund {
     private String externalId;
     private Long amount;
-    private String status;
     private String userExternalId;
     private String userEmail;
     private String gatewayTransactionId;
     private String chargeExternalId;
+    private RefundStatus status;
     private boolean historic;
 
-    public Refund(String externalId, Long amount, String status, String userExternalId, String userEmail, String gatewayTransactionId, String chargeExternalId, boolean historic) {
+    public Refund(String externalId, Long amount, RefundStatus status, String userExternalId, String userEmail, String gatewayTransactionId, String chargeExternalId, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -21,6 +21,19 @@ public class Refund {
         this.gatewayTransactionId = gatewayTransactionId;
         this.chargeExternalId = chargeExternalId;
         this.historic = historic;
+    }
+
+    public static Refund from(RefundEntity refundEntity) {
+        return new Refund(
+                refundEntity.getExternalId(),
+                refundEntity.getAmount(),
+                refundEntity.getStatus(),
+                refundEntity.getUserExternalId(),
+                refundEntity.getUserEmail(),
+                refundEntity.getGatewayTransactionId(),
+                refundEntity.getChargeExternalId(),
+                false
+        );
     }
 
     public boolean isHistoric() {
@@ -43,7 +56,7 @@ public class Refund {
         return userExternalId;
     }
 
-    public String getStatus() {
+    public RefundStatus getStatus() {
         return status;
     }
 

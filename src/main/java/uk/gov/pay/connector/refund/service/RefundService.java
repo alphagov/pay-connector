@@ -16,6 +16,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
@@ -23,6 +24,7 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -245,5 +247,13 @@ public class RefundService {
                 gatewayAccountEntity, availableToBeRefunded);
 
         return availableToBeRefunded;
+    }
+
+    public List<Refund> findRefunds(Charge charge) {
+        return refundDao
+                .findRefundsByChargeExternalId(charge.getExternalId())
+                .stream()
+                .map(Refund::from)
+                .collect(Collectors.toList());
     }
 }
