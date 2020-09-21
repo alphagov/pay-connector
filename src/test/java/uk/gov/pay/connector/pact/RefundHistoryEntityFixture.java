@@ -7,13 +7,15 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
+import static java.time.ZoneOffset.UTC;
+
 public class RefundHistoryEntityFixture {
 
     private Long id = 1L;
     private String externalId = RandomStringUtils.randomAlphanumeric(10);
     private Long amount = 50L;
     private String status = RefundStatus.CREATED.getValue();
-    private ZonedDateTime createdDate = ZonedDateTime.now().minusSeconds(5L);
+    private ZonedDateTime createdDate = ZonedDateTime.now(UTC).minusSeconds(5L);
     private Long version = 1L;
     private ZonedDateTime historyStartDate = createdDate.plusSeconds(2L);
     private ZonedDateTime historyEndDate = createdDate.plusSeconds(3L);
@@ -31,7 +33,9 @@ public class RefundHistoryEntityFixture {
 
     public RefundHistory build() {
         return new RefundHistory(id, externalId, amount, status, Timestamp.valueOf(createdDate.toLocalDateTime()),
-                version, Timestamp.valueOf(historyStartDate.toLocalDateTime()), Timestamp.valueOf(historyEndDate.toLocalDateTime()),
+                version,
+                Timestamp.from(historyStartDate.toInstant()),
+                Timestamp.from(historyEndDate.toInstant()),
                 userExternalId, gatewayTransactionId, chargeExternalId, userEmail);
     }
 
@@ -52,6 +56,11 @@ public class RefundHistoryEntityFixture {
 
     public RefundHistoryEntityFixture withChargeExternalId(String chargeExternalId) {
         this.chargeExternalId = chargeExternalId;
+        return this;
+    }
+
+    public RefundHistoryEntityFixture withHistoryStartDate(ZonedDateTime historyStartDate) {
+        this.historyStartDate = historyStartDate;
         return this;
     }
 

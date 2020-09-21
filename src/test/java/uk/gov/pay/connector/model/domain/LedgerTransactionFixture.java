@@ -60,6 +60,9 @@ public class LedgerTransactionFixture {
     private ZonedDateTime captureSubmittedDate;
     private ZonedDateTime capturedDate;
     private ChargeResponse.RefundSummary refundSummary;
+    private String parentTransactionId;
+    private String userEmail;
+    private String userExternalId;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -135,6 +138,21 @@ public class LedgerTransactionFixture {
         return ledgerTransactionFixture;
     }
 
+    public static LedgerTransactionFixture from(RefundEntity refundEntity) {
+        LedgerTransactionFixture ledgerTransactionFixture =
+                aValidLedgerTransaction()
+                        .withAmount(refundEntity.getAmount())
+                        .withStatus(refundEntity.getStatus().toExternal().getStatus())
+                        .withCreatedDate(refundEntity.getCreatedDate())
+                        .withExternalId(refundEntity.getExternalId())
+                        .withGatewayTransactionId(refundEntity.getGatewayTransactionId())
+                        .withParentTransactionId(refundEntity.getChargeExternalId())
+                        .withUserEmail(refundEntity.getUserEmail())
+                        .withUserExternalId(refundEntity.getUserExternalId());
+
+        return ledgerTransactionFixture;
+    }
+
     private static ZonedDateTime getEventDate(List<ChargeEventEntity> chargeEventEntities, ChargeStatus status) {
         return ofNullable(chargeEventEntities).flatMap(entities -> entities.stream()
                 .filter(chargeEvent -> status.equals(chargeEvent.getStatus()))
@@ -183,10 +201,14 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setSettlementSummary(settlementSummary);
         ledgerTransaction.setRefundSummary(refundSummary);
 
+        ledgerTransaction.setParentTransactionId(parentTransactionId);
+        ledgerTransaction.setUserEmail(userEmail);
+        ledgerTransaction.setUserExternalId(userExternalId);
+
         return ledgerTransaction;
     }
 
-    private LedgerTransactionFixture withCreatedDate(ZonedDateTime createdDate) {
+    public LedgerTransactionFixture withCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
         return this;
     }
@@ -311,4 +333,18 @@ public class LedgerTransactionFixture {
         return this;
     }
 
+    public LedgerTransactionFixture withParentTransactionId(String chargeExternalId) {
+        this.parentTransactionId = chargeExternalId;
+        return this;
+    }
+
+    public LedgerTransactionFixture withUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+        return this;
+    }
+
+    public LedgerTransactionFixture withUserExternalId(String userExternalId) {
+        this.userExternalId = userExternalId;
+        return this;
+    }
 }

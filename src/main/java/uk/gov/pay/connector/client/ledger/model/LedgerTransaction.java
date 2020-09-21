@@ -45,6 +45,9 @@ public class LedgerTransaction {
     private String walletType;
     @JsonProperty("metadata")
     private Map<String, Object> externalMetaData;
+    private String userEmail;
+    private String userExternalId;
+    private String parentTransactionId;
 
     public LedgerTransaction() {
 
@@ -252,5 +255,29 @@ public class LedgerTransaction {
 
     public void setExternalMetaData(Map<String, Object> externalMetaData) {
         this.externalMetaData = externalMetaData;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    public String getUserExternalId() {
+        return userExternalId;
+    }
+
+    public void setUserExternalId(String userExternalId) {
+        this.userExternalId = userExternalId;
+    }
+
+    public String getParentTransactionId() {
+        return parentTransactionId;
+    }
+
+    public void setParentTransactionId(String parentTransactionId) {
+        this.parentTransactionId = parentTransactionId;
     }
 }
