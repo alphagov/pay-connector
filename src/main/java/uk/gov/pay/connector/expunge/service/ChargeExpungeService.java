@@ -11,7 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.tasks.ParityCheckService;
+import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;

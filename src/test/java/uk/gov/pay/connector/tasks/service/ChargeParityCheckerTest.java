@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.tasks;
+package uk.gov.pay.connector.tasks.service;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -9,27 +9,22 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
-import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
-import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.util.List;
-import java.util.Optional;
 
 import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.commons.model.Source.CARD_PAYMENT_LINK;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
@@ -39,22 +34,18 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
+import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
+import static uk.gov.pay.connector.wallets.WalletType.GOOGLE_PAY;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ParityCheckServiceTest {
+public class ChargeParityCheckerTest {
 
-    private ParityCheckService parityCheckService;
-    @Mock
-    private LedgerService mockLedgerService;
-    @Mock
-    private ChargeService mockChargeService;
     @Mock
     private RefundDao mockRefundDao;
-    @Mock
-    private HistoricalEventEmitter mockHistoricalEventEmitter;
     @Mock
     private PaymentProviders mockProviders;
     @InjectMocks
@@ -84,48 +75,94 @@ public class ParityCheckServiceTest {
 
         when(mockRefundDao.findRefundsByChargeExternalId(any())).thenReturn(refundEntities);
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
-        parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockRefundDao,
-                mockHistoricalEventEmitter, chargeParityChecker);
     }
 
     @Test
-    public void chargeAndRefundsParityCheckStatus_shouldFetchTransactionFromLedgerAndParityCheck() {
+    public void parityCheck_shouldMatchIfChargeMatchesWithLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnMissingInLedgerIfTransactionIsNull() {
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, null);
+
+        assertThat(parityCheckStatus, is(MISSING_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfCardDetailsDoesNotMatchWithLedger() {
+        chargeEntity.getCardDetails().setBillingAddress(null);
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCardDetails(new CardDetails("test-name", null, "test-brand",
+                        "6666", "123656", "11/88", null))
                 .build();
-        when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
-        ParityCheckStatus chargeAndRefundsParityCheckStatus = parityCheckService.getChargeAndRefundsParityCheckStatus(chargeEntity);
-
-        assertThat(chargeAndRefundsParityCheckStatus, is(EXISTS_IN_LEDGER));
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
 
     @Test
-    public void parityCheckChargeForExpunger_shouldBackfillChargeIfParityCheckFails() {
+    public void parityCheck_shouldReturnDataMismatchIfGatewayAccountDetailsDoesNotMatch() {
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withGatewayAccountId(345345L)
                 .isLive(true)
                 .withPaymentProvider("test-paymemt-provider")
                 .build();
-        when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
-        boolean matchesWithLedger = parityCheckService.parityCheckChargeForExpunger(chargeEntity);
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
-        assertThat(matchesWithLedger, is(false));
-        verify(mockHistoricalEventEmitter).processPaymentEvents(chargeEntity, true);
-        verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
 
     @Test
-    public void parityCheckChargeForExpunger_shouldNotBackfillIfChargeMatchesWithLedger() {
+    public void parityCheck_shouldReturnDataMismatchIfFeatureSpecificFieldsDoesNotMatch() {
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withSource(CARD_API)
+                .withMoto(false)
+                .withDelayedCapture(false)
+                .withFee(10000L)
+                .withCorporateCardSurcharge(10000L)
+                .withNetAmount(10000L)
+                .withWalletType(GOOGLE_PAY)
                 .build();
-        when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
-        boolean matchesWithLedger = parityCheckService.parityCheckChargeForExpunger(chargeEntity);
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
-        assertThat(matchesWithLedger, is(true));
-        verify(mockHistoricalEventEmitter, never()).processPaymentEvents(chargeEntity, true);
-        verify(mockChargeService, never()).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfCaptureFieldsDoesnotMatchWithLedger() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCapturedDate(parse("2016-01-26T14:23:55Z"))
+                .withCaptureSubmittedDate(parse("2016-01-26T14:23:55Z"))
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfRefundSummaryStatusDoesnotMatchWithLedger() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withRefundSummary(null)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfChargeDoesNotMatchWithLedger() {
+        LedgerTransaction transaction = aValidLedgerTransaction().withStatus("pending").build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
 
     private ChargeEventEntity createChargeEventEntity(ChargeStatus status, String timeStamp) {

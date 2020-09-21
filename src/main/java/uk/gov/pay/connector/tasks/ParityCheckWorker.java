@@ -14,6 +14,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import javax.inject.Inject;
 import java.util.List;

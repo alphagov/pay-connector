@@ -16,7 +16,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.tasks.ParityCheckService;
+import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
