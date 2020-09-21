@@ -43,13 +43,13 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class SmartpayRefundIT extends ChargingITestBase {
+public class SmartpayRefundsResourceIT extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private String pspReference;
 
-    public SmartpayRefundIT() {
+    public SmartpayRefundsResourceIT() {
         super("smartpay");
     }
 

@@ -43,12 +43,12 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class EpdqRefundIT extends ChargingITestBase {
+public class EpdqRefundsResourceIT extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    public EpdqRefundIT() {
+    public EpdqRefundsResourceIT() {
         super("epdq");
     }
 

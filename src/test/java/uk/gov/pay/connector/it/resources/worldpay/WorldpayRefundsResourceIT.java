@@ -43,12 +43,12 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class WorldpayRefundIT extends ChargingITestBase {
+public class WorldpayRefundsResourceIT extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    public WorldpayRefundIT() {
+    public WorldpayRefundsResourceIT() {
         super("worldpay");
     }
 

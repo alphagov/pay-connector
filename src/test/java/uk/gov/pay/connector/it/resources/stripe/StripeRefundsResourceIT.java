@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class StripeRefundIT extends ChargingITestBase {
+public class StripeRefundsResourceIT extends ChargingITestBase {
     private String stripeAccountId = "stripe_account_id";
     private String accountId = "555";
 
@@ -43,7 +43,7 @@ public class StripeRefundIT extends ChargingITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    public StripeRefundIT() {
+    public StripeRefundsResourceIT() {
         super("stripe");
     }
 
