@@ -45,6 +45,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -112,6 +113,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private EventService mockEventService;
+    
+    @Mock
+    private RefundService mockRefundService;
 
     @Mock
     private NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
@@ -126,7 +130,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
-                stateTransitionService, ledgerService, mockEventService, mockedRefundDao, mockNorthAmericanRegionMapper);
+                stateTransitionService, ledgerService, mockRefundService, mockEventService, mockNorthAmericanRegionMapper);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(

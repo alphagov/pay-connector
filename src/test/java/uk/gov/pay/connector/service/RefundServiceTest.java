@@ -606,7 +606,7 @@ public class RefundServiceTest {
         when(mockRefundDao.findRefundsByChargeExternalId(charge.getExternalId()))
                 .thenReturn(List.of(refundOne, refundTwo));
 
-        List<Refund> refunds = chargeRefundService.findRefunds(charge);
+        List<Refund> refunds = refundService.findRefunds(charge);
 
         assertThat(refunds.size(), is(2));
         assertThat(refunds.get(0).getChargeExternalId(), is(charge.getExternalId()));

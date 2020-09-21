@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -20,7 +21,9 @@ import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
@@ -50,6 +53,8 @@ public class ParityCheckWorkerTest {
     private ChargeDao chargeDao;
     @Mock
     private ChargeService chargeService;
+    @Mock
+    private RefundService refundService;
     @Mock
     private EmittedEventDao emittedEventDao;
     @Mock
@@ -135,6 +140,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundEntity));
+        when(refundService.findRefunds(Charge.from(chargeEntity))).thenReturn(List.of(Refund.from(refundEntity)));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
         when(ledgerService.getTransaction(refundEntity.getExternalId()))
                 .thenReturn(Optional.of(aValidLedgerTransaction().withStatus("submitted").build()));
@@ -144,7 +150,7 @@ public class ParityCheckWorkerTest {
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
-        verify(refundDao, times(2)).findRefundsByChargeExternalId(chargeEntity.getExternalId());
+        verify(refundDao, times(1)).findRefundsByChargeExternalId(chargeEntity.getExternalId());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
         verify(emittedEventDao, never()).recordEmission(any(), any());
         verify(chargeDao, never()).findById(2L);

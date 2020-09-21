@@ -22,8 +22,8 @@ import uk.gov.pay.connector.client.ledger.model.SettlementSummary;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -54,12 +54,12 @@ import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 public class ChargeParityChecker {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeParityChecker.class);
-    private final RefundDao refundDao;
+    private final RefundService refundService;
     private final PaymentProviders providers;
 
     @Inject
-    public ChargeParityChecker(RefundDao refundDao, PaymentProviders providers) {
-        this.refundDao = refundDao;
+    public ChargeParityChecker(RefundService refundService, PaymentProviders providers) {
+        this.refundService = refundService;
         this.providers = providers;
     }
 
@@ -243,10 +243,10 @@ public class ChargeParityChecker {
     }
 
     private boolean matchRefundSummary(ChargeEntity chargeEntity, LedgerTransaction transaction) {
-        List<RefundEntity> refundsList = refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId());
+        List<Refund> refundList = refundService.findRefunds(Charge.from(chargeEntity));
 
         ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName())
-                .getExternalChargeRefundAvailability(Charge.from(chargeEntity), refundsList);
+                .getExternalChargeRefundAvailability(Charge.from(chargeEntity), refundList);
 
         return isEquals(refundAvailability.getStatus(),
                 ofNullable(transaction.getRefundSummary()).map(refundSummary -> refundSummary.getStatus()).orElse(null), "refund_summary.status");

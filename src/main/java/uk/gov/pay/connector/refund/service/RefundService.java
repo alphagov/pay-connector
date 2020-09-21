@@ -68,8 +68,8 @@ public class RefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest) {
-        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
-        long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundEntityList);
+        List<Refund> refundList = findRefunds(charge);
+        long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundList);
         RefundEntity refundEntity = createRefundEntity(refundRequest, charge);
 
         logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
@@ -230,17 +230,20 @@ public class RefundService {
     private long validateRefundAndGetAvailableAmount(Charge charge,
                                                      GatewayAccountEntity gatewayAccountEntity,
                                                      RefundRequest refundRequest,
-                                                     List<RefundEntity> refundEntityList) {
+                                                     List<Refund> refundList) {
         ExternalChargeRefundAvailability refundAvailability;
 
         refundAvailability = providers
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
-                .getExternalChargeRefundAvailability(charge, refundEntityList);
+                .getExternalChargeRefundAvailability(charge, refundList);
         checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
 
-        List<RefundEntity> refundEntities = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
+//      @TODO(sfount) is there a reason this currently needs to request new values from the database? This all happens in an @Transactional method
+//                    can we just pass the refund list that's been passed into this method (will the newly created refund be picked up before the
+//                    transaction has commited?         
+        List<Refund> postRefundList = findRefunds(charge);
 
-        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, refundEntities);
+        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, postRefundList);
         checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
 
         checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability, 

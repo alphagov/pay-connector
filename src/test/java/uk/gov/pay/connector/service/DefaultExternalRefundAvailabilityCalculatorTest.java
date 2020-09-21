@@ -6,11 +6,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.time.ZonedDateTime.now;
@@ -84,12 +87,12 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     @Test
     public void testGetChargeRefundAvailabilityReturnsAvailable() {
-        List<RefundEntity> refunds = Arrays.asList(
+        List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_ERROR).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(199L).build()
-        );
+        ).map(Refund::from).collect(Collectors.toList());
 
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L), refunds), is(EXTERNAL_AVAILABLE));
     }
@@ -101,27 +104,27 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     @Test
     public void testGetChargeRefundAvailabilityReturnsFull() {
-        List<RefundEntity> refunds = Arrays.asList(
+        List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
-        );
+        ).map(Refund::from).collect(Collectors.toList());
 
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L), refunds), is(EXTERNAL_FULL));
     }
 
     @Test
     public void historicCharge_shouldRecalculateAvailabilityIfCurrentAvailabilityIsMutable() {
-        List<RefundEntity> fullRefunds = Arrays.asList(
+        List<Refund> fullRefunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
-        );
-        List<RefundEntity> previouslyFullNowErroredRefunds = Arrays.asList(
+        ).map(Refund::from).collect(Collectors.toList());
+        List<Refund> previouslyFullNowErroredRefunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_ERROR).withAmount(200L).build()
-        );
+        ).map(Refund::from).collect(Collectors.toList());
 
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_AVAILABLE), fullRefunds), is(EXTERNAL_FULL));
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_FULL), previouslyFullNowErroredRefunds), is(EXTERNAL_AVAILABLE));
@@ -129,8 +132,8 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     @Test
     public void historicCharge_shouldNotRecalculateAvailabilityIfCurrentAvailabilityIsTerminal() {
-        List<RefundEntity> refunds = Arrays.asList(
-                aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build()
+        List<Refund> refunds = Arrays.asList(
+                Refund.from(aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build())
         );
 
         assertThat(defaultExternalRefundAvailabilityCalculator.calculate(getHistoricCharge(EXTERNAL_UNAVAILABLE), List.of()), is(EXTERNAL_UNAVAILABLE));

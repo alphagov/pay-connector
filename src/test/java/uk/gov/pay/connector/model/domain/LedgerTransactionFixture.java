@@ -19,12 +19,14 @@ import uk.gov.pay.connector.client.ledger.model.TransactionState;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -127,7 +129,7 @@ public class LedgerTransactionFixture {
         ExternalChargeRefundAvailability refundAvailability;
         if (refundsList != null) {
             refundAvailability = new DefaultExternalRefundAvailabilityCalculator()
-                    .calculate(Charge.from(chargeEntity), refundsList);
+                    .calculate(Charge.from(chargeEntity), refundsList.stream().map(Refund::from).collect(Collectors.toList()));
         } else {
             refundAvailability = new DefaultExternalRefundAvailabilityCalculator()
                     .calculate(Charge.from(chargeEntity), List.of());

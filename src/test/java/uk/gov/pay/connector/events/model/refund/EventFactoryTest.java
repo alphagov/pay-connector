@@ -44,6 +44,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -66,6 +67,8 @@ public class EventFactoryTest {
     @Mock
     private RefundDao refundDao;
     @Mock
+    private RefundService refundService;
+    @Mock
     private ChargeEventDao chargeEventDao;
     @Mock
     private PaymentProviders paymentProviders;
@@ -77,7 +80,7 @@ public class EventFactoryTest {
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
         
-        eventFactory = new EventFactory(chargeService, refundDao, chargeEventDao, paymentProviders);
+        eventFactory = new EventFactory(chargeService, refundDao, refundService, chargeEventDao, paymentProviders);
     }
     
     @Test
