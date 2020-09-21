@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.refund.resource;
 
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -37,12 +39,14 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 public class ChargeRefundsResource {
 
     private final ChargeRefundService refundService;
+    private final ChargeService chargeService;
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
 
     @Inject
-    public ChargeRefundsResource(ChargeRefundService refundService, ChargeDao chargeDao, RefundDao refundDao) {
+    public ChargeRefundsResource(ChargeRefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
         this.refundService = refundService;
+        this.chargeService = chargeService;
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
     }
@@ -53,7 +57,10 @@ public class ChargeRefundsResource {
     @Produces(APPLICATION_JSON)
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeExternalId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
-        final ChargeRefundResponse refundServiceResponse = refundService.doRefund(accountId, chargeExternalId, refundRequest);
+
+        ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId)
+                .map(charge -> refundService.doRefund(accountId, charge, refundRequest))
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), accountId, uriInfo).serialize()).build();

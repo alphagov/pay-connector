@@ -3,9 +3,7 @@ package uk.gov.pay.connector.refund.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -36,8 +34,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 public class ChargeRefundService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final ChargeService chargeService;
+    
     private final RefundDao refundDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final PaymentProviders providers;
@@ -45,10 +42,9 @@ public class ChargeRefundService {
     private StateTransitionService stateTransitionService;
 
     @Inject
-    public ChargeRefundService(ChargeService chargeService, RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
+    public ChargeRefundService(RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
                                UserNotificationService userNotificationService, StateTransitionService stateTransitionService
     ) {
-        this.chargeService = chargeService;
         this.refundDao = refundDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.providers = providers;
@@ -56,11 +52,9 @@ public class ChargeRefundService {
         this.stateTransitionService = stateTransitionService;
     }
 
-    public ChargeRefundResponse doRefund(Long accountId, String chargeExternalId, RefundRequest refundRequest) {
+    public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
-        Charge charge = chargeService.findCharge(chargeExternalId, gatewayAccountEntity.getId())
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
