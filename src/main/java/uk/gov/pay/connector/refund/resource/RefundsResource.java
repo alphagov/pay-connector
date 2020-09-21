@@ -36,7 +36,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithRefundNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
-public class ChargeRefundsResource {
+public class RefundsResource {
 
     private final RefundService refundService;
     private final ChargeService chargeService;
@@ -44,7 +44,7 @@ public class ChargeRefundsResource {
     private final RefundDao refundDao;
 
     @Inject
-    public ChargeRefundsResource(RefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
+    public RefundsResource(RefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
         this.refundService = refundService;
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
