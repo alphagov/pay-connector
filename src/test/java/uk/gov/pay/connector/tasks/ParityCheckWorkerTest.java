@@ -7,7 +7,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -22,6 +21,8 @@ import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
+import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -64,6 +64,10 @@ public class ParityCheckWorkerTest {
     private LedgerService ledgerService;
     @Mock
     private PaymentProviders mockProviders;
+    @Mock
+    private HistoricalEventEmitter historicalEventEmitter;
+    @InjectMocks
+    ChargeParityChecker chargeParityChecker;
 
     private ParityCheckWorker worker;
     private ChargeEntity chargeEntity;
@@ -74,9 +78,9 @@ public class ParityCheckWorkerTest {
     public void setUp() {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         
+        parityCheckService = new ParityCheckService(ledgerService, chargeService, refundDao, historicalEventEmitter, chargeParityChecker);
         worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
                 stateTransitionService, eventService, refundDao, parityCheckService);
-        CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         chargeEntity = aValidChargeEntity()
                 .withCardDetails(defaultCardDetails())
                 .withGatewayAccountEntity(defaultGatewayAccountEntity())
