@@ -76,7 +76,7 @@ public class StripeRefundHandlerTest {
         RefundEntity refundEntity = RefundEntityFixture
                 .aValidRefundEntity()
                 .withAmount(100L)
-                .withChargeTransactionId("pi_123")
+                .withGatewayTransactionId("pi_123")
                 .build();
         refundRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
         mockTransferSuccess();

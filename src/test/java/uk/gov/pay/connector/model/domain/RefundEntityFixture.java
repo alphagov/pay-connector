@@ -75,7 +75,7 @@ public class RefundEntityFixture {
         return this;
     }
     
-    public RefundEntityFixture withChargeTransactionId(String transactionId) {
+    public RefundEntityFixture withGatewayTransactionId(String transactionId) {
         this.transactionId = transactionId;
         return this;
     }
