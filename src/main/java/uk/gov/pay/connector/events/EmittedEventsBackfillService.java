@@ -19,15 +19,12 @@ import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
-import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 
 public class EmittedEventsBackfillService {
-    private static final int PAGE_SIZE = 100;
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    public static final int PAGE_SIZE = 100;
 
     private final EmittedEventDao emittedEventDao;
     private final ChargeService chargeService;
@@ -50,53 +47,30 @@ public class EmittedEventsBackfillService {
     }
 
     public void backfillNotEmittedEvents() {
-        Long lastProcessedId = 0L;
-        ZonedDateTime cutoffDate = getCutoffDateForProcessingNotEmittedEvents();
-        ZonedDateTime now = now(UTC);
-        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(cutoffDate, now);
+        EmittedEventBatchIterator emittedEventBatchIterator = new EmittedEventBatchIterator(emittedEventDao, sweepConfig, 0L, PAGE_SIZE, now());
 
-        while (maxId.isPresent()) {
-            List<EmittedEventEntity> notEmittedEventsToProcess =
-                    emittedEventDao.findNotEmittedEventsOlderThan(cutoffDate,
-                            PAGE_SIZE, lastProcessedId, maxId.get(), now);
+        emittedEventBatchIterator.forEachRemaining(batch -> {
+            logger.info(
+                    "Processing not emitted events [lastProcessedId={}, no.of.events={}, oldestDate={}]",
+                    batch.getStartId(), 
+                    batch.getEndId().map(Object::toString).orElse("none"), 
+                    batch.oldestEventDate().map(ZonedDateTime::toString).orElse("none")
+            );
 
-            if (!notEmittedEventsToProcess.isEmpty()) {
-                String oldestEventDate = notEmittedEventsToProcess.stream()
-                        .map(EmittedEventEntity::getEventDate).min(ZonedDateTime::compareTo)
-                        .map(ZonedDateTime::toString).orElse("none");
+            batch.getEvents().forEach(this::backfillEvent);
+        });
 
-                logger.info("Processing not emitted events [lastProcessedId={}, no.of.events={}, oldestDate={}]",
-                        lastProcessedId, notEmittedEventsToProcess.size(), oldestEventDate);
-
-                notEmittedEventsToProcess.forEach(this::backfillEvent);
-
-                lastProcessedId = notEmittedEventsToProcess.get(notEmittedEventsToProcess.size() - 1).getId();
-            } else {
-                break;
-            }
-        }
         logger.info("Finished processing not emitted events [lastProcessedId={}, maxId={}]",
-                lastProcessedId, maxId.map(Object::toString).orElse("none"));
+                emittedEventBatchIterator.getCurrentBatchStartId(), emittedEventBatchIterator.getMaximumIdOfEventsEligibleForReEmission().map(Object::toString).orElse("none"));
     }
 
     @Transactional
     public void backfillEvent(EmittedEventEntity event) {
         try {
-            Optional<ChargeEntity> charge = Optional.empty();
-
-            if (ResourceType.valueOf(event.getResourceType().toUpperCase()).equals(ResourceType.PAYMENT)) {
-                charge = Optional.of(chargeService.findChargeByExternalId(event.getResourceExternalId()));
-            } else {
-                Optional<RefundEntity> refundEntity = refundDao.findByExternalId(event.getResourceExternalId())
-                        .stream()
-                        .findFirst();
-                if (refundEntity.isPresent()) {
-                    charge = Optional.ofNullable(chargeService.findChargeByExternalId(refundEntity.get().getChargeExternalId()));
-                }
-            }
-
-            charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
-            charge.ifPresent(historicalEventEmitter::processPaymentAndRefundEvents);
+            String chargeId = chargeIdForEvent(event);
+            ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
+            MDC.put("chargeId", charge.getExternalId());
+            historicalEventEmitter.processPaymentAndRefundEvents(charge);
             event.setEmittedDate(now(ZoneId.of("UTC")));
         } catch (Exception e) {
             logger.error(
@@ -113,8 +87,19 @@ public class EmittedEventsBackfillService {
         }
     }
 
-    private ZonedDateTime getCutoffDateForProcessingNotEmittedEvents() {
-        int notEmittedEventMaxAgeInSeconds = sweepConfig.getNotEmittedEventMaxAgeInSeconds();
-        return now().minusSeconds(notEmittedEventMaxAgeInSeconds);
+    private String chargeIdForEvent(EmittedEventEntity event) {
+        if (isPaymentEvent(event)) {
+            return event.getResourceExternalId();
+        } else {
+            return refundDao.findByExternalId(event.getResourceExternalId())
+                    .stream().findFirst()
+                    .map(RefundEntity::getChargeExternalId)
+                    .orElse("");
+        }
     }
+
+    private boolean isPaymentEvent(EmittedEventEntity event) {
+        return ResourceType.valueOf(event.getResourceType().toUpperCase()).equals(ResourceType.PAYMENT);
+    }
+
 }

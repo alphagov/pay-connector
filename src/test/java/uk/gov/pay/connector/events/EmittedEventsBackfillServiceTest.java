@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -40,6 +41,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -84,6 +87,7 @@ public class EmittedEventsBackfillServiceTest {
         root.addAppender(mockAppender);
         emittedEventsBackfillService = new EmittedEventsBackfillService(emittedEventDao, chargeService, refundDao, chargeDao,
                 eventService, stateTransitionService, connectorConfiguration);
+        lenient().when(chargeService.findChargeByExternalId(any())).thenThrow(new ChargeNotFoundRuntimeException(""));
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .build();
@@ -94,6 +98,8 @@ public class EmittedEventsBackfillServiceTest {
                 .build();
         chargeEntity.getEvents().add(chargeEventEntity);
         refundEntity = mock(RefundEntity.class);
+        when(refundEntity.getExternalId()).thenReturn("my-refund-id");
+        when(refundEntity.getChargeExternalId()).thenReturn(chargeEntity.getExternalId());
         when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class), any())).thenReturn(Optional.of(maxId));
     }
     
@@ -113,7 +119,7 @@ public class EmittedEventsBackfillServiceTest {
     public void backfillsEventsWhenEmittedPaymentEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceExternalId(chargeEntity.getExternalId()).build();
         when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedEvent));
-        when(chargeService.findChargeByExternalId(chargeEntity.getExternalId())).thenReturn(chargeEntity);
+        doReturn(chargeEntity).when(chargeService).findChargeByExternalId(chargeEntity.getExternalId());
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
@@ -128,17 +134,17 @@ public class EmittedEventsBackfillServiceTest {
     @Test
     public void backfillsEventsWhenEmittedRefundEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceType("refund")
-                .withResourceExternalId(chargeEntity.getExternalId()).build();
+                .withResourceExternalId(refundEntity.getExternalId()).build();
         var refundHistory = RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()
+                .withExternalId(refundEntity.getExternalId())
                 .withChargeExternalId(chargeEntity.getExternalId())
                 .build();
         when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedEvent));
-        when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
+        when(refundDao.findByExternalId(refundEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
         when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory));
-        when(chargeService.findChargeByExternalId(chargeEntity.getExternalId())).thenReturn(chargeEntity);
-        when(refundEntity.getChargeExternalId()).thenReturn(chargeEntity.getExternalId());
-        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
+        doReturn(chargeEntity).when(chargeService).findChargeByExternalId(chargeEntity.getExternalId());
+        doReturn(Optional.of(Charge.from(chargeEntity))).when(chargeService).findCharge(chargeEntity.getExternalId());
         chargeEntity.getEvents().clear();
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
@@ -155,22 +161,27 @@ public class EmittedEventsBackfillServiceTest {
         var emittedPaymentEvent = anEmittedEventEntity().withResourceExternalId(chargeEntity.getExternalId()).build();
         var emittedRefundEvent = anEmittedEventEntity().withResourceType("refund").withId(2L)
                 .withEventDate(ZonedDateTime.parse("2019-09-20T09:00Z"))
-                .withResourceExternalId(chargeEntity.getExternalId())
+                .withResourceExternalId(refundEntity.getExternalId())
                 .build();
         var refundHistory = RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()
+                .withExternalId(refundEntity.getExternalId())
                 .withChargeExternalId(chargeEntity.getExternalId())
                 .build();
         when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
-        when(chargeService.findChargeByExternalId(chargeEntity.getExternalId())).thenReturn(chargeEntity);
-        when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
+        doReturn(chargeEntity).when(chargeService).findChargeByExternalId(chargeEntity.getExternalId());
+        when(refundDao.findByExternalId(refundEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
         when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory));
-        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
+        doReturn(Optional.of(Charge.from(chargeEntity))).when(chargeService).findCharge(chargeEntity.getExternalId());
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
-        verify(stateTransitionService, times(2)).offerStateTransition(any(), any(), isNull());
+        // Each event triggers a full backfill for the charge entity and associated refunds.
+        // Not clear if this is useful behaviour but that's as-implemented. Since there is one charge and one refund
+        // there are two events associated. Because there are two events, these two events get emitted two times, hence 
+        // four event emissions in total
+        verify(stateTransitionService, times(4)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00Z]"));

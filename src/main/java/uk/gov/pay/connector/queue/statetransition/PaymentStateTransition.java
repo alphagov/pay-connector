@@ -31,4 +31,11 @@ public final class PaymentStateTransition extends StateTransition {
     public String getIdentifier() {
         return String.valueOf(chargeEventId);
     }
+
+    @Override
+    public String toString() {
+        return "PaymentStateTransition{" +
+                "chargeEventId=" + chargeEventId +
+                "} " + super.toString();
+    }
 }

@@ -19,4 +19,12 @@ abstract class RefundCreatedEventDetails extends EventDetails {
     public String getGatewayAccountId() {
         return gatewayAccountId;
     }
+
+    @Override
+    public String toString() {
+        return "RefundCreatedEventDetails{" +
+                "amount=" + amount +
+                ", gatewayAccountId='" + gatewayAccountId + '\'' +
+                '}';
+    }
 }
