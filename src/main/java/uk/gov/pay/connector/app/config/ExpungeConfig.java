@@ -19,25 +19,31 @@ public class ExpungeConfig extends Configuration {
     @Valid
     @NotNull
     @Min(1)
-    private int numberOfChargesToExpunge;
+    private int numberOfChargesOrRefundsToExpunge;
 
     @Valid
     @NotNull
     @Min(0)
-    private int excludeChargesParityCheckedWithInDays;
+    private int excludeChargesOrRefundsParityCheckedWithInDays;
 
     private boolean expungeChargesEnabled;
+
+    private boolean expungeRefundsEnabled;
+
+    @Valid
+    @NotNull
+    private int minimumAgeOfRefundInDays;
 
     public int getMinimumAgeOfChargeInDays() {
         return minimumAgeOfChargeInDays;
     }
 
-    public int getNumberOfChargesToExpunge() {
-        return numberOfChargesToExpunge;
+    public int getNumberOfChargesOrRefundsToExpunge() {
+        return numberOfChargesOrRefundsToExpunge;
     }
 
-    public int getExcludeChargesParityCheckedWithInDays() {
-        return excludeChargesParityCheckedWithInDays;
+    public int getExcludeChargesOrRefundsParityCheckedWithInDays() {
+        return excludeChargesOrRefundsParityCheckedWithInDays;
     }
 
     public boolean isExpungeChargesEnabled() {
@@ -46,5 +52,13 @@ public class ExpungeConfig extends Configuration {
 
     public int getMinimumAgeForHistoricChargeExceptions() {
         return minimumAgeForHistoricChargeExceptions;
+    }
+
+    public boolean isExpungeRefundsEnabled() {
+        return expungeRefundsEnabled;
+    }
+
+    public int getMinimumAgeOfRefundInDays() {
+        return minimumAgeOfRefundInDays;
     }
 }
