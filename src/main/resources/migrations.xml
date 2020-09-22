@@ -1513,4 +1513,30 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add parity-check columns to refunds" author="">
+        <addColumn tableName="refunds">
+            <column name="parity_check_status" type="varchar(100)">
+            </column>
+        </addColumn>
+        <addColumn tableName="refunds">
+            <column name="parity_check_date" type="timestamp without timezone">
+            </column>
+        </addColumn>
+        <createIndex indexName="idx_refunds_parity_check_date"
+                     tableName="refunds"
+                     unique="false">
+            <column name="parity_check_date"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="add parity-check columns to refunds history" author="">
+        <addColumn tableName="refunds_history">
+            <column name="parity_check_status" type="varchar(100)">
+            </column>
+        </addColumn>
+        <addColumn tableName="refunds_history">
+            <column name="parity_check_date" type="timestamp without timezone">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
