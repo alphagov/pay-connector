@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.refund.service.ChargeRefundService;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.Optional;
@@ -18,11 +18,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class RefundNotificationProcessor {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private ChargeRefundService refundService;
+    private RefundService refundService;
     private UserNotificationService userNotificationService;
 
     @Inject
-    RefundNotificationProcessor(ChargeRefundService refundService,
+    RefundNotificationProcessor(RefundService refundService,
                                 UserNotificationService userNotificationService) {
         this.refundService = refundService;
         this.userNotificationService = userNotificationService;

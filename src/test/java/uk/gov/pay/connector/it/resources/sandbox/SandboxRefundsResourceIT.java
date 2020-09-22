@@ -39,12 +39,12 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class SandboxRefundIT extends ChargingITestBase {
+public class SandboxRefundsResourceIT extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    public SandboxRefundIT() {
+    public SandboxRefundsResourceIT() {
         super("sandbox");
     }
 

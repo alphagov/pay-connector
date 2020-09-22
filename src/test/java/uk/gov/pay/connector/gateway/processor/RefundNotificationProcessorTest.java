@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.refund.service.ChargeRefundService;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.List;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 public class RefundNotificationProcessorTest {
 
     @Mock
-    private ChargeRefundService refundService;
+    private RefundService refundService;
     @Mock
     private UserNotificationService userNotificationService;
 

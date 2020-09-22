@@ -13,7 +13,7 @@ import uk.gov.pay.connector.refund.model.RefundResponse;
 import uk.gov.pay.connector.refund.model.RefundsResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
-import uk.gov.pay.connector.refund.service.ChargeRefundService;
+import uk.gov.pay.connector.refund.service.RefundService;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -36,15 +36,15 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithRefundNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
-public class ChargeRefundsResource {
+public class RefundsResource {
 
-    private final ChargeRefundService refundService;
+    private final RefundService refundService;
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
 
     @Inject
-    public ChargeRefundsResource(ChargeRefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
+    public RefundsResource(RefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
         this.refundService = refundService;
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;

@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
-public class ChargeRefundService {
+public class RefundService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     
@@ -42,8 +42,8 @@ public class ChargeRefundService {
     private StateTransitionService stateTransitionService;
 
     @Inject
-    public ChargeRefundService(RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
-                               UserNotificationService userNotificationService, StateTransitionService stateTransitionService
+    public RefundService(RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
+                         UserNotificationService userNotificationService, StateTransitionService stateTransitionService
     ) {
         this.refundDao = refundDao;
         this.gatewayAccountDao = gatewayAccountDao;
