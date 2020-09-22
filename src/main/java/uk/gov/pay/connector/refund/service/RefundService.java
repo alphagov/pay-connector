@@ -36,7 +36,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 public class RefundService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    
+
     private final RefundDao refundDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final PaymentProviders providers;
@@ -246,10 +246,14 @@ public class RefundService {
         long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, postRefundList);
         checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
 
-        checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability, 
+        checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability,
                 gatewayAccountEntity, availableToBeRefunded);
 
         return availableToBeRefunded;
+    }
+
+    public List<RefundEntity> findNotExpungedRefunds(String chargeExternalId) {
+        return refundDao.findRefundsByChargeExternalId(chargeExternalId);
     }
 
     public List<Refund> findRefunds(Charge charge) {

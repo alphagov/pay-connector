@@ -6,7 +6,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.RefundResponse;
@@ -41,14 +40,12 @@ public class RefundsResource {
     private final RefundService refundService;
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
-    private final RefundDao refundDao;
 
     @Inject
-    public RefundsResource(RefundService refundService, ChargeService chargeService, ChargeDao chargeDao, RefundDao refundDao) {
+    public RefundsResource(RefundService refundService, ChargeService chargeService, ChargeDao chargeDao) {
         this.refundService = refundService;
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
-        this.refundDao = refundDao;
     }
 
     @POST
@@ -86,20 +83,23 @@ public class RefundsResource {
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
+    /**
+     * Not used anymore - public api now only uses ledger, this can be removed once public api code is tidied up.
+     */
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Produces(APPLICATION_JSON)
     public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
-                    List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeId);
+                    List<RefundEntity> refundEntityList = refundService.findNotExpungedRefunds(chargeId);
                     return Response.ok(RefundsResponse.valueOf(chargeEntity, refundEntityList, uriInfo).serialize()).build();
                 })
                 .orElse(responseWithChargeNotFound(chargeId));
     }
 
     private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, Long accountId, UriInfo uriInfo) {
-        return refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()).stream()
+        return refundService.findNotExpungedRefunds(chargeEntity.getExternalId()).stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
                 .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, accountId, uriInfo).serialize()).build())
