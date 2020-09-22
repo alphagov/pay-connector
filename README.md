@@ -42,6 +42,17 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS` | `20` | Maximum wait time for long poll message requests to queue. |
 | `AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE` | `10` | Maximum number of messages that should be received in an individual message batch. |
 
+### Expunger
+| Variable | Default | Purpose |
+|---------|---------|---------|
+| `EXPUNGE_NO_OF_CHARGES_OR_REFUNDS_PER_TASK_RUN`            | 25000 | Number of charges or refunds to expunge each time expunge resource endpoint is invoked |
+| `EXPUNGE_EXCLUDE_CHARGES_OR_REFUNDS_PARITY_CHECKED_WITHIN_DAYS` | 7 | Exclude charges or refunds from expunging if parity checked within the configured days  |
+| `EXPUNGE_HISTORIC_CHARGE_OR_REFUND_EXCEPTIONS_OLDER_THAN_DAYS`  | 90 | Number of days after which charges or refunds in a certain state (ex: CAPTURE_SUBMITTED for charge) can be expunged, even when not in expungeable state  |
+| `EXPUNGE_CHARGES_ENABLED`   | false | Set to true to enable expunging charges (in expungeable state) |
+| `EXPUNGE_CHARGES_OLDER_THAN_DAYS` | 7 | Expunge charges older than 7 days (or as configured) based on created date | 
+| `EXPUNGE_REFUNDS_ENABLED`          | false |  Set to true to enable expunging refunds in terminal state |
+| `EXPUNGE_REFUNDS_OLDER_THAN_DAYS`            | 7 | Expunge refunds older than 7 days (or as configured) based on created date |
+
 ### Background captures
 
 The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state that have been published to

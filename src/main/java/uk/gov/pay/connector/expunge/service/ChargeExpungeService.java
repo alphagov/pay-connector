@@ -67,7 +67,7 @@ public class ChargeExpungeService {
         } else {
             int noOfChargesToExpunge = getNumberOfChargesToExpunge(noOfChargesToExpungeQueryParam);
             int minimumAgeOfChargeInDays = expungeConfig.getMinimumAgeOfChargeInDays();
-            int createdWithinLast = expungeConfig.getExcludeChargesParityCheckedWithInDays();
+            int createdWithinLast = expungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays();
 
             IntStream.range(0, noOfChargesToExpunge).forEach(number -> {
                 chargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, createdWithinLast)
@@ -91,7 +91,7 @@ public class ChargeExpungeService {
         if (noOfChargesToExpungeQueryParam != null && noOfChargesToExpungeQueryParam > 0) {
             return noOfChargesToExpungeQueryParam;
         }
-        return expungeConfig.getNumberOfChargesToExpunge();
+        return expungeConfig.getNumberOfChargesOrRefundsToExpunge();
     }
 
     private void parityCheckAndExpungeIfMet(ChargeEntity chargeEntity) {

@@ -181,11 +181,13 @@ restClientConfig:
 ledgerBaseURL: ${LEDGER_URL:-http://localhost:10700}
 
 expungeConfig:
-  minimumAgeOfChargeInDays: ${EXPUNGE_CHARGES_OLDER_THAN_DAYS:-90}
-  excludeChargesParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_PARITY_CHECKED_WITHIN_DAYS:-7}
-  numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGE_PER_TASK_RUN:-10}
+  numberOfChargesOrRefundsToExpunge: ${EXPUNGE_NO_OF_CHARGES_OR_REFUNDS_PER_TASK_RUN:-10}
+  excludeChargesOrRefundsParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_OR_REFUNDS_PARITY_CHECKED_WITHIN_DAYS:-7}
   expungeChargesEnabled: ${EXPUNGE_CHARGES_ENABLED:-true}
+  minimumAgeOfChargeInDays: ${EXPUNGE_CHARGES_OLDER_THAN_DAYS:-90}
   minimumAgeForHistoricChargeExceptions: ${EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS:-90}
+  expungeRefundsEnabled: ${EXPUNGE_REFUNDS_ENABLED:-true}
+  minimumAgeOfRefundInDays: ${EXPUNGE_REFUNDS_OLDER_THAN_DAYS:-90}
 
 authorisation3dsConfig:
   maximumNumberOfTimesToAllowUserToAttempt3ds: ${MAXIMUM_NO_USER_3DS_ATTEMPTS:-1}
