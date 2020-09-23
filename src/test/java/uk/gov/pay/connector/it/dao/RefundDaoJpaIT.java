@@ -1,18 +1,22 @@
 package uk.gov.pay.connector.it.dao;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
@@ -21,6 +25,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
+import static uk.gov.pay.connector.events.EmittedEventFixture.anEmittedEventEntity;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.resources.ChargeEventsResourceIT.SUBMITTED_BY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
@@ -28,6 +34,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 public class RefundDaoJpaIT extends DaoITestBase {
@@ -37,11 +44,13 @@ public class RefundDaoJpaIT extends DaoITestBase {
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
     private String refundGatewayTransactionId;
+    private EmittedEventDao emittedEventDao;
 
     @Before
     public void setUp() throws Exception {
         setup();
         refundDao = env.getInstance(RefundDao.class);
+        emittedEventDao = env.getInstance(EmittedEventDao.class);
         databaseTestHelper.deleteAllCardTypes();
 
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
@@ -117,7 +126,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     @Test
     public void findByChargeExternalIdAndGatewayTransactionId_shouldNotFindRefundIfGatewayTransactionIdDoesNotMatch() {
         String noExistingRefundTransactionId = "refund_0";
-        assertThat(refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeTestRecord.getExternalChargeId(), 
+        assertThat(refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeTestRecord.getExternalChargeId(),
                 noExistingRefundTransactionId).isPresent(), is(false));
     }
 
@@ -306,5 +315,111 @@ public class RefundDaoJpaIT extends DaoITestBase {
         refundDao.persist(refundEntity2);
 
         assertThat(refundDao.findMaxId(), Matchers.is(refundEntity.getId()));
+    }
+
+    @Test
+    public void findRefundToExpunge_shouldReturnRefundReadyForExpunging() {
+        String chargeExternalId = randomAlphanumeric(26);
+        RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundToExpunge.setStatus(REFUNDED);
+        refundToExpunge.setCreatedDate(ZonedDateTime.now(UTC).minusDays(7));
+        refundDao.persist(refundToExpunge);
+        
+        RefundEntity refundToExclude = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundToExclude.setStatus(REFUNDED);
+        refundToExclude.setCreatedDate(ZonedDateTime.now(UTC));
+        refundDao.persist(refundToExclude);
+
+        RefundEntity refundParityCheckedRecentlyAndToBeExcluded = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundParityCheckedRecentlyAndToBeExcluded.setStatus(REFUNDED);
+        refundParityCheckedRecentlyAndToBeExcluded.setCreatedDate(ZonedDateTime.now(UTC).minusDays(17));
+        refundParityCheckedRecentlyAndToBeExcluded.setParityCheckDate(now(ZoneId.of("UTC")).minusDays(2));
+        refundParityCheckedRecentlyAndToBeExcluded.setParityCheckStatus(MISSING_IN_LEDGER);
+        refundDao.persist(refundParityCheckedRecentlyAndToBeExcluded);
+
+        Optional<RefundEntity> mayBeRefundToExpunge = refundDao.findRefundToExpunge(5, 7);
+
+        assertThat(mayBeRefundToExpunge.isPresent(), Matchers.is(true));
+        RefundEntity refundEntity = mayBeRefundToExpunge.get();
+        assertThat(refundEntity.getId(), Matchers.is(refundToExpunge.getId()));
+        assertThat(refundEntity.getExternalId(), Matchers.is(refundToExpunge.getExternalId()));
+
+        refundDao.expungeRefund(refundToExpunge.getExternalId());
+    }
+
+    @Test
+    public void findRefundToExpunge_shouldReturnParityCheckedRefundIfEligible() {
+        String chargeExternalId = randomAlphanumeric(26);
+        RefundEntity refundParityCheckedRecentlyAndNotEligibleForExpunging = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundParityCheckedRecentlyAndNotEligibleForExpunging.setStatus(REFUNDED);
+        refundParityCheckedRecentlyAndNotEligibleForExpunging.setCreatedDate(ZonedDateTime.now(UTC).minusDays(10));
+        refundParityCheckedRecentlyAndNotEligibleForExpunging.setParityCheckDate(now(ZoneId.of("UTC")).minusDays(2));
+        refundParityCheckedRecentlyAndNotEligibleForExpunging.setParityCheckStatus(MISSING_IN_LEDGER);
+        refundDao.persist(refundParityCheckedRecentlyAndNotEligibleForExpunging);
+
+        RefundEntity refundParityCheckedPreviouslyAndIsNowEligibleForExpunging = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.setStatus(REFUNDED);
+        refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.setCreatedDate(ZonedDateTime.now(UTC).minusDays(10));
+        refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.setParityCheckDate(now(ZoneId.of("UTC")).minusDays(8));
+        refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.setParityCheckStatus(MISSING_IN_LEDGER);
+        refundDao.persist(refundParityCheckedPreviouslyAndIsNowEligibleForExpunging);
+
+        Optional<RefundEntity> mayBeRefundToExpunge = refundDao.findRefundToExpunge(5, 7);
+
+        assertThat(mayBeRefundToExpunge.isPresent(), Matchers.is(true));
+        RefundEntity refundEntity = mayBeRefundToExpunge.get();
+        assertThat(refundEntity.getId(), Matchers.is(refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.getId()));
+        assertThat(refundEntity.getExternalId(), Matchers.is(refundParityCheckedPreviouslyAndIsNowEligibleForExpunging.getExternalId()));
+
+        refundDao.expungeRefund(refundEntity.getExternalId());
+    }
+
+    @Test
+    public void findRefundToExpunge_shouldNotReturnRefundIfChargeStillExists() {
+        RefundEntity refund = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refund.setStatus(REFUNDED);
+        refund.setCreatedDate(ZonedDateTime.now(UTC).minusDays(10));
+        refundDao.persist(refund);
+
+        Optional<RefundEntity> mayBeRefundToExpunge = refundDao.findRefundToExpunge(5, 7);
+
+        assertThat(mayBeRefundToExpunge.isPresent(), Matchers.is(false));
+    }
+
+    @Test
+    public void expungeRefund_shouldExpungeRefundRelatedRecordsCorrectly() {
+        RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundToExpunge.setStatus(REFUNDED);
+        refundDao.persist(refundToExpunge);
+
+        RefundEntity refundToNotBeExpunged = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundToNotBeExpunged.setStatus(REFUND_ERROR);
+        refundDao.persist(refundToNotBeExpunged);
+
+        emittedEventDao.persist(anEmittedEventEntity()
+                .withResourceExternalId(refundToExpunge.getExternalId())
+                .withResourceType("refund")
+                .withId(RandomUtils.nextLong())
+                .build());
+
+        // assert data is as expected
+        Optional<RefundEntity> mayBeRefundEntity = refundDao.findByExternalId(refundToExpunge.getExternalId());
+        List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeExternalId(chargeTestRecord.getExternalChargeId());
+        boolean containsEmittedEventForRefundExternalId = databaseTestHelper.containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
+
+        assertThat(containsEmittedEventForRefundExternalId, is(true));
+        assertThat(mayBeRefundEntity.isPresent(), Matchers.is(true));
+        assertThat(refundHistoryList.size(), Matchers.is(2));
+
+        // act
+        refundDao.expungeRefund(refundToExpunge.getExternalId());
+
+        mayBeRefundEntity = refundDao.findByExternalId(refundToExpunge.getExternalId());
+        refundHistoryList = refundDao.searchHistoryByChargeExternalId(chargeTestRecord.getExternalChargeId());
+        containsEmittedEventForRefundExternalId = databaseTestHelper.containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
+
+        assertThat(mayBeRefundEntity.isPresent(), Matchers.is(false));
+        assertThat(refundHistoryList.size(), Matchers.is(1));
+        assertThat(containsEmittedEventForRefundExternalId, is(false));
     }
 }

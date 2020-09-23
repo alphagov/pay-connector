@@ -2,6 +2,7 @@ package uk.gov.pay.connector.refund.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -13,6 +14,8 @@ import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -79,6 +82,14 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "charge_external_id")
     private String chargeExternalId;
+
+    @Column(name = "parity_check_status")
+    @Enumerated(EnumType.STRING)
+    private ParityCheckStatus parityCheckStatus;
+
+    @Column(name = "parity_check_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime parityCheckDate;
 
     public RefundEntity() {
         //for jpa
@@ -184,5 +195,21 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public void setChargeExternalId(String chargeExternalId) {
         this.chargeExternalId = chargeExternalId;
+    }
+
+    public ParityCheckStatus getParityCheckStatus() {
+        return parityCheckStatus;
+    }
+
+    public void setParityCheckStatus(ParityCheckStatus parityCheckStatus) {
+        this.parityCheckStatus = parityCheckStatus;
+    }
+
+    public ZonedDateTime getParityCheckDate() {
+        return parityCheckDate;
+    }
+
+    public void setParityCheckDate(ZonedDateTime parityCheckDate) {
+        this.parityCheckDate = parityCheckDate;
     }
 }
