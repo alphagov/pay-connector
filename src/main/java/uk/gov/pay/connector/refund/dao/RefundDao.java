@@ -3,6 +3,7 @@ package uk.gov.pay.connector.refund.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
+import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -14,6 +15,8 @@ import java.sql.Date;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static java.time.ZoneOffset.UTC;
 
 @Transactional
 public class RefundDao extends JpaDao<RefundEntity> {
@@ -129,5 +132,43 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .createQuery(query, Long.class)
                 .setMaxResults(1)
                 .getSingleResult();
+    }
+
+    public Optional<RefundEntity> findRefundToExpunge(int minimumAgeOfRefundInDays, int excludeRefundsParityCheckedWithInDays) {
+        String query = "SELECT r FROM RefundEntity r left outer join ChargeEntity c on r.chargeExternalId = c.externalId " +
+                " WHERE c.externalId is null " +
+                " AND (r.parityCheckDate is null or r.parityCheckDate < :parityCheckedBeforeDate)" +
+                " AND r.createdDate < :createdBeforeDate " +
+                " ORDER BY r.createdDate asc";
+
+        ZonedDateTime parityCheckedBeforeDate = ZonedDateTime.now(UTC)
+                .minusDays(excludeRefundsParityCheckedWithInDays);
+        ZonedDateTime createdBeforeDate = ZonedDateTime.now(UTC)
+                .minusDays(minimumAgeOfRefundInDays);
+
+        return entityManager.get()
+                .createQuery(query, RefundEntity.class)
+                .setParameter("parityCheckedBeforeDate", parityCheckedBeforeDate)
+                .setParameter("createdBeforeDate", createdBeforeDate)
+                .setMaxResults(1)
+                .getResultList().stream().findFirst();
+    }
+
+    public void expungeRefund(String externalId) {
+        entityManager.get()
+                .createNativeQuery("delete from emitted_events where resource_type = ?1 AND resource_external_id = ?2")
+                .setParameter(1, ResourceType.REFUND.getLowercase())
+                .setParameter(2, externalId)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from refunds_history where external_id = ?1")
+                .setParameter(1, externalId)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from refunds where external_id = ?1")
+                .setParameter(1, externalId)
+                .executeUpdate();
     }
 }
