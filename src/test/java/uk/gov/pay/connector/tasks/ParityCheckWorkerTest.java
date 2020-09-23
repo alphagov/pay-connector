@@ -26,6 +26,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
+import uk.gov.pay.connector.tasks.service.RefundParityChecker;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,12 +79,15 @@ public class ParityCheckWorkerTest {
     private ChargeEntity chargeEntity;
     private boolean doNotReprocessValidRecords = false;
     private Optional<String> emptyParityCheckStatus = Optional.empty();
+    private RefundParityChecker refundParityChecker;
 
     @Before
     public void setUp() {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         
-        parityCheckService = new ParityCheckService(ledgerService, chargeService, refundService, historicalEventEmitter, chargeParityChecker);
+        parityCheckService = new ParityCheckService(ledgerService, chargeService, historicalEventEmitter, 
+                chargeParityChecker, refundParityChecker, refundService);
+
         worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
                 stateTransitionService, eventService, refundDao, parityCheckService);
         chargeEntity = aValidChargeEntity()

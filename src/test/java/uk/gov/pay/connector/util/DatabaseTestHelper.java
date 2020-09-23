@@ -9,6 +9,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
@@ -142,13 +143,20 @@ public class DatabaseTestHelper {
     public int addRefund(String externalId, long amount, RefundStatus status,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail, String chargeExternalId) {
+        return addRefund(externalId, amount, status, gatewayTransactionId, createdDate, submittedByUserExternalId, userEmail, chargeExternalId, null, null);
+    }
+    public int addRefund(String externalId, long amount, RefundStatus status,
+                         String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
+                         String userEmail, String chargeExternalId, ParityCheckStatus parityCheckStatus, ZonedDateTime parityCheckDate) {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("INSERT INTO refunds(id, external_id, amount, status, " +
-                                " gateway_transaction_id, created_date, user_external_id, user_email, charge_external_id) " +
+                                " gateway_transaction_id, created_date, user_external_id, user_email, charge_external_id," +
+                                " parity_check_date, parity_check_status) " +
                                 "VALUES (:id, :external_id, :amount, :status, " +
-                                ":gateway_transaction_id, :created_date, :user_external_id, :user_email, :charge_external_id)")
+                                ":gateway_transaction_id, :created_date, :user_external_id, :user_email, :charge_external_id," +
+                                ":parity_check_date, :parity_check_status)")
                         .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("amount", amount)
@@ -158,6 +166,8 @@ public class DatabaseTestHelper {
                         .bind("user_external_id", submittedByUserExternalId)
                         .bind("user_email", userEmail)
                         .bind("charge_external_id", chargeExternalId)
+                        .bind("parity_check_status", parityCheckStatus)
+                        .bind("parity_check_date", parityCheckDate)
                         .bind("version", 1)
                         .execute()
         );

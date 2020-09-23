@@ -132,10 +132,19 @@ public class HistoricalEventEmitter {
         refundHistories
                 .stream()
                 .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
-                .forEach(this::emitAndPersistEventForRefundHistoryEntry);
+                .forEach(refundHistory -> emitAndPersistEventForRefundHistoryEntry(refundHistory, shouldForceEmission));
     }
 
-    public void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory) {
+    @Transactional
+    public void emitEventsForRefund(String refundExternalId, boolean shouldForceEmission) {
+        List<RefundHistory> refundHistories = refundDao.getRefundHistoryByRefundExternalId(refundExternalId);
+        refundHistories
+                .stream()
+                .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
+                .forEach(refundHistory -> emitAndPersistEventForRefundHistoryEntry(refundHistory, shouldForceEmission));
+    }
+
+    public void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory, boolean shouldForceEmission) {
         Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
         Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(refundHistory.getChargeExternalId()));

@@ -29,18 +29,20 @@ public class ParityCheckService {
     private RefundService refundService;
     private HistoricalEventEmitter historicalEventEmitter;
     private final ChargeParityChecker chargeParityChecker;
+    private final RefundParityChecker refundParityChecker;
 
     @Inject
     public ParityCheckService(LedgerService ledgerService,
                               ChargeService chargeService,
-                              RefundService refundService,
                               HistoricalEventEmitter historicalEventEmitter,
-                              ChargeParityChecker chargeParityChecker) {
+                              ChargeParityChecker chargeParityChecker, RefundParityChecker refundParityChecker,
+                              RefundService refundService) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
         this.refundService = refundService;
         this.historicalEventEmitter = historicalEventEmitter;
         this.chargeParityChecker = chargeParityChecker;
+        this.refundParityChecker = refundParityChecker;
     }
 
     public ParityCheckStatus getChargeAndRefundsParityCheckStatus(ChargeEntity charge) {
@@ -63,6 +65,21 @@ public class ParityCheckService {
         // force emit and update charge status
         historicalEventEmitter.processPaymentEvents(chargeEntity, true);
         chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), parityCheckStatus);
+
+        return false;
+    }
+
+    @Transactional
+    public boolean parityCheckRefundForExpunger(RefundEntity refundEntity) {
+        Optional<LedgerTransaction> transaction = ledgerService.getTransaction(refundEntity.getExternalId());
+        ParityCheckStatus parityCheckStatus = refundParityChecker.checkParity(refundEntity, transaction.orElse(null));
+
+        if (EXISTS_IN_LEDGER.equals(parityCheckStatus)) {
+            return true;
+        }
+
+        historicalEventEmitter.emitEventsForRefund(refundEntity.getExternalId(), true);
+        refundService.updateRefundParityStatus(refundEntity.getExternalId(), parityCheckStatus);
 
         return false;
     }

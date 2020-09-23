@@ -15,11 +15,17 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
+import uk.gov.pay.connector.tasks.service.RefundParityChecker;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +49,8 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -61,8 +69,13 @@ public class ParityCheckServiceTest {
     private PaymentProviders mockProviders;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
+    @Mock
+    RefundDao mockRefundDao;
     private ChargeEntity chargeEntity;
+    private RefundEntity refundEntity;
     private List<RefundEntity> refundEntities = List.of();
+    @InjectMocks
+    private RefundParityChecker refundParityChecker;
 
     @Before
     public void setUp() {
@@ -83,11 +96,14 @@ public class ParityCheckServiceTest {
                 .withDelayedCapture(true)
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .build();
+        refundEntity = RefundEntityFixture.aValidRefundEntity()
+                .withStatus(REFUNDED)
+                .build();
 
         when(mockRefundService.findRefunds(any())).thenReturn(refundEntities.stream().map(Refund::from).collect(Collectors.toList()));
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
-        parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockRefundService,
-                mockHistoricalEventEmitter, chargeParityChecker);
+        parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockHistoricalEventEmitter,
+                chargeParityChecker, refundParityChecker, mockRefundService);
     }
 
     @Test
@@ -128,6 +144,36 @@ public class ParityCheckServiceTest {
         assertThat(matchesWithLedger, is(true));
         verify(mockHistoricalEventEmitter, never()).processPaymentEvents(chargeEntity, true);
         verify(mockChargeService, never()).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
+    }
+
+    @Test
+    public void parityCheckRefundForExpunger_shouldBackfillRefundIfParityCheckFails() {
+        LedgerTransaction transaction = from(refundEntity)
+                .withStatus(REFUND_ERROR.toExternal().getStatus()).build();
+        when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
+
+        boolean matchesWithLedger = parityCheckService.parityCheckRefundForExpunger(refundEntity);
+
+        assertThat(matchesWithLedger, is(false));
+        verify(mockHistoricalEventEmitter).emitEventsForRefund(refundEntity.getExternalId(), true);
+        verify(mockRefundService).updateRefundParityStatus(refundEntity.getExternalId(), DATA_MISMATCH);
+    }
+
+    @Test
+    public void parityCheckRefundForExpunger_shouldNotBackfillRefundIfMatchesWithLedger() {
+        RefundHistory refundHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity().
+                withHistoryStartDate(refundEntity.getCreatedDate()).build();
+        when(mockRefundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(refundEntity.getExternalId(), RefundStatus.CREATED))
+                .thenReturn(Optional.of(refundHistory));
+
+        LedgerTransaction transaction = from(refundEntity).build();
+        when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
+
+        boolean matchesWithLedger = parityCheckService.parityCheckRefundForExpunger(refundEntity);
+
+        assertThat(matchesWithLedger, is(true));
+        verify(mockHistoricalEventEmitter, never()).emitEventsForRefund(refundEntity.getExternalId(), true);
+        verify(mockRefundService, never()).updateRefundParityStatus(any(), any());
     }
 
     private ChargeEventEntity createChargeEventEntity(ChargeStatus status, String timeStamp) {
