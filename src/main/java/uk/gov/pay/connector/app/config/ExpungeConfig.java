@@ -18,6 +18,10 @@ public class ExpungeConfig extends Configuration {
 
     @Valid
     @NotNull
+    private int minimumAgeForHistoricRefundExceptions;
+
+    @Valid
+    @NotNull
     @Min(1)
     private int numberOfChargesOrRefundsToExpunge;
 
@@ -44,6 +48,10 @@ public class ExpungeConfig extends Configuration {
 
     public int getExcludeChargesOrRefundsParityCheckedWithInDays() {
         return excludeChargesOrRefundsParityCheckedWithInDays;
+    }
+
+    public int getMinimumAgeForHistoricRefundExceptions() {
+        return minimumAgeForHistoricRefundExceptions;
     }
 
     public boolean isExpungeChargesEnabled() {
