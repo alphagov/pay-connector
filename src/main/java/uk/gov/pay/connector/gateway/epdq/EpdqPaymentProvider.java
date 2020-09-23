@@ -41,7 +41,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
@@ -236,8 +236,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<RefundEntity> refundEntityList) {
-        return externalRefundAvailabilityCalculator.calculate(charge, refundEntityList);
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
+        return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
 
     /**

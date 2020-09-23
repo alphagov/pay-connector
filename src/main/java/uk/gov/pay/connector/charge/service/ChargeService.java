@@ -61,8 +61,8 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
-import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -117,16 +117,23 @@ public class ChargeService {
     private final StateTransitionService stateTransitionService;
     private final LedgerService ledgerService;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
-    private final RefundDao refundDao;
-    private EventService eventService;
+    private final RefundService refundService;
+    private final EventService eventService;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
-                         CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers,
-                         StateTransitionService stateTransitionService, LedgerService ledgerService, EventService eventService,
-                         RefundDao refundDao, NorthAmericanRegionMapper northAmericanRegionMapper) {
+    public ChargeService(TokenDao tokenDao,
+                         ChargeDao chargeDao,
+                         ChargeEventDao chargeEventDao,
+                         CardTypeDao cardTypeDao,
+                         GatewayAccountDao gatewayAccountDao,
+                         ConnectorConfiguration config,
+                         PaymentProviders providers,
+                         StateTransitionService stateTransitionService,
+                         LedgerService ledgerService,
+                         RefundService refundService,
+                         EventService eventService,
+                         NorthAmericanRegionMapper northAmericanRegionMapper) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -138,8 +145,8 @@ public class ChargeService {
         this.stateTransitionService = stateTransitionService;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.ledgerService = ledgerService;
+        this.refundService = refundService;
         this.eventService = eventService;
-        this.refundDao = refundDao;
         this.northAmericanRegionMapper = northAmericanRegionMapper;
     }
 
@@ -280,10 +287,9 @@ public class ChargeService {
     public Optional<Charge> findCharge(String chargeExternalId) {
         Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalId(chargeExternalId);
 
-        if(maybeChargeEntity.isPresent()) {
+        if (maybeChargeEntity.isPresent()) {
             return maybeChargeEntity.map(Charge::from);
-        }
-        else{
+        } else {
             return ledgerService.getTransaction(chargeExternalId).map(Charge::from);
         }
     }
@@ -291,10 +297,9 @@ public class ChargeService {
     public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
         Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId);
 
-        if(maybeChargeEntity.isPresent()) {
+        if (maybeChargeEntity.isPresent()) {
             return maybeChargeEntity.map(Charge::from);
-        }
-        else{
+        } else {
             return ledgerService.getTransactionForGatewayAccount(chargeExternalId, gatewayAccountId).map(Charge::from);
         }
     }
@@ -306,7 +311,7 @@ public class ChargeService {
     }
 
     private Optional<Charge> findChargeFromLedger(String paymentGatewayName, String gatewayTransactionId) {
-        return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId).map(Charge::from);
+        return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName, gatewayTransactionId).map(Charge::from);
     }
 
     @Transactional
@@ -653,11 +658,11 @@ public class ChargeService {
 
     @Transactional
     public ChargeEntity forceTransitionChargeState(String chargeExternalId, ChargeStatus targetChargeState) {
-        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity -> 
+        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity ->
                 forceTransitionChargeState(chargeEntity, targetChargeState))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
-    
+
     @Transactional
     public ChargeEntity forceTransitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
         ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
@@ -671,7 +676,7 @@ public class ChargeService {
                         charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity,
                         eventClass);
             }
-            
+
             return charge;
         }).orElseThrow(() -> new InvalidForceStateTransitionException(fromChargeState, targetChargeState));
     }
@@ -679,7 +684,7 @@ public class ChargeService {
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
-    
+
     @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
@@ -748,7 +753,7 @@ public class ChargeService {
         if (hasFullCardNumber(authCardDetails)) { // Apple Pay etc. don’t give us a full card number, just the last four digits here
             detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         }
-        
+
         if (hasLastFourCharactersCardNumber(authCardDetails)) {
             detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
         }
@@ -771,7 +776,7 @@ public class ChargeService {
     private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() > 6;
     }
-    
+
     private boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() >= 4;
     }
@@ -796,10 +801,10 @@ public class ChargeService {
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity chargeEntity) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         Charge charge = Charge.from(chargeEntity);
-        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId());
-        refund.setStatus(providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundEntityList).getStatus());
-        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundEntityList));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList));
+        List<Refund> refundList = refundService.findRefunds(charge);
+        refund.setStatus(providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundList).getStatus());
+        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundList));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundList));
         return refund;
     }
 

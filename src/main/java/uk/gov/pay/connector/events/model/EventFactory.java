@@ -26,8 +26,9 @@ import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.service.RefundService;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -40,6 +41,7 @@ import java.util.stream.Stream;
 public class EventFactory {
     private final ChargeService chargeService;
     private final RefundDao refundDao;
+    private final RefundService refundService;
     private final PaymentProviders paymentProviders;
     private final ChargeEventDao chargeEventDao;
     private static final List<Class<? extends Event>> EVENTS_AFFECTING_REFUNDABILITY = List.of(
@@ -54,9 +56,10 @@ public class EventFactory {
             PaymentGatewayStateTransitions.getAllEventsResultingInTerminalState();
 
     @Inject
-    public EventFactory(ChargeService chargeService, RefundDao refundDao, ChargeEventDao chargeEventDao, PaymentProviders paymentProviders) {
+    public EventFactory(ChargeService chargeService, RefundDao refundDao, RefundService refundService, ChargeEventDao chargeEventDao, PaymentProviders paymentProviders) {
         this.chargeService = chargeService;
         this.refundDao = refundDao;
+        this.refundService = refundService;
         this.chargeEventDao = chargeEventDao;
         this.paymentProviders = paymentProviders;
     }
@@ -158,18 +161,18 @@ public class EventFactory {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
                     Optional.ofNullable(charge)
                     .map(c -> {
-                        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(c.getExternalId());
+                        List<Refund> refundList = refundService.findRefunds(c);
                         ExternalChargeRefundAvailability refundAvailability;
 
                         refundAvailability = paymentProviders
                                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                                .getExternalChargeRefundAvailability(charge, refundEntityList);
+                                .getExternalChargeRefundAvailability(charge, refundList);
 
                         return new RefundAvailabilityUpdated(
                                         c.getExternalId(),
                                         RefundAvailabilityUpdatedEventDetails.from(
                                                 charge,
-                                                refundEntityList,
+                                                refundList,
                                                 refundAvailability
                                         ),
                                         eventTimestamp

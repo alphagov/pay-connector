@@ -29,6 +29,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
@@ -585,6 +586,34 @@ public class RefundServiceTest {
 
         refundService.transitionRefundState(refundEntity, CREATED);
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, CREATED);
+    }
+
+    @Test
+    public void shouldFindRefundsGivenValidCharge() {
+        Charge charge = Charge.from(aValidChargeEntity().build());
+
+        RefundEntity refundOne = aValidRefundEntity()
+                .withChargeExternalId(charge.getExternalId())
+                .withAmount(100L)
+                .withStatus(CREATED)
+                .build();
+        RefundEntity refundTwo = aValidRefundEntity()
+                .withChargeExternalId(charge.getExternalId())
+                .withAmount(400L)
+                .withStatus(RefundStatus.REFUND_SUBMITTED)
+                .build();
+
+        when(mockRefundDao.findRefundsByChargeExternalId(charge.getExternalId()))
+                .thenReturn(List.of(refundOne, refundTwo));
+
+        List<Refund> refunds = refundService.findRefunds(charge);
+
+        assertThat(refunds.size(), is(2));
+        assertThat(refunds.get(0).getChargeExternalId(), is(charge.getExternalId()));
+        assertThat(refunds.get(0).getAmount(), is(refundOne.getAmount()));
+        assertThat(refunds.get(0).getStatus(), is(RefundStatus.CREATED));
+        assertThat(refunds.get(1).getStatus(), is(RefundStatus.REFUND_SUBMITTED));
+        assertThat(refunds.get(1).getAmount(), is(refundTwo.getAmount()));
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {

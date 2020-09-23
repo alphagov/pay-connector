@@ -55,6 +55,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
@@ -160,7 +161,7 @@ public class ChargeServiceTest {
     protected StateTransitionService mockStateTransitionService;
 
     @Mock
-    protected RefundDao mockRefundDao;
+    protected RefundService mockedRefundService;
 
     @Mock
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
@@ -213,7 +214,7 @@ public class ChargeServiceTest {
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockEventService, mockRefundDao, mockNorthAmericanRegionMapper);
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockNorthAmericanRegionMapper);
     }
 
     @After

@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationHandler;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -99,8 +100,8 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<RefundEntity> refundEntityList) {
-        return externalRefundAvailabilityCalculator.calculate(charge, refundEntityList);
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
+        return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
 
     private GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {

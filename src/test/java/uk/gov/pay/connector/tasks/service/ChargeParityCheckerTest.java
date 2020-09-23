@@ -14,8 +14,8 @@ import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.util.List;
 
@@ -45,7 +45,7 @@ import static uk.gov.pay.connector.wallets.WalletType.GOOGLE_PAY;
 public class ChargeParityCheckerTest {
 
     @Mock
-    private RefundDao mockRefundDao;
+    private RefundService mockRefundService;
     @Mock
     private PaymentProviders mockProviders;
     @InjectMocks
@@ -73,7 +73,7 @@ public class ChargeParityCheckerTest {
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .build();
 
-        when(mockRefundDao.findRefundsByChargeExternalId(any())).thenReturn(refundEntities);
+        when(mockRefundService.findRefunds(any())).thenReturn(List.of());
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
     }
 
