@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.refund.model.domain;
 
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+
 import java.util.Objects;
 
 public class Refund {
@@ -9,13 +11,18 @@ public class Refund {
     private String userEmail;
     private String gatewayTransactionId;
     private String chargeExternalId;
-    private RefundStatus status;
+    private ExternalRefundStatus externalStatus;
     private boolean historic;
 
-    public Refund(String externalId, Long amount, RefundStatus status, String userExternalId, String userEmail, String gatewayTransactionId, String chargeExternalId, boolean historic) {
+    public Refund(String externalId, Long amount,
+                  ExternalRefundStatus externalStatus,
+                  String userExternalId, String userEmail,
+                  String gatewayTransactionId,
+                  String chargeExternalId,
+                  boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
-        this.status = status;
+        this.externalStatus = externalStatus;
         this.userExternalId = userExternalId;
         this.userEmail = userEmail;
         this.gatewayTransactionId = gatewayTransactionId;
@@ -27,7 +34,7 @@ public class Refund {
         return new Refund(
                 refundEntity.getExternalId(),
                 refundEntity.getAmount(),
-                refundEntity.getStatus(),
+                refundEntity.getStatus().toExternal(),
                 refundEntity.getUserExternalId(),
                 refundEntity.getUserEmail(),
                 refundEntity.getGatewayTransactionId(),
@@ -56,8 +63,8 @@ public class Refund {
         return userExternalId;
     }
 
-    public RefundStatus getStatus() {
-        return status;
+    public ExternalRefundStatus getExternalStatus() {
+        return externalStatus;
     }
 
     public Long getAmount() {
@@ -80,7 +87,7 @@ public class Refund {
         Refund refund = (Refund) obj;
         return Objects.equals(externalId, refund.externalId) &&
                 Objects.equals(amount, refund.amount) &&
-                Objects.equals(status, refund.status) &&
+                Objects.equals(externalStatus, refund.externalStatus) &&
                 Objects.equals(gatewayTransactionId, refund.gatewayTransactionId) &&
                 Objects.equals(historic, refund.historic) &&
                 Objects.equals(chargeExternalId, refund.chargeExternalId) &&

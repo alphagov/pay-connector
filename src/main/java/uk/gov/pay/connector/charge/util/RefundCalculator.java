@@ -3,10 +3,11 @@ package uk.gov.pay.connector.charge.util;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.List;
+
+import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUCCESS;
 
 /**
  * Holder for utility methods used to calculate refund amounts
@@ -27,7 +28,7 @@ public class RefundCalculator {
 
     public static long getRefundedAmount(List<Refund> refundList) {
         return refundList.stream()
-                .filter(p -> List.of(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED).contains(p.getStatus()))
+                .filter(p -> List.of(EXTERNAL_SUBMITTED, EXTERNAL_SUCCESS).contains(p.getExternalStatus()))
                 .mapToLong(Refund::getAmount)
                 .sum();
     }

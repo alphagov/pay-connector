@@ -611,8 +611,8 @@ public class RefundServiceTest {
         assertThat(refunds.size(), is(2));
         assertThat(refunds.get(0).getChargeExternalId(), is(charge.getExternalId()));
         assertThat(refunds.get(0).getAmount(), is(refundOne.getAmount()));
-        assertThat(refunds.get(0).getStatus(), is(RefundStatus.CREATED));
-        assertThat(refunds.get(1).getStatus(), is(RefundStatus.REFUND_SUBMITTED));
+        assertThat(refunds.get(0).getExternalStatus(), is(RefundStatus.CREATED.toExternal()));
+        assertThat(refunds.get(1).getExternalStatus(), is(RefundStatus.REFUND_SUBMITTED.toExternal()));
         assertThat(refunds.get(1).getAmount(), is(refundTwo.getAmount()));
     }
 
