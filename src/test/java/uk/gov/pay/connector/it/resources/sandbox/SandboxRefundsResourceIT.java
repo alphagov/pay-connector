@@ -8,11 +8,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +27,7 @@ import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,6 +40,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
@@ -107,9 +114,9 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
 
         //second refund request with wrong refundAmountAvailable
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
-            .statusCode(PRECONDITION_FAILED.getStatusCode())
-            .body("message", contains("Refund Amount Available Mismatch"))
-            .body("error_identifier", is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH.toString()));
+                .statusCode(PRECONDITION_FAILED.getStatusCode())
+                .body("message", contains("Refund Amount Available Mismatch"))
+                .body("error_identifier", is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
@@ -286,6 +293,71 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }
 
+    @Test
+    public void shouldFailRequestingARefundForHistoricCharge_whenPartialRefundAmountGreaterThanRemainingAmount_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
+        String chargeExternalId = "historic-charge-id";
+        
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        LedgerTransaction charge = aValidLedgerTransaction()
+                .withExternalId(chargeExternalId)
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withAmount(1000L)
+                .withRefundSummary(refundSummary)
+                .build();
+        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+
+        // add one refund that is still in connector and another that is only in ledger to check
+        // that both are used when calculating refundability
+        databaseTestHelper.addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
+
+        LedgerTransaction expungedRefund = aValidLedgerTransaction()
+                .withExternalId("ledger-refund-id")
+                .withParentTransactionId(defaultTestCharge.getExternalChargeId())
+                .withAmount(300L)
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .build();
+        ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
+
+        Long refundAmount = 201L;
+        postRefundFor(chargeExternalId, refundAmount, 200L)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("reason", is("amount_not_available"))
+                .body("message", contains("Not sufficient amount available for refund"))
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
+    }
+
+    @Test
+    public void shouldSucceedRequestingARefundForHistoricCharge_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
+        String chargeExternalId = "historic-charge-id";
+
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        LedgerTransaction charge = aValidLedgerTransaction()
+                .withExternalId(chargeExternalId)
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withAmount(1000L)
+                .withRefundSummary(refundSummary)
+                .build();
+        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+
+        // add one refund that is still in connector and another that is only in ledger to check
+        // that both are used when calculating refundability
+        databaseTestHelper.addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
+
+        LedgerTransaction expungedRefund = aValidLedgerTransaction()
+                .withExternalId("ledger-refund-id")
+                .withParentTransactionId(defaultTestCharge.getExternalChargeId())
+                .withAmount(300L)
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .build();
+        ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
+
+        Long refundAmount = 200L;
+        postRefundFor(chargeExternalId, refundAmount, 200L)
+                .statusCode(ACCEPTED.getStatusCode());
+    }
+
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {
         return postRefundFor(chargeId, refundAmount, refundAmountAvlbl, null, null);
     }
@@ -293,7 +365,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl,
                                               String userExternalId, String userEmail) {
         Map<String, Object> refundData = new HashMap();
-        
+
         refundData.put("amount", refundAmount);
         refundData.put("refund_amount_available", refundAmountAvlbl);
 
@@ -301,7 +373,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
             refundData.put("user_external_id", userExternalId);
             refundData.put("user_email", userEmail);
         }
-        
+
         String refundPayload = new Gson().toJson(refundData);
 
         return givenSetup()

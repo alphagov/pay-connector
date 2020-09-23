@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -28,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -45,16 +47,22 @@ public class RefundService {
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
     private StateTransitionService stateTransitionService;
+    private LedgerService ledgerService;
 
     @Inject
-    public RefundService(RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
-                         UserNotificationService userNotificationService, StateTransitionService stateTransitionService
+    public RefundService(RefundDao refundDao,
+                         GatewayAccountDao gatewayAccountDao,
+                         PaymentProviders providers,
+                         UserNotificationService userNotificationService,
+                         StateTransitionService stateTransitionService,
+                         LedgerService ledgerService
     ) {
         this.refundDao = refundDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
         this.stateTransitionService = stateTransitionService;
+        this.ledgerService = ledgerService;
     }
 
     public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
@@ -260,11 +268,27 @@ public class RefundService {
     }
 
     public List<Refund> findRefunds(Charge charge) {
-        return refundDao
+        List<Refund> refundsFromDatabase = refundDao
                 .findRefundsByChargeExternalId(charge.getExternalId())
                 .stream()
                 .map(Refund::from)
                 .collect(Collectors.toList());
+        
+        if (charge.isHistoric()) {
+            // Combine refunds that have been expunged and so only exist in ledger with refunds that still exist in
+            // the database, preferring records that still exist in the database as they might be in-flight.
+            Stream<Refund> refundsOnlyInLedger = ledgerService
+                    .getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId())
+                    .getTransactions()
+                    .stream()
+                    .map(Refund::from)
+                    .filter(refund -> refundsFromDatabase.stream().noneMatch(refund1 -> refund1.getExternalId().equals(refund.getExternalId())));
+
+            return Stream.concat(refundsFromDatabase.stream(), refundsOnlyInLedger).collect(Collectors.toList());
+        } else {
+            return refundsFromDatabase;
+        }
+        
     }
     
     @Transactional

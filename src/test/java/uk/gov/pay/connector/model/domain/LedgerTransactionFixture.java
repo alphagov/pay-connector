@@ -47,7 +47,7 @@ public class LedgerTransactionFixture {
     private String returnUrl;
     private SupportedLanguage language;
     private CardDetails cardDetails;
-    private ZonedDateTime createdDate;
+    private ZonedDateTime createdDate = ZonedDateTime.now();
     private boolean live;
     private Long gatewayAccountId;
     private String paymentProvider;

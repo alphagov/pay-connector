@@ -14,6 +14,8 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.LedgerTransactionFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -45,6 +48,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
@@ -67,7 +71,9 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RefundServiceTest {
@@ -94,6 +100,8 @@ public class RefundServiceTest {
     private UserNotificationService mockUserNotificationService;
     @Mock
     private StateTransitionService mockStateTransitionService;
+    @Mock
+    private LedgerService mockLedgerService;
 
     @Before
     public void setUp() {
@@ -101,7 +109,7 @@ public class RefundServiceTest {
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         refundService = new RefundService(
-                mockRefundDao, mockGatewayAccountDao, mockProviders, mockUserNotificationService, mockStateTransitionService
+                mockRefundDao, mockGatewayAccountDao, mockProviders, mockUserNotificationService, mockStateTransitionService, mockLedgerService
         );
     }
 
@@ -191,13 +199,26 @@ public class RefundServiceTest {
 
         when(mockRefundDao.findById(refundId)).thenReturn(Optional.of(spiedRefundEntity));
 
-        ChargeRefundResponse gatewayResponse = refundService.doRefund(accountId, Charge.from(transaction), new RefundRequest(refundAmount, 500L, userExternalId));
+        LedgerTransaction ledgerRefund = LedgerTransactionFixture.aValidLedgerTransaction()
+                .withExternalId("a-refund-in-ledger")
+                .withParentTransactionId(externalChargeId)
+                .withAmount(100L)
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUBMITTED.getStatus())
+                .build();
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(externalChargeId)
+                .withTransactions(List.of(ledgerRefund))
+                .build();
+        when(mockLedgerService.getRefundsForPayment(accountId, externalChargeId))
+                .thenReturn(refundTransactionsForPayment);
+
+        ChargeRefundResponse gatewayResponse = refundService.doRefund(accountId, Charge.from(transaction), new RefundRequest(refundAmount, 400L, userExternalId));
 
         assertThat(gatewayResponse.getGatewayRefundResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getGatewayRefundResponse().getError().isPresent(), is(false));
 
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
-        
+
         verify(mockRefundDao).persist(any(RefundEntity.class));
         verify(mockProvider).refund(any(RefundGatewayRequest.class));
         verify(mockRefundDao, times(1)).findById(refundId);
@@ -589,8 +610,9 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldFindRefundsGivenValidCharge() {
+    public void shouldFindRefundsGivenValidNotHistoricCharge() {
         Charge charge = Charge.from(aValidChargeEntity().build());
+        charge.setHistoric(false);
 
         RefundEntity refundOne = aValidRefundEntity()
                 .withChargeExternalId(charge.getExternalId())
@@ -607,6 +629,8 @@ public class RefundServiceTest {
                 .thenReturn(List.of(refundOne, refundTwo));
 
         List<Refund> refunds = refundService.findRefunds(charge);
+        
+        verify(mockLedgerService, never()).getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId());
 
         assertThat(refunds.size(), is(2));
         assertThat(refunds.get(0).getChargeExternalId(), is(charge.getExternalId()));
@@ -614,6 +638,61 @@ public class RefundServiceTest {
         assertThat(refunds.get(0).getExternalStatus(), is(RefundStatus.CREATED.toExternal()));
         assertThat(refunds.get(1).getExternalStatus(), is(RefundStatus.REFUND_SUBMITTED.toExternal()));
         assertThat(refunds.get(1).getAmount(), is(refundTwo.getAmount()));
+    }
+
+    @Test
+    public void shouldFindRefundsIncludingExpungedRefundsFromLedger() {
+        Charge charge = Charge.from(aValidChargeEntity().build());
+        charge.setHistoric(true);
+        
+        String refundInDatabaseAndLedgerId = "refund-in-database-and-ledger";
+        String refundOnlyInDatabaseId = "refund-only-in-database";
+        String refundOnlyInLedgerId = "refund-only-in-ledger";
+
+        RefundEntity databaseRefund1 = aValidRefundEntity()
+                .withExternalId(refundInDatabaseAndLedgerId)
+                .withChargeExternalId(charge.getExternalId())
+                .withAmount(100L)
+                .withStatus(REFUNDED)
+                .build();
+        RefundEntity databaseRefund2 = aValidRefundEntity()
+                .withExternalId(refundOnlyInDatabaseId)
+                .withChargeExternalId(charge.getExternalId())
+                .withAmount(200L)
+                .withStatus(RefundStatus.REFUND_SUBMITTED)
+                .build();
+        
+        LedgerTransaction ledgerRefund1 = LedgerTransactionFixture.aValidLedgerTransaction()
+                .withExternalId(refundInDatabaseAndLedgerId)
+                .withParentTransactionId(charge.getExternalId())
+                .withAmount(100L)
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUBMITTED.getStatus())
+                .build();
+        LedgerTransaction ledgerRefund2 = LedgerTransactionFixture.aValidLedgerTransaction()
+                .withExternalId(refundOnlyInLedgerId)
+                .withParentTransactionId(charge.getExternalId())
+                .withAmount(300L)
+                .withStatus(ExternalRefundStatus.EXTERNAL_ERROR.getStatus())
+                .build();
+
+        when(mockRefundDao.findRefundsByChargeExternalId(charge.getExternalId()))
+                .thenReturn(List.of(databaseRefund1, databaseRefund2));
+        
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(charge.getExternalId())
+                .withTransactions(List.of(ledgerRefund1, ledgerRefund2))
+                .build();
+        when(mockLedgerService.getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId()))
+                .thenReturn(refundTransactionsForPayment);
+
+        List<Refund> refunds = refundService.findRefunds(charge);
+        assertThat(refunds, hasSize(3));
+        assertThat(refunds.get(0).getAmount(), is(100L));
+        assertThat(refunds.get(0).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUCCESS));
+        assertThat(refunds.get(1).getAmount(), is(200L));
+        assertThat(refunds.get(1).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUBMITTED));
+        assertThat(refunds.get(2).getAmount(), is(300L));
+        assertThat(refunds.get(2).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_ERROR));
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
