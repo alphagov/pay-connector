@@ -83,7 +83,7 @@ public class ParityCheckWorkerTest {
     public void setUp() {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         
-        parityCheckService = new ParityCheckService(ledgerService, chargeService, refundDao, historicalEventEmitter, chargeParityChecker);
+        parityCheckService = new ParityCheckService(ledgerService, chargeService, refundService, historicalEventEmitter, chargeParityChecker);
         worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
                 stateTransitionService, eventService, refundDao, parityCheckService);
         chargeEntity = aValidChargeEntity()
@@ -139,7 +139,7 @@ public class ParityCheckWorkerTest {
         chargeEntity.setStatus(ChargeStatus.EXPIRED);
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundEntity));
+        when(refundService.findNotExpungedRefunds(chargeEntity.getExternalId())).thenReturn(List.of(refundEntity));
         when(refundService.findRefunds(Charge.from(chargeEntity))).thenReturn(List.of(Refund.from(refundEntity)));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
         when(ledgerService.getTransaction(refundEntity.getExternalId()))
@@ -150,7 +150,6 @@ public class ParityCheckWorkerTest {
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
-        verify(refundDao, times(1)).findRefundsByChargeExternalId(chargeEntity.getExternalId());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
         verify(emittedEventDao, never()).recordEmission(any(), any());
         verify(chargeDao, never()).findById(2L);
@@ -173,7 +172,7 @@ public class ParityCheckWorkerTest {
     @Test
     public void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
         when(chargeDao.findMaxId()).thenReturn(1L);
-        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
+        when(refundService.findNotExpungedRefunds(chargeEntity.getExternalId()))
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
@@ -189,7 +188,7 @@ public class ParityCheckWorkerTest {
     @Test
     public void executeEmitsEventAndRecordsEmissionWhenRefundWithDifferentStatusInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
-        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
+        when(refundService.findNotExpungedRefunds(chargeEntity.getExternalId()))
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.of(

@@ -9,8 +9,8 @@ import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
 import java.util.List;
@@ -26,18 +26,19 @@ public class ParityCheckService {
     private static final Logger logger = LoggerFactory.getLogger(ParityCheckService.class);
     private LedgerService ledgerService;
     private ChargeService chargeService;
-    private RefundDao refundDao;
+    private RefundService refundService;
     private HistoricalEventEmitter historicalEventEmitter;
     private final ChargeParityChecker chargeParityChecker;
 
     @Inject
-    public ParityCheckService(LedgerService ledgerService, ChargeService chargeService,
-                              RefundDao refundDao,
+    public ParityCheckService(LedgerService ledgerService,
+                              ChargeService chargeService,
+                              RefundService refundService,
                               HistoricalEventEmitter historicalEventEmitter,
                               ChargeParityChecker chargeParityChecker) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
-        this.refundDao = refundDao;
+        this.refundService = refundService;
         this.historicalEventEmitter = historicalEventEmitter;
         this.chargeParityChecker = chargeParityChecker;
     }
@@ -45,7 +46,7 @@ public class ParityCheckService {
     public ParityCheckStatus getChargeAndRefundsParityCheckStatus(ChargeEntity charge) {
         ParityCheckStatus parityCheckStatus = getChargeParityCheckStatus(charge);
         if (parityCheckStatus.equals(EXISTS_IN_LEDGER)) {
-            return getRefundsParityCheckStatus(refundDao.findRefundsByChargeExternalId(charge.getExternalId()));
+            return getRefundsParityCheckStatus(refundService.findNotExpungedRefunds(charge.getExternalId()));
         }
 
         return parityCheckStatus;

@@ -15,7 +15,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
@@ -23,6 +23,7 @@ import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,8 +56,6 @@ public class ParityCheckServiceTest {
     @Mock
     private RefundService mockRefundService;
     @Mock
-    private RefundDao mockRefundDao;
-    @Mock
     private HistoricalEventEmitter mockHistoricalEventEmitter;
     @Mock
     private PaymentProviders mockProviders;
@@ -85,9 +84,9 @@ public class ParityCheckServiceTest {
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .build();
 
-        when(mockRefundDao.findRefundsByChargeExternalId(any())).thenReturn(refundEntities);
+        when(mockRefundService.findRefunds(any())).thenReturn(refundEntities.stream().map(Refund::from).collect(Collectors.toList()));
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
-        parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockRefundDao,
+        parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockRefundService,
                 mockHistoricalEventEmitter, chargeParityChecker);
     }
 
