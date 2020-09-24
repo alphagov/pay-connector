@@ -4,6 +4,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -22,6 +23,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -262,5 +265,14 @@ public class RefundService {
                 .stream()
                 .map(Refund::from)
                 .collect(Collectors.toList());
+    }
+    
+    @Transactional
+    public void updateRefundParityStatus(String externalId, ParityCheckStatus parityCheckStatus) {
+        refundDao.findByExternalId(externalId)
+                .ifPresent(refundEntity -> {
+                    refundEntity.setParityCheckDate(ZonedDateTime.now(ZoneId.of("UTC")));
+                    refundEntity.setParityCheckStatus(parityCheckStatus);
+                });
     }
 }

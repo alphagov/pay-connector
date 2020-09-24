@@ -171,4 +171,16 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter(1, externalId)
                 .executeUpdate();
     }
+
+    public List<RefundHistory> getRefundHistoryByRefundExternalId(String refundExternalId) {
+        String query = "SELECT id, external_id, amount, status, created_date, version, " +
+                "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email, charge_external_id " +
+                "FROM refunds_history r " +
+                "WHERE external_id = ?1 ";
+
+        return entityManager.get()
+                .createNativeQuery(query, "RefundEntityHistoryMapping")
+                .setParameter(1, refundExternalId)
+                .getResultList();
+    }
 }

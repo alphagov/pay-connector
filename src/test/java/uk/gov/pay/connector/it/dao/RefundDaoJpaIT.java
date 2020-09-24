@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.oneOf;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
@@ -324,7 +325,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         refundToExpunge.setStatus(REFUNDED);
         refundToExpunge.setCreatedDate(ZonedDateTime.now(UTC).minusDays(7));
         refundDao.persist(refundToExpunge);
-        
+
         RefundEntity refundToExclude = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
         refundToExclude.setStatus(REFUNDED);
         refundToExclude.setCreatedDate(ZonedDateTime.now(UTC));
@@ -421,5 +422,27 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(mayBeRefundEntity.isPresent(), Matchers.is(false));
         assertThat(refundHistoryList.size(), Matchers.is(1));
         assertThat(containsEmittedEventForRefundExternalId, is(false));
+    }
+
+    @Test
+    public void getRefundHistoryByRefundExternalId_shouldReturnResultsCorrectly() {
+        RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntity.setStatus(CREATED);
+        refundDao.persist(refundEntity);
+
+        refundEntity.setStatus(REFUND_ERROR);
+        refundDao.merge(refundEntity);
+
+        RefundEntity refundThatShouldNotBeReturned = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundThatShouldNotBeReturned.setStatus(CREATED);
+        refundDao.persist(refundThatShouldNotBeReturned);
+
+        List<RefundHistory> refundHistoryList = refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId());
+
+        assertThat(refundHistoryList.size(), is(2));
+        assertThat(refundHistoryList.get(0).getExternalId(), is(refundEntity.getExternalId()));
+        assertThat(refundHistoryList.get(0).getStatus(), oneOf(CREATED, REFUND_ERROR));
+        assertThat(refundHistoryList.get(1).getExternalId(), is(refundEntity.getExternalId()));
+        assertThat(refundHistoryList.get(1).getStatus(), oneOf(CREATED, REFUND_ERROR));
     }
 }
