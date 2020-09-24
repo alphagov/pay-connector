@@ -49,7 +49,6 @@ public class RefundExpungeServiceTest {
     @Before
     public void setUp() {
         when(mockExpungeConfig.isExpungeRefundsEnabled()).thenReturn(true);
-        when(mockExpungeConfig.getNumberOfChargesOrRefundsToExpunge()).thenReturn(defaultNumberOfRefundsToExpunge);
         when(mockExpungeConfig.getMinimumAgeOfRefundInDays()).thenReturn(minimumAgeOfRefundInDays);
         when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeRefundsParityCheckedWithInDays);
         when(mockExpungeConfig.getMinimumAgeForHistoricRefundExceptions()).thenReturn(10);
@@ -67,7 +66,7 @@ public class RefundExpungeServiceTest {
         when(mockParityCheckService.parityCheckRefundForExpunger(any())).thenReturn(true);
         when(mockRefundDao.findRefundToExpunge(minimumAgeOfRefundInDays, defaultExcludeRefundsParityCheckedWithInDays))
                 .thenReturn(Optional.of(refundEntity));
-        refundExpungeService.expunge(null);
+        refundExpungeService.expunge(defaultNumberOfRefundsToExpunge);
 
         verify(mockRefundDao, times(defaultNumberOfRefundsToExpunge)).expungeRefund(any());
         verify(mockRefundDao, times(defaultNumberOfRefundsToExpunge)).findRefundToExpunge(minimumAgeOfRefundInDays,

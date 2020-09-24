@@ -61,11 +61,10 @@ public class ChargeExpungeService {
         return status.isExpungeable();
     }
 
-    public void expunge(Integer noOfChargesToExpungeQueryParam) {
+    public void expunge(Integer noOfChargesToExpunge) {
         if (!expungeConfig.isExpungeChargesEnabled()) {
             logger.info("Charge expunging feature is disabled. No charges have been expunged");
         } else {
-            int noOfChargesToExpunge = getNumberOfChargesToExpunge(noOfChargesToExpungeQueryParam);
             int minimumAgeOfChargeInDays = expungeConfig.getMinimumAgeOfChargeInDays();
             int createdWithinLast = expungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays();
 
@@ -85,13 +84,6 @@ public class ChargeExpungeService {
                         });
             });
         }
-    }
-
-    private int getNumberOfChargesToExpunge(Integer noOfChargesToExpungeQueryParam) {
-        if (noOfChargesToExpungeQueryParam != null && noOfChargesToExpungeQueryParam > 0) {
-            return noOfChargesToExpungeQueryParam;
-        }
-        return expungeConfig.getNumberOfChargesOrRefundsToExpunge();
     }
 
     private void parityCheckAndExpungeIfMet(ChargeEntity chargeEntity) {

@@ -46,11 +46,10 @@ public class RefundExpungeService {
         this.refundDao = refundDao;
     }
 
-    public void expunge(Integer noOfRefundsToExpungeQueryParam) {
+    public void expunge(Integer noOfRefundsToExpunge) {
         if (!expungeConfig.isExpungeRefundsEnabled()) {
             logger.info("Refunds expunging feature is disabled. No refunds have been expunged");
         } else {
-            int noOfRefundsToExpunge = getNumberOfRefundsToExpunge(noOfRefundsToExpungeQueryParam);
             int minimumAgeOfRefundInDays = expungeConfig.getMinimumAgeOfRefundInDays();
             int excludeRefundsParityCheckedWithInDays = expungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays();
 
@@ -70,13 +69,6 @@ public class RefundExpungeService {
                         });
             });
         }
-    }
-
-    private int getNumberOfRefundsToExpunge(Integer noOfRefundsToExpungeQueryParam) {
-        if (noOfRefundsToExpungeQueryParam != null && noOfRefundsToExpungeQueryParam > 0) {
-            return noOfRefundsToExpungeQueryParam;
-        }
-        return expungeConfig.getNumberOfChargesOrRefundsToExpunge();
     }
 
     private void parityCheckAndExpunge(RefundEntity refundEntity) {

@@ -17,8 +17,15 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
@@ -27,6 +34,8 @@ import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.ZonedDateTime.parse;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -36,28 +45,34 @@ import static uk.gov.pay.commons.model.SupportedLanguage.ENGLISH;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.events.EmittedEventFixture.anEmittedEventEntity;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ExpungeResourceIT {
-    
+
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
-    
+
     @DropwizardTestContext
     protected TestContext testContext;
-    
+
     EmittedEventDao emittedEventDao;
 
     private DatabaseFixtures.TestCharge expungeableCharge1;
     private DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures.TestAccount defaultTestAccount;
-    
+
     private LedgerStub ledgerStub;
+    private RefundDao refundDao;
 
     @Before
     public void setUp() {
-        emittedEventDao = testContext.getInstanceFromGuiceContainer(EmittedEventDao.class); 
+        emittedEventDao = testContext.getInstanceFromGuiceContainer(EmittedEventDao.class);
+        refundDao = testContext.getInstanceFromGuiceContainer(RefundDao.class);
         databaseTestHelper = testContext.getDatabaseTestHelper();
         insertTestAccount();
     }
@@ -257,7 +272,7 @@ public class ExpungeResourceIT {
                 .insert();
         insertChargeEvent(nonExpungeableCharge2);
         ledgerStub.returnLedgerTransaction("external_charge_id_13", nonExpungeableCharge2, null);
-        
+
         given().port(testContext.getPort())
                 .contentType(JSON)
                 .post("/v1/tasks/expunge")
@@ -277,7 +292,7 @@ public class ExpungeResourceIT {
     @Test
     public void shouldExpungeAuxiliaryTables_whenTheyExistAndReferenceAChargeForExpunging() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
-        
+
         ledgerStub = new LedgerStub();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -328,5 +343,85 @@ public class ExpungeResourceIT {
         assertThat(postFee, is(false));
         var postEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(expungeableCharge1.getExternalChargeId());
         assertThat(postEmittedEvents, is(false));
+    }
+
+    @Test
+    public void shouldExpungeRefundEligibleAndRelatedRecords() throws JsonProcessingException {
+        String chargeExternalId = randomAlphanumeric(26);
+        RefundEntity refundToBeExpunged1 = createAndStubRefund(chargeExternalId, 91, REFUNDED, true);
+        RefundEntity refundToBeExpunged2 = createAndStubRefund(chargeExternalId, 91, REFUND_SUBMITTED, true);
+
+        boolean containsRefund1 = databaseTestHelper.containsRefundWithExternalId(refundToBeExpunged1.getExternalId());
+        assertThat(containsRefund1, is(true));
+        boolean containsRefund2 = databaseTestHelper.containsRefundWithExternalId(refundToBeExpunged2.getExternalId());
+        assertThat(containsRefund2, is(true));
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .post("/v1/tasks/expunge")
+                .then()
+                .statusCode(200);
+
+        containsRefund1 = databaseTestHelper.containsRefundWithExternalId(refundToBeExpunged1.getExternalId());
+        containsRefund2 = databaseTestHelper.containsRefundWithExternalId(refundToBeExpunged2.getExternalId());
+        assertThat(containsRefund1, is(false));
+        assertThat(containsRefund2, is(false));
+    }
+
+    @Test
+    public void shouldNotExpungeRefundsNotMeetingCriteria() throws JsonProcessingException {
+        String chargeExternalId = randomAlphanumeric(26);
+        RefundEntity nonExpungeableRefund1 = createAndStubRefund(chargeExternalId, 1, REFUNDED, true);
+        RefundEntity nonExpungeableRefund2 = createAndStubRefund(chargeExternalId, 1, REFUND_SUBMITTED, true);
+        RefundEntity parityCheckFailedRefund = createAndStubRefund(chargeExternalId, 91, REFUNDED, false);
+
+        var chargeToStub = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withChargeId(ThreadLocalRandom.current().nextLong())
+                .withTestAccount(defaultTestAccount);
+        ledgerStub.returnLedgerTransaction(chargeExternalId, chargeToStub, null);
+        var containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());
+        assertThat(containsEmittedEvents, is(false));
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .post("/v1/tasks/expunge")
+                .then()
+                .statusCode(200);
+
+        boolean containsRefund1 = databaseTestHelper.containsRefundWithExternalId(nonExpungeableRefund1.getExternalId());
+        assertThat(containsRefund1, is(true));
+        boolean containsRefund2 = databaseTestHelper.containsRefundWithExternalId(nonExpungeableRefund2.getExternalId());
+        assertThat(containsRefund2, is(true));
+
+        List<Map<String, Object>> parityCheckFailedRefundFromDB = databaseTestHelper.getRefund(parityCheckFailedRefund.getId());
+        assertThat(parityCheckFailedRefundFromDB.get(0).get("external_id"), is(parityCheckFailedRefund.getExternalId()));
+        assertThat(parityCheckFailedRefundFromDB.get(0).get("parity_check_status"), is("DATA_MISMATCH"));
+        assertThat(parityCheckFailedRefundFromDB.get(0).get("parity_check_date"), is(notNullValue()));
+        containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());
+        assertThat(containsEmittedEvents, is(true));
+    }
+
+    private RefundEntity createAndStubRefund(String chargeExternalId, int createdBeforeDays, RefundStatus refundStatus,
+                                             boolean stubForMatchingLedgerTransaction) throws JsonProcessingException {
+        RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
+        refundEntity.setGatewayTransactionId(randomAlphanumeric(20));
+        refundEntity.setStatus(RefundStatus.CREATED);
+        refundEntity.setCreatedDate(now(UTC).minusDays(createdBeforeDays));
+        refundDao.persist(refundEntity);
+        refundEntity.setStatus(refundStatus);
+        refundDao.merge(refundEntity);
+        Optional<RefundHistory> refundHistoryCreated = refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
+                refundEntity.getExternalId(), RefundStatus.CREATED);
+
+        ledgerStub = new LedgerStub();
+
+        if (stubForMatchingLedgerTransaction) {
+            ledgerStub.returnLedgerTransaction(refundEntity, refundHistoryCreated.get().getHistoryStartDate());
+        } else {
+            ledgerStub.returnLedgerTransactionWithMismatch(refundEntity, refundHistoryCreated.get().getHistoryStartDate());
+        }
+
+        return refundEntity;
     }
 }

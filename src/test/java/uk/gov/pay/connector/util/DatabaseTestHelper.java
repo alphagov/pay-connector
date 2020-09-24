@@ -294,7 +294,8 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, gateway_transaction_id, amount, status, created_date, user_external_id, user_email, charge_external_id " +
+                h.createQuery("SELECT external_id, gateway_transaction_id, amount, status, created_date, user_external_id, user_email, charge_external_id," +
+                        " parity_check_status, parity_check_date " +
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
@@ -365,6 +366,15 @@ public class DatabaseTestHelper {
     public boolean containsChargeWithExternalId(String externalId) {
         var result = jdbi.withHandle(h ->
                 h.createQuery("SELECT count(*) FROM charges WHERE external_id = :external_id")
+                        .bind("external_id", externalId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
+
+    public boolean containsRefundWithExternalId(String externalId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM refunds WHERE external_id = :external_id")
                         .bind("external_id", externalId)
                         .mapTo(Integer.class)
                         .first());
