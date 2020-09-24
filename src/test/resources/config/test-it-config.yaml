@@ -188,6 +188,7 @@ expungeConfig:
   minimumAgeForHistoricChargeExceptions: ${EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS:-90}
   expungeRefundsEnabled: ${EXPUNGE_REFUNDS_ENABLED:-true}
   minimumAgeOfRefundInDays: ${EXPUNGE_REFUNDS_OLDER_THAN_DAYS:-90}
+  minimumAgeForHistoricRefundExceptions: ${EXPUNGE_HISTORIC_REFUND_EXCEPTIONS_OLDER_THAN_DAYS:-90}
 
 authorisation3dsConfig:
   maximumNumberOfTimesToAllowUserToAttempt3ds: ${MAXIMUM_NO_USER_3DS_ATTEMPTS:-1}
