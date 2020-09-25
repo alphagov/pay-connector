@@ -93,6 +93,10 @@ public class EmittedEventEntity {
         this.id = id;
     }
 
+    public void setDoNotRetryEmitUntil(ZonedDateTime doNotRetryEmitUntil) {
+        this.doNotRetryEmitUntil = doNotRetryEmitUntil;
+    }
+
     @Override
     public String toString() {
         return "EmittedEventEntity{" +

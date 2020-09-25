@@ -15,6 +15,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
+import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -29,13 +30,14 @@ import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -80,13 +82,20 @@ public class EmittedEventsBackfillServiceTest {
     public void setUp() {
         var sweepConfig = mock(EmittedEventSweepConfig.class);
         when(sweepConfig.getNotEmittedEventMaxAgeInSeconds()).thenReturn(1800);
+
+        EventEmitterConfig mockEventEmitterConfig = mock(EventEmitterConfig.class);
+        when(mockEventEmitterConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds()).thenReturn(60L);
+
         when(connectorConfiguration.getEmittedEventSweepConfig()).thenReturn(sweepConfig);
+        when(connectorConfiguration.getEventEmitterConfig()).thenReturn(mockEventEmitterConfig);
         Logger root = (Logger) LoggerFactory.getLogger(EmittedEventsBackfillService.class);
         mockAppender = mock(Appender.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
-        emittedEventsBackfillService = new EmittedEventsBackfillService(emittedEventDao, chargeService, refundDao, chargeDao,
-                eventService, stateTransitionService, connectorConfiguration);
+        HistoricalEventEmitter historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao,
+                chargeService, true, eventService, stateTransitionService);
+        emittedEventsBackfillService = new EmittedEventsBackfillService(emittedEventDao, chargeService, refundDao,
+                historicalEventEmitter, connectorConfiguration);
         lenient().when(chargeService.findChargeByExternalId(any())).thenThrow(new ChargeNotFoundRuntimeException(""));
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
@@ -102,13 +111,13 @@ public class EmittedEventsBackfillServiceTest {
         when(refundEntity.getChargeExternalId()).thenReturn(chargeEntity.getExternalId());
         when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class), any())).thenReturn(Optional.of(maxId));
     }
-    
+
     @Test
     public void logsMessageWhenNoEmittedEventsSatisfyingCriteria() {
         when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class), any())).thenReturn(Optional.empty());
-        
+
         emittedEventsBackfillService.backfillNotEmittedEvents();
-        
+
         verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), anyLong(), eq(maxId), any());
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
@@ -142,10 +151,10 @@ public class EmittedEventsBackfillServiceTest {
                 .build();
         when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedEvent));
         when(refundDao.findByExternalId(refundEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
-        when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory));
-        doReturn(chargeEntity).when(chargeService).findChargeByExternalId(chargeEntity.getExternalId());
+        when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(List.of(refundHistory));
         doReturn(Optional.of(Charge.from(chargeEntity))).when(chargeService).findCharge(chargeEntity.getExternalId());
         chargeEntity.getEvents().clear();
+
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
@@ -171,17 +180,14 @@ public class EmittedEventsBackfillServiceTest {
         when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
         doReturn(chargeEntity).when(chargeService).findChargeByExternalId(chargeEntity.getExternalId());
         when(refundDao.findByExternalId(refundEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
-        when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory));
+        when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(List.of(refundHistory));
         doReturn(Optional.of(Charge.from(chargeEntity))).when(chargeService).findCharge(chargeEntity.getExternalId());
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
-        // Each event triggers a full backfill for the charge entity and associated refunds.
-        // Not clear if this is useful behaviour but that's as-implemented. Since there is one charge and one refund
-        // there are two events associated. Because there are two events, these two events get emitted two times, hence 
-        // four event emissions in total
-        verify(stateTransitionService, times(4)).offerStateTransition(any(), any(), isNull());
+        // 2 events emitted for payment event and refund event
+        verify(stateTransitionService, times(2)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00Z]"));

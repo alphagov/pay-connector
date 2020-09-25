@@ -6,12 +6,10 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.ResourceType;
-import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
@@ -20,7 +18,9 @@ import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class EmittedEventsBackfillService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -31,19 +31,18 @@ public class EmittedEventsBackfillService {
     private final HistoricalEventEmitter historicalEventEmitter;
     private RefundDao refundDao;
     private final EmittedEventSweepConfig sweepConfig;
-    private static final boolean shouldForceEmission = true;
+    private long doNotRetryEmittingEventUntilDurationInSeconds;
 
     @Inject
     public EmittedEventsBackfillService(EmittedEventDao emittedEventDao, ChargeService chargeService, RefundDao refundDao,
-                                        ChargeDao chargeDao, EventService eventService,
-                                        StateTransitionService stateTransitionService,
-                                        ConnectorConfiguration configuration) {
+                                        HistoricalEventEmitter historicalEventEmitter, ConnectorConfiguration configuration) {
         this.emittedEventDao = emittedEventDao;
         this.chargeService = chargeService;
         this.refundDao = refundDao;
         this.sweepConfig = configuration.getEmittedEventSweepConfig();
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, shouldForceEmission,
-                eventService, stateTransitionService);
+        this.doNotRetryEmittingEventUntilDurationInSeconds = configuration.getEventEmitterConfig()
+                .getDefaultDoNotRetryEmittingEventUntilDurationInSeconds();
+        this.historicalEventEmitter = historicalEventEmitter;
     }
 
     public void backfillNotEmittedEvents() {
@@ -52,8 +51,8 @@ public class EmittedEventsBackfillService {
         emittedEventBatchIterator.forEachRemaining(batch -> {
             logger.info(
                     "Processing not emitted events [lastProcessedId={}, no.of.events={}, oldestDate={}]",
-                    batch.getStartId(), 
-                    batch.getEndId().map(Object::toString).orElse("none"), 
+                    batch.getStartId(),
+                    batch.getEndId().map(Object::toString).orElse("none"),
                     batch.oldestEventDate().map(ZonedDateTime::toString).orElse("none")
             );
 
@@ -61,16 +60,22 @@ public class EmittedEventsBackfillService {
         });
 
         logger.info("Finished processing not emitted events [lastProcessedId={}, maxId={}]",
-                emittedEventBatchIterator.getCurrentBatchStartId(), emittedEventBatchIterator.getMaximumIdOfEventsEligibleForReEmission().map(Object::toString).orElse("none"));
+                emittedEventBatchIterator.getCurrentBatchStartId(), emittedEventBatchIterator
+                        .getMaximumIdOfEventsEligibleForReEmission().map(Object::toString).orElse("none"));
     }
 
     @Transactional
     public void backfillEvent(EmittedEventEntity event) {
         try {
             String chargeId = chargeIdForEvent(event);
-            ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
-            MDC.put("chargeId", charge.getExternalId());
-            historicalEventEmitter.processPaymentAndRefundEvents(charge);
+
+            MDC.put(PAYMENT_EXTERNAL_ID, chargeId);
+            if (isPaymentEvent(event)) {
+                ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
+                historicalEventEmitter.processPaymentEvents(chargeEntity, true);
+            } else {
+                historicalEventEmitter.emitEventsForRefund(event.getResourceExternalId(), true);
+            }
             event.setEmittedDate(now(ZoneId.of("UTC")));
         } catch (Exception e) {
             logger.error(
@@ -81,9 +86,9 @@ public class EmittedEventsBackfillService {
                     event.getEventType(),
                     event.getEventDate()
             );
-            throw e;
+            event.setDoNotRetryEmitUntil(ZonedDateTime.now(UTC).plusSeconds(doNotRetryEmittingEventUntilDurationInSeconds));
         } finally {
-            MDC.remove("chargeId");
+            MDC.remove(PAYMENT_EXTERNAL_ID);
         }
     }
 
