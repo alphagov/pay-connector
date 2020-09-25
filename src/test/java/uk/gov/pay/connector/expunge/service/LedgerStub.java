@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class LedgerStub {
 
@@ -31,6 +34,17 @@ public class LedgerStub {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         ledgerTransactionFields.put("description", "This is a mismatch");
         stubResponse(externalId, ledgerTransactionFields);
+    }
+
+    public void returnLedgerTransactionWithMismatch(RefundEntity refund, ZonedDateTime refundCreatedEventDate) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund, null);
+        ledgerTransactionFields.put("external_id", "This is a mismatch");
+        stubResponse(refund.getExternalId(), ledgerTransactionFields);
+    }
+
+    public void returnLedgerTransaction(RefundEntity refund, ZonedDateTime refundCreatedEventDate) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund, refundCreatedEventDate);
+        stubResponse(refund.getExternalId(), ledgerTransactionFields);
     }
 
     public void returnNotFoundForFindByProviderAndGatewayTransactionId(String paymentProvider,
@@ -114,7 +128,7 @@ public class LedgerStub {
                 account));
         Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("payment_provider",
                 account));
-        if(fee != null) {
+        if (fee != null) {
             map.put("fee", 0);
             Optional.of(testCharge.getAmount()).ifPresent(amount -> map.put("net_amount", amount));
             Optional.of(testCharge.getAmount()).ifPresent(amount -> map.put("total_amount", amount));
@@ -129,4 +143,21 @@ public class LedgerStub {
         return map;
     }
 
+    private Map<String, Object> refundEntityToLedgerTransaction(RefundEntity refund, ZonedDateTime refundCreatedEventDate) {
+        var map = new HashMap<String, Object>();
+
+        Optional.ofNullable(refund.getExternalId()).ifPresent(value -> map.put("transaction_id", value));
+        Optional.ofNullable(refund.getChargeExternalId()).ifPresent(value -> map.put("parent_transaction_id", value));
+        Optional.of(refund.getAmount()).ifPresent(value -> map.put("amount", String.valueOf(value)));
+        Optional.ofNullable(refund.getGatewayTransactionId()).ifPresent(value -> map.put("gateway_transaction_id", value));
+        Optional.ofNullable(refund.getUserExternalId()).ifPresent(value -> map.put("user_external_id", value));
+        Optional.ofNullable(refund.getUserEmail()).ifPresent(value -> map.put("user_email", value));
+        Optional.ofNullable(refundCreatedEventDate).ifPresent(value -> map.put("created_date",
+                ISO_INSTANT_MILLISECOND_PRECISION.format(value)));
+
+        Optional.ofNullable(refund.getStatus()).ifPresent(value -> map.put("state",
+                refund.getStatus().toExternal()));
+
+        return map;
+    }
 }

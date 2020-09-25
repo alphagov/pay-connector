@@ -57,7 +57,9 @@ public class RefundParityChecker {
             fieldsMatch = fieldsMatch && isEquals(refundCreatedEventDate, transaction.getCreatedDate(), "created_date");
 
             String refundExternalStatus = refundEntity.getStatus().toExternal().getStatus();
-            fieldsMatch = fieldsMatch && isEquals(refundExternalStatus, transaction.getState().getStatus(), "status");
+            fieldsMatch = fieldsMatch && isEquals(refundExternalStatus,
+                    transaction.getState() != null ? transaction.getState().getStatus() : null,
+                    "status");
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
