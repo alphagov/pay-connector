@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.refund.model.domain;
 
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
 import java.util.Objects;
@@ -40,6 +41,19 @@ public class Refund {
                 refundEntity.getGatewayTransactionId(),
                 refundEntity.getChargeExternalId(),
                 false
+        );
+    }
+
+    public static Refund from(LedgerTransaction ledgerTransaction) {
+        return new Refund(
+                ledgerTransaction.getTransactionId(),
+                ledgerTransaction.getAmount(),
+                ExternalRefundStatus.fromPublicStatusLabel(ledgerTransaction.getState().getStatus()),
+                ledgerTransaction.getUserExternalId(),
+                ledgerTransaction.getUserEmail(),
+                ledgerTransaction.getParentTransactionId(),
+                ledgerTransaction.getGatewayTransactionId(),
+                true
         );
     }
 

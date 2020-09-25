@@ -3,12 +3,16 @@ package uk.gov.pay.connector.expunge.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,12 +26,25 @@ import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
 
 public class LedgerStub {
 
     public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         stubResponse(externalId, ledgerTransactionFields);
+    }
+
+    public void returnLedgerTransaction(String externalId, LedgerTransaction ledgerTransaction) throws JsonProcessingException {
+        ResponseDefinitionBuilder response = aResponse()
+                .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .withStatus(200)
+                .withBody(new ObjectMapper().writeValueAsString(ledgerTransaction));
+        stubFor(
+                get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
+                        .withQueryParam("override_account_id_restriction", equalTo("true"))
+                        .willReturn(response)
+        );
     }
 
     public void returnLedgerTransactionWithMismatch(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
@@ -63,6 +80,22 @@ public class LedgerStub {
         stubResponseForProviderAndGatewayTransactionId(testCharge.getTransactionId(),
                 paymentProvider,
                 ledgerTransactionFields, 200);
+    }
+
+    public void returnRefundsForPayment(String chargeExternalId, List<LedgerTransaction> refunds) throws JsonProcessingException {
+        RefundTransactionsForPayment refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(chargeExternalId)
+                .withTransactions(refunds)
+                .build();
+
+        ResponseDefinitionBuilder response = aResponse()
+                .withStatus(200)
+                .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .withBody(new ObjectMapper().writeValueAsString(refundTransactionsForPayment));
+
+        String url = format("/v1/transaction/%s/transaction", chargeExternalId);
+        stubFor(WireMock.get(urlPathEqualTo(url))
+                .willReturn(response));
     }
 
     private void stubResponseForProviderAndGatewayTransactionId(String gatewayTransactionId, String paymentProvider,

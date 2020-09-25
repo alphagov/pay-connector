@@ -20,4 +20,12 @@ public class RefundTransactionsForPayment {
     public List<LedgerTransaction> getTransactions() {
         return transactions;
     }
+
+    public void setParentTransactionId(String parentTransactionId) {
+        this.parentTransactionId = parentTransactionId;
+    }
+
+    public void setTransactions(List<LedgerTransaction> transactions) {
+        this.transactions = transactions;
+    }
 }
