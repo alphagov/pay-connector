@@ -183,8 +183,8 @@ public class LedgerStub {
         Optional.ofNullable(refund.getChargeExternalId()).ifPresent(value -> map.put("parent_transaction_id", value));
         Optional.of(refund.getAmount()).ifPresent(value -> map.put("amount", String.valueOf(value)));
         Optional.ofNullable(refund.getGatewayTransactionId()).ifPresent(value -> map.put("gateway_transaction_id", value));
-        Optional.ofNullable(refund.getUserExternalId()).ifPresent(value -> map.put("user_external_id", value));
-        Optional.ofNullable(refund.getUserEmail()).ifPresent(value -> map.put("user_email", value));
+        Optional.ofNullable(refund.getUserExternalId()).ifPresent(value -> map.put("refunded_by", value));
+        Optional.ofNullable(refund.getUserEmail()).ifPresent(value -> map.put("refunded_by_user_email", value));
         Optional.ofNullable(refundCreatedEventDate).ifPresent(value -> map.put("created_date",
                 ISO_INSTANT_MILLISECOND_PRECISION.format(value)));
 
