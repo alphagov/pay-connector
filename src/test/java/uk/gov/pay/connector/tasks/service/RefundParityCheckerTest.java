@@ -68,13 +68,13 @@ public class RefundParityCheckerTest {
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfUserEmailDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withUserEmail(null).build();
+        LedgerTransaction transaction = from(refundEntity).withRefundedByUserEmail(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfUserExternalIdDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withUserExternalId(null).build();
+        LedgerTransaction transaction = from(refundEntity).withRefundedBy(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 

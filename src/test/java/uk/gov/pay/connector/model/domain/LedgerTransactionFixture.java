@@ -63,8 +63,8 @@ public class LedgerTransactionFixture {
     private ZonedDateTime capturedDate;
     private ChargeResponse.RefundSummary refundSummary;
     private String parentTransactionId;
-    private String userEmail;
-    private String userExternalId;
+    private String refundedBy;
+    private String refundedByUserEmail;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -149,8 +149,8 @@ public class LedgerTransactionFixture {
                         .withExternalId(refundEntity.getExternalId())
                         .withGatewayTransactionId(refundEntity.getGatewayTransactionId())
                         .withParentTransactionId(refundEntity.getChargeExternalId())
-                        .withUserEmail(refundEntity.getUserEmail())
-                        .withUserExternalId(refundEntity.getUserExternalId());
+                        .withRefundedByUserEmail(refundEntity.getUserEmail())
+                        .withRefundedBy(refundEntity.getUserExternalId());
 
         return ledgerTransactionFixture;
     }
@@ -204,8 +204,8 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setRefundSummary(refundSummary);
 
         ledgerTransaction.setParentTransactionId(parentTransactionId);
-        ledgerTransaction.setUserEmail(userEmail);
-        ledgerTransaction.setUserExternalId(userExternalId);
+        ledgerTransaction.setRefundedBy(refundedBy);
+        ledgerTransaction.setRefundedByUserEmail(refundedByUserEmail);
 
         return ledgerTransaction;
     }
@@ -340,13 +340,13 @@ public class LedgerTransactionFixture {
         return this;
     }
 
-    public LedgerTransactionFixture withUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public LedgerTransactionFixture withRefundedBy(String userExternalId) {
+        this.refundedBy = userExternalId;
         return this;
     }
 
-    public LedgerTransactionFixture withUserExternalId(String userExternalId) {
-        this.userExternalId = userExternalId;
+    public LedgerTransactionFixture withRefundedByUserEmail(String userEmail) {
+        this.refundedByUserEmail = userEmail;
         return this;
     }
 }

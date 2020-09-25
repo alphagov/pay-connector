@@ -31,7 +31,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.LEDGER_GET_REFUNDS_FOR_PAYMENT;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.LEDGER_GET_TRANSACTION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.LEDGER_PAYMENT_TRANSACTION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.LEDGER_REFUND_TRANSACTION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,8 +61,8 @@ public class LedgerServiceTest {
     }
 
     @Test
-    public void getTransaction_shouldSerialiseLedgerTransaction() throws JsonProcessingException {
-        when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(objectMapper.readValue(load(LEDGER_GET_TRANSACTION), LedgerTransaction.class));
+    public void getTransaction_shouldSerialiseLedgerPaymentTransactionCorrectly() throws JsonProcessingException {
+        when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(objectMapper.readValue(load(LEDGER_PAYMENT_TRANSACTION), LedgerTransaction.class));
 
         String externalId = "external-id";
         Optional<LedgerTransaction> mayBeTransaction = ledgerService.getTransaction("external-id");
@@ -72,6 +73,26 @@ public class LedgerServiceTest {
         assertThat(transaction.getAmount(), is(12000L));
         assertThat(transaction.getGatewayAccountId(), is("3"));
         assertThat(transaction.getExternalMetaData(), is(notNullValue()));
+    }
+
+    @Test
+    public void getTransaction_shouldSerialiseLedgerRefundTransactionCorrectly() throws JsonProcessingException {
+        when(mockResponse.readEntity(LedgerTransaction.class))
+                .thenReturn(objectMapper.readValue(load(LEDGER_REFUND_TRANSACTION), LedgerTransaction.class));
+
+        String externalId = "external-id";
+        Optional<LedgerTransaction> mayBeTransaction = ledgerService.getTransaction("external-id");
+
+        assertThat(mayBeTransaction.isPresent(), is(true));
+        LedgerTransaction transaction = mayBeTransaction.get();
+        assertThat(transaction.getTransactionId(), is(externalId));
+        assertThat(transaction.getAmount(), is(1000L));
+        assertThat(transaction.getGatewayTransactionId(), is("re_1H6zDTHj08j2jFuBtG6maiHK11"));
+        assertThat(transaction.getParentTransactionId(), is("64pcdagc9c13vgi7n904aio3n9"));
+        assertThat(transaction.getRefundedBy(), is("refunded-by-external-id"));
+        assertThat(transaction.getRefundedByUserEmail(), is("test@example.org"));
+        assertThat(transaction.getCreatedDate(), is("2020-07-20T13:39:38.940Z"));
+        assertThat(transaction.getState().getStatus(), is("success"));
     }
 
     @Test

@@ -49,8 +49,8 @@ public class RefundParityChecker {
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getChargeExternalId(), transaction.getParentTransactionId(), "parent_transaction_id");
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getAmount(), transaction.getAmount(), "amount");
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
-            fieldsMatch = fieldsMatch && isEquals(refundEntity.getUserExternalId(), transaction.getUserExternalId(), "user_external_id");
-            fieldsMatch = fieldsMatch && isEquals(refundEntity.getUserEmail(), transaction.getUserEmail(), "user_email");
+            fieldsMatch = fieldsMatch && isEquals(refundEntity.getUserExternalId(), transaction.getRefundedBy(), "refunded_by");
+            fieldsMatch = fieldsMatch && isEquals(refundEntity.getUserEmail(), transaction.getRefundedByUserEmail(), "refunded_by_user_email");
 
             String refundCreatedEventDate = getRefundCreatedDate(refundEntity.getExternalId())
                     .map(ISO_INSTANT_MILLISECOND_PRECISION::format).orElse(null);
