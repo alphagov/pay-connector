@@ -159,6 +159,13 @@ public class Charge {
                 Objects.equals(email, charge.email);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(externalId, amount, status, externalStatus, gatewayTransactionId, corporateSurcharge,
+                refundAvailabilityStatus, reference, description, createdDate, email, gatewayAccountId,
+                paymentGatewayName, historic);
+    }
+
     public String getExternalStatus() {
         return externalStatus;
     }
