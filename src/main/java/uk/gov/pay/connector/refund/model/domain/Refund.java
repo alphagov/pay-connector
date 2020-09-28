@@ -107,4 +107,10 @@ public class Refund {
                 Objects.equals(chargeExternalId, refund.chargeExternalId) &&
                 Objects.equals(gatewayTransactionId, refund.gatewayTransactionId);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(externalId, amount, userExternalId, userEmail, gatewayTransactionId, chargeExternalId,
+                externalStatus, historic);
+    }
 }
