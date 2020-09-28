@@ -36,7 +36,7 @@ public enum StripePayoutStatus {
                 return stat;
             }
         }
-        throw new IllegalArgumentException(format("Stripe payout status not recognized: [{}]", status));
+        throw new IllegalArgumentException(format("Stripe payout status not recognized: [%s]", status));
     }
 
     public Optional<Class<? extends PayoutEvent>> getEventClass() {
