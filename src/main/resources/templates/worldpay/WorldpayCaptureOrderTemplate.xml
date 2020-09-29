@@ -5,7 +5,7 @@
     <modify>
         <orderModification orderCode="${transactionId?xml}">
             <capture>
-                <date dayOfMonth="${captureDate.dayOfMonth().get()?string('00')}" month="${captureDate.monthOfYear().get()?string('00')}" year="${captureDate.year().get()?string('0000')}"/>
+                <date dayOfMonth="${captureDate.getDayOfMonth()?string('00')}" month="${captureDate.getMonthValue()?string('00')}" year="${captureDate.getYear()?string('0000')}"/>
                 <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             </capture>
         </orderModification>
