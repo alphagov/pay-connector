@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import io.dropwizard.setup.Environment;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -219,8 +217,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
-                .with3dsRequired(is3dsRequired)
-                .withDate(DateTime.now(DateTimeZone.UTC));
+                .with3dsRequired(is3dsRequired);
 
         if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);

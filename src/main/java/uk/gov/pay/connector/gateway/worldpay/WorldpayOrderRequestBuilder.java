@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
@@ -8,15 +7,13 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
-import uk.gov.pay.connector.northamericaregion.CanadaPostalcodeToProvinceOrTerritoryMapper;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.pay.connector.northamericaregion.UsZipCodeToStateMapper;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.ws.rs.core.MediaType;
-import java.util.Locale;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
@@ -26,7 +23,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     static public class WorldpayTemplateData extends TemplateData {
         private String reference;
         private String amount;
-        private DateTime captureDate;
+        private LocalDate captureDate;
         private String sessionId;
         private String acceptHeader;
         private String userAgentHeader;
@@ -53,11 +50,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             this.amount = amount;
         }
 
-        public DateTime getCaptureDate() {
+        public LocalDate getCaptureDate() {
             return captureDate;
         }
 
-        public void setCaptureDate(DateTime captureDate) {
+        public void setCaptureDate(LocalDate captureDate) {
             this.captureDate = captureDate;
         }
 
@@ -174,7 +171,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withDate(DateTime date) {
+    public WorldpayOrderRequestBuilder withDate(LocalDate date) {
         worldpayTemplateData.setCaptureDate(date);
         return this;
     }

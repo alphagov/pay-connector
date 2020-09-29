@@ -1,11 +1,15 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.CaptureHandler;
+import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
@@ -40,10 +44,11 @@ public class WorldpayCaptureHandler implements CaptureHandler {
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         return aWorldpayCaptureOrderRequestBuilder()
-                .withDate(DateTime.now(DateTimeZone.UTC))
+                .withDate(LocalDate.now(ZoneOffset.UTC))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getTransactionId())
                 .build();
     }
+
 }
