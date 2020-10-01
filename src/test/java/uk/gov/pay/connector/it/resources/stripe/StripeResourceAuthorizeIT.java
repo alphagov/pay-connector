@@ -12,6 +12,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -66,8 +67,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 public class StripeResourceAuthorizeIT {
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
-    private static final String EXP_MONTH = "11";
-    private static final String EXP_YEAR = "99";
+    private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");
     private static final String CARD_NUMBER = "4242424242424242";
     private static final String AMOUNT = "6234";
     private static final String CARD_TYPE = "CREDIT"; 
@@ -82,7 +82,7 @@ public class StripeResourceAuthorizeIT {
 
     private String stripeAccountId;
     private final String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
-            EXP_MONTH + "/" + EXP_YEAR, CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
+            EXPIRY, CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
             "London", ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     private final String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
     private final String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");

@@ -10,7 +10,7 @@
                 <VISA-SSL>
                     <cardNumber>${authCardDetails.cardNo}</cardNumber>
                     <expiryDate>
-                        <date month="${authCardDetails.endDate?split('/')?first}" year="20${authCardDetails.endDate?split('/')?last}"/>
+                        <date month="${authCardDetails.endDate.twoDigitMonth?xml}" year="${authCardDetails.endDate.fourDigitYear?xml}"/>
                     </expiryDate>
                     <cardHolderName>${authCardDetails.cardHolder?xml}</cardHolderName>
                     <cvc>${authCardDetails.cvc}</cvc>

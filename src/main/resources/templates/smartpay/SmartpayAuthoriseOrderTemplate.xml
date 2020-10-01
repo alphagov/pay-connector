@@ -12,8 +12,8 @@
                 </ns1:amount>
                 <ns1:card>
                     <ns1:cvc>${authCardDetails.cvc}</ns1:cvc>
-                    <ns1:expiryMonth>${authCardDetails.endDate?split('/')?first}</ns1:expiryMonth>
-                    <ns1:expiryYear>20${authCardDetails.endDate?split('/')?last}</ns1:expiryYear>
+                    <ns1:expiryMonth>${authCardDetails.endDate.twoDigitMonth?xml}</ns1:expiryMonth>
+                    <ns1:expiryYear>${authCardDetails.endDate.fourDigitYear?xml}</ns1:expiryYear>
                     <ns1:holderName>${authCardDetails.cardHolder?xml}</ns1:holderName>
                     <ns1:number>${authCardDetails.cardNo}</ns1:number>
                     <#if authCardDetails.address.isPresent()>

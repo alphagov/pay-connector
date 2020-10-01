@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
@@ -78,7 +79,7 @@ public class ChargeEntityFixture {
 
         cardDetailsEntity.setCardHolderName("Test");
         cardDetailsEntity.setCardBrand("visa");
-        cardDetailsEntity.setExpiryDate("11/99");
+        cardDetailsEntity.setExpiryDate(CardExpiryDate.valueOf("11/99"));
         cardDetailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"));
         cardDetailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of("1234"));
         cardDetailsEntity.setCardType(CardType.DEBIT);

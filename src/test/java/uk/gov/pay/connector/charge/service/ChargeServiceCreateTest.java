@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
@@ -85,7 +86,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 LastDigitsCardNumber.of("1234"),
                 FirstDigitsCardNumber.of("123456"),
                 "Jane Doe",
-                "01/19",
+                CardExpiryDate.valueOf("01/19"),
                 "visa",
                 CardType.valueOf("DEBIT")
         );
@@ -126,7 +127,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getCardDetails().getCardBrand(), is("visa"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(telephoneChargeResponse.get().getEmail(), is("jane.doe@example.com"));
-        assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate().toString(), is("01/19"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
@@ -514,7 +515,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate().toString(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getCardDetails().getCardType(), is(nullValue()));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
@@ -676,7 +677,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate().toString(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
@@ -732,7 +733,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate().toString(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
@@ -781,7 +782,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
         assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
-        assertThat(chargeResponse.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(chargeResponse.getCardDetails().getExpiryDate().toString(), is("01/19"));
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));

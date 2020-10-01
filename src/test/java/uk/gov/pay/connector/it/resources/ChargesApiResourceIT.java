@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -224,7 +225,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -249,7 +250,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -274,7 +275,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
-                "03/18", null, null, null, null, null, null, null);
+                CardExpiryDate.valueOf("03/18"), null, null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -505,7 +506,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
-                "03/18", DEBIT.toString(), null, null, null, null, null, null);
+                CardExpiryDate.valueOf("03/18"), DEBIT.toString(), null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -531,7 +532,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
-                "03/18", null, null, null, null, null, null, null);
+                CardExpiryDate.valueOf("03/18"), null, null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -553,7 +554,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withReturnUrl(RETURN_URL)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
         databaseTestHelper.addToken(chargeId, "tokenId");
     }

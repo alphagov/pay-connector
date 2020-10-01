@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.mockito.Mock;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -368,7 +369,7 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("5555444433331111")
                 .withCvc("737")
-                .withEndDate("08/18")
+                .withEndDate(CardExpiryDate.valueOf("08/18"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();

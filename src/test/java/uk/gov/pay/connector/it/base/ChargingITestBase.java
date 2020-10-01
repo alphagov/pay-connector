@@ -11,6 +11,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -370,7 +371,8 @@ public class ChargingITestBase {
         addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", null, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
     }

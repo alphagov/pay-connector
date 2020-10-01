@@ -5,12 +5,11 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -20,17 +19,14 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
 
-import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static java.util.Arrays.asList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -52,11 +48,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
@@ -212,8 +204,9 @@ public class ChargesFrontendResourceIT {
                 .withDelayedCapture(false)
                 .withEmail(email)
                 .build());
-        databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456",
+                "Mr. McPayment", CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city",
+                null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
@@ -233,7 +226,7 @@ public class ChargesFrontendResourceIT {
                 .withEmail(email)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
@@ -252,7 +245,7 @@ public class ChargesFrontendResourceIT {
                 .withStatus(AUTHORISATION_3DS_REQUIRED)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
 
         connectorRestApi
@@ -277,7 +270,7 @@ public class ChargesFrontendResourceIT {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", null, null, null, null, null, null, null);
+                CardExpiryDate.valueOf("03/18"), null, null, null, null, null, null, null);
 
         connectorRestApi
                 .withChargeId(externalChargeId)

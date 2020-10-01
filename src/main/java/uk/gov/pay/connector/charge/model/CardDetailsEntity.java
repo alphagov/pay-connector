@@ -3,6 +3,8 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.commons.jpa.CardExpiryDateConverter;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
@@ -40,8 +42,10 @@ public class CardDetailsEntity {
     private String cardHolderName;
 
     @Column(name = "expiry_date")
+    @Convert(converter = CardExpiryDateConverter.class)
     @JsonProperty("expiry_date")
-    private String expiryDate;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private CardExpiryDate expiryDate;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_brand", referencedColumnName = "brand", updatable = false, insertable = false)
@@ -63,7 +67,8 @@ public class CardDetailsEntity {
     public CardDetailsEntity() {
     }
     
-    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType) {
+    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName,
+                             CardExpiryDate expiryDate, String cardBrand, CardType cardType) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
@@ -72,7 +77,8 @@ public class CardDetailsEntity {
         this.cardType = cardType;
     }
 
-    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType, AddressEntity billingAddress) {
+    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName,
+                             CardExpiryDate expiryDate, String cardBrand, CardType cardType, AddressEntity billingAddress) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
@@ -118,11 +124,11 @@ public class CardDetailsEntity {
         this.cardHolderName = cardHolder;
     }
 
-    public String getExpiryDate() {
+    public CardExpiryDate getExpiryDate() {
         return expiryDate;
     }
 
-    public void setExpiryDate(String expiryDate) {
+    public void setExpiryDate(CardExpiryDate expiryDate) {
         this.expiryDate = expiryDate;
     }
 

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -15,7 +16,7 @@ public final class AuthCardDetailsFixture {
     private String cardNo = "4242424242424242";
     private String cardHolder = "Mr Test";
     private String cvc = "123";
-    private String endDate = "12/99";
+    private CardExpiryDate endDate = CardExpiryDate.valueOf("12/99");
     private Address address = AddressFixture.anAddress().build();
     private String cardBrand = "visa";
     private String userAgentHeader = "Mozilla/5.0";
@@ -53,7 +54,7 @@ public final class AuthCardDetailsFixture {
         return this;
     }
 
-    public AuthCardDetailsFixture withEndDate(String endDate) {
+    public AuthCardDetailsFixture withEndDate(CardExpiryDate endDate) {
         this.endDate = endDate;
         return this;
     }

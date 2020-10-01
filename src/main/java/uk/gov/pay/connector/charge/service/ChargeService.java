@@ -4,6 +4,7 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -172,7 +173,7 @@ public class ChargeService {
                     LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
                     FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
                     telephoneChargeRequest.getNameOnCard().orElse(null),
-                    telephoneChargeRequest.getCardExpiry().orElse(null),
+                    telephoneChargeRequest.getCardExpiry().map(CardExpiryDate::valueOf).orElse(null),
                     telephoneChargeRequest.getCardType().orElse(null),
                     null
             );

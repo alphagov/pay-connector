@@ -6,6 +6,7 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -177,8 +178,7 @@ public class WalletAuthoriseService {
         authCardDetails.setCardNo(walletAuthorisationData.getPaymentInfo().getLastDigitsCardNumber());
         authCardDetails.setPayersCardType(walletAuthorisationData.getPaymentInfo().getCardType());
         authCardDetails.setCardBrand(walletAuthorisationData.getPaymentInfo().getBrand());
-        walletAuthorisationData.getCardExpiryDate().ifPresent(
-                cardExpiry -> authCardDetails.setEndDate(cardExpiry.format(EXPIRY_DATE_FORMAT)));
+        walletAuthorisationData.getCardExpiryDate().map(EXPIRY_DATE_FORMAT::format).map(CardExpiryDate::valueOf).ifPresent(authCardDetails::setEndDate);
         authCardDetails.setCorporateCard(false);
         return authCardDetails;
     }

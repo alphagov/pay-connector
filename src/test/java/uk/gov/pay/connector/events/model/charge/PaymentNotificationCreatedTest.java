@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class PaymentNotificationCreatedTest {
     }
 
     @Test
-    public void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
+    public void whenCardDetailsAndMetadataAreNotAvailable() throws JsonProcessingException {
         chargeEntityFixture
                 .withCardDetails(null)
                 .withExternalMetadata(null);
@@ -106,6 +107,42 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));
         assertThat(actual, hasNoJsonPath("$.event_details.last_digits_card_number"));
         assertThat(actual, hasNoJsonPath("$.event_details.cardholder_name"));
+        assertThat(actual, hasNoJsonPath("$.event_details.expiry_date"));
+        assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.processor_id"));
+        assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.auth_code"));
+        assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.telephone_number"));
+    }
+
+    @Test
+    public void whenCardDetailsIsAvailableButNotAllItsFieldsAre() throws JsonProcessingException {
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
+        cardDetailsEntity.setCardHolderName("Mr Test");
+
+        chargeEntityFixture
+                .withCardDetails(cardDetailsEntity)
+                .withExternalMetadata(null);
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity);
+
+        String actual = PaymentNotificationCreated.from(chargeEvent).toJsonString();
+
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_NOTIFICATION_CREATED")));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
+
+        assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
+        assertThat(actual, hasJsonPath("$.event_details.description", equalTo("This is a description")));
+        assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
+        assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(providerId)));
+        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo("sandbox")));
+        assertThat(actual, hasJsonPath("$.event_details.source", equalTo("CARD_EXTERNAL_TELEPHONE")));
+        assertThat(actual, hasJsonPath("$.event_details.cardholder_name", equalTo("Mr Test")));
+
+        assertThat(actual, hasNoJsonPath("$.event_details.card_brand"));
+        assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));
+        assertThat(actual, hasNoJsonPath("$.event_details.last_digits_card_number"));
         assertThat(actual, hasNoJsonPath("$.event_details.expiry_date"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.processor_id"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.auth_code"));

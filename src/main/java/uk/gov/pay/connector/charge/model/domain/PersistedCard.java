@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -27,7 +28,8 @@ public class PersistedCard {
     private String cardHolderName;
 
     @JsonProperty("expiry_date")
-    private String expiryDate;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private CardExpiryDate expiryDate;
 
     @JsonProperty("billing_address")
     private Address billingAddress;
@@ -72,11 +74,11 @@ public class PersistedCard {
         this.cardHolderName = cardHolderName;
     }
 
-    public String getExpiryDate() {
+    public CardExpiryDate getExpiryDate() {
         return expiryDate;
     }
 
-    public void setExpiryDate(String expiryDate) {
+    public void setExpiryDate(CardExpiryDate expiryDate) {
         this.expiryDate = expiryDate;
     }
 

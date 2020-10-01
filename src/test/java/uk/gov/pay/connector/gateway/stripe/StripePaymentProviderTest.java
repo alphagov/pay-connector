@@ -7,6 +7,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
@@ -340,7 +341,7 @@ public class StripePaymentProviderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("4242424242424242")
                 .withCvc("111")
-                .withEndDate("08/99")
+                .withEndDate(CardExpiryDate.valueOf("08/99"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();
@@ -352,7 +353,7 @@ public class StripePaymentProviderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("4242424242424242")
                 .withCvc("111")
-                .withEndDate("08/99")
+                .withEndDate(CardExpiryDate.valueOf("08/99"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();

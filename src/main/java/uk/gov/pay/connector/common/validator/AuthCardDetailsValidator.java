@@ -16,7 +16,6 @@ public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCa
     private static final Pattern TWELVE_TO_NINETEEN_DIGITS = compile("[0-9]{12,19}");
     private static final Pattern THREE_TO_FOUR_DIGITS = compile("[0-9]{3,4}");
     private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s*[0-9]{3,4}\\s*");
-    private static final Pattern EXPIRY_DATE = compile("[0-9]{2}/[0-9]{2}");
     private static final Pattern CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS = compile(".*([0-9].*){12,}");
     private static final short MAX_LENGTH = 255;
 
@@ -35,7 +34,6 @@ public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCa
     private static boolean isWellFormatted(AuthCardDetails authCardDetails) {
         return isValidCardNumberLength(authCardDetails.getCardNo()) &&
                 isBetween3To4Digits(authCardDetails.getCvc()) &&
-                hasExpiryDateFormat(authCardDetails.getEndDate()) &&
                 hasCardBrand(authCardDetails.getCardBrand()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardBrand()) &&
                 isAddressValid(authCardDetails) &&
@@ -75,10 +73,6 @@ public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCa
 
     private static boolean isBetween3To4Digits(String number) {
         return notNullAndMatches(THREE_TO_FOUR_DIGITS, number);
-    }
-
-    private static boolean hasExpiryDateFormat(String date) {
-        return notNullAndMatches(EXPIRY_DATE, date);
     }
 
     private static boolean addressUnlikelyToContainACardNumber(Address address) {

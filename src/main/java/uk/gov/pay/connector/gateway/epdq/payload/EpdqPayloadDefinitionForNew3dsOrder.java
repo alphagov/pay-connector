@@ -45,7 +45,7 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
                 .add(CVC_KEY, getAuthCardDetails().getCvc())
                 .add(DECLINEURL_KEY, frontend3dsIncomingUrl + "?status=declined")
                 .add(EXCEPTIONURL_KEY, frontend3dsIncomingUrl + "?status=error")
-                .add(EXPIRY_DATE_KEY, getAuthCardDetails().getEndDate())
+                .add(EXPIRY_DATE_KEY, getAuthCardDetails().getEndDate().toString())
                 .add(FLAG3D_KEY, "Y")
                 .add(HTTPACCEPT_KEY, getBrowserAcceptHeader())
                 .add(HTTPUSER_AGENT_KEY, getBrowserUserAgent())

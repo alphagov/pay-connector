@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
@@ -55,7 +56,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
 
     private static final String CARD_NO = "4242424242424242";
     private static final String CVC = "321";
-    private static final String END_DATE = "01/18";
+    private static final CardExpiryDate END_DATE = CardExpiryDate.valueOf("01/18");
 
     private static final String AMOUNT = "500";
     private static final String CURRENCY = "GBP";
@@ -127,7 +128,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("5555444433331111")
                 .withCvc("737")
-                .withEndDate("08/18")
+                .withEndDate(CardExpiryDate.valueOf("08/18"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();
@@ -149,7 +150,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),
@@ -185,7 +186,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),
@@ -220,7 +221,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_KEY, ACCEPT_HEADER),

@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -74,7 +75,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
     private static final String ORDER_ID = "OrderId";
     private static final String CARD_NO = "4242424242424242";
     private static final String CVC = "321";
-    private static final String END_DATE = "01/18";
+    private static final CardExpiryDate END_DATE = CardExpiryDate.valueOf("01/18");
     private static final String AMOUNT = "500";
     private static final String CURRENCY = "GBP";
     private static final String CARDHOLDER_NAME = "Ms Making A Payment";
@@ -510,7 +511,7 @@ public class EpdqPayloadDefinitionForNew3ds2OrderTest {
                     .add(CURRENCY_KEY, CURRENCY)
                     .add(CVC_KEY, CVC)
                     .add(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined")
-                    .add(EXPIRY_DATE_KEY, END_DATE)
+                    .add(EXPIRY_DATE_KEY, END_DATE.toString())
                     .add(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error")
                     .add(FLAG3D_KEY, "Y")
                     .add(HTTPACCEPT_KEY, browserAcceptHeader)

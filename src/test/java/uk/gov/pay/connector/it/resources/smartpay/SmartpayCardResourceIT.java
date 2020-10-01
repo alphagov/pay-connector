@@ -10,6 +10,7 @@ import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -231,7 +232,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
                 "Mr.Payment",
                 "5555444433331111",
                 cvc,
-                "08/18",
+                CardExpiryDate.valueOf("08/18"),
                 "visa",
                 "CREDIT",
                 "The Money Pool", "line 2",

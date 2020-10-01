@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
@@ -47,7 +48,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
 
     private static final String CARD_NO = "4242424242424242";
     private static final String CVC = "321";
-    private static final String END_DATE = "01/18";
+    private static final CardExpiryDate END_DATE = CardExpiryDate.valueOf("01/18");
 
     private static final String AMOUNT = "500";
     private static final String CURRENCY = "GBP";
@@ -113,7 +114,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("5555444433331111")
                 .withCvc("737")
-                .withEndDate("08/18")
+                .withEndDate(CardExpiryDate.valueOf("08/18"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();
@@ -131,7 +132,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
                 new BasicNameValuePair(OWNER_ADDRESS_KEY, ADDRESS_LINE_1),
@@ -157,7 +158,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
                 new BasicNameValuePair(OWNER_ADDRESS_KEY, ADDRESS_LINE_1 + ", " + ADDRESS_LINE_2),
@@ -182,7 +183,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
-                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE.toString()),
                 new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
                 new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
                 new BasicNameValuePair(PSPID_KEY, PSP_ID),

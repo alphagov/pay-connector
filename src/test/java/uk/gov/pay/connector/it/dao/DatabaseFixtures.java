@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -217,7 +218,7 @@ public class DatabaseFixtures {
         private LastDigitsCardNumber lastDigitsCardNumber = LastDigitsCardNumber.of("1234");
         private FirstDigitsCardNumber firstDigitsCardNumber = FirstDigitsCardNumber.of("123456");
         private String cardHolderName = "Mr. Pay McPayment";
-        private String expiryDate = "02/17";
+        private CardExpiryDate expiryDate = CardExpiryDate.valueOf("02/17");
         private TestAddress billingAddress = new TestAddress();
         private Long chargeId;
         private String cardBrand = "visa";
@@ -238,7 +239,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardDetails withExpiryDate(String expiryDate) {
+        public TestCardDetails withExpiryDate(CardExpiryDate expiryDate) {
             this.expiryDate = expiryDate;
             return this;
         }
@@ -275,7 +276,7 @@ public class DatabaseFixtures {
             return cardHolderName;
         }
 
-        public String getExpiryDate() {
+        public CardExpiryDate getExpiryDate() {
             return expiryDate;
         }
 
