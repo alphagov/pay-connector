@@ -173,7 +173,7 @@ public class ChargeService {
                     LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
                     FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
                     telephoneChargeRequest.getNameOnCard().orElse(null),
-                    telephoneChargeRequest.getCardExpiry().map(CardExpiryDate::valueOf).orElse(null),
+                    telephoneChargeRequest.getCardExpiry().orElse(null),
                     telephoneChargeRequest.getCardType().orElse(null),
                     null
             );

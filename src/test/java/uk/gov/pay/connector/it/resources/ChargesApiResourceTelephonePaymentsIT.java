@@ -352,6 +352,15 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturn400ForInvalidCardExpiryDate() {
+        postBody.put("card_expiry", "99/99");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(400);
+    }
+
+    @Test
     public void shouldReturn422ForInvalidCardType() {
         
         postBody.put("card_type", "invalid-card");
@@ -360,16 +369,6 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb"));
-    }
-
-    @Test
-    public void shouldReturn422ForInvalidCardExpiryDate() {
-        postBody.put("card_expiry", "99/99");
-        
-        connectorRestApiClient
-                .postCreateTelephoneCharge(toJson(postBody))
-                .statusCode(422)
-                .body("message[0]", is("Field [card_expiry] must have valid MM/YY"));
     }
 
     @Test
@@ -513,4 +512,5 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message[0]", is("must not be null"));
     }
+
 }

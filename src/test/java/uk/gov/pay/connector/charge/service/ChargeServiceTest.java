@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -199,7 +200,7 @@ public class ChargeServiceTest {
                 .withEmailAddress("jane.doe@example.com")
                 .withTelephoneNumber("+447700900796")
                 .withCardType("visa")
-                .withCardExpiry("01/19")
+                .withCardExpiry(CardExpiryDate.valueOf("01/19"))
                 .withLastFourDigits("1234")
                 .withFirstSixDigits("123456");
 

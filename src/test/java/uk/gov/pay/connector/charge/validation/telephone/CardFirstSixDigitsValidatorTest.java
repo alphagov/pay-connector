@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 
@@ -31,7 +32,7 @@ public class CardFirstSixDigitsValidatorTest {
                 .withReference("Some reference")
                 .withProcessorId("1PROC")
                 .withProviderId("1PROV")
-                .withCardExpiry("01/99")
+                .withCardExpiry(CardExpiryDate.valueOf("01/99"))
                 .withLastFourDigits("1234")
                 .withCardType("visa")
                 .withPaymentOutcome(new PaymentOutcome("success"));
