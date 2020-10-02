@@ -77,17 +77,6 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingExpiryDate() {
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withEndDate(null)
-                .build();
-
-        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
-        assertEquals(1, violations.size());
-        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
-    }
-
-    @Test
     public void validationFailsForMissingCardBrand() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardBrand(null)
@@ -103,7 +92,6 @@ public class AuthCardDetailsValidatorTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("")
                 .withCvc("")
-                .withEndDate("")
                 .withCardBrand("")
                 .build();
 
@@ -191,17 +179,6 @@ public class AuthCardDetailsValidatorTest {
     public void validationFailsForCVCwithLessThan3Digits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc("12")
-                .build();
-
-        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
-        assertEquals(1, violations.size());
-        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    public void validationFailsForExpiryDateWithWrongFormat() {
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withEndDate("1290")
                 .build();
 
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);

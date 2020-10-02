@@ -2,19 +2,14 @@ package uk.gov.pay.connector.gateway.stripe.request;
 
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.northamericaregion.CanadaPostalcodeToProvinceOrTerritoryMapper;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.pay.connector.northamericaregion.UsZipCodeToStateMapper;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class StripePaymentMethodRequest extends StripeRequest {
@@ -44,8 +39,8 @@ public class StripePaymentMethodRequest extends StripeRequest {
     @Override
     protected Map<String, String> params() {
         Map<String, String> localParams = new HashMap<>();
-        localParams.put("card[exp_month]", authCardDetails.expiryMonth());
-        localParams.put("card[exp_year]", authCardDetails.expiryYear());
+        localParams.put("card[exp_month]", Integer.valueOf(authCardDetails.getEndDate().getTwoDigitMonth()).toString());
+        localParams.put("card[exp_year]", authCardDetails.getEndDate().getTwoDigitYear());
         localParams.put("card[number]", authCardDetails.getCardNo());
         localParams.put("card[cvc]", authCardDetails.getCvc());
         localParams.put("billing_details[name]", authCardDetails.getCardHolder());

@@ -90,7 +90,7 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
                 .add(CARDHOLDER_NAME_KEY, authCardDetails.getCardHolder())
                 .add(CURRENCY_KEY, "GBP")
                 .add(CVC_KEY, authCardDetails.getCvc())
-                .add(EXPIRY_DATE_KEY, authCardDetails.getEndDate())
+                .add(EXPIRY_DATE_KEY, authCardDetails.getEndDate().toString())
                 .add(OPERATION_KEY, "RES")
                 .add(ORDER_ID_KEY, orderId);
 

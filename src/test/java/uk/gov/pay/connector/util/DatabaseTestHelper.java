@@ -5,6 +5,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.postgresql.util.PGobject;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -212,8 +213,9 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardType,
-                                        String line1, String line2, String postcode, String city, String county, String country) {
+    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String firstDigitsCardNumber, String cardHolderName,
+                                        CardExpiryDate expiryDate, String cardType, String line1, String line2, String postcode, String city, String county,
+                                        String country) {
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country, card_type=:card_type WHERE id=:id")
@@ -222,7 +224,7 @@ public class DatabaseTestHelper {
                         .bind("last_digits_card_number", lastDigitsCardNumber)
                         .bind("first_digits_card_number", firstDigitsCardNumber)
                         .bind("cardholder_name", cardHolderName)
-                        .bind("expiry_date", expiryDate)
+                        .bind("expiry_date", expiryDate.toString())
                         .bind("address_line1", line1)
                         .bind("address_line2", line2)
                         .bind("address_postcode", postcode)

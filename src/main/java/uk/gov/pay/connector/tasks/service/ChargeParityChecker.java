@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -131,7 +132,9 @@ public class ChargeParityChecker {
                     cardDetailsEntity.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
                     isEmpty(ledgerCardDetails.getCardBrand()) ? null : ledgerCardDetails.getCardBrand(),
                     "card_brand");
-            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getExpiryDate(), ledgerCardDetails.getExpiryDate(), "expiry_date");
+            fieldsMatch = fieldsMatch && isEquals(
+                    Optional.of(cardDetailsEntity.getExpiryDate()).map(CardExpiryDate::toString).orElse(null),
+                    ledgerCardDetails.getExpiryDate(), "expiry_date");
 
             String cardType = null;
             if (cardDetailsEntity.getCardType() != null) {

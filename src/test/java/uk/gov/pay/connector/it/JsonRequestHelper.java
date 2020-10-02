@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it;
 
 import com.google.gson.JsonObject;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
@@ -9,7 +10,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class JsonRequestHelper {
 
     private static final String CVC = "123";
-    private static final String EXPIRY_DATE = "11/99";
+    private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("11/99");
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String ADDRESS_LINE_1 = "The Money Pool";
     private static final String ADDRESS_CITY = "London";
@@ -31,14 +32,14 @@ public class JsonRequestHelper {
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
-    public static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
+    public static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, CardExpiryDate expiryDate, String cardBrand) {
         return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, CARD_TYPE, ADDRESS_LINE_1,
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
     public static String buildDetailedJsonAuthorisationDetailsFor(String cardNumber,
                                                                   String cvc,
-                                                                  String expiryDate,
+                                                                  CardExpiryDate expiryDate,
                                                                   String cardBrand,
                                                                   String cardType,
                                                                   String cardHolderName,
@@ -54,7 +55,7 @@ public class JsonRequestHelper {
     public static String buildJsonAuthorisationDetailsFor(String cardHolderName,
                                                           String cardNumber,
                                                           String cvc,
-                                                          String expiryDate,
+                                                          CardExpiryDate expiryDate,
                                                           String cardBrand,
                                                           String cardType,
                                                           String line1,
@@ -119,7 +120,7 @@ public class JsonRequestHelper {
     private static String buildCorporateJsonAuthorisationDetailsFor(String cardHolderName,
                                                                     String cardNumber,
                                                                     String cvc,
-                                                                    String expiryDate,
+                                                                    CardExpiryDate expiryDate,
                                                                     String cardBrand,
                                                                     String line1,
                                                                     String line2,
@@ -170,7 +171,7 @@ public class JsonRequestHelper {
     private static JsonObject buildJsonAuthorisationDetailsWithoutAddress(String cardHolderName,
                                                                           String cardNumber,
                                                                           String cvc,
-                                                                          String expiryDate,
+                                                                          CardExpiryDate expiryDate,
                                                                           String cardBrand,
                                                                           Boolean isCorporateCard,
                                                                           String payersCardType,
@@ -179,7 +180,7 @@ public class JsonRequestHelper {
         JsonObject authorisationDetails = new JsonObject();
         authorisationDetails.addProperty("card_number", cardNumber);
         authorisationDetails.addProperty("cvc", cvc);
-        authorisationDetails.addProperty("expiry_date", expiryDate);
+        authorisationDetails.addProperty("expiry_date", expiryDate.toString());
         authorisationDetails.addProperty("card_brand", cardBrand);
         authorisationDetails.addProperty("cardholder_name", cardHolderName);
         authorisationDetails.addProperty("accept_header", "text/html");

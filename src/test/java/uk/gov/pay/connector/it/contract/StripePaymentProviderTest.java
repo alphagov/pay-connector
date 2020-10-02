@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -71,7 +72,7 @@ public class StripePaymentProviderTest {
     public void shouldAuthoriseSuccessfully_WithNoBillingAddress() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
-                .withEndDate("01/30")
+                .withEndDate(CardExpiryDate.valueOf("01/30"))
                 .build();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
@@ -89,7 +90,7 @@ public class StripePaymentProviderTest {
         usAddress.setCountry("US");
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(usAddress)
-                .withEndDate("01/30")
+                .withEndDate(CardExpiryDate.valueOf("01/30"))
                 .build();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
@@ -107,7 +108,7 @@ public class StripePaymentProviderTest {
         canadaAddress.setCountry("CA");
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(canadaAddress)
-                .withEndDate("01/30")
+                .withEndDate(CardExpiryDate.valueOf("01/30"))
                 .build();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
@@ -211,7 +212,8 @@ public class StripePaymentProviderTest {
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise() {
-        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(),
+                anAuthCardDetails().withEndDate(CardExpiryDate.valueOf("01/21")).build());
         return stripePaymentProvider.authorise(request);
     }
 

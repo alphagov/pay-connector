@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -9,12 +10,12 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -121,7 +122,8 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", CardType.DEBIT, new AddressEntity(billingAddress));
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
+                "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", CardType.DEBIT, new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 
@@ -136,7 +138,8 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", null, new AddressEntity(billingAddress));
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
+                "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 

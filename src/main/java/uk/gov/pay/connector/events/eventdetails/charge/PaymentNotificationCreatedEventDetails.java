@@ -1,12 +1,18 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
@@ -55,44 +61,24 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
-            String firstDigitsCardNumber = null;
-            String lastDigitsCardNumber = null;
-            String cardHolderName = null;
-            String expiryDate = null;
-            String cardBrand = null;
-            String cardBrandLabel = null;
-
-            if (charge.getCardDetails() != null) {
-                if (charge.getCardDetails().getLastDigitsCardNumber() != null) {
-                    lastDigitsCardNumber = charge.getCardDetails().getLastDigitsCardNumber().toString();
-                }
-                if (charge.getCardDetails().getFirstDigitsCardNumber() != null) {
-                    firstDigitsCardNumber = charge.getCardDetails().getFirstDigitsCardNumber().toString();
-                }
-                cardHolderName = charge.getCardDetails().getCardHolderName();
-                expiryDate = charge.getCardDetails().getExpiryDate();
-                cardBrand = charge.getCardDetails().getCardBrand();
-                if (charge.getCardDetails().getCardTypeDetails().isPresent()) {
-                    cardBrandLabel = charge.getCardDetails().getCardTypeDetails().get().getLabel();
-                }
-            }
-            return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(),
-                    charge.getAmount(),
-                    charge.getReference().toString(),
-                    charge.getDescription(),
-                    charge.getGatewayTransactionId(),
-                    firstDigitsCardNumber,
-                    lastDigitsCardNumber,
-                    cardHolderName,
-                    charge.getEmail(),
-                    expiryDate,
-                    cardBrand,
-                    cardBrandLabel,
-                    charge.getGatewayAccount().isLive(),
-                    charge.getGatewayAccount().getGatewayName(),
-                    charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null),
-                    charge.getSource(),
-                    charge.getLanguage().toString());
+        Optional<CardDetailsEntity> cardDetails = Optional.ofNullable(charge.getCardDetails());
+        return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(),
+                charge.getAmount(),
+                charge.getReference().toString(),
+                charge.getDescription(),
+                charge.getGatewayTransactionId(),
+                cardDetails.map(CardDetailsEntity::getFirstDigitsCardNumber).map(FirstDigitsCardNumber::toString).orElse(null),
+                cardDetails.map(CardDetailsEntity::getLastDigitsCardNumber).map(LastDigitsCardNumber::toString).orElse(null),
+                cardDetails.map(CardDetailsEntity::getCardHolderName).orElse(null),
+                charge.getEmail(),
+                cardDetails.map(CardDetailsEntity::getExpiryDate).map(CardExpiryDate::toString).orElse(null),
+                cardDetails.map(CardDetailsEntity::getCardBrand).orElse(null),
+                cardDetails.flatMap(CardDetailsEntity::getCardTypeDetails).map(CardBrandLabelEntity::getLabel).orElse(null),
+                charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getGatewayName(),
+                charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null),
+                charge.getSource(),
+                charge.getLanguage().toString());
     }
 
     @Override

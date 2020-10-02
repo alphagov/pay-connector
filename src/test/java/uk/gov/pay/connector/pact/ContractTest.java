@@ -11,6 +11,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -137,7 +138,8 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .withDelayedCapture(delayedCapture)
                 .build());
-        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23", String.valueOf(DEBIT),
+        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName,
+                CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 

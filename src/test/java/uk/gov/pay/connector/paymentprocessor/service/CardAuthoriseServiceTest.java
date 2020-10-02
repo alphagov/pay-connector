@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -530,7 +531,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String cardholderName = "Mr Bright";
         String cardNumber = "4242424242424242";
         String cvc = "123";
-        String expiryDate = "12/23";
+        CardExpiryDate expiryDate = CardExpiryDate.valueOf("12/23");
         String cardBrand = "visa";
         String addressLine1 = "Line 1";
         String addressLine2 = "Line 1";

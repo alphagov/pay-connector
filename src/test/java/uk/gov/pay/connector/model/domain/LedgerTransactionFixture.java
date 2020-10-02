@@ -115,7 +115,7 @@ public class LedgerTransactionFixture {
                     chargeEntityCardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
                     ofNullable(chargeEntityCardDetails.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
                     ofNullable(chargeEntityCardDetails.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
-                    chargeEntityCardDetails.getExpiryDate(),
+                    chargeEntityCardDetails.getExpiryDate().toString(),
                     ofNullable(chargeEntityCardDetails.getCardType()).map(cardType -> cardType.toString().toLowerCase()).orElse(null)
             );
 

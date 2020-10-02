@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -78,7 +79,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                                     .orElse(null)
                             )
                             .withCardholderName(cardDetails.getCardHolderName())
-                            .withExpiryDate(cardDetails.getExpiryDate())
+                            .withExpiryDate(Optional.ofNullable(cardDetails.getExpiryDate()).map(CardExpiryDate::toString).orElse(null))
                             .withAddressLine1(cardDetails.getBillingAddress().map(AddressEntity::getLine1).orElse(null))
                             .withAddressLine2(cardDetails.getBillingAddress().map(AddressEntity::getLine2).orElse(null))
                             .withAddressCity(cardDetails.getBillingAddress().map(AddressEntity::getCity).orElse(null))

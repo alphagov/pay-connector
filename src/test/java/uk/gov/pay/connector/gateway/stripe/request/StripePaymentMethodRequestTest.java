@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -18,7 +19,6 @@ import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -62,7 +62,7 @@ public class StripePaymentMethodRequestTest {
         authCardDetails.setCardNo(cardNo);
         authCardDetails.setCardHolder(cardHolder);
         authCardDetails.setCvc(cvc);
-        authCardDetails.setEndDate(endMonth + "/" + endYear);
+        authCardDetails.setEndDate(CardExpiryDate.valueOf(endMonth + "/" + endYear));
 
         CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
 

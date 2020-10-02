@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.w3c.dom.Document;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -557,7 +558,7 @@ public class WorldpayPaymentProviderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("4111111111111111")
                 .withCvc("123")
-                .withEndDate("12/15")
+                .withEndDate(CardExpiryDate.valueOf("12/15"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();

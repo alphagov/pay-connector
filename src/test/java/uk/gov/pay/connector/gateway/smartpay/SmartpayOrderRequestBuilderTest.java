@@ -4,6 +4,7 @@ import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -281,7 +282,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withCardHolder("Mr. Payment")
                 .withCardNo("5555444433331111")
                 .withCvc("737")
-                .withEndDate("08/18")
+                .withEndDate(CardExpiryDate.valueOf("08/18"))
                 .withCardBrand("visa")
                 .withAddress(address)
                 .build();

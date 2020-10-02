@@ -356,7 +356,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(cardDetails.getCardHolderName(), is("Mr. Payment"));
         assertThat(cardDetails.getCardBrand(), is("visa"));
-        assertThat(cardDetails.getExpiryDate(), is("12/23"));
+        assertThat(cardDetails.getExpiryDate().toString(), is("12/23"));
         assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
         assertThat(cardDetails.getFirstDigitsCardNumber(), is(nullValue()));
         assertThat(cardDetails.getBillingAddress().isPresent(), is(false));

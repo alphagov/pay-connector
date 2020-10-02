@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.common.model.domain.Address;
 
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
@@ -15,7 +16,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String cardNo;
     private String cardHolder;
     private String cvc;
-    private String endDate;
+    private CardExpiryDate endDate;
     private Address address;
     private String cardBrand;
     private String userAgentHeader;
@@ -92,7 +93,8 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     @JsonProperty("expiry_date")
-    public void setEndDate(String endDate) {
+    @JsonSerialize(using = ToStringSerializer.class)
+    public void setEndDate(CardExpiryDate endDate) {
         this.endDate = endDate;
     }
 
@@ -148,18 +150,8 @@ public class AuthCardDetails implements AuthorisationDetails {
         return cvc;
     }
 
-    public String getEndDate() {
+    public CardExpiryDate getEndDate() {
         return endDate;
-    }
-
-    public String expiryMonth() {
-        YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
-        return String.valueOf(yearMonth.getMonthValue());
-    }
-
-    public String expiryYear() {
-        YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
-        return String.valueOf(yearMonth.getYear()).substring(2, 4);
     }
 
     public Optional<Address> getAddress() {
