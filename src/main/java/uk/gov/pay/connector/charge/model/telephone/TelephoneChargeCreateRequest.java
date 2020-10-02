@@ -2,8 +2,8 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardBrand;
-import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidZonedDateTime;
@@ -49,8 +49,7 @@ public class TelephoneChargeCreateRequest {
     
     private String emailAddress;
     
-    @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
-    private String cardExpiry;
+    private CardExpiryDate cardExpiry;
 
     @ValidCardLastFourDigits(message = "Field [last_four_digits] must be exactly 4 digits")
     private String lastFourDigits;
@@ -132,7 +131,7 @@ public class TelephoneChargeCreateRequest {
         return Optional.ofNullable(emailAddress);
     }
 
-    public Optional<String> getCardExpiry() {
+    public Optional<CardExpiryDate> getCardExpiry() {
         return Optional.ofNullable(cardExpiry);
     }
 
@@ -173,7 +172,7 @@ public class TelephoneChargeCreateRequest {
 
         private String emailAddress;
 
-        private String cardExpiry;
+        private CardExpiryDate cardExpiry;
 
         private String lastFourDigits;
 
@@ -241,7 +240,7 @@ public class TelephoneChargeCreateRequest {
             return this;
         }
         
-        public Builder withCardExpiry(String cardExpiry) {
+        public Builder withCardExpiry(CardExpiryDate cardExpiry) {
             this.cardExpiry = cardExpiry;
             return this;
         }
