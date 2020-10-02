@@ -18,6 +18,8 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -357,7 +359,8 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
-                .statusCode(400);
+                .statusCode(400)
+                .body("message", hasItem(containsString("CardExpiryDate")));
     }
 
     @Test
