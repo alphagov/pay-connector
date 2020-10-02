@@ -6,7 +6,6 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -27,7 +26,9 @@ import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
@@ -77,7 +78,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
     @Test
     public void shouldAuthoriseCharge_ForAValidAmericanExpress() {
-        shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", CardExpiryDate.valueOf("11/99"), "american-express"));
+        shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
     }
 
     @Test
@@ -98,7 +99,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 "Mr. Name",
                 "4444333322221111",
                 "123",
-                CardExpiryDate.valueOf("10/99"),
+                "10/99",
                 "visa",
                 "CREDIT",
                 "Line1",
@@ -121,7 +122,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
 
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
-                "4444333322221111", "123", CardExpiryDate.valueOf("11/30"),
+                "4444333322221111", "123", "11/30",
                 valueWithMoreThan10CharactersAsNumbers, "CREDIT", valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
@@ -147,7 +148,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
         String valueWith10CharactersAsNumbers = "r-12-34-5  Ju&^6501-7m";
 
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
-                "4444333322221111", "123", CardExpiryDate.valueOf("11/30"),
+                "4444333322221111", "123", "11/30",
                 valueWith10CharactersAsNumbers, "CREDIT", valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers));
@@ -217,7 +218,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCvcIsMoreThan4Digits() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", CardExpiryDate.valueOf("11/99"), "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -226,7 +227,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     @Test
     public void shouldReturnError_WhenCvcIsLessThan3Digits() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", CardExpiryDate.valueOf("11/99"), "visa");
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
@@ -238,6 +239,15 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
+        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+    }
+
+    @Test
+    public void shouldReturnError_WhenCardExpiryDateIsInvalid() {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "123", "99/99", "visa");
+
+        shouldReturnGenericError(chargeId, randomCardNumberDetails, "CardExpiryDate");
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
@@ -362,7 +372,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                         "Charge1 Name",
                         "4242424242424242",
                         "123",
-                        CardExpiryDate.valueOf("10/99"),
+                        "10/99",
                         "visa",
                         "CREDIT",
                         "Charge1 Line1",
@@ -378,7 +388,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                         "Charge2 Name",
                         "4444333322221111",
                         "456",
-                        CardExpiryDate.valueOf("11/99"),
+                        "11/99",
                         "visa",
                         null,
                         "Charge2 Line1",
@@ -447,6 +457,17 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void shouldReturnGenericError(String chargeId, String randomCardNumber, String substringExpectedInMessage) {
+        givenSetup()
+                .body(randomCardNumber)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
+                .body("message", hasItem(containsString(substringExpectedInMessage)));
     }
 
     private void shouldReturn_unsupportedCardDetails_errorFor(String chargeId, String randomCardNumber) {

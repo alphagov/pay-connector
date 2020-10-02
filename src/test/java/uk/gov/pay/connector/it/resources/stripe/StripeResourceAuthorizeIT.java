@@ -82,7 +82,7 @@ public class StripeResourceAuthorizeIT {
 
     private String stripeAccountId;
     private final String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
-            EXPIRY, CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
+            EXPIRY.toString(), CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
             "London", ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     private final String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
     private final String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
