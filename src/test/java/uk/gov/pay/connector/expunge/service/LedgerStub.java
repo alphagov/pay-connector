@@ -97,6 +97,14 @@ public class LedgerStub {
         stubFor(WireMock.get(urlPathEqualTo(url))
                 .willReturn(response));
     }
+    
+    public void returnErrorForFindRefundsForPayment(String chargeExternalId) {
+        ResponseDefinitionBuilder repsonse = aResponse().withStatus(500);
+        String url = format("/v1/transaction/%s/transaction", chargeExternalId);
+        stubFor(WireMock.get(urlPathEqualTo(url))
+                .willReturn(repsonse));
+
+    }
 
     private void stubResponseForProviderAndGatewayTransactionId(String gatewayTransactionId, String paymentProvider,
                                                                 Map<String, Object> ledgerTransactionFields, int status) throws JsonProcessingException {

@@ -27,12 +27,14 @@ import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -356,6 +358,29 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         Long refundAmount = 200L;
         postRefundFor(chargeExternalId, refundAmount, 200L)
                 .statusCode(ACCEPTED.getStatusCode());
+    }
+
+    @Test
+    public void shouldErrorRequestingARefundForHistoricCharge_whenErrorReturnedByLedger() throws Exception {
+        String chargeExternalId = "historic-charge-id";
+
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        LedgerTransaction charge = aValidLedgerTransaction()
+                .withExternalId(chargeExternalId)
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withAmount(1000L)
+                .withRefundSummary(refundSummary)
+                .build();
+        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+
+        ledgerStub.returnErrorForFindRefundsForPayment(chargeExternalId);
+
+        postRefundFor(chargeExternalId, 200L, 200L)
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
+        assertThat(refunds, hasSize(0));
     }
 
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {
