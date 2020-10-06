@@ -27,7 +27,6 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.LedgerTransactionFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -69,6 +68,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
@@ -199,7 +199,7 @@ public class RefundServiceTest {
 
         when(mockRefundDao.findById(refundId)).thenReturn(Optional.of(spiedRefundEntity));
 
-        LedgerTransaction ledgerRefund = LedgerTransactionFixture.aValidLedgerTransaction()
+        LedgerTransaction ledgerRefund = aValidLedgerTransaction()
                 .withExternalId("a-refund-in-ledger")
                 .withParentTransactionId(externalChargeId)
                 .withAmount(100L)
@@ -547,6 +547,66 @@ public class RefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
+    
+    @Test
+    public void shouldFailWhenANewRefundHasBeenCreatedSincePreviouslyQueried() {
+        String externalChargeId = "chargeId";
+        Long accountId = 2L;
+        GatewayAccountEntity account = new GatewayAccountEntity("sandbox", newHashMap(), TEST);
+        account.setId(accountId);
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withAmount(1000L)
+                .withExternalId(externalChargeId)
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transactionId")
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
+
+        RefundEntity refundExpungedSinceWeFirstChecked = aValidRefundEntity()
+                .withAmount(100L)
+                .withExternalId("refund1")
+                .withChargeExternalId(externalChargeId)
+                .withStatus(REFUNDED)
+                .build();
+
+        LedgerTransaction refundObtainedFromLedger = aValidLedgerTransaction()
+                .withAmount(100L)
+                .withExternalId("refund2")
+                .withParentTransactionId(externalChargeId)
+                .withStatus(REFUNDED.toExternal().getStatus())
+                .build();
+
+        RefundEntity newlyCreatedRefund = aValidRefundEntity()
+                .withAmount(100L)
+                .withExternalId("refund3")
+                .withChargeExternalId(externalChargeId)
+                .withStatus(CREATED)
+                .build();
+
+        // The second time we query, return a different list of refunds containing a new refund and not containing the
+        // first refund, which has since been expunged. Both refunds are for the same amount to ensure that we are
+        // still including the newly expunged refund in the calculation.
+        when(mockRefundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
+                .thenReturn(List.of(refundExpungedSinceWeFirstChecked))
+                .thenReturn(List.of(newlyCreatedRefund));
+
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withTransactions(List.of(refundObtainedFromLedger))
+                .withParentTransactionId(externalChargeId).build();
+        when(mockLedgerService.getRefundsForPayment(accountId, externalChargeId)).thenReturn(refundTransactionsForPayment);
+
+        expectedException.expect(RefundException.class);
+        expectedException.expectMessage("HTTP 412 Precondition Failed");
+
+        Charge charge = Charge.from(chargeEntity);
+        charge.setHistoric(true);
+        refundService.doRefund(accountId, charge, new RefundRequest(100L, 800L, userExternalId));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+    }
 
     @Test
     public void shouldUpdateRefundRecordToFailWhenRefundFails() {
@@ -629,7 +689,7 @@ public class RefundServiceTest {
                 .thenReturn(List.of(refundOne, refundTwo));
 
         List<Refund> refunds = refundService.findRefunds(charge);
-        
+
         verify(mockLedgerService, never()).getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId());
 
         assertThat(refunds.size(), is(2));
@@ -644,7 +704,7 @@ public class RefundServiceTest {
     public void shouldFindRefundsIncludingExpungedRefundsFromLedger() {
         Charge charge = Charge.from(aValidChargeEntity().build());
         charge.setHistoric(true);
-        
+
         String refundInDatabaseAndLedgerId = "refund-in-database-and-ledger";
         String refundOnlyInDatabaseId = "refund-only-in-database";
         String refundOnlyInLedgerId = "refund-only-in-ledger";
@@ -661,14 +721,14 @@ public class RefundServiceTest {
                 .withAmount(200L)
                 .withStatus(RefundStatus.REFUND_SUBMITTED)
                 .build();
-        
-        LedgerTransaction ledgerRefund1 = LedgerTransactionFixture.aValidLedgerTransaction()
+
+        LedgerTransaction ledgerRefund1 = aValidLedgerTransaction()
                 .withExternalId(refundInDatabaseAndLedgerId)
                 .withParentTransactionId(charge.getExternalId())
                 .withAmount(100L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUBMITTED.getStatus())
                 .build();
-        LedgerTransaction ledgerRefund2 = LedgerTransactionFixture.aValidLedgerTransaction()
+        LedgerTransaction ledgerRefund2 = aValidLedgerTransaction()
                 .withExternalId(refundOnlyInLedgerId)
                 .withParentTransactionId(charge.getExternalId())
                 .withAmount(300L)
@@ -677,7 +737,7 @@ public class RefundServiceTest {
 
         when(mockRefundDao.findRefundsByChargeExternalId(charge.getExternalId()))
                 .thenReturn(List.of(databaseRefund1, databaseRefund2));
-        
+
         var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
                 .withParentTransactionId(charge.getExternalId())
                 .withTransactions(List.of(ledgerRefund1, ledgerRefund2))
