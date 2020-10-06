@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
@@ -35,7 +36,7 @@ public class RefundParityCheckerTest {
     private RefundDao mockRefundDao;
     @InjectMocks
     RefundParityChecker refundParityChecker;
-
+    private Long gatewayAccountId = nextLong();
     private RefundEntity refundEntity;
 
     @Before
@@ -51,7 +52,7 @@ public class RefundParityCheckerTest {
 
     @Test
     public void parityCheck_shouldMatchIfRefundMatchesWithLedgerTransaction() {
-        LedgerTransaction transaction = from(refundEntity).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).build();
         assertParityCheckStatus(transaction, EXISTS_IN_LEDGER);
     }
 
@@ -62,43 +63,43 @@ public class RefundParityCheckerTest {
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfRefundDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withAmount(null).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withAmount(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfUserEmailDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withRefundedByUserEmail(null).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withRefundedByUserEmail(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfUserExternalIdDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withRefundedBy(null).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withRefundedBy(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfGatewayTransactionIdDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withGatewayTransactionId(null).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withGatewayTransactionId(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfStatusDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withStatus(REFUNDED.toExternal().getStatus()).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withStatus(REFUNDED.toExternal().getStatus()).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
 
-        transaction = from(refundEntity).withStatus(null).build();
+        transaction = from(gatewayAccountId, refundEntity).withStatus(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 
     @Test
     public void parityCheck_shouldReturnDataMismatchIfCreatedDateDoesNotMatchWithLedger() {
-        LedgerTransaction transaction = from(refundEntity).withCreatedDate(ZonedDateTime.now(UTC).minusDays(1)).build();
+        LedgerTransaction transaction = from(gatewayAccountId, refundEntity).withCreatedDate(ZonedDateTime.now(UTC).minusDays(1)).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
 
-        transaction = from(refundEntity).withCreatedDate(null).build();
+        transaction = from(gatewayAccountId, refundEntity).withCreatedDate(null).build();
         assertParityCheckStatus(transaction, DATA_MISMATCH);
     }
 

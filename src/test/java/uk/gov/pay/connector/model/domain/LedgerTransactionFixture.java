@@ -140,9 +140,10 @@ public class LedgerTransactionFixture {
         return ledgerTransactionFixture;
     }
 
-    public static LedgerTransactionFixture from(RefundEntity refundEntity) {
+    public static LedgerTransactionFixture from(Long gatewayAccountId, RefundEntity refundEntity) {
         LedgerTransactionFixture ledgerTransactionFixture =
                 aValidLedgerTransaction()
+                        .withGatewayAccountId(gatewayAccountId)
                         .withAmount(refundEntity.getAmount())
                         .withStatus(refundEntity.getStatus().toExternal().getStatus())
                         .withCreatedDate(refundEntity.getCreatedDate())

@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.time.ZonedDateTime.parse;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -148,7 +149,7 @@ public class ParityCheckServiceTest {
 
     @Test
     public void parityCheckRefundForExpunger_shouldBackfillRefundIfParityCheckFails() {
-        LedgerTransaction transaction = from(refundEntity)
+        LedgerTransaction transaction = from(nextLong(), refundEntity)
                 .withStatus(REFUND_ERROR.toExternal().getStatus()).build();
         when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
@@ -166,7 +167,7 @@ public class ParityCheckServiceTest {
         when(mockRefundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(refundEntity.getExternalId(), RefundStatus.CREATED))
                 .thenReturn(Optional.of(refundHistory));
 
-        LedgerTransaction transaction = from(refundEntity).build();
+        LedgerTransaction transaction = from(nextLong(), refundEntity).build();
         when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
         boolean matchesWithLedger = parityCheckService.parityCheckRefundForExpunger(refundEntity);

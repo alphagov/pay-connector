@@ -273,7 +273,7 @@ public class RefundService {
                 .stream()
                 .map(Refund::from)
                 .collect(Collectors.toList());
-        
+
         if (charge.isHistoric()) {
             // Combine refunds that have been expunged and so only exist in ledger with refunds that still exist in
             // the database, preferring records that still exist in the database as they might be in-flight.
@@ -288,15 +288,11 @@ public class RefundService {
         } else {
             return refundsFromDatabase;
         }
-        
+
     }
-    
+
     @Transactional
     public void updateRefundParityStatus(String externalId, ParityCheckStatus parityCheckStatus) {
-        refundDao.findByExternalId(externalId)
-                .ifPresent(refundEntity -> {
-                    refundEntity.setParityCheckDate(ZonedDateTime.now(ZoneId.of("UTC")));
-                    refundEntity.setParityCheckStatus(parityCheckStatus);
-                });
+        refundDao.updateParityCheckStatus(externalId, ZonedDateTime.now(ZoneId.of("UTC")), parityCheckStatus);
     }
 }

@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
@@ -46,6 +47,13 @@ public class RefundParityChecker {
             boolean fieldsMatch;
 
             fieldsMatch = isEquals(externalId, transaction.getTransactionId(), "external_id");
+
+            if (isBlank(transaction.getGatewayAccountId())) {
+                logger.info("Field value does not match between ledger and connector [field_name={}]", "gateway_account_id",
+                        kv(FIELD_NAME, "gateway_account_id"));
+                fieldsMatch = false;
+            }
+
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getChargeExternalId(), transaction.getParentTransactionId(), "parent_transaction_id");
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getAmount(), transaction.getAmount(), "amount");
             fieldsMatch = fieldsMatch && isEquals(refundEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");

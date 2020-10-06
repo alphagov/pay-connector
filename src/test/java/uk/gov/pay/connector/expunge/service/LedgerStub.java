@@ -54,13 +54,15 @@ public class LedgerStub {
     }
 
     public void returnLedgerTransactionWithMismatch(RefundEntity refund, ZonedDateTime refundCreatedEventDate) throws JsonProcessingException {
-        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund, null);
+        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund, null, refundCreatedEventDate);
         ledgerTransactionFields.put("external_id", "This is a mismatch");
         stubResponse(refund.getExternalId(), ledgerTransactionFields);
     }
 
-    public void returnLedgerTransaction(RefundEntity refund, ZonedDateTime refundCreatedEventDate) throws JsonProcessingException {
-        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund, refundCreatedEventDate);
+    public void returnLedgerTransaction(RefundEntity refund, Long gatewayAccountId,
+                                        ZonedDateTime refundCreatedEventDate) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = refundEntityToLedgerTransaction(refund,
+                gatewayAccountId, refundCreatedEventDate);
         stubResponse(refund.getExternalId(), ledgerTransactionFields);
     }
 
@@ -97,7 +99,7 @@ public class LedgerStub {
         stubFor(WireMock.get(urlPathEqualTo(url))
                 .willReturn(response));
     }
-    
+
     public void returnErrorForFindRefundsForPayment(String chargeExternalId) {
         ResponseDefinitionBuilder repsonse = aResponse().withStatus(500);
         String url = format("/v1/transaction/%s/transaction", chargeExternalId);
@@ -184,10 +186,12 @@ public class LedgerStub {
         return map;
     }
 
-    private Map<String, Object> refundEntityToLedgerTransaction(RefundEntity refund, ZonedDateTime refundCreatedEventDate) {
+    private Map<String, Object> refundEntityToLedgerTransaction(RefundEntity refund, Long gatewayAccountId,
+                                                                ZonedDateTime refundCreatedEventDate) {
         var map = new HashMap<String, Object>();
 
         Optional.ofNullable(refund.getExternalId()).ifPresent(value -> map.put("transaction_id", value));
+        Optional.ofNullable(gatewayAccountId).ifPresent(value -> map.put("gateway_account_id", gatewayAccountId));
         Optional.ofNullable(refund.getChargeExternalId()).ifPresent(value -> map.put("parent_transaction_id", value));
         Optional.of(refund.getAmount()).ifPresent(value -> map.put("amount", String.valueOf(value)));
         Optional.ofNullable(refund.getGatewayTransactionId()).ifPresent(value -> map.put("gateway_transaction_id", value));
