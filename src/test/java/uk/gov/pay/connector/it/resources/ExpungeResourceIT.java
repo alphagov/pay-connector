@@ -371,8 +371,8 @@ public class ExpungeResourceIT {
     @Test
     public void shouldNotExpungeRefundsNotMeetingCriteria() throws JsonProcessingException {
         String chargeExternalId = randomAlphanumeric(26);
-        RefundEntity nonExpungeableRefund1 = createAndStubRefund(chargeExternalId, 1, REFUNDED, true);
-        RefundEntity nonExpungeableRefund2 = createAndStubRefund(chargeExternalId, 1, REFUND_SUBMITTED, true);
+        RefundEntity nonExpungeableRefund1 = createAndStubRefund(randomAlphanumeric(26), 1, REFUNDED, true);
+        RefundEntity nonExpungeableRefund2 = createAndStubRefund(randomAlphanumeric(26), 1, REFUND_SUBMITTED, true);
         RefundEntity parityCheckFailedRefund = createAndStubRefund(chargeExternalId, 91, REFUNDED, false);
 
         var chargeToStub = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
@@ -400,6 +400,9 @@ public class ExpungeResourceIT {
         assertThat(parityCheckFailedRefundFromDB.get(0).get("parity_check_date"), is(notNullValue()));
         containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());
         assertThat(containsEmittedEvents, is(true));
+
+        List<Map<String, Object>> refundsHistoryList = databaseTestHelper.getRefundsHistoryByChargeExternalId(chargeExternalId);
+        assertThat(refundsHistoryList.size(), is(2));
     }
 
     private RefundEntity createAndStubRefund(String chargeExternalId, int createdBeforeDays, RefundStatus refundStatus,
@@ -417,7 +420,8 @@ public class ExpungeResourceIT {
         ledgerStub = new LedgerStub();
 
         if (stubForMatchingLedgerTransaction) {
-            ledgerStub.returnLedgerTransaction(refundEntity, refundHistoryCreated.get().getHistoryStartDate());
+            ledgerStub.returnLedgerTransaction(refundEntity, defaultTestAccount.getAccountId(),
+                    refundHistoryCreated.get().getHistoryStartDate());
         } else {
             ledgerStub.returnLedgerTransactionWithMismatch(refundEntity, refundHistoryCreated.get().getHistoryStartDate());
         }

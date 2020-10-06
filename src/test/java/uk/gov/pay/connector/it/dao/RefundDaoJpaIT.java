@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.oneOf;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
@@ -444,5 +445,27 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundHistoryList.get(0).getStatus(), oneOf(CREATED, REFUND_ERROR));
         assertThat(refundHistoryList.get(1).getExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundHistoryList.get(1).getStatus(), oneOf(CREATED, REFUND_ERROR));
+    }
+
+    @Test
+    public void updateParityCheckStatus_shouldUpdateParityCheckColumnsOnRefundCorrectly() {
+        RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntity.setStatus(CREATED);
+        refundDao.persist(refundEntity);
+
+        Optional<RefundEntity> mayBeRefundEntityFromDB = refundDao.findByExternalId(refundEntity.getExternalId());
+        List<RefundHistory> refundHistoryList = refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId());
+        assertThat(mayBeRefundEntityFromDB.get().getParityCheckDate(), is(nullValue()));
+        assertThat(mayBeRefundEntityFromDB.get().getParityCheckStatus(), is(nullValue()));
+        assertThat(refundHistoryList.size(), is(1));
+
+        ZonedDateTime parityCheckDate = ZonedDateTime.now(UTC);
+        refundDao.updateParityCheckStatus(refundEntity.getExternalId(), parityCheckDate, MISSING_IN_LEDGER);
+
+        mayBeRefundEntityFromDB = refundDao.findByExternalId(refundEntity.getExternalId());
+        refundHistoryList = refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId());
+        assertThat(mayBeRefundEntityFromDB.get().getParityCheckDate().toLocalDateTime(), is(parityCheckDate.toLocalDateTime()));
+        assertThat(mayBeRefundEntityFromDB.get().getParityCheckStatus(), is(MISSING_IN_LEDGER));
+        assertThat(refundHistoryList.size(), is(1));
     }
 }

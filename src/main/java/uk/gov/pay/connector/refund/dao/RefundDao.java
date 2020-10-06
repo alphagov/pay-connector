@@ -2,7 +2,9 @@ package uk.gov.pay.connector.refund.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
+import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
@@ -10,6 +12,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TemporalType;
 import java.sql.Date;
 import java.time.ZonedDateTime;
@@ -182,5 +185,18 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
                 .setParameter(1, refundExternalId)
                 .getResultList();
+    }
+
+    public void updateParityCheckStatus(String externalId, ZonedDateTime parityCheckDate, ParityCheckStatus parityCheckStatus) {
+        Query query = entityManager.get().createNativeQuery("update refunds " +
+                " set parity_check_status = ?1, parity_check_date = ?2" +
+                " where external_id = ?3");
+
+        UTCDateTimeConverter utcDateTimeConverter = new UTCDateTimeConverter();
+
+        query.setParameter(1, parityCheckStatus.toString())
+                .setParameter(2, utcDateTimeConverter.convertToDatabaseColumn(parityCheckDate))
+                .setParameter(3, externalId)
+                .executeUpdate();
     }
 }
