@@ -26,7 +26,9 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -248,19 +250,28 @@ public class RefundService {
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
                 .getExternalChargeRefundAvailability(charge, refundList);
         checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
+        
+        // We re-check the database for any newly created refunds that could have been made when we were making the
+        // network request to find the external refund-ability
+        List<Refund> updatedRefunds = checkForNewRefunds(charge, refundList);
 
-//      @TODO(sfount) is there a reason this currently needs to request new values from the database? This all happens in an @Transactional method
-//                    can we just pass the refund list that's been passed into this method (will the newly created refund be picked up before the
-//                    transaction has commited?         
-        List<Refund> postRefundList = findRefunds(charge);
-
-        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, postRefundList);
+        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, updatedRefunds);
         checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
 
         checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability,
                 gatewayAccountEntity, availableToBeRefunded);
 
         return availableToBeRefunded;
+    }
+
+    private List<Refund> checkForNewRefunds(Charge charge, List<Refund> refundList) {
+        List<RefundEntity> databaseRefunds = findNotExpungedRefunds(charge.getExternalId());
+
+        // Add any new or updated refunds to our existing list. If a refund has been expunged since we last queried and 
+        // so no longer exists in the database, continue using the existing record from the original refund list.
+        Map<String, Refund> updatedRefunds = refundList.stream().collect(Collectors.toMap(Refund::getExternalId, refund -> refund));
+        databaseRefunds.forEach(refundEntity -> updatedRefunds.put(refundEntity.getExternalId(), Refund.from(refundEntity)));
+        return new ArrayList<>(updatedRefunds.values());
     }
 
     public List<RefundEntity> findNotExpungedRefunds(String chargeExternalId) {
