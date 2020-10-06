@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -115,7 +116,7 @@ public class LedgerTransactionFixture {
                     chargeEntityCardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
                     ofNullable(chargeEntityCardDetails.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
                     ofNullable(chargeEntityCardDetails.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
-                    chargeEntityCardDetails.getExpiryDate().toString(),
+                    ofNullable(chargeEntityCardDetails.getExpiryDate()).map(CardExpiryDate::toString).orElse(null),
                     ofNullable(chargeEntityCardDetails.getCardType()).map(cardType -> cardType.toString().toLowerCase()).orElse(null)
             );
 

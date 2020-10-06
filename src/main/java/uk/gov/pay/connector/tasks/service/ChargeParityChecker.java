@@ -133,7 +133,7 @@ public class ChargeParityChecker {
                     isEmpty(ledgerCardDetails.getCardBrand()) ? null : ledgerCardDetails.getCardBrand(),
                     "card_brand");
             fieldsMatch = fieldsMatch && isEquals(
-                    Optional.of(cardDetailsEntity.getExpiryDate()).map(CardExpiryDate::toString).orElse(null),
+                    Optional.ofNullable(cardDetailsEntity.getExpiryDate()).map(CardExpiryDate::toString).orElse(null),
                     ledgerCardDetails.getExpiryDate(), "expiry_date");
 
             String cardType = null;

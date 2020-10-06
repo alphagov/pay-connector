@@ -95,6 +95,7 @@ public class ChargeParityCheckerTest {
     @Test
     public void parityCheck_shouldReturnDataMismatchIfCardDetailsDoesNotMatchWithLedger() {
         chargeEntity.getCardDetails().setBillingAddress(null);
+        chargeEntity.getCardDetails().setExpiryDate(null);
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withCardDetails(new CardDetails("test-name", null, "test-brand",
                         "6666", "123656", "11/88", null))
