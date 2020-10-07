@@ -18,7 +18,7 @@ import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -54,7 +54,7 @@ public class ChargeExpungeService {
         if (chargeIsHistoric && status.equals(ChargeStatus.CAPTURE_SUBMITTED)) {
             return true;
         }
-        if (chargeEntity.getPaymentGatewayName().equals(PaymentGatewayName.EPDQ) && 
+        if (chargeEntity.getPaymentGatewayName().equals(PaymentGatewayName.EPDQ) &&
                 List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR).contains(status)) {
             return false;
         }
@@ -68,21 +68,26 @@ public class ChargeExpungeService {
             int minimumAgeOfChargeInDays = expungeConfig.getMinimumAgeOfChargeInDays();
             int createdWithinLast = expungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays();
 
-            IntStream.range(0, noOfChargesToExpunge).forEach(number -> {
-                chargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, createdWithinLast)
-                        .ifPresent(chargeEntity -> {
-                            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
-                            logger.info(format("Attempting to expunge charge %s", chargeEntity.getExternalId()));
-                            try {
-                                parityCheckAndExpungeIfMet(chargeEntity);
-                            } catch (OptimisticLockException error) {
-                                logger.info("Expunging process conflicted with an already running process, exit");
-                                MDC.remove(HEADER_REQUEST_ID);
-                                throw error;
-                            }
-                            MDC.remove(PAYMENT_EXTERNAL_ID);
-                        });
-            });
+            for (int number = 0; number < noOfChargesToExpunge; number++) {
+                Optional<ChargeEntity> mayBeChargeToExpunge = chargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, createdWithinLast);
+
+                if (mayBeChargeToExpunge.isPresent()) {
+                    ChargeEntity chargeEntity = mayBeChargeToExpunge.get();
+                    MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+                    logger.info(format("Attempting to expunge charge %s", chargeEntity.getExternalId()));
+                    try {
+                        parityCheckAndExpungeIfMet(chargeEntity);
+                    } catch (OptimisticLockException error) {
+                        logger.info("Expunging process conflicted with an already running process, exit");
+                        MDC.remove(HEADER_REQUEST_ID);
+                        MDC.remove(PAYMENT_EXTERNAL_ID);
+                        throw error;
+                    }
+                    MDC.remove(PAYMENT_EXTERNAL_ID);
+                } else {
+                    break;
+                }
+            }
         }
     }
 

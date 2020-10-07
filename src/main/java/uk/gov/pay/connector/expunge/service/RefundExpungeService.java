@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.stream.IntStream;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
@@ -53,21 +53,28 @@ public class RefundExpungeService {
             int minimumAgeOfRefundInDays = expungeConfig.getMinimumAgeOfRefundInDays();
             int excludeRefundsParityCheckedWithInDays = expungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays();
 
-            IntStream.range(0, noOfRefundsToExpunge).forEach(number -> {
-                refundDao.findRefundToExpunge(minimumAgeOfRefundInDays, excludeRefundsParityCheckedWithInDays)
-                        .ifPresent(refundEntity -> {
-                            MDC.put(REFUND_EXTERNAL_ID, refundEntity.getExternalId());
-                            logger.info(format("Attempting to expunge refund %s", refundEntity.getExternalId()));
-                            try {
-                                parityCheckAndExpunge(refundEntity);
-                            } catch (OptimisticLockException error) {
-                                logger.info("Expunging process conflicted with an already running process, exit");
-                                MDC.remove(HEADER_REQUEST_ID);
-                                throw error;
-                            }
-                            MDC.remove(REFUND_EXTERNAL_ID);
-                        });
-            });
+            for (int number = 0; number < noOfRefundsToExpunge; number++) {
+                Optional<RefundEntity> mayBeRefundToExpunge = refundDao.findRefundToExpunge(minimumAgeOfRefundInDays,
+                        excludeRefundsParityCheckedWithInDays);
+
+                if (mayBeRefundToExpunge.isPresent()) {
+                    RefundEntity refundEntity = mayBeRefundToExpunge.get();
+                    MDC.put(REFUND_EXTERNAL_ID, refundEntity.getExternalId());
+                    logger.info(format("Attempting to expunge refund %s", refundEntity.getExternalId()));
+                    try {
+                        parityCheckAndExpunge(refundEntity);
+                    } catch (OptimisticLockException error) {
+                        logger.info("Expunging process conflicted with an already running process, exit");
+                        MDC.remove(HEADER_REQUEST_ID);
+                        MDC.remove(REFUND_EXTERNAL_ID);
+                        throw error;
+                    }
+                    MDC.remove(REFUND_EXTERNAL_ID);
+                } else {
+                    break;
+                }
+
+            }
         }
     }
 
