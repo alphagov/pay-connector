@@ -182,12 +182,13 @@ restClientConfig:
 ledgerBaseURL: ${LEDGER_URL:-localhost:10700}
 
 expungeConfig:
-  numberOfChargesOrRefundsToExpunge: ${EXPUNGE_NO_OF_CHARGES_OR_REFUNDS_PER_TASK_RUN:-25000}
   excludeChargesOrRefundsParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_OR_REFUNDS_PARITY_CHECKED_WITHIN_DAYS:-7}
   expungeChargesEnabled: ${EXPUNGE_CHARGES_ENABLED:-false}
+  numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGES_PER_TASK_RUN:-1000}
   minimumAgeOfChargeInDays: ${EXPUNGE_CHARGES_OLDER_THAN_DAYS:-7}
   minimumAgeForHistoricChargeExceptions: ${EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS:-90}
   expungeRefundsEnabled: ${EXPUNGE_REFUNDS_ENABLED:-false}
+  numberOfRefundsToExpunge: ${EXPUNGE_NO_OF_REFUNDS_PER_TASK_RUN:-1000}
   minimumAgeOfRefundInDays: ${EXPUNGE_REFUNDS_OLDER_THAN_DAYS:-7}
   minimumAgeForHistoricRefundExceptions: ${EXPUNGE_HISTORIC_REFUND_EXCEPTIONS_OLDER_THAN_DAYS:-90}
 

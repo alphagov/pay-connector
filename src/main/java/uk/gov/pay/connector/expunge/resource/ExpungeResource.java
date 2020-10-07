@@ -29,10 +29,11 @@ public class ExpungeResource {
     @POST
     @Path("/v1/tasks/expunge")
     @Produces(APPLICATION_JSON)
-    public Response expunge(@QueryParam("number_of_charges_or_refunds_to_expunge") Integer noOfChargesOrRefundsToExpunge) {
+    public Response expunge(@QueryParam("number_of_charges_to_expunge") Integer noOfChargesToExpunge,
+                            @QueryParam("number_of_refunds_to_expunge") Integer noOfRefundsToExpunge) {
         String correlationId = MDC.get(HEADER_REQUEST_ID) == null ? "ExpungeResource-" + UUID.randomUUID().toString() : MDC.get(HEADER_REQUEST_ID);
         MDC.put(HEADER_REQUEST_ID, correlationId);
-        expungeService.expunge(noOfChargesOrRefundsToExpunge);
+        expungeService.expunge(noOfChargesToExpunge, noOfRefundsToExpunge);
         MDC.remove(HEADER_REQUEST_ID);
         return status(OK).build();
     }

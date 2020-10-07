@@ -23,7 +23,12 @@ public class ExpungeConfig extends Configuration {
     @Valid
     @NotNull
     @Min(1)
-    private int numberOfChargesOrRefundsToExpunge;
+    private int numberOfChargesToExpunge;
+
+    @Valid
+    @NotNull
+    @Min(1)
+    private int numberOfRefundsToExpunge;
 
     @Valid
     @NotNull
@@ -42,8 +47,12 @@ public class ExpungeConfig extends Configuration {
         return minimumAgeOfChargeInDays;
     }
 
-    public int getNumberOfChargesOrRefundsToExpunge() {
-        return numberOfChargesOrRefundsToExpunge;
+    public int getNumberOfChargesToExpunge() {
+        return numberOfChargesToExpunge;
+    }
+
+    public int getNumberOfRefundsToExpunge() {
+        return numberOfRefundsToExpunge;
     }
 
     public int getExcludeChargesOrRefundsParityCheckedWithInDays() {

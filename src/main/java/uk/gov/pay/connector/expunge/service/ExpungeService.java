@@ -19,16 +19,25 @@ public class ExpungeService {
         expungeConfig = connectorConfiguration.getExpungeConfig();
     }
 
-    public void expunge(Integer noOfChargesOrRefundsToExpungeQueryParam) {
-        int noOfRecordsToExpunge = getNumberOfRecordsToExpunge(noOfChargesOrRefundsToExpungeQueryParam);
-        chargeExpungeService.expunge(noOfRecordsToExpunge);
-        refundExpungeService.expunge(noOfRecordsToExpunge);
+    public void expunge(Integer noOfChargesToExpungeQueryParam, Integer noOfRefundsToExpungeQueryParam) {
+        int noOfChargesToExpunge = getNumberOfChargesToExpunge(noOfChargesToExpungeQueryParam);
+        chargeExpungeService.expunge(noOfChargesToExpunge);
+
+        int noOfRefundsToExpunge = getNumberOfRefundsToExpunge(noOfRefundsToExpungeQueryParam);
+        refundExpungeService.expunge(noOfRefundsToExpunge);
     }
 
-    private int getNumberOfRecordsToExpunge(Integer noOfChargesToExpungeQueryParam) {
+    private int getNumberOfChargesToExpunge(Integer noOfChargesToExpungeQueryParam) {
         if (noOfChargesToExpungeQueryParam != null && noOfChargesToExpungeQueryParam > 0) {
             return noOfChargesToExpungeQueryParam;
         }
-        return expungeConfig.getNumberOfChargesOrRefundsToExpunge();
+        return expungeConfig.getNumberOfChargesToExpunge();
+    }
+
+    private int getNumberOfRefundsToExpunge(Integer noOfRefundsToExpungeQueryParam) {
+        if (noOfRefundsToExpungeQueryParam != null && noOfRefundsToExpungeQueryParam > 0) {
+            return noOfRefundsToExpungeQueryParam;
+        }
+        return expungeConfig.getNumberOfRefundsToExpunge();
     }
 }
