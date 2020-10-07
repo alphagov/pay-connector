@@ -22,31 +22,33 @@ public class ExpungeServiceTest {
     @Mock
     ConnectorConfiguration mockConnectorConfiguration;
 
-    int defaultNumberOfChargesOrRefundsToExpunge = 999;
+    int defaultNumberOfChargesToExpunge = 999;
+    int defaultNumberOfRefundsToExpunge = 100;
     ExpungeService expungeService;
 
     @Before
     public void setUp() {
         ExpungeConfig expungeConfig = mock(ExpungeConfig.class);
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(expungeConfig);
-        when(expungeConfig.getNumberOfChargesOrRefundsToExpunge()).thenReturn(defaultNumberOfChargesOrRefundsToExpunge);
+        when(expungeConfig.getNumberOfChargesToExpunge()).thenReturn(defaultNumberOfChargesToExpunge);
+        when(expungeConfig.getNumberOfRefundsToExpunge()).thenReturn(defaultNumberOfRefundsToExpunge);
 
         expungeService = new ExpungeService(mockChargeExpungeService, mockRefundExpungeService, mockConnectorConfiguration);
     }
 
     @Test
     public void shouldInvokeChargeAndRefundExpungerWithNoOfRecordsToExpungeBasedOnConfigurationWhenQueryParamIsNotPassed() {
-        expungeService.expunge(null);
+        expungeService.expunge(null, null);
 
-        verify(mockChargeExpungeService).expunge(defaultNumberOfChargesOrRefundsToExpunge);
-        verify(mockRefundExpungeService).expunge(defaultNumberOfChargesOrRefundsToExpunge);
+        verify(mockChargeExpungeService).expunge(defaultNumberOfChargesToExpunge);
+        verify(mockRefundExpungeService).expunge(defaultNumberOfRefundsToExpunge);
     }
 
     @Test
     public void shouldInvokeChargeAndRefundExpungerWithQueryParameterPassedForNoOfRecordsToExpunge() {
-        expungeService.expunge(5);
+        expungeService.expunge(5, 10);
 
         verify(mockChargeExpungeService).expunge(5);
-        verify(mockRefundExpungeService).expunge(5);
+        verify(mockRefundExpungeService).expunge(10);
     }
 }
