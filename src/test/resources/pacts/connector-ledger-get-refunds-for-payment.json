@@ -1,0 +1,139 @@
+{
+  "consumer": {
+    "name": "connector"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "get a refunds for payment request",
+      "providerStates": [
+        {
+          "name": "refund transactions for a transaction exist",
+          "params": {
+            "gateway_account_id": "3",
+            "transaction_external_id": "650516the13q5jpfo435f1m1fm"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/v1/transaction/650516the13q5jpfo435f1m1fm/transaction",
+        "query": {
+          "gateway_account_id": [
+            "3"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "parent_transaction_id": "650516the13q5jpfo435f1m1fm",
+          "transactions": [
+            {
+              "gateway_account_id": "3",
+              "amount": 100,
+              "state": {
+                "status": "submitted"
+              },
+              "created_date": "2019-12-23T15:24:07.061Z",
+              "transaction_type": "REFUND",
+              "transaction_id": "nklfm1pk9flpu91j815kp2835o",
+              "parent_transaction_id": "650516the13q5jpfo435f1m1fm"
+            },
+            {
+              "gateway_account_id": "3",
+              "amount": 110,
+              "state": {
+                "status": "error"
+              },
+              "created_date": "2019-12-23T16:20:12.343Z",
+              "transaction_type": "REFUND",
+              "transaction_id": "migtkmlt6gvm16sim5h0p7oeje",
+              "parent_transaction_id": "650516the13q5jpfo435f1m1fm"
+            }
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.parent_transaction_id": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.transactions[0].amount": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.transactions[0].state.status": {
+              "matchers": [
+                {
+                  "match": "value"
+                }
+              ]
+            },
+            "$.transactions[0].created_date": {
+              "matchers": [
+                {
+                  "date": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                }
+              ]
+            },
+            "$.transactions[0].transaction_id": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.transactions[1].amount": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.transactions[1].state.status": {
+              "matchers": [
+                {
+                  "match": "value"
+                }
+              ]
+            },
+            "$.transactions[1].created_date": {
+              "matchers": [
+                {
+                  "date": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                }
+              ]
+            },
+            "$.transactions[1].transaction_id": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pact-specification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "3.5.16"
+    }
+  }
+}
