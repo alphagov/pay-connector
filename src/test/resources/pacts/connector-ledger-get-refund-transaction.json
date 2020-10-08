@@ -1,0 +1,96 @@
+{
+  "consumer": {
+    "name": "connector"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "get a refund transaction request",
+      "providerStates": [
+        {
+          "name": "a refund transaction for a transaction exists",
+          "params": {
+            "gateway_account_id": "3",
+            "transaction_external_id": "nklfm1pk9flpu91j815kp2835o",
+            "parent_external_id": "64pcdagc9c13vgi7n904aio3n9"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/v1/transaction/nklfm1pk9flpu91j815kp2835o",
+        "query": {
+          "override_account_id_restriction": [
+            "true"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "gateway_account_id": "3",
+          "amount": 1000,
+          "state": {
+            "status": "success"
+          },
+          "created_date": "2020-07-20T13:39:38.940Z",
+          "transaction_type": "REFUND",
+          "transaction_id": "nklfm1pk9flpu91j815kp2835o",
+          "parent_transaction_id": "64pcdagc9c13vgi7n904aio3n9"
+        },
+        "matchingRules": {
+          "body": {
+            "$.amount": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.state.status": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.created_date": {
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.transaction_id": {
+              "matchers": [
+                {
+                  "match": "value"
+                }
+              ]
+            },
+            "$.parent_transaction_id": {
+              "matchers": [
+                {
+                  "match": "value"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pact-specification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "3.5.16"
+    }
+  }
+}

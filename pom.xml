@@ -24,6 +24,12 @@
         <postgresql.version>42.2.16</postgresql.version>
         <commons-lang3.version>3.11</commons-lang3.version>
         <jjwt.version>0.11.2</jjwt.version>
+        <pact.version>3.6.15</pact.version>
+        <PACT_BROKER_URL/>
+        <PACT_BROKER_USERNAME/>
+        <PACT_BROKER_PASSWORD/>
+        <PACT_CONSUMER_VERSION/>
+        <PACT_CONSUMER_TAG/>
     </properties>
     <repositories>
         <repository>
@@ -500,6 +506,22 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>au.com.dius</groupId>
+                <artifactId>pact-jvm-provider-maven_2.12</artifactId>
+                <version>${pact.version}</version>
+                <configuration>
+                    <pactDirectory>target/pacts</pactDirectory>
+                    <pactBrokerUrl>${PACT_BROKER_URL}</pactBrokerUrl>
+                    <pactBrokerUsername>${PACT_BROKER_USERNAME}</pactBrokerUsername>
+                    <pactBrokerPassword>${PACT_BROKER_PASSWORD}</pactBrokerPassword>
+                    <projectVersion>${PACT_CONSUMER_VERSION}</projectVersion>
+                    <tags>
+                        <tag>${PACT_CONSUMER_TAG}</tag>
+                    </tags>
+                    <trimSnapshot>true</trimSnapshot>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
