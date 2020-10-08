@@ -20,12 +20,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class LedgerServiceContractTest {
+public class LedgerServiceConsumerTest {
 
     @Rule
     public PactProviderRule ledgerRule = new PactProviderRule("ledger", this);
