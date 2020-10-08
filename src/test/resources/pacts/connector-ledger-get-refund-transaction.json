@@ -41,7 +41,8 @@
           "created_date": "2020-07-20T13:39:38.940Z",
           "transaction_type": "REFUND",
           "transaction_id": "nklfm1pk9flpu91j815kp2835o",
-          "parent_transaction_id": "64pcdagc9c13vgi7n904aio3n9"
+          "parent_transaction_id": "64pcdagc9c13vgi7n904aio3n9",
+          "refunded_by": "someone"
         },
         "matchingRules": {
           "body": {
