@@ -27,6 +27,8 @@ pipeline {
       steps {
         script {
           long stepBuildTime = System.currentTimeMillis()
+          def commit = gitCommit()
+          def branchName = 'master'
 
           sh 'mvn -version'
           sh "mvn clean verify pact:publish -DPACT_BROKER_URL=https://pact-broker-test.cloudapps.digital -DPACT_CONSUMER_VERSION=${commit}" +
