@@ -29,7 +29,8 @@ pipeline {
           long stepBuildTime = System.currentTimeMillis()
 
           sh 'mvn -version'
-          sh 'mvn clean verify'
+          sh "mvn clean verify pact:publish -DPACT_BROKER_URL=https://pact-broker-test.cloudapps.digital -DPACT_CONSUMER_VERSION=${commit}" +
+                  " -DPACT_BROKER_USERNAME=${PACT_BROKER_USERNAME} -DPACT_BROKER_PASSWORD=${PACT_BROKER_PASSWORD} -DPACT_CONSUMER_TAG=${branchName}"
           runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }
