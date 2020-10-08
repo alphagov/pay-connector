@@ -195,6 +195,31 @@ public class HistoricalEventEmitterWorkerTest {
     }
 
     @Test
+    public void executeShouldNotEmitPaymentDetailsEnteredEventWithTerminalAuthenticationStateForNotificationPayment() {
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
+                .build();
+
+        ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(secondEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        worker.execute(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(PaymentDetailsEntered.class), any());
+    }
+
+    @Test
     public void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
