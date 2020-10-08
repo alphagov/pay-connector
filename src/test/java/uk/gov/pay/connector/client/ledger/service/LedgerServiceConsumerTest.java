@@ -61,7 +61,7 @@ public class LedgerServiceConsumerTest {
     public void getTransaction_shouldSerialiseLedgerRefundTransactionCorrectly() {
         String externalId = "nklfm1pk9flpu91j815kp2835o";
         Optional<LedgerTransaction> mayBeTransaction = ledgerService.getTransaction(externalId);
-
+        // a comment to make a test pr
         assertThat(mayBeTransaction.isPresent(), is(true));
         LedgerTransaction transaction = mayBeTransaction.get();
         assertThat(transaction.getTransactionId(), is(externalId));
