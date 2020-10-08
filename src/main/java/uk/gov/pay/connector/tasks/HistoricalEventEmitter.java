@@ -43,6 +43,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 
@@ -262,10 +263,17 @@ public class HistoricalEventEmitter {
         // checking against any terminal authentication transition
         chargeEventEntities
                 .stream()
+                .filter(event -> isNotATelephonePaymentNotification(chargeEventEntities))
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
+    }
+
+    private boolean isNotATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
+        return !chargeEventEntities.stream()
+                .map(ChargeEventEntity::getStatus)
+                .collect(Collectors.toList()).contains(PAYMENT_NOTIFICATION_CREATED);
     }
 
     private boolean isValidPaymentDetailsEnteredTransition(List<ChargeEventEntity> chargeEventEntities, ChargeEventEntity event) {
