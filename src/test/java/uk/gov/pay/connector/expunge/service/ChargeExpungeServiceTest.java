@@ -66,8 +66,11 @@ public class ChargeExpungeServiceTest {
 
     @Test
     public void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
         when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays,defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
 
         chargeExpungeService.expunge(defaultNumberOfChargesToExpunge);
         verify(mockChargeDao, times(defaultNumberOfChargesToExpunge)).findChargeToExpunge(minimumAgeOfChargeInDays,
