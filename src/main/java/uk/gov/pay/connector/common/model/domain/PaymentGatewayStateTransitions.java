@@ -261,6 +261,7 @@ public class PaymentGatewayStateTransitions {
                 .flatMap(Optional::stream)
                 .map(me -> (ModelledTypedEvent) me)
                 .map(ModelledTypedEvent::getClazz)
+                .distinct()
                 .collect(Collectors.toList());
     }
 
