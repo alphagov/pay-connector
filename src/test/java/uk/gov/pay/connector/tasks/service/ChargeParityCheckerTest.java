@@ -20,6 +20,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import java.util.List;
 
 import static java.time.ZonedDateTime.parse;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,6 +81,40 @@ public class ChargeParityCheckerTest {
     @Test
     public void parityCheck_shouldMatchIfChargeMatchesWithLedgerTransaction() {
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfBillingAddressIsNotAvailableInConnectorButOnLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        chargeEntity.getCardDetails().setBillingAddress(null);
+
+        assertThat(transaction.getCardDetails().getBillingAddress(), is(notNullValue()));
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfCardHolderNameIsNotAvailableInConnectorButOnLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        chargeEntity.getCardDetails().setCardHolderName(null);
+
+        assertThat(transaction.getCardDetails().getCardholderName(), is(notNullValue()));
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfEmailIsNotAvailableInConnectorButOnLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        chargeEntity.setEmail(null);
+
+        assertThat(transaction.getEmail(), is(notNullValue()));
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));

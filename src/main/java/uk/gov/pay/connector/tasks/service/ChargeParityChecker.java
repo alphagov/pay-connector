@@ -9,6 +9,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -99,7 +100,13 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getDescription(), transaction.getDescription(), "description");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReference().toString(), transaction.getReference(), "reference");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getLanguage(), transaction.getLanguage(), "language");
-        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getEmail(), transaction.getEmail(), "email");
+
+        // email may be empty in connector but not in ledger, if service provides email but turns off email address collection
+        fieldsMatch = fieldsMatch && (
+                (chargeEntity.getEmail() == null && transaction.getEmail() != null)
+                        || isEquals(chargeEntity.getEmail(), transaction.getEmail(), "email")
+        );
+
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReturnUrl(), transaction.getReturnUrl(), "return_url");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
         fieldsMatch = fieldsMatch && isEquals(
@@ -121,7 +128,13 @@ public class ChargeParityChecker {
         }
 
         if (nonNull(ledgerCardDetails)) {
-            fieldsMatch = isEquals(cardDetailsEntity.getCardHolderName(), ledgerCardDetails.getCardholderName(), "cardholder_name");
+
+            // card holder name may be empty in connector but not in ledger, if service provides name but payment is made using wallet
+            fieldsMatch = (
+                    (cardDetailsEntity.getCardHolderName() == null && ledgerCardDetails.getCardholderName() != null)
+                            || isEquals(cardDetailsEntity.getCardHolderName(), ledgerCardDetails.getCardholderName(), "cardholder_name")
+            );
+
             fieldsMatch = fieldsMatch && isEquals(
                     ofNullable(cardDetailsEntity.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
                     ledgerCardDetails.getLastDigitsCardNumber(), "last_digits_card_number");
@@ -159,11 +172,13 @@ public class ChargeParityChecker {
 
         boolean fieldsMatch;
 
-        if (isNull(addressEntity) && isNull(ledgerBillingAddress)) {
+        // address details can be empty in connector but not in ledger if service provides billing address
+        // but turned off settings to collect billing address or for wallet payment
+        if ((isNull(addressEntity) && isNull(ledgerBillingAddress)) || isNull(addressEntity)) {
             return true;
         }
 
-        if (nonNull(addressEntity) && isNull(ledgerBillingAddress) || isNull(addressEntity)) {
+        if (isNull(ledgerBillingAddress)) {
             logger.info("Field value does not match between ledger and connector [field_name={}]", "billing_address",
                     kv(FIELD_NAME, "billing_address"));
             fieldsMatch = false;
@@ -252,7 +267,7 @@ public class ChargeParityChecker {
                 .getExternalChargeRefundAvailability(Charge.from(chargeEntity), refundList);
 
         return isEquals(refundAvailability.getStatus(),
-                ofNullable(transaction.getRefundSummary()).map(refundSummary -> refundSummary.getStatus()).orElse(null), "refund_summary.status");
+                ofNullable(transaction.getRefundSummary()).map(ChargeResponse.RefundSummary::getStatus).orElse(null), "refund_summary.status");
     }
 
     private Optional<ZonedDateTime> getChargeEventDate(ChargeEntity chargeEntity, List<ChargeStatus> chargeEventStatuses) {
