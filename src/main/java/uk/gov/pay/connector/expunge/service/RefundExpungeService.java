@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -34,15 +37,17 @@ public class RefundExpungeService {
     private final ExpungeConfig expungeConfig;
     private final ParityCheckService parityCheckService;
     private final RefundService refundService;
+    private final ChargeService chargeService;
     private final RefundDao refundDao;
 
     @Inject
     public RefundExpungeService(ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService,
-                                RefundService refundService, RefundDao refundDao) {
+                                RefundService refundService, ChargeService chargeService, RefundDao refundDao) {
         expungeConfig = connectorConfiguration.getExpungeConfig();
         this.parityCheckService = parityCheckService;
         this.refundService = refundService;
+        this.chargeService = chargeService;
         this.refundDao = refundDao;
     }
 
@@ -81,7 +86,11 @@ public class RefundExpungeService {
     private void parityCheckAndExpunge(RefundEntity refundEntity) {
         boolean hasRefundBeenParityCheckedBefore = refundEntity.getParityCheckDate() != null;
 
-        if (isInExpungeableState(refundEntity)) {
+        if (chargeExistsForRefund(refundEntity)) {
+            refundService.updateRefundParityStatus(refundEntity.getExternalId(), SKIPPED);
+            logger.info("Refund cannot be expunged because charge has not been expunged from in-flight database",
+                    kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()));
+        } else if (isInExpungeableState(refundEntity)) {
             boolean matchesWithLedger = parityCheckService.parityCheckRefundForExpunger(refundEntity);
 
             if (matchesWithLedger) {
@@ -99,6 +108,15 @@ public class RefundExpungeService {
             logger.info("Refund is not in expungeable state",
                     kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()));
         }
+    }
+
+    private boolean chargeExistsForRefund(RefundEntity refundEntity) {
+        try {
+            chargeService.findChargeByExternalId(refundEntity.getChargeExternalId());
+        } catch (ChargeNotFoundRuntimeException e) {
+            return false;
+        }
+        return true;
     }
 
     private boolean isInExpungeableState(RefundEntity refundEntity) {
