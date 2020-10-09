@@ -138,9 +138,8 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
 
     public Optional<RefundEntity> findRefundToExpunge(int minimumAgeOfRefundInDays, int excludeRefundsParityCheckedWithInDays) {
-        String query = "SELECT r FROM RefundEntity r left outer join ChargeEntity c on r.chargeExternalId = c.externalId " +
-                " WHERE c.externalId is null " +
-                " AND (r.parityCheckDate is null or r.parityCheckDate < :parityCheckedBeforeDate)" +
+        String query = "SELECT r FROM RefundEntity r" +
+                " WHERE (r.parityCheckDate is null or r.parityCheckDate < :parityCheckedBeforeDate)" +
                 " AND r.createdDate < :createdBeforeDate " +
                 " ORDER BY r.createdDate asc";
 

@@ -377,18 +377,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findRefundToExpunge_shouldNotReturnRefundIfChargeStillExists() {
-        RefundEntity refund = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
-        refund.setStatus(REFUNDED);
-        refund.setCreatedDate(ZonedDateTime.now(UTC).minusDays(10));
-        refundDao.persist(refund);
-
-        Optional<RefundEntity> mayBeRefundToExpunge = refundDao.findRefundToExpunge(5, 7);
-
-        assertThat(mayBeRefundToExpunge.isPresent(), Matchers.is(false));
-    }
-
-    @Test
     public void expungeRefund_shouldExpungeRefundRelatedRecordsCorrectly() {
         RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundToExpunge.setStatus(REFUNDED);
