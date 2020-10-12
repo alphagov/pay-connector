@@ -21,7 +21,7 @@
         <surefire.version>3.0.0-M5</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.13.5</jooq.version>
-        <postgresql.version>42.2.16</postgresql.version>
+        <postgresql.version>42.2.17</postgresql.version>
         <commons-lang3.version>3.11</commons-lang3.version>
         <jjwt.version>0.11.2</jjwt.version>
         <pact.version>3.6.15</pact.version>
