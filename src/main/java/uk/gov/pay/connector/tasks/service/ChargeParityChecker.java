@@ -22,6 +22,7 @@ import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.SettlementSummary;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -101,12 +102,7 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getDescription(), transaction.getDescription(), "description");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReference().toString(), transaction.getReference(), "reference");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getLanguage(), transaction.getLanguage(), "language");
-
-        // email may be empty in connector but not in ledger, if service provides email but turns off email address collection
-        fieldsMatch = fieldsMatch && (
-                (chargeEntity.getEmail() == null && transaction.getEmail() != null)
-                        || isEquals(chargeEntity.getEmail(), transaction.getEmail(), "email")
-        );
+        fieldsMatch = fieldsMatch && matchEmail(chargeEntity, transaction);
 
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReturnUrl(), transaction.getReturnUrl(), "return_url");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
@@ -119,6 +115,20 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeExternalStatus, transaction.getState().getStatus(), "status");
 
         return fieldsMatch;
+    }
+
+    private boolean matchEmail(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        // continue only if charge is in success state. For other states, it is possible that frontend sends a PATCH
+        // request to connector but charge expires or cancelled by user or other non auth states. so email will not be sent to ledger
+        if (!ExternalChargeState.EXTERNAL_SUCCESS.getStatusV2().equals(transaction.getState().getStatus())) {
+            return true;
+        }
+
+        // email may be empty in connector but not in ledger, if service provides email but turns off email address collection
+        return (
+                (chargeEntity.getEmail() == null && transaction.getEmail() != null)
+                        || isEquals(chargeEntity.getEmail(), transaction.getEmail(), "email")
+        );
     }
 
     private boolean matchCardDetails(CardDetailsEntity cardDetailsEntity, CardDetails ledgerCardDetails) {

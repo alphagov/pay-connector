@@ -32,6 +32,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defau
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
@@ -113,6 +114,24 @@ public class ChargeParityCheckerTest {
 
     @Test
     public void parityCheck_shouldMatchIfEmailIsNotAvailableInConnectorButOnLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
+        chargeEntity.setEmail(null);
+
+        assertThat(transaction.getEmail(), is(notNullValue()));
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldNotMatchEmailIfChargeIsInErrorState() {
+        ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, "2016-01-25T13:23:55Z");
+        chargeEntity = aValidChargeEntity()
+                .withStatus(CAPTURE_ERROR)
+                .withEmail("test@example.org")
+                .withEvents(List.of(chargeEventCreated))
+                .build();
+
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
         chargeEntity.setEmail(null);
 
