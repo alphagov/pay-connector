@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -213,7 +214,8 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
                 transaction.getNetAmount(), "net_amount");
 
-        if (hasTerminalAuthenticationState(chargeEntity.getEvents())) {
+        if (hasTerminalAuthenticationState(chargeEntity.getEvents())
+                && isNotATelephonePaymentNotification(chargeEntity.getEvents())) {
             fieldsMatch = fieldsMatch && isEquals(getTotalAmountFor(chargeEntity),
                     transaction.getTotalAmount(), "total_amount");
         }
@@ -226,6 +228,12 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && externalMetadataMatches(chargeEntity, transaction);
 
         return fieldsMatch;
+    }
+
+    private boolean isNotATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
+        return !chargeEventEntities.stream()
+                .map(ChargeEventEntity::getStatus)
+                .collect(Collectors.toList()).contains(PAYMENT_NOTIFICATION_CREATED);
     }
 
     private boolean hasTerminalAuthenticationState(List<ChargeEventEntity> eventEntities) {

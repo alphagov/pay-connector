@@ -35,6 +35,7 @@ import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 
 public class LedgerTransactionFixture {
@@ -92,7 +93,7 @@ public class LedgerTransactionFixture {
                         .withTotalAmount(getTotalAmountFor(chargeEntity))
                         .withNetAmount(chargeEntity.getNetAmount().orElse(null));
 
-        ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), CREATED));
+        ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), List.of(CREATED, PAYMENT_NOTIFICATION_CREATED)));
         if (chargeEntity.getGatewayAccount() != null) {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             ledgerTransactionFixture.withPaymentProvider(gatewayAccount.getGatewayName());
@@ -123,8 +124,8 @@ public class LedgerTransactionFixture {
             ledgerTransactionFixture.withCardDetails(cardDetails);
         }
 
-        ledgerTransactionFixture.withCapturedDate(getEventDate(chargeEntity.getEvents(), CAPTURED));
-        ledgerTransactionFixture.withCaptureSubmittedDate(getEventDate(chargeEntity.getEvents(), CAPTURE_SUBMITTED));
+        ledgerTransactionFixture.withCapturedDate(getEventDate(chargeEntity.getEvents(), List.of(CAPTURED)));
+        ledgerTransactionFixture.withCaptureSubmittedDate(getEventDate(chargeEntity.getEvents(), List.of(CAPTURE_SUBMITTED)));
 
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         ExternalChargeRefundAvailability refundAvailability;
@@ -157,9 +158,9 @@ public class LedgerTransactionFixture {
         return ledgerTransactionFixture;
     }
 
-    private static ZonedDateTime getEventDate(List<ChargeEventEntity> chargeEventEntities, ChargeStatus status) {
+    private static ZonedDateTime getEventDate(List<ChargeEventEntity> chargeEventEntities, List<ChargeStatus> status) {
         return ofNullable(chargeEventEntities).flatMap(entities -> entities.stream()
-                .filter(chargeEvent -> status.equals(chargeEvent.getStatus()))
+                .filter(chargeEvent -> status.contains(chargeEvent.getStatus()))
                 .findFirst()
                 .map(ChargeEventEntity::getUpdated))
                 .orElse(null);
@@ -288,7 +289,7 @@ public class LedgerTransactionFixture {
     }
 
     public LedgerTransactionFixture withWalletType(WalletType walletType) {
-        this.walletType = walletType.toString();
+        this.walletType = walletType != null ? walletType.toString() : null;
         return this;
     }
 
