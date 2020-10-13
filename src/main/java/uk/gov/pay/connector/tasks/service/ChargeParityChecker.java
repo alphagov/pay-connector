@@ -29,6 +29,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,7 @@ public class ChargeParityChecker {
             boolean fieldsMatch;
 
             fieldsMatch = matchCommonFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchCreatedDate(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getCardDetails(), transaction.getCardDetails());
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
@@ -110,15 +112,22 @@ public class ChargeParityChecker {
 
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReturnUrl(), transaction.getReturnUrl(), "return_url");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
-        fieldsMatch = fieldsMatch && isEquals(
-                getChargeEventDate(chargeEntity, List.of(CREATED, PAYMENT_NOTIFICATION_CREATED))
-                        .map(ISO_INSTANT_MILLISECOND_PRECISION::format).orElse(null),
-                transaction.getCreatedDate(), "created_date");
 
         String chargeExternalStatus = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getStatusV2();
         fieldsMatch = fieldsMatch && isEquals(chargeExternalStatus, transaction.getState().getStatus(), "status");
 
         return fieldsMatch;
+    }
+
+    private boolean matchCreatedDate(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        return getChargeEventDate(chargeEntity, List.of(CREATED, PAYMENT_NOTIFICATION_CREATED))
+                .map(connectorDate -> {
+                    // Due to charge events being out of order for some historic payments, the date in ledger was 
+                    // slightly different to in connector. Allow for a few seconds of difference as it is not worth 
+                    // correcting this minor disparity.
+                    return Math.abs(Duration.between(connectorDate, ZonedDateTime.parse(transaction.getCreatedDate())).toMillis()) < 5000;
+                })
+                .orElse(false);
     }
 
     private boolean matchCardDetails(CardDetailsEntity cardDetailsEntity, CardDetails ledgerCardDetails) {

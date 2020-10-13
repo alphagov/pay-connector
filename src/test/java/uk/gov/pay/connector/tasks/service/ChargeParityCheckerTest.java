@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static java.time.ZonedDateTime.parse;
@@ -216,6 +217,46 @@ public class ChargeParityCheckerTest {
     @Test
     public void parityCheck_shouldReturnDataMismatchIfChargeDoesNotMatchWithLedger() {
         LedgerTransaction transaction = aValidLedgerTransaction().withStatus("pending").build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfLedgerCreatedDateWithin5sAfterConnectorDate() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:23:59Z"))
+                .build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfLedgerCreatedDateWithin5sBeforeConnectorDate() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:23:51Z"))
+                .build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfLedgerCreatedDateMoreThan5sAfterConnectorDate() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:24:00Z"))
+                .build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfLedgerCreatedDateMoreThan5sBeforeConnectorDate() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:23:50Z"))
+                .build();
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
