@@ -44,6 +44,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -55,18 +56,19 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
 import javax.ws.rs.core.UriInfo;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.UriBuilder.fromUri;
@@ -304,6 +306,10 @@ public class ChargeServiceTest {
     @Test
     public void shouldUpdateEmailToCharge() {
         ChargeEntity createdChargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(createdChargeEntity)
+                .withUpdated(ZonedDateTime.now(UTC))
+                .withStatus(ENTERING_CARD_DETAILS).build();
+        createdChargeEntity.getEvents().add(chargeEventEntity);
         final String chargeEntityExternalId = createdChargeEntity.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId))
                 .thenReturn(Optional.of(createdChargeEntity));
@@ -318,7 +324,10 @@ public class ChargeServiceTest {
                 .withValidPaths(ImmutableSet.of("email"))
                 .build();
 
-        service.updateCharge(chargeEntityExternalId, patchRequest);
+        Optional<ChargeEntity> chargeEntity = service.updateCharge(chargeEntityExternalId, patchRequest);
+        assertThat(chargeEntity.get().getEmail(), is(expectedEmail));
+        
+        verify(mockEventService).emitAndRecordEvent(any(UserEmailCollected.class));
     }
 
     @Test

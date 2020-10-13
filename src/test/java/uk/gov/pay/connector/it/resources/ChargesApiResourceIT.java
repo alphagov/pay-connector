@@ -96,7 +96,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .body("code", is(404))
                 .body("message", is("HTTP 404 Not Found"));
     }
-    
+
     @Test
     public void shouldReturn404WhenGettingNonExistentChargeId() {
         connectorRestApiClient

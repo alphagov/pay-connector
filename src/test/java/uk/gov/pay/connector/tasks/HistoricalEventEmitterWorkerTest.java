@@ -26,6 +26,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -56,7 +57,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -195,6 +195,24 @@ public class HistoricalEventEmitterWorkerTest {
     }
 
     @Test
+    public void executeShouldEmitUserEmailCollectedEventWhenEnteringCardDetailsStateExists() {
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .build();
+
+        chargeEntity.getEvents().add(firstEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        worker.execute(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, times(1)).emitAndRecordEvent(any(UserEmailCollected.class), isNotNull());
+    }
+
+    @Test
     public void executeShouldNotEmitPaymentDetailsEnteredEventWithTerminalAuthenticationStateForNotificationPayment() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
@@ -224,7 +242,7 @@ public class HistoricalEventEmitterWorkerTest {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withChargeStatus(ChargeStatus.CREATED)
                 .build();
 
         chargeEntity.getEvents().add(firstEvent);
@@ -234,7 +252,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty(), 1L);
 
-        verifyZeroInteractions(eventService);
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -294,6 +312,7 @@ public class HistoricalEventEmitterWorkerTest {
         chargeEntity.getEvents().clear();
         chargeEntity.getEvents().add(firstEvent);
         chargeEntity.getEvents().add(secondEvent);
+        chargeEntity.setEmail(null);
 
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
@@ -307,7 +326,7 @@ public class HistoricalEventEmitterWorkerTest {
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull()); // additional event - paymentDetailsEnteredEvent
+        verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull()); // additional events - paymentDetailsEnteredEvent
         assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
@@ -372,8 +391,9 @@ public class HistoricalEventEmitterWorkerTest {
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull());
+        verify(eventService, times(2)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull());
         assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("USER_EMAIL_COLLECTED"));
     }
 
     @Test

@@ -15,6 +15,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.time.ZonedDateTime.now;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
@@ -42,6 +44,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
@@ -125,6 +128,7 @@ public class HistoricalEventEmitter {
 
         processChargeStateTransitionEvents(charge.getId(), chargeEventEntities, forceEmission);
         processPaymentDetailEnteredEvent(chargeEventEntities, forceEmission);
+        processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
     }
 
     @Transactional
@@ -268,6 +272,24 @@ public class HistoricalEventEmitter {
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
+    }
+
+    private void processUserEmailCollectedEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        // email patched by frontend before submitting card details is not included in state transition.
+        // emits event, when charge has email and has entering card details state.
+        // Could generate events even if service prefills email address, but there is no way to distinguish 
+        // if service prefilled email or is submitted by user
+        if (isNotBlank(charge.getEmail())) {
+            boolean hasEnteringCardDetailsEvent = chargeEventEntities
+                    .stream().anyMatch(event -> ENTERING_CARD_DETAILS.equals(event.getStatus()));
+
+            if (hasEnteringCardDetailsEvent) {
+                UserEmailCollected emailEnteredEvent = UserEmailCollected.from(charge);
+                if (forceEmission || !emittedEventDao.hasBeenEmittedBefore(emailEnteredEvent)) {
+                    eventService.emitAndRecordEvent(emailEnteredEvent, getDoNotRetryEmitUntilDate());
+                }
+            }
+        }
     }
 
     private boolean isNotATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
