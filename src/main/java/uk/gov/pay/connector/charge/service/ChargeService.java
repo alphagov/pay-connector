@@ -4,7 +4,6 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -51,6 +50,7 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -321,6 +321,7 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     if (chargePatchRequest.getPath().equals(ChargesApiResource.EMAIL_KEY)) {
                         chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
+                        eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity));
                     }
                     return Optional.of(chargeEntity);
                 })

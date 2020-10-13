@@ -82,7 +82,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.event_details.address_country", equalTo("GB")));
         assertThat(actual, hasJsonPath("$.event_details.wallet", equalTo("APPLE_PAY")));
     }
-    
+
     @Test
     public void whenAllTheDataIsAvailableForUsCountry() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
