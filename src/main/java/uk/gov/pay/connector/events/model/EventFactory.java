@@ -9,6 +9,7 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
+import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
@@ -131,7 +132,10 @@ public class EventFactory {
                 return CaptureConfirmed.from(chargeEvent);
             } else if (eventClass == PaymentNotificationCreated.class) {
                 return PaymentNotificationCreated.from(chargeEvent);
-            } else {
+            } else if (eventClass == CancelledByUser.class) {
+                return CancelledByUser.from(chargeEvent);
+            }
+            else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),
                         chargeEvent.getUpdated()

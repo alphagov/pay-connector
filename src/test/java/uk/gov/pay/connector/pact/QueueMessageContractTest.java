@@ -22,6 +22,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDeta
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
+import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
@@ -235,6 +236,21 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a refund included in payout message")
     public String verifyRefundIncludedInPayoutEvent() throws JsonProcessingException {
         RefundIncludedInPayout event = new RefundIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+
+        return event.toJsonString();
+    }
+
+    @PactVerifyProvider("a cancelled by user message")
+    public String verifyCancelledByUserEvent() throws JsonProcessingException {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withTransactionId("gateway_transaction_id")
+                .withGatewayTransactionId("gateway_transaction_id")
+                .build();
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .build();
+        CancelledByUser event = CancelledByUser.from(chargeEventEntity);
 
         return event.toJsonString();
     }

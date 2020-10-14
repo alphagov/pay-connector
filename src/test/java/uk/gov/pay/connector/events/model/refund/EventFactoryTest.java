@@ -16,6 +16,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
@@ -310,7 +311,7 @@ public class EventFactoryTest {
                 new Object[]{CancelByUserFailed.class, EmptyEventDetails.class},
                 new Object[]{CancelledByExpiration.class, EmptyEventDetails.class},
                 new Object[]{CancelledByExternalService.class, EmptyEventDetails.class},
-                new Object[]{CancelledByUser.class, EmptyEventDetails.class},
+                new Object[]{CancelledByUser.class, CancelledByUserEventDetails.class},
                 new Object[]{CancelledWithGatewayAfterAuthorisationError.class, EmptyEventDetails.class},
                 new Object[]{CaptureAbandonedAfterTooManyRetries.class, EmptyEventDetails.class},
                 new Object[]{CaptureConfirmed.class, CaptureConfirmedEventDetails.class},
