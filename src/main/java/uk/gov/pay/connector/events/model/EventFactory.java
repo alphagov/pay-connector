@@ -20,6 +20,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
@@ -87,7 +88,7 @@ public class EventFactory {
         ChargeEventEntity chargeEvent = chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
                 .orElseThrow(() -> new EventCreationException(String.valueOf(paymentStateTransition.getChargeEventId())));
 
-         PaymentEvent paymentEvent = createPaymentEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass());
+        PaymentEvent paymentEvent = createPaymentEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass());
 
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
                 Charge.from(chargeEvent.getChargeEntity()),
@@ -134,8 +135,9 @@ public class EventFactory {
                 return PaymentNotificationCreated.from(chargeEvent);
             } else if (eventClass == CancelledByUser.class) {
                 return CancelledByUser.from(chargeEvent);
-            }
-            else {
+            } else if (eventClass == UserEmailCollected.class) {
+                return UserEmailCollected.from(chargeEvent.getChargeEntity());
+            } else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),
                         chargeEvent.getUpdated()
