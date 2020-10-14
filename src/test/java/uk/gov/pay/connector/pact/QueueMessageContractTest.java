@@ -23,12 +23,14 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDeta
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
+import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -113,6 +115,21 @@ public class QueueMessageContractTest {
         );
 
         return captureConfirmedEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a user email collected message")
+    public String verifyUserEmailCollectedEvent() throws JsonProcessingException {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withEmail("test@example.org")
+                .build();
+
+        UserEmailCollected userEmailCollected = new UserEmailCollected(
+                resourceId,
+                UserEmailCollectedEventDetails.from(charge),
+                ZonedDateTime.now()
+        );
+
+        return userEmailCollected.toJsonString();
     }
 
     @PactVerifyProvider("a capture submitted message")
