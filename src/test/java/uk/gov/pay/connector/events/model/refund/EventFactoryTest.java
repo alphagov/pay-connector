@@ -22,7 +22,6 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDeta
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
-import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.model.Event;
@@ -51,7 +50,6 @@ import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -77,7 +75,6 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(JUnitParamsRunner.class)
 public class EventFactoryTest {
@@ -419,37 +416,5 @@ public class EventFactoryTest {
 
         PaymentNotificationCreatedEventDetails eventDetails = (PaymentNotificationCreatedEventDetails) event.getEventDetails();
         assertThat(eventDetails.getGatewayTransactionId(), is(charge.getGatewayTransactionId()));
-    }
-
-    @Test
-    public void shouldCreatedCorrectEventForUserEmailCollected() throws Exception {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withStatus(ChargeStatus.USER_CANCELLED)
-                .withEmail("test@example.org")
-                .build();
-        Long chargeEventEntityId = 100L;
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
-                .withCharge(charge)
-                .withChargeStatus(ENTERING_CARD_DETAILS)
-                .withId(chargeEventEntityId)
-                .build();
-        charge.getEvents().add(chargeEventEntity);
-        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
-                Optional.of(chargeEventEntity)
-        );
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, UserEmailCollected.class);
-        List<Event> events = eventFactory.createEvents(paymentStateTransition);
-
-        assertThat(events.size(), is(1));
-
-        UserEmailCollected event = (UserEmailCollected) events.get(0);
-        assertThat(event, is(instanceOf(UserEmailCollected.class)));
-
-        assertThat(event.getEventDetails(), instanceOf(UserEmailCollectedEventDetails.class));
-        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
-
-        UserEmailCollectedEventDetails eventDetails = (UserEmailCollectedEventDetails) event.getEventDetails();
-        assertThat(eventDetails.getEmail(), is(charge.getEmail()));
     }
 }
