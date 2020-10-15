@@ -40,6 +40,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.sandbox.SandboxAuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -117,7 +118,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private EventService mockEventService;
-    
+
     @Mock
     private RefundService mockRefundService;
 
@@ -126,6 +127,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private AuthorisationRequestSummaryStringifier mockAuthorisationRequestSummaryStringifier;
+
+    @Mock
+    private AuthorisationRequestSummaryStructuredLogging mockAuthorisationRequestSummaryStructuredLogging;
     
     private CardAuthoriseService cardAuthorisationService;
 
@@ -149,6 +153,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 cardAuthoriseBaseService,
                 chargeService,
                 mockAuthorisationRequestSummaryStringifier,
+                mockAuthorisationRequestSummaryStructuredLogging,
                 mockEnvironment);
     }
 
