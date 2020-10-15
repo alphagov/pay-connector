@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -14,7 +16,6 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import java.util.List;
@@ -43,4 +44,7 @@ public interface PaymentProvider {
     GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException;
 
     ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundEntityList);
+    
+    AuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails);
+
 }

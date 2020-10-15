@@ -4,9 +4,10 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -24,7 +25,6 @@ import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationH
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import java.util.List;
@@ -102,6 +102,11 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
         return externalRefundAvailabilityCalculator.calculate(charge, refundList);
+    }
+
+    @Override
+    public SandboxAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+        return new SandboxAuthorisationRequestSummary();
     }
 
     private GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {

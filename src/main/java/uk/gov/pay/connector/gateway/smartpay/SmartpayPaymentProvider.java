@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -160,6 +161,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
 
+    @Override
+    public SmartpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+        return new SmartpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    }
+
     private GatewayOrder buildAuthoriseOrderFor(CardAuthorisationGatewayRequest request) {
         SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
                 SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder() : SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder();
@@ -191,4 +197,5 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     private String getMerchantCode(GatewayRequest request) {
         return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
     }
+
 }

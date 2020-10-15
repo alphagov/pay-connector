@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -209,6 +210,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
 
+    @Override
+    public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+        return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    }
+
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {
         logMissingDdcResultFor3dsFlexIntegration(request);
 
@@ -259,4 +265,5 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private String sanitiseMessage(String message) {
         return message.replaceAll("<cardHolderName>.*</cardHolderName>", "<cardHolderName>REDACTED</cardHolderName>");
     }
+
 }
