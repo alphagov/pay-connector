@@ -16,20 +16,21 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
+import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
 
 public class CardAuthoriseService {
 
@@ -37,19 +38,22 @@ public class CardAuthoriseService {
     private final CardAuthoriseBaseService cardAuthoriseBaseService;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
+    private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
+    private final MetricRegistry metricRegistry;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private MetricRegistry metricRegistry;
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardAuthoriseBaseService cardAuthoriseBaseService,
                                 ChargeService chargeService,
+                                AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
                                 Environment environment) {
         this.providers = providers;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
+        this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -86,11 +90,11 @@ public class CardAuthoriseService {
                     sessionIdentifier.orElse(null),
                     authCardDetails);
 
-            boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 
-            // Used by Sumo Logic saved search
-            logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                    billingAddressSubmitted ? "with billing address" : "without billing address",
+            // Used by Splunk saved search
+            logger.info("Authorisation{} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                    authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
                     updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
                     transactionId.orElse("missing transaction ID"),
                     updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
@@ -101,7 +105,7 @@ public class CardAuthoriseService {
                     updatedCharge.getGatewayAccount().getGatewayName(),
                     updatedCharge.getGatewayAccount().getType(),
                     updatedCharge.getGatewayAccount().getId(),
-                    billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
+                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
                     newStatus.toString())).inc();
 
             return new AuthorisationResponse(operationResponse);
@@ -113,9 +117,7 @@ public class CardAuthoriseService {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
-        getPaymentProviderFor(charge)
-                .generateTransactionId().ifPresent(charge::setGatewayTransactionId);
-
+        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         return charge;
     }
 
@@ -149,4 +151,9 @@ public class CardAuthoriseService {
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
+
+    private AuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+        return getPaymentProviderFor(chargeEntity).generateAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    }
+
 }

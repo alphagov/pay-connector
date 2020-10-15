@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsO
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult.Auth3dsResultOutcome;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -238,6 +239,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
         return externalRefundAvailabilityCalculator.calculate(charge, refundList);
+    }
+
+    @Override
+    public EpdqAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+        return new EpdqAuthorisationRequestSummary(chargeEntity, authCardDetails);
     }
 
     /**

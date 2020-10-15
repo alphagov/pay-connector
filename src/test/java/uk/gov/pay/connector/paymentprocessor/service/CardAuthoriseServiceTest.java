@@ -30,6 +30,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -37,6 +38,8 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.sandbox.SandboxAuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -121,12 +124,18 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
 
+    @Mock
+    private AuthorisationRequestSummaryStringifier mockAuthorisationRequestSummaryStringifier;
+    
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
     public void setUpCardAuthorisationService() {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(ChargeEntity.class), any(AuthCardDetails.class)))
+                .thenReturn(new SandboxAuthorisationRequestSummary());
+        when(mockAuthorisationRequestSummaryStringifier.stringify(any(AuthorisationRequestSummary.class))).thenReturn("");
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
@@ -139,6 +148,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 cardAuthoriseBaseService,
                 chargeService,
+                mockAuthorisationRequestSummaryStringifier,
                 mockEnvironment);
     }
 
