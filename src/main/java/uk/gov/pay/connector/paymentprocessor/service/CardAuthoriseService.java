@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -23,10 +24,12 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
+import java.util.Locale;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -39,6 +42,7 @@ public class CardAuthoriseService {
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
+    private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
     private final MetricRegistry metricRegistry;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -48,12 +52,14 @@ public class CardAuthoriseService {
                                 CardAuthoriseBaseService cardAuthoriseBaseService,
                                 ChargeService chargeService,
                                 AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
+                                AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging,
                                 Environment environment) {
         this.providers = providers;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
         this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
+        this.authorisationRequestSummaryStructuredLogging = authorisationRequestSummaryStructuredLogging;
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -93,12 +99,18 @@ public class CardAuthoriseService {
             var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 
             // Used by Splunk saved search
-            logger.info("Authorisation{} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+            var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
                     authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
                     updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
                     transactionId.orElse("missing transaction ID"),
                     updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
                     operationResponse, ChargeStatus.fromString(charge.getStatus()), newStatus);
+
+            var structuredLoggingArguments = ArrayUtils.addAll(
+                    charge.getStructuredLoggingArgs(),
+                    authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
+
+            logger.info(logMessage, structuredLoggingArguments);
 
             metricRegistry.counter(String.format(
                     "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
