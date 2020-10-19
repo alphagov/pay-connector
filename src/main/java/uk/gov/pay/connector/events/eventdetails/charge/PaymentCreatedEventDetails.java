@@ -12,8 +12,11 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 
 public class PaymentCreatedEventDetails extends EventDetails {
 
@@ -96,7 +99,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
     private static boolean containsPostAuthorisationReadyStatus(ChargeStatus status) {
         return PaymentGatewayStateTransitions.getInstance()
-                .getNextStatus(AUTHORISATION_READY).contains(status);
+                .getNextStatus(AUTHORISATION_READY)
+                .stream().filter(chargeStatus -> !(chargeStatus.equals(EXPIRED) || chargeStatus.equals(USER_CANCELLED)))
+                .collect(Collectors.toList())
+                .contains(status);
     }
 
     private static void addCardDetailsIfExist(ChargeEntity charge, Builder builder) {
