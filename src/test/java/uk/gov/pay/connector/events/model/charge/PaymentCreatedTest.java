@@ -71,14 +71,24 @@ public class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.email", equalTo("test@email.gov.uk")));
     }
 
+
+    private Object[] eventStatusesForNonCreatedAndNonAuthWithCardDetails() {
+        return new Object[]{
+                new Object[]{ChargeStatus.USER_CANCELLED},
+                new Object[]{ChargeStatus.SYSTEM_CANCELLED},
+                new Object[]{ChargeStatus.EXPIRED}
+        };
+    }
+
     @Test
-    public void serializesPayloadForNonCreatedWithCardDetails() throws JsonProcessingException {
+    @Parameters(method = "eventStatusesForNonCreatedAndNonAuthWithCardDetails")
+    public void serializesPayloadForNonCreatedWithCardDetails(ChargeStatus status) throws JsonProcessingException {
         chargeEntityFixture
-                .withStatus(ChargeStatus.SYSTEM_CANCELLED)
+                .withStatus(ChargeStatus.USER_CANCELLED)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .withEvents(List.of(
                         aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.CREATED).withUpdated(ZonedDateTime.now().minusHours(3)).build(),
-                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.SYSTEM_CANCELLED).withUpdated(ZonedDateTime.now().minusHours(3)).build()
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(status).withUpdated(ZonedDateTime.now().minusHours(3)).build()
                 ));
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
