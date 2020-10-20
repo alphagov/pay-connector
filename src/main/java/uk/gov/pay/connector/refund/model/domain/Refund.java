@@ -51,8 +51,8 @@ public class Refund {
                 ExternalRefundStatus.fromPublicStatusLabel(ledgerTransaction.getState().getStatus()),
                 ledgerTransaction.getRefundedBy(),
                 ledgerTransaction.getRefundedByUserEmail(),
-                ledgerTransaction.getParentTransactionId(),
                 ledgerTransaction.getGatewayTransactionId(),
+                ledgerTransaction.getParentTransactionId(),
                 true
         );
     }

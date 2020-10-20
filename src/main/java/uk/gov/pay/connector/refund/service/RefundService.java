@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
@@ -102,6 +103,15 @@ public class RefundService {
 
     public Optional<RefundEntity> findByChargeExternalIdAndGatewayTransactionId(String chargeExternalId, String gatewayTransactionId) {
         return refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeExternalId, gatewayTransactionId);
+    }
+
+    public Optional<Refund> findHistoricRefundByChargeExternalIdAndGatewayTransactionId(Charge charge,
+                                                                                        String gatewayTransactionId) {
+        List<Refund> refunds = getHistoricRefunds(charge);
+        return refunds.stream()
+                .filter(refund -> isNotBlank(refund.getGatewayTransactionId())
+                        && refund.getGatewayTransactionId().equals(gatewayTransactionId))
+                .findFirst();
     }
 
     private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
@@ -250,7 +260,7 @@ public class RefundService {
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
                 .getExternalChargeRefundAvailability(charge, refundList);
         checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
-        
+
         // We re-check the database for any newly created refunds that could have been made when we were making the
         // network request to find the external refund-ability
         List<Refund> updatedRefunds = checkForNewRefunds(charge, refundList);
@@ -288,18 +298,26 @@ public class RefundService {
         if (charge.isHistoric()) {
             // Combine refunds that have been expunged and so only exist in ledger with refunds that still exist in
             // the database, preferring records that still exist in the database as they might be in-flight.
-            Stream<Refund> refundsOnlyInLedger = ledgerService
-                    .getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId())
-                    .getTransactions()
-                    .stream()
-                    .map(Refund::from)
-                    .filter(refund -> refundsFromDatabase.stream().noneMatch(refund1 -> refund1.getExternalId().equals(refund.getExternalId())));
+            Stream<Refund> refundsOnlyInLedger = getHistoricRefunds(charge).stream()
+                    .filter(refund -> refundsFromDatabase
+                            .stream()
+                            .noneMatch(refund1 -> refund1.getExternalId().equals(refund.getExternalId()))
+                    );
 
             return Stream.concat(refundsFromDatabase.stream(), refundsOnlyInLedger).collect(Collectors.toList());
         } else {
             return refundsFromDatabase;
         }
 
+    }
+
+    private List<Refund> getHistoricRefunds(Charge charge) {
+        return ledgerService
+                .getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId())
+                .getTransactions()
+                .stream()
+                .map(Refund::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional

@@ -547,7 +547,7 @@ public class RefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
-    
+
     @Test
     public void shouldFailWhenANewRefundHasBeenCreatedSincePreviouslyQueried() {
         String externalChargeId = "chargeId";
@@ -753,6 +753,54 @@ public class RefundServiceTest {
         assertThat(refunds.get(1).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUBMITTED));
         assertThat(refunds.get(2).getAmount(), is(300L));
         assertThat(refunds.get(2).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_ERROR));
+    }
+
+    @Test
+    public void shouldFindHistoricRefundsForChargeExternalIdAndRefundGatewayTransactionId() {
+        Charge charge = Charge.from(aValidChargeEntity().build());
+
+        String refundFromLedger1 = "refund-from-ledger1";
+        String refundFromLedger2 = "refund-from-ledger2";
+
+        LedgerTransaction ledgerRefund1 = aValidLedgerTransaction()
+                .withExternalId(refundFromLedger1)
+                .withParentTransactionId(charge.getExternalId())
+                .withGatewayTransactionId("refund-gateway-tx-1")
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .build();
+        LedgerTransaction ledgerRefund2 = aValidLedgerTransaction()
+                .withExternalId(refundFromLedger2)
+                .withParentTransactionId(charge.getExternalId())
+                .withGatewayTransactionId("refund-gateway-tx-2")
+                .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .build();
+
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(charge.getExternalId())
+                .withTransactions(List.of(ledgerRefund1, ledgerRefund2))
+                .build();
+        when(mockLedgerService.getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId()))
+                .thenReturn(refundTransactionsForPayment);
+
+        Optional<Refund> mayBeRefund = refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, "refund-gateway-tx-1");
+        assertThat(mayBeRefund.isPresent(), is(true));
+        assertThat(mayBeRefund.get().getExternalId(), is(ledgerRefund1.getTransactionId()));
+        assertThat(mayBeRefund.get().getGatewayTransactionId(), is("refund-gateway-tx-1"));
+    }
+
+    @Test
+    public void shouldRefundOptionalEmptyIfNoHistoricRefundsExistsForChargeExternalIdAndRefundGatewayTransactionId() {
+        Charge charge = Charge.from(aValidChargeEntity().build());
+
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(charge.getExternalId())
+                .withTransactions(List.of())
+                .build();
+        when(mockLedgerService.getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId()))
+                .thenReturn(refundTransactionsForPayment);
+
+        Optional<Refund> mayBeRefund = refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, "some-gateway-tx-id");
+        assertThat(mayBeRefund.isPresent(), is(false));
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
