@@ -72,7 +72,7 @@ public class NotificationResource {
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
-        logger.info("Responding to notification from provider={} with 200 {}", "worldpay", response);
+        logger.info("Responding to notification (IP: '{}') from provider={} with 200 {}", ipAddress, "worldpay", response); //TODO: revert logging the IP
         return Response.ok(response).build();
     }
 
