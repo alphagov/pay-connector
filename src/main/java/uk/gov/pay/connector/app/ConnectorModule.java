@@ -26,6 +26,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
@@ -96,6 +97,16 @@ public class ConnectorModule extends AbstractModule {
         return new XrayUtils(connectorConfiguration.isXrayEnabled());
     }
 
+    @Provides
+    @Singleton
+    public ReverseDnsLookup reverseDnsLookup() {
+        return getReverseDnsLookup();
+    }
+    
+    protected ReverseDnsLookup getReverseDnsLookup() {
+        return new ReverseDnsLookup();
+    }
+    
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();

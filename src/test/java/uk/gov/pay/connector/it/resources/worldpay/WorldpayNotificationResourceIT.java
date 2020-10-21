@@ -1,22 +1,29 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import io.dropwizard.setup.Environment;
 import io.restassured.response.ValidatableResponse;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -24,24 +31,39 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(
+        app = WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class, 
+        config = "config/test-it-config.yaml",
+        configOverrides = {@ConfigOverride(key = "worldpay.notificationDomain", value = ".worldpay.com")}
+)
 public class WorldpayNotificationResourceIT extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
+    private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
+    private static final String UNEXPECTED_IP_ADDRESS = "8.8.8.8";
+    private static ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
+    
+    @BeforeClass
+    public static void before() {
+        when(reverseDnsLookup.lookup(new DnsPointerResourceRecord(WORLDPAY_IP_ADDRESS))).thenReturn(Optional.of("hello.worldpay.com."));
+        when(reverseDnsLookup.lookup(new DnsPointerResourceRecord(UNEXPECTED_IP_ADDRESS))).thenReturn(Optional.of("dns.google."));
+    }
 
     public WorldpayNotificationResourceIT() {
         super("worldpay");
     }
 
     @Test
-    public void shouldHandleAChargeNotification() throws Exception {
+    public void shouldHandleAChargeNotification() {
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -56,7 +78,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleARefundNotification() throws Exception {
+    public void shouldHandleARefundNotification() {
         String transactionId = RandomIdGenerator.newId();
         String refundExternalId = String.valueOf(nextLong());
         int refundAmount = 1000;
@@ -109,7 +131,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldIgnoreAuthorisedNotification() throws Exception {
+    public void shouldIgnoreAuthorisedNotification() {
 
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURED, transactionId);
@@ -125,7 +147,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
+    public void shouldNotAddUnknownStatusToDatabaseFromANotification() {
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -153,24 +175,13 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
-                .header("X-Forwarded-For", "8.8.8.8, 123.1.23.32")
+                .header("X-Forwarded-For", UNEXPECTED_IP_ADDRESS)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(403);
     }
-
-    @Test
-    public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() {
-        given().port(testContext.getPort())
-                .body(notificationPayloadForTransaction("any", "WHATEVER"))
-                .header("X-Forwarded-For", "something is wrong, 8.8.8.8")
-                .contentType(TEXT_XML)
-                .post(NOTIFICATION_PATH)
-                .then()
-                .statusCode(403);
-    }
-
+    
     @Test
     public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() {
         given().port(testContext.getPort())
@@ -191,19 +202,18 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
                 .statusCode(415);
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status));
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status, String reference) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status, String reference) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status, reference));
     }
 
     private ValidatableResponse notifyConnector(String payload) {
-        String xForwardedForHeader = format("%s, %s", "54.194.29.214", "8.8.8.8");
         return given().port(testContext.getPort())
                 .body(payload)
-                .header("X-Forwarded-For", xForwardedForHeader)
+                .header("X-Forwarded-For", WORLDPAY_IP_ADDRESS)
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
                 .then();
@@ -225,11 +235,29 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
 
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
-        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
         databaseTestHelper.addRefund(refundExternalId, refundAmount, REFUND_SUBMITTED,
                 refundExternalId, ZonedDateTime.now(),
                 externalChargeId);
         return externalChargeId;
     }
 
+    public static class ConnectorAppWithCustomInjector extends ConnectorApp {
+
+        @Override
+        protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
+            return new ConnectorModuleWithOverrides(configuration, environment);
+        }
+    }
+
+    private static class ConnectorModuleWithOverrides extends ConnectorModule {
+
+        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
+            super(configuration, environment);
+        }
+
+        @Override
+        protected ReverseDnsLookup getReverseDnsLookup() {
+            return reverseDnsLookup;
+        }
+    }
 }
