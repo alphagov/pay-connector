@@ -86,8 +86,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void initialize(Bootstrap<ConnectorConfiguration> bootstrap) {
-        java.security.Security.setProperty("networkaddress.cache.ttl" , "15");
-        
         bootstrap.setConfigurationSourceProvider(
                 new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
                         new EnvironmentVariableSubstitutor(NON_STRICT_VARIABLE_SUBSTITUTOR)
