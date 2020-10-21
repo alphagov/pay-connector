@@ -20,6 +20,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -93,11 +94,11 @@ public class RefundNotificationProcessorTest {
     @Test
     public void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
-        
+
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("%s refund notification could not be used to update charge [%s] (missing reference)", 
+        String expectedLogMessage = String.format("%s refund notification could not be used to update charge [%s] (missing reference)",
                 paymentGatewayName,
                 charge.getExternalId());
 
@@ -114,6 +115,22 @@ public class RefundNotificationProcessorTest {
                 paymentGatewayName,
                 "unknown",
                 charge.getExternalId());
+
+        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+    }
+
+    @Test
+    public void shouldLogWarning_whenNotificationIsForAnExpungedRefund() {
+        String gatewayTransactionId = "refund-gateway-tx-id123";
+        when(refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId))
+                .thenReturn(Optional.of(Refund.from(refundEntity)));
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, gatewayTransactionId, transactionId, charge);
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = String.format("%s notification could not be processed as refund [%s] has been expunged from connector",
+                paymentGatewayName, refundEntity.getExternalId());
 
         assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }

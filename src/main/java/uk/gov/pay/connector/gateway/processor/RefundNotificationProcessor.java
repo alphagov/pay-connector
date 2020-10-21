@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -13,7 +14,11 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundNotificationProcessor {
 
@@ -36,11 +41,23 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        Optional<RefundEntity> optionalRefundEntity 
-                = refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), gatewayTransactionId);
+        Optional<RefundEntity> optionalRefundEntity =
+                refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), gatewayTransactionId);
+
         if (optionalRefundEntity.isEmpty()) {
-            logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
-                    gatewayName, gatewayTransactionId, charge.getExternalId());
+            Optional<Refund> mayBeHistoricRefund
+                    = refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId);
+
+            mayBeHistoricRefund.ifPresentOrElse(
+                    refund -> logger.warn("{} notification could not be processed as refund [{}] has been expunged from connector",
+                            gatewayName, refund.getExternalId(),
+                            kv(REFUND_EXTERNAL_ID, refund.getExternalId()), kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                            kv(PROVIDER, gatewayName)),
+                    () -> logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
+                            gatewayName, gatewayTransactionId, charge.getExternalId(),
+                            kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), kv(PROVIDER, gatewayName),
+                            kv("provider_refund_id", gatewayTransactionId))
+            );
             return;
         }
 
