@@ -7,10 +7,14 @@ import org.slf4j.LoggerFactory;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Optional;
 
-import static java.lang.String.*;
+import static java.lang.String.format;
+import static java.lang.String.join;
 
 public class DnsUtils {
     private static final Logger logger = LoggerFactory.getLogger(DnsUtils.class);
@@ -35,15 +39,6 @@ public class DnsUtils {
         } catch (Exception e) {
             logger.error("Reverse DNS Lookup failed: {}", e.getLocalizedMessage());
             return false;
-        }
-    }
-
-    public Optional<String> dnsLookup(String hostName) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(hostName);
-            return Optional.ofNullable(inetAddress.getHostAddress());
-        } catch (Exception e) {
-            return Optional.empty();
         }
     }
 

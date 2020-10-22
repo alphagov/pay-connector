@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.util;
 
-import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -16,14 +13,6 @@ public class DnsUtilsITest {
     @Before
     public void setup() {
         dnsUtils = new DnsUtils();
-    }
-
-    @Test
-    public void shouldReturnAnIpAddressForAValidHostname() {
-        InetAddressValidator validator = InetAddressValidator.getInstance();
-        Optional<String> maybeIp = dnsUtils.dnsLookup("build.ci.pymnt.uk");
-        assertThat(maybeIp.isPresent(), is(true));
-        assertThat(validator.isValidInet4Address(maybeIp.get()), is (true));
     }
 
     @Test
@@ -42,11 +31,6 @@ public class DnsUtilsITest {
     public void reverseDnsShouldReturnHostIfIpIsValid() {
         assertThat(dnsUtils.reverseDnsLookup("195.35.90.1").isPresent(), is(true));
         assertThat(dnsUtils.reverseDnsLookup("195.35.90.1").get(), is("hello.worldpay.com."));
-    }
-
-    @Test
-    public void shouldNotReturnAnIpAddressForAnInvalidHostname() {
-        assertThat(dnsUtils.dnsLookup("asdasd").isPresent(), is(false));
     }
 
     @Test
