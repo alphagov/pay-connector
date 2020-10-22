@@ -8,7 +8,6 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -201,8 +200,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     private ValidatableResponse notifyConnector(String payload) {
-        String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
-        String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
+        String xForwardedForHeader = format("%s, %s", "54.194.29.214", "8.8.8.8");
         return given().port(testContext.getPort())
                 .body(payload)
                 .header("X-Forwarded-For", xForwardedForHeader)
