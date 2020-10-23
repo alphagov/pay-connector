@@ -88,7 +88,7 @@ public class ParityCheckWorkerTest {
         parityCheckService = new ParityCheckService(ledgerService, chargeService, historicalEventEmitter, 
                 chargeParityChecker, refundParityChecker, refundService);
 
-        worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
+        worker = new ParityCheckWorker(chargeDao, chargeService, emittedEventDao,
                 stateTransitionService, eventService, refundDao, parityCheckService);
         chargeEntity = aValidChargeEntity()
                 .withCardDetails(defaultCardDetails())

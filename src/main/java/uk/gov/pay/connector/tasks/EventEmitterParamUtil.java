@@ -9,7 +9,6 @@ import java.util.OptionalLong;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-
 public class EventEmitterParamUtil {
 
     public static Optional<ZonedDateTime> getDateParam(Map<String, List<String>> parameters, String paramName) {
@@ -41,6 +40,10 @@ public class EventEmitterParamUtil {
         } else {
             return Optional.of(Long.parseLong(value));
         }
+    }
+
+    public static Optional<String> getStringParam(Map<String, List<String>> parameters, String paramName) {
+        return Optional.ofNullable(getParameterValue(parameters, paramName));
     }
 
     public static String getParameterValue(Map<String, List<String>> parameters, String paramName) {

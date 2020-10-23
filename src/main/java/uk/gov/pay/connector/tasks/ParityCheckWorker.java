@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -25,7 +24,6 @@ import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUES
 public class ParityCheckWorker {
     private static final int PAGE_SIZE = 100;
     private static final Logger logger = LoggerFactory.getLogger(ParityCheckWorker.class);
-    private static final boolean shouldForceEmission = true;
     private final ChargeDao chargeDao;
     private ChargeService chargeService;
 
@@ -38,7 +36,7 @@ public class ParityCheckWorker {
     private long maxId;
 
     @Inject
-    public ParityCheckWorker(ChargeDao chargeDao, ChargeService chargeService, LedgerService ledgerService, EmittedEventDao emittedEventDao,
+    public ParityCheckWorker(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
                              StateTransitionService stateTransitionService, EventService eventService, RefundDao refundDao,
                              ParityCheckService parityCheckService) {
         this.chargeDao = chargeDao;
@@ -58,7 +56,7 @@ public class ParityCheckWorker {
             MDC.put(HEADER_REQUEST_ID, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
 
             if (parityCheckStatus.isPresent()) {
-                checkParityForParityCheckStatus(parityCheckStatus);
+                checkParityForParityCheckStatus(parityCheckStatus.get());
             } else {
                 maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
                 checkParityForIdRange(startId, maxId, doNotReprocessValidRecords);
@@ -67,26 +65,26 @@ public class ParityCheckWorker {
             for (StackTraceElement s : e.getStackTrace()) {
                 logger.error("Null pointer exception stack trace: {}", s);
             }
-            logger.error(
-                    "Null pointer exception [start={}] [max={}] [error={}]",
-                    startId, maxId, e);
+            logger.error("Null pointer exception [start={}] [max={}] [error={}]",
+                    startId, maxId, e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]", startId, maxId, e);
+            logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]",
+                    startId, maxId, e.getMessage(), e);
         }
 
         logger.info("Terminating");
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, shouldForceEmission,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService,
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
-    private void checkParityForParityCheckStatus(Optional<String> parityCheckStatus) {
-        ParityCheckStatus parityStatus = ParityCheckStatus.valueOf(parityCheckStatus.get());
+    private void checkParityForParityCheckStatus(String parityCheckStatus) {
+        ParityCheckStatus parityStatus = ParityCheckStatus.valueOf(parityCheckStatus);
         Long lastProcessedId = 0L;
 
-        logger.info("Starting for status {}", parityCheckStatus.get());
+        logger.info("Starting for status {}", parityCheckStatus);
         while (true) {
             List<ChargeEntity> charges = chargeDao.findByParityCheckStatus(parityStatus, PAGE_SIZE, lastProcessedId);
 
@@ -101,14 +99,14 @@ public class ParityCheckWorker {
     }
 
     public void checkParityForIdRange(long startId, long maxId, boolean doNotReprocessValidRecords) {
-        logger.info("Starting from {} up to {}", startId, this.maxId);
-        for (long i = startId; i <= this.maxId; i++) {
+        logger.info("Starting from {} up to {}", startId, maxId);
+        for (long i = startId; i <= maxId; i++) {
             final Optional<ChargeEntity> maybeCharge = chargeDao.findById(i);
 
             if (maybeCharge.isPresent()) {
                 checkParityFor(maybeCharge.get(), doNotReprocessValidRecords);
             } else {
-                logger.info("[{}/{}] - not found", i, this.maxId);
+                logger.info("[{}/{}] - not found", i, maxId);
             }
         }
     }
@@ -138,6 +136,6 @@ public class ParityCheckWorker {
 
     private void emitHistoricalEvents(ChargeEntity charge) {
         historicalEventEmitter.processPaymentEvents(charge, true);
-        historicalEventEmitter.processRefundEvents(charge.getExternalId());
+        historicalEventEmitter.processRefundEvents(charge.getExternalId(), true);
     }
 }

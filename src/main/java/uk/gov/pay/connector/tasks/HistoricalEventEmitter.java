@@ -17,6 +17,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -72,7 +73,6 @@ public class HistoricalEventEmitter {
     private final EmittedEventDao emittedEventDao;
     private final RefundDao refundDao;
     private final ChargeService chargeService;
-    private boolean shouldForceEmission;
     private PaymentGatewayStateTransitions paymentGatewayStateTransitions;
     private EventService eventService;
     private StateTransitionService stateTransitionService;
@@ -84,43 +84,20 @@ public class HistoricalEventEmitter {
                                   EventService eventService,
                                   StateTransitionService stateTransitionService,
                                   ChargeService chargeService) {
-        this(emittedEventDao, refundDao, chargeService, false, eventService, stateTransitionService, null);
+        this(emittedEventDao, refundDao, chargeService, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, ChargeService chargeService, boolean shouldForceEmission, EventService eventService,
-                                  StateTransitionService stateTransitionService) {
-        this(emittedEventDao, refundDao, chargeService, shouldForceEmission, eventService, stateTransitionService, null);
-    }
-
-    public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, ChargeService chargeService, boolean shouldForceEmission,
+                                  RefundDao refundDao, ChargeService chargeService,
                                   EventService eventService, StateTransitionService stateTransitionService,
                                   Long doNotRetryEmitUntilDuration) {
         this.emittedEventDao = emittedEventDao;
         this.refundDao = refundDao;
         this.chargeService = chargeService;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
-        this.shouldForceEmission = shouldForceEmission;
         this.eventService = eventService;
         this.stateTransitionService = stateTransitionService;
         this.doNotRetryEmitUntilDuration = doNotRetryEmitUntilDuration;
-    }
-
-    private static int sortOutOfOrderCaptureEvents(ChargeEventEntity lhs, ChargeEventEntity rhs) {
-        // puts CAPTURE_SUBMITTED at top of the events list (after first pass of sorting)
-        // when timestamp for CAPTURED is same or before CAPTURE_SUBMITTED timestamp 
-        if (lhs.getStatus().equals(ChargeStatus.CAPTURE_SUBMITTED)
-                && rhs.getStatus().equals(ChargeStatus.CAPTURED)) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
-
-    public void processPaymentAndRefundEvents(ChargeEntity charge) {
-        processPaymentEvents(charge, shouldForceEmission);
-        processRefundEvents(charge.getExternalId());
     }
 
     public void processPaymentEvents(ChargeEntity charge, boolean forceEmission) {
@@ -131,16 +108,14 @@ public class HistoricalEventEmitter {
         processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
     }
 
-    @Transactional
-    public void processRefundEvents(String chargeExternalId) {
+    public void processRefundEvents(String chargeExternalId, boolean forceEmission) {
         List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeExternalId(chargeExternalId);
         refundHistories
                 .stream()
                 .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
-                .forEach(refundHistory -> emitAndPersistEventForRefundHistoryEntry(refundHistory, shouldForceEmission));
+                .forEach(refundHistory -> emitAndPersistEventForRefundHistoryEntry(refundHistory, forceEmission));
     }
 
-    @Transactional
     public void emitEventsForRefund(String refundExternalId, boolean shouldForceEmission) {
         List<RefundHistory> refundHistories = refundDao.getRefundHistoryByRefundExternalId(refundExternalId);
         refundHistories
@@ -149,8 +124,10 @@ public class HistoricalEventEmitter {
                 .forEach(refundHistory -> emitAndPersistEventForRefundHistoryEntry(refundHistory, shouldForceEmission));
     }
 
+    @Transactional
     public void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory, boolean shouldForceEmission) {
-        Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
+        Class<? extends RefundEvent> refundEventClass = RefundStateEventMap.calculateRefundEventClass(
+                refundHistory.getUserExternalId(), refundHistory.getStatus());
         Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(refundHistory.getChargeExternalId()));
         Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass,
@@ -169,7 +146,7 @@ public class HistoricalEventEmitter {
         }
     }
 
-    private void emitRefundEvent(RefundHistory refundHistory, Class refundEventClass, Event event) {
+    private void emitRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> refundEventClass, Event event) {
         RefundStateTransition stateTransition = new RefundStateTransition(
                 refundHistory.getExternalId(),
                 refundHistory.getStatus(),
@@ -186,6 +163,17 @@ public class HistoricalEventEmitter {
                 .sorted(Comparator.comparing(ChargeEventEntity::getUpdated))
                 .sorted(HistoricalEventEmitter::sortOutOfOrderCaptureEvents)
                 .collect(Collectors.toList());
+    }
+
+    private static int sortOutOfOrderCaptureEvents(ChargeEventEntity lhs, ChargeEventEntity rhs) {
+        // puts CAPTURE_SUBMITTED at top of the events list (after first pass of sorting)
+        // when timestamp for CAPTURED is same or before CAPTURE_SUBMITTED timestamp
+        if (lhs.getStatus().equals(ChargeStatus.CAPTURE_SUBMITTED)
+                && rhs.getStatus().equals(ChargeStatus.CAPTURED)) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 
     private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities,

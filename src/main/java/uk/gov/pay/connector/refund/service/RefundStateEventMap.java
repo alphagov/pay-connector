@@ -3,13 +3,14 @@ package uk.gov.pay.connector.refund.service;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
+import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 public class RefundStateEventMap {
 
-        public static Class calculateRefundEventClass(String userExternalId, RefundStatus refundStatus) {
+        public static Class<? extends RefundEvent> calculateRefundEventClass(String userExternalId, RefundStatus refundStatus) {
         switch (refundStatus) {
             case CREATED:
                 if (userExternalId != null) {

@@ -93,7 +93,7 @@ public class EmittedEventsBackfillServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
         HistoricalEventEmitter historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao,
-                chargeService, true, eventService, stateTransitionService);
+                eventService, stateTransitionService, chargeService);
         emittedEventsBackfillService = new EmittedEventsBackfillService(emittedEventDao, chargeService, refundDao,
                 historicalEventEmitter, connectorConfiguration);
         lenient().when(chargeService.findChargeByExternalId(any())).thenThrow(new ChargeNotFoundRuntimeException(""));

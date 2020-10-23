@@ -18,6 +18,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getLongParam;
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getParameterValue;
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getStringParam;
 
 public class ParityCheckTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -51,11 +52,11 @@ public class ParityCheckTask extends Task {
     }
 
     @Override
-    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) {
         Long startId = getLongParam(parameters, "start_id").orElse(0L);
         final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
-        boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records").orElse(false);
         Optional<String> parityCheckStatus = getStringParam(parameters, "parity_check_status");
+        boolean doNotReprocessValidRecords = getDoNotReprocessValidRecordsParam(parameters).orElse(false);
         final Long doNotRetryEmitUntilDuration = getDoNotRetryEmitUntilDuration(parameters);
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
@@ -71,14 +72,9 @@ public class ParityCheckTask extends Task {
         }
     }
 
-    private Optional<Boolean> getFlagParam(Map<String, List<String>> parameters, String paramName) {
-        String value = getParameterValue(parameters, paramName);
-        return Optional.ofNullable(StringUtils.isNotBlank(value) ?
-                Boolean.valueOf(value) : null);
-    }
-
-    private Optional<String> getStringParam(Map<String, List<String>> parameters, String paramName) {
-        return Optional.ofNullable(getParameterValue(parameters, paramName));
+    private Optional<Boolean> getDoNotReprocessValidRecordsParam(Map<String, List<String>> parameters) {
+        String value = getParameterValue(parameters, "do_not_reprocess_valid_records");
+        return Optional.of(StringUtils.isNotBlank(value) && Boolean.parseBoolean(value));
     }
 
     private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {

@@ -75,7 +75,7 @@ public class HistoricalEventEmitterWorker {
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, false,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService,
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
@@ -101,7 +101,7 @@ public class HistoricalEventEmitterWorker {
                 long finalCurrentId = currentId;
                 refundDao.findById(currentId)
                         .ifPresentOrElse(
-                                refundEntity -> historicalEventEmitter.processRefundEvents(refundEntity.getChargeExternalId()),
+                                refundEntity -> historicalEventEmitter.processRefundEvents(refundEntity.getChargeExternalId(), false),
                                 () -> logger.info("Refund [{}/{}] - not found", finalCurrentId, maxId));
             }
         } catch (Exception e) {
@@ -125,7 +125,7 @@ public class HistoricalEventEmitterWorker {
                 final ChargeEntity charge = maybeCharge.get();
 
                 historicalEventEmitter.processPaymentEvents(charge, false);
-                historicalEventEmitter.processRefundEvents(charge.getExternalId());
+                historicalEventEmitter.processRefundEvents(charge.getExternalId(), false);
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
@@ -188,7 +188,7 @@ public class HistoricalEventEmitterWorker {
 
             if (maybeCharge.isPresent()) {
                 final Charge charge = maybeCharge.get();
-                historicalEventEmitter.processRefundEvents(charge.getExternalId());
+                historicalEventEmitter.processRefundEvents(charge.getExternalId(), false);
             }
         } finally {
             MDC.remove("chargeId");
