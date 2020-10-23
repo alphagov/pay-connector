@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.DnsUtils;
+import uk.gov.pay.connector.util.IpDomainMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public class WorldpayNotificationServiceTest {
     @Mock
     private WorldpayNotificationConfiguration mockWorldpayConfiguration;
     @Mock
-    private DnsUtils mockDnsUtils;
+    private IpDomainMatcher mockIpDomainMatcher;
     @Mock
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
@@ -58,7 +58,7 @@ public class WorldpayNotificationServiceTest {
         notificationService = new WorldpayNotificationService(
                 mockChargeService,
                 mockWorldpayConfiguration,
-                mockDnsUtils,
+                mockIpDomainMatcher,
                 mockChargeNotificationProcessor,
                 mockRefundNotificationProcessor,
                 mockGatewayAccountService);
@@ -239,7 +239,7 @@ public class WorldpayNotificationServiceTest {
                 "2017");
         when(mockWorldpayConfiguration.isNotificationEndpointSecured()).thenReturn(true);
         when(mockWorldpayConfiguration.getNotificationDomain()).thenReturn("worldpay.com");
-        when(mockDnsUtils.ipMatchesDomain(ipAddress, "worldpay.com")).thenReturn(false);
+        when(mockIpDomainMatcher.ipMatchesDomain(ipAddress, "worldpay.com")).thenReturn(false);
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertFalse(result);

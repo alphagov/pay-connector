@@ -14,7 +14,7 @@ import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.DnsUtils;
+import uk.gov.pay.connector.util.IpDomainMatcher;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -45,7 +45,7 @@ public class WorldpayNotificationService {
 
     private final ChargeService chargeService;
     private final WorldpayNotificationConfiguration config;
-    private final DnsUtils dnsUtils;
+    private final IpDomainMatcher ipDomainMatcher;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
     private GatewayAccountService gatewayAccountService;
@@ -54,13 +54,13 @@ public class WorldpayNotificationService {
     public WorldpayNotificationService(
             ChargeService chargeService,
             WorldpayNotificationConfiguration config,
-            DnsUtils dnsUtils,
+            IpDomainMatcher ipDomainMatcher,
             ChargeNotificationProcessor chargeNotificationProcessor,
             RefundNotificationProcessor refundNotificationProcessor,
             GatewayAccountService gatewayAccountService) {
         this.chargeService = chargeService;
         this.config = config;
-        this.dnsUtils = dnsUtils;
+        this.ipDomainMatcher = ipDomainMatcher;
 
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
@@ -157,7 +157,7 @@ public class WorldpayNotificationService {
     }
 
     private boolean isNotificationRejectedFromIpAddress(String ipAddress) {
-        return isNotificationEndpointSecured() && !dnsUtils.ipMatchesDomain(ipAddress, notificationDomain());
+        return isNotificationEndpointSecured() && !ipDomainMatcher.ipMatchesDomain(ipAddress, notificationDomain());
     }
 
     private boolean isTransactionIdBlank(WorldpayNotification notification) {
