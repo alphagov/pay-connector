@@ -28,7 +28,7 @@ public class IpDomainMatcher {
     public boolean ipMatchesDomain(String forwardedAddress, String domain) {
         try {
             String ipAddress = extractForwardedIp(forwardedAddress);
-            return reverseDnsLookup.lookup(ipAddress).map(host -> {
+            return reverseDnsLookup.lookup(new DnsPointerResourceRecord(ipAddress)).map(host -> {
                 if (!host.endsWith(domain + ".")) {
                     LOGGER.error("Reverse DNS lookup on ip '{}' - resolved domain '{}' does not match '{}'", ipAddress, host, domain);
                     return false;

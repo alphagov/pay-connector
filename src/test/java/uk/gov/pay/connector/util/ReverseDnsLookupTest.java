@@ -11,13 +11,14 @@ public class ReverseDnsLookupTest {
 
     @Test
     public void reverseDnsShouldReturnHostIfIpIsValid() {
-        assertThat(reverseDnsLookup.lookup("195.35.90.1").isPresent(), is(true));
-        assertThat(reverseDnsLookup.lookup("195.35.90.1").get(), is("hello.worldpay.com."));
+        var pointerRecord = new DnsPointerResourceRecord("195.35.90.1");
+        assertThat(reverseDnsLookup.lookup(pointerRecord).isPresent(), is(true));
+        assertThat(reverseDnsLookup.lookup(pointerRecord).get(), is("hello.worldpay.com."));
     }
 
     @Test
     public void reverseDnsShouldNotReturnHostIfIpIsNotValid() {
-        assertThat(reverseDnsLookup.lookup("123.234.567.890").isPresent(), is(false));
-        assertThat(reverseDnsLookup.lookup("not-an-ip").isPresent(), is(false));
+        assertThat(reverseDnsLookup.lookup(new DnsPointerResourceRecord("123.234.567.890")).isPresent(), is(false));
+        assertThat(reverseDnsLookup.lookup(new DnsPointerResourceRecord("not-an-ip")).isPresent(), is(false));
     }
 }
