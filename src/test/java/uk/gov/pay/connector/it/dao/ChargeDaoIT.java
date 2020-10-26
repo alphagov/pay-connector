@@ -68,7 +68,6 @@ public class ChargeDaoIT extends DaoITestBase {
     private ChargeDao chargeDao;
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
-    private DatabaseFixtures.TestRefund defaultTestRefund;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
 
@@ -868,7 +867,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private void insertTestRefund() {
-        this.defaultTestRefund = DatabaseFixtures
+        DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withTestCharge(defaultTestCharge)

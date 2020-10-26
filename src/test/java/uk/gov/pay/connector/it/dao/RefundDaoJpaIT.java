@@ -5,6 +5,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -27,6 +28,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.oneOf;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.events.EmittedEventFixture.anEmittedEventEntity;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
@@ -455,5 +457,22 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(mayBeRefundEntityFromDB.get().getParityCheckDate().toLocalDateTime(), is(parityCheckDate.toLocalDateTime()));
         assertThat(mayBeRefundEntityFromDB.get().getParityCheckStatus(), is(MISSING_IN_LEDGER));
         assertThat(refundHistoryList.size(), is(1));
+    }
+
+    @Test
+    public void findRefundsByParityCheckStatus() {
+        RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntity.setStatus(CREATED);
+        refundEntity.setParityCheckStatus(MISSING_IN_LEDGER);
+        refundDao.persist(refundEntity);
+        RefundEntity refundEntityToExclude = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntityToExclude.setStatus(REFUNDED);
+        refundEntityToExclude.setParityCheckStatus(EXISTS_IN_LEDGER);
+        refundDao.persist(refundEntityToExclude);
+
+        var refunds = refundDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER, 1, 0L);
+
+        assertThat(refunds.size(), Matchers.is(1));
+        assertThat(refunds.get(0).getParityCheckStatus(), Matchers.is(ParityCheckStatus.MISSING_IN_LEDGER));
     }
 }
