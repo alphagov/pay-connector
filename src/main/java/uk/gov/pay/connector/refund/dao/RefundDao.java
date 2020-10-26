@@ -198,4 +198,14 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter(3, externalId)
                 .executeUpdate();
     }
+
+    public List<RefundEntity> findByParityCheckStatus(ParityCheckStatus parityCheckStatus, int pageSize, Long lastProcessedId) {
+        return entityManager.get()
+                .createQuery("SELECT r FROM RefundEntity r WHERE r.id > :lastProcessedId " +
+                        " AND r.parityCheckStatus = :parityCheckStatus ORDER BY r.id", RefundEntity.class)
+                .setParameter("parityCheckStatus", parityCheckStatus)
+                .setParameter("lastProcessedId", lastProcessedId)
+                .setMaxResults(pageSize)
+                .getResultList();
+    }
 }
