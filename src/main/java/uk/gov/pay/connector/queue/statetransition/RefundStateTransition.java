@@ -13,12 +13,6 @@ public class RefundStateTransition extends StateTransition {
         this.refundStatus = refundStatus;
     }
 
-    public RefundStateTransition(String refundExternalId, RefundStatus refundStatus, Class stateTransitionEventClass, long delayDurationInMilliseconds) {
-        super(stateTransitionEventClass, delayDurationInMilliseconds);
-        this.refundExternalId = refundExternalId;
-        this.refundStatus = refundStatus;
-    }
-
     public RefundStateTransition(String refundExternalId, RefundStatus refundStatus, Class stateTransitionEventClass, int numberOfProcessAttempts, long delayDurationInMilliseconds) {
         super(stateTransitionEventClass, numberOfProcessAttempts, delayDurationInMilliseconds);
         this.refundExternalId = refundExternalId;
