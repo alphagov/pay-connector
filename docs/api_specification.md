@@ -2630,3 +2630,82 @@ Content-Type: application/json
 | `total_volume`   | X              | Count of successful payments          |
 | `total_amount`   | X              | Sum of successful payments            |
 | `average_amount` | X              | Average value of successful payments  |
+
+## POST /tasks/historical-event-emitter
+
+Task to emit payment or refunds events for a given `start_id` and `max_id` range. 
+
+Historical event emitter task doesn't emit event, if event was emitted previously. To re-emit events, relevant emitted events records need to be cleared 
+
+### Request query param description
+
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `start_id`               | Charge/Refund ID (from database) to start with to emit events. Defaults to `0` |
+| `max_id`                 | Charge/Refund ID until which events to be emitted. If not provided, this is set to maximum ID available. |
+| `record_type`            | Type of records (charge/refund) for which events to be emitted. Defaults to 'charge' |
+| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitted events   |
+
+### Request example
+
+POST `/tasks/historical-event-emitter`
+```
+curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter?start_id=10001'
+```
+
+### Response example
+
+```
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 9301 (#0)
+> POST /v1/tasks/historical-event-emitter HTTP/1.1
+> Host: 127.0.0.1:9301
+> User-Agent: curl/7.54.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Wed, 25 Sep 2020 08:15:48 GMT
+< Content-Length: 0
+```
+
+## POST /tasks/parity-checker
+
+Task to parity check charges or refunds with ledger for a given `start_id` and `max_id` range or by `parity_check_status`.
+Parity checker compares fields of ledger transaction to charge/refund record in connector. 
+
+When parity check fails, new events are emitted even when the events have been emitted previously.  
+
+### Request query param description
+
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `start_id`               | Charge/Refund ID (from database) to start with for parity checking. Defaults to `0` |
+| `max_id`                 | Charge/Refund ID until which the records to be parity checked. If not provided, this is set to maximum ID available. |
+| `parity_check_status`    | Parity check the records, which were parity checked and marked with `parity_check_status`.  `start_id` and `max_id` are ignored if parity checking by parity check status|
+| `record_type`            | Type of records (charge/refund) to be parity checked. Defaults to 'charge' |
+| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitted events   |
+| `do_not_reprocess_valid_records`| Set to `true` to skip parity checking the records which were previously parity checked and matches with ledger transaction. Defaults to `false`|
+
+### Request example
+
+POST `/tasks/parity-checker`
+```
+curl -v -XPOST '127.0.0.1:9301/tasks/parity-checker?parity_check_status=DATA_MISMATCH'
+```
+
+### Response example
+
+```
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 9301 (#0)
+> POST /v1/tasks/parity-checker HTTP/1.1
+> Host: 127.0.0.1:9301
+> User-Agent: curl/7.54.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Wed, 25 Sep 2020 08:15:48 GMT
+< Content-Length: 0
+```

@@ -82,6 +82,7 @@ public class ParityCheckWorker {
         }
 
         logger.info("Terminating");
+        MDC.remove(HEADER_REQUEST_ID);
     }
 
     public void executeForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
