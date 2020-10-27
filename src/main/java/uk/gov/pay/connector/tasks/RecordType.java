@@ -3,10 +3,10 @@ package uk.gov.pay.connector.tasks;
 import org.apache.commons.lang3.StringUtils;
 
 public enum RecordType {
-    
+
     CHARGE("charge"),
     REFUND("refund");
-    
+
     String value;
 
     RecordType(String value) {
@@ -21,12 +21,12 @@ public enum RecordType {
         return this.getValue();
     }
 
-    public static RecordType fromString(String status) {
+    public static RecordType fromString(String recordTypeParam) {
         for (RecordType type : values()) {
-            if (StringUtils.equals(type.getValue(), status)) {
+            if (StringUtils.equals(type.getValue(), recordTypeParam)) {
                 return type;
             }
         }
-        throw new IllegalArgumentException("charge status not recognized: " + status);
+        throw new IllegalArgumentException("Record type not recognized: " + recordTypeParam);
     }
 }
