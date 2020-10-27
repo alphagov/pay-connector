@@ -153,7 +153,7 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 ### Command line tasks
 
 There are a number of
-[commands](http://www.dropwizard.io/1.1.0/docs/manual/core.html#commands)
+[commands](https://www.dropwizard.io/en/latest/manual/core.html#commands)
 which can run from the command line. Invoke the all-in-one jar to see a list
 of the commands:
 
@@ -167,6 +167,15 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 
 * `render-state-transition-graph` - Outputs a representation of the connector state
                                     transitions as a graphviz 'dot' file
+
+### Admin tasks
+Admin [tasks](https://www.dropwizard.io/en/latest/manual/core.html#tasks) provides one-off action to perform certain task. 
+Task can be invoked by sending request on admin port.
+ 
+| Path                          | Supported Methods | Description                        |
+| ----------------------------- | ----------------- | ---------------------------------- |
+|[```/tasks/historical-event-emitter```](docs/api_specification.md#post-taskshistorical-event-emitter) | POST   |  Emits events to ledger for charges or refunds |
+|[```/tasks/parity-checker```](docs/api_specification.md#post-tasksparity-checker)   | POST    |  Parity checks charges or refunds with ledger transactions |
 
 ### API namespace
 
