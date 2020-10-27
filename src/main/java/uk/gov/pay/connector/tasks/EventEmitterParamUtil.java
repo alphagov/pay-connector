@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static uk.gov.pay.connector.tasks.RecordType.fromString;
 
 public class EventEmitterParamUtil {
 
@@ -50,5 +52,15 @@ public class EventEmitterParamUtil {
         return (parameters.get(paramName) == null ||
                 parameters.get(paramName).isEmpty()) ?
                 null : parameters.get(paramName).get(0);
+    }
+
+    public static Optional<RecordType> getRecordType(Map<String, List<String>> parameters) {
+        String recordType = getParameterValue(parameters, "record_type");
+
+        if (isEmpty(recordType)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(fromString(recordType));
     }
 }

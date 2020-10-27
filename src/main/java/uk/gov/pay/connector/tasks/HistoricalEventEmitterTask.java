@@ -15,9 +15,8 @@ import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
-import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getParameterValue;
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getRecordType;
 import static uk.gov.pay.connector.tasks.RecordType.CHARGE;
 
 public class HistoricalEventEmitterTask extends Task {
@@ -53,7 +52,7 @@ public class HistoricalEventEmitterTask extends Task {
         Long startId = getOptionalLongParam(parameters, "start_id").orElse(0);
         final OptionalLong maybeMaxId = getOptionalLongParam(parameters, "max_id");
         final Long doNotRetryEmitUntilDuration = getDoNotRetryEmitUntilDuration(parameters);
-        final RecordType recordType = getRecordType(parameters);
+        final RecordType recordType = getRecordType(parameters).orElse(CHARGE);
 
         logger.info("Execute called start_id={} max_id={} doNotRetryEmitUntilDuration={} - processing",
                 startId, maybeMaxId, doNotRetryEmitUntilDuration);
@@ -72,17 +71,6 @@ public class HistoricalEventEmitterTask extends Task {
             logger.info("Rejected request, worker already running");
             output.println("Rejected request, worker already running");
         }
-    }
-
-    private RecordType getRecordType(Map<String, List<String>> parameters) {
-        String recordType = getParameterValue(parameters, "record_type");
-
-        if (isEmpty(recordType)) {
-            logger.info("Record type is not set available, defaulting to [{}]", CHARGE);
-            return CHARGE;
-        }
-
-        return RecordType.fromString(recordType);
     }
 
     private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {

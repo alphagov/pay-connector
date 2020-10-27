@@ -18,7 +18,9 @@ import java.util.concurrent.SynchronousQueue;
 
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getLongParam;
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getParameterValue;
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getRecordType;
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getStringParam;
+import static uk.gov.pay.connector.tasks.RecordType.CHARGE;
 
 public class ParityCheckTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -55,16 +57,25 @@ public class ParityCheckTask extends Task {
     public void execute(Map<String, List<String>> parameters, PrintWriter output) {
         Long startId = getLongParam(parameters, "start_id").orElse(0L);
         final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
-        Optional<String> parityCheckStatus = getStringParam(parameters, "parity_check_status");
+        Optional<String> mayBeParityCheckStatus = getStringParam(parameters, "parity_check_status");
         boolean doNotReprocessValidRecords = getDoNotReprocessValidRecordsParam(parameters).orElse(false);
         final Long doNotRetryEmitUntilDuration = getDoNotRetryEmitUntilDuration(parameters);
+        final RecordType recordType = getRecordType(parameters).orElse(CHARGE);
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
 
         try {
             logger.info("Request accepted");
-            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords,
-                    parityCheckStatus, doNotRetryEmitUntilDuration));
+
+            if (CHARGE == recordType) {
+                executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords,
+                        mayBeParityCheckStatus, doNotRetryEmitUntilDuration));
+            } else {
+                executor.execute(() -> worker.executeForRefundsOnly(startId, maybeMaxId.orElse(null),
+                        doNotReprocessValidRecords,
+                        mayBeParityCheckStatus.orElse(null), doNotRetryEmitUntilDuration));
+            }
+
             output.println("Accepted");
         } catch (java.util.concurrent.RejectedExecutionException e) {
             logger.info("Rejected request, worker already running");
