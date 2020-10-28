@@ -98,6 +98,45 @@ Content-Type: application/json
 
 -----------------------------------------------------------------------------------------------------------
 
+## POST /v1/tasks/expunge
+
+Task to expunge charges and refunds on terminal or expungeable state from connector. 
+
+This task checks parity of charge/refund with ledger transaction and expunges only if the fields matches. If parity
+check fails, new events are emitted for charge/refunds and the record is marked with latest parity check status.  
+
+### Request query param description
+
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `number_of_charges_to_expunge`       | Number of charges to expunge. Defaults to `EXPUNGE_NO_OF_CHARGES_PER_TASK_RUN` environment variable or configuration default |
+| `number_of_refunds_to_expunge`       | Number of refunds to expunge. Defaults to `EXPUNGE_NO_OF_REFUNDS_PER_TASK_RUN` environment variable or configuration default |
+
+### Request example
+
+POST `/v1/tasks/expunge`
+```
+curl -v -XPOST '127.0.0.1:9300/v1/tasks/expunge'
+```
+
+### Response example
+
+```
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 9300 (#0)
+> POST /v1/tasks/expunge HTTP/1.1
+> Host: 127.0.0.1:9300
+> User-Agent: curl/7.54.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Wed, 25 Sep 2019 08:15:48 GMT
+< Content-Length: 0
+```
+
+-----------------------------------------------------------------------------------------------------------
+
 ## POST /v1/api/accounts
 
 This endpoint creates a new account in this connector.
@@ -2592,6 +2631,8 @@ The following fields are present for each gateway account returned.
 
 This endpoint will not return any statistics for any account that has not conducted a live payment.
 
+-----------------------------------------------------------------------------------------------------------
+
 ## GET /v1/api/reports/daily-performance-report
 
 Retrieves performance summary scoped by day
@@ -2631,6 +2672,8 @@ Content-Type: application/json
 | `total_amount`   | X              | Sum of successful payments            |
 | `average_amount` | X              | Average value of successful payments  |
 
+-----------------------------------------------------------------------------------------------------------
+
 ## POST /tasks/historical-event-emitter
 
 Task to emit payment or refunds events for a given `start_id` and `max_id` range. 
@@ -2644,7 +2687,7 @@ Historical event emitter task doesn't emit event, if event was emitted previousl
 | `start_id`               | Charge/Refund ID (from database) to start with to emit events. Defaults to `0` |
 | `max_id`                 | Charge/Refund ID until which events to be emitted. If not provided, this is set to maximum ID available. |
 | `record_type`            | Type of records (charge/refund) for which events to be emitted. Defaults to 'charge' |
-| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitted events   |
+| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitting events   |
 
 ### Request example
 
@@ -2668,6 +2711,45 @@ curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter?start_id=10001'
 < Date: Wed, 25 Sep 2020 08:15:48 GMT
 < Content-Length: 0
 ```
+-----------------------------------------------------------------------------------------------------------
+
+## POST /tasks/historical-event-emitter-by-date
+
+Task to emit payment and refunds events for a given `start_date` and `end_date` range. 
+
+Historical event emitter by date task doesn't emit event, if event was emitted previously. To re-emit events, relevant emitted events records need to be cleared 
+
+### Request query param description
+
+| Field                    | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `start_date`               | Mandatory. Start date of charge events or refund history events for which events to be emitted |
+| `end_date`                 | Mandatory. Date until which the events to be emitted |
+| `do_not_retry_emit_until  `| Duration (in seconds) until which emitted event sweeper should ignore retrying emitting events   |
+
+### Request example
+
+POST `/tasks/historical-event-emitter-by-date`
+```
+curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter-by-date?start_date=2016-01-25T13:23:55Z&end_date=2016-01-25T13:23:55Z'
+```
+
+### Response example
+
+```
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 9301 (#0)
+> POST /v1/tasks/historical-event-emitter-by-date HTTP/1.1
+> Host: 127.0.0.1:9301
+> User-Agent: curl/7.54.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Wed, 25 Sep 2020 08:15:48 GMT
+< Content-Length: 0
+```
+-----------------------------------------------------------------------------------------------------------
 
 ## POST /tasks/parity-checker
 
@@ -2684,7 +2766,7 @@ When parity check fails, new events are emitted even when the events have been e
 | `max_id`                 | Charge/Refund ID until which the records to be parity checked. If not provided, this is set to maximum ID available. |
 | `parity_check_status`    | Parity check the records, which were parity checked and marked with `parity_check_status`.  `start_id` and `max_id` are ignored if parity checking by parity check status|
 | `record_type`            | Type of records (charge/refund) to be parity checked. Defaults to 'charge' |
-| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitted events   |
+| `do_not_retry_emit_until`| Duration (in seconds) until which emitted event sweeper should ignore retrying emitting events   |
 | `do_not_reprocess_valid_records`| Set to `true` to skip parity checking the records which were previously parity checked and matches with ledger transaction. Defaults to `false`|
 
 ### Request example
