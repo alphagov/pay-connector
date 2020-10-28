@@ -148,6 +148,7 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 | [```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep) | POST              | Spawns a task to expire charges with a default window of 90 minutes                                                              |
 | [```/v1/tasks/emitted-events-sweep```](docs/api_specification.md#post-v1tasksemitted-events-sweep)   | POST              | Spawns a task to verify whether all the events from the state transition in-memory queue have been processed                     |
 | [```/v1/tasks/gateway-cleanup-sweep```](docs/api_specification.md#post-v1tasksgateway-cleanup-sweep) | POST              | Spawns a task to check ePDQ charges in an authorisation error state with the gateway and cancel them on the gateway if necessary |
+| [```/v1/tasks/expunge```](docs/api_specification.md#post-v1tasksexpunge)                             | POST              | Spawns a task to parity check and remove charge & refunds from connector |
 
 
 ### Command line tasks
@@ -175,6 +176,7 @@ Task can be invoked by sending request on admin port.
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/tasks/historical-event-emitter```](docs/api_specification.md#post-taskshistorical-event-emitter) | POST   |  Emits events to ledger for charges or refunds |
+|[```/tasks/historical-event-emitter-by-date```](docs/api_specification.md#post-taskshistorical-event-emitter-by-date) | POST   |  Emits events to ledger for charges or refunds for a given date range|
 |[```/tasks/parity-checker```](docs/api_specification.md#post-tasksparity-checker)   | POST    |  Parity checks charges or refunds with ledger transactions |
 
 ### API namespace
