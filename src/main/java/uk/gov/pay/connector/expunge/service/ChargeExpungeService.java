@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
-import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
+import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeExpungeService {
@@ -79,7 +79,7 @@ public class ChargeExpungeService {
                         parityCheckAndExpungeIfMet(chargeEntity);
                     } catch (OptimisticLockException error) {
                         logger.info("Expunging process conflicted with an already running process, exit");
-                        MDC.remove(HEADER_REQUEST_ID);
+                        MDC.remove(MDC_REQUEST_ID_KEY);
                         MDC.remove(PAYMENT_EXTERNAL_ID);
                         throw error;
                     }

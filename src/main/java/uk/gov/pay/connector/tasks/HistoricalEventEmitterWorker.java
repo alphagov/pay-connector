@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
+import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 
 public class HistoricalEventEmitterWorker {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitterWorker.class);
@@ -53,7 +53,7 @@ public class HistoricalEventEmitterWorker {
 
     public void execute(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
-            MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
             maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
             logger.info("Starting from {} up to {}", startId, maxId);
@@ -80,7 +80,7 @@ public class HistoricalEventEmitterWorker {
     }
 
     public void executeForDateRange(ZonedDateTime startDate, ZonedDateTime endDate, Long doNotRetryEmitUntilDuration) {
-        MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+        MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
 
         initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
         logger.info("Starting to emit events from date range {} up to {}", startDate, endDate);
@@ -91,7 +91,7 @@ public class HistoricalEventEmitterWorker {
 
     public void executeForRefundsOnly(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
-            MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
             maxId = maybeMaxId.orElseGet(refundDao::findMaxId);
@@ -107,7 +107,7 @@ public class HistoricalEventEmitterWorker {
         } catch (Exception e) {
             logger.error("Error attempting to process refunds events on job [start={}] [max={}] [error={}]", startId, maxId, e);
         } finally {
-            MDC.remove(HEADER_REQUEST_ID);
+            MDC.remove(MDC_REQUEST_ID_KEY);
         }
 
         logger.info("Terminating");
