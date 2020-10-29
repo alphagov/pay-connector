@@ -17,7 +17,7 @@ import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
-import uk.gov.pay.connector.filters.RestClientLoggingFilter;
+import uk.gov.pay.logging.RestClientLoggingFilter;
 
 import javax.inject.Inject;
 import javax.net.ssl.HostnameVerifier;

@@ -24,7 +24,7 @@ import java.util.Optional;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
-import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
+import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
@@ -62,7 +62,7 @@ public class ParityCheckWorker {
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
-            MDC.put(HEADER_REQUEST_ID, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
 
             if (parityCheckStatus.isPresent()) {
                 checkParityForParityCheckStatus(parityCheckStatus.get());
@@ -82,7 +82,7 @@ public class ParityCheckWorker {
         }
 
         logger.info("Terminating");
-        MDC.remove(HEADER_REQUEST_ID);
+        MDC.remove(MDC_REQUEST_ID_KEY);
     }
 
     public void executeForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
@@ -90,7 +90,7 @@ public class ParityCheckWorker {
         String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
-            MDC.put(HEADER_REQUEST_ID, parityCheckRequestId);
+            MDC.put(MDC_REQUEST_ID_KEY, parityCheckRequestId);
 
             if (isNotBlank(parityCheckStatus)) {
                 processRefundsByParityCheckStatus(parityCheckStatus, doNotReprocessValidRecords);
@@ -103,7 +103,7 @@ public class ParityCheckWorker {
                     startId, maxId, e.getMessage(), e);
         }
         logger.info("Terminating");
-        MDC.remove(HEADER_REQUEST_ID);
+        MDC.remove(MDC_REQUEST_ID_KEY);
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {

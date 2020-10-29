@@ -7,7 +7,6 @@ import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -25,10 +24,10 @@ import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
-import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundExpungeService {
@@ -70,7 +69,7 @@ public class RefundExpungeService {
                         parityCheckAndExpunge(refundEntity);
                     } catch (OptimisticLockException error) {
                         logger.info("Expunging process conflicted with an already running process, exit");
-                        MDC.remove(HEADER_REQUEST_ID);
+                        MDC.remove(MDC_REQUEST_ID_KEY);
                         MDC.remove(REFUND_EXTERNAL_ID);
                         throw error;
                     }
