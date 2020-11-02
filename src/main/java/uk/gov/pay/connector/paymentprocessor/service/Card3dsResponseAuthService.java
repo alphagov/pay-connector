@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 
 import javax.inject.Inject;
+import java.util.Locale;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -106,7 +107,7 @@ public class Card3dsResponseAuthService {
                 operationResponse.getProviderSessionIdentifier().orElse(null)
         );
 
-        LOGGER.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+        var logMessage = String.format(Locale.UK, "3DS response authorisation for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
                 updatedCharge.getExternalId(),
                 updatedCharge.getPaymentGatewayName().getName(),
                 updatedCharge.getGatewayTransactionId(),
@@ -114,8 +115,11 @@ public class Card3dsResponseAuthService {
                 updatedCharge.getGatewayAccount().getId(),
                 operationResponse,
                 oldChargeStatus,
-                updatedCharge.getStatus()
-        );
+                updatedCharge.getStatus());
+
+        var structuredLoggingArguments = updatedCharge.getStructuredLoggingArgs();
+
+        LOGGER.info(logMessage, structuredLoggingArguments);
 
         cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }
