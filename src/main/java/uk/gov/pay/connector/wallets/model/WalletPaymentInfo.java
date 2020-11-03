@@ -17,6 +17,9 @@ public class WalletPaymentInfo {
     private String cardholderName;
     @Length(max = 254, message = "Email must be a maximum of 254 chars")
     private String email;
+    private String acceptHeader;
+    private String userAgentHeader;
+    private String ipAddress;
 
     public WalletPaymentInfo() {
     }
@@ -47,6 +50,18 @@ public class WalletPaymentInfo {
 
     public PayersCardType getCardType() {
         return cardType;
+    }
+
+    public String getAcceptHeader() {
+        return acceptHeader;
+    }
+
+    public String getUserAgentHeader() {
+        return userAgentHeader;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
     }
 
     @Override

@@ -39,7 +39,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
 public class WorldpayOrderRequestBuilderTest {
-
     private AppleDecryptedPaymentData validData =
             anApplePayDecryptedPaymentData()
                     .withApplePaymentInfo(
