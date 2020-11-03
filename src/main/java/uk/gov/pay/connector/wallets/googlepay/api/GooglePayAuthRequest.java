@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.wallets.googlepay.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -11,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Optional;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
 
     @NotNull @Valid private final WalletPaymentInfo paymentInfo;
