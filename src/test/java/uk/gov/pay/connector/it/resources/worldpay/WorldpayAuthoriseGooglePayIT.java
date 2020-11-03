@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.it.resources;
+package uk.gov.pay.connector.it.resources.worldpay;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -36,13 +36,13 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
-    
+public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
+
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
-    public CardResourceAuthoriseGooglePayIT() {
-        super("sandbox");
+    public WorldpayAuthoriseGooglePayIT() {
+        super("worldpay");
     }
 
     @Override
@@ -56,6 +56,8 @@ public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
 
     @Test
     public void authoriseChargeSuccess() throws IOException {
+        worldpayMockClient.mockAuthorisationSuccess();
+        
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-auth-request.json"));
 
@@ -72,44 +74,5 @@ public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(true));
-    }
-
-    @Test
-    public void tooLongCardHolderName_shouldResultInBadRequest() throws Exception {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String payload = fixture("googlepay/example-auth-request.json").replace("Example Name", "tenchars12".repeat(26));
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(payload);
-
-        givenSetup()
-                .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Card holder name must be a maximum of 255 chars"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-
-        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
-    }
-
-    @Test
-    public void tooLongEmail_shouldResultInBadRequest() throws Exception {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String payload = fixture("googlepay/example-auth-request.json")
-                .replace("example@test.example","tenchars12".repeat(10) + "@" + "12tenchars".repeat(16));
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(payload);
-
-        givenSetup()
-                .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Email must be a maximum of 254 chars"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-
-        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
     }
 }
