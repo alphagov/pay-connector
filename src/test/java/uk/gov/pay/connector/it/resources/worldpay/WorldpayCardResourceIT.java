@@ -1,24 +1,17 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.amazonaws.util.json.Jackson;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import java.io.IOException;
-
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -96,56 +89,6 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
-    }
-
-    @Test
-    public void shouldAuthoriseChargeWithGooglePay() throws IOException {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode validPayload = Jackson.getObjectMapper().readTree(
-                fixture("googlepay/example-auth-request.json"));
-
-        worldpayMockClient.mockAuthorisationSuccess();
-
-        givenSetup()
-                .body(validPayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(OK.getStatusCode())
-                .body("status", is(ChargeStatus.AUTHORISATION_SUCCESS.toString()));
-    }
-
-    @Test
-    public void shouldNotAuthoriseChargeWithGooglePay_ForAWorldpayErrorCard() throws IOException {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode validPayload = Jackson.getObjectMapper().readTree(
-                fixture("googlepay/example-auth-request.json"));
-        worldpayMockClient.mockAuthorisationFailure();
-
-        givenSetup()
-                .body(validPayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", contains("This transaction was declined."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
-    }
-
-    @Test
-    public void shouldNotAuthoriseChargeForInvalidGooglePayRequest() throws IOException {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode invalidPayload = Jackson.getObjectMapper().readTree(
-                fixture("googlepay/invalid-empty-signature-auth-request.json"));
-
-        givenSetup()
-                .body(invalidPayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(422)
-                .body("message", contains("Field [signature] must not be empty"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
