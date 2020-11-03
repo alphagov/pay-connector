@@ -32,6 +32,20 @@ public class WalletPaymentInfo {
         this.email = email;
     }
 
+    public WalletPaymentInfo(String lastDigitsCardNumber, 
+                             String brand,
+                             PayersCardType cardType, 
+                             String cardholderName,
+                             String email,
+                             String acceptHeader, 
+                             String userAgentHeader, 
+                             String ipAddress) {
+        this(lastDigitsCardNumber, brand, cardType, cardholderName, email);
+        this.acceptHeader = acceptHeader;
+        this.userAgentHeader = userAgentHeader;
+        this.ipAddress = ipAddress;
+    }
+
     public String getCardholderName() {
         return cardholderName;
     }

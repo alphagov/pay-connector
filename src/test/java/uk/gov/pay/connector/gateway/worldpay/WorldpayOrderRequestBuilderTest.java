@@ -6,10 +6,13 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 
@@ -23,6 +26,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
+import static uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture.anGooglePayAuthRequestFixture;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
@@ -30,6 +34,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS;
@@ -39,12 +45,17 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
 public class WorldpayOrderRequestBuilderTest {
-    private AppleDecryptedPaymentData validData =
+    
+    protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
+    protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
+
+    private AppleDecryptedPaymentData validApplePayData =
             anApplePayDecryptedPaymentData()
                     .withApplePaymentInfo(
                             anApplePayPaymentInfo()
                                     .withLastDigitsCardNumber("4242").build())
                     .build();
+
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
 
@@ -214,7 +225,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
-                .withWalletTemplateData(validData)
+                .withWalletTemplateData(validApplePayData)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -251,6 +262,53 @@ public class WorldpayOrderRequestBuilderTest {
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
+        GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture();
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
+                .withWalletTemplateData(validGooglePay3dsData)
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseGooglePay3DSOrderRequestWithoutIpAddress() throws Exception {
+        GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
+                .withGooglePaymentInfo(new WalletPaymentInfo(
+                        "4242",
+                        "visa",
+                        PayersCardType.DEBIT,
+                        "Example Name",
+                        "example@test.example",
+                        GOOGLE_PAY_ACCEPT_HEADER,
+                        GOOGLE_PAY_USER_AGENT_HEADER,
+                        "8.8.8.8"
+                        )
+                );
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
+                .withWalletTemplateData(validGooglePay3dsData)
+                .with3dsRequired(true)
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .withAcceptHeader(GOOGLE_PAY_ACCEPT_HEADER)
+                .withUserAgentHeader(GOOGLE_PAY_USER_AGENT_HEADER)
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test

@@ -139,6 +139,20 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
+        String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForApplePay(chargeId))
+                .then()
+                .statusCode(400)
+                .body("message", contains("Wallets are not supported for Smartpay"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
@@ -151,20 +165,6 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
-    }
-
-    @Test
-    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
-        String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
-
-        given().port(testContext.getPort())
-                .contentType(JSON)
-                .body(validApplePayAuthorisationDetails)
-                .post(authoriseChargeUrlForApplePay(chargeId))
-                .then()
-                .statusCode(400)
-                .body("message", contains("Wallets are not supported for Smartpay"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test

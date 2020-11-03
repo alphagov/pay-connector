@@ -40,9 +40,14 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     }
 
     private GatewayOrder buildWalletAuthoriseOrder(WalletAuthorisationGatewayRequest request) {
+
         return aWorldpayAuthoriseWalletOrderRequestBuilder(request.getWalletAuthorisationData().getWalletType())
                 .withWalletTemplateData(request.getWalletAuthorisationData())
+                .with3dsRequired(request.getGatewayAccount().isRequires3ds())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
+                .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
+                .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
+                .withPayerIpAddress(request.getWalletAuthorisationData().getPaymentInfo().getIpAddress())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
