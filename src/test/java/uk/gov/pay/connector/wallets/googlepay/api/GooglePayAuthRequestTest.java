@@ -16,7 +16,6 @@ public class GooglePayAuthRequestTest {
     @Test
     public void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
-
         JsonNode expected = objectMapper.readTree(fixture("googlepay/example-3ds-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(
                 fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
@@ -34,6 +33,5 @@ public class GooglePayAuthRequestTest {
         assertThat(actual.getEncryptedPaymentData().getSignature(), is(encryptedPaymentData.get("signature").asText()));
         assertThat(actual.getEncryptedPaymentData().getProtocolVersion(), is(encryptedPaymentData.get("protocol_version").asText()));
         assertThat(actual.getEncryptedPaymentData().getSignedMessage(), is(encryptedPaymentData.get("signed_message").asText()));
-
     }
 }

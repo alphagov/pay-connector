@@ -12,7 +12,18 @@
                     <signature>${walletAuthorisationData.encryptedPaymentData.signature?xml}</signature>
                     <signedMessage>${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}</signedMessage>
                 </PAYWITHGOOGLE-SSL>
+                <#if requires3ds>
+                <session id="${sessionId?xml}"/>
+                </#if>
             </paymentDetails>
+            <#if requires3ds>
+            <shopper>
+                <browser>
+                    <acceptHeader>${walletAuthorisationData.paymentInfo.acceptHeader?xml}</acceptHeader>
+                    <userAgentHeader>${walletAuthorisationData.paymentInfo.userAgentHeader?xml}</userAgentHeader>
+                </browser>
+            </shopper>
+            </#if>
         </order>
     </submit>
 </paymentService>
