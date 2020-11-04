@@ -84,7 +84,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
         worldpayMockClient.mockAuthorisationRequires3ds();
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-auth-request.json"));
+        JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-3ds-auth-request.json"));
 
         givenSetup()
                 .body(googlePayload)
