@@ -13,7 +13,11 @@
                     <signedMessage>${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}</signedMessage>
                 </PAYWITHGOOGLE-SSL>
                 <#if requires3ds>
+                <#if payerIpAddress??>
+                <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>
+                <#else>
                 <session id="${sessionId?xml}"/>
+                </#if>
                 </#if>
             </paymentDetails>
             <#if requires3ds>

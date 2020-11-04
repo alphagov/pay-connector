@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
-import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -42,6 +41,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,7 +50,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Mock
     private GatewayClient mockGatewayClient;
     private GatewayAccountEntity gatewayAccountEntity;
-    private WorldpayWalletAuthorisationHandler worldpayApplePayAuthorisationHandler;
+    private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private ChargeEntity chargeEntity;
 
     @Captor
@@ -64,7 +64,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, ImmutableMap.of(TEST.toString(), WORLDPAY_URL));
+        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, ImmutableMap.of(TEST.toString(), WORLDPAY_URL));
         chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
         gatewayAccountEntity = new GatewayAccountEntity("worldpay", new HashMap<>(), TEST);
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
@@ -77,7 +77,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Test
     public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
         try {
-            worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
+            worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
         } catch (GatewayErrorException e) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
@@ -89,7 +89,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Test
     public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         try {
-            worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
+            worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
         } catch (GatewayErrorException e) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
@@ -99,12 +99,36 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3DSRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
+    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
         try {
-            worldpayApplePayAuthorisationHandler.authorise(getGooglePay3DSAuthorisationRequestWithoutIpAddress());
+            worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false));
         } catch (GatewayErrorException e) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
+            assertThat(headers.getValue().size(), is(1));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+        }
+    }
+
+    @Test
+    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithIpAddressArePresent() throws Exception {
+        try {
+            worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, true));
+        } catch (GatewayErrorException e) {
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
+            assertThat(headers.getValue().size(), is(1));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+        }
+    }
+
+    @Test
+    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithout3dsEnabledArePresent() throws Exception {
+        try {
+            worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(false, true));
+        } catch (GatewayErrorException e) {
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
             assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
         }
@@ -116,10 +140,11 @@ public class WorldpayWalletAuthorisationHandlerTest {
         return new WalletAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 
-    private WalletAuthorisationGatewayRequest getGooglePay3DSAuthorisationRequestWithoutIpAddress() throws IOException {
+    private WalletAuthorisationGatewayRequest getGooglePay3dsAuthorisationRequest(boolean isRequires3ds, boolean withIpAddress) throws IOException {
         GooglePayAuthRequest googlePayAuthRequest =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
-        chargeEntity.getGatewayAccount().setRequires3ds(true);
+        chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
+        chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);
         chargeEntity.setExternalId(GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS);
         return new WalletAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }

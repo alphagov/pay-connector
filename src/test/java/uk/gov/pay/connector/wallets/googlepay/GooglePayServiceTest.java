@@ -34,21 +34,23 @@ public class GooglePayServiceTest {
 
     @Mock
     private WalletAuthoriseService mockedWalletAuthoriseService;
+    @Mock
+    private WorldpayOrderStatusResponse worldpayResponse;
 
     private GooglePayService googlePayService;
     private GooglePayAuthRequest googlePayAuthRequest;
+    private GooglePayAuthRequest googlePayAuth3dsRequest;
     
     @Before
     public void setUp() throws IOException {
         googlePayService = new GooglePayService(mockedWalletAuthoriseService);
         googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
     }
     
     @Test
     public void shouldAuthoriseAValidCharge() {
         String externalChargeId = "external-charge-id";
-
-        WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -61,6 +63,23 @@ public class GooglePayServiceTest {
         verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION SUCCESS")));
+    }
+
+    @Test
+    public void shouldReturnAuthorise3dsRequiredForAValid3dsCharge() {
+        String externalChargeId = "external-charge-id";
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
+                .withResponse(worldpayResponse)
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
+                .build();
+        when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
+        when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuth3dsRequest);
+
+        verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuth3dsRequest);
+        assertThat(authorisationResponse.getStatus(), is(200));
+        assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION 3DS REQUIRED")));
     }
 
     @Test

@@ -35,6 +35,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE;
@@ -281,7 +282,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseGooglePay3DSOrderRequestWithoutIpAddress() throws Exception {
+    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
                 .withGooglePaymentInfo(new WalletPaymentInfo(
                         "4242",
@@ -308,6 +309,67 @@ public class WorldpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
+        GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
+                .withGooglePaymentInfo(new WalletPaymentInfo(
+                                "4242",
+                                "visa",
+                                PayersCardType.DEBIT,
+                                "Example Name",
+                                "example@test.example",
+                                GOOGLE_PAY_ACCEPT_HEADER,
+                                GOOGLE_PAY_USER_AGENT_HEADER,
+                                "8.8.8.8"
+                        )
+                );
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
+                .withWalletTemplateData(validGooglePay3dsData)
+                .with3dsRequired(true)
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .withAcceptHeader(GOOGLE_PAY_ACCEPT_HEADER)
+                .withUserAgentHeader(GOOGLE_PAY_USER_AGENT_HEADER)
+                .withPayerIpAddress("8.8.8.8")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
+        GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
+                .withGooglePaymentInfo(new WalletPaymentInfo(
+                                "4242",
+                                "visa",
+                                PayersCardType.DEBIT,
+                                "Example Name",
+                                "example@test.example",
+                                GOOGLE_PAY_ACCEPT_HEADER,
+                                GOOGLE_PAY_USER_AGENT_HEADER,
+                                "8.8.8.8"
+                        )
+                );
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
+                .withWalletTemplateData(validGooglePay3dsData)
+                .with3dsRequired(false)
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
