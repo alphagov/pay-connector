@@ -74,7 +74,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
         Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
         assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
 
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(true));
     }

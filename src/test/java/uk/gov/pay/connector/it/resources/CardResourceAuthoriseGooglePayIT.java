@@ -55,26 +55,6 @@ public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
     }
 
     @Test
-    public void authoriseChargeSuccess() throws IOException {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-auth-request.json"));
-
-        givenSetup()
-                .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(200);
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
-        assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
-
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(true));
-    }
-
-    @Test
     public void tooLongCardHolderName_shouldResultInBadRequest() throws Exception {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String payload = fixture("googlepay/example-auth-request.json").replace("Example Name", "tenchars12".repeat(26));
