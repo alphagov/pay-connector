@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
+import java.util.Optional;
+
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WalletPaymentInfo {
@@ -84,6 +86,9 @@ public class WalletPaymentInfo {
                 "lastDigitsCardNumber='" + lastDigitsCardNumber + '\'' +
                 ", brand='" + brand + '\'' +
                 ", cardType=" + cardType +
+                ", acceptHeader=" + acceptHeader +
+                ", userAgentHeader=" + userAgentHeader +
+                ", ipAddress=" + Optional.ofNullable(ipAddress).map(x -> "ipAddress is present").orElse("ipAddress is not present") +
                 '}';
     }
 }

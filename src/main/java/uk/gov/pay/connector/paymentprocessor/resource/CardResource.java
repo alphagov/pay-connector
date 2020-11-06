@@ -76,6 +76,7 @@ public class CardResource {
     public Response authoriseCharge(@PathParam("chargeId") String chargeId,
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
+        logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
         return googlePayService.authorise(chargeId, googlePayAuthRequest);
     }
 
