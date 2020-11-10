@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -14,8 +12,6 @@ import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshal
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 
 public interface WorldpayGatewayResponseGenerator {
-
-    Logger logger = LoggerFactory.getLogger(WorldpayGatewayResponseGenerator.class);
 
     default GatewayResponse getWorldpayGatewayResponse(GatewayClient.Response response) throws GatewayErrorException {
         return getWorldpayGatewayResponse(response, WorldpayOrderStatusResponse.class);

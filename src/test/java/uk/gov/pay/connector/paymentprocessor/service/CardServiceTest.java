@@ -13,7 +13,6 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -24,14 +23,17 @@ import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.Ch
 public abstract class CardServiceTest {
 
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
-    protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
+    @Mock
+    protected PaymentProviders mockedProviders;
     @Mock
     protected MetricRegistry mockMetricRegistry;
-    protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
+    @Mock
+    protected ChargeDao mockedChargeDao;
     protected ChargeService chargeService;
-    protected ChargeEventDao mockedChargeEventDao = mock(ChargeEventDao.class);
-    protected CardTypeDao mockedCardTypeDao = mock(CardTypeDao.class);
-    protected RefundDao mockedRefundDao = mock(RefundDao.class);
+    @Mock
+    protected ChargeEventDao mockedChargeEventDao;
+    @Mock
+    protected CardTypeDao mockedCardTypeDao;
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
         ChargeEntity entity = ChargeEntityFixture

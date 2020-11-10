@@ -82,6 +82,14 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
 
+    public String getPaRequest() {
+        return paRequest;
+    }
+
+    public String getIssuerUrl() {
+        return issuerUrl;
+    }
+
     public String getLastEvent() {
         return lastEvent;
     }

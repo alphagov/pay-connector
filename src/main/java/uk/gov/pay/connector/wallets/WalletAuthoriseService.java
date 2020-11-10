@@ -7,6 +7,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -15,6 +16,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -52,6 +54,7 @@ public class WalletAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             Optional<String> transactionId = Optional.empty();
             Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
             ChargeStatus chargeStatus = null;
             String responseFromPaymentGateway = null;
             String requestStatus = "failure";
@@ -66,6 +69,7 @@ public class WalletAuthoriseService {
                     transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
                     sessionIdentifier = operationResponse.getSessionIdentifier();
                     responseFromPaymentGateway = baseResponse.toString();
+                    auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
                 } else {
                     operationResponse.throwGatewayError();
                 }
@@ -92,7 +96,8 @@ public class WalletAuthoriseService {
                     responseFromPaymentGateway,
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
-                    chargeStatus);
+                    chargeStatus,
+                    auth3dsDetailsEntity);
 
             // Used by Sumo Logic saved search
             logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
@@ -136,7 +141,8 @@ public class WalletAuthoriseService {
             String responseFromGateway,
             String transactionId,
             ProviderSessionIdentifier sessionIdentifier,
-            ChargeStatus status) {
+            ChargeStatus status,
+            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
 
         logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
         AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
@@ -147,7 +153,8 @@ public class WalletAuthoriseService {
                 sessionIdentifier,
                 authCardDetailsToBePersisted,
                 walletAuthorisationData.getWalletType(),
-                walletAuthorisationData.getPaymentInfo().getEmail());
+                walletAuthorisationData.getPaymentInfo().getEmail(),
+                auth3dsRequiredDetails);
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
@@ -187,4 +194,9 @@ public class WalletAuthoriseService {
         return paymentProviders.byName(chargeEntity.getPaymentGatewayName());
     }
 
+    private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+        return operationResponse.getBaseResponse()
+                .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
+                .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
+    }
 }
