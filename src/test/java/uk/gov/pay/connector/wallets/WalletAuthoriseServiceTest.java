@@ -111,10 +111,13 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private EventQueue eventQueue;
+    
     @Mock
     private EmittedEventDao emittedEventDao;
+    
     @Mock
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
+    
     @Mock
     private RefundService mockRefundService;
 
@@ -126,7 +129,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                             anApplePayPaymentInfo().build())
                     .build();
 
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
+    
     @InjectMocks
     private EventService mockEventService;
 
@@ -158,7 +163,6 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private void setUpLogging() {
         Logger root = (Logger) LoggerFactory.getLogger(WalletAuthoriseService.class);
-        mockAppender = mock(Appender.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
@@ -479,7 +483,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
-
+    
     private GatewayResponse providerWillAuthorise() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);

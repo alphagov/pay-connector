@@ -411,7 +411,10 @@ public class ChargeService {
         return builderOfResponse;
     }
 
-    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {
+    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(
+            AbstractChargeResponseBuilder<T, R> responseBuilder, 
+            UriInfo uriInfo, 
+            ChargeEntity chargeEntity) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
@@ -498,8 +501,9 @@ public class ChargeService {
                                                             ProviderSessionIdentifier sessionIdentifier,
                                                             AuthCardDetails authCardDetails,
                                                             WalletType walletType,
-                                                            String emailAddress) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, null, sessionIdentifier,
+                                                            String emailAddress,
+                                                            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
                 walletType, emailAddress);
     }
 

@@ -82,6 +82,14 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
 
+    public String getPaRequest() {
+        return paRequest;
+    }
+
+    public String getIssuerUrl() {
+        return issuerUrl;
+    }
+
     public String getLastEvent() {
         return lastEvent;
     }
@@ -177,6 +185,9 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         }
         if (StringUtils.isNotBlank(issuerUrl)) {
             joiner.add("issuerURL: " + issuerUrl);
+        }
+        if (StringUtils.isNotBlank(paRequest)) {
+            joiner.add("paRequest: present");
         }
         if (StringUtils.isNotBlank(challengeAcsUrl)) {
             joiner.add("threeDSChallengeDetails acsUrl: " + challengeAcsUrl);
