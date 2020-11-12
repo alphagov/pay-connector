@@ -25,14 +25,14 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseBaseService {
+public class AuthorisationService {
     
     private final CardExecutorService cardExecutorService;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public CardAuthoriseBaseService(CardExecutorService cardExecutorService, Environment environment) {
+    public AuthorisationService(CardExecutorService cardExecutorService, Environment environment) {
         this.cardExecutorService = cardExecutorService;
         this.metricRegistry = environment.metrics();
     }
