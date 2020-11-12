@@ -38,7 +38,7 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 public class CardAuthoriseService {
 
     private final CardTypeDao cardTypeDao;
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final AuthorisationExecutor authorisationExecutor;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
@@ -49,13 +49,13 @@ public class CardAuthoriseService {
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
-                                CardAuthoriseBaseService cardAuthoriseBaseService,
+                                AuthorisationExecutor authorisationExecutor,
                                 ChargeService chargeService,
                                 AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
                                 AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging,
                                 Environment environment) {
         this.providers = providers;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.authorisationExecutor = authorisationExecutor;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
         this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
@@ -64,7 +64,7 @@ public class CardAuthoriseService {
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return authorisationExecutor.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
@@ -79,12 +79,12 @@ public class CardAuthoriseService {
                 if (operationResponse.getBaseResponse().isEmpty()) operationResponse.throwGatewayError();
 
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-                transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
+                transactionId = authorisationExecutor.extractTransactionId(charge.getExternalId(), operationResponse);
                 auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
                 sessionIdentifier = operationResponse.getSessionIdentifier();
 
             } catch (GatewayException e) {
-                newStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
+                newStatus = AuthorisationExecutor.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 

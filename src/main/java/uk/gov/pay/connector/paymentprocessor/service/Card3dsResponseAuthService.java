@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import com.codahale.metrics.MetricRegistry;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,23 +29,26 @@ public class Card3dsResponseAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(Card3dsResponseAuthService.class);
 
     private final ChargeService chargeService;
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final AuthorisationExecutor authorisationExecutor;
     private final PaymentProviders providers;
     private final Authorisation3dsConfig authorisation3dsConfig;
+    private final MetricRegistry metricRegistry;
 
     @Inject
     public Card3dsResponseAuthService(PaymentProviders providers,
                                       ChargeService chargeService,
-                                      CardAuthoriseBaseService cardAuthoriseBaseService,
-                                      ConnectorConfiguration config) {
+                                      AuthorisationExecutor authorisationExecutor,
+                                      ConnectorConfiguration config,
+                                      Environment environment) {
         this.providers = providers;
         this.chargeService = chargeService;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.authorisationExecutor = authorisationExecutor;
         this.authorisation3dsConfig = config.getAuthorisation3dsConfig();
+        this.metricRegistry = environment.metrics();
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsResult auth3DsResult) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return authorisationExecutor.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
             return authoriseAndProcess3DS(auth3DsResult, charge);
@@ -51,7 +56,7 @@ public class Card3dsResponseAuthService {
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsResult auth3DsResult) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return authorisationExecutor.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
             return authoriseAndProcess3DS(auth3DsResult, charge);
         });
@@ -121,6 +126,16 @@ public class Card3dsResponseAuthService {
 
         LOGGER.info(logMessage, structuredLoggingArguments);
 
-        cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
+        emitAuthorisationMetric(updatedCharge, "authorise-3ds");
+    }
+
+    private void emitAuthorisationMetric(ChargeEntity charge, String operation) {
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.%s.result.%s",
+                charge.getGatewayAccount().getGatewayName(),
+                charge.getGatewayAccount().getType(),
+                charge.getGatewayAccount().getId(),
+                operation,
+                charge.getStatus())
+        ).inc();
     }
 }

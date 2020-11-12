@@ -146,11 +146,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockNorthAmericanRegionMapper);
 
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        AuthorisationExecutor authorisationExecutor = new AuthorisationExecutor(mockExecutorService);
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
-                cardAuthoriseBaseService,
+                authorisationExecutor,
                 chargeService,
                 mockAuthorisationRequestSummaryStringifier,
                 mockAuthorisationRequestSummaryStructuredLogging,

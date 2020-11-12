@@ -99,9 +99,9 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, mockConfiguration, null, mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, northAmericanRegionMapper);
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        AuthorisationExecutor authorisationExecutor = new AuthorisationExecutor(mockExecutorService);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthoriseBaseService, mockConfiguration);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationExecutor, mockConfiguration, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {
