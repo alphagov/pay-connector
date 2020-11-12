@@ -97,19 +97,36 @@ public class AuthorisationService {
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
-            logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
+            LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
+                    walletAuthorisationData.getWalletType().toString(), requestStatus, charge.getExternalId(), operationResponse.toString());
+            
+            metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
+                    charge.getGatewayAccount().getGatewayName(),
+                    charge.getGatewayAccount().getType(),
+                    charge.getGatewayAccount().getId(),
+                    walletAuthorisationData.getWalletType().equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
+                    requestStatus)).inc();
+            
+            LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
 
-            processGatewayAuthorisationResponse(
+            ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                     charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
-                    walletAuthorisationData,
-                    operationResponse.toString(),
+                    newStatus,
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
-                    newStatus,
+                    authCardDetailsFor(walletAuthorisationData),
+                    walletAuthorisationData.getWalletType(),
+                    walletAuthorisationData.getPaymentInfo().getEmail(),
                     auth3dsDetailsEntity);
 
-            // Used by Sumo Logic saved search
+            metricRegistry.counter(String.format(
+                    "gateway-operations.%s.%s.%s.authorise.result.%s",
+                    updatedCharge.getGatewayAccount().getGatewayName(),
+                    updatedCharge.getGatewayAccount().getType(),
+                    updatedCharge.getGatewayAccount().getId(),
+                    newStatus.toString())).inc();
+            
+            // Used by saved search
             LOGGER.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     charge.getExternalId(), charge.getPaymentGatewayName().getName(),
                     transactionId.orElse("missing transaction ID"),
@@ -118,42 +135,6 @@ public class AuthorisationService {
 
             return operationResponse;
         });
-    }
-
-    private void processGatewayAuthorisationResponse(
-            String chargeExternalId,
-            ChargeStatus oldChargeStatus,
-            WalletAuthorisationData walletAuthorisationData,
-            String responseFromGateway,
-            String transactionId,
-            ProviderSessionIdentifier sessionIdentifier,
-            ChargeStatus status,
-            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
-
-        LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
-        AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
-        ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
-                chargeExternalId,
-                status,
-                transactionId,
-                sessionIdentifier,
-                authCardDetailsToBePersisted,
-                walletAuthorisationData.getWalletType(),
-                walletAuthorisationData.getPaymentInfo().getEmail(),
-                auth3dsRequiredDetails);
-
-        LOGGER.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId != null ? transactionId : "missing transaction ID",
-                updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                responseFromGateway, oldChargeStatus, status);
-
-        metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.%s.authorise.result.%s",
-                updatedCharge.getGatewayAccount().getGatewayName(),
-                updatedCharge.getGatewayAccount().getType(),
-                updatedCharge.getGatewayAccount().getId(),
-                status.toString())).inc();
     }
 
     private AuthCardDetails authCardDetailsFor(WalletAuthorisationData walletAuthorisationData) {
@@ -166,22 +147,7 @@ public class AuthorisationService {
         authCardDetails.setCorporateCard(false);
         return authCardDetails;
     }
-
-    private void logMetrics(ChargeEntity chargeEntity,
-                            GatewayResponse<BaseAuthoriseResponse> operationResponse,
-                            String successOrFailure,
-                            WalletType walletType) {
-
-        LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
-                walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
-        metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
-                chargeEntity.getGatewayAccount().getGatewayName(),
-                chargeEntity.getGatewayAccount().getType(),
-                chargeEntity.getGatewayAccount().getId(),
-                walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
-                successOrFailure)).inc();
-    }
-
+    
     private PaymentProvider getPaymentProviderFor(ChargeEntity charge) {
         return paymentProviders.byName(charge.getPaymentGatewayName());
     }
