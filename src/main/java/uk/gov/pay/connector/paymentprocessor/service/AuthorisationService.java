@@ -41,9 +41,9 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 public class AuthorisationService {
 
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
-    
+
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
-    
+
     private final CardExecutorService cardExecutorService;
     private final MetricRegistry metricRegistry;
     private final ChargeService chargeService;
@@ -52,7 +52,7 @@ public class AuthorisationService {
     @Inject
     public AuthorisationService(CardExecutorService cardExecutorService,
                                 Environment environment,
-                                ChargeService chargeService, 
+                                ChargeService chargeService,
                                 PaymentProviders paymentProviders) {
         this.cardExecutorService = cardExecutorService;
         this.metricRegistry = environment.metrics();
@@ -64,12 +64,9 @@ public class AuthorisationService {
         return executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            Optional<String> transactionId = Optional.empty();
-            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
             ChargeStatus newStatus = null;
             String requestStatus = "failure";
-            
+
             try {
                 LOGGER.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
                 var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(charge, walletAuthorisationData);
@@ -79,9 +76,6 @@ public class AuthorisationService {
                 if (baseResponse.isPresent()) {
                     requestStatus = "success";
                     newStatus = baseResponse.get().authoriseStatus().getMappedChargeStatus();
-                    transactionId = extractTransactionId(charge.getExternalId(), operationResponse);
-                    sessionIdentifier = operationResponse.getSessionIdentifier();
-                    auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
                 } else {
                     operationResponse.throwGatewayError();
                 }
@@ -97,16 +91,20 @@ public class AuthorisationService {
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
+            Optional<String> transactionId = extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
+
             LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
                     walletAuthorisationData.getWalletType().toString(), requestStatus, charge.getExternalId(), operationResponse.toString());
-            
+
             metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
                     charge.getGatewayAccount().getGatewayName(),
                     charge.getGatewayAccount().getType(),
                     charge.getGatewayAccount().getId(),
                     walletAuthorisationData.getWalletType().equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
                     requestStatus)).inc();
-            
+
             LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
 
             ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
@@ -125,7 +123,7 @@ public class AuthorisationService {
                     updatedCharge.getGatewayAccount().getType(),
                     updatedCharge.getGatewayAccount().getId(),
                     newStatus.toString())).inc();
-            
+
             // Used by saved search
             LOGGER.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     charge.getExternalId(), charge.getPaymentGatewayName().getName(),
@@ -147,7 +145,7 @@ public class AuthorisationService {
         authCardDetails.setCorporateCard(false);
         return authCardDetails;
     }
-    
+
     private PaymentProvider getPaymentProviderFor(ChargeEntity charge) {
         return paymentProviders.byName(charge.getPaymentGatewayName());
     }
@@ -164,7 +162,7 @@ public class AuthorisationService {
                 .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
                 .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
     }
-    
+
     Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         Optional<String> transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId);
@@ -174,7 +172,7 @@ public class AuthorisationService {
         }
         return transactionId;
     }
-    
+
     ChargeStatus mapFromGatewayErrorException(GatewayException e) {
         if (e instanceof GatewayException.GenericGatewayException) {
             return AUTHORISATION_ERROR;
@@ -187,7 +185,7 @@ public class AuthorisationService {
         }
         throw new RuntimeException("Unrecognised GatewayException instance " + e.getClass());
     }
-    
+
     public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
         Pair<ExecutionStatus, T> executeResult = cardExecutorService.execute(authorisationSupplier);
 
