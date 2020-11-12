@@ -40,7 +40,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -148,14 +148,14 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockNorthAmericanRegionMapper));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
-                cardAuthoriseBaseService,
+                authorisationService,
                 mockEnvironment);
 
         setUpLogging();

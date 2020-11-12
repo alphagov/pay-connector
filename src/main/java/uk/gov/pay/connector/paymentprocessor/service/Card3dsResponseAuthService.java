@@ -27,23 +27,23 @@ public class Card3dsResponseAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(Card3dsResponseAuthService.class);
 
     private final ChargeService chargeService;
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final AuthorisationService authorisationService;
     private final PaymentProviders providers;
     private final Authorisation3dsConfig authorisation3dsConfig;
 
     @Inject
     public Card3dsResponseAuthService(PaymentProviders providers,
                                       ChargeService chargeService,
-                                      CardAuthoriseBaseService cardAuthoriseBaseService,
+                                      AuthorisationService authorisationService,
                                       ConnectorConfiguration config) {
         this.providers = providers;
         this.chargeService = chargeService;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.authorisationService = authorisationService;
         this.authorisation3dsConfig = config.getAuthorisation3dsConfig();
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsResult auth3DsResult) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return authorisationService.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
             return authoriseAndProcess3DS(auth3DsResult, charge);
@@ -51,7 +51,7 @@ public class Card3dsResponseAuthService {
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsResult auth3DsResult) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
             return authoriseAndProcess3DS(auth3DsResult, charge);
         });
@@ -121,6 +121,6 @@ public class Card3dsResponseAuthService {
 
         LOGGER.info(logMessage, structuredLoggingArguments);
 
-        cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
+        authorisationService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }
 }

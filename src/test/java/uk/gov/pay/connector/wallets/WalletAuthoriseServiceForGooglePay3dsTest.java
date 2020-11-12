@@ -24,7 +24,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
@@ -86,11 +86,11 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class));
         
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
-                cardAuthoriseBaseService,
+                authorisationService,
                 mockEnvironment);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);
