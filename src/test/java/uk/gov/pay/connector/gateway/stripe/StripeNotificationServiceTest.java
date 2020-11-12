@@ -10,13 +10,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import net.logstash.logback.marker.ObjectAppendingMarker;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -40,7 +40,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItemInArray;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -51,7 +52,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
@@ -67,8 +67,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeNotificationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class StripeNotificationServiceTest {
     private StripeNotificationService notificationService;
 
     @Mock
@@ -99,15 +99,21 @@ public class StripeNotificationServiceTest {
     private final String webhookTestSigningSecret = "whtest";
     private final String webhookLiveSigningSecret = "whlive";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
                 mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue,
                 mockPayoutEmitterService);
 
         when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
+    }
+
+    private void setUpCharge() {
         when(mockCharge.getExternalId()).thenReturn(externalId);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_REQUIRED.getValue());
+    }
+
+    private void setUpChargeServiceToReturnCharge() {
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), sourceId)).thenReturn(Optional.of(mockCharge));
     }
 
@@ -120,7 +126,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void should_log_the_requirements_and_payoutsDisabled_json_when_an_account_updated_event_is_received() {
+    void should_log_the_requirements_and_payoutsDisabled_json_when_an_account_updated_event_is_received() {
         Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -135,7 +141,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldLogTheIdOfThePayoutCreatedEvent_whenItIsReceived() {
+    void shouldLogTheIdOfThePayoutCreatedEvent_whenItIsReceived() {
         Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -155,7 +161,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
+    void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
@@ -170,7 +176,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldSendAllExceptPayoutCreatedEventToEventQueue() {
+    void shouldSendAllExceptPayoutCreatedEventToEventQueue() {
         List<String> types = List.of("payout.updated", "payout.paid", "payout.failed");
         StripePayout payout = new StripePayout("po_aaaaaaaaaaaaaaaaaaaaa", 1337702L, 1585094400L,
                 1585013446L, "in_transit", "bank_account", null);
@@ -190,7 +196,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
+    void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
 
@@ -212,7 +218,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable() {
+    void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CHARGEABLE);
 
@@ -222,7 +230,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable_withTestWebhook() {
+    void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable_withTestWebhook() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CHARGEABLE);
 
@@ -232,7 +242,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceFailed() {
+    void shouldUpdateCharge_WhenNotificationIsFor3DSSourceFailed() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
@@ -241,7 +253,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceCancelled() {
+    void shouldUpdateCharge_WhenNotificationIsFor3DSSourceCancelled() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CANCELED);
         notificationService.handleNotificationFor(payload, signPayload(payload));
@@ -250,7 +264,8 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdated() {
+    void shouldUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdated() {
+        setUpCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
         when(mockCharge.getAmount()).thenReturn(1000L);
@@ -262,7 +277,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdatedButAmountsDontMatch() {
+    void shouldNotUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdatedButAmountsDontMatch() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
         when(mockCharge.getAmount()).thenReturn(500L);
@@ -274,7 +289,8 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsForPaymentIntentPaymentFailed() {
+    void shouldUpdateCharge_WhenNotificationIsForPaymentIntentPaymentFailed() {
+        setUpCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_PAYMENT_FAILED);
 
@@ -285,12 +301,11 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdate_IfChargeIsNotIn3dsReadyForASourceNotification() {
+    void shouldNotUpdate_IfChargeIsNotIn3dsReadyForASourceNotification() {
 
         final List<StripeNotificationType> sourceTypes = ImmutableList.of(
                 SOURCE_CANCELED, SOURCE_CHARGEABLE, SOURCE_FAILED);
 
-        when(mockCharge.getStatus()).thenReturn(ENTERING_CARD_DETAILS.getValue());
         for (StripeNotificationType type : sourceTypes) {
             final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE, sourceId, type);
             notificationService.handleNotificationFor(payload, signPayload(payload));
@@ -300,7 +315,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldIgnoreNotificationWhenStatusIsUnknown() {
+    void shouldIgnoreNotificationWhenStatusIsUnknown() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, UNKNOWN);
 
@@ -310,7 +325,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateCharge_WhenTransactionIdIsNotAvailable() {
+    void shouldNotUpdateCharge_WhenTransactionIdIsNotAvailable() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 StringUtils.EMPTY, SOURCE_CHARGEABLE);
 
@@ -320,7 +335,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateCharge_WhenChargeIsNotFoundForTransactionId() {
+    void shouldNotUpdateCharge_WhenChargeIsNotFoundForTransactionId() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 "unknown-source-id", SOURCE_CHARGEABLE);
 
@@ -330,7 +345,7 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateCharge_WhenPayloadIsInvalid() {
+    void shouldNotUpdateCharge_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
@@ -338,7 +353,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldWaitForSpecifiedDelayBeforeProcessingNotification() {
+    void shouldWaitForSpecifiedDelayBeforeProcessingNotification() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
         when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(1000);
@@ -354,7 +371,9 @@ public class StripeNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotWaitForSpecifiedDelayIfChargeIs3DSReady() {
+    void shouldNotWaitForSpecifiedDelayIfChargeIs3DSReady() {
+        setUpCharge();
+        setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
         when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(2000);
@@ -369,10 +388,12 @@ public class StripeNotificationServiceTest {
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
-    @Test(expected = WebApplicationException.class)
-    public void shouldThrowException_WhenSignatureIsInvalid() {
+    @Test
+    void shouldThrowException_WhenSignatureIsInvalid() {
         final String payload = "invalid-payload";
-        notificationService.handleNotificationFor(payload, "invalid-signature");
+
+        assertThrows(WebApplicationException.class,
+                () -> notificationService.handleNotificationFor(payload, "invalid-signature"));
     }
 
     private static String sampleStripeNotification(String location,
