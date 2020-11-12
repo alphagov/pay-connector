@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
@@ -19,11 +20,11 @@ public abstract class WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletService.class);
 
-    private WalletAuthoriseService authoriseService;
+    private AuthorisationService authoriseService;
     private final WalletType walletType;
 
     @Inject
-    public WalletService(WalletAuthoriseService authoriseService, WalletType walletType) {
+    public WalletService(AuthorisationService authoriseService, WalletType walletType) {
         this.authoriseService = authoriseService;
         this.walletType = walletType;
     }
@@ -31,7 +32,7 @@ public abstract class WalletService {
     public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         LOGGER.info("Authorising {} charge with id {} ", walletType.toString(), chargeId);
         GatewayResponse<BaseAuthoriseResponse> response =
-                authoriseService.doAuthorise(chargeId, getWalletAuthorisationData(chargeId, walletAuthorisationRequest));
+                authoriseService.authoriseWalletPayment(chargeId, getWalletAuthorisationData(chargeId, walletAuthorisationRequest));
 
         if (isAuthorisationSubmitted(response)) {
             LOGGER.info("Charge {}: {} authorisation was deferred.", chargeId, walletType.toString());

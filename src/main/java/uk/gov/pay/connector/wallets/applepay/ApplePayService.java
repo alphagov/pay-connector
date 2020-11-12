@@ -2,8 +2,8 @@ package uk.gov.pay.connector.wallets.applepay;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
-import uk.gov.pay.connector.wallets.WalletAuthoriseService;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
@@ -18,7 +18,7 @@ public class ApplePayService extends WalletService {
     private ApplePayDecrypter applePayDecrypter;
 
     @Inject
-    public ApplePayService(ApplePayDecrypter applePayDecrypter, WalletAuthoriseService authoriseService) {
+    public ApplePayService(ApplePayDecrypter applePayDecrypter, AuthorisationService authoriseService) {
         super(authoriseService, WalletType.APPLE_PAY);
         this.applePayDecrypter = applePayDecrypter;
     }

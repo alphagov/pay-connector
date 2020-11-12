@@ -12,6 +12,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.util.XrayUtils;
 
+import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,7 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
  * catches the timeout exception and returns to frontend as 'in progress'. Frontend then polls connector until the 
  * charge is authorised (by the CES thread), and continues on its merry way.
  */
+@Singleton
 public class CardExecutorService {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);

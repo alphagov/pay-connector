@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.wallets.WalletAuthoriseService;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.ws.rs.core.Response;
@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 public class GooglePayServiceTest {
 
     @Mock
-    private WalletAuthoriseService mockedWalletAuthoriseService;
+    private AuthorisationService mockedWalletAuthoriseService;
     @Mock
     private WorldpayOrderStatusResponse worldpayResponse;
 
@@ -56,11 +56,11 @@ public class GooglePayServiceTest {
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
-        when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockedWalletAuthoriseService.authoriseWalletPayment(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
+        verify(mockedWalletAuthoriseService).authoriseWalletPayment(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION SUCCESS")));
     }
@@ -73,11 +73,11 @@ public class GooglePayServiceTest {
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
-        when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
+        when(mockedWalletAuthoriseService.authoriseWalletPayment(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuth3dsRequest);
 
-        verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuth3dsRequest);
+        verify(mockedWalletAuthoriseService).authoriseWalletPayment(externalChargeId, googlePayAuth3dsRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION 3DS REQUIRED")));
     }
@@ -92,11 +92,11 @@ public class GooglePayServiceTest {
                 .build();
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");
-        when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockedWalletAuthoriseService.authoriseWalletPayment(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
+        verify(mockedWalletAuthoriseService).authoriseWalletPayment(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(500));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));

@@ -84,7 +84,7 @@ public class CardAuthoriseService {
                 sessionIdentifier = operationResponse.getSessionIdentifier();
 
             } catch (GatewayException e) {
-                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                newStatus = authorisationService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 

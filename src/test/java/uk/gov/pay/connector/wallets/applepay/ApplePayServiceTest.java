@@ -12,7 +12,7 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.wallets.WalletAuthoriseService;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import javax.ws.rs.core.Response;
@@ -36,7 +36,7 @@ public class ApplePayServiceTest {
     private ApplePayDecrypter mockedApplePayDecrypter;
 
     @Mock
-    private WalletAuthoriseService mockedApplePayAuthoriseService;
+    private AuthorisationService mockedAuthorisationService;
 
     private ApplePayService applePayService;
     private AppleDecryptedPaymentData validData =
@@ -46,7 +46,7 @@ public class ApplePayServiceTest {
                     .build();
     @Before
     public void setUp() {
-        applePayService = new ApplePayService(mockedApplePayDecrypter, mockedApplePayAuthoriseService);
+        applePayService = new ApplePayService(mockedApplePayDecrypter, mockedAuthorisationService);
     }
     
     @Test
@@ -61,11 +61,11 @@ public class ApplePayServiceTest {
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
         when(mockedApplePayDecrypter.performDecryptOperation(applePayAuthRequest)).thenReturn(validData);
-        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
+        when(mockedAuthorisationService.authoriseWalletPayment(externalChargeId, validData)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest);
 
-        verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
+        verify(mockedAuthorisationService).authoriseWalletPayment(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION SUCCESS")));
     }
@@ -82,11 +82,11 @@ public class ApplePayServiceTest {
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");
         when(mockedApplePayDecrypter.performDecryptOperation(applePayAuthRequest)).thenReturn(validData);
-        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
+        when(mockedAuthorisationService.authoriseWalletPayment(externalChargeId, validData)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest);
 
-        verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
+        verify(mockedAuthorisationService).authoriseWalletPayment(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(500));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));

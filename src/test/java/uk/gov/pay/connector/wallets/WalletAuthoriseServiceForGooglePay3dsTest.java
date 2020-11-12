@@ -49,7 +49,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_
 @RunWith(MockitoJUnitRunner.class)
 public class WalletAuthoriseServiceForGooglePay3dsTest {
 
-    private WalletAuthoriseService walletAuthoriseService;
+    private AuthorisationService authorisationService;
     
     @Mock
     private PaymentProviders mockedProviders;
@@ -86,12 +86,7 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class));
         
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
-        walletAuthoriseService = new WalletAuthoriseService(
-                mockedProviders,
-                chargeService,
-                authorisationService,
-                mockEnvironment);
+        authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, chargeService, mockedProviders);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);
         when(chargeService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
@@ -109,7 +104,7 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
         WalletAuthorisationData authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
-        walletAuthoriseService.doAuthorise(chargeEntity.getExternalId(), authorisationData);
+        authorisationService.authoriseWalletPayment(chargeEntity.getExternalId(), authorisationData);
 
         verify(chargeService).updateChargePostWalletAuthorisation(
                 anyString(),
