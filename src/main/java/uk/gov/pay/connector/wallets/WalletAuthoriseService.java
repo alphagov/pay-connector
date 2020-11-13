@@ -51,9 +51,6 @@ public class WalletAuthoriseService {
         return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            Optional<String> transactionId = Optional.empty();
-            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
             ChargeStatus chargeStatus = null;
             String requestStatus = "failure";
 
@@ -63,9 +60,6 @@ public class WalletAuthoriseService {
                 if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
                     chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-                    transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-                    sessionIdentifier = operationResponse.getSessionIdentifier();
-                    auth3dsDetailsEntity = operationResponse.getBaseResponse().get().extractAuth3dsRequiredDetails();
                 } else {
                     operationResponse.throwGatewayError();
                 }
@@ -81,6 +75,11 @@ public class WalletAuthoriseService {
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
 

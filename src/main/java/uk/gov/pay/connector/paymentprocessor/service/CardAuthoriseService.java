@@ -68,9 +68,6 @@ public class CardAuthoriseService {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             ChargeStatus newStatus;
-            Optional<String> transactionId = Optional.empty();
-            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
 
             try {
                 operationResponse = authorise(charge, authCardDetails);
@@ -80,14 +77,16 @@ public class CardAuthoriseService {
                 }
 
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-                transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-                auth3dsDetailsEntity = operationResponse.getBaseResponse().get().extractAuth3dsRequiredDetails();
-                sessionIdentifier = operationResponse.getSessionIdentifier();
 
             } catch (GatewayException e) {
                 newStatus = AuthorisationService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     charge.getExternalId(),
