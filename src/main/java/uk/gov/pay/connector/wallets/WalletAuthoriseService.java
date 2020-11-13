@@ -16,7 +16,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -52,24 +51,15 @@ public class WalletAuthoriseService {
         return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            Optional<String> transactionId = Optional.empty();
-            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
             ChargeStatus chargeStatus = null;
-            String responseFromPaymentGateway = null;
             String requestStatus = "failure";
 
             try {
                 operationResponse = authorise(charge, walletAuthorisationData);
-                Optional<BaseAuthoriseResponse> baseResponse = operationResponse.getBaseResponse();
 
-                if (baseResponse.isPresent()) {
+                if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
-                    chargeStatus = baseResponse.get().authoriseStatus().getMappedChargeStatus();
-                    transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-                    sessionIdentifier = operationResponse.getSessionIdentifier();
-                    responseFromPaymentGateway = baseResponse.toString();
-                    auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
+                    chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                 } else {
                     operationResponse.throwGatewayError();
                 }
@@ -83,23 +73,25 @@ public class WalletAuthoriseService {
                 }
 
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
 
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
                     walletAuthorisationData,
-                    responseFromPaymentGateway,
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
                     chargeStatus,
                     auth3dsDetailsEntity);
 
-            // Used by Sumo Logic saved search
+            // Used by Splunk saved search
             logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     charge.getExternalId(), charge.getPaymentGatewayName().getName(),
                     transactionId.orElse("missing transaction ID"),
@@ -136,9 +128,7 @@ public class WalletAuthoriseService {
 
     private void processGatewayAuthorisationResponse(
             String chargeExternalId,
-            ChargeStatus oldChargeStatus,
             WalletAuthorisationData walletAuthorisationData,
-            String responseFromGateway,
             String transactionId,
             ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status,
@@ -156,12 +146,6 @@ public class WalletAuthoriseService {
                 walletAuthorisationData.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
 
-        logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId != null ? transactionId : "missing transaction ID",
-                updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                responseFromGateway, oldChargeStatus, status);
-
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",
                 updatedCharge.getGatewayAccount().getGatewayName(),
@@ -174,8 +158,7 @@ public class WalletAuthoriseService {
             throws GatewayException {
 
         logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
-        WalletAuthorisationGatewayRequest authorisationGatewayRequest =
-                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
+        var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
         return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
     }
 
@@ -192,11 +175,5 @@ public class WalletAuthoriseService {
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return paymentProviders.byName(chargeEntity.getPaymentGatewayName());
-    }
-
-    private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        return operationResponse.getBaseResponse()
-                .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
     }
 }

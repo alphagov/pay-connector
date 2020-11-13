@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.model.response;
 
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
@@ -12,6 +13,10 @@ public interface BaseAuthoriseResponse extends BaseResponse {
     AuthoriseStatus authoriseStatus();
 
     Optional<? extends Gateway3dsRequiredParams> getGatewayParamsFor3ds();
+
+    default Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails() {
+        return getGatewayParamsFor3ds().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
+    }
 
     enum AuthoriseStatus {
         SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),

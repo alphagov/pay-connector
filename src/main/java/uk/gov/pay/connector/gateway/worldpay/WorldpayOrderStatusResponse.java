@@ -94,6 +94,22 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return lastEvent;
     }
 
+    public String getChallengeAcsUrl() {
+        return challengeAcsUrl;
+    }
+
+    public String getChallengeTransactionId() {
+        return challengeTransactionId;
+    }
+
+    public String getChallengePayload() {
+        return challengePayload;
+    }
+
+    public String getThreeDsVersion() {
+        return threeDsVersion;
+    }
+
     public String getRefusedReturnCodeDescription() {
         return refusedReturnCodeDescription;
     }

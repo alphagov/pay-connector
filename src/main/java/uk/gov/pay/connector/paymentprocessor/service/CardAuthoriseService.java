@@ -18,7 +18,6 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
-import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -69,24 +68,25 @@ public class CardAuthoriseService {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             ChargeStatus newStatus;
-            Optional<String> transactionId = Optional.empty();
-            Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
 
             try {
                 operationResponse = authorise(charge, authCardDetails);
 
-                if (operationResponse.getBaseResponse().isEmpty()) operationResponse.throwGatewayError();
+                if (operationResponse.getBaseResponse().isEmpty()) {
+                    operationResponse.throwGatewayError();
+                }
 
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-                transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-                auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
-                sessionIdentifier = operationResponse.getSessionIdentifier();
 
             } catch (GatewayException e) {
                 newStatus = AuthorisationService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     charge.getExternalId(),
@@ -153,13 +153,7 @@ public class CardAuthoriseService {
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
-
-    private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        return operationResponse.getBaseResponse()
-                .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
-    }
-
+    
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
