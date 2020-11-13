@@ -16,7 +16,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -61,15 +60,14 @@ public class WalletAuthoriseService {
 
             try {
                 operationResponse = authorise(charge, walletAuthorisationData);
-                Optional<BaseAuthoriseResponse> baseResponse = operationResponse.getBaseResponse();
 
-                if (baseResponse.isPresent()) {
+                if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
-                    chargeStatus = baseResponse.get().authoriseStatus().getMappedChargeStatus();
+                    chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                     transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
                     sessionIdentifier = operationResponse.getSessionIdentifier();
-                    responseFromPaymentGateway = baseResponse.toString();
-                    auth3dsDetailsEntity = extractAuth3dsRequiredDetails(operationResponse);
+                    responseFromPaymentGateway = operationResponse.getBaseResponse().toString();
+                    auth3dsDetailsEntity = operationResponse.getBaseResponse().get().extractAuth3dsRequiredDetails();
                 } else {
                     operationResponse.throwGatewayError();
                 }
@@ -174,8 +172,7 @@ public class WalletAuthoriseService {
             throws GatewayException {
 
         logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
-        WalletAuthorisationGatewayRequest authorisationGatewayRequest =
-                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
+        var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
         return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
     }
 
@@ -192,11 +189,5 @@ public class WalletAuthoriseService {
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return paymentProviders.byName(chargeEntity.getPaymentGatewayName());
-    }
-
-    private Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        return operationResponse.getBaseResponse()
-                .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
     }
 }
