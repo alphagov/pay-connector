@@ -55,7 +55,6 @@ public class WalletAuthoriseService {
             Optional<ProviderSessionIdentifier> sessionIdentifier = Optional.empty();
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = Optional.empty();
             ChargeStatus chargeStatus = null;
-            String responseFromPaymentGateway = null;
             String requestStatus = "failure";
 
             try {
@@ -66,7 +65,6 @@ public class WalletAuthoriseService {
                     chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                     transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
                     sessionIdentifier = operationResponse.getSessionIdentifier();
-                    responseFromPaymentGateway = operationResponse.getBaseResponse().toString();
                     auth3dsDetailsEntity = operationResponse.getBaseResponse().get().extractAuth3dsRequiredDetails();
                 } else {
                     operationResponse.throwGatewayError();
@@ -81,7 +79,6 @@ public class WalletAuthoriseService {
                 }
 
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
@@ -89,15 +86,13 @@ public class WalletAuthoriseService {
 
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
                     walletAuthorisationData,
-                    responseFromPaymentGateway,
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
                     chargeStatus,
                     auth3dsDetailsEntity);
 
-            // Used by Sumo Logic saved search
+            // Used by Splunk saved search
             logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     charge.getExternalId(), charge.getPaymentGatewayName().getName(),
                     transactionId.orElse("missing transaction ID"),
@@ -134,9 +129,7 @@ public class WalletAuthoriseService {
 
     private void processGatewayAuthorisationResponse(
             String chargeExternalId,
-            ChargeStatus oldChargeStatus,
             WalletAuthorisationData walletAuthorisationData,
-            String responseFromGateway,
             String transactionId,
             ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status,
@@ -153,12 +146,6 @@ public class WalletAuthoriseService {
                 walletAuthorisationData.getWalletType(),
                 walletAuthorisationData.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
-
-        logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId != null ? transactionId : "missing transaction ID",
-                updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                responseFromGateway, oldChargeStatus, status);
 
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",
