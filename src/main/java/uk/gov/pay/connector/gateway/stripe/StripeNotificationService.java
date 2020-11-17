@@ -24,6 +24,7 @@ import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.List;
@@ -77,6 +78,7 @@ public class StripeNotificationService {
     private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
     private final PayoutReconcileQueue payoutReconcileQueue;
     private final PayoutEmitterService payoutEmitterService;
+    private final IpAddressMatcher ipAddressMatcher;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
     private static final long DEFAULT_TOLERANCE = 300L;
@@ -87,7 +89,8 @@ public class StripeNotificationService {
                                      StripeGatewayConfig stripeGatewayConfig,
                                      StripeAccountUpdatedHandler stripeAccountUpdatedHandler,
                                      PayoutReconcileQueue payoutReconcileQueue,
-                                     PayoutEmitterService payoutEmitterService) {
+                                     PayoutEmitterService payoutEmitterService,
+                                     IpAddressMatcher ipAddressMatcher) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
@@ -95,9 +98,14 @@ public class StripeNotificationService {
         objectMapper = new ObjectMapper();
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.payoutEmitterService = payoutEmitterService;
+        this.ipAddressMatcher = ipAddressMatcher;
     }
 
-    public void handleNotificationFor(String payload, String signatureHeader) {
+    public boolean handleNotificationFor(String payload, String signatureHeader, String forwardedIpAddresses) {
+        if (!ipAddressMatcher.isMatch(forwardedIpAddresses, stripeGatewayConfig.getAllowedIpAddresses())) {
+            return false;
+        }
+
         logger.info("Parsing {} notification", PAYMENT_GATEWAY_NAME);
 
         if (!isValidNotificationSignature(payload, signatureHeader)) {
@@ -110,7 +118,7 @@ public class StripeNotificationService {
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
         } catch (StripeParseException e) {
             logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
-            return;
+            return true;
         }
 
         if (isASourceNotification(notification)) {
@@ -122,6 +130,7 @@ public class StripeNotificationService {
         } else if (isAPayoutNotification(notification)) {
             processPayoutNotification(notification);
         }
+        return true;
     }
 
     private boolean isAnAccountUpdatedNotification(StripeNotification notification) {

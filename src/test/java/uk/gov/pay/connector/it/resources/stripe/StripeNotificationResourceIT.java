@@ -11,6 +11,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -45,11 +46,15 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(
+        app = ConnectorApp.class,
+        config = "config/test-it-config.yaml")
 public class StripeNotificationResourceIT {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/stripe";
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";
+    private static final String STRIPE_IP_ADDRESS = "1.2.3.4";
+    private static final String UNEXPECTED_IP_ADDRESS = "1.1.1.1";
 
     private RestAssuredClient connectorRestApiClient;
 
@@ -200,11 +205,36 @@ public class StripeNotificationResourceIT {
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_3DS_REQUIRED.getValue());
     }
 
+    @Test
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
+        String transactionId = "transaction-id" + nextInt();
+        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+        stripeMockClient.mockCreateCharge();
+
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
+                transactionId, SOURCE_CHARGEABLE);
+
+        notifyConnectorFromUnexpectedIpAddress(payload)
+                .then()
+                .statusCode(403);
+    }
+
     private Response notifyConnectorWithHeader(String payload, String header) {
         return given()
                 .port(testContext.getPort())
                 .body(payload)
                 .header("Stripe-Signature", header)
+                .header("X-Forwarded-For", STRIPE_IP_ADDRESS)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH);
+    }
+
+    private Response notifyConnectorWithHeader(String payload, String stripeSignature, String forwardedIpAddresses) {
+        return given()
+                .port(testContext.getPort())
+                .body(payload)
+                .header("Stripe-Signature", stripeSignature)
+                .header("X-Forwarded-For", forwardedIpAddresses)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);
     }
@@ -212,6 +242,11 @@ public class StripeNotificationResourceIT {
     private Response notifyConnector(String payload) {
         return notifyConnectorWithHeader(payload, StripeNotificationUtilTest.generateSigHeader(
                 "whtest", payload));
+    }
+
+    private Response notifyConnectorFromUnexpectedIpAddress(String payload) {
+        return notifyConnectorWithHeader(payload, StripeNotificationUtilTest.generateSigHeader(
+                "whtest", payload), UNEXPECTED_IP_ADDRESS);
     }
 
     private static String sampleStripeNotification(String location,

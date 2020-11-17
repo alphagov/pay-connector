@@ -91,8 +91,13 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/stripe")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseStripeNotifications(String notification, @HeaderParam("Stripe-Signature") String signatureHeader) {
-        stripeNotificationService.handleNotificationFor(notification, signatureHeader);
+    public Response authoriseStripeNotifications(String notification,
+                                                 @HeaderParam("Stripe-Signature") String signatureHeader,
+                                                 @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!stripeNotificationService.handleNotificationFor(notification, signatureHeader, forwardedIpAddresses)) {
+            LOGGER.info(String.format("Rejected notification for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            return forbiddenErrorResponse();
+        }
         String response = "[OK]";
         LOGGER.info("Responding to notification from provider=Stripe with 200 {}", response);
         return Response.ok(response).build();

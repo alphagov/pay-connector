@@ -28,6 +28,7 @@ import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.WebApplicationException;
@@ -40,11 +41,13 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItemInArray;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -69,6 +72,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT
 
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
+    private static final String FORWARDED_IP_ADDRESSES = "1.2.3.4, 102.108.0.6";
+    private static final List<String> ALLOWED_IP_ADDRESSES = List.of("1.2.3.4", "9.9.9.9");
+
     private StripeNotificationService notificationService;
 
     @Mock
@@ -101,11 +107,17 @@ class StripeNotificationServiceTest {
 
     @BeforeEach
     void setup() {
-        notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
-                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler, mockPayoutReconcileQueue,
-                mockPayoutEmitterService);
+        notificationService = new StripeNotificationService(
+                mockCard3dsResponseAuthService,
+                mockChargeService,
+                stripeGatewayConfig,
+                stripeAccountUpdatedHandler,
+                mockPayoutReconcileQueue,
+                mockPayoutEmitterService,
+                new IpAddressMatcher());
 
-        when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
+        lenient().when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
+        when(stripeGatewayConfig.getAllowedIpAddresses()).thenReturn(ALLOWED_IP_ADDRESSES);
     }
 
     private void setUpCharge() {
@@ -132,8 +144,10 @@ class StripeNotificationServiceTest {
         root.addAppender(mockAppender);
 
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(), containsString("Received an account.updated event for stripe account"));
@@ -148,8 +162,10 @@ class StripeNotificationServiceTest {
 
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
@@ -164,8 +180,10 @@ class StripeNotificationServiceTest {
     void shouldSendThePayoutCreatedEventToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockPayoutEmitterService, never()).emitPayoutEvent(any(), any(), any(), any());
 
         verify(mockPayoutReconcileQueue).sendPayout(payoutArgumentCaptor.capture());
@@ -186,7 +204,7 @@ class StripeNotificationServiceTest {
             String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                     "evt_id", stripeNotificationType);
 
-            notificationService.handleNotificationFor(payload, signPayload(payload));
+            assertTrue(notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES));
 
             verify(mockPayoutEmitterService).emitPayoutEvent(stripeNotificationType.getEventClass().get(),
                     toUTCZonedDateTime(1567622603L), "connect_account_id", payout);
@@ -199,13 +217,14 @@ class StripeNotificationServiceTest {
     void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
-
         Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
         root.setLevel(Level.ERROR);
         root.addAppender(mockAppender);
-
         doThrow(new QueueException("Failed to send to queue")).when(mockPayoutReconcileQueue).sendPayout(any());
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(),
@@ -224,8 +243,9 @@ class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
 
@@ -236,8 +256,9 @@ class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload, signPayloadWithTestSecret(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayloadWithTestSecret(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
 
@@ -247,8 +268,10 @@ class StripeNotificationServiceTest {
         setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
@@ -258,8 +281,10 @@ class StripeNotificationServiceTest {
         setUpChargeServiceToReturnCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CANCELED);
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.CANCELED));
     }
 
@@ -271,8 +296,9 @@ class StripeNotificationServiceTest {
         when(mockCharge.getAmount()).thenReturn(1000L);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
     }
 
@@ -283,8 +309,9 @@ class StripeNotificationServiceTest {
         when(mockCharge.getAmount()).thenReturn(500L);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(any(), any());
     }
 
@@ -293,22 +320,22 @@ class StripeNotificationServiceTest {
         setUpCharge();
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 "pi_123", PAYMENT_INTENT_PAYMENT_FAILED);
-
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
-        notificationService.handleNotificationFor(payload, signPayload(payload));
 
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
     @Test
     void shouldNotUpdate_IfChargeIsNotIn3dsReadyForASourceNotification() {
-
         final List<StripeNotificationType> sourceTypes = ImmutableList.of(
                 SOURCE_CANCELED, SOURCE_CHARGEABLE, SOURCE_FAILED);
 
         for (StripeNotificationType type : sourceTypes) {
             final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE, sourceId, type);
-            notificationService.handleNotificationFor(payload, signPayload(payload));
+            assertTrue(notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES));
         }
 
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
@@ -319,8 +346,9 @@ class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, UNKNOWN);
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
     }
 
@@ -329,8 +357,9 @@ class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 StringUtils.EMPTY, SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
     }
 
@@ -339,16 +368,18 @@ class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 "unknown-source-id", SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
     }
 
     @Test
     void shouldNotUpdateCharge_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
     }
 
@@ -362,11 +393,12 @@ class StripeNotificationServiceTest {
         when(mockChargeService.findChargeByExternalId(anyString())).thenReturn(mockCharge);
 
         Instant instantBeforeInvocation = Instant.now();
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
         Instant instantAfterInvocation = Instant.now();
         assertTrue(instantAfterInvocation.isAfter(instantBeforeInvocation.plusSeconds(1)));
         assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(1500))); //includes additional overhead to complete handleNotificationFor() 
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
@@ -381,10 +413,11 @@ class StripeNotificationServiceTest {
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_READY.getValue());
 
         Instant instantBeforeInvocation = Instant.now();
-        notificationService.handleNotificationFor(payload, signPayload(payload));
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
         Instant instantAfterInvocation = Instant.now();
         assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(300))); // plus 300 to consider the time to process handleNotificationFor()
 
+        assertTrue(result);
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
     }
 
@@ -393,7 +426,18 @@ class StripeNotificationServiceTest {
         final String payload = "invalid-payload";
 
         assertThrows(WebApplicationException.class,
-                () -> notificationService.handleNotificationFor(payload, "invalid-signature"));
+                () -> notificationService.handleNotificationFor(payload, "invalid-signature", FORWARDED_IP_ADDRESSES));
+    }
+
+    @Test
+    void shouldReturnFalseWhenForwardedIpAddressIsNotInAllowedIpAddresses() {
+        String forwardedIpAddresses = "1.1.1.1, 102.108.0.6";
+        String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
+                "evt_id", PAYOUT_CREATED);
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), forwardedIpAddresses);
+
+        assertFalse(result);
     }
 
     private static String sampleStripeNotification(String location,

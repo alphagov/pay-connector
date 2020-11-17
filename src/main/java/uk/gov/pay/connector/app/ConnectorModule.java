@@ -25,6 +25,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.HashUtil;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.util.XrayUtils;
@@ -53,6 +54,7 @@ public class ConnectorModule extends AbstractModule {
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
+        bind(IpAddressMatcher.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));

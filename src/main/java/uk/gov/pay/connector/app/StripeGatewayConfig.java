@@ -38,6 +38,10 @@ public class StripeGatewayConfig extends Configuration {
     @Min(1)
     private int notification3dsWaitDelay;
 
+    @Valid
+    @NotNull
+    private List<String> allowedIpAddresses;
+
     public String getUrl() {
         return url;
     }
@@ -64,5 +68,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public int getNotification3dsWaitDelay() {
         return notification3dsWaitDelay;
+    }
+
+    public List<String> getAllowedIpAddresses() {
+        return allowedIpAddresses;
     }
 }
