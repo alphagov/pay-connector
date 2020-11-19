@@ -68,7 +68,7 @@ public class NotificationResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) {
         if (!worldpayNotificationService.handleNotificationFor(ipAddress, notification)) {
-            LOGGER.info(String.format("Rejected notification for ip '%s'", ipAddress), kv("notification_source", ipAddress));
+            LOGGER.info(String.format("Rejected notification from provider=Worldpay for IP '%s'", ipAddress), kv("notification_source", ipAddress));
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
@@ -80,8 +80,12 @@ public class NotificationResource {
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Path("/v1/api/notifications/epdq")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseEpdqNotifications(String notification) {
-        epdqNotificationService.handleNotificationFor(notification);
+    public Response authoriseEpdqNotifications(String notification,
+                                               @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!epdqNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
+            LOGGER.info(String.format("Rejected notification from provider=Epdq for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            return forbiddenErrorResponse();
+        }
         String response = "[OK]";
         LOGGER.info("Responding to notification from provider={} with 200 {}", "epdq", response);
         return Response.ok(response).build();
@@ -95,7 +99,7 @@ public class NotificationResource {
                                                  @HeaderParam("Stripe-Signature") String signatureHeader,
                                                  @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!stripeNotificationService.handleNotificationFor(notification, signatureHeader, forwardedIpAddresses)) {
-            LOGGER.info(String.format("Rejected notification for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            LOGGER.info(String.format("Rejected notification from provider=Stripe for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
             return forbiddenErrorResponse();
         }
         String response = "[OK]";

@@ -47,6 +47,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 @DropwizardConfig(app = SendRefundEmailIT.ConnectorAppWithCustomInjector.class, config = "config/test-it-config.yaml", 
         configOverrides = {@ConfigOverride(key = "notifyConfig.emailNotifyEnabled", value = "true")})
 public class SendRefundEmailIT {
+    private static final String EPDQ_IP_ADDRESS = "4.3.2.1";
 
     @DropwizardTestContext
     protected TestContext testContext;
@@ -88,6 +89,7 @@ public class SendRefundEmailIT {
                 ZonedDateTime.now(), chargeId.toString());
 
         given().port(testContext.getPort())
+                .header("X-Forwarded-For", EPDQ_IP_ADDRESS)
                 .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post("/v1/api/notifications/epdq");

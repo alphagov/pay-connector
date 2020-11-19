@@ -70,6 +70,7 @@ smartpay:
   credentials: ['username','password','merchant_id']
 
 epdq:
+  allowedCidrs: ${EPDQ_ALLOWED_CIDRS}
   urls:
     test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
     live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}

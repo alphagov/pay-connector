@@ -21,6 +21,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `GDS_CONNECTOR_EPDQ_TEST_URL` | - | Pointing to the TEST gateway URL of ePDQ payment provider. |
 | `GDS_CONNECTOR_EPDQ_LIVE_URL` | - | Pointing to the LIVE gateway URL of ePDQ payment provider. |
 | `COLLECT_FEE_FEATURE_FLAG` | false | enable or disable collecting fees for the Stripe payment gateway. |
+| `EPDQ_ALLOWED_CIDRS` | - | A list of allowed Epdq CIDRs used for IP firewalling on notifications coming from Epdq. |
 | `STRIPE_ALLOWED_CIDRS` | - | A list of allowed Stripe CIDRs used for IP firewalling on notifications coming from Stripe. |
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |

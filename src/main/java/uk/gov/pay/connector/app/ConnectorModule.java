@@ -125,6 +125,13 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Named("AllowedEpdqIpAddresses")
+    public Set<String> allowedEpdqIpAddresses(ConnectorConfiguration config) {
+        return CidrUtils.getIpAddresses(config.getEpdqConfig().getAllowedCidrs());
+    }
+
+    @Provides
+    @Singleton
     @Named("AllowedStripeIpAddresses")
     public Set<String> allowedStripeIpAddresses(StripeGatewayConfig config) {
         return CidrUtils.getIpAddresses(config.getAllowedCidrs());

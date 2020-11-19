@@ -29,6 +29,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
@@ -45,6 +46,8 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_EPDQ = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/epdq";
+    private static final String EPDQ_IP_ADDRESS = "4.3.2.1";
+    private static final String UNEXPECTED_IP_ADDRESS = "1.1.1.1";
 
     public EpdqNotificationResourceIT() {
         super("epdq");
@@ -276,6 +279,15 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
                 .statusCode(415);
     }
 
+    @Test
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
+        String transactionId = "transaction-id";
+        String chargeId = createNewChargeWith(CAPTURE_READY, transactionId);
+
+        notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE), UNEXPECTED_IP_ADDRESS)
+                .statusCode(403);
+    }
+
     private ValidatableResponse notifyConnector(String transactionId, String status, String shaOutPassphrase) {
         return notifyConnector(NotificationUtils.epdqNotificationPayload(transactionId, status, shaOutPassphrase));
     }
@@ -284,9 +296,27 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         return notifyConnector(epdqNotificationPayload(transactionId, payIdSub, status, shaOutPassphrase));
     }
 
+    private ValidatableResponse notifyConnector(String transactionId,
+                                                String payIdSub,
+                                                String status,
+                                                String shaOutPassphrase,
+                                                String forwardedIpAddresses) {
+        return notifyConnector(epdqNotificationPayload(transactionId, payIdSub, status, shaOutPassphrase), forwardedIpAddresses);
+    }
+
     private ValidatableResponse notifyConnector(String payload) {
         return given().port(testContext.getPort())
                 .body(payload)
+                .header("X-Forwarded-For", EPDQ_IP_ADDRESS)
+                .contentType(APPLICATION_FORM_URLENCODED)
+                .post(NOTIFICATION_PATH)
+                .then();
+    }
+
+    private ValidatableResponse notifyConnector(String payload, String forwardedIpAddresses) {
+        return given().port(testContext.getPort())
+                .body(payload)
+                .header("X-Forwarded-For", forwardedIpAddresses)
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post(NOTIFICATION_PATH)
                 .then();

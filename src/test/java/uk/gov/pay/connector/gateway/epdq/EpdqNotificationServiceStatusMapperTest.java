@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -48,8 +49,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, AUTHORISATION_REJECTED, null);
     }
 
@@ -59,8 +61,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, AUTHORISATION_SUCCESS, null);
     }
 
@@ -70,8 +73,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
 
@@ -82,8 +86,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
 
@@ -98,8 +103,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState(), null);
     }
 
@@ -112,8 +118,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, USER_CANCELLATION_FLOW.getSuccessTerminalState(), null);
     }
 
@@ -126,8 +133,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, EXPIRE_FLOW.getSuccessTerminalState(), null);
     }
 
@@ -140,8 +148,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
@@ -152,8 +161,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
@@ -164,8 +174,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
@@ -173,8 +184,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldNotUpdateCharge_IfEpdqStatusIsUnknown() {
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
@@ -184,8 +196,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUNDED, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
@@ -195,8 +208,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUNDED, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
@@ -206,8 +220,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
@@ -217,8 +232,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
@@ -228,8 +244,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
@@ -237,8 +254,9 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldNotProcessRefund_IfEpdqStatusIsUnknown() {
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
 
-        notificationService.handleNotificationFor(payload);
+        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
     

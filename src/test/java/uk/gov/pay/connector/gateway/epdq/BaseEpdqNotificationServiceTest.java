@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -14,13 +15,18 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.util.CidrUtils;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
 abstract class BaseEpdqNotificationServiceTest {
+    private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(List.of("102.22.31.0/24", "9.9.9.9/32"));
+
     EpdqNotificationService notificationService;
 
     @Mock
@@ -45,7 +51,9 @@ abstract class BaseEpdqNotificationServiceTest {
                 new EpdqSha512SignatureGenerator(),
                 mockChargeNotificationProcessor,
                 mockRefundNotificationProcessor,
-                mockGatewayAccountService
+                mockGatewayAccountService,
+                new IpAddressMatcher(new InetAddressValidator()),
+                ALLOWED_IP_ADDRESSES
         );
         gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
         gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
