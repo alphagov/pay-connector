@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -33,8 +33,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_REFUND;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-@RunWith(MockitoJUnitRunner.class)
-public class SmartpayNotificationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class SmartpayNotificationServiceTest {
     private final String originalReference = "original-reference";
     private final String pspReference = "psp-reference";
     private SmartpayNotificationService notificationService;
@@ -62,8 +62,8 @@ public class SmartpayNotificationServiceTest {
                 .replace("{{pspReference}}", pspReference);
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         notificationService = new SmartpayNotificationService(
                 mockChargeService,
                 mockChargeNotificationProcessor,
@@ -73,13 +73,12 @@ public class SmartpayNotificationServiceTest {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
     }
 
     @Test
-    public void shouldUpdateCharge_WhenNotificationIsForChargeCapture() {
+    void shouldUpdateCharge_WhenNotificationIsForChargeCapture() {
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
                 randomId(), originalReference, pspReference);
 
@@ -91,15 +90,15 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateCharge_WhenNotificationIsForCaptureAndChargeIsHistoric() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
-                randomId(), originalReference, pspReference);
-
+    void shouldNotUpdateCharge_WhenNotificationIsForCaptureAndChargeIsHistoric() {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         charge.setHistoric(true);
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
+                randomId(), originalReference, pspReference);
 
         notificationService.handleNotificationFor(payload);
 
@@ -108,7 +107,9 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldUpdateRefund_WhenNotificationIsForRefund() {
+    void shouldUpdateRefund_WhenNotificationIsForRefund() {
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, pspReference);
 
@@ -120,7 +121,7 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldIgnore_WhenNotificationIsForAuthorisation() {
+    void shouldIgnore_WhenNotificationIsForAuthorisation() {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_AUTHORISATION,
                 randomId(), originalReference, pspReference);
 
@@ -131,7 +132,9 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldProcessMultipleNotifications() {
+    void shouldProcessMultipleNotifications() {
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleSmartpayNotification(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES,
                 randomId(), originalReference, pspReference);
 
@@ -142,7 +145,9 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldIgnoreNotificationWhenStatusIsUnknown() {
+    void shouldIgnoreNotificationWhenStatusIsUnknown() {
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS,
                 randomId(), originalReference, pspReference);
 
@@ -153,7 +158,7 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateChargeOrRefund_WhenTransactionIdIsNotAvailable() {
+    void shouldNotUpdateChargeOrRefund_WhenTransactionIdIsNotAvailable() {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, StringUtils.EMPTY);
 
@@ -164,11 +169,12 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateChargeOrRefund_WhenGatewayAccountEntityIsNotAvailable() {
+    void shouldNotUpdateChargeOrRefund_WhenGatewayAccountEntityIsNotAvailable() {
+        setUpChargeServiceToReturnCharge();
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.empty());
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, pspReference);
 
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.empty());
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
@@ -176,7 +182,7 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateChargeOrRefund_WhenChargeIsNotFoundForTransactionId() {
+    void shouldNotUpdateChargeOrRefund_WhenChargeIsNotFoundForTransactionId() {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), "unknown-transaction-id", pspReference);
 
@@ -187,12 +193,20 @@ public class SmartpayNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
+    void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
 
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    private void setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(gatewayAccountEntity);
+    }
+
+    private void setUpChargeServiceToReturnCharge() {
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
     }
 }

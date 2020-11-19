@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -20,7 +20,7 @@ import java.util.List;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
-public abstract class BaseEpdqNotificationServiceTest {
+abstract class BaseEpdqNotificationServiceTest {
     EpdqNotificationService notificationService;
 
     @Mock
@@ -38,8 +38,8 @@ public abstract class BaseEpdqNotificationServiceTest {
     final String payIdSub = "pay-id-sub";
     private final String shaPhraseOut = "sha-phrase-out";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         notificationService = new EpdqNotificationService(
                 mockChargeService,
                 new EpdqSha512SignatureGenerator(),

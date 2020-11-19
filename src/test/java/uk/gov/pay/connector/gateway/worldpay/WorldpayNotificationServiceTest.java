@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -30,8 +30,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
-@RunWith(MockitoJUnitRunner.class)
-public class WorldpayNotificationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class WorldpayNotificationServiceTest {
     private WorldpayNotificationService notificationService;
 
     @Mock
@@ -53,8 +53,8 @@ public class WorldpayNotificationServiceTest {
     private final String referenceId = "refund-reference";
     private final String transactionId = "transaction-reference";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         notificationService = new WorldpayNotificationService(
                 mockChargeService,
                 mockWorldpayConfiguration,
@@ -62,12 +62,12 @@ public class WorldpayNotificationServiceTest {
                 mockChargeNotificationProcessor,
                 mockRefundNotificationProcessor,
                 mockGatewayAccountService);
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), transactionId)).thenReturn(Optional.of(charge));
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
     }
 
     @Test
-    public void givenAChargeCapturedNotification_chargeNotificationProcessorInvokedWithNotificationAndCharge() {
+    void givenAChargeCapturedNotification_chargeNotificationProcessorInvokedWithNotificationAndCharge() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -77,8 +77,8 @@ public class WorldpayNotificationServiceTest {
                 "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertTrue(result);
 
+        assertTrue(result);
         WorldpayNotification expectedNotification = new WorldpayNotification(
                 "MERCHANTCODE",
                 "CAPTURED",
@@ -91,7 +91,13 @@ public class WorldpayNotificationServiceTest {
         verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), charge, CAPTURED, expectedNotification.getGatewayEventDate());
     }
     @Test
-    public void givenAChargeCapturedNotification_shouldNotInvokeChargeNotificationProcessor_IfChargeIsHistoric() {
+    void givenAChargeCapturedNotification_shouldNotInvokeChargeNotificationProcessor_IfChargeIsHistoric() {
+        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build());
+        charge.setHistoric(true);
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -100,21 +106,17 @@ public class WorldpayNotificationServiceTest {
                 "03",
                 "2017");
 
-        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .build());
-        charge.setHistoric(true);
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), transactionId)).thenReturn(Optional.of(charge));
-
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
+
         assertFalse(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
-    public void givenARefundNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
+    void givenARefundNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final List<String> refundSuccessStatuses = Arrays.asList(
                 "REFUNDED",
                 "REFUNDED_BY_MERCHANT"
@@ -135,21 +137,23 @@ public class WorldpayNotificationServiceTest {
     }
 
     @Test
-    public void givenARefundFailedNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
+    void givenARefundFailedNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleWorldpayNotification(
                 transactionId, referenceId, "REFUND_FAILED",
                 "10", "03", "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertTrue(result);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
         verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR,
                 gatewayAccountEntity, referenceId, transactionId, charge);
     }
 
     @Test
-    public void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
+    void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -157,18 +161,18 @@ public class WorldpayNotificationServiceTest {
                 "10",
                 "03",
                 "2017");
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), 
-                transactionId)).thenReturn(Optional.empty());
+        setUpChargeServiceToReturnCharge(Optional.empty());
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertFalse(result);
 
+        assertFalse(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void ifGatewayAccountNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
+    void ifGatewayAccountNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.empty());
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -177,17 +181,15 @@ public class WorldpayNotificationServiceTest {
                 "03",
                 "2017");
 
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.empty());
-
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertFalse(result);
 
+        assertFalse(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
-    public void ifTransactionIdEmpty_shouldNotInvokeChargeNotificationProcessor() {
+    void ifTransactionIdEmpty_shouldNotInvokeChargeNotificationProcessor() {
         final String payload = sampleWorldpayNotification(
                 "",
                 referenceId,
@@ -197,13 +199,13 @@ public class WorldpayNotificationServiceTest {
                 "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertTrue(result);
 
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void shouldIgnoreNotificationWhenStatusIsToBeIgnored() {
+    void shouldIgnoreNotificationWhenStatusIsToBeIgnored() {
         final List<String> ignoredStatuses = Arrays.asList(
                 "SENT_FOR_AUTHORISATION",
                 "AUTHORISED",
@@ -229,7 +231,7 @@ public class WorldpayNotificationServiceTest {
     }
 
     @Test
-    public void ifIpAddressOutsidePermittedRange_returnFalseAndDontProcessNotification() {
+    void ifIpAddressOutsidePermittedRange_returnFalseAndDontProcessNotification() {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -242,14 +244,14 @@ public class WorldpayNotificationServiceTest {
         when(mockIpDomainMatcher.ipMatchesDomain(ipAddress, "worldpay.com")).thenReturn(false);
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertFalse(result);
 
+        assertFalse(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
-    public void ifPayloadNotValidXml_shouldIgnoreNotification() {
+    void ifPayloadNotValidXml_shouldIgnoreNotification() {
         String payload = "<not></valid>";
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
@@ -280,5 +282,13 @@ public class WorldpayNotificationServiceTest {
             String referenceId,
             String status) {
         return sampleWorldpayNotification(transactionId, referenceId, status, "2017", "10", "22");
+    }
+
+    private void setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(gatewayAccountEntity);
+    }
+
+    private void setUpChargeServiceToReturnCharge(Optional<Charge> charge) {
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), transactionId)).thenReturn(charge);
     }
 }

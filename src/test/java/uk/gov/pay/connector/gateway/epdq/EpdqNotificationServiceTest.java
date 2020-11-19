@@ -1,12 +1,13 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
@@ -20,30 +21,30 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_REFUND;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         super.setup();
     }
 
     @Test
-    public void givenAChargeCapturedNotification_chargeNotificationProcessorInvokedWithNotificationAndCharge() {
-
+    void givenAChargeCapturedNotification_chargeNotificationProcessorInvokedWithNotificationAndCharge() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
-    
+
     @Test
-    public void givenChargeCapturedNotification_chargeNotificationProcessorShouldBeInvokedIfChargeIsHistoric() {
+    void givenChargeCapturedNotification_chargeNotificationProcessorShouldBeInvokedIfChargeIsHistoric() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
@@ -51,25 +52,23 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
         charge.setHistoric(true);
-
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockRefundNotificationProcessor);
-        
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
 
     @Test
-    public void givenARefundNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
-
+    void givenARefundNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_REFUND);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
@@ -78,13 +77,11 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
     }
 
     @Test
-    public void ifChargeNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
+    void ifChargeNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_REFUND);
-
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.empty());
+        setUpChargeServiceToReturnCharge(Optional.empty());
 
         notificationService.handleNotificationFor(payload);
 
@@ -93,13 +90,12 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
     }
 
     @Test
-    public void ifGatewayAccountNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
+    void ifGatewayAccountNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_REFUND);
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.empty());
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.empty());
 
         notificationService.handleNotificationFor(payload);
 
@@ -108,19 +104,10 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
     }
 
     @Test
-    public void ifTransactionIdEmpty_shouldNotInvokeChargeOrRefundNotificationProcessor() {
+    void ifTransactionIdEmpty_shouldNotInvokeChargeOrRefundNotificationProcessor() {
         final String payload = notificationPayloadForTransaction(
                 null,
                 EPDQ_REFUND);
-        notificationService.handleNotificationFor(payload);
-
-        verifyNoInteractions(mockChargeNotificationProcessor);
-        verifyNoInteractions(mockRefundNotificationProcessor);
-    }
-
-    @Test
-    public void ifPayloadNotValidXml_shouldIgnoreNotification() {
-        String payload = "not_valid";
 
         notificationService.handleNotificationFor(payload);
 
@@ -129,7 +116,17 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
     }
 
     @Test
-    public void shouldIgnoreNotificationWhenStatusIsUnknown() {
+    void ifPayloadNotValidXml_shouldIgnoreNotification() {
+        final String payload = "not_valid";
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    void shouldIgnoreNotificationWhenStatusIsUnknown() {
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EpdqNotification.StatusCode.UNKNOWN);
@@ -141,14 +138,21 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
     }
 
     @Test
-    public void shouldNotUpdateIfShaPhraseExpectedIsIncorrect() {
-        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"));
-
+    void shouldNotUpdateIfShaPhraseExpectedIsIncorrect() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
+        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"));
 
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    protected void setUpGatewayAccountToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(gatewayAccountEntity);
+    }
+
+    protected void setUpChargeServiceToReturnCharge(Optional<Charge> charge) {
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(charge);
     }
 }

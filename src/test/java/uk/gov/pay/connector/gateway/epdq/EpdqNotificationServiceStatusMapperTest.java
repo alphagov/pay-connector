@@ -1,25 +1,18 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.queue.QueueException;
 
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -42,199 +35,210 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.UNKN
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 
-@RunWith(JUnitParamsRunner.class)
-public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTest {
+class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTest {
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
-
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         super.setup();
     }
 
     @Test
-    public void shouldUpdateChargeToAuthorisationRejected_IfEpdqStatusIs2() throws QueueException {
+    void shouldUpdateChargeToAuthorisationRejected_IfEpdqStatusIs2() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISATION_REFUSED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor).invoke(payId, charge, AUTHORISATION_REJECTED, null);
     }
 
     @Test
-    public void shouldUpdateChargeToAuthorisationSuccess_IfEpdqStatusIs5() throws QueueException {
+    void shouldUpdateChargeToAuthorisationSuccess_IfEpdqStatusIs5() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor).invoke(payId, charge, AUTHORISATION_SUCCESS, null);
     }
 
     @Test
-    public void shouldUpdateChargeToCaptured_IfEpdqStatusIs9() throws QueueException {
+    void shouldUpdateChargeToCaptured_IfEpdqStatusIs9() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
 
     @Test
-    public void shouldUpdateChargeToCaptured_IfEpdqStatusIs9AndChargeIsHistoric() throws QueueException {
-        charge = getCharge(true);
+    void shouldUpdateChargeToCaptured_IfEpdqStatusIs9AndChargeIsHistoric() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        charge = getCharge(true);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
-        
 
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
 
-    @Test
-    @Parameters({"SYSTEM CANCEL SUBMITTED", "CREATED", "ENTERING CARD DETAILS"})
-    public void shouldUpdateChargeToSystemCancel_IfEpdqStatusIs6WithRelevantChargeStatus(String status) throws QueueException {
+    @ParameterizedTest
+    @ValueSource(strings = {"SYSTEM CANCEL SUBMITTED", "CREATED", "ENTERING CARD DETAILS"})
+    void shouldUpdateChargeToSystemCancel_IfEpdqStatusIs6WithRelevantChargeStatus(String status) {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.fromString(status))
                 .withGatewayTransactionId(payId)
                 .build());
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger("epdq", payId))
-                .thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         notificationService.handleNotificationFor(payload);
+
         verify(mockChargeNotificationProcessor).invoke(payId, charge, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState(), null);
     }
 
     @Test
-    public void shouldUpdateChargeToUserCancel_IfEpdqStatusIs6WithRelevantChargeStatus() throws QueueException {
+    void shouldUpdateChargeToUserCancel_IfEpdqStatusIs6WithRelevantChargeStatus() {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(USER_CANCEL_SUBMITTED)
                 .build());
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
+
         verify(mockChargeNotificationProcessor).invoke(payId, charge, USER_CANCELLATION_FLOW.getSuccessTerminalState(), null);
     }
 
     @Test
-    public void shouldUpdateChargeToExpire_IfEpdqStatusIs6WithRelevantChargeStatus() throws QueueException {
+    void shouldUpdateChargeToExpire_IfEpdqStatusIs6WithRelevantChargeStatus() {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(EXPIRE_CANCEL_SUBMITTED)
                 .build());
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
-
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
+
         verify(mockChargeNotificationProcessor).invoke(payId, charge, EXPIRE_FLOW.getSuccessTerminalState(), null);
     }
 
     @Test
-    public void shouldUpdateChargeToSystemCancel_IfEpdqStatusIs6AndChargeStatusIsNotRelevant() throws QueueException {
+    void shouldUpdateChargeToSystemCancel_IfEpdqStatusIs6AndChargeStatusIsNotRelevant() {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CAPTURED)
                 .build());
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
-
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
+
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeStatusIsNotPresent() throws QueueException {
+    void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeStatusIsNotPresent() {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = getCharge(false);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
-
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
+
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeIsHistoric() throws QueueException {
+    void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeIsHistoric() {
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = getCharge(true);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
-
-        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         notificationService.handleNotificationFor(payload);
+
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void shouldNotUpdateCharge_IfEpdqStatusIsUnknown() throws QueueException {
+    void shouldNotUpdateCharge_IfEpdqStatusIsUnknown() {
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
+
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
-    public void shouldRefund_IfEpdqStatusIs7() throws QueueException {
+    void shouldRefund_IfEpdqStatusIs7() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_DELETED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
+
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUNDED, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
     @Test
-    public void shouldRefund_IfEpdqStatusIs8() throws QueueException {
+    void shouldRefund_IfEpdqStatusIs8() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
+
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUNDED, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
     @Test
-    public void shouldBeARefundError_IfEpdqStatusIs83() throws QueueException {
+    void shouldBeARefundError_IfEpdqStatusIs83() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_REFUSED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
+
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
     @Test
-    public void shouldBeARefundError_IfEpdqStatusIs73() throws QueueException {
+    void shouldBeARefundError_IfEpdqStatusIs73() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_DELETION_REFUSED);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
+
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
     @Test
-    public void shouldBeARefundError_IfEpdqStatusIs94() throws QueueException {
+    void shouldBeARefundError_IfEpdqStatusIs94() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_DECLINED_BY_ACQUIRER);
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+
         notificationService.handleNotificationFor(payload);
+
         verify(mockRefundNotificationProcessor).invoke(EPDQ, REFUND_ERROR, gatewayAccountEntity, payId + "/" + payIdSub, payId, charge);
     }
 
     @Test
-    public void shouldNotProcessRefund_IfEpdqStatusIsUnknown() throws QueueException {
+    void shouldNotProcessRefund_IfEpdqStatusIsUnknown() {
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
 
         notificationService.handleNotificationFor(payload);
+
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
     
