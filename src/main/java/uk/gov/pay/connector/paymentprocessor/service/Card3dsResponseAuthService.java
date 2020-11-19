@@ -39,6 +39,10 @@ public class Card3dsResponseAuthService {
         TypeOf3dsRequest(String logMessage) {
             this.logMessage = logMessage;
         }
+
+        public String getLogMessage() {
+            return logMessage;
+        }
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Card3dsResponseAuthService.class);
@@ -134,7 +138,7 @@ public class Card3dsResponseAuthService {
         }
 
         var logMessage = String.format(Locale.UK, "3DS authentication result%s authorisation for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
-                worldPay3dsOrFlexLogMessage.toString(),
+                worldPay3dsOrFlexLogMessage.getLogMessage(),
                 updatedCharge.getExternalId(),
                 updatedCharge.getPaymentGatewayName().getName(),
                 updatedCharge.getGatewayTransactionId(),
