@@ -249,7 +249,7 @@ public class RefundServiceTest {
             return null;
         }).when(mockRefundDao).persist(any(RefundEntity.class));
 
-        RefundEntity refundEntity = refundService.createRefundEntity(new RefundRequest(refundAmount, chargeEntity.getAmount(), userExternalId), Charge.from(chargeEntity));
+        RefundEntity refundEntity = refundService.createRefundEntity(new RefundRequest(refundAmount, chargeEntity.getAmount(), userExternalId), account, Charge.from(chargeEntity));
 
         assertThat(refundEntity.getAmount(), is(refundAmount));
         assertThat(refundEntity.getStatus(), is(CREATED));
@@ -665,7 +665,7 @@ public class RefundServiceTest {
                 .build();
         RefundEntity refundEntity = aValidRefundEntity().withAmount(100L).build();
 
-        refundService.transitionRefundState(refundEntity, CREATED);
+        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), CREATED);
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, CREATED);
     }
 

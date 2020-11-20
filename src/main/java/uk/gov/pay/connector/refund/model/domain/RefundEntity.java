@@ -28,6 +28,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @SqlResultSetMapping(
         name = "RefundEntityHistoryMapping",
@@ -150,6 +151,10 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public boolean hasStatus(RefundStatus... status) {
         return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus().getValue()));
+    }
+
+    public boolean hasStatus() {
+        return isNotBlank(status);
     }
 
     public Long getId() {
