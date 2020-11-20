@@ -1,14 +1,25 @@
 package uk.gov.pay.connector.util;
 
+import org.apache.commons.validator.routines.InetAddressValidator;
+
 import javax.inject.Singleton;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Singleton
 public class IpAddressMatcher {
-    public boolean isMatch(String forwardedIpAddresses, List<String> allowedIpAddresses) {
+    private final InetAddressValidator ipAddressValidator;
+
+    public IpAddressMatcher(InetAddressValidator ipAddressValidator) {
+        this.ipAddressValidator = ipAddressValidator;
+    }
+
+    public boolean isMatch(String forwardedIpAddresses, Set<String> allowedIpAddresses) {
         if (Objects.nonNull(forwardedIpAddresses) && Objects.nonNull(allowedIpAddresses)) {
-            return allowedIpAddresses.contains(getFirstIpAddress(forwardedIpAddresses));
+            String ipAddress = getFirstIpAddress(forwardedIpAddresses);
+            if (ipAddressValidator.isValid(ipAddress)) {
+                return allowedIpAddresses.contains(ipAddress);
+            }
         }
         return false;
     }

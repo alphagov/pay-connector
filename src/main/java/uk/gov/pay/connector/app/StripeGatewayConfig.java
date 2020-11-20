@@ -40,7 +40,7 @@ public class StripeGatewayConfig extends Configuration {
 
     @Valid
     @NotNull
-    private List<String> allowedIpAddresses;
+    private List<String> allowedCidrs;
 
     public String getUrl() {
         return url;
@@ -70,7 +70,7 @@ public class StripeGatewayConfig extends Configuration {
         return notification3dsWaitDelay;
     }
 
-    public List<String> getAllowedIpAddresses() {
-        return allowedIpAddresses;
+    public List<String> getAllowedCidrs() {
+        return allowedCidrs;
     }
 }

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import net.logstash.logback.marker.ObjectAppendingMarker;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -36,6 +38,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -73,7 +76,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
     private static final String FORWARDED_IP_ADDRESSES = "1.2.3.4, 102.108.0.6";
-    private static final List<String> ALLOWED_IP_ADDRESSES = List.of("1.2.3.4", "9.9.9.9");
+    private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(Set.of("1.2.3.0/24", "9.9.9.9/32"));
 
     private StripeNotificationService notificationService;
 
@@ -114,10 +117,10 @@ class StripeNotificationServiceTest {
                 stripeAccountUpdatedHandler,
                 mockPayoutReconcileQueue,
                 mockPayoutEmitterService,
-                new IpAddressMatcher());
+                new IpAddressMatcher(new InetAddressValidator()),
+                ALLOWED_IP_ADDRESSES);
 
         lenient().when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
-        when(stripeGatewayConfig.getAllowedIpAddresses()).thenReturn(ALLOWED_IP_ADDRESSES);
     }
 
     private void setUpCharge() {
