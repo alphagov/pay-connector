@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -40,6 +41,11 @@ import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NO
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundService {
 
@@ -84,7 +90,7 @@ public class RefundService {
     public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest) {
         List<Refund> refundList = findRefunds(charge);
         long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundList);
-        RefundEntity refundEntity = createRefundEntity(refundRequest, charge);
+        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge);
 
         logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                 charge.getExternalId(),
@@ -123,7 +129,7 @@ public class RefundService {
             // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help
             // services to view refund history in detail in self service.
             // see Javadoc (RefundHistory) for details on how history is handled
-            setRefundStatus(refundEntityId, REFUND_SUBMITTED);
+            setRefundStatus(refundEntityId, gatewayAccountEntity, REFUND_SUBMITTED);
         }
 
         return updateRefund(gatewayRefundResponse, refundEntityId, refundStatus, gatewayAccountEntity, charge);
@@ -150,7 +156,7 @@ public class RefundService {
 
             getTransactionId(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setGatewayTransactionId);
 
-            transitionRefundState(refundEntity, refundStatus);
+            transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus);
         });
 
         return refund.get();
@@ -158,8 +164,8 @@ public class RefundService {
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public void setRefundStatus(Long refundEntityId, RefundStatus refundStatus) {
-        refundDao.findById(refundEntityId).ifPresent(refundEntity -> transitionRefundState(refundEntity, refundStatus));
+    public void setRefundStatus(Long refundEntityId, GatewayAccountEntity gatewayAccountEntity, RefundStatus refundStatus) {
+        refundDao.findById(refundEntityId).ifPresent(refundEntity -> transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus));
     }
 
     private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {
@@ -178,16 +184,27 @@ public class RefundService {
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public RefundEntity createRefundEntity(RefundRequest refundRequest, Charge charge) {
+    public RefundEntity createRefundEntity(RefundRequest refundRequest, GatewayAccountEntity gatewayAccountEntity, Charge charge) {
         RefundEntity refundEntity = new RefundEntity(refundRequest.getAmount(),
                 refundRequest.getUserExternalId(), refundRequest.getUserEmail(), charge.getExternalId());
-        transitionRefundState(refundEntity, RefundStatus.CREATED);
+        transitionRefundState(refundEntity, gatewayAccountEntity, RefundStatus.CREATED);
         refundDao.persist(refundEntity);
 
         return refundEntity;
     }
 
-    public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
+    public void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity, RefundStatus refundStatus) {
+        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
+        logger.info("Changing refund status for externalId [{}] [{}]->[{}]",
+                refundEntity.getExternalId(), fromState, refundStatus.getValue(),
+                kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
+                kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(PROVIDER, gatewayAccountEntity.getGatewayName()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv("from_state", fromState),
+                kv("to_state", refundStatus.getValue()));
+
         refundEntity.setStatus(refundStatus);
         stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
     }

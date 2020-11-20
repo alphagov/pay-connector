@@ -64,7 +64,7 @@ public class RefundNotificationProcessor {
         RefundEntity refundEntity = optionalRefundEntity.get();
         RefundStatus oldStatus = refundEntity.getStatus();
 
-        refundService.transitionRefundState(refundEntity, newStatus);
+        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus);
 
         if (RefundStatus.REFUNDED.equals(newStatus)) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
