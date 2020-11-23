@@ -10,9 +10,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.common.validator.RequestValidator;
@@ -24,6 +26,7 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
+import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -34,6 +37,7 @@ import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import javax.ws.rs.client.Client;
 import java.time.Clock;
 import java.util.Properties;
+import java.util.Set;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -54,7 +58,7 @@ public class ConnectorModule extends AbstractModule {
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
-        bind(IpAddressMatcher.class).in(Singleton.class);
+        bind(InetAddressValidator.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
@@ -117,6 +121,19 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
+    }
+
+    @Provides
+    @Singleton
+    @Named("AllowedStripeIpAddresses")
+    public Set<String> allowedStripeIpAddresses(StripeGatewayConfig config) {
+        return CidrUtils.getIpAddresses(config.getAllowedCidrs());
+    }
+
+    @Provides
+    @Singleton
+    public IpAddressMatcher ipAddressMatcher(InetAddressValidator inetAddressValidator) {
+        return new IpAddressMatcher(inetAddressValidator);
     }
 
     @Provides

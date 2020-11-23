@@ -53,7 +53,7 @@ epdq:
       readTimeout: 1000ms
 
 stripe:
-  allowedIpAddresses: ["1.2.3.4", "9.9.9.9"]
+  allowedCidrs: ["1.2.3.0/24", "9.9.9.9/32"]
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
   authTokens:
     test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}

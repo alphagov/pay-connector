@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.Webhook;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ import uk.gov.pay.connector.util.IpAddressMatcher;
 import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -79,6 +81,7 @@ public class StripeNotificationService {
     private final PayoutReconcileQueue payoutReconcileQueue;
     private final PayoutEmitterService payoutEmitterService;
     private final IpAddressMatcher ipAddressMatcher;
+    private final Set<String> allowedStripeIpAddresses;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
     private static final long DEFAULT_TOLERANCE = 300L;
@@ -90,7 +93,8 @@ public class StripeNotificationService {
                                      StripeAccountUpdatedHandler stripeAccountUpdatedHandler,
                                      PayoutReconcileQueue payoutReconcileQueue,
                                      PayoutEmitterService payoutEmitterService,
-                                     IpAddressMatcher ipAddressMatcher) {
+                                     IpAddressMatcher ipAddressMatcher,
+                                     @Named("AllowedStripeIpAddresses") Set<String> allowedStripeIpAddresses) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
@@ -99,10 +103,11 @@ public class StripeNotificationService {
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.payoutEmitterService = payoutEmitterService;
         this.ipAddressMatcher = ipAddressMatcher;
+        this.allowedStripeIpAddresses = allowedStripeIpAddresses;
     }
 
     public boolean handleNotificationFor(String payload, String signatureHeader, String forwardedIpAddresses) {
-        if (!ipAddressMatcher.isMatch(forwardedIpAddresses, stripeGatewayConfig.getAllowedIpAddresses())) {
+        if (!ipAddressMatcher.isMatch(forwardedIpAddresses, allowedStripeIpAddresses)) {
             return false;
         }
 
