@@ -40,7 +40,8 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends ChargingITestBase {
-
+    private static final String SMARTPAY_IP_ADDRESS = "6.6.6.6, 1.1.1.1";
+    private static final String UNEXPECTED_IP_ADDRESS = "3.4.2.1";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";
 
@@ -248,19 +249,43 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
                 .statusCode(415);
     }
 
+    @Test
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsnewbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+        String smartpayPaymentReference = randomId();
+        String externalChargeId = createNewChargeWith(CAPTURE_SUBMITTED, smartpayPaymentReference);
+
+        notifyConnectorWithCredentials(notificationPayloadForTransaction(externalChargeId, smartpayPaymentReference, randomId(), "notification-capture"),
+                "bob",
+                "bobsnewbigsecret",
+                UNEXPECTED_IP_ADDRESS)
+                .then()
+                .statusCode(403);
+    }
+
     private Response notifyConnector(String payload) {
         return given()
                 .port(testContext.getPort())
                 .auth().basic("bob", "bobsbigsecret")
+                .header("X-Forwarded-For", SMARTPAY_IP_ADDRESS)
                 .body(payload)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);
     }
 
     private Response notifyConnectorWithCredentials(String payload, String username, String password) {
+        return notifyConnectorWithCredentials(payload, username, password, SMARTPAY_IP_ADDRESS);
+    }
+
+    private Response notifyConnectorWithCredentials(String payload, String username, String password, String forwardedIpAddresses) {
         return given()
                 .port(testContext.getPort())
                 .auth().basic(username, password)
+                .header("X-Forwarded-For", forwardedIpAddresses)
                 .body(payload)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);

@@ -47,9 +47,13 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @PermitAll
     @Path("/v1/api/notifications/smartpay")
-    public Response authoriseSmartpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) {
-        LOGGER.info(String.format("Received notification for smartpay ip '%s'", ipAddress), kv("notification_source", ipAddress));
-        smartpayNotificationService.handleNotificationFor(notification);
+    public Response authoriseSmartpayNotifications(String notification,
+                                                   @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        LOGGER.info(String.format("Received notification for smartpay ip '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+        if (!smartpayNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
+            LOGGER.info(String.format("Rejected notification from provider=Smartpay for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            return forbiddenErrorResponse();
+        }
         String response = "[accepted]";
         LOGGER.info("Responding to notification from provider=smartpay with 200 {}", response);
         return Response.ok(response).build();

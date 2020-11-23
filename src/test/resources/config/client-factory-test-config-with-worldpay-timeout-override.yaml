@@ -38,6 +38,7 @@ worldpay:
       readTimeout: 2000ms
 
 smartpay:
+  allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS:-[]}
   urls:
     test: http://localhost:10107/not/used
     live: http://localhost:10107/not/used

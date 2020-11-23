@@ -34,6 +34,7 @@ worldpay:
       readTimeout: 222ms
 
 smartpay:
+  allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS:-[]}
   urls:
     test: http://localhost:10106/pal/servlet/soap/Payment
     live: http://localhost:10106/pal/servlet/soap/Payment

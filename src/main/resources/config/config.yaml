@@ -64,6 +64,7 @@ worldpay:
       readTimeout: 1000ms
 
 smartpay:
+  allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS}
   urls:
     test: ${GDS_CONNECTOR_SMARTPAY_TEST_URL}
     live: ${GDS_CONNECTOR_SMARTPAY_LIVE_URL}
