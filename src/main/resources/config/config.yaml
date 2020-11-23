@@ -63,6 +63,9 @@ worldpay:
       # Capture median time is 200ms. We can be quite agressive in the timeout since we have a retry mechanism.
       readTimeout: 1000ms
 
+sandbox:
+  allowedCidrs: ${SANDBOX_ALLOWED_CIDRS}
+
 smartpay:
   allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS}
   urls:

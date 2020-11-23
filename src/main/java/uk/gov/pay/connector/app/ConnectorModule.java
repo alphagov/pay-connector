@@ -132,6 +132,13 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Named("AllowedSandboxIpAddresses")
+    public Set<String> allowedSandboxIpAddresses(ConnectorConfiguration config) {
+        return CidrUtils.getIpAddresses(config.getSandboxConfig().getAllowedCidrs());
+    }
+
+    @Provides
+    @Singleton
     @Named("AllowedSmartpayIpAddresses")
     public Set<String> allowedSmartpayIpAddresses(ConnectorConfiguration config) {
         return CidrUtils.getIpAddresses(config.getSmartpayConfig().getAllowedCidrs());

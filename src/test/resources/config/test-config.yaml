@@ -33,6 +33,9 @@ worldpay:
     auth:
       readTimeout: 222ms
 
+sandbox:
+  allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}
+
 smartpay:
   allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS:-[]}
   urls:

@@ -37,6 +37,9 @@ worldpay:
     capture:
       readTimeout: 2000ms
 
+sandbox:
+  allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}
+
 smartpay:
   allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS:-[]}
   urls:

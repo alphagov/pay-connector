@@ -3,6 +3,7 @@ package uk.gov.pay.connector.webhook.resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.epdq.EpdqNotificationService;
+import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
@@ -29,15 +30,18 @@ public class NotificationResource {
 
     private final WorldpayNotificationService worldpayNotificationService;
     private final EpdqNotificationService epdqNotificationService;
+    private final SandboxNotificationService sandboxNotificationService;
     private final SmartpayNotificationService smartpayNotificationService;
     private final StripeNotificationService stripeNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 EpdqNotificationService epdqNotificationService,
+                                SandboxNotificationService sandboxNotificationService,
                                 SmartpayNotificationService smartpayNotificationService,
                                 StripeNotificationService stripeNotificationService) {
         this.worldpayNotificationService = worldpayNotificationService;
+        this.sandboxNotificationService = sandboxNotificationService;
         this.smartpayNotificationService = smartpayNotificationService;
         this.epdqNotificationService = epdqNotificationService;
         this.stripeNotificationService = stripeNotificationService;
@@ -62,7 +66,12 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/sandbox")
-    public Response authoriseSandboxNotifications(String notification) {
+    public Response authoriseSandboxNotifications(String notification,
+                                                  @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses)) {
+            LOGGER.info(String.format("Rejected notification from provider=Sandbox for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            return forbiddenErrorResponse();
+        }
         return Response.ok().build();
     }
 
