@@ -2,6 +2,7 @@ package uk.gov.pay.connector.webhook.resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.epdq.EpdqNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayNotificationService;
@@ -21,7 +22,13 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 @Path("/")
 public class NotificationResource {
@@ -53,13 +60,15 @@ public class NotificationResource {
     @Path("/v1/api/notifications/smartpay")
     public Response authoriseSmartpayNotifications(String notification,
                                                    @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
-        LOGGER.info(String.format("Received notification for smartpay ip '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+        LOGGER.info(String.format("Received notification for provider %s IP '%s'", SMARTPAY.getName(),  forwardedIpAddresses),
+                kv(PROVIDER, SMARTPAY.getName()),
+                kv("notification_source", forwardedIpAddresses));
         if (!smartpayNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
-            LOGGER.info(String.format("Rejected notification from provider=Smartpay for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            logRejectionMessage(forwardedIpAddresses, SMARTPAY);
             return forbiddenErrorResponse();
         }
         String response = "[accepted]";
-        LOGGER.info("Responding to notification from provider=smartpay with 200 {}", response);
+        logResponseMessage(response, SMARTPAY);
         return Response.ok(response).build();
     }
 
@@ -69,7 +78,7 @@ public class NotificationResource {
     public Response authoriseSandboxNotifications(String notification,
                                                   @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses)) {
-            LOGGER.info(String.format("Rejected notification from provider=Sandbox for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            logRejectionMessage(forwardedIpAddresses, SANDBOX);
             return forbiddenErrorResponse();
         }
         return Response.ok().build();
@@ -79,13 +88,13 @@ public class NotificationResource {
     @Consumes(TEXT_XML)
     @Path("/v1/api/notifications/worldpay")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) {
-        if (!worldpayNotificationService.handleNotificationFor(ipAddress, notification)) {
-            LOGGER.info(String.format("Rejected notification from provider=Worldpay for IP '%s'", ipAddress), kv("notification_source", ipAddress));
+    public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!worldpayNotificationService.handleNotificationFor(forwardedIpAddresses, notification)) {
+            logRejectionMessage(forwardedIpAddresses, WORLDPAY);
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
-        LOGGER.info("Responding to notification from provider={} with 200 {}", "worldpay", response);
+        logResponseMessage(response, WORLDPAY);
         return Response.ok(response).build();
     }
 
@@ -96,11 +105,11 @@ public class NotificationResource {
     public Response authoriseEpdqNotifications(String notification,
                                                @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!epdqNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
-            LOGGER.info(String.format("Rejected notification from provider=Epdq for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            logRejectionMessage(forwardedIpAddresses, EPDQ);
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
-        LOGGER.info("Responding to notification from provider={} with 200 {}", "epdq", response);
+        logResponseMessage(response, EPDQ);
         return Response.ok(response).build();
     }
 
@@ -112,11 +121,22 @@ public class NotificationResource {
                                                  @HeaderParam("Stripe-Signature") String signatureHeader,
                                                  @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!stripeNotificationService.handleNotificationFor(notification, signatureHeader, forwardedIpAddresses)) {
-            LOGGER.info(String.format("Rejected notification from provider=Stripe for IP '%s'", forwardedIpAddresses), kv("notification_source", forwardedIpAddresses));
+            logRejectionMessage(forwardedIpAddresses, STRIPE);
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
-        LOGGER.info("Responding to notification from provider=Stripe with 200 {}", response);
+        logResponseMessage(response, STRIPE);
         return Response.ok(response).build();
+    }
+
+    private void logRejectionMessage(String forwardedIpAddresses, PaymentGatewayName gateway) {
+        LOGGER.info(String.format("Rejected notification from provider %s for IP '%s'", gateway.getName(), forwardedIpAddresses),
+                kv(PROVIDER, gateway.getName()),
+                kv("notification_source", forwardedIpAddresses));
+    }
+
+    private void logResponseMessage(String response, PaymentGatewayName gateway) {
+        LOGGER.info(String.format("Responding to notification from provider %s with 200 %s", gateway.getName(), response),
+                kv(PROVIDER, gateway.getName()));
     }
 }
