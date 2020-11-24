@@ -94,9 +94,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(originalReference, charge, CAPTURED,
                 ZonedDateTime.parse("2015-10-08T13:48:30+02:00"));  // from notification-capture.json
@@ -113,9 +111,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
@@ -127,9 +123,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
                 RefundStatus.REFUNDED, gatewayAccountEntity, pspReference, originalReference, charge);
@@ -140,9 +134,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_AUTHORISATION,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -154,9 +146,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verify(mockChargeNotificationProcessor).invoke(any(), any(), any(), any());
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -168,9 +158,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -180,8 +168,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, StringUtils.EMPTY);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -193,9 +180,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -205,9 +190,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), "unknown-transaction-id", pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -216,9 +199,7 @@ class SmartpayNotificationServiceTest {
     void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -229,9 +210,7 @@ class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
                 randomId(), originalReference, pspReference);
 
-        final boolean result = notificationService.handleNotificationFor(payload, forwardedIpAddresses);
-
-        assertFalse(result);
+        assertFalse(notificationService.handleNotificationFor(payload, forwardedIpAddresses));
     }
 
     private void setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {

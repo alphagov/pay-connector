@@ -40,9 +40,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
@@ -59,9 +57,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
@@ -74,9 +70,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, gatewayAccountEntity, 
                 payId + "/" + payIdSub, payId, charge);
@@ -89,9 +83,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 EPDQ_REFUND);
         setUpChargeServiceToReturnCharge(Optional.empty());
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -104,9 +96,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.empty());
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -117,9 +107,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 null,
                 EPDQ_REFUND);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -128,9 +116,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
     void ifPayloadNotValidXml_shouldIgnoreNotification() {
         final String payload = "not_valid";
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -141,9 +127,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EpdqNotification.StatusCode.UNKNOWN);
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -153,9 +137,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
         gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"));
 
-        final boolean result = notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES);
-
-        assertTrue(result);
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -167,9 +149,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
 
-        final boolean result = notificationService.handleNotificationFor(payload, forwardedIpAddresses);
-
-        assertFalse(result);
+        assertFalse(notificationService.handleNotificationFor(payload, forwardedIpAddresses));
     }
 
     protected void setUpGatewayAccountToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {
