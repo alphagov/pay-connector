@@ -51,7 +51,26 @@ public class CaptureMessageReceiver implements Managed {
 
     @Override
     public void stop() {
+        LOGGER.info("Shutting down card capture service");
         chargeCaptureMessageExecutorService.shutdown();
+        try {
+            // Wait for existing charges to finish being captured
+            if (chargeCaptureMessageExecutorService.awaitTermination(15, TimeUnit.SECONDS)) {
+                LOGGER.info("card capture service shut down cleanly");
+            } else {
+                // If the existing charges being captured didn't terminate within the allowed time then force them to.
+                LOGGER.error("Charges still being captured after shutdown wait time will now be forcefully stopped");
+                chargeCaptureMessageExecutorService.shutdownNow();
+                if (!chargeCaptureMessageExecutorService.awaitTermination(12, TimeUnit.SECONDS)){
+                    LOGGER.error("Charge capture service could not be forced stopped");
+                }
+            }
+        } catch (InterruptedException ex) {
+            LOGGER.error("Failed to shutdown charge capture service cleanly as the wait was interrupted.");
+            chargeCaptureMessageExecutorService.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void chargeCaptureMessageReceiver() {
