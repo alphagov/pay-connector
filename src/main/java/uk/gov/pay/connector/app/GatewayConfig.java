@@ -17,6 +17,8 @@ public class GatewayConfig extends Configuration {
 
     private JerseyClientOverrides jerseyClientOverrides;
 
+    private List<String> allowedCidrs;
+
     public Optional<JerseyClientOverrides> getJerseyClientOverrides() {
         return Optional.ofNullable(jerseyClientOverrides);
     }
@@ -27,5 +29,9 @@ public class GatewayConfig extends Configuration {
 
     public Map<String, String> getUrls() {
         return urls;
+    }
+
+    public List<String> getAllowedCidrs() {
+        return allowedCidrs;
     }
 }

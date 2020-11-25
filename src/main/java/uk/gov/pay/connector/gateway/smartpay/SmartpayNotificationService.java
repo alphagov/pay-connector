@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.name.Named;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +14,13 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -33,6 +36,8 @@ public class SmartpayNotificationService {
     private final GatewayAccountService gatewayAccountService;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
+    private final IpAddressMatcher ipAddressMatcher;
+    private final Set<String> allowedSmartpayIpAddresses;
 
     private static final String PAYMENT_GATEWAY_NAME = SMARTPAY.getName();
 
@@ -40,15 +45,23 @@ public class SmartpayNotificationService {
     public SmartpayNotificationService(ChargeService chargeService,
                                        ChargeNotificationProcessor chargeNotificationProcessor,
                                        RefundNotificationProcessor refundNotificationProcessor,
-                                       GatewayAccountService gatewayAccountService) {
+                                       GatewayAccountService gatewayAccountService,
+                                       IpAddressMatcher ipAddressMatcher,
+                                       @Named("AllowedSmartpayIpAddresses") Set<String> allowedSmartpayIpAddresses) {
         this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
+        this.ipAddressMatcher = ipAddressMatcher;
+        this.allowedSmartpayIpAddresses = allowedSmartpayIpAddresses;
     }
 
     @Transactional
-    public boolean handleNotificationFor(String payload) {
+    public boolean handleNotificationFor(String payload, String forwardedIpAddresses) {
+        if (!ipAddressMatcher.isMatch(forwardedIpAddresses, allowedSmartpayIpAddresses)) {
+            return false;
+        }
+
         List<SmartpayNotification> notifications = parse(payload);
         for (SmartpayNotification notification : notifications) {
             handle(notification);

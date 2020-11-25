@@ -12,6 +12,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -23,6 +25,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 
 @ExtendWith(MockitoExtension.class)
 class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
+    protected static final String FORWARDED_IP_ADDRESSES = "102.22.31.106, 102.108.0.6";
 
     @BeforeEach
     void setup() {
@@ -37,8 +40,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
     }
@@ -55,8 +57,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, payId, charge, CAPTURED);
     }
@@ -69,8 +70,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, gatewayAccountEntity, 
                 payId + "/" + payIdSub, payId, charge);
@@ -83,8 +83,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 EPDQ_REFUND);
         setUpChargeServiceToReturnCharge(Optional.empty());
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -97,8 +96,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.empty());
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -109,8 +107,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 null,
                 EPDQ_REFUND);
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -119,8 +116,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
     void ifPayloadNotValidXml_shouldIgnoreNotification() {
         final String payload = "not_valid";
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -131,8 +127,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EpdqNotification.StatusCode.UNKNOWN);
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
@@ -142,10 +137,19 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
         gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"));
 
-        notificationService.handleNotificationFor(payload);
-
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    void shouldReturnFalseWhenForwardedIpAddressIsNotInAllowedIpAddresses() {
+        final String forwardedIpAddresses = "1.1.1.1, 102.108.0.6";
+        final String payload = notificationPayloadForTransaction(
+                payId,
+                EPDQ_PAYMENT_REQUESTED);
+
+        assertFalse(notificationService.handleNotificationFor(payload, forwardedIpAddresses));
     }
 
     protected void setUpGatewayAccountToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {

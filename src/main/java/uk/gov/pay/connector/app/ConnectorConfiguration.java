@@ -40,6 +40,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private SandboxGatewayConfig sandboxConfig;
+
+    @Valid
+    @NotNull
     private GatewayConfig smartpayConfig;
 
     @Valid
@@ -141,6 +145,11 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("worldpay")
     public WorldpayConfig getWorldpayConfig() {
         return worldpayConfig;
+    }
+
+    @JsonProperty("sandbox")
+    public SandboxGatewayConfig getSandboxConfig() {
+        return sandboxConfig;
     }
 
     @JsonProperty("smartpay")

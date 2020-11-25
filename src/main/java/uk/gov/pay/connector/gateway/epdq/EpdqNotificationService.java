@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.google.inject.persist.Transactional;
 import org.apache.http.NameValuePair;
 import org.slf4j.Logger;
@@ -13,12 +14,12 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.util.IpAddressMatcher;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -47,22 +48,32 @@ public class EpdqNotificationService {
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;
+    private final IpAddressMatcher ipAddressMatcher;
+    private final Set<String> allowedEpdqIpAddresses;
 
     @Inject
     public EpdqNotificationService(ChargeService chargeService,
                                    SignatureGenerator signatureGenerator,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    RefundNotificationProcessor refundNotificationProcessor,
-                                   GatewayAccountService gatewayAccountService) {
+                                   GatewayAccountService gatewayAccountService,
+                                   IpAddressMatcher ipAddressMatcher,
+                                   @Named("AllowedEpdqIpAddresses") Set<String> allowedEpdqIpAddresses) {
         this.chargeService = chargeService;
         this.signatureGenerator = signatureGenerator;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
+        this.allowedEpdqIpAddresses = allowedEpdqIpAddresses;
+        this.ipAddressMatcher = ipAddressMatcher;
     }
 
     @Transactional
-    public void handleNotificationFor(String payload) {
+    public boolean handleNotificationFor(String payload, String forwardedIpAddresses) {
+        if (!ipAddressMatcher.isMatch(forwardedIpAddresses, allowedEpdqIpAddresses)) {
+            return false;
+        }
+
         logger.info("Parsing {} notification", PAYMENT_GATEWAY_NAME);
 
         EpdqNotification notification;
@@ -71,14 +82,14 @@ public class EpdqNotificationService {
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
         } catch (EpdqParseException e) {
             logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
-            return;
+            return true;
         }
 
         logger.info("Verifying {} notification {}", PAYMENT_GATEWAY_NAME, notification);
 
         if (isBlank(notification.getTransactionId())) {
             logger.error("{} notification {} failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
-            return;
+            return true;
         }
 
         Optional<Charge> maybeCharge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
@@ -87,7 +98,7 @@ public class EpdqNotificationService {
         if (maybeCharge.isEmpty()) {
             logger.error("{} notification {} could not be verified (associated charge entity not found)",
                     PAYMENT_GATEWAY_NAME, notification);
-            return;
+            return true;
         }
 
         Charge charge = maybeCharge.get();
@@ -103,13 +114,13 @@ public class EpdqNotificationService {
                     charge.getExternalId()),
                     kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                     kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
-            return;
+            return true;
         }
 
         GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
 
         if (!isValidNotificationSignature(notification, gatewayAccountEntity)) {
-            return;
+            return true;
         }
 
         logger.info("Evaluating {} notification {}", PAYMENT_GATEWAY_NAME, notification);
@@ -120,7 +131,7 @@ public class EpdqNotificationService {
             if(charge.isHistoric()){
                 if (CAPTURED.equals(newChargeStatus.get())) {
                     chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, notification.getTransactionId(), charge, newChargeStatus.get());
-                    return;
+                    return true;
                 }
                 
                 logger.error(format("%s notification %s could not be processed as the charge [%s] has been expunged from connector and it is not possible to move the charge to state %s.",
@@ -130,7 +141,7 @@ public class EpdqNotificationService {
                         newChargeStatus.get().name()),
                         kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                         kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
-                return;
+                return true;
             }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, newChargeStatus.get(), null);
         } else {
@@ -139,6 +150,7 @@ public class EpdqNotificationService {
                     PaymentGatewayName.EPDQ, refundStatus, gatewayAccountEntity,
                     notification.getReference(), notification.getTransactionId(), charge));
         }
+        return true;
     }
 
     private boolean isValidNotificationSignature(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
