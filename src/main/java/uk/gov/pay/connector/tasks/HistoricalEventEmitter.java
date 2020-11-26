@@ -15,7 +15,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
+import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
@@ -272,9 +272,9 @@ public class HistoricalEventEmitter {
                     .stream().anyMatch(event -> ENTERING_CARD_DETAILS.equals(event.getStatus()));
 
             if (hasEnteringCardDetailsEvent) {
-                UserEmailCollected emailEnteredEvent = UserEmailCollected.from(charge);
-                if (forceEmission || !emittedEventDao.hasBeenEmittedBefore(emailEnteredEvent)) {
-                    eventService.emitAndRecordEvent(emailEnteredEvent, getDoNotRetryEmitUntilDate());
+                BackfillerRecreatedUserEmailCollected userEmailCollectedEvent = BackfillerRecreatedUserEmailCollected.from(charge);
+                if (forceEmission || !emittedEventDao.hasBeenEmittedBefore(userEmailCollectedEvent)) {
+                    eventService.emitAndRecordEvent(userEmailCollectedEvent, getDoNotRetryEmitUntilDate());
                 }
             }
         }

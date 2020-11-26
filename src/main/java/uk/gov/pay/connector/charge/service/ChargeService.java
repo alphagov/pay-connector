@@ -50,8 +50,8 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -83,6 +83,8 @@ import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -321,7 +323,7 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     if (chargePatchRequest.getPath().equals(ChargesApiResource.EMAIL_KEY)) {
                         chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
-                        eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity));
+                        eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity, now(UTC)));
                     }
                     return Optional.of(chargeEntity);
                 })
@@ -412,8 +414,8 @@ public class ChargeService {
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(
-            AbstractChargeResponseBuilder<T, R> responseBuilder, 
-            UriInfo uriInfo, 
+            AbstractChargeResponseBuilder<T, R> responseBuilder,
+            UriInfo uriInfo,
             ChargeEntity chargeEntity) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;

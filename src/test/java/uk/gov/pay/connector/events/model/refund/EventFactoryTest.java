@@ -32,6 +32,7 @@ import uk.gov.pay.connector.events.model.charge.AuthorisationCancelled;
 import uk.gov.pay.connector.events.model.charge.AuthorisationErrorCheckedWithGatewayChargeWasMissing;
 import uk.gov.pay.connector.events.model.charge.AuthorisationErrorCheckedWithGatewayChargeWasRejected;
 import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
+import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CancelByExpirationFailed;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceFailed;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceSubmitted;
@@ -51,7 +52,6 @@ import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -422,7 +422,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatedCorrectEventForUserEmailCollected() throws Exception {
+    public void shouldCreatedCorrectEventForBackfillRecreatedUserEmailCollectedEvent() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.USER_CANCELLED)
                 .withEmail("test@example.org")
@@ -438,13 +438,14 @@ public class EventFactoryTest {
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
                 Optional.of(chargeEventEntity)
         );
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, UserEmailCollected.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, 
+                BackfillerRecreatedUserEmailCollected.class);
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(1));
 
-        UserEmailCollected event = (UserEmailCollected) events.get(0);
-        assertThat(event, is(instanceOf(UserEmailCollected.class)));
+        BackfillerRecreatedUserEmailCollected event = (BackfillerRecreatedUserEmailCollected) events.get(0);
+        assertThat(event, is(instanceOf(BackfillerRecreatedUserEmailCollected.class)));
 
         assertThat(event.getEventDetails(), instanceOf(UserEmailCollectedEventDetails.class));
         assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));

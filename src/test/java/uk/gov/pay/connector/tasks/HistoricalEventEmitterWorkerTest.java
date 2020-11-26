@@ -20,13 +20,13 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
+import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -209,7 +209,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty(), 1L);
 
-        verify(eventService, times(1)).emitAndRecordEvent(any(UserEmailCollected.class), isNotNull());
+        verify(eventService, times(1)).emitAndRecordEvent(any(BackfillerRecreatedUserEmailCollected.class), isNotNull());
     }
 
     @Test
@@ -393,7 +393,7 @@ public class HistoricalEventEmitterWorkerTest {
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService, times(2)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull());
         assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
-        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("USER_EMAIL_COLLECTED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("BACKFILLER_RECREATED_USER_EMAIL_COLLECTED"));
     }
 
     @Test
