@@ -48,13 +48,13 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(params.getCredentials()));
             }
             jdbi.withHandle(h ->
-                    h.createUpdate("INSERT INTO gateway_accounts (id, payment_provider, credentials, " +
+                    h.createUpdate("INSERT INTO gateway_accounts (id, external_id, payment_provider, credentials, " +
                             "service_name, type, description, analytics_id, email_collection_mode, " +
                             "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                             "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
                             "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
                             "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds) " +
-                            "VALUES (:id, :payment_provider, :credentials, :service_name, :type, " +
+                            "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
                             ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                             ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                             ":corporate_prepaid_credit_card_surcharge_amount, " +
@@ -62,6 +62,7 @@ public class DatabaseTestHelper {
                             ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, "+
                             ":allow_apple_pay, :allow_google_pay, :requires_3ds)")
                             .bind("id", Long.valueOf(params.getAccountId()))
+                            .bind("external_id", params.getExternalId())
                             .bind("payment_provider", params.getPaymentGateway())
                             .bindBySqlType("credentials", jsonObject, OTHER)
                             .bind("service_name", params.getServiceName())

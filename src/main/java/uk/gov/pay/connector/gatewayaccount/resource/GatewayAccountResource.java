@@ -2,8 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
@@ -62,7 +60,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
-    private static final Splitter COMMA_SEPARATOR = Splitter.on(',').trimResults().omitEmptyStrings();
 
     private static final String DESCRIPTION_FIELD_NAME = "description";
     private static final String ANALYTICS_ID_FIELD_NAME = "analytics_id";
@@ -383,12 +380,6 @@ public class GatewayAccountResource {
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    private Map<String, Object> addSelfLink(URI chargeId, Map<String, Object> charge) {
-        List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", chargeId, "rel", "self", "method", "GET"));
-        charge.put("links", links);
-        return charge;
     }
 
     private List<String> checkMissingCredentialsFields(Map<String, String> credentialsPayload, String provider) {

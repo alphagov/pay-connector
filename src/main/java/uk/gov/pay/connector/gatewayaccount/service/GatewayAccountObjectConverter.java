@@ -10,6 +10,8 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Map;
 
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
+
 public class GatewayAccountObjectConverter {
 
     private static final int DEFAULT_INTEGRATION_VERSION_3_DS = 1;
@@ -22,6 +24,8 @@ public class GatewayAccountObjectConverter {
                 gatewayAccountRequest.getPaymentProvider(), 
                 credentials,
                 GatewayAccountEntity.Type.fromString(gatewayAccountRequest.getProviderAccountType()));
+
+        gatewayAccountEntity.setExternalId(randomUuid());
 
         gatewayAccountEntity.setServiceName(gatewayAccountRequest.getServiceName());
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
@@ -43,6 +47,7 @@ public class GatewayAccountObjectConverter {
 
         return new GatewayAccountResponse.GatewayAccountResponseBuilder()
                 .gatewayAccountId(entity.getId().toString())
+                .externalId(entity.getExternalId())
                 .serviceName(entity.getServiceName())
                 .description(entity.getDescription())
                 .analyticsId(entity.getAnalyticsId())

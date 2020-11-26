@@ -27,7 +27,6 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         String query = "SELECT gae FROM GatewayAccountEntity gae " +
                 "WHERE gae.notificationCredentials.userName = :username";
 
-
         return entityManager.get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("username", username)

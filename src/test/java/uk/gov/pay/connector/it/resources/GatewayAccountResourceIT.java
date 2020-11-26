@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -155,6 +156,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(200)
                 .body("payment_provider", is("sandbox"))
                 .body("gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
+                .body("external_id", is(defaultTestAccount.getExternalId()))
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
@@ -205,7 +207,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(OK.getStatusCode())
                 .body("accounts", hasSize(2))
                 .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)))
-                .body("accounts[1].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)));
+                .body("accounts[0].external_id", is(notNullValue()))
+                .body("accounts[1].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)))
+                .body("accounts[1].external_id", is(notNullValue()));
     }
 
     @Test

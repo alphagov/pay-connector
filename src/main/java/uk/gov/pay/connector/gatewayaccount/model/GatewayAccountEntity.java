@@ -50,6 +50,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonIgnore
     private Long id;
 
+    @Column(name = "external_id")
+    private String externalId;
+
     @Column(name = "payment_provider")
     private String gatewayName;
 
@@ -153,6 +156,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView({Views.ApiView.class, Views.FrontendView.class})
     public Long getId() {
         return this.id;
+    }
+
+    @JsonProperty("external_id")
+    @JsonView({Views.ApiView.class, Views.FrontendView.class})
+    public String getExternalId() {
+        return externalId;
     }
 
     @JsonProperty("payment_provider")
@@ -364,6 +373,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     public boolean isLive() {

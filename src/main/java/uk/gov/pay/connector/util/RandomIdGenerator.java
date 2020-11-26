@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Locale;
+import java.util.UUID;
 
 public class RandomIdGenerator {
 
@@ -24,5 +26,9 @@ public class RandomIdGenerator {
         String id = new BigInteger(130, RANDOM).toString(32);
 
         return StringUtils.leftPad(id, 26, '0');
+    }
+
+    public static String randomUuid() {
+        return UUID.randomUUID().toString().replace("-", "").toLowerCase(Locale.ENGLISH);
     }
 }
