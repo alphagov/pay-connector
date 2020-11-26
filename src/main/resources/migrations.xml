@@ -1539,4 +1539,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add external_id column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="external_id" type="varchar(32)" defaultValueComputed="replace(uuid_generate_v4()::VARCHAR,'-'::text,''::text)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
