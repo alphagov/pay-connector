@@ -34,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountDaoIT extends DaoITestBase {
 
@@ -63,6 +64,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         String paymentProvider = "test provider";
         GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>(), TEST);
 
+        account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
 
         gatewayAccountDao.persist(account);
@@ -113,6 +115,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
         Map<String, String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
+        assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
@@ -162,6 +165,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
         Map<String, String> credentialsMap = gatewayAccount.getCredentials();
         assertThat(credentialsMap.size(), is(0));
+        assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
@@ -351,12 +355,16 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void shouldSearchForAccountsById() {
         long gatewayAccountId_1 = nextLong();
+        String externalId_1 = randomUuid();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withExternalId(externalId_1)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        String externalId_2 = randomUuid();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withExternalId(externalId_2)
                 .build());
         long gatewayAccountId_3 = gatewayAccountId_2 + 1;
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
@@ -369,7 +377,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(2));
         assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(0).getExternalId(), is(externalId_1));
         assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
+        assertThat(gatewayAccounts.get(1).getExternalId(), is(externalId_2));
     }
 
     @Test

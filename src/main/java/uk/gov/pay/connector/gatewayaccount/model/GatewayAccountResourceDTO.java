@@ -18,6 +18,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("gateway_account_id")
     private long accountId;
 
+    @JsonProperty("external_id")
+    private String externalId;
+
     @JsonProperty("payment_provider")
     private String paymentProvider;
 
@@ -83,6 +86,7 @@ public class GatewayAccountResourceDTO {
     }
 
     public GatewayAccountResourceDTO(long accountId,
+                                     String externalId,
                                      String paymentProvider,
                                      GatewayAccountEntity.Type type,
                                      String description,
@@ -104,6 +108,7 @@ public class GatewayAccountResourceDTO {
                                      boolean motoMaskCardNumberInput,
                                      boolean motoMaskCardSecurityCodeInput) {
         this.accountId = accountId;
+        this.externalId = externalId;
         this.paymentProvider = paymentProvider;
         this.type = type;
         this.description = description;
@@ -129,6 +134,7 @@ public class GatewayAccountResourceDTO {
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
         return new GatewayAccountResourceDTO(
                 gatewayAccountEntity.getId(),
+                gatewayAccountEntity.getExternalId(),
                 gatewayAccountEntity.getGatewayName(),
                 GatewayAccountEntity.Type.fromString(gatewayAccountEntity.getType()),
                 gatewayAccountEntity.getDescription(),
@@ -154,6 +160,10 @@ public class GatewayAccountResourceDTO {
 
     public long getAccountId() {
         return accountId;
+    }
+
+    public String getExternalId() {
+        return externalId;
     }
 
     public String getPaymentProvider() {

@@ -11,6 +11,7 @@ import static com.google.common.primitives.Chars.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.RandomIdGenerator.newId;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class RandomIdGeneratorTest {
 
@@ -41,5 +42,11 @@ public class RandomIdGeneratorTest {
             .parallel()
             .mapToObj(value -> newId())
             .forEach(id -> assertEquals(26, id.length()));
+    }
+
+    @Test
+    public void randomUuid_shouldGenerateIdsOf32CharsInLength() {
+        String randomUuid = randomUuid();
+        assertEquals(32, randomUuid.length());
     }
 }

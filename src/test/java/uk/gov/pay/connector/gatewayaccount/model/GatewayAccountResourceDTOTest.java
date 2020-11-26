@@ -18,6 +18,7 @@ public class GatewayAccountResourceDTOTest {
     public void fromEntity() {
         GatewayAccountEntity entity = new GatewayAccountEntity();
         entity.setId(100L);
+        entity.setExternalId("some-external-id");
         entity.setGatewayName("testGatewayName");
         entity.setType(GatewayAccountEntity.Type.fromString("test"));
         entity.setDescription("aDescription");
@@ -45,6 +46,7 @@ public class GatewayAccountResourceDTOTest {
         
         GatewayAccountResourceDTO dto = GatewayAccountResourceDTO.fromEntity(entity);
         assertThat(dto.getAccountId(), is(entity.getId()));
+        assertThat(dto.getExternalId(), is(entity.getExternalId()));
         assertThat(dto.getPaymentProvider(), is(entity.getGatewayName()));
         assertThat(dto.getType(), is(entity.getType()));
         assertThat(dto.getDescription(), is(entity.getDescription()));

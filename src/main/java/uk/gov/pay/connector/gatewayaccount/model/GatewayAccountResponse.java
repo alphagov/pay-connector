@@ -20,6 +20,9 @@ public class GatewayAccountResponse {
     @JsonProperty("description")
     private final String description;
 
+    @JsonProperty("external_id")
+    private final String externalId;
+
     @JsonProperty("analytics_id")
     private final String analyticsId;
 
@@ -37,6 +40,7 @@ public class GatewayAccountResponse {
 
     public GatewayAccountResponse(GatewayAccountResponseBuilder gatewayAccountResponseBuilder) {
         this.gatewayAccountId = gatewayAccountResponseBuilder.gatewayAccountId;
+        this.externalId = gatewayAccountResponseBuilder.externalId;
         this.providerAccountType = gatewayAccountResponseBuilder.providerAccountType;
         this.serviceName = gatewayAccountResponseBuilder.serviceName;
         this.description = gatewayAccountResponseBuilder.description;
@@ -78,6 +82,10 @@ public class GatewayAccountResponse {
         return requires3ds;
     }
 
+    public String getExternalId() {
+        return externalId;
+    }
+
     public static class GatewayAccountResponseBuilder {
 
         private String providerAccountType;
@@ -86,6 +94,7 @@ public class GatewayAccountResponse {
         private String description;
         private String analyticsId;
         private String gatewayAccountId;
+        private String externalId;
         private boolean requires3ds;
         private URI location;
         private List<Map<String, Object>> links;
@@ -96,6 +105,11 @@ public class GatewayAccountResponse {
 
         public GatewayAccountResponseBuilder gatewayAccountId(String gatewayAccountId) {
             this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public GatewayAccountResponseBuilder externalId(String externalId) {
+            this.externalId = externalId;
             return this;
         }
 

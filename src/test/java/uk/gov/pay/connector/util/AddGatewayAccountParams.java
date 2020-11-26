@@ -7,9 +7,11 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
     private String accountId;
+    private String externalId;
     private String paymentGateway;
     private Map<String, String> credentials;
     private String serviceName;
@@ -35,6 +37,10 @@ public class AddGatewayAccountParams {
 
     public String getAccountId() {
         return accountId;
+    }
+
+    public String getExternalId() {
+        return externalId;
     }
 
     public String getPaymentGateway() {
@@ -125,6 +131,7 @@ public class AddGatewayAccountParams {
         private boolean allowApplePay;
         private boolean allowGooglePay;
         private boolean requires3ds;
+        private String externalId = randomUuid();
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -226,6 +233,7 @@ public class AddGatewayAccountParams {
         public AddGatewayAccountParams build() {
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
             addGatewayAccountParams.accountId = this.accountId;
+            addGatewayAccountParams.externalId = this.externalId;
             addGatewayAccountParams.paymentGateway = this.paymentGateway;
             addGatewayAccountParams.corporatePrepaidDebitCardSurchargeAmount = this.corporatePrepaidDebitCardSurchargeAmount;
             addGatewayAccountParams.analyticsId = this.analyticsId;
@@ -249,6 +257,11 @@ public class AddGatewayAccountParams {
 
         public AddGatewayAccountParamsBuilder withIntegrationVersion3ds(int integrationVersion3ds) {
             this.integrationVersion3ds = integrationVersion3ds;
+            return this;
+        }
+
+        public AddGatewayAccountParamsBuilder withExternalId(String externalId) {
+            this.externalId = externalId;
             return this;
         }
     }

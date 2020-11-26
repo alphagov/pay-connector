@@ -26,6 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 
 public class ChargeDaoCardDetailsIT extends DaoITestBase {
@@ -118,6 +119,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     @Test
     public void persist_shouldStoreCardDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
+        testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = AddressFixture.anAddress().build();
@@ -134,6 +136,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     @Test
     public void persist_shouldStoreNullCardTypeDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
+        testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = AddressFixture.anAddress().build();

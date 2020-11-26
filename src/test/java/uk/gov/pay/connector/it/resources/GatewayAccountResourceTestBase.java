@@ -127,6 +127,7 @@ public class GatewayAccountResourceTestBase {
 
         response.header("Location", containsString(urlSlug))
                 .body("gateway_account_id", containsString(accountId))
+                .body("external_id", is(notNullValue()))
                 .body("type", is(type.toString()))
                 .body("description", is(description))
                 .body("service_name", is(name))

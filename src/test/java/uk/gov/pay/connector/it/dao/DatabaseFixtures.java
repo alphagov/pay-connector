@@ -31,6 +31,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class DatabaseFixtures {
 
@@ -313,6 +314,7 @@ public class DatabaseFixtures {
 
     public class TestAccount {
         long accountId = RandomUtils.nextLong(1, 99999);
+        String externalId = randomUuid();
         private String paymentProvider = "sandbox";
         private Map<String, String> credentials = new HashMap<>();
         private String serviceName = "service_name";
@@ -337,6 +339,10 @@ public class DatabaseFixtures {
 
         public long getAccountId() {
             return accountId;
+        }
+
+        public String getExternalId() {
+            return externalId;
         }
 
         public String getPaymentProvider() {
@@ -477,6 +483,7 @@ public class DatabaseFixtures {
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
+                    .withExternalId(externalId)
                     .withPaymentGateway(paymentProvider)
                     .withCredentials(credentials)
                     .withServiceName(serviceName)
