@@ -9,6 +9,7 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
+import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -20,7 +21,6 @@ import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
@@ -135,8 +135,8 @@ public class EventFactory {
                 return PaymentNotificationCreated.from(chargeEvent);
             } else if (eventClass == CancelledByUser.class) {
                 return CancelledByUser.from(chargeEvent);
-            } else if (eventClass == UserEmailCollected.class) {
-                return UserEmailCollected.from(chargeEvent.getChargeEntity());
+            } else if (eventClass == BackfillerRecreatedUserEmailCollected.class) {
+                return BackfillerRecreatedUserEmailCollected.from(chargeEvent.getChargeEntity());
             } else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),

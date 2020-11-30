@@ -15,6 +15,7 @@ import java.util.Optional;
 public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     private final Long corporateSurcharge;
+    private final String email;
     private final String cardType;
     private final String cardBrand;
     private final String cardBrandLabel;
@@ -36,6 +37,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private PaymentDetailsEnteredEventDetails(Builder builder) {
 
         this.corporateSurcharge = builder.corporateSurcharge;
+        this.email = builder.email;
         this.cardType = builder.cardType;
         this.cardBrand = builder.cardBrand;
         this.cardBrandLabel = builder.cardBrandLabel;
@@ -57,6 +59,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     public static PaymentDetailsEnteredEventDetails from(ChargeEntity charge) {
         Builder builder = new Builder()
+                .withEmail(charge.getEmail())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCorporateSurcharge(charge.getCorporateSurcharge().orElse(null))
                 .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(charge))
@@ -90,6 +93,10 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     public Long getCorporateSurcharge() {
         return corporateSurcharge;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public String getCardType() {
@@ -166,6 +173,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         if (o == null || getClass() != o.getClass()) return false;
         PaymentDetailsEnteredEventDetails that = (PaymentDetailsEnteredEventDetails) o;
         return Objects.equals(corporateSurcharge, that.corporateSurcharge) &&
+                Objects.equals(email, that.email) &&
                 Objects.equals(cardType, that.cardType) &&
                 Objects.equals(cardBrand, that.cardBrand) &&
                 Objects.equals(firstDigitsCardNumber, that.firstDigitsCardNumber) &&
@@ -186,13 +194,14 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     @Override
     public int hashCode() {
-        return Objects.hash(corporateSurcharge, cardType, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
+        return Objects.hash(corporateSurcharge, email, cardType, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
                 gatewayTransactionId, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode,
                 addressCounty, addressStateProvince, addressCountry, wallet, totalAmount);
     }
 
     private static class Builder {
         private Long corporateSurcharge;
+        private String email;
         private String cardType;
         private String cardBrand;
         private String cardBrandLabel;
@@ -213,6 +222,11 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
         Builder withCorporateSurcharge(Long corporateSurcharge) {
             this.corporateSurcharge = corporateSurcharge;
+            return this;
+        }
+
+        Builder withEmail(String email) {
+            this.email = email;
             return this;
         }
 

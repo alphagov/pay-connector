@@ -64,6 +64,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
 
         assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(10)));
+        assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(110)));
         assertThat(actual, hasJsonPath("$.event_details.card_type", equalTo("DEBIT")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
