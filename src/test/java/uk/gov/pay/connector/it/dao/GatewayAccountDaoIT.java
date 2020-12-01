@@ -537,6 +537,21 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(storedNotifySettings.get("notify_template_id"), is(notifyTemplateId));
     }
 
+    @Test
+    public void findByExternalId_shouldFindGatewayAccount() {
+        Long id = nextLong();
+        String externalId = randomUuid();
+        databaseFixtures
+                .aTestAccount()
+                .withAccountId(id)
+                .withExternalId(externalId)
+                .insert();
+        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByExternalId(externalId);
+        assertThat(gatewayAccountOptional.isPresent(), is(true));
+        assertThat(gatewayAccountOptional.get().getId(), is(id));
+        assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));
+    }
+
     private DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
         return databaseFixtures
                 .aTestAccount()

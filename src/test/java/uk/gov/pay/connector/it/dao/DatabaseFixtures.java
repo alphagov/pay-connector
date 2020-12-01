@@ -480,6 +480,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))

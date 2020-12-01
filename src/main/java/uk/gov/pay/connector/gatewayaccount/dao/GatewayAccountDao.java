@@ -62,4 +62,13 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         
         return query.getResultList();
     }
+
+    public Optional<GatewayAccountEntity> findByExternalId(String externalId) {
+        String query = "SELECT g FROM GatewayAccountEntity g where g.externalId = :externalId";
+
+        return entityManager.get()
+                .createQuery(query, GatewayAccountEntity.class)
+                .setParameter("externalId", externalId)
+                .getResultList().stream().findFirst();
+    }
 }

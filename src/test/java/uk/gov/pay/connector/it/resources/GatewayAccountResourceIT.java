@@ -794,4 +794,34 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
     }
+
+    @Test
+    public void shouldReturnAccountInformationForGetAccountByExternalId() {
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .insert();
+
+        givenSetup()
+                .get(ACCOUNTS_EXTERNAL_ID_URL + defaultTestAccount.getExternalId())
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("sandbox"))
+                .body("gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
+                .body("external_id", is(defaultTestAccount.getExternalId()))
+                .body("type", is(TEST.toString()))
+                .body("description", is("a description"))
+                .body("analytics_id", is("an analytics id"))
+                .body("email_collection_mode", is("OPTIONAL"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
+                .body("service_name", is("service_name"))
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("allow_google_pay", is(false))
+                .body("allow_apple_pay", is(false))
+                .body("allow_zero_amount", is(false))
+                .body("integration_version_3ds", is(2));
+    }
 }
