@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayAccountServiceTest {
@@ -357,5 +358,14 @@ public class GatewayAccountServiceTest {
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(mockGatewayAccountEntity).setIntegrationVersion3ds(2);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldGetGatewayAccountByExternalId() {
+        String externalId = randomUuid();
+        when(mockGatewayAccountDao.findByExternalId(externalId)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccountByExternal(externalId);
+
+        assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
     }
 }

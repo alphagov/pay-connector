@@ -27,6 +27,7 @@ public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
+    public static final String ACCOUNTS_EXTERNAL_ID_URL = ACCOUNTS_API_URL + "external-id/";
 
     @DropwizardTestContext
     protected TestContext testContext;

@@ -91,6 +91,10 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
 
+    public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {
+        return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
+    }
+
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater = Map.ofEntries(
             entry(
                 CREDENTIALS_GATEWAY_MERCHANT_ID,
