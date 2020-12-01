@@ -36,6 +36,9 @@ worldpay:
   urls:
     test: ${GDS_CONNECTOR_WORLDPAY_TEST_URL}
     live: ${GDS_CONNECTOR_WORLDPAY_LIVE_URL}
+  threeDsFlexDdcUrls:
+    test: ${WORLDPAY_3DS_FLEX_DDC_TEST_URL}
+    live: ${WORLDPAY_3DS_FLEX_DDC_LIVE_URL}
   secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATION_ENABLED:-false}
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-.worldpay.com}
   credentials: ['username','password','merchant_id']
