@@ -20,6 +20,9 @@ worldpay:
   urls:
     test: http://localhost:10107/not/used
     live: http://localhost:10107/not/used
+  threeDsFlexDdcUrls:
+    test: https://secure-test.worldpay.com/shopper/3ds/ddc.html
+    live: https://secure-test.worldpay.com/shopper/3ds/ddc.html
   secureNotificationEnabled: true
   notificationDomain: ""
   applePay:

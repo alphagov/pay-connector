@@ -25,6 +25,9 @@ worldpay:
   urls:
     test: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
     live: http://localhost:10107/jsp/merchant/xml/paymentService.jsp
+  threeDsFlexDdcUrls:
+    test: https://secure-test.worldpay.com/shopper/3ds/ddc.html
+    live: https://secure-test.worldpay.com/shopper/3ds/ddc.html
   secureNotificationEnabled: true
   notificationDomain: "amazonaws.com"
   credentials: ['username','password','merchant_id']
