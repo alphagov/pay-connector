@@ -20,6 +20,9 @@ worldpay:
   urls:
     test: http://localhost:10107/not/used
     live: http://localhost:10107/not/used
+  threeDsFlexDdcUrls:
+    test: https://localhost:10108/not/used
+    live: https://localhost:10108/not/used
   secureNotificationEnabled: true
   notificationDomain: ""
   applePay:
