@@ -42,20 +42,12 @@ public class WorldpayUpdate3dsFlexCredentialsRequest {
         return jwtMacKey;
     }
 
-    public boolean hasAllCredentials() {
-        return isNoneBlank(issuer, organisationalUnitId, jwtMacKey);
-    }
-
     public static final class WorldpayUpdate3dsFlexCredentialsRequestBuilder {
         private String issuer;
         private String organisationalUnitId;
         private String jwtMacKey;
 
         private WorldpayUpdate3dsFlexCredentialsRequestBuilder() {
-        }
-
-        public static WorldpayUpdate3dsFlexCredentialsRequestBuilder aWorldpayUpdate3dsFlexCredentialsRequest() {
-            return new WorldpayUpdate3dsFlexCredentialsRequestBuilder();
         }
 
         public WorldpayUpdate3dsFlexCredentialsRequestBuilder withIssuer(String issuer) {
