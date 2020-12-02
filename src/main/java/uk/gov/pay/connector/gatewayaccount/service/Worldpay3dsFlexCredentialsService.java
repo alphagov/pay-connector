@@ -38,10 +38,5 @@ public class Worldpay3dsFlexCredentialsService {
                     .build();
             worldpay3dsFlexCredentialsDao.merge(newWorldpay3dsFlexCredentialsEntity);
         });
-        gatewayAccountEntity.setIntegrationVersion3ds(
-                worldpayUpdate3dsFlexCredentialsRequest.hasAllCredentials() ?
-                        IntegrationVersion3DS.TWO.getValue() :
-                        IntegrationVersion3DS.ONE.getValue());
-        gatewayAccountDao.merge(gatewayAccountEntity);
     }
 }
