@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -84,8 +85,10 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ValueSource(strings = { "test", "live" })
     void account_credentials_are_valid_for_a_gateway_account(String type) {
         var gatewayAccount = aGatewayAccountEntity().withType(GatewayAccountEntity.Type.fromString(type)).build();
-        var flexCredentials = new Worldpay3dsFlexCredentials("53f0917f101a4428b69d5fb0",
-                "57992a087a0c4849895ab8a2", "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9");
+        var validIssuer = "53f0917f101a4428b69d5fb0";
+        var validOrgUnitId = "57992a087a0c4849895ab8a2";
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        var flexCredentials = new Worldpay3dsFlexCredentials(validIssuer, validOrgUnitId, validJwtMacKey);
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
@@ -97,10 +100,23 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         assertTrue(service.validateCredentials(gatewayAccount, flexCredentials));
     }
 
-    @Test
-    @Disabled
-    void account_credentials_are_invalid_for_a_live_gateway_account() {
-        //TODO implement
+    @ParameterizedTest
+    @ValueSource(strings = { "test", "live" })
+    void account_credentials_are_invalid_for_a_live_gateway_account(String type) {
+        var gatewayAccount = aGatewayAccountEntity().withType(GatewayAccountEntity.Type.fromString(type)).build();
+        var invalidIssuer = "54i0917n10va4428b69l5id0";
+        var invalidOrgUnitId = "57992i087n0v4849895alid2";
+        var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        var flexCredentials = new Worldpay3dsFlexCredentials(invalidIssuer, invalidOrgUnitId, invalidJwtMacKey);
+
+        when(response.getStatus()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+        when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
+        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
+                any(ZonedDateTime.class))).thenReturn(DDC_TOKEN);
+        var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
+        when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
+
+        assertFalse(service.validateCredentials(gatewayAccount, flexCredentials));
     }
 
     @Test

@@ -16,6 +16,8 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `LEDGER_URL` | - | Base URL of Ledger |
 | `GDS_CONNECTOR_WORLDPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Worldpay payment provider. |
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
+| `WORLDPAY_3DS_FLEX_DDC_TEST_URL` | - | Pointing to Worldpay's TEST Device Data Collection URL. |
+| `WORLDPAY_3DS_FLEX_DDC_LIVE_URL` | - | Pointing to Cardinal Commerce's LIVE Device Data Collection URL. |
 | `GDS_CONNECTOR_SMARTPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_SMARTPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_EPDQ_TEST_URL` | - | Pointing to the TEST gateway URL of ePDQ payment provider. |
