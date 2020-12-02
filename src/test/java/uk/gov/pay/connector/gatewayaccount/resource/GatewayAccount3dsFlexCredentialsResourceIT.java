@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,12 +20,17 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -31,12 +38,17 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String ACCOUNTS_API_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
-
+    private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
+    
     @DropwizardTestContext
     protected TestContext testContext;
     protected DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures databaseFixtures;
     private Long accountId = 1L;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
     @Before
     public void setUp() {
@@ -50,13 +62,57 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
 
     protected RequestSpecification givenSetup() {
-        return given().port(testContext.getPort())
-                .contentType(JSON);
+        return given().port(testContext.getPort()).contentType(JSON);
+    }
+    
+    @Test
+    public void validate_valid_3ds_flex_credentials() throws Exception {
+        stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
+
+        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validOrgUnitId = "57992i087n0v4849895alid2";
+        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        var payload = objectMapper.writeValueAsString(Map.of(
+                "issuer", validIssuer,
+                "organisational_unit_id", validOrgUnitId,
+                "jwt_mac_key", validJwtMacKey));
+        
+        givenSetup()
+                .body(payload)
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
+                .then()
+                .statusCode(200)
+                .body("result", is("valid"));
     }
 
     @Test
+    public void validate_invalid_3ds_flex_credentials() throws Exception {
+        stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
+
+        var invalidIssuer = "54i0917n10va4428b69l5id0";
+        var invalidOrgUnitId = "57992i087n0v4849895alid2";
+        var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        var payload = objectMapper.writeValueAsString(Map.of(
+                "issuer", invalidIssuer,
+                "organisational_unit_id", invalidOrgUnitId,
+                "jwt_mac_key", invalidJwtMacKey));
+        
+        givenSetup()
+                .body(payload)
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
+                .then()
+                .statusCode(200)
+                .body("result", is("invalid"));
+    }
+
+    @Test
+    public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() {
+        //TODO implement
+    }
+    
+    @Test
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
-         String payload = new ObjectMapper().writeValueAsString(Map.of(
+         String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "organisational_unit_id", "hihihi",
                 "jwt_mac_key", "hihihihihi"
@@ -74,7 +130,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void overrideSetWorldpay3dsCredentials() throws JsonProcessingException {
-        String payload =new ObjectMapper().writeValueAsString(Map.of(
+        String payload =objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "organisational_unit_id", "hihihi",
                 "jwt_mac_key", "hihihihihi"
@@ -84,7 +140,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
-        payload = new ObjectMapper().writeValueAsString(Map.of(
+        payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "updated_issuer",
                 "organisational_unit_id", "updated_organisational_unit_id",
                 "jwt_mac_key", "updated_jwt_mac_key"
@@ -102,7 +158,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void missingFieldsReturnCorrectError() throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(Map.of(
+        String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "jwt_mac_key", "hihihihihi"
         ));
@@ -112,7 +168,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(422)
                 .body("message[0]", is("Field [organisational_unit_id] cannot be null"));
-        payload = new ObjectMapper().writeValueAsString(Map.of(
+        payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "organisational_unit_id", "hihihi"
         ));
@@ -122,7 +178,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(422)
                 .body("message[0]", is("Field [jwt_mac_key] cannot be null"));
-        payload = new ObjectMapper().writeValueAsString(Map.of(
+        payload = objectMapper.writeValueAsString(Map.of(
                 "organisational_unit_id", "hihihi",
                 "jwt_mac_key", "hihihihihi"
         ));        
@@ -132,7 +188,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(422)
                 .body("message[0]", is("Field [issuer] cannot be null"));
-        payload = new ObjectMapper().writeValueAsString(Map.of(
+        payload = objectMapper.writeValueAsString(Map.of(
                 "organisational_unit_id", "hihihi"
         ));        givenSetup()
                 .body(payload)
@@ -149,7 +205,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         payloadMap.put("issuer", "testissuer");
         payloadMap.put("organisational_unit_id", null);
         payloadMap.put("jwt_mac_key", "hihihihihi");
-        String payload = new ObjectMapper().writeValueAsString(payloadMap);
+        String payload = objectMapper.writeValueAsString(payloadMap);
         givenSetup()
                 .body(payload)
                 .post(format(ACCOUNTS_API_URL,accountId))
@@ -161,7 +217,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     @Test
     public void nonExistentGatewayAccountReturns404() throws JsonProcessingException {
         Long fakeAccountId = RandomUtils.nextLong();
-        String payload = new ObjectMapper().writeValueAsString(Map.of(
+        String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "organisational_unit_id", "hihihi",
                 "jwt_mac_key", "hihihihihi"
@@ -181,7 +237,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .withIntegrationVersion3ds(2)
                 .withAccountId(fakeAccountId)
                 .insert();
-        String payload = new ObjectMapper().writeValueAsString(Map.of(
+        String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
                 "organisational_unit_id", "hihihi",
                 "jwt_mac_key", "hihihihihi"

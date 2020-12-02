@@ -78,6 +78,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         }
 
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
+        configOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + WIREMOCK_PORT + "/shopper/3ds/ddc.html"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
