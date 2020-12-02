@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class GatewayAccount {
     public static final String CREDENTIALS_MERCHANT_ID = "merchant_id";
@@ -47,5 +48,20 @@ public class GatewayAccount {
 
     public static GatewayAccount valueOf(GatewayAccountEntity entity) {
         return new GatewayAccount(entity.getId(), entity.getGatewayName(), entity.getCredentials());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GatewayAccount that = (GatewayAccount) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(gatewayName, that.gatewayName) &&
+                Objects.equals(credentials, that.credentials);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, gatewayName, credentials);
     }
 }
