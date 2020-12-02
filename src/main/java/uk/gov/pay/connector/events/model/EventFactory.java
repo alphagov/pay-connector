@@ -21,6 +21,9 @@ import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
@@ -57,7 +60,10 @@ public class EventFactory {
             CaptureSubmitted.class,
             GatewayErrorDuringAuthorisation.class,
             GatewayTimeoutDuringAuthorisation.class,
-            UnexpectedGatewayErrorDuringAuthorisation.class
+            UnexpectedGatewayErrorDuringAuthorisation.class,
+            StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class,
+            StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class,
+            StatusCorrectedToCapturedToMatchGatewayStatus.class
     );
     
     private static final List<Class> EVENTS_LEADING_TO_TERMINAL_STATE = 
