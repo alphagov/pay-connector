@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Objects;
 
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class Worldpay3dsFlexCredentials {
 
     private String issuer;
@@ -37,6 +35,11 @@ public class Worldpay3dsFlexCredentials {
 
     public static Worldpay3dsFlexCredentials fromEntity(Worldpay3dsFlexCredentialsEntity entity) {
         return new Worldpay3dsFlexCredentials(entity.getIssuer(), entity.getOrganisationalUnitId(), entity.getJwtMacKey());
+    }
+    
+    public static Worldpay3dsFlexCredentials from(Worldpay3dsFlexCredentialsRequest credentialsRequest) {
+        return new Worldpay3dsFlexCredentials(credentialsRequest.getIssuer(), 
+                credentialsRequest.getOrganisationalUnitId(), credentialsRequest.getJwtMacKey());
     }
 
     @Override
