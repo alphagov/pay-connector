@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayUpdate3dsFlexCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 
@@ -35,7 +35,7 @@ public class GatewayAccount3dsFlexCredentialsResource {
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     public Response createOrUpdateWorldpay3dsCredentials(@PathParam("accountId") Long gatewayAccountId,
-                                                         @Valid WorldpayUpdate3dsFlexCredentialsRequest worldpay3dsCredentials) {
+                                                         @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .filter(gatewayAccountEntity ->

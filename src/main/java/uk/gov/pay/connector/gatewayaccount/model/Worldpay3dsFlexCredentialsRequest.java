@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
-import static org.apache.commons.lang3.StringUtils.isNoneBlank;
-
-public class WorldpayUpdate3dsFlexCredentialsRequest {
+public class Worldpay3dsFlexCredentialsRequest {
 
     @JsonProperty("issuer")
     @NotNull(message = "Field [issuer] cannot be null")
@@ -20,11 +18,11 @@ public class WorldpayUpdate3dsFlexCredentialsRequest {
     @NotNull(message = "Field [jwt_mac_key] cannot be null")
     private String jwtMacKey;
 
-    public WorldpayUpdate3dsFlexCredentialsRequest() {
+    public Worldpay3dsFlexCredentialsRequest() {
         //Blank Constructor Needed For Instantiation
     }
 
-    private WorldpayUpdate3dsFlexCredentialsRequest(WorldpayUpdate3dsFlexCredentialsRequestBuilder builder) {
+    private Worldpay3dsFlexCredentialsRequest(WorldpayUpdate3dsFlexCredentialsRequestBuilder builder) {
         this.issuer = builder.issuer;
         this.organisationalUnitId = builder.organisationalUnitId;
         this.jwtMacKey = builder.jwtMacKey;
@@ -65,8 +63,8 @@ public class WorldpayUpdate3dsFlexCredentialsRequest {
             return this;
         }
 
-        public WorldpayUpdate3dsFlexCredentialsRequest build() {
-            return new WorldpayUpdate3dsFlexCredentialsRequest(this);
+        public Worldpay3dsFlexCredentialsRequest build() {
+            return new Worldpay3dsFlexCredentialsRequest(this);
         }
     }
 }
