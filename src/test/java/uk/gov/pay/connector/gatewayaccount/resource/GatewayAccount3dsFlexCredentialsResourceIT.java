@@ -25,7 +25,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -70,7 +69,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void validate_valid_3ds_flex_credentials() throws Exception {
-        stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
@@ -82,7 +81,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void validate_invalid_3ds_flex_credentials() throws Exception {
-        stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
@@ -102,7 +101,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() throws Exception {
-        stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
 
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
