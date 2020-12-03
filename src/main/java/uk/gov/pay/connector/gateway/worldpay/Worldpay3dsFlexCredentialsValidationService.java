@@ -14,6 +14,7 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.Response;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -49,17 +50,21 @@ public class Worldpay3dsFlexCredentialsValidationService {
 
         String url = threeDsFlexDdcUrls.get(gatewayAccountEntity.getType());
 
-        int status;
+        Response response = null;
         try {
-            status = client.target(url).request().post(Entity.form(formData)).getStatus();
+            response = client.target(url).request().post(Entity.form(formData));
         } catch (ProcessingException e) {
             throw new ThreeDsFlexDdcServiceUnavailableException(e);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
         }
         
-        if (!ACCEPTABLE_RESPONSE_CODES_FROM_3DS_FLEX_URL.contains(status)) {
+        if (!ACCEPTABLE_RESPONSE_CODES_FROM_3DS_FLEX_URL.contains(response.getStatus())) {
             throw new ThreeDsFlexDdcServiceUnavailableException();
         }
         
-        return status == SC_OK;
+        return response.getStatus() == SC_OK;
     }
 }

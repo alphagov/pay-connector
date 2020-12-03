@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -23,10 +24,11 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,7 +46,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     protected TestContext testContext;
     protected DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures databaseFixtures;
-    private Long accountId = 1L;
+    private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @ClassRule
@@ -52,7 +54,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Before
     public void setUp() {
-        accountId = RandomUtils.nextLong();
+        accountId = nextLong(2, 10000);
         databaseTestHelper = testContext.getDatabaseTestHelper();
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
@@ -67,18 +69,10 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void validate_valid_3ds_flex_credentials() throws Exception {
-        stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
-        var validIssuer = "54i0917n10va4428b69l5id0";
-        var validOrgUnitId = "57992i087n0v4849895alid2";
-        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", validIssuer,
-                "organisational_unit_id", validOrgUnitId,
-                "jwt_mac_key", validJwtMacKey));
-        
         givenSetup()
-                .body(payload)
+                .body(getCheck3dsConfigPayloadForValidCredentials())
                 .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200)
@@ -87,7 +81,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void validate_invalid_3ds_flex_credentials() throws Exception {
-        stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
@@ -106,8 +100,23 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
 
     @Test
-    public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() {
-        //TODO implement
+    public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() throws Exception {
+        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
+
+        givenSetup()
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
+                .then()
+                .statusCode(HttpStatus.SC_SERVICE_UNAVAILABLE);
+    }
+    
+    @Test
+    public void should_return_404_when_validating_3ds_flex_credentials_if_gateway_account_does_not_exist() throws Exception{
+        givenSetup()
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId-1))
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND);
     }
     
     @Test
@@ -250,4 +259,13 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .body("message[0]", is("Not a Worldpay gateway account"));
     }
 
+    private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
+        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validOrgUnitId = "57992i087n0v4849895alid2";
+        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        return new ObjectMapper().writeValueAsString(Map.of(
+                "issuer", validIssuer,
+                "organisational_unit_id", validOrgUnitId,
+                "jwt_mac_key", validJwtMacKey));
+    }
 }
