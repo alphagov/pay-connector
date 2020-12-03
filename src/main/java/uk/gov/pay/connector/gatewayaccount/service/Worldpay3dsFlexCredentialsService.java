@@ -4,7 +4,7 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.dao.Worldpay3dsFlexCredentialsDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayUpdate3dsFlexCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 
 import javax.inject.Inject;
 
@@ -23,18 +23,18 @@ public class Worldpay3dsFlexCredentialsService {
     }
 
     @Transactional
-    public void setGatewayAccountWorldpay3dsFlexCredentials(WorldpayUpdate3dsFlexCredentialsRequest worldpayUpdate3dsFlexCredentialsRequest, GatewayAccountEntity gatewayAccountEntity) {
+    public void setGatewayAccountWorldpay3dsFlexCredentials(Worldpay3dsFlexCredentialsRequest worldpay3DsFlexCredentialsRequest, GatewayAccountEntity gatewayAccountEntity) {
         worldpay3dsFlexCredentialsDao.findByGatewayAccountId(gatewayAccountEntity.getId()).ifPresentOrElse(worldpay3dsFlexCredentialsEntity -> {
-            worldpay3dsFlexCredentialsEntity.setIssuer(worldpayUpdate3dsFlexCredentialsRequest.getIssuer());
-            worldpay3dsFlexCredentialsEntity.setJwtMacKey(worldpayUpdate3dsFlexCredentialsRequest.getJwtMacKey());
-            worldpay3dsFlexCredentialsEntity.setOrganisationalUnitId(worldpayUpdate3dsFlexCredentialsRequest.getOrganisationalUnitId());
+            worldpay3dsFlexCredentialsEntity.setIssuer(worldpay3DsFlexCredentialsRequest.getIssuer());
+            worldpay3dsFlexCredentialsEntity.setJwtMacKey(worldpay3DsFlexCredentialsRequest.getJwtMacKey());
+            worldpay3dsFlexCredentialsEntity.setOrganisationalUnitId(worldpay3DsFlexCredentialsRequest.getOrganisationalUnitId());
             worldpay3dsFlexCredentialsDao.merge(worldpay3dsFlexCredentialsEntity);
         }, () -> {
             var newWorldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity()
                     .withGatewayAccountId(gatewayAccountEntity.getId())
-                    .withIssuer(worldpayUpdate3dsFlexCredentialsRequest.getIssuer())
-                    .withJwtMacKey(worldpayUpdate3dsFlexCredentialsRequest.getJwtMacKey())
-                    .withOrganisationalUnitId(worldpayUpdate3dsFlexCredentialsRequest.getOrganisationalUnitId())
+                    .withIssuer(worldpay3DsFlexCredentialsRequest.getIssuer())
+                    .withJwtMacKey(worldpay3DsFlexCredentialsRequest.getJwtMacKey())
+                    .withOrganisationalUnitId(worldpay3DsFlexCredentialsRequest.getOrganisationalUnitId())
                     .build();
             worldpay3dsFlexCredentialsDao.merge(newWorldpay3dsFlexCredentialsEntity);
         });
