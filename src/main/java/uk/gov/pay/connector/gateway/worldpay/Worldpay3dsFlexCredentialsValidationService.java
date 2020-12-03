@@ -4,6 +4,7 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.gateway.ClientFactory;
+import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
 import uk.gov.pay.connector.gateway.worldpay.exception.ThreeDsFlexDdcServiceUnavailableException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -42,6 +43,10 @@ public class Worldpay3dsFlexCredentialsValidationService {
     }
 
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, Worldpay3dsFlexCredentials flexCredentials) {
+        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())) {
+            throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
+        }
+        
         String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity), 
                 flexCredentials, ZonedDateTime.now());
 

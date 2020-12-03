@@ -3,9 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.apache.http.HttpStatus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,12 +15,14 @@ import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
 import uk.gov.pay.connector.gateway.worldpay.exception.ThreeDsFlexDdcServiceUnavailableException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 
 import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -32,6 +32,10 @@ import javax.ws.rs.core.Response;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static java.lang.String.format;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
@@ -90,7 +95,10 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ParameterizedTest
     @ValueSource(strings = { "test", "live" })
     void should_return_true_if_account_credentials_are_valid_for_a_gateway_account(String type) {
-        var gatewayAccount = aGatewayAccountEntity().withType(GatewayAccountEntity.Type.fromString(type)).build();
+        var gatewayAccount = aGatewayAccountEntity()
+                .withType(GatewayAccountEntity.Type.fromString(type))
+                .withGatewayName("worldpay")
+                .build();
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
@@ -106,7 +114,9 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ParameterizedTest
     @ValueSource(strings = { "test", "live" })
     void should_return_true_false_account_credentials_are_invalid_for_a_live_gateway_account(String type) {
-        var gatewayAccount = aGatewayAccountEntity().withType(GatewayAccountEntity.Type.fromString(type)).build();
+        var gatewayAccount = aGatewayAccountEntity()
+                .withGatewayName("worldpay")
+                .withType(GatewayAccountEntity.Type.fromString(type)).build();
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
@@ -125,7 +135,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ParameterizedTest
     @ValueSource(ints = { 100, 204, 303, 404, 500 })
     void should_throw_exception_if_response_from_3ds_flex_ddc_endpoint_is_not_200_or_400(int responseCode) {
-        var gatewayAccount = aGatewayAccountEntity().withType(LIVE).build();
+        var gatewayAccount = aGatewayAccountEntity().withGatewayName("worldpay").withType(LIVE).build();
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(response.getStatus()).thenReturn(responseCode);
@@ -138,11 +148,12 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         var exception = assertThrows(ThreeDsFlexDdcServiceUnavailableException.class,
                 () -> service.validateCredentials(gatewayAccount, flexCredentials));
         assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_SERVICE_UNAVAILABLE);
+        assertThat(exception, is(instanceOf(WebApplicationException.class)));
     }
     
     @Test
     void should_throw_exception_if_processingException_thrown_when_communicating_with_3ds_flex_ddc_endpoint() {
-        var gatewayAccount = aGatewayAccountEntity().withType(LIVE).build();
+        var gatewayAccount = aGatewayAccountEntity().withGatewayName("worldpay").withType(LIVE).build();
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(client.target(threeDsFlexDdcUrls.get("live"))).thenReturn(webTarget);
@@ -155,6 +166,18 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         var exception = assertThrows(ThreeDsFlexDdcServiceUnavailableException.class,
                 () -> service.validateCredentials(gatewayAccount, flexCredentials));
         assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_SERVICE_UNAVAILABLE);
+        assertThat(exception, is(instanceOf(WebApplicationException.class)));
+    }
+
+    @Test
+    void should_throw_exception_if_gateway_account_is_not_a_worldpay_account() {
+        var gatewayAccount = aGatewayAccountEntity().withGatewayName("stripe").build();
+        
+        var exception = assertThrows(NotAWorldpayGatewayAccountException.class,
+                () -> service.validateCredentials(gatewayAccount, getValid3dsFlexCredentials()));
+        assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_NOT_FOUND);
+        assertEquals(exception.getMessage(), format("Gateway account with id %s is not a Worldpay account.", gatewayAccount.getId()));
+        assertThat(exception, is(instanceOf(WebApplicationException.class)));
     }
 
     private Worldpay3dsFlexCredentials getValid3dsFlexCredentials() {
@@ -163,19 +186,13 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         return new Worldpay3dsFlexCredentials(validIssuer, validOrgUnitId, validJwtMacKey);
     }
-
-    @Test
-    @Disabled
-    void gateway_account_is_not_a_worldpay_account() {
-        //TODO implement
-    }
-
+    
     private void mockJerseyClient() {
         MetricRegistry metricRegistry = mock(MetricRegistry.class);
         when(environment.metrics()).thenReturn(metricRegistry);
         when(clientFactory.createWithDropwizardClient(any(PaymentGatewayName.class), any(MetricRegistry.class)))
                 .thenReturn(client);
-        when(webTarget.request()).thenReturn(invocationBuilder);
+        lenient().when(webTarget.request()).thenReturn(invocationBuilder);
     }
     
     private void mockConnectorConfiguration() {
@@ -183,5 +200,4 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         when(connectorConfiguration.getWorldpayConfig()).thenReturn(worldpayConfig);
         when(worldpayConfig.getThreeDsFlexDdcUrls()).thenReturn(threeDsFlexDdcUrls);
     }
-
 }
