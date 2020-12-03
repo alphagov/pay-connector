@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -64,7 +65,7 @@ public class GatewayAccount3dsFlexCredentialsResource {
                 .map(gatewayAccountEntity -> 
                         worldpay3dsFlexCredentialsValidationService.validateCredentials(gatewayAccountEntity, Worldpay3dsFlexCredentials.from(worldpay3dsCredentials)))
                 .map(ValidationResult::new)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     private class ValidationResult {

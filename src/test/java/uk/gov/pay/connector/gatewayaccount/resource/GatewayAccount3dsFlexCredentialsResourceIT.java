@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -23,10 +24,12 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,16 +72,8 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     public void validate_valid_3ds_flex_credentials() throws Exception {
         stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
-        var validIssuer = "54i0917n10va4428b69l5id0";
-        var validOrgUnitId = "57992i087n0v4849895alid2";
-        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", validIssuer,
-                "organisational_unit_id", validOrgUnitId,
-                "jwt_mac_key", validJwtMacKey));
-        
         givenSetup()
-                .body(payload)
+                .body(getCheck3dsConfigPayloadForValidCredentials())
                 .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200)
@@ -106,8 +101,23 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
 
     @Test
-    public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() {
-        //TODO implement
+    public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() throws Exception {
+        stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
+
+        givenSetup()
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
+                .then()
+                .statusCode(HttpStatus.SC_SERVICE_UNAVAILABLE);
+    }
+    
+    @Test
+    public void should_return_404_when_validating_3ds_flex_credentials_if_gateway_account_does_not_exist() throws Exception{
+        givenSetup()
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, nextLong(1, 99999)))
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND);
     }
     
     @Test
@@ -248,6 +258,16 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
+    }
+
+    private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
+        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validOrgUnitId = "57992i087n0v4849895alid2";
+        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        return new ObjectMapper().writeValueAsString(Map.of(
+                "issuer", validIssuer,
+                "organisational_unit_id", validOrgUnitId,
+                "jwt_mac_key", validJwtMacKey));
     }
 
 }
