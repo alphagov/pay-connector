@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
-import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
@@ -84,7 +83,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     public void validate_invalid_3ds_flex_credentials() throws Exception {
         wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
-        var invalidIssuer = "54i0917n10va4428b69l5id0";
+        var invalidIssuer = "54a0917b10ca4428b69d5ed0";
         var invalidOrgUnitId = "57002a087a0c4849895ab8a2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
         var payload = objectMapper.writeValueAsString(Map.of(
@@ -122,24 +121,18 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void should_return_422_if_organisation_unit_id_not_in_correct_format() throws Exception {
-        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validIssuer = "44992a087a0c4849895cc9a3";
         var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         var payload = objectMapper.writeValueAsString(Map.of("issuer", validIssuer,
                 "organisational_unit_id", "incorrectFormat",
                 "jwt_mac_key", validJwtMacKey));
 
-        givenSetup()
-                .body(payload)
-                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId))
-                .then()
-                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.name()))
-                .body("message[0]", is("Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"));
+        verifyIncorrectFormat(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
     }
-
+    
     @Test
     public void should_return_422_if_organisation_unit_id_is_null() throws Exception {
-        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validIssuer = "44992a087a0c4849895cc9a3";
         var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         var jsonFields = new HashMap<String, String>();
         jsonFields.put("issuer", validIssuer);
@@ -147,21 +140,52 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         jsonFields.put("jwt_mac_key", validJwtMacKey);
         var payload = objectMapper.writeValueAsString(jsonFields);
 
+        verifyIncorrectFormat(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
+    }
+
+    @Test
+    public void should_return_422_if_issuer_not_in_correct_format() throws Exception {
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        var validOrgUnitId = "57992a087a0c4849895ab8a2";
+        var payload = objectMapper.writeValueAsString(Map.of("issuer", "44992i087n0v4849895al9i3",
+                "organisational_unit_id", validOrgUnitId,
+                "jwt_mac_key", validJwtMacKey));
+
+        verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
+    }
+    
+    @Test
+    public void should_return_422_if_issuer_is_null() throws Exception {
+        var validOrgUnitId = "44992a087a0c4849895cc9a3";
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        var jsonFields = new HashMap<String, String>();
+        jsonFields.put("issuer", null);
+        jsonFields.put("organisational_unit_id", validOrgUnitId);
+        jsonFields.put("jwt_mac_key", validJwtMacKey);
+        var payload = objectMapper.writeValueAsString(jsonFields);
+
+        verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
+    }
+
+    private void verifyIncorrectFormat(String payload, String expectedErrorMessage) {
         givenSetup()
                 .body(payload)
                 .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.name()))
-                .body("message[0]", is("Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"));
+                .body("message[0]", is(expectedErrorMessage));
     }
-
+    
     @Test
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
+        String issuer = "44992a087a0c4849895cc9a3";
+        String orgUnitId = "57992a087a0c4849895ab8a2";
+        String jwtMacKey = "hihihihihi";
         String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
-                "organisational_unit_id", "57992a087a0c4849895ab8a2",
-                "jwt_mac_key", "hihihihihi"
+                "issuer", issuer,
+                "organisational_unit_id", orgUnitId,
+                "jwt_mac_key", jwtMacKey
         ));
         givenSetup()
                 .body(payload)
@@ -169,15 +193,15 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
-        assertThat(result.get("issuer"), is("testissuer"));
-        assertThat(result.get("organisational_unit_id"), is("57992a087a0c4849895ab8a2"));
-        assertThat(result.get("jwt_mac_key"), is("hihihihihi"));
+        assertThat(result.get("issuer"), is(issuer));
+        assertThat(result.get("organisational_unit_id"), is(orgUnitId));
+        assertThat(result.get("jwt_mac_key"), is(jwtMacKey));
     }
 
     @Test
     public void overrideSetWorldpay3dsCredentials() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
+                "issuer", "53f0917f101a4428b69d5fb0",
                 "organisational_unit_id", "57992a087a0c4849895ab8a2",
                 "jwt_mac_key", "hihihihihi"
         ));
@@ -186,9 +210,12 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
+        
+        String newIssuer = "43f0917f101a4428b69d5fb9";
+        String newOrgUnitId = "44992a087a0c4849895cc9a3";
         payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "updated_issuer",
-                "organisational_unit_id", "44992a087a0c4849895cc9a3",
+                "issuer", newIssuer,
+                "organisational_unit_id", newOrgUnitId,
                 "jwt_mac_key", "updated_jwt_mac_key"
         ));
         givenSetup()
@@ -197,26 +224,23 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
-        assertThat(result.get("issuer"), is("updated_issuer"));
-        assertThat(result.get("organisational_unit_id"), is("44992a087a0c4849895cc9a3"));
+        assertThat(result.get("issuer"), is(newIssuer));
+        assertThat(result.get("organisational_unit_id"), is(newOrgUnitId));
         assertThat(result.get("jwt_mac_key"), is("updated_jwt_mac_key"));
     }
 
     @Test
-    @Parameters({"issuer", "jwt_mac_key"})
-    public void missingFieldsReturnCorrectError(String field) throws JsonProcessingException {
+    public void missingFieldsReturnCorrectError() throws JsonProcessingException {
         Map<String, String> jsonFields = new HashMap<>();
-        jsonFields.put("issuer", "testissuer");
-        jsonFields.put("jwt_mac_key", "hihihihihi");
+        jsonFields.put("issuer", "57992a087a0c4849895ab8a2");
         jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2");
-        jsonFields.remove(field);
 
         givenSetup()
                 .body(objectMapper.writeValueAsString(jsonFields))
                 .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(422)
-                .body("message[0]", is(format("Field [%s] cannot be null", field)));
+                .body("message[0]", is("Field [jwt_mac_key] cannot be null"));
     }
 
     @Test

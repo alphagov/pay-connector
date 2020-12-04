@@ -14,9 +14,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target({FIELD, PARAMETER, ANNOTATION_TYPE})
 @Retention(RUNTIME)
-@Constraint(validatedBy = Worldpay3dsFlexOrganisationalUnitIdValidator.class)
-public @interface ValidWorldpay3dsFlexOrganisationalUnitId {
-    String message() default "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters";
+@Constraint(validatedBy = Worldpay3dsFlexIssuerOrOrganisationalUnitIdValidator.class)
+public @interface ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId {
+    String message();
     Class<?>[] groups() default { };
     Class<? extends Payload>[] payload() default { };
 }
