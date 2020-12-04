@@ -1,18 +1,18 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexOrganisationalUnitId;
+import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId;
 
 import javax.validation.constraints.NotNull;
 
 public class Worldpay3dsFlexCredentialsRequest {
 
     @JsonProperty("issuer")
-    @NotNull(message = "Field [issuer] cannot be null")
+    @ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId(message = "Field [issuer] must be 24 lower-case hexadecimal characters")
     private String issuer;
 
     @JsonProperty("organisational_unit_id")
-    @ValidWorldpay3dsFlexOrganisationalUnitId
+    @ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId(message = "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters")
     private String organisationalUnitId;
 
     @JsonProperty("jwt_mac_key")

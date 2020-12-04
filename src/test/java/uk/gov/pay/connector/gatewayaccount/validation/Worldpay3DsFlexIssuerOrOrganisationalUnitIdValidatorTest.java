@@ -7,9 +7,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class Worldpay3dsFlexOrganisationalUnitIdValidatorTest {
+class Worldpay3DsFlexIssuerOrOrganisationalUnitIdValidatorTest {
     
-    private Worldpay3dsFlexOrganisationalUnitIdValidator validator = new Worldpay3dsFlexOrganisationalUnitIdValidator();
+    private Worldpay3dsFlexIssuerOrOrganisationalUnitIdValidator validator = new Worldpay3dsFlexIssuerOrOrganisationalUnitIdValidator();
     
     @Test
     void test_for_valid_value() {
