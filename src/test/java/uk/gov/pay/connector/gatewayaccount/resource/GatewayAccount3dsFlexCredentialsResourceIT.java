@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
+import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
@@ -10,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -29,7 +31,6 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
@@ -84,7 +85,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
         var invalidIssuer = "54i0917n10va4428b69l5id0";
-        var invalidOrgUnitId = "57992i087n0v4849895alid2";
+        var invalidOrgUnitId = "57002a087a0c4849895ab8a2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
         var payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", invalidIssuer,
@@ -111,7 +112,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
     
     @Test
-    public void should_return_404_when_validating_3ds_flex_credentials_if_gateway_account_does_not_exist() throws Exception{
+    public void should_return_404_when_validating_3ds_flex_credentials_if_gateway_account_does_not_exist() throws Exception {
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
                 .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId-1))
@@ -120,120 +121,110 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
     
     @Test
+    public void should_return_422_if_organisation_unit_id_not_in_correct_format() throws Exception {
+        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        var payload = objectMapper.writeValueAsString(Map.of("issuer", validIssuer,
+                "organisational_unit_id", "incorrectFormat",
+                "jwt_mac_key", validJwtMacKey));
+
+        givenSetup()
+                .body(payload)
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.name()))
+                .body("message[0]", is("Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"));
+    }
+
+    @Test
+    public void should_return_422_if_organisation_unit_id_is_null() throws Exception {
+        var validIssuer = "54i0917n10va4428b69l5id0";
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        var jsonFields = new HashMap<String, String>();
+        jsonFields.put("issuer", validIssuer);
+        jsonFields.put("organisational_unit_id", null);
+        jsonFields.put("jwt_mac_key", validJwtMacKey);
+        var payload = objectMapper.writeValueAsString(jsonFields);
+
+        givenSetup()
+                .body(payload)
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.name()))
+                .body("message[0]", is("Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"));
+    }
+
+    @Test
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
-         String payload = objectMapper.writeValueAsString(Map.of(
+        String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
-                "organisational_unit_id", "hihihi",
+                "organisational_unit_id", "57992a087a0c4849895ab8a2",
                 "jwt_mac_key", "hihihihihi"
         ));
         givenSetup()
                 .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
+                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
-        var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId); 
+        var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
         assertThat(result.get("issuer"), is("testissuer"));
-        assertThat(result.get("organisational_unit_id"), is("hihihi"));
+        assertThat(result.get("organisational_unit_id"), is("57992a087a0c4849895ab8a2"));
         assertThat(result.get("jwt_mac_key"), is("hihihihihi"));
     }
 
     @Test
     public void overrideSetWorldpay3dsCredentials() throws JsonProcessingException {
-        String payload =objectMapper.writeValueAsString(Map.of(
+        String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "testissuer",
-                "organisational_unit_id", "hihihi",
+                "organisational_unit_id", "57992a087a0c4849895ab8a2",
                 "jwt_mac_key", "hihihihihi"
         ));
         givenSetup()
                 .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
+                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
         payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "updated_issuer",
-                "organisational_unit_id", "updated_organisational_unit_id",
+                "organisational_unit_id", "44992a087a0c4849895cc9a3",
                 "jwt_mac_key", "updated_jwt_mac_key"
         ));
         givenSetup()
-                .body(payload) 
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
+                .body(payload)
+                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
         assertThat(result.get("issuer"), is("updated_issuer"));
-        assertThat(result.get("organisational_unit_id"), is("updated_organisational_unit_id"));
+        assertThat(result.get("organisational_unit_id"), is("44992a087a0c4849895cc9a3"));
         assertThat(result.get("jwt_mac_key"), is("updated_jwt_mac_key"));
     }
 
     @Test
-    public void missingFieldsReturnCorrectError() throws JsonProcessingException {
-        String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
-                "jwt_mac_key", "hihihihihi"
-        ));
-        givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
-                .then()
-                .statusCode(422)
-                .body("message[0]", is("Field [organisational_unit_id] cannot be null"));
-        payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
-                "organisational_unit_id", "hihihi"
-        ));
-        givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
-                .then()
-                .statusCode(422)
-                .body("message[0]", is("Field [jwt_mac_key] cannot be null"));
-        payload = objectMapper.writeValueAsString(Map.of(
-                "organisational_unit_id", "hihihi",
-                "jwt_mac_key", "hihihihihi"
-        ));        
-        givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
-                .then()
-                .statusCode(422)
-                .body("message[0]", is("Field [issuer] cannot be null"));
-        payload = objectMapper.writeValueAsString(Map.of(
-                "organisational_unit_id", "hihihi"
-        ));        givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
-                .then()
-                .statusCode(422)
-                .body("message", hasItem("Field [jwt_mac_key] cannot be null"))
-                .body("message", hasItem("Field [issuer] cannot be null"));
-    }
+    @Parameters({"issuer", "jwt_mac_key"})
+    public void missingFieldsReturnCorrectError(String field) throws JsonProcessingException {
+        Map<String, String> jsonFields = new HashMap<>();
+        jsonFields.put("issuer", "testissuer");
+        jsonFields.put("jwt_mac_key", "hihihihihi");
+        jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2");
+        jsonFields.remove(field);
 
-    @Test
-    public void postRequestWithNullParameter() throws JsonProcessingException {
-        HashMap<String, String> payloadMap = new HashMap<>();
-        payloadMap.put("issuer", "testissuer");
-        payloadMap.put("organisational_unit_id", null);
-        payloadMap.put("jwt_mac_key", "hihihihihi");
-        String payload = objectMapper.writeValueAsString(payloadMap);
         givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,accountId))
+                .body(objectMapper.writeValueAsString(jsonFields))
+                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(422)
-                .body("message[0]", is("Field [organisational_unit_id] cannot be null"));
+                .body("message[0]", is(format("Field [%s] cannot be null", field)));
     }
 
     @Test
     public void nonExistentGatewayAccountReturns404() throws JsonProcessingException {
         Long fakeAccountId = RandomUtils.nextLong();
-        String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
-                "organisational_unit_id", "hihihi",
-                "jwt_mac_key", "hihihihihi"
-        ));
         givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,fakeAccountId))
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(ACCOUNTS_API_URL, fakeAccountId))
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
@@ -246,24 +237,19 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .withIntegrationVersion3ds(2)
                 .withAccountId(fakeAccountId)
                 .insert();
-        String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "testissuer",
-                "organisational_unit_id", "hihihi",
-                "jwt_mac_key", "hihihihihi"
-        ));
         givenSetup()
-                .body(payload)
-                .post(format(ACCOUNTS_API_URL,fakeAccountId))
+                .body(getCheck3dsConfigPayloadForValidCredentials())
+                .post(format(ACCOUNTS_API_URL, fakeAccountId))
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
     }
 
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
-        var validIssuer = "54i0917n10va4428b69l5id0";
-        var validOrgUnitId = "57992i087n0v4849895alid2";
-        var validJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
-        return new ObjectMapper().writeValueAsString(Map.of(
+        var validIssuer = "53f0917f101a4428b69d5fb0";
+        var validOrgUnitId = "57992a087a0c4849895ab8a2";
+        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
+        return objectMapper.writeValueAsString(Map.of(
                 "issuer", validIssuer,
                 "organisational_unit_id", validOrgUnitId,
                 "jwt_mac_key", validJwtMacKey));
