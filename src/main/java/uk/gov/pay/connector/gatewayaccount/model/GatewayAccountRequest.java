@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -61,7 +61,7 @@ public class GatewayAccountRequest {
     @JsonIgnore
     public boolean isValidProviderAccountType() {
         try {
-            GatewayAccountEntity.Type.fromString(providerAccountType);
+            GatewayAccountType.fromString(providerAccountType);
             return true;
         } catch (IllegalArgumentException iae) {
             return false;

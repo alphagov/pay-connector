@@ -19,11 +19,13 @@ public class GatewayAccount {
     private Long id;
     private String gatewayName;
     private Map<String, String> credentials;
+    private GatewayAccountType type;
 
-    public GatewayAccount(Long id, String gatewayName, Map<String, String> credentials) {
+    public GatewayAccount(Long id, String gatewayName, Map<String, String> credentials, GatewayAccountType type) {
         this.id = id;
         this.gatewayName = gatewayName;
         this.credentials = credentials;
+        this.type = type;
     }
 
     @JsonProperty("gateway_account_id")
@@ -47,7 +49,7 @@ public class GatewayAccount {
     }
 
     public static GatewayAccount valueOf(GatewayAccountEntity entity) {
-        return new GatewayAccount(entity.getId(), entity.getGatewayName(), entity.getCredentials());
+        return new GatewayAccount(entity.getId(), entity.getGatewayName(), entity.getCredentials(), GatewayAccountType.fromString(entity.getType()));
     }
 
     @Override
@@ -63,5 +65,9 @@ public class GatewayAccount {
     @Override
     public int hashCode() {
         return Objects.hash(id, gatewayName, credentials);
+    }
+
+    public GatewayAccountType getType() {
+        return type;
     }
 }

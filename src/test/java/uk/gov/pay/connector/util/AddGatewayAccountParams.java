@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import java.util.Map;
 
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
@@ -15,7 +15,7 @@ public class AddGatewayAccountParams {
     private String paymentGateway;
     private Map<String, String> credentials;
     private String serviceName;
-    private GatewayAccountEntity.Type type;
+    private GatewayAccountType type;
     private String description;
     private String analyticsId;
     private EmailCollectionMode emailCollectionMode;
@@ -55,7 +55,7 @@ public class AddGatewayAccountParams {
         return serviceName;
     }
 
-    public GatewayAccountEntity.Type getType() {
+    public GatewayAccountType getType() {
         return type;
     }
 
@@ -116,7 +116,7 @@ public class AddGatewayAccountParams {
         private String paymentGateway = "provider";
         private Map<String, String> credentials;
         private String serviceName = "service name";
-        private GatewayAccountEntity.Type type = TEST;
+        private GatewayAccountType type = TEST;
         private String description = "description";
         private String analyticsId;
         private EmailCollectionMode emailCollectionMode = MANDATORY;
@@ -160,7 +160,7 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withType(GatewayAccountEntity.Type type) {
+        public AddGatewayAccountParamsBuilder withType(GatewayAccountType type) {
             this.type = type;
             return this;
         }

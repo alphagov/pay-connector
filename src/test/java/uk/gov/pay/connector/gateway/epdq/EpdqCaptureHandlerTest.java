@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)

@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @Transactional
 public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {

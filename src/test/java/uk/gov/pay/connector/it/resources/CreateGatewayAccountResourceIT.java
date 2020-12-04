@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -22,8 +23,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -191,7 +192,7 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", TEST);
     }
 
-    private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
+    private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
         assertCorrectCreateResponse(response, type, null, null, null);
     }
 }

@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 

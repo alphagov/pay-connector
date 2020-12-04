@@ -24,7 +24,7 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("payment_provider")
     private String paymentProvider;
 
-    private GatewayAccountEntity.Type type;
+    private GatewayAccountType type;
 
     private String description;
 
@@ -88,7 +88,7 @@ public class GatewayAccountResourceDTO {
     public GatewayAccountResourceDTO(long accountId,
                                      String externalId,
                                      String paymentProvider,
-                                     GatewayAccountEntity.Type type,
+                                     GatewayAccountType type,
                                      String description,
                                      String serviceName,
                                      String analyticsId,
@@ -136,7 +136,7 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getId(),
                 gatewayAccountEntity.getExternalId(),
                 gatewayAccountEntity.getGatewayName(),
-                GatewayAccountEntity.Type.fromString(gatewayAccountEntity.getType()),
+                GatewayAccountType.fromString(gatewayAccountEntity.getType()),
                 gatewayAccountEntity.getDescription(),
                 gatewayAccountEntity.getServiceName(),
                 gatewayAccountEntity.getAnalyticsId(),

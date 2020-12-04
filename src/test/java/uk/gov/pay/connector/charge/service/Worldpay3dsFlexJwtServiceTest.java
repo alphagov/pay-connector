@@ -18,13 +18,13 @@ import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtCredentialsExcept
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtPaymentProviderException;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
@@ -44,6 +44,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -92,7 +93,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void shouldCreateCorrectTokenForWorldpay3dsFlexDdc() {
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), VALID_CREDENTIALS);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), VALID_CREDENTIALS, TEST);
         var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
         int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
         int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + TOKEN_EXPIRY_DURATION_SECONDS;
@@ -183,7 +184,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingIssuer() {
         var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials(null, "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
@@ -195,7 +196,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingOrgId() {
         var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", null, "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage(
@@ -208,7 +209,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingJwtMacId() {
         var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", null);
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
@@ -220,7 +221,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void generateDdcToken_shouldThrowExceptionForNonWorldpayAccount() {
         var worldpay3dsFlexCredentials = mock(Worldpay3dsFlexCredentials.class);
-        var gatewayAccount = new GatewayAccount(1L, SMARTPAY.getName(), VALID_CREDENTIALS);
+        var gatewayAccount = new GatewayAccount(1L, SMARTPAY.getName(), VALID_CREDENTIALS, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +

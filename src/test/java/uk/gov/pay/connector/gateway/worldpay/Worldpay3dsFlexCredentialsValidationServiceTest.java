@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
 import uk.gov.pay.connector.gateway.worldpay.exception.ThreeDsFlexDdcServiceUnavailableException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 
 import javax.ws.rs.ProcessingException;
@@ -46,7 +46,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,7 +96,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ValueSource(strings = { "test", "live" })
     void should_return_true_if_account_credentials_are_valid_for_a_gateway_account(String type) {
         var gatewayAccount = aGatewayAccountEntity()
-                .withType(GatewayAccountEntity.Type.fromString(type))
+                .withType(GatewayAccountType.fromString(type))
                 .withGatewayName("worldpay")
                 .build();
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
@@ -116,7 +116,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     void should_return_true_false_account_credentials_are_invalid_for_a_live_gateway_account(String type) {
         var gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("worldpay")
-                .withType(GatewayAccountEntity.Type.fromString(type)).build();
+                .withType(GatewayAccountType.fromString(type)).build();
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
@@ -181,7 +181,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     }
 
     private Worldpay3dsFlexCredentials getValid3dsFlexCredentials() {
-        var validIssuer = "53f0917f101a4428b69d5fb0";
+        var validIssuer = "53f0917f101a4428b69d5fb0"; //pragma: allowlist secret
         var validOrgUnitId = "57992a087a0c4849895ab8a2";
         var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         return new Worldpay3dsFlexCredentials(validIssuer, validOrgUnitId, validJwtMacKey);

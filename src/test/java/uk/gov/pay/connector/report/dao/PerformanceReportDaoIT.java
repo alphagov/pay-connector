@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportEntity;
@@ -31,7 +31,7 @@ public class PerformanceReportDaoIT extends DaoITestBase {
         testAccountFixture = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withType(GatewayAccountEntity.Type.LIVE)
+                .withType(GatewayAccountType.LIVE)
                 .insert();
     }
 
@@ -63,13 +63,13 @@ public class PerformanceReportDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(173L)
-                .withType(GatewayAccountEntity.Type.LIVE)
+                .withType(GatewayAccountType.LIVE)
                 .insert();
         DatabaseFixtures.TestAccount anotherGatewayAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(174L)
-                .withType(GatewayAccountEntity.Type.LIVE)
+                .withType(GatewayAccountType.LIVE)
                 .insert();
         insertCharge(gatewayAccount, 10L, ZonedDateTime.now());
         insertCharge(gatewayAccount, 2L, ZonedDateTime.now());

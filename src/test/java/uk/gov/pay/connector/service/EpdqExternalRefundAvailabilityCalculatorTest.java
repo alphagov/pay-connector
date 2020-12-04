@@ -2,16 +2,14 @@ package uk.gov.pay.connector.service;
 
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -136,14 +134,14 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     private static Charge chargeEntity(ChargeStatus status) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
     private static Charge chargeEntity(ChargeStatus status, long amount) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );

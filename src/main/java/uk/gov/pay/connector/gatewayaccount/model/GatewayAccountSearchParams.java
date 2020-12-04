@@ -130,7 +130,7 @@ public class GatewayAccountSearchParams {
             queryMap.put(REQUIRES_3DS_SQL_FIELD, Boolean.valueOf(requires3ds));
         }
         if (StringUtils.isNotEmpty(type)) {
-            queryMap.put(TYPE_SQL_FIELD, GatewayAccountEntity.Type.fromString(type));
+            queryMap.put(TYPE_SQL_FIELD, GatewayAccountType.fromString(type));
         }
         if (StringUtils.isNotEmpty(paymentProvider)) {
             queryMap.put(PAYMENT_PROVIDER_SQL_FIELD, paymentProvider);

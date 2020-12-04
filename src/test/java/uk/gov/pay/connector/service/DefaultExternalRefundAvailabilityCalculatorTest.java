@@ -6,8 +6,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Arrays;
@@ -141,14 +141,14 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
     }
 
     private Charge chargeEntity(ChargeStatus status) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
     private Charge chargeEntity(ChargeStatus status, long amount) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );
