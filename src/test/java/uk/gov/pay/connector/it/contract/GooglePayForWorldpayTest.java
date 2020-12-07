@@ -66,7 +66,7 @@ public class GooglePayForWorldpayTest {
                 URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"), 
                 gatewayAccount, 
                 gatewayOrder, 
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount));
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials()));
         assertThat(response.getStatus(), is(HttpStatus.SC_OK));
         String entity = response.getEntity();
         System.out.println(entity);

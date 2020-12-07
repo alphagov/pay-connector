@@ -33,7 +33,7 @@ public class SmartpayRefundHandler implements RefundHandler {
                     gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), 
                     buildRefundOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());

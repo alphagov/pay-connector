@@ -32,7 +32,7 @@ public class SmartpayCaptureHandler implements CaptureHandler {
                     gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), 
                     buildCaptureOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, SmartpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());

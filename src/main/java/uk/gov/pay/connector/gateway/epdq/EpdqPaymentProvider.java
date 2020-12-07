@@ -117,7 +117,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url, 
                 request.getGatewayAccount(), 
                 buildAuthoriseOrder(request, frontendUrl), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
@@ -145,7 +145,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url, 
                 request.getGatewayAccount(), 
                 buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
 
@@ -160,7 +160,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url, 
                 charge.getGatewayAccount(), 
                 buildQueryOrderRequestFor(charge),
-                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount().getCredentials()));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
@@ -194,7 +194,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     url, 
                     request.getGatewayAccount(), 
                     buildQueryOrderRequestFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
