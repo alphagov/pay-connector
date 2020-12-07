@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
@@ -132,13 +131,14 @@ public class WorldpayPaymentProviderTest {
     GatewayClient mockGatewayClient;
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
-    private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), WORLDPAY_URL.toString());
+    private Map<String, String> urlMap = Map.of(TEST.toString(), WORLDPAY_URL.toString());
 
     private WorldpayPaymentProvider providerWithMockedGatewayClient;
     private WorldpayPaymentProvider providerWithRealGatewayClient;
 
     private ChargeEntityFixture chargeEntityFixture;
     protected GatewayAccountEntity gatewayAccountEntity;
+    private Map<String, String> gatewayAccountCredentials = Map.of("merchant_id", "MERCHANTCODE");
     private GatewayClient.Response authorisationSuccessResponse;
 
     @Before
@@ -159,7 +159,7 @@ public class WorldpayPaymentProviderTest {
         providerWithRealGatewayClient = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         gatewayAccountEntity = aServiceAccount();
-        gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
+        gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
 
         authorisationSuccessResponse = mock(GatewayClient.Response.class);
@@ -448,7 +448,7 @@ public class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+        assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
     }
 
     @Test
@@ -569,7 +569,7 @@ public class WorldpayPaymentProviderTest {
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("worldpay");
         gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of(
+        gatewayAccount.setCredentials(Map.of(
                 CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
                 CREDENTIALS_USERNAME, "worldpay-password",
                 CREDENTIALS_PASSWORD, "password"

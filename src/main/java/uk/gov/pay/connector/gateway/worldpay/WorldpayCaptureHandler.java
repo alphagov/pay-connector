@@ -35,7 +35,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
                     gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), 
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());

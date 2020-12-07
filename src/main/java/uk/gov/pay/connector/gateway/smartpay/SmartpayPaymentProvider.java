@@ -88,7 +88,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), 
                 buildAuthoriseOrderFor(request), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
@@ -107,7 +107,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         try {
             GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), build3dsResponseAuthOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
             if (gatewayResponse.getBaseResponse().isEmpty())
@@ -142,7 +142,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), buildCancelOrderFor(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }
 

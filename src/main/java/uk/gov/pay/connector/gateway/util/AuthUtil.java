@@ -1,11 +1,10 @@
 package uk.gov.pay.connector.gateway.util;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.Base64;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Base64;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -30,8 +29,8 @@ public class AuthUtil {
         );
     }
 
-    public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(GatewayAccountEntity gae) {
-        String value = encode(gae.getCredentials().get(CREDENTIALS_USERNAME), gae.getCredentials().get(CREDENTIALS_PASSWORD));
+    public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, String> gatewayCredentials) {
+        String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME), gatewayCredentials.get(CREDENTIALS_PASSWORD));
         return ImmutableMap.of(AUTHORIZATION, value);
     }
 }

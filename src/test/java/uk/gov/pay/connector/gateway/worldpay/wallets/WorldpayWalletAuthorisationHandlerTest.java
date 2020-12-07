@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay.wallets;
 
 import com.amazonaws.util.json.Jackson;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,13 +9,13 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
@@ -50,6 +49,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Mock
     private GatewayClient mockGatewayClient;
     private GatewayAccountEntity gatewayAccountEntity;
+    private Map<String, String> gatewayAccountCredentials = Map.of("merchant_id", "MERCHANTCODE");
     private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private ChargeEntity chargeEntity;
 
@@ -64,12 +64,12 @@ public class WorldpayWalletAuthorisationHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, ImmutableMap.of(TEST.toString(), WORLDPAY_URL));
+        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
         chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
         gatewayAccountEntity = new GatewayAccountEntity("worldpay", new HashMap<>(), TEST);
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
-        gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
+        gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
     }
@@ -82,7 +82,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
         }
     }
 
@@ -94,7 +94,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
         }
     }
 
@@ -106,7 +106,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
         }
     }
 
@@ -118,7 +118,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
         }
     }
 
@@ -130,7 +130,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity)));
+            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
         }
     }
 

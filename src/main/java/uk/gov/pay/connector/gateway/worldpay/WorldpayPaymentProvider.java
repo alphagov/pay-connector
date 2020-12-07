@@ -30,7 +30,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -107,7 +106,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 gatewayUrlMap.get(charge.getGatewayAccount().getType()),
                 charge.getGatewayAccount(),
                 buildQuery(charge),
-                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount())
+                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount().getCredentials())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -145,7 +144,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 request.getGatewayAccount(),
                 buildAuthoriseOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
 
         if (response.getEntity().contains("request3DSecure")) {
             logger.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
@@ -165,7 +164,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getGatewayAccount(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
             logger.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
@@ -202,7 +201,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 request.getGatewayAccount(), buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
         return getWorldpayGatewayResponse(response);
     }
 
