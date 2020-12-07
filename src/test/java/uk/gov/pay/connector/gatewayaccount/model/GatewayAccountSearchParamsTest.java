@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapWithSize.aMapWithSize;
 import static org.hamcrest.collection.IsMapWithSize.anEmptyMap;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 public class GatewayAccountSearchParamsTest {
 

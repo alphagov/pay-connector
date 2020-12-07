@@ -38,6 +38,7 @@ import java.util.Map;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @Entity
 @Table(name = "gateway_accounts")
@@ -58,7 +59,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "type", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Type type;
+    private GatewayAccountType type;
 
     @Column(name = "credentials", columnDefinition = "json")
     @Convert(converter = CredentialsConverter.class)
@@ -146,7 +147,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public GatewayAccountEntity() {
     }
 
-    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, Type type) {
+    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, GatewayAccountType type) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
         this.type = type;
@@ -195,7 +196,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("type")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getType() {
-        return type.value;
+        return type.toString();
     }
 
     @JsonProperty("service_name")
@@ -346,7 +347,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.requires3ds = requires3ds;
     }
 
-    public void setType(Type type) {
+    public void setType(GatewayAccountType type) {
         this.type = type;
     }
 
@@ -380,7 +381,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
 
     public boolean isLive() {
-        return Type.LIVE.equals(type);
+        return LIVE.equals(type);
     }
 
     public void setCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
@@ -451,26 +452,4 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         }
     }
 
-    public enum Type {
-        TEST("test"), LIVE("live");
-
-        private final String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        public String toString() {
-            return value;
-        }
-
-        public static Type fromString(String type) {
-            for (Type typeEnum : Type.values()) {
-                if (typeEnum.toString().equalsIgnoreCase(type)) {
-                    return typeEnum;
-                }
-            }
-            throw new IllegalArgumentException("gateway account type has to be one of (test, live)");
-        }
-    }
 }

@@ -56,6 +56,7 @@ public class GatewayAccountServiceTest {
     @Before
     public void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao);
+        when(mockGatewayAccountEntity.getType()).thenReturn("test");
         when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
         when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");
         when(getMockGatewayAccountEntity2.getType()).thenReturn("test");

@@ -20,7 +20,7 @@ public class GatewayAccountResourceDTOTest {
         entity.setId(100L);
         entity.setExternalId("some-external-id");
         entity.setGatewayName("testGatewayName");
-        entity.setType(GatewayAccountEntity.Type.fromString("test"));
+        entity.setType(GatewayAccountType.fromString("test"));
         entity.setDescription("aDescription");
         entity.setServiceName("aServiceName");
         entity.setAnalyticsId("123");

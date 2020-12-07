@@ -11,12 +11,12 @@ import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public final class GatewayAccountEntityFixture {
     private Long id = 1L;
     private String gatewayName = SANDBOX.getName();
-    private GatewayAccountEntity.Type type = TEST;
+    private GatewayAccountType type = TEST;
     private Map<String, String> credentials = Map.of();
     private String serviceName = "Test Service";
     private String description;
@@ -55,7 +55,7 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withType(GatewayAccountEntity.Type type) {
+    public GatewayAccountEntityFixture withType(GatewayAccountType type) {
         this.type = type;
         return this;
     }

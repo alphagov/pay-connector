@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -48,7 +49,7 @@ public class GooglePayForWorldpayTest {
     public void sendPaymentToWorldpay() throws Exception {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setCredentials(ImmutableMap.of(CREDENTIALS_USERNAME, worldpayUsername, CREDENTIALS_PASSWORD, worldpayPassword));
-        gatewayAccount.setType(GatewayAccountEntity.Type.TEST);
+        gatewayAccount.setType(GatewayAccountType.TEST);
 
         String payload = load("templates/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml")
                 .replace("${amount}", "100")

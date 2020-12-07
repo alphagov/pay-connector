@@ -6,7 +6,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
@@ -110,7 +110,7 @@ public class GatewayAccountResourceTestBase {
                 .statusCode(200);
     }
 
-    public static void assertGettingAccountReturnsProviderName(int port, ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
+    public static void assertGettingAccountReturnsProviderName(int port, ValidatableResponse response, String providerName, GatewayAccountType providerUrlType) {
         given().port(port)
                 .contentType(JSON)
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
@@ -122,7 +122,7 @@ public class GatewayAccountResourceTestBase {
                 .body("type", is(providerUrlType.toString()));
     }
 
-    public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
+    public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 

@@ -20,6 +20,7 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferReversalRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -60,7 +61,7 @@ public class StripeRefundHandlerTest {
 
         gatewayAccount.setId(123L);
         gatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
-        gatewayAccount.setType(GatewayAccountEntity.Type.LIVE);
+        gatewayAccount.setType(GatewayAccountType.LIVE);
         gatewayAccount.setGatewayName("stripe");
 
         RefundEntity refundEntity = RefundEntityFixture

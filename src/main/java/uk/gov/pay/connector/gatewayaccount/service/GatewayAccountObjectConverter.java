@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.service;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -23,7 +24,7 @@ public class GatewayAccountObjectConverter {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
                 gatewayAccountRequest.getPaymentProvider(), 
                 credentials,
-                GatewayAccountEntity.Type.fromString(gatewayAccountRequest.getProviderAccountType()));
+                GatewayAccountType.fromString(gatewayAccountRequest.getProviderAccountType()));
 
         gatewayAccountEntity.setExternalId(randomUuid());
 

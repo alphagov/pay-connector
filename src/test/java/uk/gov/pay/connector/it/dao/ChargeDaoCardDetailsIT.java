@@ -15,6 +15,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 
 import java.util.HashMap;
@@ -118,7 +119,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreCardDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
 
@@ -135,7 +136,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreNullCardTypeDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
 

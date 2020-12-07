@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
@@ -458,7 +459,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         CardTypeEntity cardTypeEntity = new CardTypeEntity();
         cardTypeEntity.setRequires3ds(true);
         cardTypeEntity.setBrand(authCardDetails.getCardBrand());
-        gatewayAccountEntity.setType(GatewayAccountEntity.Type.LIVE);
+        gatewayAccountEntity.setType(GatewayAccountType.LIVE);
         gatewayAccountEntity.setGatewayName("worldpay");
         gatewayAccountEntity.setRequires3ds(false);
 
