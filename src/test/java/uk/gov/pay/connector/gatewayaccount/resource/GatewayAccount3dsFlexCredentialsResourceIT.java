@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.specification.RequestSpecification;
+import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
@@ -85,7 +86,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
         var invalidIssuer = "54a0917b10ca4428b69d5ed0";
         var invalidOrgUnitId = "57002a087a0c4849895ab8a2";
-        var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
+        var invalidJwtMacKey = "3751b5f1-4fef-4306-bc09-99df6320d5b8";
         var payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", invalidIssuer,
                 "organisational_unit_id", invalidOrgUnitId,
@@ -167,6 +168,30 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
     }
 
+    @Test
+    public void should_return_422_if_jwt_mac_key_not_in_correct_format() throws Exception {
+        var validIssuer = "44992a087a0c4849895cc9a3";
+        var validOrgUnitId = "57992a087a0c4849895ab8a2";
+        var payload = objectMapper.writeValueAsString(Map.of("issuer", validIssuer,
+                "organisational_unit_id", validOrgUnitId,
+                "jwt_mac_key", "hihihihi"));
+
+        verifyIncorrectFormat(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
+    }
+    
+    @Test
+    public void should_return_422_if_jwt_mac_key_is_null() throws Exception {
+        var validOrgUnitId = "44992a087a0c4849895cc9a3";
+        var validIssuer = "44992a087a0c4849895cc9a3";
+        var jsonFields = new HashMap<String, String>();
+        jsonFields.put("issuer", validIssuer);
+        jsonFields.put("organisational_unit_id", validOrgUnitId);
+        jsonFields.put("jwt_mac_key", null);
+        var payload = objectMapper.writeValueAsString(jsonFields);
+
+        verifyIncorrectFormat(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
+    }
+
     private void verifyIncorrectFormat(String payload, String expectedErrorMessage) {
         givenSetup()
                 .body(payload)
@@ -181,7 +206,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
         String issuer = "44992a087a0c4849895cc9a3";
         String orgUnitId = "57992a087a0c4849895ab8a2";
-        String jwtMacKey = "hihihihihi";
+        String jwtMacKey = "3751b5f1-4fef-4306-bc09-99df6320d5b8";
         String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", issuer,
                 "organisational_unit_id", orgUnitId,
@@ -203,7 +228,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", "53f0917f101a4428b69d5fb0",
                 "organisational_unit_id", "57992a087a0c4849895ab8a2",
-                "jwt_mac_key", "hihihihihi"
+                "jwt_mac_key", "3751b5f1-4fef-4306-bc09-99df6320d5b8"
         ));
         givenSetup()
                 .body(payload)
@@ -213,10 +238,11 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         
         String newIssuer = "43f0917f101a4428b69d5fb9";
         String newOrgUnitId = "44992a087a0c4849895cc9a3";
+        String updatedJwtMacKey = "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8";
         payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", newIssuer,
                 "organisational_unit_id", newOrgUnitId,
-                "jwt_mac_key", "updated_jwt_mac_key"
+                "jwt_mac_key", updatedJwtMacKey
         ));
         givenSetup()
                 .body(payload)
@@ -226,21 +252,28 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
         assertThat(result.get("issuer"), is(newIssuer));
         assertThat(result.get("organisational_unit_id"), is(newOrgUnitId));
-        assertThat(result.get("jwt_mac_key"), is("updated_jwt_mac_key"));
+        assertThat(result.get("jwt_mac_key"), is(updatedJwtMacKey));
     }
 
     @Test
-    public void missingFieldsReturnCorrectError() throws JsonProcessingException {
+    @Parameters({
+            "jwt_mac_key, Field [jwt_mac_key] must be a UUID in its lowercase canonical representation", 
+            "issuer, Field [issuer] must be 24 lower-case hexadecimal characters",
+            "organisational_unit_id, Field [organisational_unit_id] must be 24 lower-case hexadecimal characters",
+    })
+    public void missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
         Map<String, String> jsonFields = new HashMap<>();
         jsonFields.put("issuer", "57992a087a0c4849895ab8a2");
         jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2");
+        jsonFields.put("jwt_mac_key", "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8");
+        jsonFields.remove(key);
 
         givenSetup()
                 .body(objectMapper.writeValueAsString(jsonFields))
                 .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(422)
-                .body("message[0]", is("Field [jwt_mac_key] cannot be null"));
+                .body("message[0]", is(expectedErrorMessage));
     }
 
     @Test

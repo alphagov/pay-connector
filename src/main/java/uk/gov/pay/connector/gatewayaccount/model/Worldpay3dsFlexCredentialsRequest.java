@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId;
+import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexJwtMacKey;
 
 import javax.validation.constraints.NotNull;
 
@@ -16,7 +17,7 @@ public class Worldpay3dsFlexCredentialsRequest {
     private String organisationalUnitId;
 
     @JsonProperty("jwt_mac_key")
-    @NotNull(message = "Field [jwt_mac_key] cannot be null")
+    @ValidWorldpay3dsFlexJwtMacKey
     private String jwtMacKey;
 
     public Worldpay3dsFlexCredentialsRequest() {
