@@ -19,6 +19,11 @@ class Worldpay3dsFlexJwtMacKeyValidatorTest {
     }
     
     @Test
+    void assert_worldpay_test_jwt_mac_key_is_valid() {
+        assertTrue(validator.isValid("fa2daee2-1fbb-45ff-4444-52805d5cd9e0", null));
+    }
+    
+    @Test
     void test_for_invalid_uppercase_UUID() {
         assertFalse(validator.isValid(UUID.randomUUID().toString().toUpperCase(), null));
     }
