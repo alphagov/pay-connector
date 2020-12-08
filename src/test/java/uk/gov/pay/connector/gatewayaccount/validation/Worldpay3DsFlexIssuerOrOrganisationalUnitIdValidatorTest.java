@@ -21,4 +21,14 @@ class Worldpay3DsFlexIssuerOrOrganisationalUnitIdValidatorTest {
     void test_for_invalid_value(String value) {
         assertFalse(validator.isValid(value, null));
     }
+
+    @Test
+    void assert_worldpay_test_orgUnitId_is_valid() {
+        assertTrue(validator.isValid("5bd9b55e4444761ac0af1c80", null));
+    }
+
+    @Test
+    void assert_worldpay_test_issuer_is_valid() {
+        assertTrue(validator.isValid("5bd9e0e4444dce153428c940", null));
+    }
 }
