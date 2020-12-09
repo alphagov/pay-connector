@@ -53,6 +53,9 @@
             />
             </#if>
             </#if>
+            <#if exemptionEngine>
+                <exemption type="OP" placement="AUTHORISATION"/>
+            </#if>
         </order>
     </submit>
 </paymentService>

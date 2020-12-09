@@ -37,6 +37,9 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     @Column(name = "jwt_mac_key")
     private String jwtMacKey;
 
+    @Column(name = "exemption_engine")
+    private boolean exemptionEngine;
+
     public Worldpay3dsFlexCredentialsEntity() {
         super();
     }
@@ -47,6 +50,10 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
         this.issuer = issuer;
         this.organisationalUnitId = organisationalUnitId;
         this.jwtMacKey = jwtMacKey;
+    }
+
+    public boolean isExemptionEngine() {
+        return exemptionEngine;
     }
 
     public Long getId() { return id; }
@@ -92,6 +99,7 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
         private String issuer;
         private String organisationalUnitId;
         private String jwtMacKey;
+        private boolean exemptionEngine;
 
         private Worldpay3dsFlexCredentialsEntityBuilder() {
         }
@@ -120,12 +128,18 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
             return this;
         }
 
+        public Worldpay3dsFlexCredentialsEntityBuilder withExemptionEngine(boolean exemptionEngine) {
+            this.exemptionEngine = exemptionEngine;
+            return this;
+        }
+        
         public Worldpay3dsFlexCredentialsEntity build() {
             Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity = new Worldpay3dsFlexCredentialsEntity();
             worldpay3dsFlexCredentialsEntity.jwtMacKey = this.jwtMacKey;
             worldpay3dsFlexCredentialsEntity.gatewayAccountId = this.gatewayAccountId;
             worldpay3dsFlexCredentialsEntity.organisationalUnitId = this.organisationalUnitId;
             worldpay3dsFlexCredentialsEntity.issuer = this.issuer;
+            worldpay3dsFlexCredentialsEntity.exemptionEngine = this.exemptionEngine;
             return worldpay3dsFlexCredentialsEntity;
         }
     }

@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -221,9 +222,13 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
 
+        boolean exemptionEngine = Optional.ofNullable(request.getGatewayAccount().getWorldpay3dsFlexCredentials())
+                .map(Worldpay3dsFlexCredentials::isExemptionEngine).orElse(false);
+        
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
-                .with3dsRequired(is3dsRequired);
+                .with3dsRequired(is3dsRequired)
+                .withExemptionEngine(exemptionEngine);
 
         if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);

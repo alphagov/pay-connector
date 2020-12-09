@@ -31,6 +31,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String paResponse3ds;
         private String payerIpAddress;
         private String state;
+        private boolean exemptionEngine;
 
         public String getReference() {
             return reference;
@@ -112,6 +113,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setState(String state) {
             this.state = state;
+        }
+
+        public boolean isExemptionEngine() {
+            return exemptionEngine;
+        }
+
+        public void setExemptionEngine(boolean exemptionEngine) {
+            this.exemptionEngine = exemptionEngine;
         }
     }
 
@@ -199,6 +208,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
         logger.info("3DS requirement is: " + requires3ds + " for " + worldpayTemplateData.sessionId);
         worldpayTemplateData.setRequires3ds(requires3ds);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withExemptionEngine(boolean exemptionEngine) {
+        worldpayTemplateData.setExemptionEngine(exemptionEngine);
         return this;
     }
 
