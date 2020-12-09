@@ -31,7 +31,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String paResponse3ds;
         private String payerIpAddress;
         private String state;
-        private boolean exemptionEngine;
+        private boolean exemptionEngineEnabled;
 
         public String getReference() {
             return reference;
@@ -115,12 +115,12 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             this.state = state;
         }
 
-        public boolean isExemptionEngine() {
-            return exemptionEngine;
+        public boolean isExemptionEngineEnabled() {
+            return exemptionEngineEnabled;
         }
 
-        public void setExemptionEngine(boolean exemptionEngine) {
-            this.exemptionEngine = exemptionEngine;
+        public void setExemptionEngineEnabled(boolean exemptionEngineEnabled) {
+            this.exemptionEngineEnabled = exemptionEngineEnabled;
         }
     }
 
@@ -212,7 +212,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
     
     public WorldpayOrderRequestBuilder withExemptionEngine(boolean exemptionEngine) {
-        worldpayTemplateData.setExemptionEngine(exemptionEngine);
+        worldpayTemplateData.setExemptionEngineEnabled(exemptionEngine);
         return this;
     }
 

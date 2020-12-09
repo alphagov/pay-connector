@@ -14,13 +14,13 @@ public class Worldpay3dsFlexCredentials {
 
     @JsonIgnore
     private String jwtMacKey;
-    private boolean exemptionEngine;
+    private boolean exemptionEngineEnabled;
 
-    public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey, boolean exemptionEngine) {
+    public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey, boolean exemptionEngineEnabled) {
         this.issuer = issuer;
         this.organisationalUnitId = organisationalUnitId;
         this.jwtMacKey = jwtMacKey;
-        this.exemptionEngine = exemptionEngine;
+        this.exemptionEngineEnabled = exemptionEngineEnabled;
     }
 
     public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey) {
@@ -29,8 +29,8 @@ public class Worldpay3dsFlexCredentials {
         this.jwtMacKey = jwtMacKey;
     }
 
-    public boolean isExemptionEngine() {
-        return exemptionEngine;
+    public boolean isExemptionEngineEnabled() {
+        return exemptionEngineEnabled;
     }
 
     public String getIssuer() {
@@ -47,7 +47,7 @@ public class Worldpay3dsFlexCredentials {
 
     public static Worldpay3dsFlexCredentials fromEntity(Worldpay3dsFlexCredentialsEntity entity) {
         return new Worldpay3dsFlexCredentials(entity.getIssuer(), entity.getOrganisationalUnitId(), 
-                entity.getJwtMacKey(), entity.isExemptionEngine());
+                entity.getJwtMacKey(), entity.isExemptionEngineEnabled());
     }
     
     public static Worldpay3dsFlexCredentials from(Worldpay3dsFlexCredentialsRequest credentialsRequest) {
@@ -62,11 +62,12 @@ public class Worldpay3dsFlexCredentials {
         Worldpay3dsFlexCredentials that = (Worldpay3dsFlexCredentials) o;
         return Objects.equals(issuer, that.issuer) &&
                 Objects.equals(organisationalUnitId, that.organisationalUnitId) &&
+                Objects.equals(exemptionEngineEnabled, that.exemptionEngineEnabled) &&
                 Objects.equals(jwtMacKey, that.jwtMacKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(issuer, organisationalUnitId, jwtMacKey);
+        return Objects.hash(issuer, organisationalUnitId, jwtMacKey, exemptionEngineEnabled);
     }
 }

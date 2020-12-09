@@ -347,17 +347,7 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         providerWithMockedGatewayClient.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-
-        verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
-                gatewayOrderArgumentCaptor.capture(),
-                anyMap());
-
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/exemption").getLength(),
-                is(0));
+        verifyNoExemptionRequestInAuthorisationRequest();
     }
     
     @Test
@@ -373,17 +363,7 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         providerWithMockedGatewayClient.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-
-        verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
-                gatewayOrderArgumentCaptor.capture(),
-                anyMap());
-
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/exemption").getLength(),
-                is(0));
+        verifyNoExemptionRequestInAuthorisationRequest();
     }
 
     @Test
@@ -426,6 +406,10 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         providerWithMockedGatewayClient.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
+        verifyNoExemptionRequestInAuthorisationRequest();
+    }
+
+    private void verifyNoExemptionRequestInAuthorisationRequest() throws Exception {
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(mockGatewayClient).postRequestFor(
