@@ -414,6 +414,32 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    void should_not_include_exemption_element_if_account_has_exemption_engine_set_to_true_but_3ds_is_not_enabled() throws Exception {
+        
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+                .thenReturn(authorisationSuccessResponse);
+
+        gatewayAccountEntity.setRequires3ds(false);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        providerWithMockedGatewayClient.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                gatewayOrderArgumentCaptor.capture(),
+                anyMap());
+
+        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/exemption").getLength(),
+                is(0));
+    }
+
+    @Test
     void should_not_include_elements_when_worldpay_3ds_flex_ddc_result_is_not_present() throws Exception {
 
         gatewayAccountEntity.setRequires3ds(true);

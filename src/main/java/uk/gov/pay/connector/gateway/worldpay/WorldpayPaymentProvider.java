@@ -222,8 +222,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
 
-        boolean exemptionEngine = Optional.ofNullable(request.getGatewayAccount().getWorldpay3dsFlexCredentials())
-                .map(Worldpay3dsFlexCredentials::isExemptionEngine).orElse(false);
+        boolean exemptionEngine = request.getGatewayAccount().isRequires3ds() ? 
+                Optional.ofNullable(request.getGatewayAccount().getWorldpay3dsFlexCredentials())
+                        .map(Worldpay3dsFlexCredentials::isExemptionEngine)
+                        .orElse(false) 
+                : false;
         
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
