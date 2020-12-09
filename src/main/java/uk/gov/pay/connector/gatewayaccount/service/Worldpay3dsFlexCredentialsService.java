@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.dao.Worldpay3dsFlexCredentialsDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
@@ -12,14 +11,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentia
 
 public class Worldpay3dsFlexCredentialsService {
 
-    private GatewayAccountDao gatewayAccountDao;
     private Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao;
 
     @Inject
-    public Worldpay3dsFlexCredentialsService(Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao,
-                                             GatewayAccountDao gatewayAccountDao) {
+    public Worldpay3dsFlexCredentialsService(Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao) {
         this.worldpay3dsFlexCredentialsDao = worldpay3dsFlexCredentialsDao;
-        this.gatewayAccountDao = gatewayAccountDao;
     }
 
     @Transactional
