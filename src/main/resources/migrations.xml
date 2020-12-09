@@ -1547,4 +1547,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add exemption_engine column to worldpay_3ds_flex_credentials table" author="">
+        <addColumn tableName="worldpay_3ds_flex_credentials">
+            <column name="exemption_engine" type="boolean" defaultValue="false" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
