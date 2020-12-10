@@ -46,6 +46,9 @@
                     <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
                 </browser>
             </shopper>
+            <#if exemptionEngineEnabled>
+            <exemption type="OP" placement="AUTHORISATION"/>
+            </#if>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
             <additional3DSData
                 dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()}"
