@@ -138,10 +138,20 @@ public class WorldpayNotificationService {
         } else if (isRefundNotification(notification)) {
             refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
                     notification.getReference(), notification.getTransactionId(), charge);
+        } else if (isErrorNotification(notification)) {
+            if (gatewayAccountEntity.isLive()) {
+                logger.error("{} error notification received for live account {}", PAYMENT_GATEWAY_NAME, notification);
+            } else {
+                logger.info("{} error notification received for test account {}", PAYMENT_GATEWAY_NAME, notification);
+            }
         } else {
             logger.error("{} notification {} unknown", PAYMENT_GATEWAY_NAME, notification);
         }
         return true;
+    }
+
+    private boolean isErrorNotification(WorldpayNotification notification) {
+        return "ERROR".equals(notification.getStatus());
     }
 
     private RefundStatus newRefundStatus(WorldpayNotification notification) {
