@@ -43,15 +43,7 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     public Worldpay3dsFlexCredentialsEntity() {
         super();
     }
-
-    public Worldpay3dsFlexCredentialsEntity(Long gatewayAccountId, String issuer, String organisationalUnitId, String jwtMacKey) {
-        super();
-        this.gatewayAccountId = gatewayAccountId;
-        this.issuer = issuer;
-        this.organisationalUnitId = organisationalUnitId;
-        this.jwtMacKey = jwtMacKey;
-    }
-
+    
     public boolean isExemptionEngineEnabled() {
         return exemptionEngineEnabled;
     }

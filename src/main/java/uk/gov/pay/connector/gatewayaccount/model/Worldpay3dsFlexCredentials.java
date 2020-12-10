@@ -22,13 +22,7 @@ public class Worldpay3dsFlexCredentials {
         this.jwtMacKey = jwtMacKey;
         this.exemptionEngineEnabled = exemptionEngineEnabled;
     }
-
-    public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey) {
-        this.issuer = issuer;
-        this.organisationalUnitId = organisationalUnitId;
-        this.jwtMacKey = jwtMacKey;
-    }
-
+    
     public boolean isExemptionEngineEnabled() {
         return exemptionEngineEnabled;
     }
@@ -52,7 +46,7 @@ public class Worldpay3dsFlexCredentials {
     
     public static Worldpay3dsFlexCredentials from(Worldpay3dsFlexCredentialsRequest credentialsRequest) {
         return new Worldpay3dsFlexCredentials(credentialsRequest.getIssuer(), 
-                credentialsRequest.getOrganisationalUnitId(), credentialsRequest.getJwtMacKey());
+                credentialsRequest.getOrganisationalUnitId(), credentialsRequest.getJwtMacKey(), false);
     }
 
     @Override

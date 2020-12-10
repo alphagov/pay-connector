@@ -94,7 +94,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void shouldCreateCorrectTokenForWorldpay3dsFlexDdc() {
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), VALID_CREDENTIALS, TEST);
-        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0", false);
         int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
         int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + TOKEN_EXPIRY_DURATION_SECONDS;
         var paymentCreationZonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond((long) paymentCreationTimeEpochSeconds19August2029), UTC);
@@ -183,7 +183,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingIssuer() {
-        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials(null, "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials(null, "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0", false);
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
@@ -195,7 +195,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingOrgId() {
-        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", null, "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", null, "fa2daee2-1fbb-45ff-4444-52805d5cd9e0", false);
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
@@ -208,7 +208,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingJwtMacId() {
-        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", null);
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", null, false);
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null, TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
