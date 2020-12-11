@@ -26,11 +26,10 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
-        given(mockAuthorisationRequestSummary.exemptionRequest()).willReturn(PRESENT);
-        
+
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
         
-        assertThat(result, is(" with billing address and with 3DS data and without device data collection result and with exemption"));
+        assertThat(result, is(" with billing address and with 3DS data and without device data collection result"));
     }
 
     @Test
@@ -39,7 +38,6 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
-        given(mockAuthorisationRequestSummary.exemptionRequest()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 

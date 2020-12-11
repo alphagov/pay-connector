@@ -3,13 +3,9 @@ package uk.gov.pay.connector.gateway.model;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 
 public interface AuthorisationRequestSummary {
-    
+
     enum Presence {
         PRESENT, NOT_PRESENT, NOT_APPLICABLE
-    }
-    
-    default Presence exemptionRequest() {
-        return NOT_APPLICABLE;
     }
 
     default Presence billingAddress() {

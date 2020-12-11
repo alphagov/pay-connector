@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_PRESENT;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
@@ -13,15 +12,11 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private final Presence billingAddress;
     private final Presence dataFor3ds;
     private final Presence deviceDataCollectionResult;
-    private final Presence exemptionRequest;
 
     public WorldpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         deviceDataCollectionResult = authCardDetails.getWorldpay3dsFlexDdcResult().map(address -> PRESENT).orElse(NOT_PRESENT);
-        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-        dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.isRequires3ds()) ? PRESENT : NOT_PRESENT;
-        exemptionRequest = gatewayAccount.isRequires3ds() && 
-                gatewayAccount.getWorldpay3dsFlexCredentials().isExemptionEngineEnabled() ? PRESENT : NOT_PRESENT;
+        dataFor3ds = (deviceDataCollectionResult == PRESENT || chargeEntity.getGatewayAccount().isRequires3ds()) ? PRESENT : NOT_PRESENT;
     }
 
     @Override
@@ -39,8 +34,4 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
         return deviceDataCollectionResult;
     }
 
-    @Override
-    public Presence exemptionRequest() {
-        return exemptionRequest;
-    }
 }
