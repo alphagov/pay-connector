@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 
 import java.util.Optional;
 
@@ -25,6 +26,43 @@ class WorldpayAuthorisationRequestSummaryTest {
     @Mock private ChargeEntity mockChargeEntity;
     @Mock private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock private AuthCardDetails mockAuthCardDetails;
+    @Mock private Worldpay3dsFlexCredentials mockWorldpay3dsFlexCredentials;
+
+    @Test
+    void requires3ds_true_and_Worldpay3dsFlexCredentials_not_present_means_exemption_request_not_present() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
+        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        assertThat(worldpayAuthorisationRequestSummary.exemptionRequest(), is(NOT_PRESENT));
+    }
+    
+    @Test
+    void requires3ds_true_and_exemption_engine_enabled_means_exemption_request_present() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
+        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getWorldpay3dsFlexCredentials()).willReturn(Optional.of(mockWorldpay3dsFlexCredentials));
+        given(mockWorldpay3dsFlexCredentials.isExemptionEngineEnabled()).willReturn(true);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        assertThat(worldpayAuthorisationRequestSummary.exemptionRequest(), is(PRESENT));
+    }
+
+    @Test
+    void requires3ds_true_and_exemption_engine_not_enabled_means_exemption_request_not_present() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
+        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getWorldpay3dsFlexCredentials()).willReturn(Optional.of(mockWorldpay3dsFlexCredentials));
+        given(mockWorldpay3dsFlexCredentials.isExemptionEngineEnabled()).willReturn(false);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        assertThat(worldpayAuthorisationRequestSummary.exemptionRequest(), is(NOT_PRESENT));
+    }
+
+    @Test
+    void requires3ds_false_means_exemption_request_not_present() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
+        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        assertThat(worldpayAuthorisationRequestSummary.exemptionRequest(), is(NOT_PRESENT));
+    }
 
     @Test
     void billingAddressPresent() {
@@ -46,6 +84,8 @@ class WorldpayAuthorisationRequestSummaryTest {
     void requires3dsTrueMeansDataFor3dsPresent() {
         given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getWorldpay3dsFlexCredentials()).willReturn(Optional.of(mockWorldpay3dsFlexCredentials));
+        given(mockWorldpay3dsFlexCredentials.isExemptionEngineEnabled()).willReturn(false);
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds(), is(PRESENT));
     }
@@ -60,6 +100,7 @@ class WorldpayAuthorisationRequestSummaryTest {
 
     @Test
     void deviceDataCollectionResultPresentMeansDataFor3dsPresent() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
         given(mockAuthCardDetails.getWorldpay3dsFlexDdcResult()).willReturn(Optional.of("DDC Result"));
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds(), is(PRESENT));
@@ -67,6 +108,7 @@ class WorldpayAuthorisationRequestSummaryTest {
 
     @Test
     void deviceDataCollectionResultPresent() {
+        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
         given(mockAuthCardDetails.getWorldpay3dsFlexDdcResult()).willReturn(Optional.of("DDC Result"));
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
         assertThat(worldpayAuthorisationRequestSummary.deviceDataCollectionResult(), is(PRESENT));
