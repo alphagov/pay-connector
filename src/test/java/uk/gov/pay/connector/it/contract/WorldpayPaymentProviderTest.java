@@ -26,8 +26,6 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -50,9 +48,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -72,7 +71,6 @@ public class WorldpayPaymentProviderTest {
     private Histogram mockHistogram;
     private Counter mockCounter;
     private Environment mockEnvironment;
-    private ExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
 
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
@@ -116,6 +114,19 @@ public class WorldpayPaymentProviderTest {
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
+    }
+    
+    @Test
+    public void submitAuthRequestWithExemptionEngineFlag() throws Exception {
+        validGatewayAccount.setRequires3ds(true);
+        validGatewayAccount.setIntegrationVersion3ds(1);
+        validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(anAuthCardDetails().build());
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+        assertTrue(response.getGatewayError().isEmpty());
     }
 
     @Test
