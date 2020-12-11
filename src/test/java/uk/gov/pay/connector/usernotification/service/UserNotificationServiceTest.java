@@ -229,6 +229,17 @@ public class UserNotificationServiceTest {
     }
 
     @Test
+    public void shouldNotSendEmail_IfEmailEnabledButChargeDoesNotHaveAnEmailAddress() throws Exception {
+        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
+        Charge chargeWithoutEmail = Charge.from(ChargeEntityFixture.aValidChargeEntity().withEmail(null).build());
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity, chargeWithoutEmail, gatewayAccountEntity);
+        idF.get(1000, TimeUnit.SECONDS);
+
+        verifyNoInteractions(mockNotifyClient);
+    }
+
+    @Test
     public void shouldNotSendPaymentConfirmedEmail_whenConfirmationEmailNotificationsAreDisabledForService() {
         chargeEntity.getGatewayAccount()
                 .getEmailNotifications()
