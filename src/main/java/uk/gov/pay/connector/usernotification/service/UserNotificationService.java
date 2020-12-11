@@ -84,6 +84,11 @@ public class UserNotificationService {
             return CompletableFuture.completedFuture(Optional.empty());
         }
 
+        if (charge.getEmail() == null) {
+            logger.warn("Cannot send email for charge_external_id = {} because the charge does not have an email address", charge.getExternalId());
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         return executorService.submit(() -> {
             try {
