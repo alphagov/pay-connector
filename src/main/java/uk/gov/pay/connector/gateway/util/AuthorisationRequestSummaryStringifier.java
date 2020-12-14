@@ -53,6 +53,17 @@ public class AuthorisationRequestSummaryStringifier {
                 break;
         }
 
+        switch (authorisationRequestSummary.exemptionRequest()) {
+            case PRESENT:
+                stringJoiner.add("with exemption");
+                break;
+            case NOT_PRESENT:
+                stringJoiner.add("without exemption");
+                break;
+            default:
+                break;
+        }
+
         return stringJoiner.toString();
     }
 
