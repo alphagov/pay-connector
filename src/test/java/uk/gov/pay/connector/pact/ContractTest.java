@@ -36,6 +36,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
@@ -399,5 +400,20 @@ public class ContractTest {
                 .withTransactionId(chargeExternalId)
                 .withCorporateSurcharge(250L)
                 .build());
+    }
+
+    @State("a gateway account 333 with Worldpay 3DS Flex credentials exists")
+    public void aGatewayAccountWithWorldpay3dsFlexCredentialsExists() {
+        final String worldpayGatewayAccountId = "333";
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("333")
+                .withPaymentGateway(WORLDPAY.getName())
+                .build());
+        dbHelper.insertWorldpay3dsFlexCredential(
+                Long.valueOf(worldpayGatewayAccountId),
+                "fa2daee2-1fbb-45ff-4444-52805d5cd9e0",
+                "5bd9e0e4444dce153428c940",
+                "5bd9b55e4444761ac0af1c80",
+                1L);
     }
 }
