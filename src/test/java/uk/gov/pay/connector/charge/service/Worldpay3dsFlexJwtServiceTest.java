@@ -294,6 +294,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 .withId(1L)
                 .withGatewayName(SMARTPAY.getName())
                 .withCredentials(VALID_CREDENTIALS)
+                .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
