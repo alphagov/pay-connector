@@ -23,9 +23,9 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -124,7 +124,7 @@ public class WorldpayPaymentProviderTest {
         
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(anAuthCardDetails().build());
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getGatewayError().isEmpty());
     }
@@ -134,7 +134,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         var authCardDetails = anAuthCardDetails().withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString()).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
@@ -146,7 +146,7 @@ public class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
         response.getBaseResponse().ifPresent(res -> {
             assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
@@ -162,7 +162,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
@@ -171,7 +171,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(null).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
@@ -186,7 +186,7 @@ public class WorldpayPaymentProviderTest {
         usAddress.setCountry("US");
         AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(usAddress).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
@@ -201,7 +201,7 @@ public class WorldpayPaymentProviderTest {
         canadaAddress.setCountry("CA");
         AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(canadaAddress).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
@@ -213,7 +213,7 @@ public class WorldpayPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
@@ -234,7 +234,7 @@ public class WorldpayPaymentProviderTest {
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
 
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
@@ -260,7 +260,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -284,7 +284,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
