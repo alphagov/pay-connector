@@ -34,6 +34,7 @@ import javax.persistence.Table;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Lists.newArrayList;
@@ -228,11 +229,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
-    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentials() {
-        if (worldpay3dsFlexCredentialsEntity != null) {
-            return Worldpay3dsFlexCredentials.fromEntity(worldpay3dsFlexCredentialsEntity);
-        }
-        return null;
+    public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {
+        return Optional.ofNullable(worldpay3dsFlexCredentialsEntity).map(Worldpay3dsFlexCredentials::fromEntity);
     }
 
     public boolean isRequires3ds() {

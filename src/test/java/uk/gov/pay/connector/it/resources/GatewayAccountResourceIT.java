@@ -458,7 +458,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .get("/v1/frontend/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(200)
-                .body("$", not(hasKey("worldpay_3ds_flex")));
+                .body("worldpay_3ds_flex", nullValue());
     }
 
     @Test
@@ -484,7 +484,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .get("/v1/frontend/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(200)
-                .body("$", not(hasKey("worldpay_3ds_flex")));
+                .body("worldpay_3ds_flex", nullValue());
     }
 
     @Test

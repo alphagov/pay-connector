@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtCredentialsException;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
 import uk.gov.pay.connector.charge.model.NewChargeStatusRequest;
@@ -83,7 +84,8 @@ public class ChargesFrontendResource {
 
         ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
-        Worldpay3dsFlexCredentials worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials();
+        var worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials()
+                .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId()));
         String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, chargeEntity.getCreatedDate());
 
         return Response.ok().entity(Map.of("jwt", token)).build();
