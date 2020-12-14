@@ -31,7 +31,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("reply/orderStatus/payment/ISO8583ReturnCode/@code")
     private String refusedReturnCode;
-
+    
     private String errorCode;
 
     private String errorMessage;
@@ -42,6 +42,12 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     private String issuerUrl;
 
     private String challengeAcsUrl;
+
+    @XmlPath("/reply/orderStatus/exemptionResponse/@result")
+    private String exemptionResponseResult;
+
+    @XmlPath("/reply/orderStatus/exemptionResponse/@reason")
+    private String exemptionResponseReason;
 
     @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/transactionId3DS/text()")
     private String challengeTransactionId;
@@ -213,6 +219,12 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         }
         if (StringUtils.isNotBlank(threeDsVersion)) {
             joiner.add("threeDSChallengeDetails threeDSVersion: " + threeDsVersion);
+        }
+        if (StringUtils.isNotBlank(exemptionResponseResult)) {
+            joiner.add("result: " + exemptionResponseResult);
+        }
+        if (StringUtils.isNotBlank(exemptionResponseReason)) {
+            joiner.add("reason: " + exemptionResponseReason);
         }
         if (StringUtils.isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());
