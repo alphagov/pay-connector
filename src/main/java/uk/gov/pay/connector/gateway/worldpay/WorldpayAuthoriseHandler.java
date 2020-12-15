@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -9,6 +10,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
 
@@ -26,7 +28,9 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     private final GatewayClient authoriseClient;
     private final Map<String, URI> gatewayUrlMap;
 
-    public WorldpayAuthoriseHandler(GatewayClient authoriseClient, Map<String, URI> gatewayUrlMap) {
+    @Inject
+    public WorldpayAuthoriseHandler(@Named("WorldpayAuthoriseGatewayClient") GatewayClient authoriseClient,
+                                    @Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap) {
         this.authoriseClient = authoriseClient;
         this.gatewayUrlMap = gatewayUrlMap;
     }

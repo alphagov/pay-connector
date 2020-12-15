@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import com.google.inject.name.Named;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -7,6 +8,7 @@ import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
 
@@ -21,7 +23,9 @@ public class WorldpayRefundHandler implements RefundHandler {
     private final GatewayClient client;
     private final Map<String, URI> gatewayUrlMap;
 
-    public WorldpayRefundHandler(GatewayClient client, Map<String, URI> gatewayUrlMap) {
+    @Inject
+    public WorldpayRefundHandler(@Named("WorldpayRefundGatewayClient") GatewayClient client,
+                                 @Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap) {
         this.client = client;
         this.gatewayUrlMap = gatewayUrlMap;
     }

@@ -8,7 +8,6 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.persist.jpa.JpaPersistModule;
@@ -18,6 +17,8 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.common.validator.RequestValidator;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
@@ -34,10 +35,21 @@ import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
+import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
+import java.net.URI;
 import java.time.Clock;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.QUERY;
+import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -108,11 +120,11 @@ public class ConnectorModule extends AbstractModule {
     public ReverseDnsLookup reverseDnsLookup() {
         return getReverseDnsLookup();
     }
-    
+
     protected ReverseDnsLookup getReverseDnsLookup() {
         return new ReverseDnsLookup();
     }
-    
+
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
@@ -121,6 +133,49 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayGatewayUrlMap")
+    public Map<String, URI> worldpayGatewayUrlMap() {
+        return configuration.getGatewayConfigFor(WORLDPAY).getUrls().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, v -> URI.create(v.getValue())));
+    }
+    
+    @Provides
+    @Singleton
+    @Named("WorldpayCaptureGatewayClient")
+    public GatewayClient worldpayCaptureGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, environment.metrics());
+    }
+    
+    @Provides
+    @Singleton
+    @Named("WorldpayRefundGatewayClient")
+    public GatewayClient worldpayRefundGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayAuthoriseGatewayClient")
+    public GatewayClient worldpayAuthoriseGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayCancelGatewayClient")
+    public GatewayClient worldpayCancelGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayInquiryGatewayClient")
+    public GatewayClient worldpayInquiryGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
     }
 
     @Provides
@@ -173,7 +228,7 @@ public class ConnectorModule extends AbstractModule {
     public Client provideClient() {
         return RestClientFactory.buildClient(configuration.getRestClientConfig());
     }
-    
+
     @Provides
     @Singleton
     public Clock systemUtcClock() {
@@ -199,7 +254,7 @@ public class ConnectorModule extends AbstractModule {
     protected StateTransitionQueue getStateTransitionQueue() {
         return new StateTransitionQueue();
     }
-    
+
     @Provides
     public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
 
