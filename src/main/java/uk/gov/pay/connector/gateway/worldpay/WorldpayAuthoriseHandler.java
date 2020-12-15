@@ -64,7 +64,7 @@ public class WorldpayAuthoriseHandler implements AuthoriseHandler, WorldpayGatew
             
             logger.info("Unrecognised response status when authorising. Charge_id={}, status={}, response={}",
                     request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
-            throw new RuntimeException("Unrecognised response status when authorising.");
+            return responseBuilder().withGatewayError(e.toGatewayError()).build();
             
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
             
