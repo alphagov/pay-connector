@@ -30,8 +30,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -56,16 +54,15 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
-    public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
+    
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient inquiryClient;
@@ -163,7 +160,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
-            logger.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
+            LOGGER.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
 
             if (gatewayResponse.getBaseResponse().isEmpty()) {
                 gatewayResponse.throwGatewayError();

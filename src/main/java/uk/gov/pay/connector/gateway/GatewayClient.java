@@ -27,10 +27,10 @@ import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static javax.ws.rs.core.Response.Status.Family.familyOf;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.OK;
 
 public class GatewayClient {
-    private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
     private final MetricRegistry metricRegistry;
@@ -62,7 +62,7 @@ public class GatewayClient {
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
+            LOGGER.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
 
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
@@ -74,11 +74,11 @@ public class GatewayClient {
                 return gatewayResponse;
             } else {
                 if (statusCode >= INTERNAL_SERVER_ERROR.getStatusCode()) {
-                    logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
+                    LOGGER.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
                             statusCode, url, account.getType(), request.getOrderRequestType());
                     incrementFailureCounter(metricRegistry, metricsPrefix);
                 } else {
-                    logger.info("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
+                    LOGGER.info("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
                             statusCode, url, account.getType(), request.getOrderRequestType());
                 }
                 throw new GatewayErrorException("Non-success HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
@@ -87,17 +87,17 @@ public class GatewayClient {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
-                    logger.error(format("Connection timed out error for gateway url=%s", url), pe);
+                    LOGGER.error(format("Connection timed out error for gateway url=%s", url), pe);
                     throw new GatewayConnectionTimeoutException("Gateway connection timeout error");
                 }
             }
-            logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
+            LOGGER.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayException(pe.getMessage());
         } catch (GatewayErrorException e) {
             throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
-            logger.error(format("Exception for gateway url=%s", url), e);
+            LOGGER.error(format("Exception for gateway url=%s", url), e);
             throw new GatewayException.GenericGatewayException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
