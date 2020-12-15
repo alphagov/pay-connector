@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -45,9 +46,13 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ContractTest {
+    public static final int WORLDPAY_DDC_PORT_NUMBER = PortFactory.findFreePort();
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+            ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"),
+            ConfigOverride.config("worldpay.threeDsFlexDdcUrls.test", String.format("http://localhost:%s/shopper/3ds/ddc.html", WORLDPAY_DDC_PORT_NUMBER)),
+            ConfigOverride.config("worldpay.threeDsFlexDdcUrls.live", String.format("http://localhost:%s/shopper/3ds/ddc.html", WORLDPAY_DDC_PORT_NUMBER)));
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
