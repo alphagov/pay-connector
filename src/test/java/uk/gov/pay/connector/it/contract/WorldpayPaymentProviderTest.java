@@ -23,6 +23,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseHandler;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureHandler;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -30,6 +32,8 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundHandler;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
+import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -74,6 +78,7 @@ public class WorldpayPaymentProviderTest {
     private Histogram mockHistogram;
     private Counter mockCounter;
     private Environment mockEnvironment;
+    private CardExecutorService mockCardExecutorService = mock(CardExecutorService.class);
 
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
@@ -357,7 +362,10 @@ public class WorldpayPaymentProviderTest {
                 new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap()), 
                 new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap()), 
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
-                new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()));
+                new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
+                new AuthorisationRequestSummaryStringifier(), 
+                new AuthorisationService(mockCardExecutorService, mockEnvironment), 
+                new AuthorisationRequestSummaryStructuredLogging());
     }
 
     private Map<String, URI> gatewayUrlMap() {

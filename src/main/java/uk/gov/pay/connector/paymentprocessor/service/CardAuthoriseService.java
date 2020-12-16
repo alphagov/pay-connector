@@ -36,6 +36,8 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 
 public class CardAuthoriseService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
+    
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
@@ -43,7 +45,6 @@ public class CardAuthoriseService {
     private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
     private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
     private final MetricRegistry metricRegistry;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
@@ -110,7 +111,7 @@ public class CardAuthoriseService {
                     charge.getStructuredLoggingArgs(),
                     authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
 
-            logger.info(logMessage, structuredLoggingArguments);
+            LOGGER.info(logMessage, structuredLoggingArguments);
 
             metricRegistry.counter(String.format(
                     "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
@@ -135,7 +136,7 @@ public class CardAuthoriseService {
 
     private void ensureCardBrandGateway3DSCompatibility(ChargeEntity chargeEntity, String cardBrand) {
         if (gatewayCardBrand3DSMismatch(chargeEntity, cardBrand)) {
-            logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
+            LOGGER.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
                     chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
             chargeService.transitionChargeState(chargeEntity, ChargeStatus.AUTHORISATION_ABORTED);
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());

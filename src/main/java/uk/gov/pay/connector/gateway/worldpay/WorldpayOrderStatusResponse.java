@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -11,6 +10,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
@@ -86,6 +87,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/acsURL/text()")
     public void setChallengeAcsUrl(String challengeAcsUrl) {
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
+    }
+
+    public Optional<String> getExemptionResponseResult() {
+        return Optional.ofNullable(exemptionResponseResult).map(r -> isBlank(r) ? null : exemptionResponseResult);
     }
 
     public String getPaRequest() {
@@ -193,43 +198,43 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "Worldpay authorisation response (", ")");
-        if (StringUtils.isNotBlank(getTransactionId())) {
+        if (isNotBlank(getTransactionId())) {
             joiner.add("orderCode: " + getTransactionId());
         }
-        if (StringUtils.isNotBlank(getLastEvent())) {
+        if (isNotBlank(getLastEvent())) {
             joiner.add("lastEvent: " + getLastEvent());
         }
-        if (StringUtils.isNotBlank(getRefusedReturnCode())) {
+        if (isNotBlank(getRefusedReturnCode())) {
             joiner.add("ISO8583ReturnCode code: " + getRefusedReturnCode());
         }
-        if (StringUtils.isNotBlank(getRefusedReturnCodeDescription())) {
+        if (isNotBlank(getRefusedReturnCodeDescription())) {
             joiner.add("ISO8583ReturnCode description: " + getRefusedReturnCodeDescription());
         }
-        if (StringUtils.isNotBlank(issuerUrl)) {
+        if (isNotBlank(issuerUrl)) {
             joiner.add("issuerURL: " + issuerUrl);
         }
-        if (StringUtils.isNotBlank(paRequest)) {
+        if (isNotBlank(paRequest)) {
             joiner.add("paRequest: present");
         }
-        if (StringUtils.isNotBlank(challengeAcsUrl)) {
+        if (isNotBlank(challengeAcsUrl)) {
             joiner.add("threeDSChallengeDetails acsUrl: " + challengeAcsUrl);
         }
-        if (StringUtils.isNotBlank(challengeTransactionId)) {
+        if (isNotBlank(challengeTransactionId)) {
             joiner.add("threeDSChallengeDetails transactionId3DS: " + challengeTransactionId);
         }
-        if (StringUtils.isNotBlank(threeDsVersion)) {
+        if (isNotBlank(threeDsVersion)) {
             joiner.add("threeDSChallengeDetails threeDSVersion: " + threeDsVersion);
         }
-        if (StringUtils.isNotBlank(exemptionResponseResult)) {
+        if (isNotBlank(exemptionResponseResult)) {
             joiner.add("result: " + exemptionResponseResult);
         }
-        if (StringUtils.isNotBlank(exemptionResponseReason)) {
+        if (isNotBlank(exemptionResponseReason)) {
             joiner.add("reason: " + exemptionResponseReason);
         }
-        if (StringUtils.isNotBlank(getErrorCode())) {
+        if (isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());
         }
-        if (StringUtils.isNotBlank(getErrorMessage())) {
+        if (isNotBlank(getErrorMessage())) {
             joiner.add("error: " + getErrorMessage());
         }
         return joiner.toString();
