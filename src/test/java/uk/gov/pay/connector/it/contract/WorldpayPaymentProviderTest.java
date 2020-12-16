@@ -133,8 +133,10 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(anAuthCardDetails().build());
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.getBaseResponse().isPresent());
-        assertTrue(response.getGatewayError().isEmpty());
+        assertTrue(response.getBaseResponse().isEmpty());
+        // We expect an error as currently our Worldpay account has not been configured with the exemption engine
+        // result: REJECTED, reason: NOT_SUBSCRIBED
+        assertTrue(response.getGatewayError().isPresent());
     }
 
     @Test

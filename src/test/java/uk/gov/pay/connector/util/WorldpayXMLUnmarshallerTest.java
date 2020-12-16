@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
-import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotification;
@@ -15,8 +15,10 @@ import java.time.LocalDate;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE;
@@ -94,7 +96,8 @@ public class WorldpayXMLUnmarshallerTest {
     public void shouldUnmarshallAAuthorisationSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getLastEvent(), is("AUTHORISED"));
+        assertTrue(response.getLastEvent().isPresent());
+        assertThat(response.getLastEvent().get(), is("AUTHORISED"));
         assertNull(response.getRefusedReturnCode());
         assertNull(response.getRefusedReturnCodeDescription());
 
@@ -110,7 +113,7 @@ public class WorldpayXMLUnmarshallerTest {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
 
-        assertNull(response.getLastEvent());
+        assertTrue(response.getLastEvent().isEmpty());
         assertNull(response.getRefusedReturnCode());
         assertNull(response.getRefusedReturnCodeDescription());
         assertNull(response.getErrorCode());
@@ -128,7 +131,7 @@ public class WorldpayXMLUnmarshallerTest {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_FLEX_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
 
-        assertNull(response.getLastEvent());
+        assertTrue(response.getLastEvent().isEmpty());
         assertNull(response.getRefusedReturnCode());
         assertNull(response.getRefusedReturnCodeDescription());
         assertNull(response.getErrorCode());
@@ -147,7 +150,8 @@ public class WorldpayXMLUnmarshallerTest {
     public void shouldUnmarshallAAuthorisationFailedResponse() throws Exception {
         String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
-        assertThat(response.getLastEvent(), is("REFUSED"));
+        assertTrue(response.getLastEvent().isPresent());
+        assertThat(response.getLastEvent().get(), is("REFUSED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("REFUSED"));
 
@@ -163,7 +167,8 @@ public class WorldpayXMLUnmarshallerTest {
         String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.CANCELLED));
-        assertThat(response.getLastEvent(), is("CANCELLED"));
+        assertTrue(response.getLastEvent().isPresent());
+        assertThat(response.getLastEvent().get(), is("CANCELLED"));
         assertThat(response.getRefusedReturnCode(), is("5"));
         assertThat(response.getRefusedReturnCodeDescription(), is("CANCELLED"));
 

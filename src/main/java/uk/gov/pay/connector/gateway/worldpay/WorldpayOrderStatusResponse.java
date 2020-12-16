@@ -101,8 +101,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return issuerUrl;
     }
 
-    public String getLastEvent() {
-        return lastEvent;
+    public Optional<String> getLastEvent() {
+        return Optional.ofNullable(lastEvent).map(r -> isBlank(r) ? null : lastEvent);
     }
 
     public String getChallengeAcsUrl() {
@@ -201,8 +201,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (isNotBlank(getTransactionId())) {
             joiner.add("orderCode: " + getTransactionId());
         }
-        if (isNotBlank(getLastEvent())) {
-            joiner.add("lastEvent: " + getLastEvent());
+        if (isNotBlank(lastEvent)) {
+            joiner.add("lastEvent: " + lastEvent);
         }
         if (isNotBlank(getRefusedReturnCode())) {
             joiner.add("ISO8583ReturnCode code: " + getRefusedReturnCode());

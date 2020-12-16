@@ -157,11 +157,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         
         if (response.getBaseResponse().isPresent()) {
         
-            var worldpayOrderStatusResponse = response.getBaseResponse().get();
+            var worldpayOrderResponse = response.getBaseResponse().get();
         
-            if (worldpayOrderStatusResponse.getLastEvent().equals("REFUSED") && 
-                    worldpayOrderStatusResponse.getExemptionResponseResult().isPresent() &&
-                    SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS.contains(worldpayOrderStatusResponse.getExemptionResponseResult().get())) {
+            if (worldpayOrderResponse.getLastEvent().isPresent() && 
+                    worldpayOrderResponse.getLastEvent().get().equals("REFUSED") && 
+                    worldpayOrderResponse.getExemptionResponseResult().isPresent() &&
+                    SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS.contains(worldpayOrderResponse.getExemptionResponseResult().get())) {
 
                 var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
