@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -11,7 +9,6 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -34,23 +31,18 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
-import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
-import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
-import static uk.gov.pay.connector.gateway.GatewayOperation.QUERY;
-import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
@@ -74,22 +66,24 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final Map<String, URI> gatewayUrlMap;
 
     @Inject
-    public WorldpayPaymentProvider(ConnectorConfiguration configuration,
-                                   GatewayClientFactory gatewayClientFactory,
-                                   Environment environment) {
+    public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
+                                   @Named("WorldpayAuthoriseGatewayClient") GatewayClient authoriseClient,
+                                   @Named("WorldpayCancelGatewayClient") GatewayClient cancelClient,
+                                   @Named("WorldpayInquiryGatewayClient") GatewayClient inquiryClient,
+                                   WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler,
+                                   WorldpayAuthoriseHandler worldpayAuthoriseHandler,
+                                   WorldpayCaptureHandler worldpayCaptureHandler,
+                                   WorldpayRefundHandler worldpayRefundHandler) {
 
-        gatewayUrlMap = configuration.getGatewayConfigFor(WORLDPAY).getUrls().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, v -> URI.create(v.getValue())));
-        cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, environment.metrics());
-        inquiryClient = gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
+        this.gatewayUrlMap = gatewayUrlMap;
+        this.cancelClient = cancelClient;
+        this.inquiryClient = inquiryClient;
+        this.authoriseClient = authoriseClient;
+        this.worldpayCaptureHandler = worldpayCaptureHandler;
+        this.worldpayRefundHandler = worldpayRefundHandler;
+        this.worldpayWalletAuthorisationHandler = worldpayWalletAuthorisationHandler;
+        this.worldpayAuthoriseHandler = worldpayAuthoriseHandler;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        
-        worldpayCaptureHandler = new WorldpayCaptureHandler(gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, environment.metrics()), gatewayUrlMap);
-        worldpayRefundHandler = new WorldpayRefundHandler(gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, environment.metrics()), gatewayUrlMap);
-        
-        authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, environment.metrics());
-        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(authoriseClient, gatewayUrlMap);
-        worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, gatewayUrlMap);
     }
 
     @Override

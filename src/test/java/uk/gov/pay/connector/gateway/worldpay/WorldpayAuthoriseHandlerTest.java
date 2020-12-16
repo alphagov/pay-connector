@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,8 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.ErrorType;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -44,11 +47,13 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,6 +66,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
@@ -348,12 +354,45 @@ class WorldpayAuthoriseHandlerTest {
         assertTrue(response.getSessionIdentifier().isPresent());
     }
 
+    @Test
+    void should_error_if_worldpay_returns_401() {
+        Client mockClient = mockWorldpayResponse(401, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
+
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP);
+
+        GatewayResponse<WorldpayOrderStatusResponse> response = 
+                handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()));
+        assertTrue(response.getGatewayError().isPresent());
+        assertGatewayErrorEquals(response.getGatewayError().get(),
+                new GatewayError("Non-success HTTP status code 401 from gateway", ErrorType.GATEWAY_ERROR));
+    }
+
+    @Test
+    void should_error_if_worldpay_returns_500() {
+        Client mockClient = mockWorldpayResponse(500, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
+
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP);
+        
+        GatewayResponse<WorldpayOrderStatusResponse> response = 
+                handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()));
+        assertTrue(response.getGatewayError().isPresent());
+        assertGatewayErrorEquals(response.getGatewayError().get(),
+                new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
+    }
+
+    private void assertGatewayErrorEquals(GatewayError actual, GatewayError expected) {
+        assertNotNull(actual);
+        assertThat(actual.getMessage(), is(expected.getMessage()));
+        assertThat(actual.getErrorType(), is(expected.getErrorType()));
+    }
+
     private GatewayClient createGatewayClient(Client mockClient) {
         ClientFactory mockClientFactory = mock(ClientFactory.class);
         GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
         when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.WORLDPAY), any(GatewayOperation.class), any(MetricRegistry.class)))
                 .thenReturn(mockClient);
         MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
+        lenient().when(mockMetricRegistry.counter(anyString())).thenReturn(mock(Counter.class));
         Histogram mockHistogram = mock(Histogram.class);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         return gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
