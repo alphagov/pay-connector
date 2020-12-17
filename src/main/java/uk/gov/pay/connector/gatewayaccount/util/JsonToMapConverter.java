@@ -15,13 +15,16 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Converter
 public class JsonToMapConverter implements AttributeConverter<Map<String, String>, PGobject> {
+    
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public PGobject convertToDatabaseColumn(Map<String, String> keyValueMap) {
         PGobject pGobject = new PGobject();
         pGobject.setType("json");
         if(null != keyValueMap && !keyValueMap.isEmpty()) {
             try {
-                pGobject.setValue(new ObjectMapper().writeValueAsString(keyValueMap));
+                pGobject.setValue(objectMapper.writeValueAsString(keyValueMap));
             } catch (SQLException | JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -33,7 +36,7 @@ public class JsonToMapConverter implements AttributeConverter<Map<String, String
     public Map<String, String> convertToEntityAttribute(PGobject pgObject) {
         try {
             if (pgObject != null && !isEmpty(pgObject.toString())) {
-                return new ObjectMapper().readValue(pgObject.toString(), new TypeReference<Map<String, String>>() {});
+                return objectMapper.readValue(pgObject.toString(), new TypeReference<Map<String, String>>() {});
             }
             return null;
 

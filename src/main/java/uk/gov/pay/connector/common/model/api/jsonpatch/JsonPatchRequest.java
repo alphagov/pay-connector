@@ -14,6 +14,8 @@ import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIEL
 
 public class JsonPatchRequest {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     private JsonPatchOp op;
     private String path;
     private JsonNode value;
@@ -55,7 +57,7 @@ public class JsonPatchRequest {
         if (value != null) {
             if ((value.isTextual() && !isEmpty(value.asText())) || (!value.isNull() && value.isObject())) {
                 try {
-                    return new ObjectMapper().readValue(value.traverse(), new TypeReference<Map<String, String>>() {});
+                    return objectMapper.readValue(value.traverse(), new TypeReference<Map<String, String>>() {});
                 } catch (IOException e) {
                     throw new RuntimeException("Malformed JSON object in value", e);
                 }

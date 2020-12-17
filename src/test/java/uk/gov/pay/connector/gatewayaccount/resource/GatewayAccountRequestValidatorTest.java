@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
@@ -30,13 +29,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOT
 public class GatewayAccountRequestValidatorTest {
 
     private GatewayAccountRequestValidator validator;
-
-    private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void before() {
         validator = new GatewayAccountRequestValidator(new RequestValidator());
-        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -81,7 +78,7 @@ public class GatewayAccountRequestValidatorTest {
 
         if (value != null) patch.put(FIELD_VALUE, value);
 
-        JsonNode jsonNode = new ObjectMapper().valueToTree(patch);
+        JsonNode jsonNode = objectMapper.valueToTree(patch);
         try {
             validator.validatePatchRequest(jsonNode);
             fail("Expected ValidationException");
@@ -93,9 +90,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenFieldsAreMissing() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
-                        FIELD_OPERATION_PATH, "notify_settings"));
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace", FIELD_OPERATION_PATH, "notify_settings"));
         try {
             validator.validatePatchRequest(jsonNode);
             fail("Expected ValidationException");
@@ -108,10 +104,10 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenFieldsNotValidInValue() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUE, ImmutableMap.of("timbuktu", "anapitoken",
+                        FIELD_VALUE, Map.of("timbuktu", "anapitoken",
                                 "colombo", "atemplateid")));
         try {
             validator.validatePatchRequest(jsonNode);
@@ -127,7 +123,7 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenInvalidPathOnOperation() {
-        JsonNode jsonNode = objectMapper.valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(Map.of(FIELD_OPERATION, "replace",
                 FIELD_OPERATION_PATH, "service_name"));
         try {
             validator.validatePatchRequest(jsonNode);
@@ -140,9 +136,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenEmailCollectionModeIsInvalid() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(
-                        FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "email_collection_mode",
                         FIELD_VALUE, "someValue"));
         try {
@@ -156,10 +151,10 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldNotThrow_whenAllValidationsPassed() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUE, ImmutableMap.of(
+                        FIELD_VALUE, Map.of(
                                 FIELD_NOTIFY_API_TOKEN, "anapitoken",
                                 FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid",
                                 FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID, "anothertemplateid")));
@@ -169,9 +164,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldNotThrow_whenPathIsValidEmailCollectionMode() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(
-                        FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace", 
                         FIELD_OPERATION_PATH, "email_collection_mode",
                         FIELD_VALUE, "MANDATORY"));
         validator.validatePatchRequest(jsonNode);
@@ -179,10 +173,10 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenInvalidOperation() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "delete",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "delete",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
+                        FIELD_VALUE, Map.of(FIELD_NOTIFY_API_TOKEN, "anapitoken", 
                                 FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
         try {
             validator.validatePatchRequest(jsonNode);
@@ -195,17 +189,17 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldIgnoreEmptyOrMissingValue_whenRemoveOperation() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "remove",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "remove",
                         FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
+                        FIELD_VALUE, Map.of(FIELD_NOTIFY_API_TOKEN, "")));
         validator.validatePatchRequest(jsonNode);
     }
 
     @Test
     public void shouldThrow_whenCorporateCreditSurchargeAmountIsInvalid() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "corporate_credit_card_surcharge_amount",
                         FIELD_VALUE, -100));
         try {
@@ -219,8 +213,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenIncorrectOperationForCorporateDebitSurchargeAmount() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "remove",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "remove",
                         FIELD_OPERATION_PATH, "corporate_debit_card_surcharge_amount",
                         FIELD_VALUE, 250));
         try {
@@ -235,8 +229,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenInvalidValueForCorporatePrepaidCreditSurchargeAmount() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "corporate_prepaid_credit_card_surcharge_amount",
                         FIELD_VALUE, "not zero or a positive number that can be represented as a long"));
         try {
@@ -251,9 +245,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenMissingValueForCorporatePrepaidDebitSurchargeAmount() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
-                        FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount"));
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace", FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount"));
         try {
             validator.validatePatchRequest(jsonNode);
             fail("Expected ValidationException");
@@ -269,7 +262,7 @@ public class GatewayAccountRequestValidatorTest {
         valueMap.put("op", "replace");
         valueMap.put("path", "corporate_prepaid_debit_card_surcharge_amount");
         valueMap.put("value", null);
-        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        JsonNode jsonNode = objectMapper.valueToTree(valueMap);
         try {
             validator.validatePatchRequest(jsonNode);
             fail("Expected ValidationException");
@@ -281,8 +274,8 @@ public class GatewayAccountRequestValidatorTest {
 
     @Test
     public void shouldThrow_whenEmptyValueForCorporatePrepaidDebitSurchargeAmount() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount",
                         FIELD_VALUE, ""));
         try {

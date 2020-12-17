@@ -29,6 +29,8 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class PayoutReconcileQueueTest {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     @Mock
     private SqsQueueService sqsQueueService;
     @Mock
@@ -43,7 +45,6 @@ public class PayoutReconcileQueueTest {
         when(connectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
         when(connectorConfiguration.getPayoutReconcileProcessConfig()).thenReturn(payoutReconcileProcessConfig);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         payoutReconcileQueue = new PayoutReconcileQueue(sqsQueueService, connectorConfiguration, objectMapper);
     }
 

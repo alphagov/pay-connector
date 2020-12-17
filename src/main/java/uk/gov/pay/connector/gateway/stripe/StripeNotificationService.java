@@ -94,12 +94,13 @@ public class StripeNotificationService {
                                      PayoutReconcileQueue payoutReconcileQueue,
                                      PayoutEmitterService payoutEmitterService,
                                      IpAddressMatcher ipAddressMatcher,
-                                     @Named("AllowedStripeIpAddresses") Set<String> allowedStripeIpAddresses) {
+                                     @Named("AllowedStripeIpAddresses") Set<String> allowedStripeIpAddresses,
+                                     ObjectMapper objectMapper) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
         this.payoutReconcileQueue = payoutReconcileQueue;
-        objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.payoutEmitterService = payoutEmitterService;
         this.ipAddressMatcher = ipAddressMatcher;

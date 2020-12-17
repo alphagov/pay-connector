@@ -52,6 +52,7 @@ public class GatewayAccountServiceTest {
     private GatewayAccountService gatewayAccountService;
     
     private static final Long GATEWAY_ACCOUNT_ID = 100L;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() {
@@ -90,7 +91,7 @@ public class GatewayAccountServiceTest {
         Map<String, String> settings = Map.of(
                 "api_token", "anapitoken",
                 "template_id", "atemplateid");
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "notify_settings",
                 "value", settings)));
@@ -106,7 +107,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateNotifySettingsWhenRemove() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of("op", "replace",
                 "path", "notify_settings")));
 
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
@@ -120,7 +121,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateEmailCollectionMode() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "email_collection_mode",
                 "value", "off")));
@@ -137,7 +138,7 @@ public class GatewayAccountServiceTest {
     
     @Test
     public void shouldUpdateCorporateCreditCardSurchargeAmount() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100)));
@@ -151,7 +152,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateCorporateDebitCardSurchargeAmount() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "corporate_debit_card_surcharge_amount",
                 "value", 100)));
@@ -165,7 +166,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateCorporatePrepaidDebitCardSurchargeAmount() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "corporate_prepaid_debit_card_surcharge_amount",
                 "value", 100)));
@@ -179,7 +180,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateCorporatePrepaidCreditCardSurchargeAmount() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "corporate_prepaid_credit_card_surcharge_amount",
                 "value", 100)));
@@ -193,7 +194,7 @@ public class GatewayAccountServiceTest {
 
     @Test(expected = DigitalWalletNotSupportedGatewayException.class)
     public void shouldNotAllowDigitalWalletForUnsupportedGateways() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "add",
                 "path", "allow_apple_pay",
                 "value", "true")));
@@ -206,7 +207,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateAllowZeroAmountTrue() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "allow_zero_amount",
                 "value", true)));
@@ -221,7 +222,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateAllowZeroAmountFalse() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "allow_zero_amount",
                 "value", false)));
@@ -235,7 +236,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateBlockPrepaidCardsTrue() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "block_prepaid_cards",
                 "value", true)));
@@ -249,7 +250,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateBlockPrepaidCardsFalse() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "block_prepaid_cards",
                 "value", false)));
@@ -263,7 +264,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateAllowMotoTrue() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "allow_moto",
                 "value", true)));
@@ -278,7 +279,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateAllowMotoFalse() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "allow_moto",
                 "value", false)));
@@ -292,7 +293,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateMotoMaskCardNumberInputTrue() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "moto_mask_card_number_input",
                 "value", true)));
@@ -306,7 +307,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateMotoMaskCardNumberInputFalse() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "moto_mask_card_number_input",
                 "value", false)));
@@ -320,7 +321,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateMotoMaskCardSecurityCodeInputTrue() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "moto_mask_card_security_code_input",
                 "value", true)));
@@ -334,7 +335,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateMotoMaskCardSecurityCodeInputFalse() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "moto_mask_card_security_code_input",
                 "value", false)));
@@ -348,7 +349,7 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateIntegrationVersion3ds() {
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "integration_version_3ds",
                 "value", 2

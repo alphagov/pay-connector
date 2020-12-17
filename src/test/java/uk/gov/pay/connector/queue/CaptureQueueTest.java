@@ -35,7 +35,7 @@ public class CaptureQueueTest {
     @Mock
     ConnectorConfiguration connectorConfiguration;
 
-    private ObjectMapper objectMapper;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() throws Exception {
@@ -45,7 +45,6 @@ public class CaptureQueueTest {
         List<QueueMessage> messages = Arrays.asList(
                 QueueMessage.of(messageResult, validJsonMessage)
         );
-        objectMapper = new ObjectMapper();
         CaptureProcessConfig captureProcessConfig = mock(CaptureProcessConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getCaptureQueueUrl()).thenReturn("");

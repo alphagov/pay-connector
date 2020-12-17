@@ -11,7 +11,6 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
-import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -196,7 +195,7 @@ public class StripeNotificationResourceIT {
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 transactionId, SOURCE_CANCELED);
-        String response = notifyConnectorWithHeader(payload, "invalid-header")
+        notifyConnectorWithHeader(payload, "invalid-header")
                 .then()
                 .statusCode(500)
                 .extract().body()

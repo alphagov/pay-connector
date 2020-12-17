@@ -2,7 +2,6 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.postgresql.util.PGobject;
@@ -16,29 +15,28 @@ import static org.junit.Assert.assertThat;
 
 public class JsonToMapConverterTest {
 
-    private JsonToMapConverter jsonToMapConverter;
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
+    private JsonToMapConverter jsonToMapConverter = new JsonToMapConverter();
     private PGobject pGobject;
 
     @Before
     public void setUp(){
-        jsonToMapConverter = new JsonToMapConverter();
         pGobject = new PGobject();
         pGobject.setType("json");
     }
 
     @Test
     public void shouldReturnAMapContainingTheValuesOfAPGObject() throws Exception {
-        JsonNode payload = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(
-                        "json_field_1", "json_value_1",
-                        "json_field_2", "json_value_2"));
+        JsonNode payload = objectMapper.valueToTree(
+                Map.of("json_field_1", "json_value_1","json_field_2", "json_value_2"));
 
-        Map<String, String> values = ImmutableMap.of("json_field_1", "json_value_1", "json_field_2", "json_value_2");
-        pGobject.setValue(new ObjectMapper().writeValueAsString(values));
+        Map<String, String> values = Map.of("json_field_1", "json_value_1", "json_field_2", "json_value_2");
+        pGobject.setValue(objectMapper.writeValueAsString(values));
 
         Map<String, String> jsonValues = jsonToMapConverter.convertToEntityAttribute(pGobject);
 
-        assertThat(new ObjectMapper().writeValueAsString(jsonValues), is(payload.toString()));
+        assertThat(objectMapper.writeValueAsString(jsonValues), is(payload.toString()));
     }
 
     @Test
@@ -51,17 +49,16 @@ public class JsonToMapConverterTest {
 
     @Test
     public void shouldReturnPGObjectContainingPredifinedValues() throws Exception {
-        Map<String, String> values = ImmutableMap.of("json_field_1", "json_value_1", "json_field_2", "json_value_2");
+        Map<String, String> values = Map.of("json_field_1", "json_value_1", "json_field_2", "json_value_2");
         pGobject = jsonToMapConverter.convertToDatabaseColumn(values);
 
         assertThat(pGobject.getType(), is("json"));
-        assertThat(pGobject.getValue(), is(new ObjectMapper().writeValueAsString(values)));
+        assertThat(pGobject.getValue(), is(objectMapper.writeValueAsString(values)));
     }
 
     @Test
     public void shouldReturnNullWhenEmptyMap() {
-        Map<String, String> values = ImmutableMap.of();
-        pGobject = jsonToMapConverter.convertToDatabaseColumn(values);
+        pGobject = jsonToMapConverter.convertToDatabaseColumn(Map.of());
         assertThat(pGobject.getValue(), is(nullValue()));
     }
 }

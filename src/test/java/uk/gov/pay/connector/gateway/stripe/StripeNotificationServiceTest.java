@@ -77,6 +77,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT
 class StripeNotificationServiceTest {
     private static final String FORWARDED_IP_ADDRESSES = "1.2.3.4, 102.108.0.6";
     private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(Set.of("1.2.3.0/24", "9.9.9.9/32"));
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private StripeNotificationService notificationService;
 
@@ -101,7 +102,7 @@ class StripeNotificationServiceTest {
     @Captor
     private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
-    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(new ObjectMapper());
+    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(objectMapper);
 
     private final String externalId = "external-id";
     private final String sourceId = "source-id";
@@ -118,7 +119,8 @@ class StripeNotificationServiceTest {
                 mockPayoutReconcileQueue,
                 mockPayoutEmitterService,
                 new IpAddressMatcher(new InetAddressValidator()),
-                ALLOWED_IP_ADDRESSES);
+                ALLOWED_IP_ADDRESSES,
+                objectMapper);
 
         lenient().when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
     }
