@@ -58,10 +58,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
     static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
-    private static final List<String> SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS = List.of("REJECTED", "OUT_OF_SCOPE");
-    
+
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient inquiryClient;
@@ -85,7 +84,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayCaptureHandler worldpayCaptureHandler,
                                    WorldpayRefundHandler worldpayRefundHandler,
                                    AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
-                                   AuthorisationService authorisationService, 
+                                   AuthorisationService authorisationService,
                                    AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging) {
 
         this.gatewayUrlMap = gatewayUrlMap;
@@ -127,7 +126,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     ChargeStatus mappedStatus = WorldpayStatus.fromString(worldpayQueryResponse.getLastEvent())
                             .map(WorldpayStatus::getPayStatus)
                             .orElse(null);
-                    
+
                     return new ChargeQueryResponse(mappedStatus, worldpayQueryResponse);
                 })
                 .orElseThrow(() ->
@@ -152,41 +151,32 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
-        
+
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayAuthoriseHandler.authorise(request);
-        
-        if (response.getBaseResponse().isPresent()) {
-        
-            var worldpayOrderResponse = response.getBaseResponse().get();
-        
-            if (worldpayOrderResponse.getLastEvent().isPresent() && 
-                    worldpayOrderResponse.getLastEvent().get().equals("REFUSED") && 
-                    worldpayOrderResponse.getExemptionResponseResult().isPresent() &&
-                    SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS.contains(worldpayOrderResponse.getExemptionResponseResult().get())) {
 
-                var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
+        if (response.getBaseResponse().isPresent() && response.getBaseResponse().get().isSoftDecline()) {
+            
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
-                Optional<String> transactionId = authorisationService.extractTransactionId(request.getCharge().getExternalId(), response);
-                
-                // Used by Splunk saved search
-                var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
-                        authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
-                        request.getCharge().getExternalId(), 
-                        request.getCharge().getPaymentGatewayName().getName(),
-                        transactionId.orElse("missing transaction ID"),
-                        request.getCharge().getGatewayAccount().getAnalyticsId(),
-                        request.getCharge().getGatewayAccount().getId(),
-                        response, 
-                        ChargeStatus.fromString(request.getCharge().getStatus()), request.getCharge().getStatus());
+            Optional<String> transactionId = authorisationService.extractTransactionId(request.getCharge().getExternalId(), response);
 
-                var structuredLoggingArguments = ArrayUtils.addAll(
-                        request.getCharge().getStructuredLoggingArgs(),
-                        authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
+            var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
+                    authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
+                    request.getCharge().getExternalId(),
+                    request.getCharge().getPaymentGatewayName().getName(),
+                    transactionId.orElse("missing transaction ID"),
+                    request.getCharge().getGatewayAccount().getAnalyticsId(),
+                    request.getCharge().getGatewayAccount().getId(),
+                    response,
+                    ChargeStatus.fromString(request.getCharge().getStatus()), request.getCharge().getStatus());
 
-                LOGGER.info(logMessage, structuredLoggingArguments);
-                
-                return worldpayAuthoriseHandler.authorise(request, true);
-            }
+            var structuredLoggingArguments = ArrayUtils.addAll(
+                    request.getCharge().getStructuredLoggingArgs(),
+                    authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
+
+            LOGGER.info(logMessage, structuredLoggingArguments);
+
+            return worldpayAuthoriseHandler.authorise(request, true);
         }
         return response;
     }

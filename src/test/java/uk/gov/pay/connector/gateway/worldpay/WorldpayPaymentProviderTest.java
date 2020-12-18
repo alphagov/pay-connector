@@ -134,7 +134,7 @@ public class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
         
         assertTrue(response.getBaseResponse().isPresent());
-        assertEquals(response.getBaseResponse().get(), secondResponse.getBaseResponse().get());
+        assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
         
         verify(worldpayAuthoriseHandler).authorise(cardAuthRequest);
         verify(worldpayAuthoriseHandler).authorise(cardAuthRequest, true);

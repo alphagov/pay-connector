@@ -8,15 +8,16 @@ import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
 public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseCancelResponse, BaseInquiryResponse {
 
+    private static final Set<String> SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS = Set.of("REJECTED", "OUT_OF_SCOPE");
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
     private static final String WORLDPAY_CANCELLED_EVENT = "CANCELLED";
@@ -88,9 +89,13 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     public void setChallengeAcsUrl(String challengeAcsUrl) {
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
-
-    public Optional<String> getExemptionResponseResult() {
-        return Optional.ofNullable(exemptionResponseResult).map(r -> isBlank(r) ? null : exemptionResponseResult);
+    
+    public boolean isSoftDecline() {
+        return Optional.ofNullable(lastEvent)
+                .map(e -> e.equals("REFUSED"))
+                .map(e -> e && exemptionResponseResult != null)
+                .map(e -> e && SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS.contains(exemptionResponseResult))
+                .orElse(false);
     }
 
     public String getPaRequest() {
@@ -102,7 +107,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     }
 
     public Optional<String> getLastEvent() {
-        return Optional.ofNullable(lastEvent).map(r -> isBlank(r) ? null : lastEvent);
+        return Optional.ofNullable(lastEvent).map(r -> r.isBlank() ? null : lastEvent);
     }
 
     public String getChallengeAcsUrl() {
