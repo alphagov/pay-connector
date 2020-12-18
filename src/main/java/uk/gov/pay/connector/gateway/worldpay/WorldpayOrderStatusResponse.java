@@ -98,6 +98,14 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
                 .orElse(false);
     }
 
+    public void setLastEvent(String lastEvent) {
+        this.lastEvent = lastEvent;
+    }
+
+    public void setExemptionResponseResult(String exemptionResponseResult) {
+        this.exemptionResponseResult = exemptionResponseResult;
+    }
+
     public String getPaRequest() {
         return paRequest;
     }
