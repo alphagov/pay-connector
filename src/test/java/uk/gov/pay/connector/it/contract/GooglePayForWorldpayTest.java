@@ -23,6 +23,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -71,6 +72,7 @@ public class GooglePayForWorldpayTest {
         String entity = response.getEntity();
         System.out.println(entity);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(entity, WorldpayOrderStatusResponse.class);
+        assertTrue(worldpayOrderStatusResponse.getLastEvent().isPresent());
         assertThat(worldpayOrderStatusResponse.getLastEvent(), is("AUTHORISED"));
     }
 

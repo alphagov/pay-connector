@@ -50,7 +50,7 @@ public class AuthorisationService {
         }
     }
     
-    public Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<? extends BaseAuthoriseResponse> operationResponse) {
         Optional<String> transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId);
 

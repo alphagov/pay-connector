@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -24,9 +25,12 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
+import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -36,6 +40,7 @@ import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -53,8 +58,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
     static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
-    
+
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient inquiryClient;
@@ -64,6 +70,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private final WorldpayAuthoriseHandler worldpayAuthoriseHandler;
     private final Map<String, URI> gatewayUrlMap;
+    private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
+    private final AuthorisationService authorisationService;
+    private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -73,7 +82,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler,
                                    WorldpayAuthoriseHandler worldpayAuthoriseHandler,
                                    WorldpayCaptureHandler worldpayCaptureHandler,
-                                   WorldpayRefundHandler worldpayRefundHandler) {
+                                   WorldpayRefundHandler worldpayRefundHandler,
+                                   AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
+                                   AuthorisationService authorisationService,
+                                   AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -83,6 +95,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.worldpayRefundHandler = worldpayRefundHandler;
         this.worldpayWalletAuthorisationHandler = worldpayWalletAuthorisationHandler;
         this.worldpayAuthoriseHandler = worldpayAuthoriseHandler;
+        this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
+        this.authorisationService = authorisationService;
+        this.authorisationRequestSummaryStructuredLogging = authorisationRequestSummaryStructuredLogging;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
@@ -111,7 +126,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     ChargeStatus mappedStatus = WorldpayStatus.fromString(worldpayQueryResponse.getLastEvent())
                             .map(WorldpayStatus::getPayStatus)
                             .orElse(null);
-                    
+
                     return new ChargeQueryResponse(mappedStatus, worldpayQueryResponse);
                 })
                 .orElseThrow(() ->
@@ -136,7 +151,34 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
-        return worldpayAuthoriseHandler.authorise(request);
+
+        GatewayResponse<WorldpayOrderStatusResponse> response = worldpayAuthoriseHandler.authorise(request);
+
+        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
+            
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(request.getCharge().getExternalId(), response);
+
+            var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
+                    authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
+                    request.getCharge().getExternalId(),
+                    request.getCharge().getPaymentGatewayName().getName(),
+                    transactionId.orElse("missing transaction ID"),
+                    request.getCharge().getGatewayAccount().getAnalyticsId(),
+                    request.getCharge().getGatewayAccount().getId(),
+                    response,
+                    ChargeStatus.fromString(request.getCharge().getStatus()), request.getCharge().getStatus());
+
+            var structuredLoggingArguments = ArrayUtils.addAll(
+                    request.getCharge().getStructuredLoggingArgs(),
+                    authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
+
+            LOGGER.info(logMessage, structuredLoggingArguments);
+
+            return worldpayAuthoriseHandler.authorise(request, true);
+        }
+        return response;
     }
 
     @Override
