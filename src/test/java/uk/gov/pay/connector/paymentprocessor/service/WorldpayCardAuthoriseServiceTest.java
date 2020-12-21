@@ -168,6 +168,34 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     } 
     
     @Test
+    void authorise_with_exemption_when_3ds_challenge_required_results_in_authorisation_3ds_required() throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_3DS_FLEX_RESPONSE));
+
+        var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
+        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+    }
+    
+    @Test
+    void authorise_with_exemption_when_3ds_requested_results_in_authorisation_3ds_required() throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_3DS_RESPONSE));
+
+        var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
+        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+    }
+    
+    @Test
     void do_authorise_should_respond_with_3ds_response_for_3ds_orders() throws Exception {
         var worldpayOrderStatusResponse = worldpayRespondsWith(null, load(WORLDPAY_3DS_RESPONSE));
 
