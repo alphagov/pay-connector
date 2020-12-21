@@ -154,7 +154,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayAuthoriseHandler.authorise(request);
 
-        if (response.getBaseResponse().isPresent() && response.getBaseResponse().get().isSoftDecline()) {
+        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 

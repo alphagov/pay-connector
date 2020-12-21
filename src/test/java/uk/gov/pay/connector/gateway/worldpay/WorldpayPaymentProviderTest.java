@@ -136,9 +136,6 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
         
-        verify(worldpayAuthoriseHandler).authorise(cardAuthRequest);
-        verify(worldpayAuthoriseHandler).authorise(cardAuthRequest, true);
-        
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();

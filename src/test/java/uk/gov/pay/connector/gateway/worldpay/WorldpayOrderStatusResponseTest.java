@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WorldpayOrderStatusResponseTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "OUT_OF_SCOPE", "REJECTED", })
+    @ValueSource(strings = { "OUT_OF_SCOPE", "REJECTED" })
     void worldpay_response_should_be_soft_decline(String exemptionResponseResult) {
         var worldpayOrderStatusResponse = new WorldpayOrderStatusResponse();
         worldpayOrderStatusResponse.setLastEvent("REFUSED");

@@ -91,11 +91,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     }
     
     public boolean isSoftDecline() {
-        return Optional.ofNullable(lastEvent)
-                .map(e -> e.equals("REFUSED"))
-                .map(e -> e && exemptionResponseResult != null)
-                .map(e -> e && SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS.contains(exemptionResponseResult))
-                .orElse(false);
+        return Optional.ofNullable(lastEvent).map("REFUSED"::equals).orElse(false)
+                && Optional.ofNullable(exemptionResponseResult).map(SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS::contains).orElse(false);
     }
 
     public void setLastEvent(String lastEvent) {
