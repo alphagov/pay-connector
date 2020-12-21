@@ -52,6 +52,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,6 +69,8 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
@@ -111,6 +114,42 @@ public class WorldpayPaymentProviderTest {
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+    }
+    
+    @Test
+    void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_exemption_honoured_but_authorisation_refused() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verify(worldpayAuthoriseHandler, never()).authorise(cardAuthRequest, true);
+    }
+    
+    @Test
+    void should_not_retry_without_exemption_flag_when_authorising_with_exemption_flag_results_in_authorised() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+        
+        verify(worldpayAuthoriseHandler, never()).authorise(cardAuthRequest, true);
     }
 
     @Test
