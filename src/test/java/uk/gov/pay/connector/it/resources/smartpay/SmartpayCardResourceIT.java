@@ -43,6 +43,8 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
 public class SmartpayCardResourceIT extends ChargingITestBase {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     private String validCardDetails = buildCardDetailsWith("737");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
 
@@ -101,7 +103,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
         smartpayMockClient.mock3dsAuthorisationSuccess();
 
         givenSetup()
-                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .body(objectMapper.writeValueAsString(get3dsPayload()))
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
                 .statusCode(200);
@@ -116,7 +118,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
         smartpayMockClient.mock3dsAuthorisationFailure();
 
         givenSetup()
-                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .body(objectMapper.writeValueAsString(get3dsPayload()))
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400);
@@ -131,7 +133,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
         smartpayMockClient.mockServerFault();
 
         givenSetup()
-                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .body(objectMapper.writeValueAsString(get3dsPayload()))
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
                 .statusCode(500);

@@ -30,6 +30,8 @@ import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixt
 
 public class LedgerStub {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
     public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         stubResponse(externalId, ledgerTransactionFields);
@@ -39,7 +41,7 @@ public class LedgerStub {
         ResponseDefinitionBuilder response = aResponse()
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .withStatus(200)
-                .withBody(new ObjectMapper().writeValueAsString(ledgerTransaction));
+                .withBody(objectMapper.writeValueAsString(ledgerTransaction));
         stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
                         .withQueryParam("override_account_id_restriction", equalTo("true"))
@@ -77,7 +79,7 @@ public class LedgerStub {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, null);
         String body = null;
 
-        new ObjectMapper().writeValueAsString(ledgerTransactionFields);
+        objectMapper.writeValueAsString(ledgerTransactionFields);
 
         stubResponseForProviderAndGatewayTransactionId(testCharge.getTransactionId(),
                 paymentProvider,
@@ -93,7 +95,7 @@ public class LedgerStub {
         ResponseDefinitionBuilder response = aResponse()
                 .withStatus(200)
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
-                .withBody(new ObjectMapper().writeValueAsString(refundTransactionsForPayment));
+                .withBody(objectMapper.writeValueAsString(refundTransactionsForPayment));
 
         String url = format("/v1/transaction/%s/transaction", chargeExternalId);
         stubFor(WireMock.get(urlPathEqualTo(url))
@@ -115,7 +117,7 @@ public class LedgerStub {
                 .withStatus(status);
 
         if (nonNull(ledgerTransactionFields) && ledgerTransactionFields.size() > 0) {
-            responseDefBuilder.withBody(new ObjectMapper().writeValueAsString(ledgerTransactionFields));
+            responseDefBuilder.withBody(objectMapper.writeValueAsString(ledgerTransactionFields));
         }
         stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId)))
@@ -130,7 +132,7 @@ public class LedgerStub {
         ResponseDefinitionBuilder responseDefBuilder = aResponse()
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .withStatus(200)
-                .withBody(new ObjectMapper().writeValueAsString(ledgerTransactionFields));
+                .withBody(objectMapper.writeValueAsString(ledgerTransactionFields));
         stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
                         .withQueryParam("override_account_id_restriction", equalTo("true"))

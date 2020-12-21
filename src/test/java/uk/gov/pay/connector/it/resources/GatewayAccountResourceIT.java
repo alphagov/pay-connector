@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
 import org.hamcrest.core.Is;
 import org.junit.Test;
@@ -12,6 +11,8 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -31,6 +32,9 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
+    
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test
@@ -365,7 +369,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void createValidNotificationCredentials_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");
         givenSetup()
-                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .body(toJson(Map.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -375,7 +379,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void patchGatewayAccountAnalyticsId_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of("analytics_id", "new-id")))
+                .body(toJson(Map.of("analytics_id", "new-id")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -391,7 +395,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void patchGatewayAccountDescription_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of("description", "new-desc")))
+                .body(toJson(Map.of("description", "new-desc")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -407,7 +411,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void patchGatewayAccountDescriptionAndAnalyticsId_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of("analytics_id", "new-id", "description", "new-desc")))
+                .body(toJson(Map.of("analytics_id", "new-id", "description", "new-desc")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -424,7 +428,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void patchGatewayAccountDescriptionAndAnalyticsIdEmpty_responseShouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of()))
+                .body(toJson(Map.of()))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
@@ -440,7 +444,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void shouldToggle3dsToTrue() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of("toggle_3ds", true)))
+                .body(toJson(Map.of("toggle_3ds", true)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -491,7 +495,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void shouldToggle3dsToFalse() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()
-                .body(toJson(ImmutableMap.of("toggle_3ds", false)))
+                .body(toJson(Map.of("toggle_3ds", false)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -508,7 +512,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         String maestroCardTypeId = databaseTestHelper.getCardTypeId("maestro", "DEBIT");
 
         givenSetup()
-                .body(toJson(ImmutableMap.of("toggle_3ds", true)))
+                .body(toJson(Map.of("toggle_3ds", true)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -520,7 +524,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(OK.getStatusCode());
 
         givenSetup()
-                .body(toJson(ImmutableMap.of("toggle_3ds", false)))
+                .body(toJson(Map.of("toggle_3ds", false)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(CONFLICT.getStatusCode());
@@ -530,7 +534,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");
         givenSetup()
-                .body(toJson(ImmutableMap.of("bob", "bob", "bobby", "bobsbigsecret")))
+                .body(toJson(Map.of("bob", "bob", "bobby", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
@@ -540,7 +544,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void whenNotificationCredentialsInvalidValues_shouldReturn400() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");
         givenSetup()
-                .body(toJson(ImmutableMap.of("username", "bob", "password", "tooshort")))
+                .body(toJson(Map.of("username", "bob", "password", "tooshort")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
                 .contentType(ContentType.JSON)
@@ -552,9 +556,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "notify_settings",
-                "value", ImmutableMap.of("api_token", "anapitoken",
+                "value", Map.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
         givenSetup()
@@ -567,9 +571,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "insert",
                 "path", "notify_settings",
-                "value", ImmutableMap.of("api_token", "anapitoken",
+                "value", Map.of("api_token", "anapitoken",
                         "template_id", "atemplateid")));
         givenSetup()
                 .body(payload)
@@ -581,7 +585,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn200_whenBlockPrepaidCardsIsUpdated() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "block_prepaid_cards",
                 "value", true));
         givenSetup()
@@ -600,7 +604,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "OFF"));
         givenSetup()
@@ -613,7 +617,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "nope"));
         givenSetup()
@@ -626,9 +630,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn404ForNotifySettings_whenGatewayAccountIsNonExistent() throws Exception {
         String gatewayAccountId = "1000023";
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "notify_settings",
-                "value", ImmutableMap.of("api_token", "anapitoken",
+                "value", Map.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
         givenSetup()
@@ -641,9 +645,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "notify_settings",
-                "value", ImmutableMap.of("api_token", "anapitoken",
+                "value", Map.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
         givenSetup()
@@ -652,7 +656,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "remove",
+        payload = objectMapper.writeValueAsString(Map.of("op", "remove",
                 "path", "notify_settings"));
 
         givenSetup()
@@ -665,7 +669,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "insert",
                 "path", "notify_setting"));
         givenSetup()
                 .body(payload)
@@ -677,7 +681,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100));
         givenSetup()
@@ -704,7 +708,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "corporate_debit_card_surcharge_amount",
                 "value", 200));
         givenSetup()
@@ -731,7 +735,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void patchGatewayAccount_forCorporatePrepaidCreditCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "corporate_prepaid_credit_card_surcharge_amount",
                 "value", 300));
         givenSetup()
@@ -758,7 +762,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void patchGatewayAccount_forCorporatePrepaidDebitCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "corporate_prepaid_debit_card_surcharge_amount",
                 "value", 400));
         givenSetup()
@@ -785,7 +789,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     @Test
     public void shouldReturn404ForCorporateSurcharge_whenGatewayAccountIsNonExistent() throws Exception {
         String gatewayAccountId = "1000023";
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100));
         givenSetup()

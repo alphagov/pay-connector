@@ -13,12 +13,15 @@ import java.util.Map;
 
 @Converter
 public class CredentialsConverter implements AttributeConverter<Map<String,String>, PGobject> {
+    
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public PGobject convertToDatabaseColumn(Map<String,String> credentials) {
         PGobject pgCredentials = new PGobject();
         pgCredentials.setType("json");
         try {
-            pgCredentials.setValue(new ObjectMapper().writeValueAsString(credentials));
+            pgCredentials.setValue(objectMapper.writeValueAsString(credentials));
         } catch (SQLException | JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -28,7 +31,7 @@ public class CredentialsConverter implements AttributeConverter<Map<String,Strin
     @Override
     public Map<String,String> convertToEntityAttribute(PGobject dbCredentials) {
         try {
-            return new ObjectMapper().readValue(dbCredentials.toString(), new TypeReference<Map<String, String>>() {});
+            return objectMapper.readValue(dbCredentials.toString(), new TypeReference<>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

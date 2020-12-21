@@ -38,6 +38,7 @@ public class SmartpayNotificationService {
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final IpAddressMatcher ipAddressMatcher;
     private final Set<String> allowedSmartpayIpAddresses;
+    private final ObjectMapper objectMapper;
 
     private static final String PAYMENT_GATEWAY_NAME = SMARTPAY.getName();
 
@@ -47,13 +48,15 @@ public class SmartpayNotificationService {
                                        RefundNotificationProcessor refundNotificationProcessor,
                                        GatewayAccountService gatewayAccountService,
                                        IpAddressMatcher ipAddressMatcher,
-                                       @Named("AllowedSmartpayIpAddresses") Set<String> allowedSmartpayIpAddresses) {
+                                       @Named("AllowedSmartpayIpAddresses") Set<String> allowedSmartpayIpAddresses, 
+                                       ObjectMapper objectMapper) {
         this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
         this.ipAddressMatcher = ipAddressMatcher;
         this.allowedSmartpayIpAddresses = allowedSmartpayIpAddresses;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -169,14 +172,12 @@ public class SmartpayNotificationService {
 
     private List<SmartpayNotification> parseNotification(String payload) throws SmartpayParseException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             // TODO for authorisation notifications, this does the wrong thing
             // Transaction ID is pspReference, not originalReference as the code below assumes
             // https://www.barclaycard.co.uk/business/files/SmartPay_Notifications_Guide.pdf
             // We will set the transaction ID to blank, which makes the notification effectively useless
             // This is OK at the moment because we ignore authorisation notifications for Smartpay
-            return objectMapper.readValue(payload, SmartpayNotificationList.class)
-                    .getNotifications();
+            return objectMapper.readValue(payload, SmartpayNotificationList.class).getNotifications();
         } catch (Exception e) {
             throw new SmartpayParseException(e);
         }

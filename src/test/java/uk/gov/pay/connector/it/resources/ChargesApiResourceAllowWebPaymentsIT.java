@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.Response;
 import junitparams.Parameters;
 import org.apache.http.HttpStatus;
@@ -33,12 +32,14 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargesApiResourceAllowWebPaymentsIT {
     
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     private String accountId;
     private String chargeId;
 
     @DropwizardTestContext
     protected TestContext testContext;
-    
+
     @Before
     public void setup() {
         accountId = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "worldpay"));
@@ -85,7 +86,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     @Test
     public void assertBadRequestResponseIfPatchingMerchantIdWithNoGatewayAccountCredentials() throws JsonProcessingException {
         String accountIdWithoutGatewayAccountCredentials = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "worldpay"));
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "add",
                 "path", "credentials/gateway_merchant_id",
                 "value", "94b53bf6b12b6c5"));
         given().port(testContext.getPort()).contentType(JSON)
@@ -100,7 +101,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     @Test
     public void assertBadRequestResponseIfPatchingDigitalWalletWithNonSupportedGateway() throws JsonProcessingException {
         String accountIdWithNotDigitalWalletSupportedGateway = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "epdq"));
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", "allow_apple_pay",
                 "value", true));
         given().port(testContext.getPort()).contentType(JSON)
@@ -114,7 +115,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     }
 
     private void allowWebPaymentsOnGatewayAccount(String path) throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                 "path", path,
                 "value", true));
 
@@ -126,7 +127,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     }
     
     private void addGatewayMerchantIdToGatewayAccount(String accountId) throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
+        String payload = objectMapper.writeValueAsString(Map.of("op", "add",
                 "path", "credentials/gateway_merchant_id",
                 "value", "94b53bf6b12b6c5"));
 

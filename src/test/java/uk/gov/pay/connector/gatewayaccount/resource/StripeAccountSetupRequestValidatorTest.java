@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
@@ -25,6 +24,7 @@ import static org.junit.Assert.assertThrows;
 public class StripeAccountSetupRequestValidatorTest {
 
     private final StripeAccountSetupRequestValidator validator = new StripeAccountSetupRequestValidator(new RequestValidator());
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Parameters({
             "replace, bank_account, true",
@@ -38,7 +38,7 @@ public class StripeAccountSetupRequestValidatorTest {
     })
     @Test
     public void shouldAllowReplaceOperationForValidPathsAndValues(String operation, String path, boolean value) {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
+        JsonNode jsonNode = objectMapper.valueToTree(Collections.singletonList(Map.of(
                 "op", operation,
                 "path", path,
                 "value", value)));
@@ -92,21 +92,21 @@ public class StripeAccountSetupRequestValidatorTest {
             params.put("value", data.get("value"));
         }
 
-        return new ObjectMapper().valueToTree(Collections.singletonList(params));
+        return objectMapper.valueToTree(Collections.singletonList(params));
     }
 
     @Test
     public void multipleUpdatesAreValid() {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(Arrays.asList(
-                ImmutableMap.of(
+        JsonNode jsonNode = objectMapper.valueToTree(Arrays.asList(
+                Map.of(
                         "op", "replace",
                         "path", "bank_account",
                         "value", true),
-                ImmutableMap.of(
+                Map.of(
                         "op", "replace",
                         "path", "responsible_person",
                         "value", false),
-                ImmutableMap.of(
+                Map.of(
                         "op", "replace",
                         "path", "vat_number",
                         "value", true)
@@ -117,7 +117,7 @@ public class StripeAccountSetupRequestValidatorTest {
 
     @Test
     public void notAnArrayIsInvalid() {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(ImmutableMap.of(
+        JsonNode jsonNode = objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "bank_account",
                 "value", true));

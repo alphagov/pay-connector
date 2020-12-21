@@ -36,6 +36,8 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class EpdqCardResourceIT extends ChargingITestBase {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    
     private String authorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
 
@@ -86,7 +88,7 @@ public class EpdqCardResourceIT extends ChargingITestBase {
         Map<String, String> payload = ImmutableMap.of("auth_3ds_result", AUTHORISED.name());
 
         givenSetup()
-                .body(new ObjectMapper().writeValueAsString(payload))
+                .body(objectMapper.writeValueAsString(payload))
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
                 .statusCode(200);

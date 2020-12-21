@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,8 +81,8 @@ class SmartpayNotificationServiceTest {
                 mockRefundNotificationProcessor,
                 mockGatewayAccountService,
                 new IpAddressMatcher(new InetAddressValidator()),
-                ALLOWED_IP_ADDRESSES
-        );
+                ALLOWED_IP_ADDRESSES,
+                new ObjectMapper());
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());

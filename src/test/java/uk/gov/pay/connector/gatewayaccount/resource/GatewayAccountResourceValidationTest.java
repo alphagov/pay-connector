@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.testing.junit.ResourceTestRule;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -27,10 +26,9 @@ import static org.mockito.Mockito.when;
 public class GatewayAccountResourceValidationTest {
 
     private static ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
-
     private static WorldpayConfig mockWorldpayConfig = mock(WorldpayConfig.class);
-
     private static GatewayConfig mockGatewayConfig = mock(GatewayConfig.class);
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     static {
         when(mockWorldpayConfig.getCredentials()).thenReturn(List.of());
@@ -60,7 +58,7 @@ public class GatewayAccountResourceValidationTest {
     @Test
     public void shouldReturn422_whenProviderAccountTypeIsInvalid() {
 
-        Map<String, Object> payload = ImmutableMap.of("type", "invalid");
+        Map<String, Object> payload = Map.of("type", "invalid");
 
         Response response = resources.client()
                 .target("/v1/api/accounts")
@@ -76,7 +74,7 @@ public class GatewayAccountResourceValidationTest {
     @Test
     public void shouldReturn422_whenPaymentProviderIsInvalid() {
 
-        Map<String, Object> payload = ImmutableMap.of("payment_provider", "blockchain");
+        Map<String, Object> payload = Map.of("payment_provider", "blockchain");
 
         Response response = resources.client()
                 .target("/v1/api/accounts")
@@ -91,8 +89,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporateDebitCardSurchargeOperationIsInvalid() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of("op", "add",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("op", "add",
                         "path", "corporate_debit_card_surcharge_amount",
                         "value", 250));
         Response response = resources.client()
@@ -106,10 +104,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeOperationIsMissing() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(
-                        "path", "corporate_prepaid_credit_card_surcharge_amount",
-                        "value", 250));
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("path", "corporate_prepaid_credit_card_surcharge_amount","value", 250));
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()
@@ -121,8 +117,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporateCreditCardSurchargeAmountIsNegativeValue() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of("op", "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("op", "replace",
                         "path", "corporate_credit_card_surcharge_amount",
                         "value", -100));
         Response response = resources.client()
@@ -137,8 +133,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporateDebditCardSurchargeAmountIsInvalidValue() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of("op", "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("op", "replace",
                         "path", "corporate_debit_card_surcharge_amount",
                         "value", "not zero or a positive number that can be represented as a long"));
         Response response = resources.client()
@@ -153,9 +149,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeAmountValueIsMissing() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of("op", "replace",
-                        "path", "corporate_prepaid_credit_card_surcharge_amount"));
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("op", "replace","path", "corporate_prepaid_credit_card_surcharge_amount"));
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()
@@ -167,8 +162,8 @@ public class GatewayAccountResourceValidationTest {
 
     @Test
     public void shouldReturn400_whenCorporateCreditCardSurchargeAmountValueIsEmpty() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of("op", "replace",
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of("op", "replace",
                         "path", "corporate_credit_card_surcharge_amount",
                         "value", ""));
         Response response = resources.client()
@@ -187,7 +182,7 @@ public class GatewayAccountResourceValidationTest {
         valueMap.put("op", "replace");
         valueMap.put("path", "corporate_prepaid_debit_card_surcharge_amount");
         valueMap.put("value", null);
-        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        JsonNode jsonNode = objectMapper.valueToTree(valueMap);
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()
@@ -203,7 +198,7 @@ public class GatewayAccountResourceValidationTest {
         valueMap.put("op", "replace");
         valueMap.put("path", "allow_zero_amount");
         valueMap.put("value", null);
-        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        JsonNode jsonNode = objectMapper.valueToTree(valueMap);
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()
@@ -219,7 +214,7 @@ public class GatewayAccountResourceValidationTest {
         valueMap.put("op", "replace");
         valueMap.put("path", "allow_zero_amount");
         valueMap.put("value", "false");
-        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        JsonNode jsonNode = objectMapper.valueToTree(valueMap);
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()

@@ -26,6 +26,8 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayMerchantIdIT {
+    
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @DropwizardTestContext
     protected TestContext testContext;
@@ -86,7 +88,7 @@ public class GatewayMerchantIdIT {
     }
 
     private void patch(String accountId, String gatewayMerchantId, String op) throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", op,
+        String payload = objectMapper.writeValueAsString(ImmutableMap.of("op", op,
                 "path", "credentials/gateway_merchant_id",
                 "value", gatewayMerchantId));
         
