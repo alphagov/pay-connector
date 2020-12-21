@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
@@ -104,9 +105,9 @@ public class WorldpayPaymentProviderTest {
     void setup() {
         worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayUrlMap, authoriseClient, cancelClient, 
                 inquiryClient, worldpayWalletAuthorisationHandler, worldpayAuthoriseHandler, worldpayCaptureHandler, 
-                worldpayRefundHandler, new AuthorisationRequestSummaryStringifier(), 
+                worldpayRefundHandler, 
                 new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)), 
-                new AuthorisationRequestSummaryStructuredLogging());
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()));
         
         gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setCredentials(gatewayAccountCredentials);

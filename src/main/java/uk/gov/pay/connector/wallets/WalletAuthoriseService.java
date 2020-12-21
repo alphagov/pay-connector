@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -29,21 +30,26 @@ import java.util.Optional;
 import static java.lang.String.format;
 
 public class WalletAuthoriseService {
+    
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
+    private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
+    
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final AuthorisationLogger authorisationLogger;
     private MetricRegistry metricRegistry;
 
     @Inject
     public WalletAuthoriseService(PaymentProviders paymentProviders,
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
+                                  AuthorisationLogger authorisationLogger, 
                                   Environment environment) {
         this.paymentProviders = paymentProviders;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
+        this.authorisationLogger = authorisationLogger;
         this.metricRegistry = environment.metrics();
     }
 
@@ -66,10 +72,10 @@ public class WalletAuthoriseService {
 
             } catch (GatewayException e) {
 
-                logger.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
+                LOGGER.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
 
                 if (e instanceof GatewayErrorException) {
-                    logger.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());
+                    LOGGER.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());
                 }
 
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
@@ -90,13 +96,15 @@ public class WalletAuthoriseService {
                     sessionIdentifier.orElse(null),
                     chargeStatus,
                     auth3dsDetailsEntity);
-
-            // Used by Splunk saved search
-            logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                    charge.getExternalId(), charge.getPaymentGatewayName().getName(),
+            
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    charge,
                     transactionId.orElse("missing transaction ID"),
-                    charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
-                    operationResponse, ChargeStatus.fromString(charge.getStatus()), chargeStatus);
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    chargeStatus
+            );
 
             return operationResponse;
         });
@@ -107,7 +115,7 @@ public class WalletAuthoriseService {
                             String successOrFailure,
                             WalletType walletType) {
 
-        logger.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
+        LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
                 walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
         metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
                 chargeEntity.getGatewayAccount().getGatewayName(),
@@ -134,7 +142,7 @@ public class WalletAuthoriseService {
             ChargeStatus status,
             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
 
-        logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
+        LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
         AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
@@ -157,7 +165,7 @@ public class WalletAuthoriseService {
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData)
             throws GatewayException {
 
-        logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
+        LOGGER.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
         return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
     }

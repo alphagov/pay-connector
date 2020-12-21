@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
@@ -107,8 +108,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 new AuthorisationService(mockExecutorService, environment),
                 chargeService,
-                new AuthorisationRequestSummaryStringifier(),
-                new AuthorisationRequestSummaryStructuredLogging(),
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 environment);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
