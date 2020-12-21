@@ -51,6 +51,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -60,6 +61,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentia
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -119,6 +121,28 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+    }
+    
+    @Test
+    void authorise_with_exemption_when_exemption_honoured_but_authorisation_refused_results_in_rejected() throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE));
+
+        var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
+        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REJECTED));
+        assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result and with exemption"));
+        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, result: HONOURED, reason: HIGH_RISK)"));
     }
     
     @Test
