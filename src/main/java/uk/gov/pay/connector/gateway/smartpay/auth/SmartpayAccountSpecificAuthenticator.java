@@ -14,9 +14,11 @@ import java.util.Optional;
 import static java.lang.String.format;
 
 public class SmartpayAccountSpecificAuthenticator implements Authenticator<BasicCredentials, BasicAuthUser> {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(SmartpayAccountSpecificAuthenticator.class);
+    
     private GatewayAccountDao gatewayAccountDao;
     private HashUtil hashUtil;
-    private static final Logger logger = LoggerFactory.getLogger(SmartpayAccountSpecificAuthenticator.class);
 
     @Inject
     public SmartpayAccountSpecificAuthenticator(GatewayAccountDao gatewayAccountDao, HashUtil hashUtil) {
@@ -32,7 +34,7 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
                 .filter((gatewayAccountEntity) -> matchCredentials(basicCredentials, gatewayAccountEntity))
                 .map(gatewayAccountEntity -> Optional.ofNullable(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser()))
                 .orElseGet(() -> {
-                    logger.error(format("Authentication failure: failed for smartpay username %s", basicCredentials));
+                    LOGGER.warn(format("Authentication failure: failed for smartpay username %s", basicCredentials));
                     return Optional.empty();
                 });
     }
