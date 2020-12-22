@@ -21,7 +21,8 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 
 public class ResponseUtil {
-    protected static final Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseUtil.class);
     private static final Joiner COMMA_JOINER = Joiner.on(", ");
 
     public static Response fieldsMissingResponse(List<String> missingFields) {
@@ -54,12 +55,12 @@ public class ResponseUtil {
     }
 
     public static Response badRequestResponse(List<String> messages) {
-        logger.error(messages.toString());
+        LOGGER.error(messages.toString());
         return buildErrorResponse(BAD_REQUEST, messages);
     }
 
     public static Response notFoundResponse(String message) {
-        logger.info(message);
+        LOGGER.info(message);
         return buildErrorResponse(NOT_FOUND, message);
     }
 
@@ -68,12 +69,12 @@ public class ResponseUtil {
     }
 
     public static Response serviceErrorResponse(String message) {
-        logger.error(message);
+        LOGGER.info(message);
         return buildErrorResponse(INTERNAL_SERVER_ERROR, message);
     }
 
     public static Response conflictErrorResponse(String message) {
-        logger.info(message);
+        LOGGER.info(message);
         return buildErrorResponse(CONFLICT, message);
     }
 
