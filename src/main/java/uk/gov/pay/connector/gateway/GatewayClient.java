@@ -74,11 +74,11 @@ public class GatewayClient {
                 return gatewayResponse;
             } else {
                 if (statusCode >= INTERNAL_SERVER_ERROR.getStatusCode()) {
-                    LOGGER.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
+                    LOGGER.warn("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
                             statusCode, url, account.getType(), request.getOrderRequestType());
                     incrementFailureCounter(metricRegistry, metricsPrefix);
                 } else {
-                    LOGGER.info("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
+                    LOGGER.warn("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
                             statusCode, url, account.getType(), request.getOrderRequestType());
                 }
                 throw new GatewayErrorException("Non-success HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
@@ -87,11 +87,11 @@ public class GatewayClient {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
-                    LOGGER.error(format("Connection timed out error for gateway url=%s", url), pe);
+                    LOGGER.warn(format("Connection timed out error for gateway url=%s", url), pe);
                     throw new GatewayConnectionTimeoutException("Gateway connection timeout error");
                 }
             }
-            LOGGER.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
+            LOGGER.warn(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayException(pe.getMessage());
         } catch (GatewayErrorException e) {
             throw e;
