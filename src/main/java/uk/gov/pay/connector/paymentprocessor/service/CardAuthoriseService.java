@@ -3,7 +3,6 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -22,13 +21,11 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
-import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
+import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import java.util.Locale;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -42,8 +39,7 @@ public class CardAuthoriseService {
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
-    private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
-    private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
+    private final AuthorisationLogger authorisationLogger;
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -51,15 +47,13 @@ public class CardAuthoriseService {
                                 PaymentProviders providers,
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
-                                AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
-                                AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging,
+                                AuthorisationLogger authorisationLogger, 
                                 Environment environment) {
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
+        this.authorisationLogger = authorisationLogger;
         this.metricRegistry = environment.metrics();
-        this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
-        this.authorisationRequestSummaryStructuredLogging = authorisationRequestSummaryStructuredLogging;
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -98,21 +92,17 @@ public class CardAuthoriseService {
                     authCardDetails);
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
-
-            // Used by Splunk saved search
-            var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
-                    authorisationRequestSummaryStringifier.stringify(authorisationRequestSummary),
-                    updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
+            
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    authorisationRequestSummary,
+                    updatedCharge,
                     transactionId.orElse("missing transaction ID"),
-                    updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                    operationResponse, ChargeStatus.fromString(charge.getStatus()), newStatus);
-
-            var structuredLoggingArguments = ArrayUtils.addAll(
-                    charge.getStructuredLoggingArgs(),
-                    authorisationRequestSummaryStructuredLogging.createArgs(authorisationRequestSummary));
-
-            LOGGER.info(logMessage, structuredLoggingArguments);
-
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    newStatus
+            );
+            
             metricRegistry.counter(String.format(
                     "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
                     updatedCharge.getGatewayAccount().getGatewayName(),

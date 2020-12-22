@@ -217,6 +217,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public String getStatus() {
         return status;
     }
+    
+    public ChargeStatus getChargeStatus() {
+        return ChargeStatus.fromString(status);
+    }
 
     public String getGatewayTransactionId() {
         return gatewayTransactionId;
