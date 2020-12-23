@@ -51,6 +51,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -127,18 +128,37 @@ public class WorldpayPaymentProviderTest {
     }
     
     @Test
+    public void submitAuthForSoftDecline() {
+        validGatewayAccount.setRequires3ds(true);
+        validGatewayAccount.setIntegrationVersion3ds(1);
+        validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        // card holder of "EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED" elicits a soft decline response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
+        var authCardDetails = anAuthCardDetails().withCardHolder("EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED").build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+        assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
+        assertEquals(response.getBaseResponse().get().getLastEvent().get(), "AUTHORISED");
+    }
+    
+    @Test
     public void submitAuthRequestWithExemptionEngineFlag() {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(1);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(anAuthCardDetails().build());
+        // card holder of "EE.HONOURED_ISSUER_HONOURED.AUTHORISED" elicits an authorised response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
+        var authCardDetails = anAuthCardDetails().withCardHolder("EE.HONOURED_ISSUER_HONOURED.AUTHORISED").build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.getBaseResponse().isEmpty());
-        // We expect an error as currently our Worldpay account has not been configured with the exemption engine
-        // result: REJECTED, reason: NOT_SUBSCRIBED
-        assertTrue(response.getGatewayError().isPresent());
+        assertTrue(response.getBaseResponse().isPresent());
+        assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
+        assertEquals(response.getBaseResponse().get().getLastEvent().get(), "AUTHORISED");
+        assertEquals(response.getBaseResponse().get().getExemptionResponseResult(), "HONOURED");
+        assertEquals(response.getBaseResponse().get().getExemptionResponseReason(), "ISSUER_HONOURED");
     }
 
     @Test

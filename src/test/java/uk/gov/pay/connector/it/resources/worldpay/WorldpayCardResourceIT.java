@@ -180,7 +180,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
-
+    
     @Test
     public void shouldAuthoriseCharge_For3dsRequiredCharge() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
