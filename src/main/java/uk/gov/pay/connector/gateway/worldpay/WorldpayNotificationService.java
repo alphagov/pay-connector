@@ -132,7 +132,7 @@ public class WorldpayNotificationService {
                         charge.getExternalId(),
                         kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                         kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
-                return false;
+                return true;
             }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {

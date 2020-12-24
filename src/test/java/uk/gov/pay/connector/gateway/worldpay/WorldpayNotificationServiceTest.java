@@ -109,7 +109,7 @@ class WorldpayNotificationServiceTest {
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
 
-        assertFalse(result);
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
