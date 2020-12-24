@@ -16,7 +16,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +48,7 @@ public class Worldpay3dsFlexCredentialsValidationService {
         }
         
         String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity), 
-                flexCredentials, ZonedDateTime.now());
+                flexCredentials, Instant.now());
 
         var formData = new MultivaluedHashMap<String, String>();
         formData.add("JWT", ddcToken);

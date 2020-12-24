@@ -14,7 +14,6 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -42,7 +41,7 @@ public class Worldpay3dsFlexJwtService {
      * @see <a href="https://beta.developer.worldpay.com/docs/wpg/directintegration/3ds2#device-data-collection-ddc-"
      * >Worldpay DDC Documentation</a>
      */
-    public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, ZonedDateTime chargeCreatedTime) {
+    public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, Instant chargeCreatedTime) {
         validateGatewayIsWorldpay(gatewayAccount);
 
         var claims = generateDdcClaims(gatewayAccount, worldpay3dsFlexCredentials, chargeCreatedTime);
@@ -81,10 +80,10 @@ public class Worldpay3dsFlexJwtService {
         }
     }
     
-    private Map<String, Object> generateDdcClaims(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, ZonedDateTime chargeCreatedTime) {
+    private Map<String, Object> generateDdcClaims(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, Instant chargeCreatedTime) {
         Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount.getId(), worldpay3dsFlexCredentials);
         Map<String, Object> claims = new HashMap<>(commonClaims);
-        claims.put("exp", chargeCreatedTime.plusSeconds(tokenExpiryDurationSeconds).toInstant().getEpochSecond());
+        claims.put("exp", chargeCreatedTime.plusSeconds(tokenExpiryDurationSeconds).getEpochSecond());
         return claims;
     }
 
