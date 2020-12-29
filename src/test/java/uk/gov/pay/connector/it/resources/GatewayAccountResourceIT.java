@@ -106,7 +106,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
-                .body("toggle_3ds", is(true));
+                .body("requires3ds", is(true));
     }
 
     @Test
@@ -452,7 +452,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("toggle_3ds", is(true));
+                .body("requires3ds", is(true));
     }
 
     @Test
@@ -503,7 +503,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("toggle_3ds", is(false));
+                .body("requires3ds", is(false));
     }
 
     @Test
