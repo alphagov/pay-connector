@@ -29,7 +29,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -46,8 +46,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @ExtendWith(MockitoExtension.class)
 class Worldpay3dsFlexCredentialsValidationServiceTest {
@@ -104,7 +104,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
         when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials), 
-                any(ZonedDateTime.class))).thenReturn(DDC_TOKEN);
+                any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
         
@@ -125,7 +125,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_BAD_REQUEST);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
         when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
-                any(ZonedDateTime.class))).thenReturn(DDC_TOKEN);
+                any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
 
@@ -141,7 +141,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         when(response.getStatus()).thenReturn(responseCode);
         when(client.target(threeDsFlexDdcUrls.get("live"))).thenReturn(webTarget);
         when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
-                any(ZonedDateTime.class))).thenReturn(DDC_TOKEN);
+                any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
 
@@ -158,7 +158,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
 
         when(client.target(threeDsFlexDdcUrls.get("live"))).thenReturn(webTarget);
         when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
-                any(ZonedDateTime.class))).thenReturn(DDC_TOKEN);
+                any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData)))))
                 .thenThrow(new ProcessingException("Some I/O failure"));
