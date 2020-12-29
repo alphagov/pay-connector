@@ -64,7 +64,7 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("email_collection_mode")
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
 
-    @JsonProperty("toggle_3ds")
+    @JsonProperty("requires3ds")
     private boolean requires3ds;
 
     @JsonProperty("allow_zero_amount")
