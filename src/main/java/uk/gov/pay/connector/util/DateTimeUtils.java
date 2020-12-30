@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.util;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -16,8 +15,10 @@ import static java.util.Objects.isNull;
 public class DateTimeUtils {
 
     private static final ZoneId UTC = ZoneId.of("Z");
+    private static final ZoneId EUROPE_LONDON = ZoneId.of("Europe/London");
     private static DateTimeFormatter dateTimeFormatterAny = DateTimeFormatter.ISO_ZONED_DATE_TIME;
     private static DateTimeFormatter localDateFormatter = DateTimeFormatter.ISO_DATE;
+    private static final DateTimeFormatter USER_FRIENDLY_DATE = DateTimeFormatter.ofPattern("d MMMM yyyy - HH:mm:ss");
 
     /**
      * Converts any valid ZonedDateTime String (ISO_8601) representation to a UTC ZonedDateTime
@@ -78,12 +79,8 @@ public class DateTimeUtils {
         return zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDate().format(localDateFormatter);
     }
 
-
-    public static String toUserFriendlyDate(ZonedDateTime zonedDateTime) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy - HH:mm:ss");
-
-        LocalDateTime localDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime();
-
-        return localDateTime.format(dateTimeFormatter);
+    public static String toUserFriendlyDate(Instant instant) {
+        return ZonedDateTime.ofInstant(instant, EUROPE_LONDON).format(USER_FRIENDLY_DATE);
     }
+
 }

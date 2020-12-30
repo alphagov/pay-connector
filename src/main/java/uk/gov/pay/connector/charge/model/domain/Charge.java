@@ -2,8 +2,7 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -18,7 +17,7 @@ public class Charge {
     private String refundAvailabilityStatus;
     private String reference;
     private String description;
-    private ZonedDateTime createdDate;
+    private Instant createdDate;
     private String email;
     private Long gatewayAccountId;
     private String paymentGatewayName;
@@ -26,7 +25,7 @@ public class Charge {
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   Long corporateSurcharge, String refundAvailabilityStatus, String reference,
-                  String description, ZonedDateTime createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
+                  String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -56,7 +55,7 @@ public class Charge {
                 null, 
                 chargeEntity.getReference().toString(),
                 chargeEntity.getDescription(),
-                ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                chargeEntity.getCreatedDate(),
                 chargeEntity.getEmail(),
                 chargeEntity.getGatewayAccount().getId(),
                 chargeEntity.getPaymentGatewayName().getName(),
@@ -85,7 +84,7 @@ public class Charge {
                 externalRefundState,
                 transaction.getReference(),
                 transaction.getDescription(),
-                ZonedDateTime.parse(transaction.getCreatedDate()),
+                Instant.parse(transaction.getCreatedDate()),
                 transaction.getEmail(),
                 Long.valueOf(transaction.getGatewayAccountId()),
                 transaction.getPaymentProvider(),
@@ -129,7 +128,7 @@ public class Charge {
         return description;
     }
 
-    public ZonedDateTime getCreatedDate() {
+    public Instant getCreatedDate() {
         return createdDate;
     }
 

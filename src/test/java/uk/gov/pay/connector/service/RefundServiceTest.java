@@ -38,8 +38,7 @@ import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -182,7 +181,7 @@ public class RefundServiceTest {
         transaction.setReference("reference");
         transaction.setDescription("description");
         transaction.setGatewayAccountId(String.valueOf(accountId));
-        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
+        transaction.setCreatedDate(Instant.now().toString());
 
         RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(refundAmount).build();
         RefundEntity spiedRefundEntity = spy(refundEntity);

@@ -66,7 +66,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -361,7 +361,7 @@ public class EventFactoryTest {
         transaction.setRefundSummary(refundSummary);
         transaction.setAmount(charge.getAmount());
         transaction.setTotalAmount(charge.getAmount());
-        transaction.setCreatedDate(ZonedDateTime.now().toString());
+        transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(charge.getGatewayAccount().getId().toString());
         when(chargeService.findCharge(transaction.getTransactionId())).thenReturn(Optional.of(Charge.from(transaction)));
 
