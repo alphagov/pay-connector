@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.calculate
 public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
-    
+
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
@@ -50,7 +50,7 @@ public class CardAuthoriseService {
                                 PaymentProviders providers,
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
-                                AuthorisationLogger authorisationLogger, 
+                                AuthorisationLogger authorisationLogger,
                                 Environment environment) {
         this.providers = providers;
         this.authorisationService = authorisationService;
@@ -83,21 +83,21 @@ public class CardAuthoriseService {
 
             Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
             Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-            
+
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     getUpdateChargePostAuthorisation(
-                            charge.getExternalId(), 
-                            newStatus, 
-                            transactionId.orElse(null), 
-                            auth3dsDetailsEntity.orElse(null), 
-                            sessionIdentifier.orElse(null), 
-                            authCardDetails, 
+                            charge.getExternalId(),
+                            newStatus,
+                            transactionId.orElse(null),
+                            auth3dsDetailsEntity.orElse(null),
+                            sessionIdentifier.orElse(null),
+                            authCardDetails,
                             operationResponse));
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
-            
+
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
                     authorisationRequestSummary,
@@ -107,7 +107,7 @@ public class CardAuthoriseService {
                     charge.getChargeStatus(),
                     newStatus
             );
-            
+
             metricRegistry.counter(String.format(
                     "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
                     updatedCharge.getGatewayAccount().getGatewayName(),
@@ -119,14 +119,15 @@ public class CardAuthoriseService {
             return new AuthorisationResponse(operationResponse);
         });
     }
-    
-    private UpdateChargePostAuthorisation getUpdateChargePostAuthorisation(String chargeExternalId, 
-                                                                           ChargeStatus newStatus, 
-                                                                           String transactionId, 
-                                                                           Auth3dsRequiredEntity auth3dsRequiredEntity, 
-                                                                           ProviderSessionIdentifier sessionIdentifier, 
-                                                                           AuthCardDetails authCardDetails, 
-                                                                           GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+
+    private UpdateChargePostAuthorisation getUpdateChargePostAuthorisation(
+            String chargeExternalId,
+            ChargeStatus newStatus,
+            String transactionId,
+            Auth3dsRequiredEntity auth3dsRequiredEntity,
+            ProviderSessionIdentifier sessionIdentifier,
+            AuthCardDetails authCardDetails,
+            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         return anUpdateChargePostAuthorisation()
                 .withChargeExternalId(chargeExternalId)
                 .withStatus(newStatus)
@@ -167,7 +168,7 @@ public class CardAuthoriseService {
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
-    
+
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }

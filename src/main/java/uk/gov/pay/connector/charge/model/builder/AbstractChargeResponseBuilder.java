@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
@@ -48,6 +49,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected WalletType walletType;
     protected ExternalMetadata externalMetadata;
     protected boolean moto;
+    protected Exemption3ds exemption3ds;
 
     protected abstract T thisObject();
 
@@ -216,6 +218,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.moto = moto;
         return thisObject();
     }
+    
+    public T withExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+        return thisObject();
+    }
 
     public String getChargeId() {
         return chargeId;
@@ -341,5 +348,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public boolean isMoto() {
         return moto;
+    }
+
+    public Exemption3ds getExemption3ds() {
+        return exemption3ds;
     }
 }

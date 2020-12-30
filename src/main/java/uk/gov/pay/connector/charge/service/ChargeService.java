@@ -453,7 +453,8 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
-                .withMoto(chargeEntity.isMoto());
+                .withMoto(chargeEntity.isMoto())
+                .withExemption3ds(chargeEntity.getExemption3ds());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);

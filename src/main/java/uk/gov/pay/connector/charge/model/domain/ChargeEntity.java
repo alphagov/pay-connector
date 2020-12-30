@@ -338,6 +338,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.exemption3ds = exemption3ds;
     }
 
+    public Exemption3ds getExemption3ds() {
+        return exemption3ds;
+    }
+
     public void setProviderSessionId(String providerSessionId) {
         this.providerSessionId = providerSessionId;
     }
