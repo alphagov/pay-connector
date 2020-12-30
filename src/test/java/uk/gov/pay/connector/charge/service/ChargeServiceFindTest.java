@@ -17,8 +17,7 @@ import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -282,7 +281,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         LedgerTransaction transaction = new LedgerTransaction();
         transaction.setTransactionId(chargeEntity.getExternalId());
         transaction.setAmount(chargeEntity.getAmount());
-        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
+        transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
 
@@ -323,7 +322,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         LedgerTransaction transaction = new LedgerTransaction();
         transaction.setTransactionId(chargeEntity.getExternalId());
         transaction.setAmount(chargeEntity.getAmount());
-        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
+        transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
         when(mockedChargeDao.findByProviderAndTransactionId(
                 "sandbox",

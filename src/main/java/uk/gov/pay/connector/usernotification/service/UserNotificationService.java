@@ -22,8 +22,6 @@ import uk.gov.service.notify.SendEmailResponse;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -174,7 +172,7 @@ public class UserNotificationService {
         HashMap<String, String> map = new HashMap<>();
 
         map.put("serviceReference", charge.getReference().toString());
-        map.put("date", DateTimeUtils.toUserFriendlyDate(ZonedDateTime.ofInstant(charge.getCreatedDate(), ZoneOffset.UTC)));
+        map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
         map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + LITERAL_DOLLAR_REFERENCE.matcher(customParagraph)

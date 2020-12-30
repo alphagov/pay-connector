@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import org.junit.Test;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -56,10 +57,9 @@ public class DateTimeUtilsTest {
 
     @Test
     public void toUserFriendlyDateShouldFormatAsDateInLondonTimezone() {
-        String aDate = "2016-07-07T23:24:48Z";
-        Optional<ZonedDateTime> zonedDateTime = DateTimeUtils.toUTCZonedDateTime(aDate);
+        Instant instant = Instant.parse("2016-07-07T23:24:48Z");
 
-        String result = DateTimeUtils.toUserFriendlyDate(zonedDateTime.get());
+        String result = DateTimeUtils.toUserFriendlyDate(instant);
 
         assertThat(result, is("8 July 2016 - 00:24:48"));
     }

@@ -10,13 +10,13 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static java.time.ZonedDateTime.now;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -156,7 +156,7 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     private Charge getHistoricCharge(ExternalChargeRefundAvailability availability) {
         return new Charge("external-id", 500L, null, "success", "transaction-id",
-                0L, availability.getStatus(), "ref-1", "desc", now(),
+                0L, availability.getStatus(), "ref-1", "desc", Instant.now(),
                 "test@example.org", 123L, "epdq", true);
     }
 }
