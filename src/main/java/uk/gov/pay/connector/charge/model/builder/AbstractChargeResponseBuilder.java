@@ -11,6 +11,7 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String returnUrl;
     protected String description;
     protected String telephoneNumber;
-    protected ZonedDateTime createdDate;
+    protected Instant createdDate;
     protected ZonedDateTime authorisedDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected ServicePaymentReference reference;
@@ -111,7 +112,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withCreatedDate(ZonedDateTime createdDate) {
+    public T withCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
         return thisObject();
     }
@@ -245,7 +246,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return description;
     }
 
-    public ZonedDateTime getCreatedDate() {
+    public Instant getCreatedDate() {
         return createdDate;
     }
 

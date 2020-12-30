@@ -61,7 +61,6 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
 import javax.ws.rs.core.UriInfo;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -373,7 +372,7 @@ public class ChargeServiceTest {
                 .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
-                .withCreatedDate(ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC))
+                .withCreatedDate(chargeEntity.getCreatedDate())
                 .withEmail(chargeEntity.getEmail())
                 .withRefunds(refunds)
                 .withSettlement(settlement)

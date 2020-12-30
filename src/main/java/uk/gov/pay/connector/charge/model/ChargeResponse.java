@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
+import uk.gov.pay.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.pay.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +78,8 @@ public class ChargeResponse {
     private String providerId;
 
     @JsonProperty("created_date")
-    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
-    private ZonedDateTime createdDate;
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    private Instant createdDate;
 
     @JsonProperty("authorised_date")
     @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
@@ -268,7 +270,7 @@ public class ChargeResponse {
         return providerId;
     }
 
-    public ZonedDateTime getCreatedDate() {
+    public Instant getCreatedDate() {
         return createdDate;
     }
 
