@@ -21,6 +21,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -33,7 +34,6 @@ import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.fail;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -294,7 +295,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         // given
         String transactionId = "7826782163";
-        ZonedDateTime createdDate = now(ZoneId.of("UTC"));
+        Instant createdDate = Instant.now();
         Long chargeId = 9999L;
         String externalChargeId = "charge9999";
 
@@ -360,7 +361,7 @@ public class ChargeDaoIT extends DaoITestBase {
     @Test
     public void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
         String transactionId = "7826782163";
-        ZonedDateTime createdDate = now(ZoneId.of("UTC"));
+        Instant createdDate = Instant.now();
         Long chargeId = 876786L;
         String externalChargeId = "charge876786";
 
@@ -447,7 +448,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
 
-        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(Instant.now().minus(Duration.ofHours(1)), chargeStatuses);
 
         assertThat(charges.size(), is(1));
         assertEquals(charges.get(0).getId(), charge.getChargeId());
@@ -466,7 +467,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CAPTURE_READY, SYSTEM_CANCELLED);
 
-        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(Instant.now().minus(Duration.ofHours(1)), chargeStatuses);
 
         assertThat(charges.size(), is(0));
     }
@@ -484,7 +485,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
 
-        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
+        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(Instant.now().minus(Duration.ofHours(1)), chargeStatuses);
 
         assertThat(charges.size(), is(0));
     }

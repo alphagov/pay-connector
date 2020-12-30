@@ -19,6 +19,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -526,7 +527,7 @@ public class DatabaseFixtures {
         SupportedLanguage language = SupportedLanguage.ENGLISH;
         boolean delayedCapture = false;
         Long corporateCardSurcharge = null;
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        Instant createdDate = Instant.now();
         TestAccount testAccount;
         TestCardDetails cardDetails;
         WalletType walletType;
@@ -583,8 +584,13 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCharge withCreatedDate(ZonedDateTime createdDate) {
+        public TestCharge withCreatedDate(Instant createdDate) {
             this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestCharge withCreatedDate(ZonedDateTime createdDate) {
+            this.createdDate = createdDate.toInstant();
             return this;
         }
 
@@ -685,7 +691,7 @@ public class DatabaseFixtures {
             return email;
         }
 
-        public ZonedDateTime getCreatedDate() {
+        public Instant getCreatedDate() {
             return createdDate;
         }
 

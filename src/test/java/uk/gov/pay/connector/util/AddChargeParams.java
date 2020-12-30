@@ -7,12 +7,11 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-
-import static java.time.ZonedDateTime.now;
 
 public class AddChargeParams {
     private final Long chargeId;
@@ -24,7 +23,7 @@ public class AddChargeParams {
     private final String transactionId;
     private final String description;
     private final ServicePaymentReference reference;
-    private final ZonedDateTime createdDate;
+    private final Instant createdDate;
     private final long version;
     private final String email;
     private final String providerId;
@@ -95,7 +94,7 @@ public class AddChargeParams {
         return reference;
     }
 
-    public ZonedDateTime getCreatedDate() {
+    public Instant getCreatedDate() {
         return createdDate;
     }
 
@@ -149,7 +148,7 @@ public class AddChargeParams {
         private String transactionId;
         private String description = "Test description";
         private ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
-        private ZonedDateTime createdDate = now();
+        private Instant createdDate = Instant.now();
         private long version = 1;
         private String email = "test@example.com";
         private String providerId = "providerId";
@@ -213,7 +212,7 @@ public class AddChargeParams {
             return this;
         }
 
-        public AddChargeParamsBuilder withCreatedDate(ZonedDateTime createdDate) {
+        public AddChargeParamsBuilder withCreatedDate(Instant createdDate) {
             this.createdDate = createdDate;
             return this;
         }

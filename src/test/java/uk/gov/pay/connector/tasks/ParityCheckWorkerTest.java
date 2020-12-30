@@ -30,6 +30,8 @@ import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.pay.connector.tasks.service.RefundParityChecker;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -112,7 +114,7 @@ public class ParityCheckWorkerTest {
                 .withDelayedCapture(true)
                 .build();
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(chargeEntity.getCreatedDate())
+                .withTimestamp(ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC))
                 .withCharge(chargeEntity)
                 .withChargeStatus(ChargeStatus.CREATED)
                 .build();

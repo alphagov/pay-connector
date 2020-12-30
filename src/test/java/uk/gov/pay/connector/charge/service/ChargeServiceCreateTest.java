@@ -28,7 +28,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
 import java.net.URI;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -162,7 +162,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("This is a description"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
         assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
@@ -511,7 +512,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("CAPTURE SUBMITTED"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -564,7 +566,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION REJECTED"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -616,7 +619,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -673,7 +677,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -729,7 +734,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
+                is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneOffset.UTC))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));

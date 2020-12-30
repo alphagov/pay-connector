@@ -19,7 +19,7 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public class ChargeEntityFixture {
     private ChargeStatus status = ChargeStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
     private String transactionId;
-    private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    private Instant createdDate = Instant.now();
     private List<ChargeEventEntity> events = new ArrayList<>();
     private Auth3dsRequiredEntity auth3DsRequiredEntity;
     private String providerSessionId;
@@ -199,7 +199,7 @@ public class ChargeEntityFixture {
     }
 
     public ChargeEntityFixture withCreatedDate(ZonedDateTime createdDate) {
-        this.createdDate = createdDate;
+        this.createdDate = createdDate.toInstant();
         return this;
     }
 

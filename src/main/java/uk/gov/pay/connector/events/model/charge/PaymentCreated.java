@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class PaymentCreated extends PaymentEvent {
@@ -24,7 +25,7 @@ public class PaymentCreated extends PaymentEvent {
         return new PaymentCreated(
                 charge.getExternalId(),
                 PaymentCreatedEventDetails.from(charge),
-                charge.getCreatedDate()
+                ZonedDateTime.ofInstant(charge.getCreatedDate(), ZoneOffset.UTC)
         );
     }
 }

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,7 +56,7 @@ public class Charge {
                 null, 
                 chargeEntity.getReference().toString(),
                 chargeEntity.getDescription(),
-                chargeEntity.getCreatedDate(),
+                ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 chargeEntity.getEmail(),
                 chargeEntity.getGatewayAccount().getId(),
                 chargeEntity.getPaymentGatewayName().getName(),

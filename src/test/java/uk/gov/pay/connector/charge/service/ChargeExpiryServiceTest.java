@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -352,8 +353,8 @@ public class ChargeExpiryServiceTest {
         when(mockChargeDao.findByExternalId(chargeEntityAuthorisationSuccess.getExternalId())).thenReturn(Optional.of(chargeEntityAuthorisationSuccess));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
-        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(Instant.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(Instant.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
@@ -375,7 +376,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
 
-        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(preAuthorisationCharge));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(Instant.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(preAuthorisationCharge));
 
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
 

@@ -73,6 +73,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -440,7 +441,7 @@ public class ChargeService {
                 .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
-                .withCreatedDate(chargeEntity.getCreatedDate())
+                .withCreatedDate(ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC))
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withEmail(chargeEntity.getEmail())
                 .withLanguage(chargeEntity.getLanguage())

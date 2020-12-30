@@ -18,7 +18,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Collections;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
@@ -80,7 +80,7 @@ public class FrontendContractTest {
                 .withTransactionId(chargeExternalId)
                 .withReference(ServicePaymentReference.of("aReference"))
                 .withDescription("Test description")
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withEmail("test@test.com")
                 .withDelayedCapture(false)
                 .build());
