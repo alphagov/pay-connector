@@ -1553,4 +1553,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add exemption_3ds column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="exemption_3ds" type="VARCHAR(50)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
