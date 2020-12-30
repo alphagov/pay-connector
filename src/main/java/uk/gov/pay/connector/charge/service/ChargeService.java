@@ -60,6 +60,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -486,14 +487,17 @@ public class ChargeService {
         return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
 
-    public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
-                                                          ChargeStatus status,
-                                                          String transactionId,
-                                                          Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                          ProviderSessionIdentifier sessionIdentifier,
-                                                          AuthCardDetails authCardDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null);
+    public ChargeEntity updateChargePostCardAuthorisation(UpdateChargePostAuthorisation update) {
+        return updateChargeAndEmitEventPostAuthorisation(
+                update.getChargeExternalId(), 
+                update.getStatus(), 
+                update.getAuthCardDetails(), 
+                update.getTransactionId(), 
+                update.getAuth3dsRequiredDetails(), 
+                update.getSessionIdentifier(),
+                null, 
+                null, 
+                update.getExemption3ds());
 
     }
 
@@ -506,19 +510,20 @@ public class ChargeService {
                                                             String emailAddress,
                                                             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
-                walletType, emailAddress);
+                walletType, emailAddress, null);
     }
 
-    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                                  ChargeStatus status,
-                                                                  AuthCardDetails authCardDetails,
-                                                                  String transactionId,
-                                                                  Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                                  ProviderSessionIdentifier sessionIdentifier,
-                                                                  WalletType walletType,
-                                                                  String emailAddress) {
+    ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+                                                           ChargeStatus status,
+                                                           AuthCardDetails authCardDetails,
+                                                           String transactionId,
+                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
+                                                           ProviderSessionIdentifier sessionIdentifier,
+                                                           WalletType walletType,
+                                                           String emailAddress,
+                                                           Exemption3ds exemption3ds) {
         updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress);
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, exemption3ds);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
 
         eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
@@ -535,13 +540,15 @@ public class ChargeService {
                                                       Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                       ProviderSessionIdentifier sessionIdentifier,
                                                       WalletType walletType,
-                                                      String emailAddress) {
+                                                      String emailAddress, 
+                                                      Exemption3ds exemption3ds) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
             Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
             Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
+            Optional.ofNullable(exemption3ds).ifPresent(e -> charge.setExemption3ds(exemption3ds));
 
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);

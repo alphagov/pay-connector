@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,13 +56,16 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.service.UpdateChargePostAuthorisation.UpdateChargePostAuthorisationBuilder.anUpdateChargePostAuthorisation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -86,6 +90,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private Appender<ILoggingEvent> mockAppender;
     
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+    
+    private ChargeService chargeServiceSpy;
 
     @BeforeEach
     void setup() {
@@ -102,12 +108,13 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 null, null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class), 
                 mock(EventService.class), mock(NorthAmericanRegionMapper.class));
+        chargeServiceSpy = spy(chargeService);
         
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
                 new AuthorisationService(mockExecutorService, environment),
-                chargeService,
+                chargeServiceSpy,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 environment);
 
@@ -121,6 +128,25 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+    }
+    
+    @Test
+    void should_set_exemption_not_requested_when_request_made_without_an_exemption() throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+
+        cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        
+        verify(chargeServiceSpy).updateChargePostCardAuthorisation(
+                anUpdateChargePostAuthorisation()
+                        .withChargeExternalId(charge.getExternalId())
+                        .withStatus(AUTHORISATION_SUCCESS)
+                        .withTransactionId("transaction-id")
+                        .withAuthCardDetails(authCardDetails)
+                        .withExemption3ds(EXEMPTION_NOT_REQUESTED)
+                        .build());
     }
     
     @Test

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.UpdateChargePostAuthorisation;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -28,8 +29,10 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import javax.inject.Inject;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.charge.service.UpdateChargePostAuthorisation.UpdateChargePostAuthorisationBuilder.anUpdateChargePostAuthorisation;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.calculateExemption3ds;
 
 public class CardAuthoriseService {
 
@@ -82,14 +85,16 @@ public class CardAuthoriseService {
             Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-
+            
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
-                    charge.getExternalId(),
-                    newStatus,
-                    transactionId.orElse(null),
-                    auth3dsDetailsEntity.orElse(null),
-                    sessionIdentifier.orElse(null),
-                    authCardDetails);
+                    getUpdateChargePostAuthorisation(
+                            charge.getExternalId(), 
+                            newStatus, 
+                            transactionId.orElse(null), 
+                            auth3dsDetailsEntity.orElse(null), 
+                            sessionIdentifier.orElse(null), 
+                            authCardDetails, 
+                            operationResponse));
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
             
@@ -113,6 +118,24 @@ public class CardAuthoriseService {
 
             return new AuthorisationResponse(operationResponse);
         });
+    }
+    
+    private UpdateChargePostAuthorisation getUpdateChargePostAuthorisation(String chargeExternalId, 
+                                                                           ChargeStatus newStatus, 
+                                                                           String transactionId, 
+                                                                           Auth3dsRequiredEntity auth3dsRequiredEntity, 
+                                                                           ProviderSessionIdentifier sessionIdentifier, 
+                                                                           AuthCardDetails authCardDetails, 
+                                                                           GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+        return anUpdateChargePostAuthorisation()
+                .withChargeExternalId(chargeExternalId)
+                .withStatus(newStatus)
+                .withTransactionId(transactionId)
+                .withAuth3dsRequiredDetails(auth3dsRequiredEntity)
+                .withSessionIdentifier(sessionIdentifier)
+                .withAuthCardDetails(authCardDetails)
+                .withExemption3ds(operationResponse.getBaseResponse().map(r -> calculateExemption3ds(r, newStatus)).orElse(null))
+                .build();
     }
 
     @Transactional

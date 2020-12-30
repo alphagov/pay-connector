@@ -22,6 +22,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -161,6 +162,9 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     @Column(name = "moto")
     private boolean moto;
+
+    @Column(name = "exemption_3ds")
+    private Exemption3ds exemption3ds;
 
     public ChargeEntity() {
         //for jpa
@@ -328,6 +332,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+    
+    public void setExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
     }
 
     public void setProviderSessionId(String providerSessionId) {

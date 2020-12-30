@@ -27,4 +27,10 @@ class WorldpayOrderStatusResponseTest {
 
         assertFalse(worldpayOrderStatusResponse.isSoftDecline());
     }
+    
+    @Test
+    void exemption_response_result_should_not_be_present() {
+        var worldpayOrderStatusResponse = new WorldpayOrderStatusResponse();
+        assertFalse(worldpayOrderStatusResponse.hasExemptionResponse());
+    }
 }

@@ -442,7 +442,7 @@ public class ChargeServiceTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("1234567890");
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
-                authCardDetails, null, null, null, null, null);
+                authCardDetails, null, null, null, null, null, null);
 
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
     }
@@ -466,7 +466,7 @@ public class ChargeServiceTest {
         when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
 
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
-                authCardDetails, null, null, null, null, null);
+                authCardDetails, null, null, null, null, null, null);
 
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
     }
@@ -490,7 +490,7 @@ public class ChargeServiceTest {
         when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
 
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
-                authCardDetails, null, null, null, null, null);
+                authCardDetails, null, null, null, null, null, null);
 
         assertThat(chargeSpy.getCardDetails().getBillingAddress().get().getStateOrProvince(), is("DC"));
     }
@@ -513,7 +513,7 @@ public class ChargeServiceTest {
         when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
 
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
-                authCardDetails, null, null, null, null, null);
+                authCardDetails, null, null, null, null, null, null);
 
         assertThat(chargeSpy.getCardDetails().getBillingAddress().get().getStateOrProvince(), is(nullValue()));
     }
