@@ -16,6 +16,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -120,7 +121,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
-    public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
+    public List<ChargeEntity> findBeforeDateWithStatusIn(Instant date, List<ChargeStatus> statuses) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
@@ -135,7 +136,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     private List<Predicate> buildParamPredicates(CriteriaBuilder cb, Root<ChargeEntity> charge,
-                                                 ZonedDateTime toDate, List<ChargeStatus> internalStates) {
+                                                 Instant toDate, List<ChargeStatus> internalStates) {
         List<Predicate> predicates = new ArrayList<>();
 
         if (internalStates != null && !internalStates.isEmpty()) {
@@ -227,9 +228,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .minus(Duration.ofDays(excludeChargesParityCheckedWithInDays))
                 .withZoneSameInstant(ZoneId.of("UTC"));
 
-        ZonedDateTime createdBeforeDate = ZonedDateTime.now()
-                .minus(Duration.ofDays(minimumAgeOfChargeInDays))
-                .withZoneSameInstant(ZoneId.of("UTC"));
+        Instant createdBeforeDate = Instant.now().minus(Duration.ofDays(minimumAgeOfChargeInDays));
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)

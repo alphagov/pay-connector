@@ -21,7 +21,9 @@ import uk.gov.pay.connector.wallets.WalletType;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +119,7 @@ public class DatabaseTestHelper {
                         .bind("return_url", addChargeParams.getReturnUrl())
                         .bind("gateway_transaction_id", addChargeParams.getTransactionId())
                         .bind("description", addChargeParams.getDescription())
-                        .bind("created_date", Timestamp.from(addChargeParams.getCreatedDate().toInstant()))
+                        .bind("created_date", LocalDateTime.ofInstant(addChargeParams.getCreatedDate(), ZoneOffset.UTC))
                         .bind("reference", addChargeParams.getReference().toString())
                         .bind("version", addChargeParams.getVersion())
                         .bind("email", addChargeParams.getEmail())

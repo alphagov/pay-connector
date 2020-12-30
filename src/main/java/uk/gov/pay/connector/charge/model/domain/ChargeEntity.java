@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
@@ -45,6 +46,7 @@ import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.Valid;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -128,8 +130,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     private String providerSessionId;
 
     @Column(name = "created_date")
-    @Convert(converter = UTCDateTimeConverter.class)
-    private ZonedDateTime createdDate;
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
+    private Instant createdDate;
 
     @Column(name = "language", nullable = false)
     @Convert(converter = SupportedLanguageJpaConverter.class)
@@ -175,7 +177,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             ServicePaymentReference reference,
             GatewayAccountEntity gatewayAccount,
             String email,
-            ZonedDateTime createdDate,
+            Instant createdDate,
             SupportedLanguage language,
             boolean delayedCapture,
             ExternalMetadata externalMetadata,
@@ -242,7 +244,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return reference;
     }
 
-    public ZonedDateTime getCreatedDate() {
+    public Instant getCreatedDate() {
         return createdDate;
     }
 
@@ -520,7 +522,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     reference,
                     gatewayAccount,
                     email,
-                    ZonedDateTime.now(ZoneId.of("UTC")),
+                    Instant.now(),
                     language,
                     delayedCapture,
                     externalMetadata,
@@ -597,7 +599,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     reference,
                     gatewayAccount,
                     email,
-                    ZonedDateTime.now(ZoneId.of("UTC")),
+                    Instant.now(),
                     SupportedLanguage.ENGLISH,
                     false,
                     externalMetadata,

@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
@@ -47,7 +48,8 @@ public class TokenDaoJpaIT extends DaoITestBase {
     @Test
     public void persist_shouldInsertAToken() {
 
-        ChargeEntity defaultChargeTestEntity = new ChargeEntity();
+        ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();
+        ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         defaultChargeTestEntity.setId(defaultTestCharge.getChargeId());
 
         TokenEntity tokenEntity = TokenEntity.generateNewTokenFor(defaultChargeTestEntity);
@@ -97,7 +99,8 @@ public class TokenDaoJpaIT extends DaoITestBase {
     public void deleteByCutOffDate_shouldDeleteOlderTokens() {
         ZonedDateTime today = ZonedDateTime.now(ZoneId.of("UTC"));
 
-        ChargeEntity chargeTestEntity = new ChargeEntity();
+        ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();
+        ChargeEntity chargeTestEntity = chargeEntityFixture.build();
         chargeTestEntity.setId(defaultTestCharge.getChargeId());
         
         TokenEntity presentDayToken = TokenEntity.generateNewTokenFor(chargeTestEntity);

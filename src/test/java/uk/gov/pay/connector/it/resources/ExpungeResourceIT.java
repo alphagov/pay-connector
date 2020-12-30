@@ -23,6 +23,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,7 +93,7 @@ public class ExpungeResourceIT {
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
-                .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))))
+                .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id")
                 .withTransactionId("gateway_transaction_id")
@@ -120,7 +121,7 @@ public class ExpungeResourceIT {
     private void insertChargeEvent(DatabaseFixtures.TestCharge charge) {
         DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper).aTestChargeEvent()
                 .withChargeStatus(CREATED)
-                .withDate(charge.getCreatedDate())
+                .withDate(ZonedDateTime.ofInstant(charge.getCreatedDate(), UTC))
                 .withChargeId(charge.getChargeId())
                 .withTestCharge(charge)
                 .insert();
@@ -130,7 +131,7 @@ public class ExpungeResourceIT {
     public void shouldUpdateTheParityCheckedDateOfNonCriteriaMatchedCharge() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
         ledgerStub = new LedgerStub();
-        var date = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91)));
+        var date = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -161,7 +162,7 @@ public class ExpungeResourceIT {
                 .aTestCharge()
                 .withChargeId(chargedId)
                 .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC)
-                        .minusDays(89))))
+                        .minusDays(89))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id_2")
                 .withTransactionId("gateway_transaction_id")
@@ -195,7 +196,7 @@ public class ExpungeResourceIT {
                 .aTestCharge()
                 .withChargeId(chargedId)
                 .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC)
-                        .minusDays(89))))
+                        .minusDays(89))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id_10")
                 .withTransactionId("gateway_transaction_id")
@@ -216,7 +217,7 @@ public class ExpungeResourceIT {
                 .aTestCharge()
                 .withChargeId(chargedId2)
                 .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC)
-                        .minusDays(91))))
+                        .minusDays(91))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id_11")
                 .withTransactionId("gateway_transaction_id")
@@ -237,7 +238,7 @@ public class ExpungeResourceIT {
                 .aTestCharge()
                 .withChargeId(chargedId3)
                 .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC)
-                        .minusDays(88))))
+                        .minusDays(88))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id_12")
                 .withTransactionId("gateway_transaction_id")
@@ -258,7 +259,7 @@ public class ExpungeResourceIT {
                 .aTestCharge()
                 .withChargeId(chargedId4)
                 .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC)
-                        .minusDays(92))))
+                        .minusDays(92))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id_13")
                 .withTransactionId("gateway_transaction_id")
@@ -297,7 +298,7 @@ public class ExpungeResourceIT {
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
-                .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))))
+                .withCreatedDate(parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant())
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("external_charge_id")
                 .withTransactionId("gateway_transaction_id")

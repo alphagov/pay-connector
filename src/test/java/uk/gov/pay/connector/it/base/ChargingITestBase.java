@@ -348,7 +348,7 @@ public class ChargingITestBase {
     }
 
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
-                             ServicePaymentReference reference, ZonedDateTime fromDate, String transactionId) {
+                             ServicePaymentReference reference, ZonedDateTime createdDate, String transactionId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
@@ -357,7 +357,7 @@ public class ChargingITestBase {
                 .withStatus(chargeStatus)
                 .withTransactionId(transactionId)
                 .withReference(reference)
-                .withCreatedDate(fromDate)
+                .withCreatedDate(createdDate.toInstant())
                 .withVersion(1)
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)

@@ -31,6 +31,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -317,16 +318,16 @@ public class ChargeExpiryService {
                 });
     }
 
-    private ZonedDateTime getExpiryDateForRegularCharges() {
+    private Instant getExpiryDateForRegularCharges() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds);
-        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
+        return Instant.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
-    private ZonedDateTime getExpiryDateForAwaitingCaptureRequest() {
+    private Instant getExpiryDateForAwaitingCaptureRequest() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
         logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds);
-        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
+        return Instant.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
     private static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {

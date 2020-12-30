@@ -8,10 +8,12 @@ import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
@@ -69,8 +71,8 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
   }
 
   public PerformanceReportEntity aggregateNumberAndValueOfPaymentsForAGivenDay(ZonedDateTime date) {
-    ZonedDateTime startDate = date.truncatedTo(ChronoUnit.DAYS);
-    ZonedDateTime endDate = startDate.plus(24, ChronoUnit.HOURS);
+    Instant startDate = date.truncatedTo(DAYS).toInstant();
+    Instant endDate = startDate.plus(Duration.ofHours(24));
 
     return (PerformanceReportEntity) entityManager
       .get()

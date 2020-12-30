@@ -32,6 +32,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -101,7 +102,7 @@ public class EmittedEventsBackfillServiceTest {
                 .aValidChargeEntity()
                 .build();
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(chargeEntity.getCreatedDate())
+                .withTimestamp(ZonedDateTime.ofInstant(chargeEntity.getCreatedDate(), ZoneOffset.UTC))
                 .withCharge(chargeEntity)
                 .withChargeStatus(ChargeStatus.CREATED)
                 .build();

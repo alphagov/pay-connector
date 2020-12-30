@@ -10,7 +10,8 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import javax.inject.Inject;
-import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,6 +83,6 @@ public class DiscrepancyService {
     }
 
     private boolean chargeAgeInDaysIsGreaterThan(ChargeEntity charge, long minimumAge) {
-        return charge.getCreatedDate().plusDays(minimumAge).isBefore(ZonedDateTime.now());
+        return charge.getCreatedDate().plus(Duration.ofDays(minimumAge)).isBefore(Instant.now());
     }
 }
