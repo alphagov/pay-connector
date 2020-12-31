@@ -19,7 +19,6 @@
         <jackson.version>2.12.0</jackson.version>
         <pay-java-commons.version>1.0.20201230174220</pay-java-commons.version>
         <surefire.version>3.0.0-M5</surefire.version>
-        <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.14.4</jooq.version>
         <postgresql.version>42.2.18</postgresql.version>
         <commons-lang3.version>3.11</commons-lang3.version>
@@ -176,30 +175,6 @@
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
             <scope>compile</scope>
-        </dependency>
-        <!--
-            The dependency below is required because the javax.persistence 2.2.x JAR is signed but
-            the rest of the EclipseLink JAR isn’t, which causes a “signer information does not
-            match signer information of other classes in the same package” error. The
-            javax.persistence 2.1.1 JAR below isn’t signed so it doesn’t have the problem. See
-            https://stackoverflow.com/q/45870753 for more information.
-
-            Note that the below is JPA 2.1.1 whereas EclipseLink 2.7.x supports JPA 2.2. However,
-            https://projects.eclipse.org/projects/ee4j.eclipselink/releases/2.7.3/review says
-            EclipseLink 2.7.3 still supports pre-2.2 versions of JPA (though deprecated). We
-            survived with JPA 2.1.1 when we were using EclipseLink 2.6.4 because that’s all it
-            supported. (We’ve never used JPA 2.2: the upgrade from EclipseLink 2.6.4 to 2.7.3
-            introduced the signing problem and is when we added the extra dependency below as a
-            mitigation).
-
-            If https://bugs.eclipse.org/bugs/show_bug.cgi?id=525457 is anything to go by, a future
-            EclipseLink release should resolve this problem and we should be able to remove the
-            below dependency.
-        -->
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>javax.persistence</artifactId>
-            <version>${javax.persistence.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
