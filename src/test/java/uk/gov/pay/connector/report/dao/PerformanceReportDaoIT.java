@@ -11,6 +11,8 @@ import uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportE
 import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +37,7 @@ public class PerformanceReportDaoIT extends DaoITestBase {
                 .insert();
     }
 
-    private void insertCharge(DatabaseFixtures.TestAccount account, long amount, ZonedDateTime createdDate) {
+    private void insertCharge(DatabaseFixtures.TestAccount account, long amount, Instant createdDate) {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -49,8 +51,8 @@ public class PerformanceReportDaoIT extends DaoITestBase {
     @Ignore
     @Test
     public void shouldAggregateNumberAndValueOfPayments() {
-        insertCharge(testAccountFixture, 10L, ZonedDateTime.now());
-        insertCharge(testAccountFixture, 2L, ZonedDateTime.now());
+        insertCharge(testAccountFixture, 10L, Instant.now());
+        insertCharge(testAccountFixture, 2L, Instant.now());
         PerformanceReportEntity performanceReportEntity = performanceReportDao.aggregateNumberAndValueOfPayments();
         assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
         assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
@@ -71,11 +73,11 @@ public class PerformanceReportDaoIT extends DaoITestBase {
                 .withAccountId(174L)
                 .withType(GatewayAccountType.LIVE)
                 .insert();
-        insertCharge(gatewayAccount, 10L, ZonedDateTime.now());
-        insertCharge(gatewayAccount, 2L, ZonedDateTime.now());
-        insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
-        insertCharge(anotherGatewayAccount, 3L, ZonedDateTime.now());
-        insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
+        insertCharge(gatewayAccount, 10L, Instant.now());
+        insertCharge(gatewayAccount, 2L, Instant.now());
+        insertCharge(anotherGatewayAccount, 6L, Instant.now());
+        insertCharge(anotherGatewayAccount, 3L, Instant.now());
+        insertCharge(anotherGatewayAccount, 6L, Instant.now());
 
         List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities =
                 performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount().collect(Collectors.toList());
@@ -96,13 +98,14 @@ public class PerformanceReportDaoIT extends DaoITestBase {
 
     @Test
     public void shouldAggregateNumberAndValueOfPaymentsForAGivenDay() {
-        ZonedDateTime oldDate = ZonedDateTime.parse("2017-11-20T10:00:00Z");
-        ZonedDateTime validDate1 = ZonedDateTime.parse("2017-11-21T10:00:00Z");
-        ZonedDateTime validDate2 = ZonedDateTime.parse("2017-11-21T11:00:00Z");
+        Instant oldDate = Instant.parse("2017-11-20T10:00:00Z");
+        Instant validDate1 = Instant.parse("2017-11-21T10:00:00Z");
+        Instant validDate2 = Instant.parse("2017-11-21T11:00:00Z");
         insertCharge(testAccountFixture, 10L, oldDate);
         insertCharge(testAccountFixture, 2L, validDate1);
         insertCharge(testAccountFixture, 10L, validDate2);
-        PerformanceReportEntity performanceReportEntity = performanceReportDao.aggregateNumberAndValueOfPaymentsForAGivenDay(validDate1);
+        PerformanceReportEntity performanceReportEntity = performanceReportDao.aggregateNumberAndValueOfPaymentsForAGivenDay(
+                ZonedDateTime.ofInstant(validDate1, ZoneOffset.UTC));
         assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
         assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
         assertThat(performanceReportEntity.getTotalVolume(), is(2L));

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class PaymentDetailsEnteredTest {
         );
 
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.parse(time))
+                .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withExternalId(paymentId)
                 .withTransactionId(validTransactionId)

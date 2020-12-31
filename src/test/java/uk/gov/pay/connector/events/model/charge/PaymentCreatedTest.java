@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class PaymentCreatedTest {
     private final String time = "2018-03-12T16:25:01.123456Z";
 
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
-            .withCreatedDate(ZonedDateTime.parse(time))
+            .withCreatedDate(Instant.parse(time))
             .withExternalId(paymentId)
             .withDescription("new passport")
             .withReference(ServicePaymentReference.of("myref"))

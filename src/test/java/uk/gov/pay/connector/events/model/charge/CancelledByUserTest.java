@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -27,7 +28,7 @@ public class CancelledByUserTest {
     @Before
     public void setUp() {
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.parse(time))
+                .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.USER_CANCELLED)
                 .withExternalId(paymentId)
                 .withTransactionId(transactionId)
