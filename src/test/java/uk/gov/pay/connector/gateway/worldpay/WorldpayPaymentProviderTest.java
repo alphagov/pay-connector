@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -67,6 +68,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
@@ -94,6 +96,7 @@ public class WorldpayPaymentProviderTest {
     @Mock private WorldpayRefundHandler worldpayRefundHandler;
     @Mock private GatewayClient.Response response = mock(GatewayClient.Response.class);
     @Mock private Appender<ILoggingEvent> mockAppender;
+    @Mock private ChargeDao chargeDao;
     
     private WorldpayPaymentProvider worldpayPaymentProvider;
 
@@ -103,11 +106,18 @@ public class WorldpayPaymentProviderTest {
 
     @BeforeEach
     void setup() {
-        worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayUrlMap, authoriseClient, cancelClient, 
-                inquiryClient, worldpayWalletAuthorisationHandler, worldpayAuthoriseHandler, worldpayCaptureHandler, 
+        worldpayPaymentProvider = new WorldpayPaymentProvider(
+                gatewayUrlMap, 
+                authoriseClient, 
+                cancelClient, 
+                inquiryClient, 
+                worldpayWalletAuthorisationHandler, 
+                worldpayAuthoriseHandler, 
+                worldpayCaptureHandler, 
                 worldpayRefundHandler, 
                 new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)), 
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()));
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
+                chargeDao);
         
         gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
@@ -116,6 +126,21 @@ public class WorldpayPaymentProviderTest {
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+    }
+
+    @Test
+    void should_set_exemption_not_requested_when_request_made_without_an_exemption() throws Exception {
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+        
+        ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(chargeDao).merge(chargeDaoArgumentCaptor.capture());
+        assertEquals(chargeDaoArgumentCaptor.getValue().getExemption3ds(), EXEMPTION_NOT_REQUESTED);
     }
 
     @Test

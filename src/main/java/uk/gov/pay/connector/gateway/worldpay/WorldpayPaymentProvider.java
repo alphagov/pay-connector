@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -51,6 +52,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
@@ -69,6 +71,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final Map<String, URI> gatewayUrlMap;
     private final AuthorisationService authorisationService;
     private final AuthorisationLogger authorisationLogger;
+    private final ChargeDao chargeDao;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -80,7 +83,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayCaptureHandler worldpayCaptureHandler,
                                    WorldpayRefundHandler worldpayRefundHandler,
                                    AuthorisationService authorisationService,
-                                   AuthorisationLogger authorisationLogger) {
+                                   AuthorisationLogger authorisationLogger, 
+                                   ChargeDao chargeDao) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -92,6 +96,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.worldpayAuthoriseHandler = worldpayAuthoriseHandler;
         this.authorisationService = authorisationService;
         this.authorisationLogger = authorisationLogger;
+        this.chargeDao = chargeDao;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
@@ -145,6 +150,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
+        
+        if (!WorldpayOrderBuilder.isExemptionEngineEnabled(request)) {
+            ChargeEntity charge = request.getCharge();
+            charge.setExemption3ds(EXEMPTION_NOT_REQUESTED);
+            chargeDao.merge(charge);
+        }
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayAuthoriseHandler.authorise(request);
 
@@ -162,7 +173,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getCharge().getChargeStatus(),
                     request.getCharge().getChargeStatus());
             
-            return worldpayAuthoriseHandler.authorise(request, true);
+            response = worldpayAuthoriseHandler.authorise(request, true);
         }
         return response;
     }

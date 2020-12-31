@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -24,6 +25,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -109,6 +111,30 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
     }
 
+    /* 
+    The gateway account set up ChargingITestBase does not have exemption engine enabled by default 
+    */
+    @Test
+    public void should_set_exemption_not_requested_when_request_made_without_an_exemption() {
+
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationSuccess();
+
+        String authDetails = buildJsonAuthorisationDetailsWithFullAddress();
+
+        givenSetup()
+                .body(authDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("exemption_3ds", is(Exemption3ds.EXEMPTION_NOT_REQUESTED.name()));
+    }
+    
     @Test
     public void shouldAuthoriseChargeWithoutBillingAddress() {
 

@@ -11,14 +11,17 @@ public interface WorldpayOrderBuilder {
     
     static WorldpayOrderRequestBuilder buildAuthoriseOrder(WorldpayOrderRequestBuilder builder, 
                                                            CardAuthorisationGatewayRequest request) {
-
-        boolean exemptionEngineEnabled = request.getGatewayAccount().getWorldpay3dsFlexCredentials()
-                .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
-                .orElse(false);
-
-        return buildAuthoriseOrderWithoutExemptionEngine(builder, request).withExemptionEngine(exemptionEngineEnabled);
+        
+        return buildAuthoriseOrderWithoutExemptionEngine(builder, request)
+                .withExemptionEngine(isExemptionEngineEnabled(request));
     }
-    
+
+    static boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
+        return request.getGatewayAccount().getWorldpay3dsFlexCredentials()
+                    .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
+                    .orElse(false);
+    }
+
     static WorldpayOrderRequestBuilder buildAuthoriseOrderWithoutExemptionEngine(WorldpayOrderRequestBuilder builder, 
                                                                                  CardAuthorisationGatewayRequest request) {
         

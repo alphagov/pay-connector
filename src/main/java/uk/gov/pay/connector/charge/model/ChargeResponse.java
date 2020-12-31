@@ -15,6 +15,7 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -131,6 +132,9 @@ public class ChargeResponse {
     @JsonProperty("moto")
     private boolean moto;
 
+    @JsonProperty("exemption_3ds")
+    private Exemption3ds exemption3ds;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -163,6 +167,7 @@ public class ChargeResponse {
         this.walletType = builder.getWalletType();
         this.externalMetadata = builder.getExternalMetadata();
         this.moto = builder.isMoto();
+        this.exemption3ds = builder.getExemption3ds();
     }
 
     public List<Map<String, Object>> getDataLinks() {

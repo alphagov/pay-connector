@@ -8,6 +8,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -367,7 +368,8 @@ public class WorldpayPaymentProviderTest {
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
                 new AuthorisationService(mockCardExecutorService, mockEnvironment), 
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()));
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
+                mock(ChargeDao.class));
     }
 
     private Map<String, URI> gatewayUrlMap() {
