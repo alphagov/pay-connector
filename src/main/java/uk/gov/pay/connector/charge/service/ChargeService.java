@@ -454,8 +454,7 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
-                .withMoto(chargeEntity.isMoto())
-                .withExemption3ds(chargeEntity.getExemption3ds());
+                .withMoto(chargeEntity.isMoto());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
@@ -512,7 +511,7 @@ public class ChargeService {
                 walletType, emailAddress);
     }
 
-    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+    ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
                                                                   ChargeStatus status,
                                                                   AuthCardDetails authCardDetails,
                                                                   String transactionId,

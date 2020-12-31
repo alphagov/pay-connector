@@ -166,6 +166,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     private boolean moto;
 
     @Column(name = "exemption_3ds")
+    @Enumerated(EnumType.STRING)
     private Exemption3ds exemption3ds;
 
     public ChargeEntity() {

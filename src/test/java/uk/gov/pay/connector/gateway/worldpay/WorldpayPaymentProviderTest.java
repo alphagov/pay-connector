@@ -129,11 +129,60 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    void should_not_include_exemption_if_account_has_no_worldpay_3ds_flex_credentials() throws Exception {
+        
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(null);
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+    }
+
+    @Test
+    void should_not_include_exemption_if_account_has_exemption_engine_set_to_false() throws Exception {
+
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(
+                aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(false).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+    }
+
+    @Test
+    void should_not_include_exemption_if_account_has_exemption_engine_set_to_true_but_3ds_is_not_enabled() throws Exception {
+
+        gatewayAccountEntity.setRequires3ds(false);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+        
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+    }
+
+    @Test
     void should_set_exemption_not_requested_when_request_made_without_an_exemption() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
         
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest))
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
@@ -172,11 +221,28 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest)).thenReturn(getGatewayResponse(worldpayXmlResponse));
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true)).thenReturn(getGatewayResponse(worldpayXmlResponse));
 
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
-        verify(worldpayAuthoriseHandler, never()).authorise(cardAuthRequest, true);
+        verify(worldpayAuthoriseHandler, never()).authorise(cardAuthRequest, false);
+    }
+
+    @Test
+    void should_include_exemption_if_account_has_exemption_engine_set_to_true() throws Exception {
+
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
     }
 
     @Test
@@ -194,8 +260,8 @@ public class WorldpayPaymentProviderTest {
         var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE);
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest)).thenReturn(firstResponse);
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true)).thenReturn(secondResponse);
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true)).thenReturn(firstResponse);
+        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false)).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
         
