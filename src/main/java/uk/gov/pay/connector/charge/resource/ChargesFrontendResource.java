@@ -33,8 +33,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -165,7 +163,7 @@ public class ChargesFrontendResource {
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(ZonedDateTime.ofInstant(charge.getCreatedDate(), ZoneOffset.UTC))
+                .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withFee(charge.getFeeAmount().orElse(null))
