@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
 import uk.gov.pay.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.pay.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.pay.commons.model.SupportedLanguage;
@@ -82,8 +81,8 @@ public class ChargeResponse {
     private Instant createdDate;
 
     @JsonProperty("authorised_date")
-    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
-    private ZonedDateTime authorisedDate;
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    private Instant authorisedDate;
 
     @JsonProperty("payment_outcome")
     private PaymentOutcome paymentOutcome;
@@ -274,7 +273,7 @@ public class ChargeResponse {
         return createdDate;
     }
 
-    public ZonedDateTime getAuthorisedDate() {
+    public Instant getAuthorisedDate() {
         return authorisedDate;
     }
 
