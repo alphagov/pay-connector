@@ -395,7 +395,7 @@ public class ChargeService {
             }
 
             if (externalMetadata.getMetadata().get("authorised_date") != null) {
-                builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
+                builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))).toInstant());
             }
 
             if (externalMetadata.getMetadata().get("created_date") != null) {

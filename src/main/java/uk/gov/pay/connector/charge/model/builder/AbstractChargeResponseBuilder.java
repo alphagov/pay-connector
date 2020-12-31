@@ -12,7 +12,6 @@ import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String description;
     protected String telephoneNumber;
     protected Instant createdDate;
-    protected ZonedDateTime authorisedDate;
+    protected Instant authorisedDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected ServicePaymentReference reference;
     protected String processorId;
@@ -117,7 +116,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withAuthorisedDate(ZonedDateTime authorisedDate) {
+    public T withAuthorisedDate(Instant authorisedDate) {
         this.authorisedDate = authorisedDate;
         return thisObject();
     }
@@ -324,7 +323,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return telephoneNumber;
     }
 
-    public ZonedDateTime getAuthorisedDate() {
+    public Instant getAuthorisedDate() {
         return authorisedDate;
     }
 
