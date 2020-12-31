@@ -20,7 +20,6 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -198,8 +197,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withCreatedDate(ZonedDateTime createdDate) {
-        this.createdDate = createdDate.toInstant();
+    public ChargeEntityFixture withCreatedDate(Instant createdDate) {
+        this.createdDate = createdDate;
         return this;
     }
 

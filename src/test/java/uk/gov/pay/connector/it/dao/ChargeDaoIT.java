@@ -443,7 +443,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .insert();
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
@@ -462,7 +462,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .insert();
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CAPTURE_READY, SYSTEM_CANCELLED);
@@ -480,7 +480,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusMinutes(30))
+                .withCreatedDate(Instant.now().minus(Duration.ofMinutes(30)))
                 .insert();
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
@@ -498,7 +498,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now())
+                .withCreatedDate(Instant.now())
                 .withAmount(300L)
                 .insert();
 
@@ -534,7 +534,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
         DatabaseFixtures
@@ -543,7 +543,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
         TestCharge charge = DatabaseFixtures
@@ -552,7 +552,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now())
+                .withCreatedDate(Instant.now())
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
         DatabaseFixtures
@@ -577,7 +577,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
 
@@ -610,7 +610,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(AUTHORISATION_3DS_READY)
                 .insert();
 
@@ -638,7 +638,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
         DatabaseFixtures
@@ -647,7 +647,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
 
@@ -749,7 +749,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(90))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();
 
@@ -757,7 +757,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(90))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .withParityCheckDate(now(ZoneId.of("UTC")).minusDays(6))
                 .insert();
@@ -766,7 +766,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(4))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(4)))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .withParityCheckDate(now(ZoneId.of("UTC")).minusDays(1))
                 .insert();
@@ -786,7 +786,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(90))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
                 .withParityCheckDate(now(ZoneId.of("UTC")))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();

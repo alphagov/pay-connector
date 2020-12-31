@@ -16,8 +16,8 @@ import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
@@ -27,8 +27,8 @@ import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
 
+import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,7 +79,7 @@ public class UserNotificationServiceTest {
     private final UUID notificationId = randomUUID();
 
     private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-            .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneOffset.UTC))
+            .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
             .build();
 
     private final Charge charge = Charge.from(chargeEntity);
@@ -141,7 +141,7 @@ public class UserNotificationServiceTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withReference(ServicePaymentReference.of("123$000"))
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .build();
 
         Map<String, String> personalisation = new HashMap<>();
@@ -343,7 +343,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withCorporateSurcharge(250L)
                 .build();
 
@@ -378,7 +378,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key", "template_id", "my-template-id"))
                 .build();
 
@@ -397,7 +397,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key", "refund_issued_template_id", "template_id2"))
                 .build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
@@ -417,7 +417,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("template_id", "my-template-id"))
                 .build();
  
@@ -433,7 +433,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key"))
                 .build();
  
@@ -449,7 +449,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
  
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("refund_issued_template_id", "my-template-id"))
                 .build();
 
@@ -467,7 +467,7 @@ public class UserNotificationServiceTest {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCreatedDate(Instant.parse("2016-01-01T10:23:12Z"))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key"))
                 .build();
 

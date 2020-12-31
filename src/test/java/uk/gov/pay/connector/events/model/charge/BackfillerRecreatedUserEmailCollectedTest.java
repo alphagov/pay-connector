@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class BackfillerRecreatedUserEmailCollectedTest {
 
         String paymentId = "jweojfewjoifewj";
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.parse(time))
+                .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.USER_CANCELLED)
                 .withExternalId(paymentId)
                 .withAmount(100L)

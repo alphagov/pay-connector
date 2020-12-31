@@ -589,11 +589,6 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCharge withCreatedDate(ZonedDateTime createdDate) {
-            this.createdDate = createdDate.toInstant();
-            return this;
-        }
-
         public TestCharge withCardDetails(TestCardDetails testCardDetails) {
             cardDetails = testCardDetails;
             return this;

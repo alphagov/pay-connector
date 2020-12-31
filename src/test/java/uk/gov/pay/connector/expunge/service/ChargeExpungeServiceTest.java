@@ -18,7 +18,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
-import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -105,7 +106,7 @@ public class ChargeExpungeServiceTest {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(CAPTURE_SUBMITTED)
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
@@ -125,7 +126,7 @@ public class ChargeExpungeServiceTest {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(8);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(CAPTURE_SUBMITTED)
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
@@ -162,7 +163,7 @@ public class ChargeExpungeServiceTest {
     @Parameters({"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
     public void shouldNotExpungeEpdqChargeWithState(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))
                 .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
                 .build();
@@ -183,7 +184,7 @@ public class ChargeExpungeServiceTest {
     @Parameters({"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
     public void shouldExpungeEpdqChargesWithState(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(5))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))
                 .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
                 .build();

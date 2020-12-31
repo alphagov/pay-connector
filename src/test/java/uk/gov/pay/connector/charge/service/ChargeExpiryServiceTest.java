@@ -33,8 +33,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -138,7 +138,7 @@ public class ChargeExpiryServiceTest {
         var status = ChargeStatus.fromString(chargeStatus);
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(status)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -161,7 +161,7 @@ public class ChargeExpiryServiceTest {
         var status = ChargeStatus.fromString(chargeStatus);
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(status)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -187,7 +187,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(status)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -225,7 +225,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(status)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -264,7 +264,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(status)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -289,7 +289,7 @@ public class ChargeExpiryServiceTest {
     public void shouldUpdateStatusToMatchGatewayStatus_whenNormalStateTransitionAllowed() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -313,7 +313,7 @@ public class ChargeExpiryServiceTest {
     public void shouldUpdateStatusWhenCancellationFails() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
+                .withCreatedDate(Instant.now())
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -335,14 +335,14 @@ public class ChargeExpiryServiceTest {
     public void shouldSweepAndExpireCharges() throws Exception {
         ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(AWAITING_CAPTURE_REQUEST)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
         ChargeEntity chargeEntityAuthorisationSuccess = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(AUTHORISATION_SUCCESS)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -369,7 +369,7 @@ public class ChargeExpiryServiceTest {
     public void shouldCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() throws Exception {
         ChargeEntity preAuthorisationCharge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -391,7 +391,7 @@ public class ChargeExpiryServiceTest {
     public void forceCancelShouldReturnSuccess_whenCancelStateIsCancelled() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -408,7 +408,7 @@ public class ChargeExpiryServiceTest {
     public void forceCancelShouldReturnSuccess_whenCancelStateIsSubmitted() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -425,7 +425,7 @@ public class ChargeExpiryServiceTest {
     public void forceCancelShouldReturnFailure_whenCancelStateIsError() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
@@ -442,7 +442,7 @@ public class ChargeExpiryServiceTest {
     public void forceCancelShouldReturnFailure_whenGatewayResponseHasError() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
