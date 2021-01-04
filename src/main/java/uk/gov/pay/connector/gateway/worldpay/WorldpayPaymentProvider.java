@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisation
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -54,7 +55,10 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
 
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
@@ -85,7 +89,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayCaptureHandler worldpayCaptureHandler,
                                    WorldpayRefundHandler worldpayRefundHandler,
                                    AuthorisationService authorisationService,
-                                   AuthorisationLogger authorisationLogger, 
+                                   AuthorisationLogger authorisationLogger,
                                    ChargeDao chargeDao) {
 
         this.gatewayUrlMap = gatewayUrlMap;
@@ -153,21 +157,24 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
 
+        Exemption3ds exemption3ds = null;
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
         
         if (!exemptionEngineEnabled) {
-            ChargeEntity charge = request.getCharge();
-            charge.setExemption3ds(EXEMPTION_NOT_REQUESTED);
-            chargeDao.merge(charge);
-            LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", EXEMPTION_NOT_REQUESTED, charge.getExternalId());
-            
+            exemption3ds = EXEMPTION_NOT_REQUESTED;
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } else {
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
+            
+            if (response.getBaseResponse().get().getExemptionResponseResult().orElse("").equals("REJECTED")) {
+                exemption3ds = EXEMPTION_REJECTED;
+            } else if (response.getBaseResponse().get().getExemptionResponseResult().orElse("").equals("OUT_OF_SCOPE")) {
+                exemption3ds = EXEMPTION_OUT_OF_SCOPE;
+            }
             
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
@@ -180,10 +187,27 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     response,
                     request.getCharge().getChargeStatus(),
                     request.getCharge().getChargeStatus());
-            
+
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+
+        } else if (responseIsHonoured(response)) {
+            exemption3ds = EXEMPTION_HONOURED;
         }
+
+        updateChargeWithExemption3ds(exemption3ds, request.getCharge());
+
         return response;
+    }
+
+    private Boolean responseIsHonoured(GatewayResponse<WorldpayOrderStatusResponse> response) {
+        return response.getBaseResponse().map(worldpayOrderStatusResponse -> 
+                worldpayOrderStatusResponse.getExemptionResponseResult().orElse("").equals("HONOURED")).orElse(false);
+    }
+
+    private void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
+        charge.setExemption3ds(exemption3ds);
+        LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
+        chargeDao.merge(charge);
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
