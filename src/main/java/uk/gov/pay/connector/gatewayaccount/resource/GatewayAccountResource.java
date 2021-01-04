@@ -159,11 +159,8 @@ public class GatewayAccountResource {
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccount ->
-                {
-                    gatewayAccount.getCredentials().remove("password");
-                    return Response.ok(gatewayAccount).build();
-                })
+                .map(GatewayAccountResourceDTO::fromEntityWithCredentialsExcludingPassword)
+                .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));
     }
 
