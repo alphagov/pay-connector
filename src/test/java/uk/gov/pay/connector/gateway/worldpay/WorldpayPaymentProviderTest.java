@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLo
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
@@ -138,10 +139,18 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
 
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
+        
+        verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
+    }
+
+    private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
+        ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(chargeDao).merge(chargeDaoArgumentCaptor.capture());
+        assertEquals(chargeDaoArgumentCaptor.getValue().getExemption3ds(), exemption3ds);
     }
 
     @Test
@@ -155,10 +164,12 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
 
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -171,27 +182,14 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
         
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest);
-    }
 
-    @Test
-    void should_set_exemption_not_requested_when_request_made_without_an_exemption() throws Exception {
-        ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
-        
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false))
-                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
-        
-        worldpayPaymentProvider.authorise(cardAuthRequest);
-        
-        ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao).merge(chargeDaoArgumentCaptor.capture());
-        assertEquals(chargeDaoArgumentCaptor.getValue().getExemption3ds(), EXEMPTION_NOT_REQUESTED);
+        verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
     }
-
+    
     @Test
     void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_3ds_challenge_required() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_3DS_FLEX_RESPONSE);
@@ -221,11 +219,11 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true)).thenReturn(getGatewayResponse(worldpayXmlResponse));
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(getGatewayResponse(worldpayXmlResponse));
 
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
-        verify(worldpayAuthoriseHandler, never()).authorise(cardAuthRequest, false);
+        verify(worldpayAuthoriseHandler, never()).authoriseWithoutExemption(cardAuthRequest);
     }
 
     @Test
@@ -239,7 +237,7 @@ public class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true))
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
@@ -260,8 +258,8 @@ public class WorldpayPaymentProviderTest {
         var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE);
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, true)).thenReturn(firstResponse);
-        when(worldpayAuthoriseHandler.authorise(cardAuthRequest, false)).thenReturn(secondResponse);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(firstResponse);
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
         

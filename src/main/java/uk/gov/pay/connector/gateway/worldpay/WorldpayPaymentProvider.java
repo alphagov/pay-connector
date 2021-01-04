@@ -154,16 +154,19 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
+        GatewayResponse<WorldpayOrderStatusResponse> response;
         
         if (!exemptionEngineEnabled) {
             ChargeEntity charge = request.getCharge();
             charge.setExemption3ds(EXEMPTION_NOT_REQUESTED);
             chargeDao.merge(charge);
             LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", EXEMPTION_NOT_REQUESTED, charge.getExternalId());
+            
+            response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+        } else {
+            response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
-
-        GatewayResponse<WorldpayOrderStatusResponse> response = worldpayAuthoriseHandler.authorise(request, exemptionEngineEnabled);
-
+        
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
@@ -178,7 +181,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getCharge().getChargeStatus(),
                     request.getCharge().getChargeStatus());
             
-            response = worldpayAuthoriseHandler.authorise(request, false);
+            response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         }
         return response;
     }
