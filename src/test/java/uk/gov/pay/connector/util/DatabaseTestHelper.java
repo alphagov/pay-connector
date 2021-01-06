@@ -55,14 +55,14 @@ public class DatabaseTestHelper {
                             "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                             "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
                             "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
-                            "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds) " +
+                            "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, allow_telephone_payment_notifications) " +
                             "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
                             ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                             ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                             ":corporate_prepaid_credit_card_surcharge_amount, " +
                             ":corporate_prepaid_debit_card_surcharge_amount, "+
                             ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, "+
-                            ":allow_apple_pay, :allow_google_pay, :requires_3ds)")
+                            ":allow_apple_pay, :allow_google_pay, :requires_3ds, :allow_telephone_payment_notifications)")
                             .bind("id", Long.valueOf(params.getAccountId()))
                             .bind("external_id", params.getExternalId())
                             .bind("payment_provider", params.getPaymentGateway())
@@ -83,6 +83,7 @@ public class DatabaseTestHelper {
                             .bind("allow_apple_pay", params.isAllowApplePay())
                             .bind("allow_google_pay", params.isAllowGooglePay())
                             .bind("requires_3ds", params.isRequires3ds())
+                            .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
                             .execute());
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -630,6 +631,14 @@ public class DatabaseTestHelper {
     public void allowMoto(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE gateway_accounts set allow_moto=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
+    public void allowTelephonePaymentNotifications(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE gateway_accounts set allow_telephone_payment_notifications=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );

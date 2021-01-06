@@ -162,11 +162,11 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnNon2xxStatusIfChargeIsNotFoundForTransaction() throws Exception {
+    public void shouldReturn2xxStatusIfChargeIsNotFoundForTransaction() throws Exception {
         ledgerStub.returnNotFoundForFindByProviderAndGatewayTransactionId("worldpay",
                 "unknown-transaction-id");
         notifyConnector("unknown-transaction-id", "GARBAGE")
-                .statusCode(403)
+                .statusCode(200)
                 .extract().body()
                 .asString();
     }

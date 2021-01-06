@@ -30,6 +30,7 @@ public class AddGatewayAccountParams {
     private boolean allowApplePay;
     private boolean allowGooglePay;
     private boolean requires3ds;
+    private boolean allowTelephonePaymentNotifications;
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
@@ -111,6 +112,10 @@ public class AddGatewayAccountParams {
         return requires3ds;
     }
 
+    public boolean isAllowTelephonePaymentNotifications() {
+        return allowTelephonePaymentNotifications;
+    }
+
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "provider";
@@ -132,6 +137,7 @@ public class AddGatewayAccountParams {
         private boolean allowGooglePay;
         private boolean requires3ds;
         private String externalId = randomUuid();
+        private boolean allowTelephonePaymentNotifications;
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -230,6 +236,11 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {
+            this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
+            return this;
+        }
+
         public AddGatewayAccountParams build() {
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
             addGatewayAccountParams.accountId = this.accountId;
@@ -252,6 +263,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.allowApplePay = this.allowApplePay;
             addGatewayAccountParams.allowGooglePay = this.allowGooglePay;
             addGatewayAccountParams.requires3ds = this.requires3ds;
+            addGatewayAccountParams.allowTelephonePaymentNotifications = this.allowTelephonePaymentNotifications;
             return addGatewayAccountParams;
         }
 

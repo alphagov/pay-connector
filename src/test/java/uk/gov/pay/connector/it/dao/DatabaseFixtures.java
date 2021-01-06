@@ -337,6 +337,7 @@ public class DatabaseFixtures {
         private boolean allowMoto;
         private boolean motoMaskCardNumberInput;
         private boolean motoMaskCardSecurityCodeInput;
+        private boolean allowTelephonePaymentNotifications;
 
         public long getAccountId() {
             return accountId;
@@ -388,6 +389,10 @@ public class DatabaseFixtures {
 
         public Map<EmailNotificationType, TestEmailNotification> getEmailNotifications() {
             return emailNotifications;
+        }
+
+        public boolean isAllowTelephonePaymentNotifications() {
+            return allowTelephonePaymentNotifications;
         }
 
         public TestAccount withAccountId(long accountId) {
@@ -486,6 +491,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {
+            this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
+            return this;
+        }
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
@@ -505,6 +515,7 @@ public class DatabaseFixtures {
                     .withAllowMoto(allowMoto)
                     .withMotoMaskCardNumberInput(motoMaskCardNumberInput)
                     .withMotoMaskCardSecurityCodeInput(motoMaskCardSecurityCodeInput)
+                    .withAllowTelephonePaymentNotifications(allowTelephonePaymentNotifications)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
@@ -513,6 +524,7 @@ public class DatabaseFixtures {
 
             return this;
         }
+
     }
 
     public class TestCharge {

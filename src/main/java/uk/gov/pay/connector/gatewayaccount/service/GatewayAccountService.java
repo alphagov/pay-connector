@@ -95,6 +95,10 @@ public class GatewayAccountService {
         return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
     }
 
+    public boolean isATelephonePaymentNotificationAccount(String merchantCode) {
+        return gatewayAccountDao.isATelephonePaymentNotificationAccount(merchantCode);
+    }
+
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater = Map.ofEntries(
             entry(
                 CREDENTIALS_GATEWAY_MERCHANT_ID,
