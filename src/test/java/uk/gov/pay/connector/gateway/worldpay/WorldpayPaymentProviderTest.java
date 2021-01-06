@@ -133,7 +133,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    void should_set_exemption_3ds_null_when_authorisation_results_in_error() {
+    void should_not_update_exemption_3ds_null_when_authorisation_results_in_error() {
         
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
@@ -147,7 +147,7 @@ public class WorldpayPaymentProviderTest {
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
-        verifyChargeUpdatedWith(null);
+        verify(chargeDao, never()).merge(any(ChargeEntity.class));
     }
     
     @Test
@@ -221,11 +221,10 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE);
-        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
-
-        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(firstResponse);
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
@@ -241,11 +240,10 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE);
-        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
-
-        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(firstResponse);
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE));
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
@@ -319,10 +317,10 @@ public class WorldpayPaymentProviderTest {
         
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE);
-        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
         
-        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(firstResponse);
+        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
@@ -332,12 +330,19 @@ public class WorldpayPaymentProviderTest {
         
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains(format("Authorisation with billing address and with 3DS data and without device data " +
-                "collection result and with exemption for %s", chargeEntity.getExternalId())));
-        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
-                "result: REJECTED, reason: HIGH_RISK)"));
-        assertTrue(log.contains("AUTHORISATION READY -> AUTHORISATION READY"));
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = format("Authorisation with billing address and with 3DS data and without device data " +
+                    "collection result and with exemption for %s", chargeEntity.getExternalId());
+            return loggingEvent.getMessage().contains(log);
+        }));
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = "Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
+                    "result: REJECTED, reason: HIGH_RISK)";
+            return loggingEvent.getMessage().contains(log);
+        }));
+        assertTrue(logs.stream().anyMatch(loggingEvent -> 
+                loggingEvent.getMessage().contains("AUTHORISATION READY -> AUTHORISATION READY")));
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> getGatewayResponse(String responseFile) throws Exception {

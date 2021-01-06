@@ -157,24 +157,18 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
 
-        Exemption3ds exemption3ds = null;
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
         
         if (!exemptionEngineEnabled) {
-            exemption3ds = EXEMPTION_NOT_REQUESTED;
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } else {
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
-            
-            if (response.getBaseResponse().get().getExemptionResponseResult().orElse("").equals("REJECTED")) {
-                exemption3ds = EXEMPTION_REJECTED;
-            } else if (response.getBaseResponse().get().getExemptionResponseResult().orElse("").equals("OUT_OF_SCOPE")) {
-                exemption3ds = EXEMPTION_OUT_OF_SCOPE;
-            }
+
+            updateChargeExemptionForSoftDecline(request, response);
             
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
@@ -190,24 +184,46 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
 
-        } else if (responseIsHonoured(response)) {
-            exemption3ds = EXEMPTION_HONOURED;
+        } else {
+            response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> 
+                    determineExemption(exemptionEngineEnabled, worldpayOrderStatusResponse)
+                            .ifPresent(exemption3ds -> updateChargeWithExemption3ds(exemption3ds, request.getCharge())));
         }
-
-        updateChargeWithExemption3ds(exemption3ds, request.getCharge());
 
         return response;
     }
 
-    private Boolean responseIsHonoured(GatewayResponse<WorldpayOrderStatusResponse> response) {
-        return response.getBaseResponse().map(worldpayOrderStatusResponse -> 
-                worldpayOrderStatusResponse.getExemptionResponseResult().orElse("").equals("HONOURED")).orElse(false);
+    private void updateChargeExemptionForSoftDecline(CardAuthorisationGatewayRequest request, GatewayResponse<WorldpayOrderStatusResponse> response) {
+        response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> {
+            if (worldpayOrderStatusResponse.getExemptionResponseResult().map("REJECTED"::equals).orElse(false)) {
+                updateChargeWithExemption3ds(EXEMPTION_REJECTED, request.getCharge());
+            }
+        });
+
+        response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> {
+            if (worldpayOrderStatusResponse.getExemptionResponseResult().map("OUT_OF_SCOPE"::equals).orElse(false)) {
+                updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, request.getCharge());
+            }
+        });
     }
 
     private void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
         charge.setExemption3ds(exemption3ds);
         LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
         chargeDao.merge(charge);
+    }
+
+    private Optional<Exemption3ds> determineExemption(boolean exemptionEngineEnabled, WorldpayOrderStatusResponse response) {
+        
+        Optional<Exemption3ds> exemption3ds = Optional.empty();
+
+        if (!exemptionEngineEnabled) {
+            exemption3ds = Optional.of(EXEMPTION_NOT_REQUESTED);
+        } else if (response.getExemptionResponseResult().map("HONOURED"::equals).orElse(false)) {
+            exemption3ds = Optional.of(EXEMPTION_HONOURED);
+        } 
+
+        return exemption3ds;
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
