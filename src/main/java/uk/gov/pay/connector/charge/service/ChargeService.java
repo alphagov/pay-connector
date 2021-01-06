@@ -104,7 +104,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
-    private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
@@ -224,7 +224,7 @@ public class ChargeService {
             checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
-                logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
             }
 
             SupportedLanguage language = chargeRequest.getLanguage() != null
@@ -343,14 +343,16 @@ public class ChargeService {
                 });
     }
 
-    private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
+    private ChargeResponse.ChargeResponseBuilder populateResponseBuilderWith(
+            AbstractChargeResponseBuilder<ChargeResponse.ChargeResponseBuilder, ChargeResponse> responseBuilder,
+            ChargeEntity chargeEntity) {
 
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
             persistedCard = chargeEntity.getCardDetails().toCard();
         }
 
-        T builderOfResponse = responseBuilder
+        ChargeResponse.ChargeResponseBuilder builderOfResponse = responseBuilder
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
@@ -509,7 +511,7 @@ public class ChargeService {
                 walletType, emailAddress);
     }
 
-    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+    ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
                                                                   ChargeStatus status,
                                                                   AuthCardDetails authCardDetails,
                                                                   String transactionId,
@@ -548,7 +550,7 @@ public class ChargeService {
 
             transitionChargeState(charge, status);
 
-            logger.info("Stored confirmation details for charge - charge_external_id={}",
+            LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
 
             return charge;
@@ -605,7 +607,7 @@ public class ChargeService {
                 GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
                 // Used by Splunk saved search
-                logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
+                LOGGER.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                         chargeEntity.getExternalId(),
                         fromString(chargeEntity.getStatus()),
                         gatewayAccount.getId(),
@@ -882,7 +884,7 @@ public class ChargeService {
 
     private String checkAndGetTruncatedValue(String processorId, String field, String value) {
         if (value.length() > 50) {
-            logger.info("Telephone payment {} - {} field is longer than 50 characters and has been truncated and stored. Actual value is {}", processorId, field, value);
+            LOGGER.info("Telephone payment {} - {} field is longer than 50 characters and has been truncated and stored. Actual value is {}", processorId, field, value);
             return value.substring(0, 50);
         }
         return value;

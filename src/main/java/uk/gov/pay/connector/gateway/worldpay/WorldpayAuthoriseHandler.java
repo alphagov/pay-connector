@@ -34,13 +34,17 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         this.authoriseClient = authoriseClient;
         this.gatewayUrlMap = gatewayUrlMap;
     }
+    
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseWithExemption(CardAuthorisationGatewayRequest request) {
+        return authorise(request, true);
+    }
 
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseWithoutExemption(CardAuthorisationGatewayRequest request) {
         return authorise(request, false);
     }
     
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, 
-                                                                  boolean withoutExemptionEngine) {
+    private GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, 
+                                                                  boolean withExemptionEngine) {
 
         logMissingDdcResultFor3dsFlexIntegration(request);
         
@@ -48,7 +52,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     request.getGatewayAccount(),
-                    WorldpayOrderBuilder.buildAuthoriseOrder(request, withoutExemptionEngine),
+                    WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
 
             if (response.getEntity().contains("request3DSecure")) {

@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -45,6 +46,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -262,6 +264,22 @@ public class ChargeDaoIT extends DaoITestBase {
             assertThat(ex.getConstraintViolations().size(), is(1));
             assertThat(ex.getConstraintViolations().iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
         }
+    }
+    
+    @Test
+    public void should_update_charge_with_exemption_3ds() {
+        var gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+        ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(gatewayAccount).build();
+        chargeDao.persist(chargeEntity);
+
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds());
+        
+        chargeEntity.setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
+        chargeDao.merge(chargeEntity);
+        
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds(), 
+                Exemption3ds.EXEMPTION_NOT_REQUESTED);
     }
 
     @Test

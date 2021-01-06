@@ -2,23 +2,18 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public interface WorldpayOrderBuilder {
     
-    static WorldpayOrderRequestBuilder buildAuthoriseOrder(WorldpayOrderRequestBuilder builder, 
-                                                           CardAuthorisationGatewayRequest request) {
-
-        boolean exemptionEngineEnabled = request.getGatewayAccount().getWorldpay3dsFlexCredentials()
-                .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
-                .orElse(false);
-
-        return buildAuthoriseOrderWithoutExemptionEngine(builder, request).withExemptionEngine(exemptionEngineEnabled);
+    static WorldpayOrderRequestBuilder buildAuthoriseOrderWithExemptionEngine(WorldpayOrderRequestBuilder builder,
+                                                                              CardAuthorisationGatewayRequest request) {
+        
+        return buildAuthoriseOrderWithoutExemptionEngine(builder, request).withExemptionEngine(true);
     }
-    
+
     static WorldpayOrderRequestBuilder buildAuthoriseOrderWithoutExemptionEngine(WorldpayOrderRequestBuilder builder, 
                                                                                  CardAuthorisationGatewayRequest request) {
         
@@ -39,11 +34,11 @@ public interface WorldpayOrderBuilder {
                 .withAuthorisationDetails(request.getAuthCardDetails());
     }
     
-    static GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request, boolean withoutExemptionEngine) {
-        if (withoutExemptionEngine) {
-            return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
+    static GatewayOrder buildAuthoriseOrderWithExemptionEngine(CardAuthorisationGatewayRequest request, boolean withExemptionEngine) {
+        if (withExemptionEngine) {
+            return buildAuthoriseOrderWithExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
         } else {
-            return buildAuthoriseOrder(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
+            return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
         }
     }
 }

@@ -206,8 +206,7 @@ public class ChargesFrontendResource {
             }
         });
 
-        return responseBuilder
-                .build();
+        return responseBuilder.build();
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
