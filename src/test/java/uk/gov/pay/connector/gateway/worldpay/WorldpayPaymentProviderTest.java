@@ -60,6 +60,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
@@ -131,6 +132,24 @@ public class WorldpayPaymentProviderTest {
         root.addAppender(mockAppender);
     }
 
+    @Test
+    void should_set_exemption_3ds_null_when_authorisation_results_in_error() {
+        
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verifyChargeUpdatedWith(null);
+    }
+    
     @Test
     void should_not_include_exemption_if_account_has_no_worldpay_3ds_flex_credentials() throws Exception {
         
