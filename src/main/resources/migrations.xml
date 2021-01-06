@@ -1561,4 +1561,20 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add allow_telephone_payment_notifications to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_telephone_payment_notifications" type="boolean">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default to allow_telephone_payment_notifications" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="allow_telephone_payment_notifications" defaultValue="false"/>
+    </changeSet>
+
+    <changeSet id="update allow_telephone_payment_notifications with default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="allow_telephone_payment_notifications" value="false"/>
+        </update>
+    </changeSet>
 </databaseChangeLog>
