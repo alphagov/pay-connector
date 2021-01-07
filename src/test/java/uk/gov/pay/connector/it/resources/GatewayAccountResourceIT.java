@@ -789,6 +789,27 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void patchGatewayAccount_forAllowTelephonePaymentNotifications() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                "path", "allow_telephone_payment_notifications",
+                "value", true));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("allow_telephone_payment_notifications", is(false));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("allow_telephone_payment_notifications", is(true));
+    }
+
+    @Test
     public void shouldReturn404ForCorporateSurcharge_whenGatewayAccountIsNonExistent() throws Exception {
         String gatewayAccountId = "1000023";
         String payload = objectMapper.writeValueAsString(Map.of("op", "replace",

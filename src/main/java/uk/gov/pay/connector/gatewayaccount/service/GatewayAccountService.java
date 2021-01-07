@@ -31,6 +31,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_MOTO;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_ZERO_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_BLOCK_PREPAID_CARDS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
@@ -174,6 +175,10 @@ public class GatewayAccountService {
             entry(
                 FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
                 (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowTelephonePaymentNotifications(gatewayAccountRequest.valueAsBoolean())
             )
     );
 

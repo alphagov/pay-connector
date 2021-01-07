@@ -41,6 +41,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_ALLOW_MOTO = "allow_moto";
     public static final String FIELD_MOTO_MASK_CARD_NUMBER_INPUT = "moto_mask_card_number_input";
     public static final String FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT = "moto_mask_card_security_code_input";
+    public static final String FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS = "allow_telephone_payment_notifications";
 
 
     private static final List<String> VALID_PATHS = List.of(
@@ -58,7 +59,8 @@ public class GatewayAccountRequestValidator {
             FIELD_BLOCK_PREPAID_CARDS,
             FIELD_ALLOW_MOTO,
             FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
-            FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT);
+            FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
+            FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS);
 
     private final RequestValidator requestValidator;
 
@@ -93,6 +95,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_ALLOW_MOTO:
             case FIELD_MOTO_MASK_CARD_NUMBER_INPUT:
             case FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT:
+            case FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
