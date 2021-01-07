@@ -68,7 +68,9 @@ public class GatewayAccountRequestValidatorTest {
             "replace, moto_mask_card_number_input, unfalse, Value [unfalse] must be of type boolean for path [moto_mask_card_number_input]",
             "bad, moto_mask_card_security_code_input, true, Operation [bad] is not valid for path [moto_mask_card_security_code_input]",
             "replace, moto_mask_card_security_code_input, null, Field [value] is required",
-            "replace, moto_mask_card_security_code_input, unfalse, Value [unfalse] must be of type boolean for path [moto_mask_card_security_code_input]"
+            "replace, moto_mask_card_security_code_input, unfalse, Value [unfalse] must be of type boolean for path [moto_mask_card_security_code_input]",
+            "replace, allow_telephone_payment_notifications, null, Field [value] is required",
+            "replace, allow_telephone_payment_notifications, unfalse, Value [unfalse] must be of type boolean for path [allow_telephone_payment_notifications]"
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<String, String>() {{
