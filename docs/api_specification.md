@@ -230,6 +230,7 @@ Content-Type: application/json
     "allow_google_pay": false,
     "block_prepaid_cards": false,
     "allow_zero_amount": false,
+    "allow_telephone_payment_notifications": false,
     "email_collection_mode": "MANDATORY",
     "requires3ds": false,
     "allow_moto": false,
@@ -269,11 +270,12 @@ Content-Type: application/json
 | `block_prepaid_cards`                            | X              | Whether pre-paid card are allowed as a payment method for this gateway account. The default value is `false`. |
 | `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                        |
 | `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                  |
-| `requires3ds`                                   | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
+| `requires3ds`                                    | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
 | `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.             |
 | `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
 | `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
+| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                       |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -321,6 +323,7 @@ Content-Type: application/json
       "email_collection_mode": "MANDATORY",
       "requires3ds": false,
       "allow_moto": false,
+      "allow_telephone_payment_notifications": false,
       "moto_mask_card_number_input": false,
       "moto_mask_card_security_code_input": false,
       "email_notifications": {
@@ -440,12 +443,13 @@ Content-Type: application/json
 | `block_prepaid_cards`                            | X              | Whether pre-paid card are allowed as a payment method for this gateway account. The default value is `false`. |
 | `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                        |
 | `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                  |
-| `requires3ds`                                     | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
+| `requires3ds`                                    | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
 | `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.             |
 | `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
 | `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
 | `_links.self`                                    | X              | A self link to get this account resource by account-id.                                                       |
+| `allow_telephone_payment_notifications`          | X              | Indicates the if account is used for telephone payments reporting. Default value is 'false'                       |
 
 
 ---------------------------------------------------------------------------------------------------------------
@@ -1178,6 +1182,7 @@ Content-Type: application/json
     "allow_google_pay": false,
     "block_prepaid_cards": false,
     "allow_zero_amount": false,
+    "allow_telephone_payment_notifications": false,
     "email_collection_mode": "MANDATORY",
     "email_notifications": {
       "REFUND_ISSUED": {
@@ -1218,6 +1223,7 @@ Content-Type: application/json
 | `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                                  |
 | `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                            |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                                 |
+| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                             |
 
 -----------------------------------------------------------------------------------------------------------
 ## PUT /v1/frontend/accounts/{accountId}
