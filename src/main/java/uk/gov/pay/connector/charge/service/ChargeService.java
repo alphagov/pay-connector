@@ -159,44 +159,40 @@ public class ChargeService {
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
-    public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId) {
-        return createCharge(telephoneChargeCreateRequest, accountId)
-                .map(charge ->
-                        populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
+    public ChargeResponse createFromTelephonePaymentNotification(TelephoneChargeCreateRequest telephoneChargeCreateRequest, GatewayAccountEntity gatewayAccount) {
+        ChargeEntity charge = createTelephoneCharge(telephoneChargeCreateRequest, gatewayAccount);
+        return populateResponseBuilderWith(aChargeResponseBuilder(), charge).build();
     }
 
     @Transactional
-    private Optional<ChargeEntity> createCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId) {
-        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+    private ChargeEntity createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, GatewayAccountEntity gatewayAccount) {
+        checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
 
-            checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
+        CardDetailsEntity cardDetails = new CardDetailsEntity(
+                LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
+                FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
+                telephoneChargeRequest.getNameOnCard().orElse(null),
+                telephoneChargeRequest.getCardExpiry().orElse(null),
+                telephoneChargeRequest.getCardType().orElse(null),
+                null
+        );
 
-            CardDetailsEntity cardDetails = new CardDetailsEntity(
-                    LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
-                    FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
-                    telephoneChargeRequest.getNameOnCard().orElse(null),
-                    telephoneChargeRequest.getCardExpiry().orElse(null),
-                    telephoneChargeRequest.getCardType().orElse(null),
-                    null
-            );
+        ChargeEntity chargeEntity = aTelephoneChargeEntity()
+                .withAmount(telephoneChargeRequest.getAmount())
+                .withDescription(telephoneChargeRequest.getDescription())
+                .withReference(ServicePaymentReference.of(telephoneChargeRequest.getReference()))
+                .withGatewayAccount(gatewayAccount)
+                .withEmail(telephoneChargeRequest.getEmailAddress().orElse(null))
+                .withExternalMetadata(storeExtraFieldsInMetaData(telephoneChargeRequest))
+                .withGatewayTransactionId(telephoneChargeRequest.getProviderId())
+                .withCardDetails(cardDetails)
+                .build();
 
-            ChargeEntity chargeEntity = aTelephoneChargeEntity()
-                    .withAmount(telephoneChargeRequest.getAmount())
-                    .withDescription(telephoneChargeRequest.getDescription())
-                    .withReference(ServicePaymentReference.of(telephoneChargeRequest.getReference()))
-                    .withGatewayAccount(gatewayAccount)
-                    .withEmail(telephoneChargeRequest.getEmailAddress().orElse(null))
-                    .withExternalMetadata(storeExtraFieldsInMetaData(telephoneChargeRequest))
-                    .withGatewayTransactionId(telephoneChargeRequest.getProviderId())
-                    .withCardDetails(cardDetails)
-                    .build();
-
-            chargeDao.persist(chargeEntity);
-            transitionChargeState(chargeEntity, PAYMENT_NOTIFICATION_CREATED);
-            transitionChargeState(chargeEntity, internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)));
-            chargeDao.merge(chargeEntity);
-            return chargeEntity;
-        });
+        chargeDao.persist(chargeEntity);
+        transitionChargeState(chargeEntity, PAYMENT_NOTIFICATION_CREATED);
+        transitionChargeState(chargeEntity, internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)));
+        chargeDao.merge(chargeEntity);
+        return chargeEntity;
     }
 
     private ChargeStatus internalChargeStatus(String code) {
@@ -512,13 +508,13 @@ public class ChargeService {
     }
 
     ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                                  ChargeStatus status,
-                                                                  AuthCardDetails authCardDetails,
-                                                                  String transactionId,
-                                                                  Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                                  ProviderSessionIdentifier sessionIdentifier,
-                                                                  WalletType walletType,
-                                                                  String emailAddress) {
+                                                           ChargeStatus status,
+                                                           AuthCardDetails authCardDetails,
+                                                           String transactionId,
+                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
+                                                           ProviderSessionIdentifier sessionIdentifier,
+                                                           WalletType walletType,
+                                                           String emailAddress) {
         updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
                 auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
