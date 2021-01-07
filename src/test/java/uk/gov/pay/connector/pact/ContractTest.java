@@ -246,10 +246,20 @@ public class ContractTest {
     }
     
     @State("a gateway account has moto payments enabled")
-    public void createGatewayAccountWithMotoEnabled(Map<String, String> params) {
+    public void enableMotoForGatewayAccount(Map<String, String> params) {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(toJson(Map.of("op", "replace","path", "allow_moto", "value", true)))
+                .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @State("a gateway account has telephone payment notifications enabled")
+    public void enableTelephonePaymentNotificationsForGatewayAccount(Map<String, String> params) {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(toJson(Map.of("op", "replace","path", "allow_telephone_payment_notifications", "value", true)))
                 .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
                 .then()
                 .statusCode(OK.getStatusCode());
