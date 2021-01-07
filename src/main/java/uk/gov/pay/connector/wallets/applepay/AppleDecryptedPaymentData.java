@@ -58,7 +58,7 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
     }
 
     public String getExpiryDateYear() {
-        return applicationExpirationDate.format(DateTimeFormatter.ofPattern("YYYY"));
+        return applicationExpirationDate.format(DateTimeFormatter.ofPattern("yyyy"));
     }
     
     @Override
