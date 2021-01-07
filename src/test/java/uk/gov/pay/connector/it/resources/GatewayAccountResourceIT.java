@@ -152,6 +152,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
+                .withAllowTelephonePaymentNotifications(true)
                 .insert();
 
         givenSetup()
@@ -174,7 +175,8 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("allow_google_pay", is(false))
                 .body("allow_apple_pay", is(false))
                 .body("allow_zero_amount", is(false))
-                .body("integration_version_3ds", is(2));
+                .body("integration_version_3ds", is(2))
+                .body("allow_telephone_payment_notifications", is(true));
     }
 
     @Test

@@ -69,12 +69,15 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("allow_zero_amount")
     private boolean allowZeroAmount;
-    
+
     @JsonProperty("integration_version_3ds")
     private int integrationVersion3ds;
-    
+
     @JsonProperty("allow_moto")
     private boolean allowMoto;
+
+    @JsonProperty("allow_telephone_payment_notifications")
+    private boolean allowTelephonePaymentNotifications;
 
     @JsonProperty("moto_mask_card_number_input")
     private boolean motoMaskCardNumberInput;
@@ -106,7 +109,8 @@ public class GatewayAccountResourceDTO {
                                      int integrationVersion3ds,
                                      boolean allowMoto,
                                      boolean motoMaskCardNumberInput,
-                                     boolean motoMaskCardSecurityCodeInput) {
+                                     boolean motoMaskCardSecurityCodeInput,
+                                     boolean allowTelephonePaymentNotifications) {
         this.accountId = accountId;
         this.externalId = externalId;
         this.paymentProvider = paymentProvider;
@@ -129,6 +133,7 @@ public class GatewayAccountResourceDTO {
         this.allowMoto = allowMoto;
         this.motoMaskCardNumberInput = motoMaskCardNumberInput;
         this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
+        this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -154,7 +159,8 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getIntegrationVersion3ds(),
                 gatewayAccountEntity.isAllowMoto(),
                 gatewayAccountEntity.isMotoMaskCardNumberInput(),
-                gatewayAccountEntity.isMotoMaskCardSecurityCodeInput()
+                gatewayAccountEntity.isMotoMaskCardSecurityCodeInput(),
+                gatewayAccountEntity.isAllowTelephonePaymentNotifications()
         );
     }
 
@@ -217,7 +223,7 @@ public class GatewayAccountResourceDTO {
     public boolean isAllowGooglePay() {
         return allowGooglePay;
     }
-    
+
     public boolean isBlockPrepaidCards() {
         return blockPrepaidCards;
     }
@@ -233,7 +239,7 @@ public class GatewayAccountResourceDTO {
     public boolean isRequires3ds() {
         return requires3ds;
     }
-    
+
     public boolean isAllowZeroAmount() {
         return allowZeroAmount;
     }
@@ -254,4 +260,7 @@ public class GatewayAccountResourceDTO {
         return motoMaskCardSecurityCodeInput;
     }
 
+    public boolean isAllowTelephonePaymentNotifications() {
+        return allowTelephonePaymentNotifications;
+    }
 }
