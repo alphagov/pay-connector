@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
@@ -135,6 +137,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                         hasProperty("type", is(visaCardDebit.getType())),
                         hasProperty("brand", is(visaCardDebit.getBrand()))
                 )));
+        assertThat(gatewayAccount.isAllowTelephonePaymentNotifications(), is(accountRecord.isAllowTelephonePaymentNotifications()));
     }
 
     @Test
@@ -146,7 +149,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                 .withServiceName("service name")
                 .withCredentials(credMap)
                 .build());
-        
+
         Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
         assertThat(maybeGatewayAccount.isPresent(), is(true));
         Map<String, String> credentialsMap = maybeGatewayAccount.get().getCredentials();
@@ -173,9 +176,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
-        
+
     }
-    
+
     @Test
     public void findById_shouldUpdateAccountCardTypes() {
         final CardTypeEntity masterCardCredit = databaseTestHelper.getMastercardCreditCard();
@@ -351,7 +354,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
         assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
     }
-    
+
     @Test
     public void shouldSearchForAccountsById() {
         long gatewayAccountId_1 = nextLong();
@@ -370,7 +373,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_3))
                 .build());
-        
+
         var params = new GatewayAccountSearchParams();
         params.setAccountIds(new CommaDelimitedSetParameter(gatewayAccountId_1 + "," + gatewayAccountId_2));
 
@@ -550,6 +553,25 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         assertThat(gatewayAccountOptional.get().getId(), is(id));
         assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));
+    }
+
+    @Test
+    public void isATelephonePaymentNotificationAccount_shouldReturnResultCorrectly() {
+        long id = nextLong();
+        String externalId = randomUuid();
+        Map<String, String> credentials = ImmutableMap.of(
+                CREDENTIALS_MERCHANT_ID, "merchant-id"
+        );
+
+        databaseFixtures
+                .aTestAccount()
+                .withAccountId(id)
+                .withExternalId(externalId)
+                .withCredentials(credentials)
+                .withAllowTelephonePaymentNotifications(true)
+                .insert();
+        boolean result = gatewayAccountDao.isATelephonePaymentNotificationAccount("merchant-id");
+        assertThat(result, is(true));
     }
 
     private DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {

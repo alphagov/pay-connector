@@ -145,6 +145,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     )
     private List<CardTypeEntity> cardTypes = newArrayList();
 
+    @Column(name = "allow_telephone_payment_notifications")
+    private boolean allowTelephonePaymentNotifications;
+
     public GatewayAccountEntity() {
     }
 
@@ -309,6 +312,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return integrationVersion3ds;
     }
 
+    @JsonProperty("allow_telephone_payment_notifications")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isAllowTelephonePaymentNotifications() {
+        return allowTelephonePaymentNotifications;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -440,6 +449,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
         this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+    }
+
+    public void setAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {
+        this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
     }
 
     public class Views {

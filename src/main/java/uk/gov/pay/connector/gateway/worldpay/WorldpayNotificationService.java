@@ -101,12 +101,22 @@ public class WorldpayNotificationService {
                 PAYMENT_GATEWAY_NAME, notification.getTransactionId());
 
         if (maybeCharge.isEmpty()) {
-            logger.info("{} notification {} could not be evaluated (associated charge entity not found)",
-                    PAYMENT_GATEWAY_NAME, notification);
             // Respond with an error, which will cause worldpay to try to send the notification
             // again later — this is necessary because sometimes we might receive a notification
-            // for a telephone payment before we know about the payment itself
-            return false;
+            // for a telephone payment before we know about the payment itself.
+            // Note that when a capture notification is rejected, Worldpay retries the notification until it is successful
+            // or removed from Worldpay's queue after 7 days. Capture notifications for new payments
+            // will be blocked until the notification being retried is successful or removed from Worldpay's queue
+            if (gatewayAccountService.isATelephonePaymentNotificationAccount(notification.getMerchantCode())) {
+                logger.info("{} notification {} for telephone payments gateway account could not be evaluated (associated charge entity not found)",
+                        PAYMENT_GATEWAY_NAME, notification);
+                return false;
+            }
+
+            logger.info("{} notification {} could not be evaluated (associated charge entity not found)",
+                    PAYMENT_GATEWAY_NAME, notification);
+
+            return true;
         }
 
         Charge charge = maybeCharge.get();

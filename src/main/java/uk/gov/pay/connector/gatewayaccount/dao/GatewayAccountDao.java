@@ -11,6 +11,8 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+
 @Transactional
 public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
@@ -43,6 +45,19 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .getResultList().stream().findFirst();
     }
 
+    public boolean isATelephonePaymentNotificationAccount(String merchantId) {
+        String query = "SELECT count(g) FROM gateway_accounts g where g.credentials->>?1 = ?2 " +
+                " and allow_telephone_payment_notifications is true";
+
+        var count = (Number) entityManager.get()
+                .createNativeQuery(query)
+                .setParameter(1, CREDENTIALS_MERCHANT_ID)
+                .setParameter(2, merchantId)
+                .getSingleResult();
+
+        return count.intValue() > 0;
+    }
+
     public List<GatewayAccountEntity> search(GatewayAccountSearchParams params) {
         List<String> filterTemplates = params.getFilterTemplates();
         String whereClause = filterTemplates.isEmpty() ?
@@ -57,9 +72,9 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         var query = entityManager
                 .get()
                 .createQuery(queryTemplate, GatewayAccountEntity.class);
-        
+
         params.getQueryMap().forEach(query::setParameter);
-        
+
         return query.getResultList();
     }
 

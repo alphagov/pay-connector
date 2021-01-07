@@ -91,6 +91,7 @@ class WorldpayNotificationServiceTest {
         );
         verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), charge, CAPTURED, expectedNotification.getGatewayEventDate());
     }
+
     @Test
     void givenAChargeCapturedNotification_shouldNotInvokeChargeNotificationProcessor_IfChargeIsHistoric() {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
@@ -154,7 +155,8 @@ class WorldpayNotificationServiceTest {
     }
 
     @Test
-    void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
+    void ifChargeNotFound_shouldRejectNotificationForTelephonePaymentsAccount() {
+        when(mockGatewayAccountService.isATelephonePaymentNotificationAccount("MERCHANTCODE")).thenReturn(true);
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -167,6 +169,19 @@ class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
 
         assertFalse(result);
+        verifyNoInteractions(mockChargeNotificationProcessor);
+    }
+
+    @Test
+    void ifChargeNotFound_shouldIgnoreForNonTelephonePaymentAccount() {
+        when(mockGatewayAccountService.isATelephonePaymentNotificationAccount("MERCHANTCODE")).thenReturn(false);
+        final String payload = sampleWorldpayNotification(
+                transactionId, referenceId, "CHARGED", "10", "03", "2017");
+        setUpChargeServiceToReturnCharge(Optional.empty());
+
+        final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
+
+        assertTrue(result);
         verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
