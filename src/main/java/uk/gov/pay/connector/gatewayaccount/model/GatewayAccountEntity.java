@@ -230,6 +230,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return notificationCredentials;
     }
 
+    @JsonIgnore
+    public Optional<Worldpay3dsFlexCredentialsEntity> getWorldpay3dsFlexCredentialsEntity() {
+        return Optional.ofNullable(worldpay3dsFlexCredentialsEntity);
+    }
+
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {

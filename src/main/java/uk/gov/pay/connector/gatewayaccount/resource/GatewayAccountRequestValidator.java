@@ -42,7 +42,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_MOTO_MASK_CARD_NUMBER_INPUT = "moto_mask_card_number_input";
     public static final String FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT = "moto_mask_card_security_code_input";
     public static final String FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS = "allow_telephone_payment_notifications";
-
+    public static final String FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED = "worldpay_exemption_engine_enabled";
 
     private static final List<String> VALID_PATHS = List.of(
             CREDENTIALS_GATEWAY_MERCHANT_ID,
@@ -60,7 +60,8 @@ public class GatewayAccountRequestValidator {
             FIELD_ALLOW_MOTO,
             FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
             FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
-            FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS);
+            FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
+            FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED);
 
     private final RequestValidator requestValidator;
 
@@ -96,6 +97,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_MOTO_MASK_CARD_NUMBER_INPUT:
             case FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT:
             case FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS:
+            case FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:

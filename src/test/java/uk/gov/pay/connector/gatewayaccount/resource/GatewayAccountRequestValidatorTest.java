@@ -70,10 +70,12 @@ public class GatewayAccountRequestValidatorTest {
             "replace, moto_mask_card_security_code_input, null, Field [value] is required",
             "replace, moto_mask_card_security_code_input, unfalse, Value [unfalse] must be of type boolean for path [moto_mask_card_security_code_input]",
             "replace, allow_telephone_payment_notifications, null, Field [value] is required",
-            "replace, allow_telephone_payment_notifications, unfalse, Value [unfalse] must be of type boolean for path [allow_telephone_payment_notifications]"
+            "replace, allow_telephone_payment_notifications, unfalse, Value [unfalse] must be of type boolean for path [allow_telephone_payment_notifications]",
+            "replace, worldpay_exemption_engine_enabled, null, Field [value] is required",
+            "replace, worldpay_exemption_engine_enabled, unfalse, Value [unfalse] must be of type boolean for path [worldpay_exemption_engine_enabled]"
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
-        Map<String, String> patch = new HashMap<String, String>() {{
+        Map<String, String> patch = new HashMap<>() {{
             put(FIELD_OPERATION, op);
             put(FIELD_OPERATION_PATH, path);
         }};

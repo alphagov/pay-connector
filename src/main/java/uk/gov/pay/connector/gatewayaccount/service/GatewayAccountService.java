@@ -5,10 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
+import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
+import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -27,6 +28,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
@@ -43,6 +45,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 
 public class GatewayAccountService {
 
@@ -179,12 +182,27 @@ public class GatewayAccountService {
             entry(
                 FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
                 (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowTelephonePaymentNotifications(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                (gatewayAccountRequest, gatewayAccountEntity) -> {
+                    throwIfGatewayAccountIsNotWorldpay(gatewayAccountEntity, FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED);
+                    var worldpay3dsFlexCredentialsEntity = gatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()
+                        .orElseThrow(() -> new MissingWorldpay3dsFlexCredentialsEntityException(gatewayAccountEntity.getId(), FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED));
+                    worldpay3dsFlexCredentialsEntity.setExemptionEngineEnabled(gatewayAccountRequest.valueAsBoolean());
+                }
             )
     );
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
-        if (!PaymentGatewayName.WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
+        if (!WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
             throw new DigitalWalletNotSupportedGatewayException(gatewayAccountEntity.getGatewayName());
+        }
+    }
+
+    private void throwIfGatewayAccountIsNotWorldpay(GatewayAccountEntity gatewayAccountEntity, String path) {
+        if (!WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
+            throw new NotSupportedGatewayAccountException(gatewayAccountEntity.getId(), WORLDPAY.getName(), path);
         }
     }
 }
