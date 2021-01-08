@@ -103,6 +103,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         this.exemptionResponseResult = exemptionResponseResult;
     }
 
+    public Optional<String> getExemptionResponseResult() {
+        return Optional.ofNullable(exemptionResponseResult);
+    }
+
     public String getPaRequest() {
         return paRequest;
     }

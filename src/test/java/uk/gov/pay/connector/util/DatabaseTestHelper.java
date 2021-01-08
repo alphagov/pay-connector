@@ -551,6 +551,15 @@ public class DatabaseTestHelper {
                         .first()
         );
     }
+    
+    public String getExemption3ds(Long chargeId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT exemption_3ds from charges WHERE id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .mapTo(String.class)
+                        .first()
+        );
+    }
 
     public String getChargeCardBrand(Long chargeId) {
         return jdbi.withHandle(h ->

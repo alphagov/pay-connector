@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -70,6 +71,12 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     @Test
+    public void exemption_3ds_should_be_null_for_a_non_worldpay_authorisation() {
+        String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", "visa"));
+        assertNull(databaseTestHelper.getExemption3ds(getLongChargeId(externalChargeId)));
+    }
+
+    @Test
     public void shouldAuthoriseCharge_ForValidCards() {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
             shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
@@ -85,7 +92,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     public void shouldStoreCardDetailsForAuthorisedCharge() {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", cardBrand));
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = getLongChargeId(externalChargeId);
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
@@ -110,7 +117,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 "US"
         );
         String externalChargeId = shouldAuthoriseChargeFor(validUsCardDetails);
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = getLongChargeId(externalChargeId);
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("address_state_province", "DC"));
         assertThat(databaseTestHelper.getChargeCardBrand(chargeId), is(cardBrand));
@@ -128,7 +135,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers));
 
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = getLongChargeId(externalChargeId);
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
@@ -153,7 +160,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers));
 
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = getLongChargeId(externalChargeId);
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
@@ -491,4 +498,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .body("message", containsInAnyOrder("Values do not match expected format/length."));
     }
 
+    private Long getLongChargeId(String externalChargeId) {
+        return Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+    }
 }

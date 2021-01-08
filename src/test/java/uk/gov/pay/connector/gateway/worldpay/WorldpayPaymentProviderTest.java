@@ -60,6 +60,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
@@ -69,14 +70,18 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -85,8 +90,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class WorldpayPaymentProviderTest {
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
-
-    private Map<String, URI> gatewayUrlMap = Map.of(TEST.toString(), WORLDPAY_URL);
+    private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
     
     @Mock private GatewayClient authoriseClient;
     @Mock private GatewayClient cancelClient;
@@ -100,7 +104,6 @@ public class WorldpayPaymentProviderTest {
     @Mock private ChargeDao chargeDao;
     
     private WorldpayPaymentProvider worldpayPaymentProvider;
-
     private ChargeEntityFixture chargeEntityFixture;
     protected GatewayAccountEntity gatewayAccountEntity;
     private Map<String, String> gatewayAccountCredentials = Map.of("merchant_id", "MERCHANTCODE");
@@ -108,7 +111,7 @@ public class WorldpayPaymentProviderTest {
     @BeforeEach
     void setup() {
         worldpayPaymentProvider = new WorldpayPaymentProvider(
-                gatewayUrlMap, 
+                GATEWAY_URL_MAP, 
                 authoriseClient, 
                 cancelClient, 
                 inquiryClient, 
@@ -129,6 +132,24 @@ public class WorldpayPaymentProviderTest {
         root.addAppender(mockAppender);
     }
 
+    @Test
+    void should_not_update_exemption_3ds_null_when_authorisation_results_in_error() {
+        
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
+        
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verify(chargeDao, never()).merge(any(ChargeEntity.class));
+    }
+    
     @Test
     void should_not_include_exemption_if_account_has_no_worldpay_3ds_flex_credentials() throws Exception {
         
@@ -189,7 +210,46 @@ public class WorldpayPaymentProviderTest {
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
     }
-    
+
+    @Test
+    void should_set_exemption_rejected_when_request_made_with_an_exemption() throws Exception {
+        
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verifyChargeUpdatedWith(EXEMPTION_REJECTED);
+    }
+
+    @Test
+    void should_set_exemption_out_of_scope_when_request_made_with_an_exemption() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE));
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
+    }
+
     @Test
     void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_3ds_challenge_required() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_3DS_FLEX_RESPONSE);
@@ -238,9 +298,11 @@ public class WorldpayPaymentProviderTest {
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
-                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
         
         worldpayPaymentProvider.authorise(cardAuthRequest);
+
+        verifyChargeUpdatedWith(EXEMPTION_HONOURED);
     }
 
     @Test
@@ -255,10 +317,10 @@ public class WorldpayPaymentProviderTest {
         
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
-        var firstResponse = getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE);
-        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
         
-        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(firstResponse);
+        var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
@@ -267,13 +329,20 @@ public class WorldpayPaymentProviderTest {
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
         
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains(format("Authorisation with billing address and with 3DS data and without device data " +
-                "collection result and with exemption for %s", chargeEntity.getExternalId())));
-        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
-                "result: REJECTED, reason: HIGH_RISK)"));
-        assertTrue(log.contains("AUTHORISATION READY -> AUTHORISATION READY"));
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = format("Authorisation with billing address and with 3DS data and without device data " +
+                    "collection result and with exemption for %s", chargeEntity.getExternalId());
+            return loggingEvent.getMessage().contains(log);
+        }));
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = "Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
+                    "result: REJECTED, reason: HIGH_RISK)";
+            return loggingEvent.getMessage().contains(log);
+        }));
+        assertTrue(logs.stream().anyMatch(loggingEvent -> 
+                loggingEvent.getMessage().contains("AUTHORISATION READY -> AUTHORISATION READY")));
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> getGatewayResponse(String responseFile) throws Exception {

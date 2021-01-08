@@ -11,7 +11,8 @@ public class TestTemplateResourceLoader {
 
     public static final String WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-success-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-honoured-response.xml";
-    public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-response.xml";
+    public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-result-rejected-response.xml";
+    public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-result-out-of-scope-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-decline-response.xml";
     static final String WORLDPAY_AUTHORISATION_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-error-response.xml";
     public static final String WORLDPAY_AUTHORISATION_FAILED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-failed-response.xml";
