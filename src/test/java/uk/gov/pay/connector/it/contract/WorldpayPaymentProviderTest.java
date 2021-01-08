@@ -157,7 +157,8 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
         assertEquals(response.getBaseResponse().get().getLastEvent().get(), "AUTHORISED");
-        assertEquals(response.getBaseResponse().get().getExemptionResponseResult(), "HONOURED");
+        assertTrue(response.getBaseResponse().get().getExemptionResponseResult().isPresent());
+        assertEquals(response.getBaseResponse().get().getExemptionResponseResult().get(), "HONOURED");
         assertEquals(response.getBaseResponse().get().getExemptionResponseReason(), "ISSUER_HONOURED");
     }
 
