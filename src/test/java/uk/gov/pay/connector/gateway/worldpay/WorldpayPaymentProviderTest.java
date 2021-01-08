@@ -44,11 +44,13 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.util.UUID.randomUUID;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -313,6 +315,8 @@ public class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         chargeEntityFixture.withStatus(ChargeStatus.AUTHORISATION_READY);
+        String gatewayTransactionId = randomUUID().toString();
+        chargeEntityFixture.withGatewayTransactionId(gatewayTransactionId);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
@@ -327,6 +331,7 @@ public class WorldpayPaymentProviderTest {
         
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
+        assertNotEquals(cardAuthRequest.getCharge().getGatewayTransactionId(), gatewayTransactionId);
         
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());

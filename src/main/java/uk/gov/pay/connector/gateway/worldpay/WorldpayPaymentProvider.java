@@ -113,7 +113,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public Optional<String> generateTransactionId() {
-        return Optional.of(randomUUID().toString());
+        return Optional.of(newTransactionId());
+    }
+
+    private String newTransactionId() {
+        return randomUUID().toString();
     }
 
     @Override
@@ -181,7 +185,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     response,
                     request.getCharge().getChargeStatus(),
                     request.getCharge().getChargeStatus());
-
+            
+            request.getCharge().setGatewayTransactionId(newTransactionId());
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } 
 

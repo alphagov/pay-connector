@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.http.Fault;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
@@ -18,8 +19,10 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANC
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class WorldpayMockClient {
 
@@ -27,59 +30,59 @@ public class WorldpayMockClient {
     }
 
     public void mockAuthorisationSuccess() {
-        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        String authoriseResponse = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationRequires3ds() {
-        String authorise3dsResponse = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
+        String authorise3dsResponse = load(WORLDPAY_3DS_RESPONSE);
         paymentServiceResponse(authorise3dsResponse);
     }
 
     public void mockAuthorisationFailure() {
-        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
+        String authoriseResponse = load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockAuthorisationPaResParseError() {
-        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE);
+        String authoriseResponse = load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 
     public void mockCaptureSuccess() {
-        String captureResponse = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_SUCCESS_RESPONSE);
+        String captureResponse = load(WORLDPAY_CAPTURE_SUCCESS_RESPONSE);
         paymentServiceResponse(captureResponse);
     }
 
     public void mockCaptureError() {
-        String captureResponse = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_ERROR_RESPONSE);
+        String captureResponse = load(WORLDPAY_CAPTURE_ERROR_RESPONSE);
         paymentServiceResponse(captureResponse);
     }
 
     public void mockCancelSuccess() {
-        String cancelResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
+        String cancelResponse = load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         paymentServiceResponse(cancelResponse);
     }
 
     public void mockCancelError() {
-        String cancelResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_ERROR_RESPONSE);
+        String cancelResponse = load(WORLDPAY_CANCEL_ERROR_RESPONSE);
         paymentServiceResponse(cancelResponse);
     }
 
     public void mockCancelSuccessOnlyFor(String gatewayTransactionId) {
-        String cancelSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
+        String cancelSuccessResponse = load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderModification[@orderCode = '" + gatewayTransactionId + "']";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, cancelSuccessResponse);
 
     }
 
     public void mockRefundSuccess() {
-        String refundResponse = TestTemplateResourceLoader.load(WORLDPAY_REFUND_SUCCESS_RESPONSE);
+        String refundResponse = load(WORLDPAY_REFUND_SUCCESS_RESPONSE);
         paymentServiceResponse(refundResponse);
     }
 
     public void mockRefundError() {
-        String refundResponse = TestTemplateResourceLoader.load(WORLDPAY_REFUND_ERROR_RESPONSE);
+        String refundResponse = load(WORLDPAY_REFUND_ERROR_RESPONSE);
         paymentServiceResponse(refundResponse);
     }
 
@@ -93,7 +96,7 @@ public class WorldpayMockClient {
     }
 
     public void mockAuthorisationQuerySuccess() {
-        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        String authSuccessResponse = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         String bodyMatchXpath = "//orderInquiry[@orderCode]";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    
     }
@@ -129,5 +132,16 @@ public class WorldpayMockClient {
                                         .withBody(responseBody)
                         )
         );
+    }
+
+    public void mockResponsesForExemptionEngineSoftDecline() {
+        stubFor(post(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")).inScenario("Exemption Engine soft decline")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(200).withBody(load(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE)))
+                .willSetStateTo("Soft decline triggered"));
+
+        stubFor(post(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")).inScenario("Exemption Engine soft decline")
+                .whenScenarioStateIs("Soft decline triggered")
+                .willReturn(aResponse().withStatus(200).withBody(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE))));
     }
 }

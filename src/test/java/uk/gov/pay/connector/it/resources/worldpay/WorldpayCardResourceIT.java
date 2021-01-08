@@ -10,10 +10,14 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -41,6 +45,24 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
         super("worldpay");
     }
 
+    @Test
+    public void should_set_new_gateway_transaction_id_when_authorisation_with_exemption_engine_results_in_soft_decline() {
+        String gatewayTransactionId = randomUUID().toString();
+        String chargeId = createNewChargeWith(ENTERING_CARD_DETAILS, gatewayTransactionId);
+
+        assertEquals(databaseTestHelper.getChargeByExternalId(chargeId).get("gateway_transaction_id"), gatewayTransactionId);
+
+        worldpayMockClient.mockResponsesForExemptionEngineSoftDecline();
+
+        givenSetup()
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        assertNotEquals(databaseTestHelper.getChargeByExternalId(chargeId), gatewayTransactionId);
+    }
+    
     @Test
     public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 
@@ -180,7 +202,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
-
+    
     @Test
     public void shouldAuthoriseCharge_For3dsRequiredCharge() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
