@@ -166,9 +166,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
         
+        calculateAndStoreExemption(exemptionEngineEnabled, request.getCharge(), response);
+        
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
-
-            updateChargeExemptionForSoftDecline(request, response);
             
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
@@ -183,28 +183,32 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getCharge().getChargeStatus());
 
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
-
-        } else {
-            response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> 
-                    determineExemption(exemptionEngineEnabled, worldpayOrderStatusResponse)
-                            .ifPresent(exemption3ds -> updateChargeWithExemption3ds(exemption3ds, request.getCharge())));
-        }
+        } 
 
         return response;
     }
 
-    private void updateChargeExemptionForSoftDecline(CardAuthorisationGatewayRequest request, GatewayResponse<WorldpayOrderStatusResponse> response) {
-        response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> {
-            if (worldpayOrderStatusResponse.getExemptionResponseResult().map("REJECTED"::equals).orElse(false)) {
-                updateChargeWithExemption3ds(EXEMPTION_REJECTED, request.getCharge());
-            }
-        });
-
-        response.getBaseResponse().ifPresent(worldpayOrderStatusResponse -> {
-            if (worldpayOrderStatusResponse.getExemptionResponseResult().map("OUT_OF_SCOPE"::equals).orElse(false)) {
-                updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, request.getCharge());
-            }
-        });
+    private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
+        if (!exemptionEngineEnabled) {
+            updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);
+        } else {
+            response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponseResult).ifPresent(exemption3ds -> {
+                switch (exemption3ds) {
+                    case "HONOURED":
+                        updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge);
+                        break;
+                    case "REJECTED":
+                        updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge);
+                        break;
+                    case "OUT_OF_SCOPE":
+                        updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge);
+                        break;
+                    default:
+                        LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
+                                "charge_external_id={}", exemption3ds, charge.getExternalId());
+                }
+            });
+        }
     }
 
     private void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
@@ -212,20 +216,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
         chargeDao.merge(charge);
     }
-
-    private Optional<Exemption3ds> determineExemption(boolean exemptionEngineEnabled, WorldpayOrderStatusResponse response) {
-        
-        Optional<Exemption3ds> exemption3ds = Optional.empty();
-
-        if (!exemptionEngineEnabled) {
-            exemption3ds = Optional.of(EXEMPTION_NOT_REQUESTED);
-        } else if (response.getExemptionResponseResult().map("HONOURED"::equals).orElse(false)) {
-            exemption3ds = Optional.of(EXEMPTION_HONOURED);
-        } 
-
-        return exemption3ds;
-    }
-
+    
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
