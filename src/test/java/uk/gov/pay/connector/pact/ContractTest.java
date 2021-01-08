@@ -23,6 +23,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
+import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.Duration;

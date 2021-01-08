@@ -107,7 +107,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedChargeDao.findByGatewayTransactionIdAndAccount(gatewayAccount.getId(), "1PROV"))
                 .thenReturn(Optional.of(returnedChargeEntity));
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(gatewayAccount.getId(), telephoneChargeCreateRequest);
 
@@ -492,11 +492,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        
         populateChargeEntity();
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -546,11 +545,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .withCardExpiry(null)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        
         populateChargeEntity();
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -599,11 +597,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .withCardExpiry(null)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        
         populateChargeEntity();
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -657,11 +654,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withAuthCode(stringGreaterThan50)
                 .withTelephoneNumber(stringGreaterThan50)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        
         populateChargeEntity();
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -714,11 +710,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withAuthCode(stringOf50)
                 .withTelephoneNumber(stringOf50)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        
         populateChargeEntity();
 
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -753,9 +748,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .build();
 
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
-        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -771,10 +764,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
-        ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();
+        
+        ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -809,10 +800,8 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .withCardExpiry(null)
                 .build();
-
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
-        ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();
+        
+        ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 

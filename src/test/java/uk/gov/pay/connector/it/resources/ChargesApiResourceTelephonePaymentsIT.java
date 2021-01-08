@@ -70,6 +70,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForOnlyRequiredFields() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
@@ -91,6 +92,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
     
     @Test
     public void createTelephoneChargeForStatusOfSuccessForAllFields() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("auth_code", "666");
         postBody.put("created_date", "2018-02-21T16:04:25Z");
         postBody.put("authorised_date", "2018-02-21T16:05:33Z");
@@ -139,6 +141,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0010() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -176,6 +179,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0050() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -220,6 +224,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0030() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -257,6 +262,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeWithTruncatedMetaData() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -304,6 +310,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeWithSource() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome", Map.of("status", "success"));
         postBody.replace("processor_id", stringOf51Characters);
 
@@ -320,6 +327,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("card_expiry", "02/19");
         postBody.put("card_type", "master-card");
         postBody.put("last_four_digits", "1234");
@@ -355,6 +363,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn400ForInvalidCardExpiryDate() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("card_expiry", "99/99");
 
         connectorRestApiClient
@@ -365,7 +374,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidCardType() {
-        
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("card_type", "invalid-card");
         
         connectorRestApiClient
@@ -376,6 +385,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatus() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "invalid"
@@ -390,6 +400,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatusAndCode() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "success",
@@ -405,7 +416,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeErrorCode() {
-        
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -425,6 +436,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidCreatedDate() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("created_date", "invalid");
 
         connectorRestApiClient
@@ -436,6 +448,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidAuthorisedDate() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.put("authorised_date", "invalid");
 
         connectorRestApiClient
@@ -447,6 +460,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForMissingAmount() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("amount");
         
         connectorRestApiClient
@@ -457,6 +471,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForMissingReference() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("reference");
         
         connectorRestApiClient
@@ -467,6 +482,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForMissingDescription() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("description");
         
         connectorRestApiClient
@@ -477,6 +493,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForMissingProcessorID() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("processor_id");
                 
         connectorRestApiClient
@@ -487,6 +504,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
     
     @Test
     public void shouldReturn422ForMissingProviderID() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("provider_id");
         
         connectorRestApiClient
@@ -497,6 +515,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForMissingPaymentOutcome() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         postBody.remove("payment_outcome");
 
         connectorRestApiClient
@@ -507,6 +526,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForTelephoneChargeCreateRequestNull() {
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
         String payload = toJson(null);
 
         connectorRestApiClient
@@ -514,6 +534,16 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .statusCode(422)
                 .contentType(JSON)
                 .body("message[0]", is("must not be null"));
+    }
+
+    @Test
+    public void shouldReturn403IfTelephoneNotificationsNotAllowedForAccount() {
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(403)
+                .contentType(JSON)
+                .body("message[0]", is("Telephone payment notifications are not enabled for this gateway account"))
+                .body("error_identifier", is("TELEPHONE_PAYMENT_NOTIFICATIONS_NOT_ALLOWED"));
     }
 
 }
