@@ -2,21 +2,25 @@ package uk.gov.pay.connector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
+import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
+import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import java.util.Arrays;
@@ -27,12 +31,17 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayAccountServiceTest {
+    private static final String BAD_REQUEST_MESSAGE = "HTTP 400 Bad Request";
 
     @Mock
     private GatewayAccountDao mockGatewayAccountDao;
@@ -49,10 +58,16 @@ public class GatewayAccountServiceTest {
     @Mock
     private GatewayAccountEntity getMockGatewayAccountEntity2;
 
+    @Mock
+    private Worldpay3dsFlexCredentialsEntity mockWorldpay3dsFlexCredentialsEntity;
+
     private GatewayAccountService gatewayAccountService;
     
     private static final Long GATEWAY_ACCOUNT_ID = 100L;
     private static ObjectMapper objectMapper = new ObjectMapper();
+
+    @Rule
+    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -131,7 +146,7 @@ public class GatewayAccountServiceTest {
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
 
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        InOrder inOrder = Mockito.inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        InOrder inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
         inOrder.verify(mockGatewayAccountEntity).setEmailCollectionMode(EmailCollectionMode.OFF);
         inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
@@ -397,5 +412,71 @@ public class GatewayAccountServiceTest {
         Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccountByExternal(externalId);
 
         assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
+    }
+
+    @Test
+    public void shouldUpdateWorldpayExemptionEngineEnabledToFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                "value", false)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+        when(mockGatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()).thenReturn(Optional.of(mockWorldpay3dsFlexCredentialsEntity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        InOrder inOrder = inOrder(mockWorldpay3dsFlexCredentialsEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockWorldpay3dsFlexCredentialsEntity).setExemptionEngineEnabled(false);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateWorldpayExemptionEngineEnabledToTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                "value", true)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+        when(mockGatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()).thenReturn(Optional.of(mockWorldpay3dsFlexCredentialsEntity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        InOrder inOrder = inOrder(mockWorldpay3dsFlexCredentialsEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockWorldpay3dsFlexCredentialsEntity).setExemptionEngineEnabled(true);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldThrowWrongGatewayAccountExceptionWhenAccountIsNotWorldpay() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                "value", true)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(EPDQ.getName());
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        exceptionRule.expect(NotSupportedGatewayAccountException.class);
+        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
+
+        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+    }
+
+    @Test
+    public void shouldThrowMissing3dsFlexCredentialsEntityExceptionWhenWorldpay3dsFlexCredentialsEntityGoesMissing() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                "value", false)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        exceptionRule.expect(MissingWorldpay3dsFlexCredentialsEntityException.class);
+        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
+
+        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
     }
 }

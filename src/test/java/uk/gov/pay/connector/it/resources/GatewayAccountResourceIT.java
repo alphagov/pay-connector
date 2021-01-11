@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -480,7 +481,35 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
                 .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
                 .body("worldpay_3ds_flex", not(hasKey("version")))
-                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")));
+                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+    }
+
+    @Test
+    public void shouldReturn200WhenWorldpayExemptionEngineEnabledIsUpdated() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor(WORLDPAY.getName(), "a-description", "analytics-id");
+        databaseTestHelper.insertWorldpay3dsFlexCredential(
+                Long.valueOf(gatewayAccountId),
+                "macKey",
+                "issuer",
+                "org_unit_id",
+                2L);
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "op", "replace",
+                "path", "worldpay_exemption_engine_enabled",
+                "value", true));
+
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(true));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 
 import javax.persistence.Column;
@@ -20,12 +21,15 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     @Id
     @GeneratedValue(generator = "worldpay_3ds_flex_credentials_id_seq", strategy = GenerationType.SEQUENCE)
     @Column(name = "id")
+    @JsonIgnore
     private Long id;
 
     @JoinColumn(name = "gateway_account_id", updatable = false, insertable = false)
+    @JsonIgnore
     private GatewayAccountEntity gatewayAccountEntity;
 
     @Column(name = "gateway_account_id")
+    @JsonIgnore
     private Long gatewayAccountId;
 
     @Column
@@ -35,6 +39,7 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     private String organisationalUnitId;
 
     @Column(name = "jwt_mac_key")
+    @JsonIgnore
     private String jwtMacKey;
 
     @Column(name = "exemption_engine")
@@ -64,6 +69,10 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
 
     public String getJwtMacKey() {
         return jwtMacKey;
+    }
+
+    public void setExemptionEngineEnabled(boolean isExemptionEngineEnabled) {
+        this.exemptionEngineEnabled = isExemptionEngineEnabled;
     }
 
     public void setGatewayAccountId(Long gatewayAccountId) {
