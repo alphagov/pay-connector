@@ -2,11 +2,14 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import javax.inject.Inject;
@@ -23,12 +26,15 @@ public class DiscrepancyService {
     private final ChargeService chargeService;
     private final QueryService queryService;
     private final ChargeExpiryService expiryService;
+    private final GatewayAccountService gatewayAccountService;
 
     @Inject
-    public DiscrepancyService(ChargeService chargeService, QueryService queryService, ChargeExpiryService expiryService) {
+    public DiscrepancyService(ChargeService chargeService, QueryService queryService,
+                              ChargeExpiryService expiryService, GatewayAccountService gatewayAccountService) {
         this.chargeService = chargeService;
         this.queryService = queryService;
         this.expiryService = expiryService;
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     public List<GatewayStatusComparison> listGatewayStatusComparisons(List<String> chargeIds) {
@@ -38,6 +44,7 @@ public class DiscrepancyService {
 
     public List<GatewayStatusComparison> resolveDiscrepancies(List<String> chargeIds) {
         return toGatewayStatusComparisonList(chargeIds)
+                .filter(gatewayStatusComparison -> !gatewayStatusComparison.getCharge().isHistoric()) // exclude resolving expunged charges
                 .filter(GatewayStatusComparison::hasExternalStatusMismatch)
                 .map(this::resolve)
                 .collect(Collectors.toList());
@@ -45,19 +52,15 @@ public class DiscrepancyService {
 
     private Stream<GatewayStatusComparison> toGatewayStatusComparisonList(List<String> chargeIds) {
         return chargeIds.stream()
-                .map(chargeService::findChargeByExternalId)
-                .map(charge -> {
-                    try {
-                        return GatewayStatusComparison.from(charge, queryService.getChargeGatewayStatus(charge));
-                    } catch (GatewayException e) {
-                        return GatewayStatusComparison.getEmpty(charge);
-                    }
-                });
+                .map(chargeExternalId -> chargeService.findCharge(chargeExternalId)
+                        .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId)))
+                .map(this::getGatewayStatusComparision);
     }
 
     private GatewayStatusComparison resolve(GatewayStatusComparison gatewayStatusComparison) {
         if (canBeCancelled(gatewayStatusComparison)) {
-            Boolean cancelSuccess = expiryService.forceCancelWithGateway(gatewayStatusComparison.getCharge());
+            ChargeEntity chargeEntity = chargeService.findChargeByExternalId(gatewayStatusComparison.getCharge().getExternalId());
+            boolean cancelSuccess = expiryService.forceCancelWithGateway(chargeEntity);
             if (cancelSuccess) {
                 LOGGER.info("Successfully resolved discrepancy for charge {} ", gatewayStatusComparison.getChargeId());
                 gatewayStatusComparison.setProcessed(true);
@@ -82,7 +85,18 @@ public class DiscrepancyService {
                 chargeAgeInDaysIsGreaterThan(gatewayStatusComparison.getCharge(), 2);
     }
 
-    private boolean chargeAgeInDaysIsGreaterThan(ChargeEntity charge, long minimumAge) {
+    private boolean chargeAgeInDaysIsGreaterThan(Charge charge, long minimumAge) {
         return charge.getCreatedDate().plus(Duration.ofDays(minimumAge)).isBefore(Instant.now());
+    }
+
+    private GatewayStatusComparison getGatewayStatusComparision(Charge charge) {
+        return gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())
+                .map(gatewayAccountEntity -> {
+                    try {
+                        return GatewayStatusComparison.from(charge, queryService.getChargeGatewayStatus(charge, gatewayAccountEntity));
+                    } catch (GatewayException e) {
+                        return GatewayStatusComparison.getEmpty(charge);
+                    }
+                }).orElse(GatewayStatusComparison.getEmpty(charge));
     }
 }

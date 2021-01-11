@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -15,38 +15,38 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class GatewayStatusComparison {
     private final ChargeStatus payStatus;
+    private final String payExternalStatus;
     @JsonProperty("gatewayStatus")
     @JsonSerialize(using = ToStringSerializer.class)
     private ChargeStatus gatewayStatus;
     private final String chargeId;
     private String rawGatewayResponse;
-    private final ChargeEntity charge;
+    private final Charge charge;
     private boolean processed = false;
 
-    public static GatewayStatusComparison from(ChargeEntity charge, ChargeQueryResponse reportedStatus) {
+    public static GatewayStatusComparison from(Charge charge, ChargeQueryResponse reportedStatus) {
         return new GatewayStatusComparison(charge, reportedStatus);
     }
 
-    public static GatewayStatusComparison getEmpty(ChargeEntity charge) {
+    public static GatewayStatusComparison getEmpty(Charge charge) {
         return new GatewayStatusComparison(charge);
     }
 
-    private GatewayStatusComparison(ChargeEntity charge, ChargeQueryResponse gatewayQueryResponse) {
-        chargeId = charge.getExternalId();
-        payStatus = ChargeStatus.fromString(charge.getStatus());
+    private GatewayStatusComparison(Charge charge, ChargeQueryResponse gatewayQueryResponse) {
+        this(charge);
         gatewayStatus = gatewayQueryResponse.getMappedStatus().orElse(null);
         rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponseString();
-        this.charge = charge;
     }
 
-    private GatewayStatusComparison(ChargeEntity charge) {
+    private GatewayStatusComparison(Charge charge) {
         chargeId = charge.getExternalId();
-        payStatus = ChargeStatus.fromString(charge.getStatus());
+        payStatus = charge.isHistoric() ? null : ChargeStatus.fromString(charge.getStatus());
+        payExternalStatus = charge.getExternalStatus();
         this.charge = charge;
     }
 
     @JsonIgnore
-    public ChargeEntity getCharge() {
+    public Charge getCharge() {
         return charge;
     }
 
@@ -65,9 +65,8 @@ public final class GatewayStatusComparison {
         return gatewayStatus != null ? gatewayStatus.toExternal() : null;
     }
 
-    @JsonSerialize(using = ToStringSerializer.class)
-    public ExternalChargeState getPayExternalStatus() {
-        return payStatus.toExternal();
+    public String getPayExternalStatus() {
+        return payExternalStatus;
     }
 
     public String getChargeId() {
@@ -83,7 +82,7 @@ public final class GatewayStatusComparison {
     }
 
     public boolean hasExternalStatusMismatch() {
-        return gatewayStatus !=null &&
+        return gatewayStatus != null &&
                 !payStatus.toExternal().getStatus().equals(gatewayStatus.toExternal().getStatus());
     }
 

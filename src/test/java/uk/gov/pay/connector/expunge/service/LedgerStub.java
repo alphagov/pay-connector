@@ -142,6 +142,18 @@ public class LedgerStub {
         );
     }
 
+    public void returnTransactionNotFound(String externalId) {
+        ResponseDefinitionBuilder responseDefBuilder = aResponse()
+                .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .withStatus(404);
+
+        stubFor(
+                get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
+                        .withQueryParam("override_account_id_restriction", equalTo("true"))
+                        .willReturn(responseDefBuilder)
+        );
+    }
+
     private static Map<String, Object> testChargeToLedgerTransactionJson(DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee fee) {
         var map = new HashMap<String, Object>();
         Optional.ofNullable(testCharge.getExternalChargeId()).ifPresent(value -> map.put("id", value));

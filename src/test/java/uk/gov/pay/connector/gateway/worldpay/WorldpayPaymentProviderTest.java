@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -483,7 +484,7 @@ public class WorldpayPaymentProviderTest {
         when(inquiryClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenReturn(response);
         
-        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(chargeEntity);
+        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
         assertThat(chargeQueryResponse.foundCharge(), is(true));

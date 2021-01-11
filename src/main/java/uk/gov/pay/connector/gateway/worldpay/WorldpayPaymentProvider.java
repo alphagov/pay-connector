@@ -121,12 +121,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException {
+    public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
-                gatewayUrlMap.get(charge.getGatewayAccount().getType()),
-                charge.getGatewayAccount(),
-                buildQuery(charge),
-                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount().getCredentials())
+                gatewayUrlMap.get(gatewayAccountEntity.getType()),
+                gatewayAccountEntity,
+                buildQuery(charge, gatewayAccountEntity),
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -151,10 +151,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return true;
     }
 
-    private GatewayOrder buildQuery(ChargeEntity charge) {
+    private GatewayOrder buildQuery(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         return aWorldpayInquiryRequestBuilder()
                 .withTransactionId(charge.getGatewayTransactionId())
-                .withMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(gatewayAccountEntity.getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 

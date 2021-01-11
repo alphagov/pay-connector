@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
 import com.google.inject.Inject;
-import org.hibernate.validator.constraints.NotEmpty;
 import uk.gov.pay.connector.paymentprocessor.service.DiscrepancyService;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;

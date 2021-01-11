@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -43,9 +44,10 @@ public class QueryServiceTest {
     @Test
     public void isTerminableWithGateway_returnsTrueForNotFinishedExternalStatus() throws Exception {
         ChargeEntity chargeEntity = aValidChargeEntity().build();
+        Charge charge = Charge.from(chargeEntity);
 
         ChargeQueryResponse response = new ChargeQueryResponse(AUTHORISATION_3DS_REQUIRED, mockGatewayResponse);
-        when(paymentProvider.queryPaymentStatus(chargeEntity)).thenReturn(response);
+        when(paymentProvider.queryPaymentStatus(charge, chargeEntity.getGatewayAccount())).thenReturn(response);
 
         assertThat(queryService.isTerminableWithGateway(chargeEntity), is(true));
     }
@@ -53,9 +55,10 @@ public class QueryServiceTest {
     @Test
     public void isTerminableWithGateway_returnsFalseForFinishedExternalStatus() throws Exception {
         ChargeEntity chargeEntity = aValidChargeEntity().build();
+        Charge charge = Charge.from(chargeEntity);
 
         ChargeQueryResponse response = new ChargeQueryResponse(CAPTURED, mockGatewayResponse);
-        when(paymentProvider.queryPaymentStatus(chargeEntity)).thenReturn(response);
+        when(paymentProvider.queryPaymentStatus(charge, chargeEntity.getGatewayAccount())).thenReturn(response);
 
         assertThat(queryService.isTerminableWithGateway(chargeEntity), is(false));
     }
