@@ -37,6 +37,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -96,7 +97,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+    public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Stripe");
     }
 

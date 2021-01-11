@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -154,13 +155,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
         throw new UnsupportedOperationException("Wallets are not supported for ePDQ");
     }
 
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException {
-        URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(charge.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
+    public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccount) throws GatewayException {
+        URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(gatewayAccount.getType()), ROUTE_FOR_QUERY_ORDER));
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                url, 
-                charge.getGatewayAccount(), 
-                buildQueryOrderRequestFor(charge),
-                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount().getCredentials()));
+                url,
+                gatewayAccount, 
+                buildQueryOrderRequestFor(charge, gatewayAccount),
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials()));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
@@ -287,13 +288,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
-    private GatewayOrder buildQueryOrderRequestFor(ChargeEntity charge) {
+    private GatewayOrder buildQueryOrderRequestFor(Charge charge, GatewayAccountEntity gatewayAccount) {
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setOrderId(charge.getExternalId());
-        epdqPayloadDefinitionForQueryOrder.setPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForQueryOrder.setUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForQueryOrder.setPspId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForQueryOrder.setPassword(gatewayAccount.getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForQueryOrder.setUserId(gatewayAccount.getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForQueryOrder.setPspId(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(gatewayAccount.getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 

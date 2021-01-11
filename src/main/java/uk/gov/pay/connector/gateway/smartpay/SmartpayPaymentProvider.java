@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -152,7 +153,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+    public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Smartpay");
     }
 

@@ -302,7 +302,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
-        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeEntity);
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
         assertThat(chargeQueryResponse.foundCharge(), is(true));
     }
@@ -310,7 +310,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeEntity);
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.empty()));
         assertThat(chargeQueryResponse.foundCharge(), is(false));
     }
