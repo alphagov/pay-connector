@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -7,6 +8,8 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -46,6 +49,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
@@ -78,6 +83,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final AuthorisationService authorisationService;
     private final AuthorisationLogger authorisationLogger;
     private final ChargeDao chargeDao;
+    private final EventService eventService;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -90,7 +96,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayRefundHandler worldpayRefundHandler,
                                    AuthorisationService authorisationService,
                                    AuthorisationLogger authorisationLogger,
-                                   ChargeDao chargeDao) {
+                                   ChargeDao chargeDao,
+                                   EventService eventService) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -103,6 +110,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.authorisationService = authorisationService;
         this.authorisationLogger = authorisationLogger;
         this.chargeDao = chargeDao;
+        this.eventService = eventService;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
@@ -216,10 +224,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         }
     }
 
-    private void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
+    @Transactional
+    public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
         charge.setExemption3ds(exemption3ds);
         LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
         chargeDao.merge(charge);
+        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, now(UTC)));
     }
     
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {

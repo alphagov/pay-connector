@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -82,6 +83,7 @@ public class WorldpayPaymentProviderTest {
     private Counter mockCounter;
     private Environment mockEnvironment;
     private CardExecutorService mockCardExecutorService = mock(CardExecutorService.class);
+    private EventService mockEventService = mock(EventService.class);
 
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
@@ -390,7 +392,8 @@ public class WorldpayPaymentProviderTest {
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
                 new AuthorisationService(mockCardExecutorService, mockEnvironment), 
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
-                mock(ChargeDao.class));
+                mock(ChargeDao.class),
+                mock(EventService.class));
     }
 
     private Map<String, URI> gatewayUrlMap() {
