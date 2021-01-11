@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -54,6 +55,7 @@ public class ChargeEntityFixture {
     private String gatewayTransactionId = null;
     private Source source = null;
     private boolean moto;
+    private Exemption3ds exemption3ds;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -129,6 +131,7 @@ public class ChargeEntityFixture {
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setSource(source);
         chargeEntity.setWalletType(walletType);
+        chargeEntity.setExemption3ds(exemption3ds);
 
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
@@ -277,4 +280,10 @@ public class ChargeEntityFixture {
         this.delayedCapture = delayedCapture;
         return this;
     }
+
+    public ChargeEntityFixture withExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+        return this;
+    }
+
 }
