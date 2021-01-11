@@ -192,6 +192,7 @@ Task can be invoked by sending request on admin port.
 |[```/v1/api/accounts```](docs/api_specification.md#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
 |[```/v1/api/accounts```](docs/api_specification.md#get-v1apiaccounts)              | GET    |  Retrieves a collection of all the accounts |
 |[```/v1/api/accounts/{gatewayAccountId}```](docs/api_specification.md#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
+|[```/v1/api/accounts/{gatewayAccountId}```](docs/api_specification.md#patch-v1apiaccountsaccountid) | PATCH | Updates an existing account's details |
 |[```/v1/api/accounts/{accountId}/charges/{chargeId}```](docs/api_specification.md#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
 |[```/v1/api/accounts/{accountId}/charges```](docs/api_specification.md#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
 |[```/v1/api/notifications/worldpay```](docs/api_specification.md#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
