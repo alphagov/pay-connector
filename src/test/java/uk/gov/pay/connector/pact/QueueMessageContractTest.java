@@ -20,12 +20,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
-import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
+import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
@@ -40,9 +42,11 @@ import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -271,4 +275,20 @@ public class QueueMessageContractTest {
 
         return event.toJsonString();
     }
+
+    @PactVerifyProvider("a gateway 3DS exemption result obtained message")
+    public String verifyGateway3dsExemptionResultObtainedEvent() throws JsonProcessingException {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withExemption3ds(Exemption3ds.EXEMPTION_HONOURED)
+                .build();
+
+        var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtained(
+                resourceId,
+                Gateway3dsExemptionResultObtainedEventDetails.from(charge),
+                ZonedDateTime.now()
+        );
+
+        return gateway3dsExemptionResultObtained.toJsonString();
+    }
+
 }
