@@ -873,16 +873,36 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void insertWorldpay3dsFlexCredential(Long gatewayAccountId, String jwtMacKey, String issuer, String organisationalUnitId, Long version) {
+    public void insertWorldpay3dsFlexCredential(Long gatewayAccountId,
+                                                String jwtMacKey,
+                                                String issuer,
+                                                String organisationalUnitId,
+                                                Long version) {
+        insertWorldpay3dsFlexCredential(
+            gatewayAccountId,
+            jwtMacKey,
+            issuer,
+            organisationalUnitId,
+            version,
+            false);
+    }
+
+    public void insertWorldpay3dsFlexCredential(Long gatewayAccountId,
+                                                String jwtMacKey,
+                                                String issuer,
+                                                String organisationalUnitId,
+                                                Long version,
+                                                boolean isExemptionEngineEnabled) {
         jdbi.withHandle(handle ->
-                handle
-                        .createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version) VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version)")
-                        .bind("gatewayAccountId", gatewayAccountId)
-                        .bind("jwtMacKey", jwtMacKey)
-                        .bind("issuer", issuer)
-                        .bind("organisationalUnitId", organisationalUnitId)
-                        .bind("version", version)
-                        .execute()
+            handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine) " +
+                    "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
+                .bind("gatewayAccountId", gatewayAccountId)
+                .bind("jwtMacKey", jwtMacKey)
+                .bind("issuer", issuer)
+                .bind("organisationalUnitId", organisationalUnitId)
+                .bind("version", version)
+                .bind("exemption_engine", isExemptionEngineEnabled)
+                .execute()
         );
     }
 

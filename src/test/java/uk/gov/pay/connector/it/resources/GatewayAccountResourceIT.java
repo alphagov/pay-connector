@@ -193,13 +193,27 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void shouldGetAllGatewayAccountsWhenSearchWithNoParams() {
         String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
         updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
-        createAGatewayAccountFor("sandbox");
+        String gatewayAccountId2 = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        databaseTestHelper.insertWorldpay3dsFlexCredential(
+            Long.valueOf(gatewayAccountId2),
+                "macKey",
+                "issuer",
+                "org_unit_id",
+                2L,
+                true);
 
         givenSetup()
                 .get("/v1/api/accounts")
                 .then()
                 .statusCode(OK.getStatusCode())
-                .body("accounts", hasSize(2));
+                .body("accounts", hasSize(2))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)))
+                .body("accounts[0].worldpay_3ds_flex", nullValue())
+                .body("accounts[1].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)))
+                .body("accounts[1].worldpay_3ds_flex.issuer", is("issuer"))
+                .body("accounts[1].worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
+                .body("accounts[1].worldpay_3ds_flex.exemption_engine_enabled", is(true))
+                .body("accounts[1].worldpay_3ds_flex", not(hasKey("jwt_mac_key")));
     }
 
     @Test

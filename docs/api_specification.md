@@ -247,7 +247,8 @@ Content-Type: application/json
             "enabled": true,
             "template_body": null
         }
-    }
+    },
+    "worldpay_3ds_flex": null
 }
 ```
 
@@ -376,6 +377,11 @@ Content-Type: application/json
               "template_body": null
           }
       },
+      "worldpay_3ds_flex": {
+        "issuer": "44992a087a0c4849895cc9a3",
+        "organisational_unit_id", "57992a087a0c4849895ab8a2",
+        "exemption_engine_enabled": true,
+      },
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/200"
@@ -412,6 +418,11 @@ Content-Type: application/json
               "enabled": true,
               "template_body": null
           }
+      },
+      "worldpay_3ds_flex": {
+        "issuer": "44992a087a0c4849895cc9a3",
+        "organisational_unit_id", "57992a087a0c4849895ab8a2",
+        "exemption_engine_enabled": true,
       },
       "_links": {
         "self": {
@@ -1143,6 +1154,168 @@ Content-Length: 52
     "message": "Charge with id [123456] not found."
 }
 ```
+-----------------------------------------------------------------------------------------------------------
+
+## GET /v1/frontend/accounts
+
+Retrieves a collection of accounts with the provider credentials, optionally filtering by the provided query parameters
+
+| Field                | Always present | Description                                                                                                                                      |
+|:---------------------|:--------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `accountIds`         |                | The account IDs that the results should be filtered by. A comma separated list of IDs.                                                           |
+| `moto_enabled`       |                | The accounts will be filtered by whether or not MOTO payment are enabled for the account if this parameter is provided. "true" or "false".       |
+| `apple_pay_enabled`  |                | The accounts will be filtered by whether or not Apple pay is enabled for the account if this parameter is provided. "true" or "false".           |
+| `google_pay_enabled` |                | The accounts will be filtered by whether or not Google pay is enabled for the account if this parameter is provided. "true" or "false".          |
+| `requires_3ds`       |                | The accounts will be filtered by whether or not 3DS is required for the account if this parameter is provided. "true" or "false".                |
+| `type`               |                | The accounts will be filtered by type if this parameter is provided. "test" or "live".                                                           |
+| `payment_provider`   |                | The accounts will be filtered by payment provider if this parameter is provided. One of "sandbox" or "worldpay", "smartpay", "epdq" or "stripe". |
+
+### Request example
+
+```
+GET /v1/frontend/accounts?accountIds=1,2&payment_provider=worldpay
+```
+
+### Response example
+
+```
+200 OK
+Content-Type: application/json
+{
+  "accounts": [
+    {
+      "type": "test",
+      "description": "a description",
+      "gateway_account_id": 100,
+      "payment_provider": "sandbox",
+      "service_name": "service_name",
+      "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 0,
+      "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 0,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "credentials: {
+        "username:" "Username"
+      },
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "block_prepaid_cards": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "requires3ds": false,
+      "allow_moto": false,
+      "allow_telephone_payment_notifications": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
+      "_links": {
+        "self": {
+          "href": "https://connector.example.com/v1/api/accounts/100"
+        }
+      }
+    },
+    {
+      "type": "live",
+      "description": "a description",
+      "gateway_account_id": 200,
+      "payment_provider": "sandbox",
+      "service_name": "service_name",
+      "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 250,
+      "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 250,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "credentials: {
+        "username:" "Username"
+      },
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "block_prepaid_cards": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "requires3ds": false,
+      "allow_moto": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
+      "worldpay_3ds_flex": {
+        "issuer": "44992a087a0c4849895cc9a3",
+        "organisational_unit_id", "57992a087a0c4849895ab8a2",
+        "exemption_engine_enabled": true,
+      },
+      "_links": {
+        "self": {
+          "href": "https://connector.example.com/v1/api/accounts/200"
+        }
+      }
+    },
+    {
+      "type": "test",
+      "description": "a description",
+      "gateway_account_id": 400,
+      "payment_provider": "worldpay",
+      "analytics_id": "an analytics id",
+      "corporate_credit_card_surcharge_amount": 0,
+      "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 0,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "block_prepaid_cards": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "requires3ds": false,
+      "allow_moto": false,
+      "moto_mask_card_number_input": false,
+      "moto_mask_card_security_code_input": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
+      "worldpay_3ds_flex": {
+        "issuer": "44992a087a0c4849895cc9a3",
+        "organisational_unit_id", "57992a087a0c4849895ab8a2",
+        "exemption_engine_enabled": true,
+      },
+      "_links": {
+        "self": {
+          "href": "https://connector.example.com/v1/api/accounts/400"
+        }
+      }
+    }
+  ]
+}
+```
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -1195,7 +1368,8 @@ Content-Type: application/json
           "enabled": true,
           "template_body": null
       }
-    }
+    },
+    "worldpay_3ds_flex": null
 }
 ```
 
@@ -1362,6 +1536,7 @@ Content-Type: application/json
         "corporate_debit_card_surcharge_amount": 0,
         "corporate_prepaid_credit_card_surcharge_amount": 0,
         "corporate_prepaid_debit_card_surcharge_amount": 0,
+        "worldpay_3ds_flex": null,
         "card_types": [
             {
                 "id": "79404bb9-31fb-4ad6-xxxx-789c3b044059",

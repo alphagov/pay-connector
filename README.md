@@ -215,6 +215,7 @@ Task can be invoked by sending request on admin port.
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
+|[```/v1/frontend/accounts```](docs/api_specification.md#get-v1frontendaccounts) | GET | Retrieves a collection of all the accounts with the provider credentials.|
 |[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#get-v1frontendaccountsaccountid)              | GET    |  Retrieves an existing account together with the provider credentials             |
 |[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
 |[```/v1/frontend/charges/{chargeId}/status```](docs/api_specification.md#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
