@@ -9,6 +9,7 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -85,6 +86,10 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("moto_mask_card_security_code_input")
     private boolean motoMaskCardSecurityCodeInput;
 
+    @JsonInclude(NON_NULL)
+    @JsonProperty("worldpay_3ds_flex")
+    private Worldpay3dsFlexCredentials worldpay3dsFlexCredentials;
+
     public GatewayAccountResourceDTO() {
     }
 
@@ -110,7 +115,8 @@ public class GatewayAccountResourceDTO {
                                      boolean allowMoto,
                                      boolean motoMaskCardNumberInput,
                                      boolean motoMaskCardSecurityCodeInput,
-                                     boolean allowTelephonePaymentNotifications) {
+                                     boolean allowTelephonePaymentNotifications,
+                                     Worldpay3dsFlexCredentials worldpay3dsFlexCredentials) {
         this.accountId = accountId;
         this.externalId = externalId;
         this.paymentProvider = paymentProvider;
@@ -134,6 +140,7 @@ public class GatewayAccountResourceDTO {
         this.motoMaskCardNumberInput = motoMaskCardNumberInput;
         this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
         this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
+        this.worldpay3dsFlexCredentials = worldpay3dsFlexCredentials;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -160,7 +167,8 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.isAllowMoto(),
                 gatewayAccountEntity.isMotoMaskCardNumberInput(),
                 gatewayAccountEntity.isMotoMaskCardSecurityCodeInput(),
-                gatewayAccountEntity.isAllowTelephonePaymentNotifications()
+                gatewayAccountEntity.isAllowTelephonePaymentNotifications(),
+                gatewayAccountEntity.getWorldpay3dsFlexCredentials().orElse(null)
         );
     }
 
@@ -262,5 +270,9 @@ public class GatewayAccountResourceDTO {
 
     public boolean isAllowTelephonePaymentNotifications() {
         return allowTelephonePaymentNotifications;
+    }
+
+    public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {
+        return Optional.ofNullable(worldpay3dsFlexCredentials);
     }
 }

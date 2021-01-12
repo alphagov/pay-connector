@@ -10,6 +10,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 
 
 public class GatewayAccountResourceDTOTest {
@@ -40,6 +41,7 @@ public class GatewayAccountResourceDTOTest {
         entity.setMotoMaskCardNumberInput(true);
         entity.setMotoMaskCardSecurityCodeInput(true);
         entity.setAllowTelephonePaymentNotifications(true);
+        entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -70,5 +72,6 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.isMotoMaskCardNumberInput(), is(entity.isMotoMaskCardNumberInput()));
         assertThat(dto.isMotoMaskCardSecurityCodeInput(), is(entity.isMotoMaskCardSecurityCodeInput()));
         assertThat(dto.isAllowTelephonePaymentNotifications(), is(entity.isAllowTelephonePaymentNotifications()));
+        assertThat(dto.getWorldpay3dsFlexCredentials(), is(entity.getWorldpay3dsFlexCredentials()));
     }
 }
