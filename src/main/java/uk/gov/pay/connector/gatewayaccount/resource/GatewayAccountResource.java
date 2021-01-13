@@ -100,7 +100,7 @@ public class GatewayAccountResource {
         logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayAccountService
                 .getGatewayAccount(accountId)
-                .map(GatewayAccountResourceDTO::fromEntity)
+                .map(GatewayAccountResourceDTO::new)
                 .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
     }
@@ -121,7 +121,7 @@ public class GatewayAccountResource {
         logger.debug("Getting gateway account for account external id {}", externalId);
         return gatewayAccountService
                 .getGatewayAccountByExternal(externalId)
-                .map(GatewayAccountResourceDTO::fromEntity)
+                .map(GatewayAccountResourceDTO::new)
                 .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
                 .orElseGet(() -> notFoundResponse(format("Account with external id %s not found.", externalId)));
     }
