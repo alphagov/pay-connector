@@ -47,7 +47,7 @@ public class GatewayAccountResourceDTOTest {
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
         entity.setEmailNotifications(emailNotifications);
         
-        GatewayAccountResourceDTO dto = GatewayAccountResourceDTO.fromEntity(entity);
+        GatewayAccountResourceDTO dto = new GatewayAccountResourceDTO(entity);
         assertThat(dto.getAccountId(), is(entity.getId()));
         assertThat(dto.getExternalId(), is(entity.getExternalId()));
         assertThat(dto.getPaymentProvider(), is(entity.getGatewayName()));

@@ -66,7 +66,7 @@ public class GatewayAccountService {
     
     public List<GatewayAccountResourceDTO> searchGatewayAccounts(GatewayAccountSearchParams params) {
         return gatewayAccountDao.search(params).stream()
-                .map(GatewayAccountResourceDTO::fromEntity)
+                .map(GatewayAccountResourceDTO::new)
                 .collect(Collectors.toList());
     }
 

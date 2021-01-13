@@ -93,83 +93,31 @@ public class GatewayAccountResourceDTO {
     public GatewayAccountResourceDTO() {
     }
 
-    public GatewayAccountResourceDTO(long accountId,
-                                     String externalId,
-                                     String paymentProvider,
-                                     GatewayAccountType type,
-                                     String description,
-                                     String serviceName,
-                                     String analyticsId,
-                                     long corporateCreditCardSurchargeAmount,
-                                     long corporateDebitCardSurchargeAmount,
-                                     boolean allowApplePay,
-                                     boolean allowGooglePay,
-                                     boolean blockPrepaidCards,
-                                     long corporatePrepaidCreditCardSurchargeAmount,
-                                     long corporatePrepaidDebitCardSurchargeAmount,
-                                     Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
-                                     EmailCollectionMode emailCollectionMode,
-                                     boolean requires3ds,
-                                     boolean allowZeroAmount,
-                                     int integrationVersion3ds,
-                                     boolean allowMoto,
-                                     boolean motoMaskCardNumberInput,
-                                     boolean motoMaskCardSecurityCodeInput,
-                                     boolean allowTelephonePaymentNotifications,
-                                     Worldpay3dsFlexCredentials worldpay3dsFlexCredentials) {
-        this.accountId = accountId;
-        this.externalId = externalId;
-        this.paymentProvider = paymentProvider;
-        this.type = type;
-        this.description = description;
-        this.serviceName = serviceName;
-        this.analyticsId = analyticsId;
-        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
-        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
-        this.allowApplePay = allowApplePay;
-        this.allowGooglePay = allowGooglePay;
-        this.blockPrepaidCards = blockPrepaidCards;
-        this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
-        this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
-        this.emailNotifications = emailNotifications;
-        this.emailCollectionMode = emailCollectionMode;
-        this.requires3ds = requires3ds;
-        this.allowZeroAmount = allowZeroAmount;
-        this.integrationVersion3ds = integrationVersion3ds;
-        this.allowMoto = allowMoto;
-        this.motoMaskCardNumberInput = motoMaskCardNumberInput;
-        this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
-        this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
-        this.worldpay3dsFlexCredentials = worldpay3dsFlexCredentials;
-    }
-
-    public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
-        return new GatewayAccountResourceDTO(
-                gatewayAccountEntity.getId(),
-                gatewayAccountEntity.getExternalId(),
-                gatewayAccountEntity.getGatewayName(),
-                GatewayAccountType.fromString(gatewayAccountEntity.getType()),
-                gatewayAccountEntity.getDescription(),
-                gatewayAccountEntity.getServiceName(),
-                gatewayAccountEntity.getAnalyticsId(),
-                gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
-                gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
-                gatewayAccountEntity.isAllowApplePay(),
-                gatewayAccountEntity.isAllowGooglePay(),
-                gatewayAccountEntity.isBlockPrepaidCards(),
-                gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
-                gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
-                gatewayAccountEntity.getEmailNotifications(),
-                gatewayAccountEntity.getEmailCollectionMode(),
-                gatewayAccountEntity.isRequires3ds(),
-                gatewayAccountEntity.isAllowZeroAmount(),
-                gatewayAccountEntity.getIntegrationVersion3ds(),
-                gatewayAccountEntity.isAllowMoto(),
-                gatewayAccountEntity.isMotoMaskCardNumberInput(),
-                gatewayAccountEntity.isMotoMaskCardSecurityCodeInput(),
-                gatewayAccountEntity.isAllowTelephonePaymentNotifications(),
-                gatewayAccountEntity.getWorldpay3dsFlexCredentials().orElse(null)
-        );
+    public GatewayAccountResourceDTO(GatewayAccountEntity gatewayAccountEntity) {
+        this.accountId = gatewayAccountEntity.getId();
+        this.externalId = gatewayAccountEntity.getExternalId();
+        this.paymentProvider = gatewayAccountEntity.getGatewayName();
+        this.type = GatewayAccountType.fromString(gatewayAccountEntity.getType());
+        this.description = gatewayAccountEntity.getDescription();
+        this.serviceName = gatewayAccountEntity.getServiceName();
+        this.analyticsId = gatewayAccountEntity.getAnalyticsId();
+        this.corporateCreditCardSurchargeAmount = gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount();
+        this.corporateDebitCardSurchargeAmount = gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount();
+        this.allowApplePay = gatewayAccountEntity.isAllowApplePay();
+        this.allowGooglePay = gatewayAccountEntity.isAllowGooglePay();
+        this.blockPrepaidCards = gatewayAccountEntity.isBlockPrepaidCards();
+        this.corporatePrepaidCreditCardSurchargeAmount = gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount();
+        this.corporatePrepaidDebitCardSurchargeAmount = gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount();
+        this.emailNotifications = gatewayAccountEntity.getEmailNotifications();
+        this.emailCollectionMode = gatewayAccountEntity.getEmailCollectionMode();
+        this.requires3ds = gatewayAccountEntity.isRequires3ds();
+        this.allowZeroAmount = gatewayAccountEntity.isAllowZeroAmount();
+        this.integrationVersion3ds = gatewayAccountEntity.getIntegrationVersion3ds();
+        this.allowMoto = gatewayAccountEntity.isAllowMoto();
+        this.motoMaskCardNumberInput = gatewayAccountEntity.isMotoMaskCardNumberInput();
+        this.motoMaskCardSecurityCodeInput = gatewayAccountEntity.isMotoMaskCardSecurityCodeInput();
+        this.allowTelephonePaymentNotifications = gatewayAccountEntity.isAllowTelephonePaymentNotifications();
+        this.worldpay3dsFlexCredentials = gatewayAccountEntity.getWorldpay3dsFlexCredentials().orElse(null);
     }
 
     public long getAccountId() {
