@@ -166,6 +166,7 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -173,6 +174,9 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
         
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
+        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
     }
 
     private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
