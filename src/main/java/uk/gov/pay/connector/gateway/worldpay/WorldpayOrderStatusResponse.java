@@ -244,10 +244,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
             joiner.add("threeDSChallengeDetails threeDSVersion: " + threeDsVersion);
         }
         if (isNotBlank(exemptionResponseResult)) {
-            joiner.add("result: " + exemptionResponseResult);
+            joiner.add("exemptionResponse result: " + exemptionResponseResult);
         }
         if (isNotBlank(exemptionResponseReason)) {
-            joiner.add("reason: " + exemptionResponseReason);
+            joiner.add("exemptionResponse reason: " + exemptionResponseReason);
         }
         if (isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());

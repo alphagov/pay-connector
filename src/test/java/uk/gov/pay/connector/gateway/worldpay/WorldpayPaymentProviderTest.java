@@ -372,7 +372,7 @@ public class WorldpayPaymentProviderTest {
         }));
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
             String log = "Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
-                    "result: REJECTED, reason: HIGH_RISK)";
+                    "exemptionResponse result: REJECTED, exemptionResponse reason: HIGH_RISK)";
             return loggingEvent.getMessage().contains(log);
         }));
         assertTrue(logs.stream().anyMatch(loggingEvent -> 

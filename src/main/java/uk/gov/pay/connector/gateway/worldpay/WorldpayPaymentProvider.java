@@ -56,6 +56,7 @@ import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary.summaryWithExemptionInformation;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
@@ -182,7 +183,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
+            var authorisationRequestSummary = summaryWithExemptionInformation(
+                    request.getCharge(), request.getAuthCardDetails(), exemptionEngineEnabled);
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -299,7 +301,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
+        return WorldpayAuthorisationRequestSummary.summaryWithoutExemptionInformation(chargeEntity, authCardDetails);
     }
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
