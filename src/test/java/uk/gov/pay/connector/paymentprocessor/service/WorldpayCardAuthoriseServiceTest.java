@@ -116,7 +116,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(WORLDPAY)).thenReturn(mockedWorldpayPaymentProvider);
         when(mockedWorldpayPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
         when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+                .thenReturn(WorldpayAuthorisationRequestSummary.summaryWithoutExemptionInformation(charge, authCardDetails));
 
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
@@ -130,7 +130,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+                .thenReturn(WorldpayAuthorisationRequestSummary.summaryWithoutExemptionInformation(charge, authCardDetails));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -141,8 +141,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result and with exemption"));
-        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, result: HONOURED, reason: HIGH_RISK)"));
+        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
+        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, exemptionResponse result: HONOURED, exemptionResponse reason: HIGH_RISK)"));
     }
     
     @Test
@@ -152,7 +152,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+                .thenReturn(WorldpayAuthorisationRequestSummary.summaryWithoutExemptionInformation(charge, authCardDetails));
         
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
         
@@ -163,8 +163,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result and with exemption"));
-        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, result: HONOURED, reason: ISSUER_HONOURED)"));
+        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
+        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, exemptionResponse result: HONOURED, exemptionResponse reason: ISSUER_HONOURED)"));
     } 
     
     @Test
