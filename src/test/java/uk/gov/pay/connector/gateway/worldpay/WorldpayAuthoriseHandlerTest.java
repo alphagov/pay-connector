@@ -188,7 +188,7 @@ class WorldpayAuthoriseHandlerTest {
         Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
         XPath xPath = XPathFactory.newInstance().newXPath();
         assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is("OP"));
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is("AUTHORISATION"));
+        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is("OPTIMISED"));
     }
 
     @Test
