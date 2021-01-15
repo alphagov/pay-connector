@@ -352,7 +352,7 @@ public class WorldpayPaymentProviderTest {
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
             String log = format("Authorisation with billing address and with 3DS data and without device data " +
-                    "collection result and with exemption for %s", chargeEntity.getExternalId());
+                    "collection result for %s", chargeEntity.getExternalId());
             return loggingEvent.getMessage().contains(log);
         }));
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
