@@ -35,6 +35,10 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
         return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
 
+    public ChargeEntity getCharge() {
+        return charge;
+    }
+
     @Override
     public GatewayAccountEntity getGatewayAccount() {
         return charge.getGatewayAccount();

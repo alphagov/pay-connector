@@ -56,7 +56,6 @@ import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary.summaryWithExemptionInformation;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
@@ -183,8 +182,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
-            var authorisationRequestSummary = summaryWithExemptionInformation(
-                    request.getCharge(), request.getAuthCardDetails(), exemptionEngineEnabled);
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -207,23 +205,27 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         if (!exemptionEngineEnabled) {
             updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);
         } else {
-            response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponseResult).ifPresent(exemption3ds -> {
-                switch (exemption3ds) {
-                    case "HONOURED":
-                        updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge);
-                        break;
-                    case "REJECTED":
-                        updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge);
-                        break;
-                    case "OUT_OF_SCOPE":
-                        updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge);
-                        break;
-                    default:
-                        LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
-                                "charge_external_id={}", exemption3ds, charge.getExternalId());
-                }
-            });
+            calculateAndStoreExemption(charge, response);
         }
+    }
+
+    private void calculateAndStoreExemption(ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
+        response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponseResult).ifPresent(exemption3ds -> {
+            switch (exemption3ds) {
+                case "HONOURED":
+                    updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge);
+                    break;
+                case "REJECTED":
+                    updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge);
+                    break;
+                case "OUT_OF_SCOPE":
+                    updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge);
+                    break;
+                default:
+                    LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
+                            "charge_external_id={}", exemption3ds, charge.getExternalId());
+            }
+        });
     }
 
     @Transactional
@@ -254,7 +256,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     build3dsResponseAuthOrder(request),
                     cookies,
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
-            GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
+            GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
+            
+            calculateAndStoreExemption(request.getCharge(), gatewayResponse);
 
             LOGGER.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
 
@@ -301,7 +305,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return WorldpayAuthorisationRequestSummary.summaryWithoutExemptionInformation(chargeEntity, authCardDetails);
+        return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
     }
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
