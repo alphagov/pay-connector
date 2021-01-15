@@ -19,6 +19,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -167,7 +168,6 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -175,9 +175,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
         
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
     }
 
     private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
@@ -196,7 +194,6 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -204,9 +201,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -218,7 +213,6 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -226,9 +220,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -240,7 +232,6 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
@@ -250,9 +241,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_REJECTED);
     }
 
     @Test
@@ -263,7 +252,6 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE));
@@ -273,9 +261,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_OUT_OF_SCOPE);
     }
 
     @Test
@@ -332,9 +318,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_HONOURED);
-        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(cardAuthRequest.getCharge().getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_HONOURED);
     }
 
     @Test
@@ -409,8 +393,18 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED);
     }
-    
+
+    private void verifyEventEmitted(ChargeEntity chargeEntity, Exemption3ds exemption3ds) {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(chargeEntity.getExternalId()));
+        assertThat(((Gateway3dsExemptionResultObtainedEventDetails) eventCaptor.getValue().getEventDetails()).getExemption3ds(), 
+                is(exemption3ds.toString()));
+        assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+    }
+
     @Test
     void should_include_paResponse_In_3ds_second_order() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture
