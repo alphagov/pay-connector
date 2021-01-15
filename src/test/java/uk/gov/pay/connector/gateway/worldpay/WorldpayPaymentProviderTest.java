@@ -85,6 +85,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
@@ -394,6 +395,20 @@ public class WorldpayPaymentProviderTest {
     void should_generate_transactionId() {
         assertThat(worldpayPaymentProvider.generateTransactionId().isPresent(), is(true));
         assertThat(worldpayPaymentProvider.generateTransactionId().get(), is(instanceOf(String.class)));
+    }
+
+
+    @Test
+    void should_log_exemption_3ds_for_charge_during_3ds_authorisation() throws Exception {
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        when(response.getEntity()).thenReturn(load(WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE));
+        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+                .thenReturn(response);
+        
+        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
+
+        verifyChargeUpdatedWith(EXEMPTION_REJECTED);
     }
     
     @Test
