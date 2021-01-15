@@ -53,7 +53,7 @@
             />
             </#if>
             <#if exemptionEngineEnabled>
-            <exemption type="OP" placement="AUTHENTICATION"/>
+            <exemption type="OP" placement="OPTIMISED"/>
             </#if>
             </#if>
         </order>
