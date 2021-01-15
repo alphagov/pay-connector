@@ -132,12 +132,15 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void submitAuthForSoftDecline() {
         validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setIntegrationVersion3ds(1);
+        validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
 
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         // card holder of "EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED" elicits a soft decline response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
-        var authCardDetails = anAuthCardDetails().withCardHolder("EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED").build();
+        var authCardDetails = anAuthCardDetails()
+                .withCardHolder("EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED")
+                .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
+                .build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
@@ -148,12 +151,15 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void submitAuthRequestWithExemptionEngineFlag() {
         validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setIntegrationVersion3ds(1);
+        validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         // card holder of "EE.HONOURED_ISSUER_HONOURED.AUTHORISED" elicits an authorised response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
-        var authCardDetails = anAuthCardDetails().withCardHolder("EE.HONOURED_ISSUER_HONOURED.AUTHORISED").build();
+        var authCardDetails = anAuthCardDetails()
+                .withCardHolder("EE.HONOURED_ISSUER_HONOURED.AUTHORISED")
+                .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
+                .build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
