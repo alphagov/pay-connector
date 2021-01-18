@@ -473,33 +473,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(200)
-                .body("worldpay_3ds_flex", nullValue());
-    }
-
-    @Test
-    public void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        databaseTestHelper.insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
-        givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(200)
-                .body("$", hasKey("worldpay_3ds_flex"))
-                .body("worldpay_3ds_flex.issuer", is("issuer"))
-                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
-                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
-                .body("worldpay_3ds_flex", not(hasKey("version")))
-                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
-                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
-    }
-
-    @Test
     public void shouldReturn200WhenWorldpayExemptionEngineEnabledIsUpdated() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor(WORLDPAY.getName(), "a-description", "analytics-id");
         databaseTestHelper.insertWorldpay3dsFlexCredential(
