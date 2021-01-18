@@ -31,8 +31,10 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -115,6 +117,99 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("gateway_account_id", is(Integer.parseInt(accountId)))
                 .body("notificationCredentials.userName", is("bob"))
                 .body("notificationCredentials.password", is(nullValue()));
+    }
+
+    @Test
+    public void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("worldpay_3ds_flex", nullValue());
+    }
+
+    @Test
+    public void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        databaseTestHelper.insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("worldpay_3ds_flex"))
+                .body("worldpay_3ds_flex.issuer", is("issuer"))
+                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
+                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
+                .body("worldpay_3ds_flex", not(hasKey("version")))
+                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountByExternalId() {
+        GatewayAccountPayload gatewayAccountOptions = GatewayAccountPayload.createDefault();
+        DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withPaymentProvider("worldpay")
+                .withCredentials(gatewayAccountOptions.getCredentials())
+                .withServiceName(gatewayAccountOptions.getServiceName())
+                .withCorporateCreditCardSurchargeAmount(250L)
+                .withCorporateDebitCardSurchargeAmount(50L)
+                .withIntegrationVersion3ds(1)
+                .insert();
+        Long accountId = gatewayAccount.getAccountId();
+
+        givenSetup().accept(JSON)
+                .get(ACCOUNT_FRONTEND_EXTERNAL_ID_URL + gatewayAccount.getExternalId())
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("worldpay"))
+                .body("gateway_account_id", is(accountId.intValue()))
+                .body("gateway_account_id", is(notNullValue()))
+                .body("credentials.username", is(gatewayAccountOptions.getUserName()))
+                .body("credentials.password", is(nullValue()))
+                .body("credentials.merchant_id", is(gatewayAccountOptions.getMerchantId()))
+                .body("email_collection_mode", is("OPTIONAL"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", not(nullValue()))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", not(nullValue()))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
+                .body("description", is(gatewayAccount.getDescription()))
+                .body("analytics_id", is(gatewayAccount.getAnalyticsId()))
+                .body("service_name", is(gatewayAccountOptions.getServiceName()))
+                .body("corporate_credit_card_surcharge_amount", is(250))
+                .body("corporate_debit_card_surcharge_amount", is(50))
+                .body("allow_apple_pay", is(false))
+                .body("allow_google_pay", is(false))
+                .body("allow_zero_amount", is(false))
+                .body("integration_version_3ds", is(1))
+                .body("block_prepaid_cards", is(false))
+                .body("allow_moto", is(false))
+                .body("allow_telephone_payment_notifications", is(false))
+                .body("worldpay_3ds_flex", nullValue());
+    }
+
+    @Test
+    public void shouldReturnGatewayAccountByExternalIdWith3dsFlexCredentials_whenGatewayAccountHasCreds() {
+        DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withPaymentProvider("worldpay")
+                .insert();
+        databaseTestHelper.insertWorldpay3dsFlexCredential(gatewayAccount.getAccountId(), "macKey", "issuer", "org_unit_id", 2L);
+        givenSetup()
+                .get(ACCOUNT_FRONTEND_EXTERNAL_ID_URL + gatewayAccount.getExternalId())
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("worldpay_3ds_flex"))
+                .body("worldpay_3ds_flex.issuer", is("issuer"))
+                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
+                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
+                .body("worldpay_3ds_flex", not(hasKey("version")))
+                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
     }
 
     @Test

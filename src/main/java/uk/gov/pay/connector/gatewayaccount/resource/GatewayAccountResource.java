@@ -127,6 +127,20 @@ public class GatewayAccountResource {
     }
 
     @GET
+    @Path("/v1/frontend/accounts/external-id/{externalId}")
+    @Produces(APPLICATION_JSON)
+    public Response getFrontendGatewayAccountByExternalId(@PathParam("externalId")  String externalId) {
+        return gatewayAccountService
+                .getGatewayAccountByExternal(externalId)
+                .map(gatewayAccount ->
+                {
+                    gatewayAccount.getCredentials().remove("password");
+                    return Response.ok(gatewayAccount).build();
+                })
+                .orElseGet(() -> notFoundResponse(format("Account with external id %s not found.", externalId)));
+    }
+
+    @GET
     @Path("/v1/frontend/accounts")
     @Produces(APPLICATION_JSON)
     public Response getFrontendGatewayAccounts(
