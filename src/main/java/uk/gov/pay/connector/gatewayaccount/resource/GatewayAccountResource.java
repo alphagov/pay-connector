@@ -115,18 +115,6 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path("/v1/api/accounts/external-id/{externalId}")
-    @Produces(APPLICATION_JSON)
-    public Response getGatewayAccountByExternalId(@PathParam("externalId")  String externalId) {
-        logger.debug("Getting gateway account for account external id {}", externalId);
-        return gatewayAccountService
-                .getGatewayAccountByExternal(externalId)
-                .map(GatewayAccountResourceDTO::new)
-                .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
-                .orElseGet(() -> notFoundResponse(format("Account with external id %s not found.", externalId)));
-    }
-
-    @GET
     @Path("/v1/frontend/accounts/external-id/{externalId}")
     @Produces(APPLICATION_JSON)
     public Response getFrontendGatewayAccountByExternalId(@PathParam("externalId")  String externalId) {
