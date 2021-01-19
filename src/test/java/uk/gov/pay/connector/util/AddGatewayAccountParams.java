@@ -6,10 +6,29 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
+    private static final Map<String, String> defaultCredentials = Map.of(
+            CREDENTIALS_MERCHANT_ID, "merchant-id",
+            CREDENTIALS_USERNAME, "username",
+            CREDENTIALS_PASSWORD, "password"
+    );
+    
+    private static final Map<String, String> epdqCredentials = Map.of(
+            CREDENTIALS_MERCHANT_ID, "merchant-id",
+            CREDENTIALS_USERNAME, "username",
+            CREDENTIALS_PASSWORD, "password",
+            CREDENTIALS_SHA_IN_PASSPHRASE, "sha-in",
+            CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-out"
+    );
+    
     private String accountId;
     private String externalId;
     private String paymentGateway;
@@ -158,6 +177,16 @@ public class AddGatewayAccountParams {
 
         public AddGatewayAccountParamsBuilder withCredentials(Map<String, String> credentials) {
             this.credentials = credentials;
+            return this;
+        }
+        
+        public AddGatewayAccountParamsBuilder withDefaultCredentials() {
+            this.credentials = defaultCredentials;
+            return this;
+        }
+        
+        public AddGatewayAccountParamsBuilder withEpdqCredentials() {
+            this.credentials = epdqCredentials;
             return this;
         }
 

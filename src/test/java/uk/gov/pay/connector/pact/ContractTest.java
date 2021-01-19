@@ -23,7 +23,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
-import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.Duration;
@@ -40,10 +39,14 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -206,7 +209,7 @@ public class ContractTest {
                 .withPaymentProvider(aDigitalWalletSupportedPaymentProvider)
                 .insert();
     }
-    
+
     @State("a gateway account with MOTO enabled and an external id 667 exists in the database")
     public void anAccountExistsWithMotoEnableAndMaskCardNumberAndSecurityCode() {
         DatabaseFixtures
@@ -232,7 +235,7 @@ public class ContractTest {
                 .withAccountId(222L)
                 .insert();
     }
-    
+
     @State({"default", "Card types exist in the database"})
     public void defaultCase() {
     }
@@ -245,12 +248,12 @@ public class ContractTest {
                 .withServiceName("a cool service")
                 .build());
     }
-    
+
     @State("a gateway account has moto payments enabled")
     public void enableMotoForGatewayAccount(Map<String, String> params) {
         given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(toJson(Map.of("op", "replace","path", "allow_moto", "value", true)))
+                .body(toJson(Map.of("op", "replace", "path", "allow_moto", "value", true)))
                 .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -260,7 +263,7 @@ public class ContractTest {
     public void enableTelephonePaymentNotificationsForGatewayAccount(Map<String, String> params) {
         given().port(app.getLocalPort())
                 .contentType(JSON)
-                .body(toJson(Map.of("op", "replace","path", "allow_telephone_payment_notifications", "value", true)))
+                .body(toJson(Map.of("op", "replace", "path", "allow_telephone_payment_notifications", "value", true)))
                 .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
                 .then()
                 .statusCode(OK.getStatusCode());
@@ -426,7 +429,10 @@ public class ContractTest {
         final String worldpayGatewayAccountId = "333";
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
+                .withExternalId("abc123")
                 .withPaymentGateway(WORLDPAY.getName())
+                .withAnalyticsId("an-analytics-id")
+                .withDefaultCredentials()
                 .build());
         dbHelper.insertWorldpay3dsFlexCredential(
                 Long.valueOf(worldpayGatewayAccountId),
@@ -434,5 +440,35 @@ public class ContractTest {
                 "5bd9e0e4444dce153428c940", // pragma: allowlist secret
                 "5bd9b55e4444761ac0af1c80", // pragma: allowlist secret
                 1L);
+        dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
+        dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
+    }
+
+    @State("a Smartpay gateway account with id 333 and external abc123 with credentials exists")
+    public void aSmartpayGatewayAccountWithCredentialsExists() {
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("333")
+                .withExternalId("abc123")
+                .withPaymentGateway(SMARTPAY.getName())
+                .withAnalyticsId("an-analytics-id")
+                .withDefaultCredentials()
+                .build());
+        dbHelper.addNotificationCredentialsFor(333L, "notification-username", "notification-password");
+        dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
+        dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
+    }
+
+
+    @State("an ePDQ gateway account with id 333 and external abc123 with credentials exists")
+    public void anEpdqGatewayAccountWithCredentialsExists() {
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("333")
+                .withExternalId("abc123")
+                .withPaymentGateway(EPDQ.getName())
+                .withAnalyticsId("an-analytics-id")
+                .withEpdqCredentials()
+                .build());
+        dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
+        dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
     }
 }
