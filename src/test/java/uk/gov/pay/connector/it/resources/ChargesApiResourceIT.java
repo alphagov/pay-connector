@@ -20,12 +20,15 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.ws.rs.core.HttpHeaders;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -344,7 +347,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     @Test
     public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+        String extChargeId = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         // run expiry task
         connectorRestApiClient
@@ -369,7 +372,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     @Test
     public void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
         String extChargeId = addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, ServicePaymentReference.of("ref"),
-                ZonedDateTime.now().minusMinutes(90));
+                Instant.now().minus(90, MINUTES));
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -393,7 +396,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusHours(120L));
+                ServicePaymentReference.of("ref"), Instant.now().minus(120, HOURS));
 
         // run expiry task
         connectorRestApiClient
@@ -419,7 +422,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -443,7 +446,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
         //create charge
         String extChargeId = addChargeAndCardDetails(CAPTURE_APPROVED,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -479,7 +482,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     public void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
         //create charge
         String extChargeId = addChargeAndCardDetails(EXPIRED,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
         connectorRestApiClient
