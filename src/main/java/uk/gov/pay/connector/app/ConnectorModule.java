@@ -211,6 +211,12 @@ public class ConnectorModule extends AbstractModule {
     public IpAddressMatcher ipAddressMatcher(InetAddressValidator inetAddressValidator) {
         return new IpAddressMatcher(inetAddressValidator);
     }
+    
+    @Provides
+    @Singleton
+    public WorldpayConfig worldpayConfig() {
+        return configuration.getWorldpayConfig();
+    }
 
     @Provides
     public Worldpay3dsFlexJwtService worldpay3dsFlexJwtServiceGenerator() {
