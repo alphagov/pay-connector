@@ -9,12 +9,14 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,12 +48,12 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesAndHaveTheCorrectEvents() {
-        String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId2 = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId3 = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId4 = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId5 = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId6 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId1 = addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId2 = addCharge(ENTERING_CARD_DETAILS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId3 = addCharge(AUTHORISATION_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId4 = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId5 = addCharge(AUTHORISATION_3DS_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId6 = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
         
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();
@@ -106,8 +108,8 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesOnlyAfterTheExpiryWindow() {
-        String shouldExpireCreatedChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String shouldntExpireCreatedChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
+        String shouldExpireCreatedChargeId = addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String shouldntExpireCreatedChargeId = addCharge(CREATED, "ref", Instant.now().minus(89, MINUTES), RandomIdGenerator.newId());
         
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();
@@ -137,8 +139,8 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesEvenIfOnGatewayCancellationError() {
-        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should not get picked
+        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        addCharge(CAPTURE_SUBMITTED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId()); //should not get picked
 
         worldpayMockClient.mockCancelError();
         worldpayMockClient.mockAuthorisationQuerySuccess();
@@ -169,9 +171,9 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
     @Test
     public void shouldExpireSuccessAndFailForMatchingCharges() {
         final String gatewayTransactionId1 = RandomIdGenerator.newId();
-        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), gatewayTransactionId1);
-        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should ignore
+        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), gatewayTransactionId1);
+        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        addCharge(CAPTURE_SUBMITTED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId()); //should ignore
 
         worldpayMockClient.mockCancelError();
         worldpayMockClient.mockCancelSuccessOnlyFor(gatewayTransactionId1);
@@ -212,7 +214,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldPreserveCardDetailsIfChargeExpires() {
-        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpayMockClient.mockCancelSuccess();
@@ -240,8 +242,9 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldNotExpireChargesWhenAwaitingCaptureDelayIsLessThan120Hours() {
-        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).plusMinutes(1L), RandomIdGenerator.newId());
+        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref",
+                Instant.now().minus(120, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();
@@ -280,8 +283,9 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesWhenAwaitingCaptureDelayIsMoreThan120Hours() {
-        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).minusMinutes(1L), RandomIdGenerator.newId());
+        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref",
+                Instant.now().minus(120, HOURS).minus(1, MINUTES), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();

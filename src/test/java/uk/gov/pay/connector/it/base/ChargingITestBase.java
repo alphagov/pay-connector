@@ -28,7 +28,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -321,20 +321,20 @@ public class ChargingITestBase {
         return chargeId;
     }
 
-    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate) {
+    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate) {
         return addChargeAndCardDetails(status, reference, fromDate, "");
 
     }
 
-    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
+    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
     }
 
     protected String addCharge(ChargeStatus status) {
-        return addCharge(status, "ref", ZonedDateTime.now(), RandomIdGenerator.newId());
+        return addCharge(status, "ref", Instant.now(), RandomIdGenerator.newId());
     }
     
-    protected String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String transactionId) {
+    protected String addCharge(ChargeStatus status, String reference, Instant fromDate, String transactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
@@ -348,7 +348,7 @@ public class ChargingITestBase {
     }
 
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
-                             ServicePaymentReference reference, ZonedDateTime createdDate, String transactionId) {
+                           ServicePaymentReference reference, Instant createdDate, String transactionId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
@@ -357,7 +357,7 @@ public class ChargingITestBase {
                 .withStatus(chargeStatus)
                 .withTransactionId(transactionId)
                 .withReference(reference)
-                .withCreatedDate(createdDate.toInstant())
+                .withCreatedDate(createdDate)
                 .withVersion(1)
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
@@ -365,7 +365,7 @@ public class ChargingITestBase {
                 .build());
     }
 
-    protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
+    protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null);

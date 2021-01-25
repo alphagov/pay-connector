@@ -11,11 +11,12 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.http.ContentType.JSON;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -35,7 +36,7 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
     
     @Test
     public void shouldExpireWithGatewayIfExistsInCancellableStateWithGatewayEvenIfChargeIsPreAuthorisation() {
-        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
 
         epdqMockClient.mockAuthorisationQuerySuccess();
         epdqMockClient.mockCancelSuccess();
@@ -62,7 +63,7 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
 
     @Test
     public void shouldHandleCaseWhereEpdqRespondsWithUnknownStatus() {
-        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
         epdqMockClient.mockUnknown();
 
         connectorRestApiClient
@@ -86,7 +87,7 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
 
     @Test
     public void shouldUpdateChargeStatusToMatchTerminalStateOnGateway() {
-        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
         
         epdqMockClient.mockAuthorisationQuerySuccessCaptured();
 
@@ -111,7 +112,7 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
 
     @Test
     public void shouldUpdateChargeStatusToMatchTerminalStateOnGatewayWhenNotAForceTransition() {
-        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
 
         epdqMockClient.mockAuthorisationQuerySuccessAuthFailed();
 

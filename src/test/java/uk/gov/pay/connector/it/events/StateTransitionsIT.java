@@ -20,10 +20,12 @@ import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -56,7 +58,7 @@ public class StateTransitionsIT extends ChargingITestBase {
 
     @Test
     public void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id-transition-it");
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
@@ -84,7 +86,7 @@ public class StateTransitionsIT extends ChargingITestBase {
 
     @Test
     public void shouldEmitCorrectRefundEvents() throws Exception{
-        String chargeId = addCharge(CAPTURED, "ref", ZonedDateTime.now().minusHours(1), "transaction-id-transition-it");
+        String chargeId = addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvailable);

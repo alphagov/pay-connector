@@ -18,9 +18,11 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -73,7 +75,7 @@ public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
 
     @Test
     public void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
-        String chargeId = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).plusMinutes(1L), RandomIdGenerator.newId());
+        String chargeId = addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
         captureApproveUrl = captureUrlForAwaitingCaptureCharge(accountId, chargeId);
 

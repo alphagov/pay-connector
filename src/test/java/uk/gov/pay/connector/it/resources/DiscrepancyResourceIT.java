@@ -11,11 +11,13 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -31,8 +33,8 @@ public class DiscrepancyResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
-        String chargeId2 = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId2 = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
         epdqMockClient.mockAuthorisationQuerySuccess();
 
         List<JsonNode> results = connectorRestApiClient
@@ -89,7 +91,7 @@ public class DiscrepancyResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         epdqMockClient.mockAuthorisationQuerySuccessAuthFailed();
         epdqMockClient.mockCancelSuccess();
 
@@ -111,7 +113,7 @@ public class DiscrepancyResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldHandleCaseWhereChargeIsInUnknownState() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         epdqMockClient.mockUnknown();
 
         List<JsonNode> results = connectorRestApiClient
@@ -141,8 +143,8 @@ public class DiscrepancyResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
-        String chargeId2 = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId2 = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         epdqMockClient.mockAuthorisationQuerySuccess();
         epdqMockClient.mockCancelSuccess();
 

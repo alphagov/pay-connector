@@ -11,12 +11,13 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -42,7 +43,7 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
     @Test
     @Parameters({"CREATED", "ENTERING_CARD_DETAILS"})
     public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status) {
-        String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        String chargeId = addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelevant");
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
@@ -52,7 +53,7 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldPreserveCardDetailsIfCancelled() {
-        String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
+        String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpayMockClient.mockCancelSuccess();
@@ -78,7 +79,7 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelledAfterAuth() {
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
@@ -93,7 +94,7 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelFailedAfterAuth() {
 
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
         worldpayMockClient.mockCancelError();
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
@@ -208,6 +209,6 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
-        return addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
+        return addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
     }
 }
