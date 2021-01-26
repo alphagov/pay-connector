@@ -1,34 +1,22 @@
 package uk.gov.pay.connector.wallets.applepay;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.wallets.applepay.ApplePayAuthRequestBuilder.anApplePayToken;
 
@@ -40,7 +28,6 @@ class ApplePayDecrypterTest {
 
     @Mock private WorldpayConfig mockWorldpayConfig;
     @Mock private ApplePayConfig mockApplePayConfig;
-    @Mock private Appender<ILoggingEvent> mockAppender;
     private ObjectMapper objectMapper = new ObjectMapper();
     private ApplePayAuthRequest applePayAuthRequest;
     private ApplePayDecrypter applePayDecrypter;
@@ -54,58 +41,39 @@ class ApplePayDecrypterTest {
         when(mockApplePayConfig.getSecondaryPrivateKey()).thenReturn(Optional.empty());
         when(mockApplePayConfig.getSecondaryPublicCertificate()).thenReturn(Optional.empty());
         applePayDecrypter = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
-
-        Logger root = (Logger) LoggerFactory.getLogger(ApplePayDecrypter.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
-    void should_throw_exception_when_secondary_key_and_cert_are_missing() {
-        String primaryKey = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgjyo3fzxT7j+CFxC7I4B5iVee2FUyn2vfOSjcgp2/g6qhRANCAARdoBFEtnuapXFKw4DYWsW0yV4bavpdWKszkefi19AhlIRE3WSNWSn25W5tZNFjMWtLISBmqANyufx2xP19oRvy"; //pragma: allowlist secret
-        String primaryCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQkNDZ0F3SUJBZ0lJVWtJS3NpWXhhS293Q2dZSUtvWkl6ajBFQXdJd2dZRXhPekE1QmdOVkJBTU1NbFJsYzNRZ1FYQndiR1VnVjI5eWJHUjNhV1JsSUVSbGRtVnNiM0JsY25NZ1VtVnNZWFJwYjI1eklFTkJJQzBnUlVORE1TQXdIZ1lEVlFRTERCZERaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk13SGhjTk1UWXdOekkxTVRVeU1ETTRXaGNOTVRnd09ESTBNVFV5TURNNFdqQ0JsekVyTUNrR0NnbVNKb21UOGl4a0FRRU1HMjFsY21Ob1lXNTBMbkpsWkhSbFlXMHVkMkZ5YzJGM0xteGliekV4TUM4R0ExVUVBd3dvVFdWeVkyaGhiblFnU1VRNklHMWxjbU5vWVc1MExuSmxaSFJsWVcwdWQyRnljMkYzTG14aWJ6RVRNQkVHQTFVRUN3d0tUVmxVVlRoWk5VUlJUVEVUTUJFR0ExVUVDZ3dLUVhCd2JHVWdTVzVqTGpFTE1Ba0dBMVVFQmhNQ1ZWTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CQndOQ0FBUmRvQkZFdG51YXBYRkt3NERZV3NXMHlWNGJhdnBkV0tzemtlZmkxOUFobElSRTNXU05XU24yNVc1dFpORmpNV3RMSVNCbXFBTnl1ZngyeFAxOW9SdnlvNElDYURDQ0FtUXdUd1lJS3dZQkJRVUhBUUVFUXpCQk1EOEdDQ3NHQVFVRkJ6QUJoak5vZEhSd09pOHZiMk56Y0MxMVlYUXVZMjl5Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREEwTFhSbGMzUjNkMlJ5WTJGbFkyTXdIUVlEVlIwT0JCWUVGQVY3blM0bU5ETHkxZ3h2T0FjQ1MxaE9nWTRsTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVMXRiVld1WC8vY0o4Tk1ORDNyMW9kbHcycWI0d2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1FRUdBMVVkSHdRNk1EZ3dOcUEwb0RLR01HaDBkSEE2THk5amNtd3RkV0YwTG1OdmNuQXVZWEJ3YkdVdVkyOXRMMkZ3Y0d4bGQzZGtjbU5oWldOakxtTnliREFPQmdOVkhROEJBZjhFQkFNQ0F5Z3dUd1lKS29aSWh2ZGpaQVlnQkVJTVFEVTRNREpFTVVNM056UkdNRGsyTWtZNE1URXlORGhGTlRNNFJFVXpRa1ZHTmpnd1F6YzVPRFpDUWpWQ05FUkRSVEJDTlRZeU5EbEdNemREUWtJNU5ETXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdUanRpWWprL0JLcDNWOERnNm1JbGNtNUZDT0YwNnp1YjdKc3I2d0NzdktBQ0lIOFUxMTRESTVIbm1mY052d000UlhGRFBUb29wNCtqak1BUHZpZGlwS2tnCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="; //pragma: allowlist secret
+    void should_throw_exception_when_primary_key_and_cert_are_invalid_and_secondary_key_and_cert_are_missing() {
+        String invalidPrimaryKey = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgjyo3fzxT7j+CFxC7I4B5iVee2FUyn2vfOSjcgp2/g6qhRANCAARdoBFEtnuapXFKw4DYWsW0yV4bavpdWKszkefi19AhlIRE3WSNWSn25W5tZNFjMWtLISBmqANyufx2xP19oRvy"; //pragma: allowlist secret
+        String invalidPrimaryCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQkNDZ0F3SUJBZ0lJVWtJS3NpWXhhS293Q2dZSUtvWkl6ajBFQXdJd2dZRXhPekE1QmdOVkJBTU1NbFJsYzNRZ1FYQndiR1VnVjI5eWJHUjNhV1JsSUVSbGRtVnNiM0JsY25NZ1VtVnNZWFJwYjI1eklFTkJJQzBnUlVORE1TQXdIZ1lEVlFRTERCZERaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk13SGhjTk1UWXdOekkxTVRVeU1ETTRXaGNOTVRnd09ESTBNVFV5TURNNFdqQ0JsekVyTUNrR0NnbVNKb21UOGl4a0FRRU1HMjFsY21Ob1lXNTBMbkpsWkhSbFlXMHVkMkZ5YzJGM0xteGliekV4TUM4R0ExVUVBd3dvVFdWeVkyaGhiblFnU1VRNklHMWxjbU5vWVc1MExuSmxaSFJsWVcwdWQyRnljMkYzTG14aWJ6RVRNQkVHQTFVRUN3d0tUVmxVVlRoWk5VUlJUVEVUTUJFR0ExVUVDZ3dLUVhCd2JHVWdTVzVqTGpFTE1Ba0dBMVVFQmhNQ1ZWTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CQndOQ0FBUmRvQkZFdG51YXBYRkt3NERZV3NXMHlWNGJhdnBkV0tzemtlZmkxOUFobElSRTNXU05XU24yNVc1dFpORmpNV3RMSVNCbXFBTnl1ZngyeFAxOW9SdnlvNElDYURDQ0FtUXdUd1lJS3dZQkJRVUhBUUVFUXpCQk1EOEdDQ3NHQVFVRkJ6QUJoak5vZEhSd09pOHZiMk56Y0MxMVlYUXVZMjl5Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREEwTFhSbGMzUjNkMlJ5WTJGbFkyTXdIUVlEVlIwT0JCWUVGQVY3blM0bU5ETHkxZ3h2T0FjQ1MxaE9nWTRsTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVMXRiVld1WC8vY0o4Tk1ORDNyMW9kbHcycWI0d2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1FRUdBMVVkSHdRNk1EZ3dOcUEwb0RLR01HaDBkSEE2THk5amNtd3RkV0YwTG1OdmNuQXVZWEJ3YkdVdVkyOXRMMkZ3Y0d4bGQzZGtjbU5oWldOakxtTnliREFPQmdOVkhROEJBZjhFQkFNQ0F5Z3dUd1lKS29aSWh2ZGpaQVlnQkVJTVFEVTRNREpFTVVNM056UkdNRGsyTWtZNE1URXlORGhGTlRNNFJFVXpRa1ZHTmpnd1F6YzVPRFpDUWpWQ05FUkRSVEJDTlRZeU5EbEdNemREUWtJNU5ETXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdUanRpWWprL0JLcDNWOERnNm1JbGNtNUZDT0YwNnp1YjdKc3I2d0NzdktBQ0lIOFUxMTRESTVIbm1mY052d000UlhGRFBUb29wNCtqak1BUHZpZGlwS2tnCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="; //pragma: allowlist secret
 
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
-        when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn(primaryKey);
-        when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(primaryCert);
-        when(mockApplePayConfig.getSecondaryPrivateKey()).thenReturn(Optional.empty());
-        when(mockApplePayConfig.getSecondaryPublicCertificate()).thenReturn(Optional.empty());
+        when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn(invalidPrimaryKey);
+        when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(invalidPrimaryCert);
         var applePayDecrypterWithInvalidPrimaryAndMissingSecondaryKeyCerts = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
 
         assertThrows(InvalidKeyException.class, () -> 
                 applePayDecrypterWithInvalidPrimaryAndMissingSecondaryKeyCerts.performDecryptOperation(applePayAuthRequest));
-
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent ->
-                loggingEvent.getMessage().contains("Could not decrypt Apple auth request with primary key, and secondary " +
-                        "primary key is not present. Throwing an InvalidKeyException.")));
     }
     
     @Test
     void should_decrypt_data_with_secondary_keys_when_primary_private_key_and_public_certificate_are_invalid() {
-        String primaryKey = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgjyo3fzxT7j+CFxC7I4B5iVee2FUyn2vfOSjcgp2/g6qhRANCAARdoBFEtnuapXFKw4DYWsW0yV4bavpdWKszkefi19AhlIRE3WSNWSn25W5tZNFjMWtLISBmqANyufx2xP19oRvy"; //pragma: allowlist secret
-        String primaryCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQkNDZ0F3SUJBZ0lJVWtJS3NpWXhhS293Q2dZSUtvWkl6ajBFQXdJd2dZRXhPekE1QmdOVkJBTU1NbFJsYzNRZ1FYQndiR1VnVjI5eWJHUjNhV1JsSUVSbGRtVnNiM0JsY25NZ1VtVnNZWFJwYjI1eklFTkJJQzBnUlVORE1TQXdIZ1lEVlFRTERCZERaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk13SGhjTk1UWXdOekkxTVRVeU1ETTRXaGNOTVRnd09ESTBNVFV5TURNNFdqQ0JsekVyTUNrR0NnbVNKb21UOGl4a0FRRU1HMjFsY21Ob1lXNTBMbkpsWkhSbFlXMHVkMkZ5YzJGM0xteGliekV4TUM4R0ExVUVBd3dvVFdWeVkyaGhiblFnU1VRNklHMWxjbU5vWVc1MExuSmxaSFJsWVcwdWQyRnljMkYzTG14aWJ6RVRNQkVHQTFVRUN3d0tUVmxVVlRoWk5VUlJUVEVUTUJFR0ExVUVDZ3dLUVhCd2JHVWdTVzVqTGpFTE1Ba0dBMVVFQmhNQ1ZWTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CQndOQ0FBUmRvQkZFdG51YXBYRkt3NERZV3NXMHlWNGJhdnBkV0tzemtlZmkxOUFobElSRTNXU05XU24yNVc1dFpORmpNV3RMSVNCbXFBTnl1ZngyeFAxOW9SdnlvNElDYURDQ0FtUXdUd1lJS3dZQkJRVUhBUUVFUXpCQk1EOEdDQ3NHQVFVRkJ6QUJoak5vZEhSd09pOHZiMk56Y0MxMVlYUXVZMjl5Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREEwTFhSbGMzUjNkMlJ5WTJGbFkyTXdIUVlEVlIwT0JCWUVGQVY3blM0bU5ETHkxZ3h2T0FjQ1MxaE9nWTRsTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVMXRiVld1WC8vY0o4Tk1ORDNyMW9kbHcycWI0d2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1FRUdBMVVkSHdRNk1EZ3dOcUEwb0RLR01HaDBkSEE2THk5amNtd3RkV0YwTG1OdmNuQXVZWEJ3YkdVdVkyOXRMMkZ3Y0d4bGQzZGtjbU5oWldOakxtTnliREFPQmdOVkhROEJBZjhFQkFNQ0F5Z3dUd1lKS29aSWh2ZGpaQVlnQkVJTVFEVTRNREpFTVVNM056UkdNRGsyTWtZNE1URXlORGhGTlRNNFJFVXpRa1ZHTmpnd1F6YzVPRFpDUWpWQ05FUkRSVEJDTlRZeU5EbEdNemREUWtJNU5ETXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdUanRpWWprL0JLcDNWOERnNm1JbGNtNUZDT0YwNnp1YjdKc3I2d0NzdktBQ0lIOFUxMTRESTVIbm1mY052d000UlhGRFBUb29wNCtqak1BUHZpZGlwS2tnCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="; //pragma: allowlist secret
+        String invalidPrimaryKey = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgjyo3fzxT7j+CFxC7I4B5iVee2FUyn2vfOSjcgp2/g6qhRANCAARdoBFEtnuapXFKw4DYWsW0yV4bavpdWKszkefi19AhlIRE3WSNWSn25W5tZNFjMWtLISBmqANyufx2xP19oRvy"; //pragma: allowlist secret
+        String invalidPrimaryCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQkNDZ0F3SUJBZ0lJVWtJS3NpWXhhS293Q2dZSUtvWkl6ajBFQXdJd2dZRXhPekE1QmdOVkJBTU1NbFJsYzNRZ1FYQndiR1VnVjI5eWJHUjNhV1JsSUVSbGRtVnNiM0JsY25NZ1VtVnNZWFJwYjI1eklFTkJJQzBnUlVORE1TQXdIZ1lEVlFRTERCZERaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk13SGhjTk1UWXdOekkxTVRVeU1ETTRXaGNOTVRnd09ESTBNVFV5TURNNFdqQ0JsekVyTUNrR0NnbVNKb21UOGl4a0FRRU1HMjFsY21Ob1lXNTBMbkpsWkhSbFlXMHVkMkZ5YzJGM0xteGliekV4TUM4R0ExVUVBd3dvVFdWeVkyaGhiblFnU1VRNklHMWxjbU5vWVc1MExuSmxaSFJsWVcwdWQyRnljMkYzTG14aWJ6RVRNQkVHQTFVRUN3d0tUVmxVVlRoWk5VUlJUVEVUTUJFR0ExVUVDZ3dLUVhCd2JHVWdTVzVqTGpFTE1Ba0dBMVVFQmhNQ1ZWTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CQndOQ0FBUmRvQkZFdG51YXBYRkt3NERZV3NXMHlWNGJhdnBkV0tzemtlZmkxOUFobElSRTNXU05XU24yNVc1dFpORmpNV3RMSVNCbXFBTnl1ZngyeFAxOW9SdnlvNElDYURDQ0FtUXdUd1lJS3dZQkJRVUhBUUVFUXpCQk1EOEdDQ3NHQVFVRkJ6QUJoak5vZEhSd09pOHZiMk56Y0MxMVlYUXVZMjl5Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREEwTFhSbGMzUjNkMlJ5WTJGbFkyTXdIUVlEVlIwT0JCWUVGQVY3blM0bU5ETHkxZ3h2T0FjQ1MxaE9nWTRsTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVMXRiVld1WC8vY0o4Tk1ORDNyMW9kbHcycWI0d2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1FRUdBMVVkSHdRNk1EZ3dOcUEwb0RLR01HaDBkSEE2THk5amNtd3RkV0YwTG1OdmNuQXVZWEJ3YkdVdVkyOXRMMkZ3Y0d4bGQzZGtjbU5oWldOakxtTnliREFPQmdOVkhROEJBZjhFQkFNQ0F5Z3dUd1lKS29aSWh2ZGpaQVlnQkVJTVFEVTRNREpFTVVNM056UkdNRGsyTWtZNE1URXlORGhGTlRNNFJFVXpRa1ZHTmpnd1F6YzVPRFpDUWpWQ05FUkRSVEJDTlRZeU5EbEdNemREUWtJNU5ETXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdUanRpWWprL0JLcDNWOERnNm1JbGNtNUZDT0YwNnp1YjdKc3I2d0NzdktBQ0lIOFUxMTRESTVIbm1mY052d000UlhGRFBUb29wNCtqak1BUHZpZGlwS2tnCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="; //pragma: allowlist secret
         
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
-        when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn(primaryKey);
-        when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(primaryCert);
+        when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn(invalidPrimaryKey);
+        when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(invalidPrimaryCert);
         when(mockApplePayConfig.getSecondaryPrivateKey()).thenReturn(Optional.of(ENCODED_PRIMARY_PRIVATE_KEY));
         when(mockApplePayConfig.getSecondaryPublicCertificate()).thenReturn(Optional.of(ENCODED_PRIMARY_PUBLIC_CERTIFICATE));
         var applePayDecrypterWithSecondaryKeyCert = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
 
         assertApplePayAuthRequest(applePayDecrypterWithSecondaryKeyCert.performDecryptOperation(applePayAuthRequest));
-
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> 
-                loggingEvent.getMessage().contains("Could not decrypt Apple auth request with primary key, trying with secondary key.")));
     }
     
     @Test
-    void shouldDecryptData_whenPrivateKeyAndPublicCertificateAreValid() {
+    void should_decrypt_data_when_primary_private_key_and_public_certificate_are_valid() {
         assertApplePayAuthRequest(applePayDecrypter.performDecryptOperation(applePayAuthRequest));
     }
 
@@ -121,7 +89,7 @@ class ApplePayDecrypterTest {
     }
 
     @Test
-    void shouldThrowException_whenPublicCertificateIsInvalid() {
+    void should_throw_exception_when_primary_certificate_is_invalid() {
         assertThrows(RuntimeException.class, () -> {
             when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn("nope");
             applePayDecrypter = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
@@ -130,7 +98,7 @@ class ApplePayDecrypterTest {
     }
 
     @Test
-    void shouldThrowException_whenPrivateKeyIsInvalid() {
+    void should_throw_exception_when_primary_private_key_is_invalid() {
         assertThrows(RuntimeException.class, () -> {
             when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn("nope");
             applePayDecrypter = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);

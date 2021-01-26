@@ -103,7 +103,7 @@ public class ApplePayDecrypter {
                     throw new InvalidKeyException("Error while trying to decrypt apple pay payload: " + ex.getMessage());
                 }
             } else {
-                LOGGER.info("Could not decrypt Apple auth request with primary key, and secondary primary key is not " +
+                LOGGER.info("Could not decrypt Apple auth request with primary key, and secondary key is not " +
                         "present. Throwing an InvalidKeyException.");
                 LOGGER.error("Error while trying to decrypt apple pay payload: " + e.getMessage());
                 throw new InvalidKeyException("Error while trying to decrypt apple pay payload: " + e.getMessage());
