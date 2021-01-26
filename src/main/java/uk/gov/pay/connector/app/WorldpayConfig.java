@@ -13,6 +13,8 @@ public class WorldpayConfig extends GatewayConfig {
     
     private String notificationDomain;
     
+    @Valid
+    @NotNull
     private ApplePayConfig applePayConfig;
     
     @Valid

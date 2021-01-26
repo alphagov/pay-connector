@@ -2,15 +2,34 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.Configuration;
 
-public class ApplePayConfig extends Configuration {
-    private String publicCertificate;
-    private String privateKey;
+import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
-    public String getPublicCertificate() {
-        return publicCertificate;
+public class ApplePayConfig extends Configuration {
+
+    @NotNull
+    private String primaryPrivateKey;
+
+    @NotNull
+    private String primaryPublicCertificate;
+
+    private String secondaryPrivateKey;
+
+    private String secondaryPublicCertificate;
+
+    public Optional<String> getSecondaryPublicCertificate() {
+        return Optional.ofNullable(secondaryPublicCertificate);
     }
 
-    public String getPrivateKey() {
-        return privateKey;
+    public Optional<String> getSecondaryPrivateKey() {
+        return Optional.ofNullable(secondaryPrivateKey);
+    }
+
+    public String getPrimaryPrivateKey() {
+        return primaryPrivateKey;
+    }
+
+    public String getPrimaryPublicCertificate() {
+        return primaryPublicCertificate;
     }
 }
