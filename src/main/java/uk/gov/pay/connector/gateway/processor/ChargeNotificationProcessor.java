@@ -48,16 +48,7 @@ public class ChargeNotificationProcessor {
         try {
             chargeService.transitionChargeState(chargeEntity, newStatus, gatewayEventDate);
         } catch (InvalidStateTransitionException e) {
-            logger.error(format("%s (%s) notification '%s' could not be used to update charge: %s",
-                    gatewayAccount.getGatewayName(), gatewayAccount.getId(), gatewayTransactionId, e.getMessage()),
-                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
-                    kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
-                    kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
-                    kv(PROVIDER, gatewayAccount.getGatewayName()));
-            
-            boolean success = forceTransitionChargeState(gatewayAccount, gatewayTransactionId, chargeEntity, oldStatus, newStatus);
-            
-            if (!success) {
+            if (!forceTransitionChargeState(gatewayAccount, gatewayTransactionId, chargeEntity, oldStatus, newStatus)) {
                 return;
             }
         }
