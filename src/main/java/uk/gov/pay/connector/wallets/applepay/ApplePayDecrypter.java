@@ -59,22 +59,22 @@ public class ApplePayDecrypter {
         this.objectMapper = objectMapper;
         ApplePayConfig applePayConfig = worldpayConfig.getApplePayConfig();
         try {
-            primaryPrivateKey = generatePrivateKey(applePayConfig.getPrimaryPrivateKey());
-            primaryCertificate = generateCertificate(applePayConfig.getPrimaryPublicCertificate());
+            primaryPrivateKey = generatePrivateKey(removeWhitespace(applePayConfig.getPrimaryPrivateKey()));
+            primaryCertificate = generateCertificate(removeWhitespace(applePayConfig.getPrimaryPublicCertificate()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         secondaryPrivateKey = applePayConfig.getSecondaryPrivateKey().map(privateKey -> {
             try {
-                return generatePrivateKey(privateKey);
+                return generatePrivateKey(removeWhitespace(privateKey));
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                 throw new RuntimeException();
             }
         });
         secondaryCertificate = applePayConfig.getSecondaryPublicCertificate().map(cert -> {
             try {
-                return generateCertificate(cert);
+                return generateCertificate(removeWhitespace(cert));
             } catch (IOException | CertificateException e) {
                 throw new RuntimeException();
             }
@@ -82,6 +82,10 @@ public class ApplePayDecrypter {
         
         long daysToExpiry = DAYS.between(Instant.now(), primaryCertificate.getNotAfter().toInstant());
         LOGGER.info("The Apple Pay payment processing cert will expire in {} days", daysToExpiry);
+    }
+    
+    private String removeWhitespace(String input) {
+        return input.replaceAll("\\s+","");
     }
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest) {

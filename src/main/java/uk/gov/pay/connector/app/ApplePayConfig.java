@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.app;
 
 import io.dropwizard.Configuration;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ApplePayConfig extends Configuration {
 
@@ -18,11 +21,19 @@ public class ApplePayConfig extends Configuration {
     private String secondaryPublicCertificate;
 
     public Optional<String> getSecondaryPublicCertificate() {
-        return Optional.ofNullable(secondaryPublicCertificate);
+        if (isNotBlank(secondaryPublicCertificate)) {
+            return Optional.of(secondaryPublicCertificate);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public Optional<String> getSecondaryPrivateKey() {
-        return Optional.ofNullable(secondaryPrivateKey);
+        if (isNotBlank(secondaryPrivateKey)) {
+            return Optional.of(secondaryPrivateKey);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public String getPrimaryPrivateKey() {
