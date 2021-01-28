@@ -45,6 +45,8 @@ worldpay:
   applePay:
     primaryPrivateKey: ${APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY:-privateKeyWhichShouldBeBase64Encoded}
     primaryPublicCertificate: ${APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE:-publicCertificateWhichShouldBeBase64Encoded}
+    secondaryPrivateKey: ${APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY_SECONDARY}
+    secondaryPublicCertificate: ${APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE_SECONDARY}
   jerseyClientOverrides:
     auth:
       # Auth is run in a background thread which will release the HTTP request from frontend after 1 second
