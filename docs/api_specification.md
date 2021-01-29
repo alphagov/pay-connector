@@ -606,6 +606,7 @@ Content-Type: application/json
 | `prefilled_cardholder_details.billing_addess.postcode` | | Postcode of the billing address to be prefilled on frontend card details page |
 | `prefilled_cardholder_details.billing_addess.city` | | City of the billing address to be prefilled on frontend card details page |
 | `prefilled_cardholder_details.billing_addess.country` | | Country code of the billing address to be prefilled on frontend card details page |
+| `internal.source`        |           | Source of payment (e.g. CARD_PAYMENT_LINK) - defaults to CARD_API (which cannot be specified explicitly) |
 
 ### Response example
 
