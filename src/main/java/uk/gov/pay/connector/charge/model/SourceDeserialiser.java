@@ -7,12 +7,18 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import uk.gov.pay.commons.model.Source;
 
 import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class SourceDeserialiser extends JsonDeserializer<Source> {
+
+    private static final Set<Source> ALLOWED_SOURCES = EnumSet.of(CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO);
+
     public SourceDeserialiser() {
     }
 
@@ -23,16 +29,9 @@ public class SourceDeserialiser extends JsonDeserializer<Source> {
             return null;
         }
 
-        try {
-            Source source = Source.valueOf(valueAsString);
-
-            if (CARD_API.equals(source) || CARD_PAYMENT_LINK.equals(source)) {
-                return source;
-            }
-
-            throw new JsonMappingException(null, "Field [source] must be one of CARD_API, CARD_PAYMENT_LINK");
-        } catch (IllegalArgumentException e) {
-            throw new JsonMappingException(null, "Field [source] must be one of CARD_API, CARD_PAYMENT_LINK");
-        }
+        return Source.from(valueAsString)
+                .filter(ALLOWED_SOURCES::contains)
+                .orElseThrow(() -> new JsonMappingException(null, "Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO"));
     }
+
 }

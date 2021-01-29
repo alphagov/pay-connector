@@ -756,7 +756,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK"));
+                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO"));
     }
 
     @Test
@@ -775,7 +775,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK"));
+                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO"));
     }
 
     @Test
