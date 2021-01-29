@@ -30,8 +30,8 @@ public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingEx
             return "Field [metadata] must be an object of JSON key-value pairs";
         }
 
-        if (message.contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK")) {
-            return "Field [source] must be one of CARD_API, CARD_PAYMENT_LINK";
+        if (message.contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO")) {
+            return "Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO";
         }
 
         return message;
