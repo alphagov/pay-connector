@@ -76,6 +76,7 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-minimal.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-including-state.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-without-address.xml";
+    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITH_IP_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-with-ip-address.xml";
     public static final String SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-3ds-request.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-minimal.xml";

@@ -171,6 +171,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
                 SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder() : SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder();
 
+        if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
+            request.getAuthCardDetails().getIpAddress().ifPresent(smartpayOrderRequestBuilder::withPayerIpAddress);
+        }
+
         return smartpayOrderRequestBuilder
                 .withMerchantCode(getMerchantCode(request))
                 .withPaymentPlatformReference(request.getChargeExternalId())

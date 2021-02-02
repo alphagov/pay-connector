@@ -18,9 +18,12 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
@@ -44,19 +47,47 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
         mockSmartpaySuccessfulOrderSubmitResponse();
-        
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+
+        AuthCardDetails authCardDetails = spy(AuthCardDetailsFixture.anAuthCardDetails().build());
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest);
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
+
+        // IP address should not be included in authorisation, if the `SendPayerIpAddressToGateway` flag is not enable on gateway account
+        verify(cardAuthorisationGatewayRequest.getAuthCardDetails(), never()).getIpAddress();
+    }
+
+    @Test
+    public void shouldAuthoriseWithIPAddressWhenSendPayerIpAddressToGatewayIsEnableOnGatewayAccount() throws Exception {
+        mockSmartpaySuccessfulOrderSubmitResponse();
+
+        GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
+
+        AuthCardDetails authCardDetails = spy(AuthCardDetailsFixture.anAuthCardDetails().withIpAddress("8.8.8.8").build());
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest);
+
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        String transactionId = response.getBaseResponse().get().getTransactionId();
+        assertThat(transactionId, is(not(nullValue())));
+
+        verify(cardAuthorisationGatewayRequest.getAuthCardDetails()).getIpAddress();
     }
 
     @Test
@@ -89,7 +120,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     @Test
     public void shouldSuccess3DSAuthorisation() {
         mockSmartpay3dsAuthorisationSuccessfulOrderSubmitResponse();
-        
+
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()

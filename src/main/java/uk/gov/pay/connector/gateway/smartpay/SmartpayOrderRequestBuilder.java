@@ -1,17 +1,14 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
-import uk.gov.pay.connector.gateway.OrderRequestBuilder;
-import uk.gov.pay.connector.northamericaregion.CanadaPostalcodeToProvinceOrTerritoryMapper;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.pay.connector.northamericaregion.UsZipCodeToStateMapper;
 
 import javax.ws.rs.core.MediaType;
-import java.util.Locale;
 
 public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
     static public class SmartpayTemplateData extends TemplateData {
@@ -19,6 +16,7 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
         private String paResponse;
         private String md;
         private String stateOrProvince;
+        private String payerIpAddress;
 
         public String getReference() {
             return reference;
@@ -50,6 +48,14 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setStateOrProvince(String stateOrProvince) {
             this.stateOrProvince = stateOrProvince;
+        }
+
+        public void setPayerIpAddress(String payerIpAddress) {
+            this.payerIpAddress = payerIpAddress;
+        }
+
+        public String getPayerIpAddress() {
+            return payerIpAddress;
         }
     }
 
@@ -105,6 +111,11 @@ public class SmartpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public SmartpayOrderRequestBuilder withMd(String md) {
         smartpayTemplateData.setMd(md);
+        return this;
+    }
+
+    public SmartpayOrderRequestBuilder withPayerIpAddress(String payerIpAddress) {
+        smartpayTemplateData.setPayerIpAddress(payerIpAddress);
         return this;
     }
 
