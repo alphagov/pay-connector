@@ -29,6 +29,9 @@
                   </ns1:card>
                 <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
                 <ns1:reference>${paymentPlatformReference?xml}</ns1:reference>
+                <#if payerIpAddress??>
+                  <ns1:shopperIP>${payerIpAddress?xml}</ns1:shopperIP>
+                </#if>
                 <ns1:shopperReference>${description?xml}</ns1:shopperReference>
             </ns1:paymentRequest>
         </ns1:authorise>

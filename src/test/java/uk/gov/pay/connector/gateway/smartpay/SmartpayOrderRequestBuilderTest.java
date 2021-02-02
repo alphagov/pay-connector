@@ -30,6 +30,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST;
@@ -136,6 +137,23 @@ public class SmartpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseOrderWithIpAddress() throws Exception {
+        AuthCardDetails authCardDetails = getValidTestCard(null);
+
+        GatewayOrder actualRequest = aSmartpayAuthoriseOrderRequestBuilder()
+                .withPayerIpAddress("8.8.8.8")
+                .withMerchantCode("MerchantAccount")
+                .withDescription("MyDescription")
+                .withPaymentPlatformReference("MyPlatformReference")
+                .withAmount("2000")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITH_IP_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
