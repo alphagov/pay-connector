@@ -314,7 +314,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>20.34.0</version>
+            <version>20.37.0</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
