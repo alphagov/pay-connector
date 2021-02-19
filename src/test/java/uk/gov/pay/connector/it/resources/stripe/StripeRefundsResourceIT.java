@@ -23,7 +23,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.eclipse.jetty.http.HttpStatus.ACCEPTED_202;
@@ -39,7 +38,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
     private String stripeAccountId = "stripe_account_id";
     private String accountId = "555";
 
-    private StripeMockClient stripeMockClient = new StripeMockClient();
+    private StripeMockClient stripeMockClient;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
@@ -50,6 +49,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
     @Before
     public void setUp() {
         super.setUp();
+        stripeMockClient = new StripeMockClient(wireMockServer);
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -105,11 +105,11 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
         String refundId = response.extract().path("refund_id");
         
-        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123"))
                 .withRequestBody(containing("amount=" + amount)));
-        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                 .withHeader("Stripe-Account", equalTo(stripeAccountId))
                 .withRequestBody(containing("transfer_group=" + testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
@@ -141,12 +141,12 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         String refundId = response.extract().path("refund_id");
-        verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
-        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123456"))
                 .withRequestBody(containing("amount=" + amount)));
-        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                 .withHeader("Stripe-Account", equalTo(stripeAccountId))
                 .withRequestBody(containing("transfer_group=" + defaultTestCharge.getExternalChargeId()))

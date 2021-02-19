@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.http.Fault;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -23,6 +23,12 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_REFU
 
 public class SmartpayMockClient {
 
+    private WireMockServer wireMockServer;
+
+    public SmartpayMockClient(WireMockServer wireMockServer) {
+        this.wireMockServer = wireMockServer;
+    }
+    
     public void mockAuthorisationWithTransactionId(String transactionId) {
         String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE)
                 .replace("{{pspReference}}", transactionId);
@@ -80,7 +86,7 @@ public class SmartpayMockClient {
     }
 
     public void mockServerFault() {
-        stubFor(
+        wireMockServer.stubFor(
                 post(urlPathEqualTo("/pal/servlet/soap/Payment"))
                         .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
         );
@@ -99,7 +105,7 @@ public class SmartpayMockClient {
     }
 
     private void paymentServiceResponse(String responseBody) {
-        stubFor(
+        wireMockServer.stubFor(
                 post(urlPathEqualTo("/pal/servlet/soap/Payment"))
                         .willReturn(
                                 aResponse()

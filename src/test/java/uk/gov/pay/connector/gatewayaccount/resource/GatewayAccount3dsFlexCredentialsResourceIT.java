@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.specification.RequestSpecification;
 import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,7 +32,6 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -42,21 +40,25 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     private static final String ACCOUNTS_API_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
     private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
+
+    public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
+    public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
+    public static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
     
     @DropwizardTestContext
     protected TestContext testContext;
-    protected DatabaseTestHelper databaseTestHelper;
+    
+    private DatabaseTestHelper databaseTestHelper;
+    private WireMockServer wireMockServer;
     private DatabaseFixtures databaseFixtures;
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
-
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
     @Before
     public void setUp() {
         accountId = nextLong(2, 10000);
         databaseTestHelper = testContext.getDatabaseTestHelper();
+        wireMockServer = testContext.getWireMockServer();
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
                 .withIntegrationVersion3ds(2)
@@ -70,7 +72,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void validate_valid_3ds_flex_credentials() throws Exception {
-        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
+        wireMockServer.stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
@@ -82,11 +84,11 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void validate_invalid_3ds_flex_credentials() throws Exception {
-        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
+        wireMockServer.stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
-        var invalidIssuer = "54a0917b10ca4428b69d5ed0";
-        var invalidOrgUnitId = "57002a087a0c4849895ab8a2";
-        var invalidJwtMacKey = "3751b5f1-4fef-4306-bc09-99df6320d5b8";
+        var invalidIssuer = "54a0917b10ca4428b69d5ed0"; // pragma: allowlist secret`
+        var invalidOrgUnitId = "57002a087a0c4849895ab8a2"; // pragma: allowlist secret`
+        var invalidJwtMacKey = "3751b5f1-4fef-4306-bc09-99df6320d5b8"; // pragma: allowlist secret`
         var payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", invalidIssuer,
                 "organisational_unit_id", invalidOrgUnitId,
@@ -102,7 +104,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void should_return_503_if_error_communicating_with_3ds_flex_ddc_endpoint() throws Exception {
-        wireMockRule.stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
+        wireMockServer.stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
 
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
@@ -122,23 +124,19 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void should_return_422_if_organisation_unit_id_not_in_correct_format() throws Exception {
-        var validIssuer = "44992a087a0c4849895cc9a3";
-        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
-        var payload = objectMapper.writeValueAsString(Map.of("issuer", validIssuer,
+        var payload = objectMapper.writeValueAsString(Map.of("issuer", VALID_ISSUER,
                 "organisational_unit_id", "incorrectFormat",
-                "jwt_mac_key", validJwtMacKey));
+                "jwt_mac_key", VALID_JWT_MAC_KEY));
 
         verifyIncorrectFormat(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
     }
     
     @Test
     public void should_return_422_if_organisation_unit_id_is_null() throws Exception {
-        var validIssuer = "44992a087a0c4849895cc9a3";
-        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         var jsonFields = new HashMap<String, String>();
-        jsonFields.put("issuer", validIssuer);
+        jsonFields.put("issuer", VALID_ISSUER);
         jsonFields.put("organisational_unit_id", null);
-        jsonFields.put("jwt_mac_key", validJwtMacKey);
+        jsonFields.put("jwt_mac_key", VALID_JWT_MAC_KEY);
         var payload = objectMapper.writeValueAsString(jsonFields);
 
         verifyIncorrectFormat(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
@@ -146,23 +144,19 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void should_return_422_if_issuer_not_in_correct_format() throws Exception {
-        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
-        var validOrgUnitId = "57992a087a0c4849895ab8a2";
         var payload = objectMapper.writeValueAsString(Map.of("issuer", "44992i087n0v4849895al9i3",
-                "organisational_unit_id", validOrgUnitId,
-                "jwt_mac_key", validJwtMacKey));
+                "organisational_unit_id", VALID_ORG_UNIT_ID,
+                "jwt_mac_key", VALID_JWT_MAC_KEY));
 
         verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
     }
     
     @Test
     public void should_return_422_if_issuer_is_null() throws Exception {
-        var validOrgUnitId = "44992a087a0c4849895cc9a3";
-        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         var jsonFields = new HashMap<String, String>();
         jsonFields.put("issuer", null);
-        jsonFields.put("organisational_unit_id", validOrgUnitId);
-        jsonFields.put("jwt_mac_key", validJwtMacKey);
+        jsonFields.put("organisational_unit_id", VALID_ORG_UNIT_ID);
+        jsonFields.put("jwt_mac_key", VALID_JWT_MAC_KEY);
         var payload = objectMapper.writeValueAsString(jsonFields);
 
         verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
@@ -170,10 +164,8 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
     @Test
     public void should_return_422_if_jwt_mac_key_not_in_correct_format() throws Exception {
-        var validIssuer = "44992a087a0c4849895cc9a3";
-        var validOrgUnitId = "57992a087a0c4849895ab8a2";
-        var payload = objectMapper.writeValueAsString(Map.of("issuer", validIssuer,
-                "organisational_unit_id", validOrgUnitId,
+        var payload = objectMapper.writeValueAsString(Map.of("issuer", VALID_ISSUER,
+                "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", "hihihihi"));
 
         verifyIncorrectFormat(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
@@ -181,11 +173,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void should_return_422_if_jwt_mac_key_is_null() throws Exception {
-        var validOrgUnitId = "44992a087a0c4849895cc9a3";
-        var validIssuer = "44992a087a0c4849895cc9a3";
         var jsonFields = new HashMap<String, String>();
-        jsonFields.put("issuer", validIssuer);
-        jsonFields.put("organisational_unit_id", validOrgUnitId);
+        jsonFields.put("issuer", VALID_ISSUER);
+        jsonFields.put("organisational_unit_id", VALID_ORG_UNIT_ID);
         jsonFields.put("jwt_mac_key", null);
         var payload = objectMapper.writeValueAsString(jsonFields);
 
@@ -204,13 +194,10 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     @Test
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
-        String issuer = "44992a087a0c4849895cc9a3";
-        String orgUnitId = "57992a087a0c4849895ab8a2";
-        String jwtMacKey = "3751b5f1-4fef-4306-bc09-99df6320d5b8";
         String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", issuer,
-                "organisational_unit_id", orgUnitId,
-                "jwt_mac_key", jwtMacKey
+                "issuer", VALID_ISSUER,
+                "organisational_unit_id", VALID_ORG_UNIT_ID,
+                "jwt_mac_key", VALID_JWT_MAC_KEY
         ));
         givenSetup()
                 .body(payload)
@@ -218,17 +205,17 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
-        assertThat(result.get("issuer"), is(issuer));
-        assertThat(result.get("organisational_unit_id"), is(orgUnitId));
-        assertThat(result.get("jwt_mac_key"), is(jwtMacKey));
+        assertThat(result.get("issuer"), is(VALID_ISSUER));
+        assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
+        assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
     }
 
     @Test
     public void overrideSetWorldpay3dsCredentials() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
-                "issuer", "53f0917f101a4428b69d5fb0",
-                "organisational_unit_id", "57992a087a0c4849895ab8a2",
-                "jwt_mac_key", "3751b5f1-4fef-4306-bc09-99df6320d5b8"
+                "issuer", "53f0917f101a4428b69d5fb0", // pragma: allowlist secret`
+                "organisational_unit_id", "57992a087a0c4849895ab8a2", // pragma: allowlist secret`
+                "jwt_mac_key", "3751b5f1-4fef-4306-bc09-99df6320d5b8" // pragma: allowlist secret`
         ));
         givenSetup()
                 .body(payload)
@@ -236,9 +223,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(200);
         
-        String newIssuer = "43f0917f101a4428b69d5fb9";
-        String newOrgUnitId = "44992a087a0c4849895cc9a3";
-        String updatedJwtMacKey = "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8";
+        String newIssuer = "43f0917f101a4428b69d5fb9"; // pragma: allowlist secret`
+        String newOrgUnitId = "44992a087a0c4849895cc9a3"; // pragma: allowlist secret`
+        String updatedJwtMacKey = "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8"; // pragma: allowlist secret`
         payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", newIssuer,
                 "organisational_unit_id", newOrgUnitId,
@@ -263,9 +250,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     })
     public void missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
         Map<String, String> jsonFields = new HashMap<>();
-        jsonFields.put("issuer", "57992a087a0c4849895ab8a2");
-        jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2");
-        jsonFields.put("jwt_mac_key", "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8");
+        jsonFields.put("issuer", "57992a087a0c4849895ab8a2"); // pragma: allowlist secret`
+        jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2"); // pragma: allowlist secret`
+        jsonFields.put("jwt_mac_key", "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8"); // pragma: allowlist secret`
         jsonFields.remove(key);
 
         givenSetup()
@@ -303,12 +290,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     }
 
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
-        var validIssuer = "53f0917f101a4428b69d5fb0";
-        var validOrgUnitId = "57992a087a0c4849895ab8a2";
-        var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
         return objectMapper.writeValueAsString(Map.of(
-                "issuer", validIssuer,
-                "organisational_unit_id", validOrgUnitId,
-                "jwt_mac_key", validJwtMacKey));
+                "issuer", VALID_ISSUER,
+                "organisational_unit_id", VALID_ORG_UNIT_ID,
+                "jwt_mac_key", VALID_JWT_MAC_KEY));
     }
 }

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.base;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.JsonObject;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -10,7 +10,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import uk.gov.pay.commons.model.CardExpiryDate;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.commons.model.SupportedLanguage;
@@ -52,7 +51,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -68,11 +66,12 @@ public class ChargingITestBase {
     protected static final String RETURN_URL = "http://service.url/success-page/";
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
     protected static final long AMOUNT = 6234L;
-    protected static final WorldpayMockClient worldpayMockClient = new WorldpayMockClient();
-    protected static final SmartpayMockClient smartpayMockClient = new SmartpayMockClient();
-    protected static final EpdqMockClient epdqMockClient = new EpdqMockClient();
-    protected static final LedgerStub ledgerStub = new LedgerStub();
 
+    protected WorldpayMockClient worldpayMockClient;
+    protected SmartpayMockClient smartpayMockClient;
+    protected EpdqMockClient epdqMockClient;
+    protected LedgerStub ledgerStub;
+    
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
@@ -84,8 +83,7 @@ public class ChargingITestBase {
 
     protected DatabaseTestHelper databaseTestHelper;
 
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
+    protected WireMockServer wireMockServer;
 
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
@@ -94,6 +92,12 @@ public class ChargingITestBase {
 
     @Before
     public void setUp() {
+        wireMockServer = testContext.getWireMockServer();
+        worldpayMockClient = new WorldpayMockClient(wireMockServer);
+        smartpayMockClient = new SmartpayMockClient(wireMockServer);
+        epdqMockClient = new EpdqMockClient(wireMockServer);
+        ledgerStub = new LedgerStub(wireMockServer);
+        
         credentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",

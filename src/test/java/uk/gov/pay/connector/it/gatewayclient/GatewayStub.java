@@ -1,8 +1,13 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -57,11 +62,11 @@ public class GatewayStub {
         );
     }
 
-    public void respondWithStatusCodeAndPayloadWhenCardAuth(int statusCode, String payload) {
-        respondWithStatusCodeAndPayloadWhenCardAuth(statusCode, payload, -1);
+    public void respondWithStatusCodeAndPayloadWhenCardAuth(WireMockServer wireMockServer, int statusCode, String payload) {
+        respondWithStatusCodeAndPayloadWhenCardAuth(wireMockServer,  statusCode, payload, -1);
     }
 
-    public void respondWithStatusCodeAndPayloadWhenCardAuth(int statusCode, String payload, int timeout) {
+    public void respondWithStatusCodeAndPayloadWhenCardAuth(WireMockServer wireMockServer, int statusCode, String payload, int timeout) {
         ResponseDefinitionBuilder responseDefBuilder = aResponse()
                 .withHeader(CONTENT_TYPE, TEXT_XML)
                 .withStatus(statusCode)
@@ -70,7 +75,7 @@ public class GatewayStub {
             responseDefBuilder.withFixedDelay(timeout);
         }
 
-        stubFor(
+        wireMockServer.stubFor(
                 post(urlPathEqualTo("/pal/servlet/soap/Payment"))
                         .withRequestBody(
                                 matching(".*<.*authorise.*>.*</.*authorise>.*")
@@ -89,8 +94,8 @@ public class GatewayStub {
         respondWithStatusCodeAndPayloadWhenCapture(UNKNOWN_STATUS_CODE, CAPTURE_SUCCESS_PAYLOAD);
     }
 
-    public void respondWithUnexpectedResponseCodeWhenCardAuth() {
-        respondWithStatusCodeAndPayloadWhenCardAuth(UNKNOWN_STATUS_CODE, AUTH_SUCCESS_PAYLOAD);
+    public void respondWithUnexpectedResponseCodeWhenCardAuth(WireMockServer wireMockServer) {
+        respondWithStatusCodeAndPayloadWhenCardAuth(wireMockServer, UNKNOWN_STATUS_CODE, AUTH_SUCCESS_PAYLOAD);
     }
 
     public void respondWithMalformedBodyWhenCapture() {

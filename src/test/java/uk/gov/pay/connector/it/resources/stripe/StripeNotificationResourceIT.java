@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -37,7 +36,6 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
@@ -62,8 +60,7 @@ public class StripeNotificationResourceIT {
     @DropwizardTestContext
     private TestContext testContext;
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
+    private WireMockServer wireMockServer;
 
     private StripeMockClient stripeMockClient;
 
@@ -72,6 +69,7 @@ public class StripeNotificationResourceIT {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
+        wireMockServer = testContext.getWireMockServer();
         var gatewayAccountParams = anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway("stripe")
@@ -80,7 +78,7 @@ public class StripeNotificationResourceIT {
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
 
-        stripeMockClient = new StripeMockClient();
+        stripeMockClient = new StripeMockClient(wireMockServer);
     }
 
     @Test

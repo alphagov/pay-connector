@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.junit;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.inject.Injector;
 import io.dropwizard.db.DataSourceFactory;
 import org.jdbi.v3.core.Jdbi;
@@ -15,12 +16,14 @@ public class TestContext {
     private DatabaseTestHelper databaseTestHelper;
     private int port;
     private Injector injector;
+    private WireMockServer wireMockServer;
     private String databaseUrl;
     private String databaseUser;
     private String databasePassword;
 
-    TestContext(int port, ConnectorConfiguration connectorConfiguration, Injector injector) {
+    TestContext(int port, ConnectorConfiguration connectorConfiguration, Injector injector, WireMockServer wireMockServer) {
         this.injector = injector;
+        this.wireMockServer = wireMockServer;
         DataSourceFactory dataSourceFactory = connectorConfiguration.getDataSourceFactory();
         databaseUrl = dataSourceFactory.getUrl();
         databaseUser = dataSourceFactory.getUser();
@@ -37,6 +40,10 @@ public class TestContext {
 
     public int getPort() {
         return port;
+    }
+
+    public WireMockServer getWireMockServer() {
+        return wireMockServer;
     }
 
     public ExecutorServiceConfig getExecutorServiceConfig() {

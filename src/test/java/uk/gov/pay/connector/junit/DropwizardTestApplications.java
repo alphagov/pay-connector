@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.junit;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.Sets;
 import io.dropwizard.Application;
 import io.dropwizard.testing.ConfigOverride;
@@ -11,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,11 +77,11 @@ final class DropwizardTestApplications {
         }
     }
 
-    static TestContext getTestContextOf(Class<? extends Application<?>> appClass, String configClasspathLocation) {
+    static TestContext getTestContextOf(Class<? extends Application<?>> appClass, String configClasspathLocation, WireMockServer wireMockServer) {
         Pair<Class<? extends Application>, String> appConfig = Pair.of(appClass, configClasspathLocation);
         DropwizardTestSupport application = apps.get(appConfig);
         return new TestContext(application.getLocalPort(), ((ConnectorConfiguration) application.getConfiguration()),
-                InjectorLookup.getInjector(application.getApplication()).get());
+                InjectorLookup.getInjector(application.getApplication()).get(), wireMockServer);
     }
 
     static void removeConfigOverridesFromSystemProperties() {

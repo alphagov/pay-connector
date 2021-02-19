@@ -5,13 +5,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.ImmutableMap;
 import io.restassured.RestAssured;
 import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -42,7 +41,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -53,11 +51,11 @@ public class GatewayAuthFailuresIT {
             ImmutableMap.of("username", "a-user", "password", "a-password", "merchant_id", "aMerchantCode");
     private static final String PAYMENT_PROVIDER = "smartpay";
 
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
-
     @DropwizardTestContext
-    private TestContext testContext;
+    public TestContext testContext;
+    
+    private WireMockServer wireMockServer;
+    
     private GatewayStub gatewayStub;
     private DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures.TestCharge chargeTestRecord;
@@ -69,6 +67,7 @@ public class GatewayAuthFailuresIT {
         gatewayStub = new GatewayStub(TRANSACTION_ID);
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
+        wireMockServer = testContext.getWireMockServer();
 
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -98,7 +97,7 @@ public class GatewayAuthFailuresIT {
 
     @Test
     public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() {
-        gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
+        gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth(wireMockServer);
 
         String errorMessage = "Non-success HTTP status code 999 from gateway";
         String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
@@ -117,7 +116,7 @@ public class GatewayAuthFailuresIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertThatLastGatewayClientLoggingEventIs(
-                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test with order request type authorise", WIREMOCK_PORT));
+                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test with order request type authorise", wireMockServer.getOptions().portNumber()));
         assertThat(databaseTestHelper.getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
