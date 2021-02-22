@@ -24,14 +24,14 @@ import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 
 abstract public class AppWithPostgresRule implements TestRule {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
-    public final static int WIREMOCK_PORT = PortFactory.findFreePort();
-    
+
     private final String configFilePath;
     private final PostgresDockerRule postgres;
     private final AppRule<ConnectorConfiguration> appRule;
     private final RuleChain rules;
 
     private DatabaseTestHelper databaseTestHelper;
+    private int wireMockPort = PortFactory.findFreePort();
 
     public AppWithPostgresRule(ConfigOverride... configOverrides) {
         this("config/test-it-config.yaml", configOverrides);
@@ -47,15 +47,10 @@ abstract public class AppWithPostgresRule implements TestRule {
 
         ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
         newConfigOverrides = overrideSqsConfig(newConfigOverrides);
+        newConfigOverrides = overrideUrlsConfig(newConfigOverrides);
         appRule = newApplication(configFilePath, newConfigOverrides);
-        
-        rules = RuleChain.outerRule(postgres).around(appRule);
-    }
 
-    private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
-        List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
-        newConfigOverride.add(config("sqsConfig.captureQueueUrl", "http://localhost:" + WIREMOCK_PORT + "/capture-queue"));
-        return newConfigOverride.toArray(new ConfigOverride[0]);
+        rules = RuleChain.outerRule(postgres).around(appRule);
     }
 
     abstract protected AppRule<ConnectorConfiguration> newApplication(
@@ -97,6 +92,10 @@ abstract public class AppWithPostgresRule implements TestRule {
         return appRule.getAdminPort();
     }
 
+    public int getWireMockPort() {
+        return wireMockPort;
+    }
+
     public Injector getGuiceInjector() {
         return appRule.getInjector();
     }
@@ -114,6 +113,26 @@ abstract public class AppWithPostgresRule implements TestRule {
         newConfigOverride.add(config("database.url", postgresDockerRule.getConnectionUrl()));
         newConfigOverride.add(config("database.user", postgresDockerRule.getUsername()));
         newConfigOverride.add(config("database.password", postgresDockerRule.getPassword()));
+        return newConfigOverride.toArray(new ConfigOverride[0]);
+    }
+    
+    private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
+        List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
+        newConfigOverride.add(config("sqsConfig.captureQueueUrl", "http://localhost:" + wireMockPort + "/capture-queue"));
+        return newConfigOverride.toArray(new ConfigOverride[0]);
+    }
+
+    private ConfigOverride[] overrideUrlsConfig(ConfigOverride[] configOverrides) {
+        List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
+        newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
+        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + wireMockPort + "/shopper/3ds/ddc.html"));
+        newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+        newConfigOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
+        newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+        newConfigOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
+        newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
+        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
+        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
 

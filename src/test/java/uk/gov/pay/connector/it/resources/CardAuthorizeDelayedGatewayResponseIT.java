@@ -22,7 +22,6 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
-
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{
