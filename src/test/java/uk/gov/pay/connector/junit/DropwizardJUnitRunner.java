@@ -1,18 +1,22 @@
 package uk.gov.pay.connector.junit;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import junitparams.JUnitParamsRunner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.FrameworkField;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.MultipleFailureException;
 import org.junit.runners.model.Statement;
 import uk.gov.pay.commons.testing.port.PortFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
@@ -49,7 +53,8 @@ import static uk.gov.pay.connector.junit.SqsTestDocker.getQueueUrl;
  */
 public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
-    public final static int WIREMOCK_PORT = PortFactory.findFreePort();
+    private int wireMockPort = PortFactory.findFreePort();
+    private WireMockServer wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort));
 
     public DropwizardJUnitRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
@@ -77,13 +82,13 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
             Arrays.stream(dropwizardConfigAnnotation.configOverrides()).forEach(c -> configOverride.add(config(c.key(), c.value())));
         }
 
-        configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
-        configOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + WIREMOCK_PORT + "/shopper/3ds/ddc.html"));
-        configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
-        configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
-        configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
-        configOverride.add(config("stripe.url", "http://localhost:" + WIREMOCK_PORT));
-        configOverride.add(config("ledgerBaseURL", "http://localhost:" + WIREMOCK_PORT));
+        configOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
+        configOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + wireMockPort + "/shopper/3ds/ddc.html"));
+        configOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+        configOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
+        configOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+        configOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
+        configOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
 
         try {
             Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
@@ -98,22 +103,21 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
             DropwizardTestApplications.removeConfigOverridesFromSystemProperties();
         }
 
+        wireMockServer.start();
+
         return super.classBlock(notifier);
     }
 
     @Override
     protected Statement withAfterClasses(Statement statement) {
-        DropwizardConfig declaredConfiguration = dropwizardConfigAnnotation();
-        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config());
-        testContext.getDatabaseTestHelper().truncateAllData();
-        return super.withAfterClasses(statement);
+        return new CleanupStatement(statement, wireMockServer);
     }
 
     @Override
     public Object createTest() throws Exception {
         Object testInstance = super.createTest();
         DropwizardConfig declaredConfiguration = dropwizardConfigAnnotation();
-        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config());
+        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config(), wireMockServer);
         setTestContextToDeclaredAnnotations(testInstance, testContext);
         return testInstance;
     }
@@ -138,5 +142,28 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
                 .filter(annotation -> annotation.annotationType().equals(DropwizardConfig.class))
                 .findFirst()
                 .orElseThrow(() -> new DropwizardJUnitRunnerException("DropwizardJUnitRunner requires annotation @DropwizardConfig to be present"));
+    }
+
+    class CleanupStatement extends Statement {
+        private Statement next;
+        private WireMockServer wireMockServer;
+
+        public CleanupStatement(Statement next, WireMockServer wireMockServer) {
+            this.next = next;
+            this.wireMockServer = wireMockServer;
+        }
+
+        @Override
+        public void evaluate() throws Throwable {
+            List<Throwable> errors = new ArrayList<>();
+            try {
+                next.evaluate();
+            } catch (Throwable e) {
+                errors.add(e);
+            } finally {
+                wireMockServer.stop();
+            }
+            MultipleFailureException.assertEmpty(errors);
+        }
     }
 }

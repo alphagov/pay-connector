@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.util.Optional;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -27,13 +24,20 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 
 public class StripeMockClient {
+
+    private WireMockServer wireMockServer;
+
+    public StripeMockClient(WireMockServer wireMockServer){
+        this.wireMockServer = wireMockServer;
+    }
+    
     public void mockCreateToken() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/tokens", 200);
     }
 
     private void setupResponse(String responseBody, String path, int status) {
-        stubFor(post(urlPathEqualTo(path)).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+        wireMockServer.stubFor(post(urlPathEqualTo(path)).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(status).withBody(responseBody)));
     }
 
@@ -73,7 +77,7 @@ public class StripeMockClient {
                 .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
                 .withHeader("Idempotency-Key", matching(".*"));
 
-        stubFor(builder
+        wireMockServer.stubFor(builder
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
     }
 

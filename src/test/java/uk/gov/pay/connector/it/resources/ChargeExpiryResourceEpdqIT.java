@@ -14,7 +14,6 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.time.Instant;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -136,7 +135,7 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
     }
 
     private void verifyPostToPath(String path) {
-        verify(
+        wireMockServer.verify(
             postRequestedFor(
                 UrlPattern.fromOneOf(
                     null,

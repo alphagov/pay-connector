@@ -2,6 +2,7 @@ package uk.gov.pay.connector.expunge.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
@@ -31,7 +31,12 @@ import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixt
 public class LedgerStub {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
+    private final WireMockServer wireMockServer;
 
+    public LedgerStub(WireMockServer wireMockServer) {
+        this.wireMockServer = wireMockServer;
+    }
+    
     public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         stubResponse(externalId, ledgerTransactionFields);
@@ -42,7 +47,7 @@ public class LedgerStub {
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .withStatus(200)
                 .withBody(objectMapper.writeValueAsString(ledgerTransaction));
-        stubFor(
+        wireMockServer.stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
                         .withQueryParam("override_account_id_restriction", equalTo("true"))
                         .willReturn(response)
@@ -98,14 +103,14 @@ public class LedgerStub {
                 .withBody(objectMapper.writeValueAsString(refundTransactionsForPayment));
 
         String url = format("/v1/transaction/%s/transaction", chargeExternalId);
-        stubFor(WireMock.get(urlPathEqualTo(url))
+        wireMockServer.stubFor(WireMock.get(urlPathEqualTo(url))
                 .willReturn(response));
     }
 
     public void returnErrorForFindRefundsForPayment(String chargeExternalId) {
         ResponseDefinitionBuilder repsonse = aResponse().withStatus(500);
         String url = format("/v1/transaction/%s/transaction", chargeExternalId);
-        stubFor(WireMock.get(urlPathEqualTo(url))
+       wireMockServer.stubFor(WireMock.get(urlPathEqualTo(url))
                 .willReturn(repsonse));
 
     }
@@ -119,7 +124,7 @@ public class LedgerStub {
         if (nonNull(ledgerTransactionFields) && ledgerTransactionFields.size() > 0) {
             responseDefBuilder.withBody(objectMapper.writeValueAsString(ledgerTransactionFields));
         }
-        stubFor(
+        wireMockServer.stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId)))
                         .withQueryParam("payment_provider", equalTo(paymentProvider))
                         .willReturn(
@@ -133,7 +138,7 @@ public class LedgerStub {
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .withStatus(200)
                 .withBody(objectMapper.writeValueAsString(ledgerTransactionFields));
-        stubFor(
+        wireMockServer.stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
                         .withQueryParam("override_account_id_restriction", equalTo("true"))
                         .willReturn(
@@ -147,7 +152,7 @@ public class LedgerStub {
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .withStatus(404);
 
-        stubFor(
+        wireMockServer.stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
                         .withQueryParam("override_account_id_restriction", equalTo("true"))
                         .willReturn(responseDefBuilder)

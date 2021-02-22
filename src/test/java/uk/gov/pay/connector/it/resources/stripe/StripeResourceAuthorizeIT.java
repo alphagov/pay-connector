@@ -2,14 +2,13 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.ImmutableMap;
+import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.collection.IsIn;
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.CardExpiryDate;
@@ -31,7 +30,6 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -58,7 +56,6 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
@@ -88,20 +85,19 @@ public class StripeResourceAuthorizeIT {
     private final String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
     private final String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
-    private final StripeMockClient stripeMockClient = new StripeMockClient();
+    private StripeMockClient stripeMockClient;
     private DatabaseTestHelper databaseTestHelper;
 
     @DropwizardTestContext
     private TestContext testContext;
 
-    @ClassRule
-    public static WireMockClassRule wireMockClassRule = new WireMockClassRule(WIREMOCK_PORT);
-
-    @Rule
-    public WireMockClassRule wireMockRule = wireMockClassRule;
+    private WireMockServer wireMockServer;
 
     @Before
     public void setup() {
+        wireMockServer = testContext.getWireMockServer();
+        stripeMockClient = new StripeMockClient(wireMockServer);
+        
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
@@ -138,18 +134,20 @@ public class StripeResourceAuthorizeIT {
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        ValidatableResponse validatableResponse = given().port(testContext.getPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
-                .then()
+                .then();
+        
+        validatableResponse
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
 
-        verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
     }
@@ -170,11 +168,11 @@ public class StripeResourceAuthorizeIT {
                 .then()
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
-        
-        verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
     }

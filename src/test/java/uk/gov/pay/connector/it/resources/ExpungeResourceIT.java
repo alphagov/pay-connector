@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -45,7 +44,6 @@ import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_
 import static uk.gov.pay.commons.model.SupportedLanguage.ENGLISH;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.events.EmittedEventFixture.anEmittedEventEntity;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -54,13 +52,12 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ExpungeResourceIT {
-
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
-
+    
     @DropwizardTestContext
     protected TestContext testContext;
 
+    private WireMockServer wireMockServer;
+    
     EmittedEventDao emittedEventDao;
 
     private DatabaseFixtures.TestCharge expungeableCharge1;
@@ -75,6 +72,7 @@ public class ExpungeResourceIT {
         emittedEventDao = testContext.getInstanceFromGuiceContainer(EmittedEventDao.class);
         refundDao = testContext.getInstanceFromGuiceContainer(RefundDao.class);
         databaseTestHelper = testContext.getDatabaseTestHelper();
+        wireMockServer = testContext.getWireMockServer();
         insertTestAccount();
     }
 
@@ -89,7 +87,7 @@ public class ExpungeResourceIT {
     @Test
     public void shouldExpungeCharge() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -130,7 +128,7 @@ public class ExpungeResourceIT {
     @Test
     public void shouldUpdateTheParityCheckedDateOfNonCriteriaMatchedCharge() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
         var date = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -157,7 +155,7 @@ public class ExpungeResourceIT {
     @Test
     public void shouldNotExpungeChargeThatIsNotOldEnoughToBeExpunged() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -190,7 +188,7 @@ public class ExpungeResourceIT {
     @Test
     public void shouldExpungeChargesMeetingCriteriaButNotThoseThatDont() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
 
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -294,7 +292,7 @@ public class ExpungeResourceIT {
     public void shouldExpungeAuxiliaryTables_whenTheyExistAndReferenceAChargeForExpunging() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
 
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -418,7 +416,7 @@ public class ExpungeResourceIT {
         Optional<RefundHistory> refundHistoryCreated = refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundEntity.getExternalId(), RefundStatus.CREATED);
 
-        ledgerStub = new LedgerStub();
+        ledgerStub = new LedgerStub(wireMockServer);
 
         if (stubForMatchingLedgerTransaction) {
             ledgerStub.returnLedgerTransaction(refundEntity, defaultTestAccount.getAccountId(),

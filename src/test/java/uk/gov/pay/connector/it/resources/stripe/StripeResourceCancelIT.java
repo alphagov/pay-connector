@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -28,7 +26,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -37,7 +34,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
@@ -49,7 +45,7 @@ public class StripeResourceCancelIT {
 
     private String stripeAccountId;
     private String accountId;
-    private StripeMockClient stripeMockClient = new StripeMockClient();
+    private StripeMockClient stripeMockClient;
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
 
     private DatabaseTestHelper databaseTestHelper;
@@ -57,14 +53,13 @@ public class StripeResourceCancelIT {
     @DropwizardTestContext
     private TestContext testContext;
 
-    @ClassRule
-    public static WireMockClassRule wireMockClassRule = new WireMockClassRule(WIREMOCK_PORT);
-
-    @Rule
-    public WireMockClassRule wireMockRule = wireMockClassRule;
+    private WireMockServer wireMockServer;
 
     @Before
     public void setup() {
+        wireMockServer = testContext.getWireMockServer();
+        stripeMockClient = new StripeMockClient(wireMockServer);
+        
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
@@ -85,7 +80,7 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
 
@@ -107,7 +102,7 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
 
