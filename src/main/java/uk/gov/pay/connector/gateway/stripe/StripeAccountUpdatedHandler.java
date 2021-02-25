@@ -30,7 +30,8 @@ public class StripeAccountUpdatedHandler {
             LOGGER.info(String.format("Received an account.updated event for stripe account %s", dataObject.getId()),
                     kv("stripe_account_id", dataObject.getId()),
                     kv("payouts_enabled", dataObject.isPayoutsEnabled()),
-                    kv("requirements", dataObject.getRequirements()));
+                    kv("requirements", dataObject.getRequirements()),
+                    kv("livemode", notification.getLivemode()));
         } catch (Exception e) {
             LOGGER.error("{} notification parsing for source object failed: {}", STRIPE.getName(), e);
         }

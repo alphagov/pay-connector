@@ -13,6 +13,8 @@ public class StripeNotification {
 
     @JsonProperty("id")
     private String id;
+    @JsonProperty("livemode")
+    private Boolean livemode;
     @JsonProperty("type")
     private String type;
     @JsonProperty("account")
@@ -44,6 +46,10 @@ public class StripeNotification {
 
     public ZonedDateTime getCreated() {
         return toUTCZonedDateTime(created);
+    }
+
+    public Boolean getLivemode() {
+        return livemode;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
