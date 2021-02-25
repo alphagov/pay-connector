@@ -156,7 +156,7 @@ class StripeNotificationServiceTest {
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(), containsString("Received an account.updated event for stripe account"));
-        assertThat(loggingEvent.getArgumentArray().length, is(3));
+        assertThat(loggingEvent.getArgumentArray().length, is(4));
     }
 
     @Test
