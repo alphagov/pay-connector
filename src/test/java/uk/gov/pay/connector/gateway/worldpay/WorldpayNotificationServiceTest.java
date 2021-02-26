@@ -229,6 +229,7 @@ class WorldpayNotificationServiceTest {
                 "EXPIRED",
                 "REFUSED",
                 "REFUSED_BY_BANK",
+                "SETTLED",
                 "SETTLED_BY_MERCHANT",
                 "SENT_FOR_REFUND"
         );
