@@ -6,6 +6,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -34,11 +35,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.Runtime.getRuntime;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OFF;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTIONAL;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 
 public class UserNotificationService {
@@ -92,8 +97,10 @@ public class UserNotificationService {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         return executorService.submit(() -> {
             try {
+                MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId().toString());
+                MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
                 NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, gatewayAccountEntity);
-                logger.info("Sending {} email, charge_external_id={}", emailNotificationType, charge.getExternalId());
+                logger.info(format("Sending %s email.", emailNotificationType));
                 SendEmailResponse response = notifyClientSettings.getClient()
                         .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null);
                 return Optional.of(response.getNotificationId().toString());
@@ -102,6 +109,8 @@ public class UserNotificationService {
                 metricRegistry.counter("notify-operations.failures").inc();
                 return Optional.empty();
             } finally {
+                MDC.remove(GATEWAY_ACCOUNT_ID);
+                MDC.remove(PAYMENT_EXTERNAL_ID);
                 responseTimeStopwatch.stop();
                 metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
@@ -181,7 +190,7 @@ public class UserNotificationService {
         
         String corporateSurchargeMsg = charge.getCorporateSurcharge()
                 .map(corporateSurcharge -> 
-                        String.format("Your payment includes a fee of £%s for using a corporate credit or debit card.",
+                        format("Your payment includes a fee of £%s for using a corporate credit or debit card.",
                                 formatToPounds(corporateSurcharge)))
                 .orElse("");
         map.put("corporateCardSurcharge", corporateSurchargeMsg);
