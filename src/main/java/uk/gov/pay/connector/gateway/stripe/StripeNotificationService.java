@@ -48,9 +48,9 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
-import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
 

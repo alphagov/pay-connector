@@ -45,7 +45,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.commons.model.Source.CARD_PAYMENT_LINK;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;

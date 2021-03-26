@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.pay.commons.model.CardExpiryDate;
-import uk.gov.pay.commons.model.Source;
-import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;

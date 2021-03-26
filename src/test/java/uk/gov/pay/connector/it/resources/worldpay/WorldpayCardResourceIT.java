@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;

@@ -25,8 +25,8 @@ import java.util.Set;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class SmartpayNotificationService {
 

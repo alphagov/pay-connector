@@ -28,7 +28,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 @Path("/")
 public class NotificationResource {

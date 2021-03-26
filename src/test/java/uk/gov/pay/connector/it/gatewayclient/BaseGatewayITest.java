@@ -14,7 +14,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.commons.testing.port.PortFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;

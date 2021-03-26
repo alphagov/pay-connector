@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;

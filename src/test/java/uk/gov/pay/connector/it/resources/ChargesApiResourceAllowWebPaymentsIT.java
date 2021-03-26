@@ -8,7 +8,7 @@ import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.GatewayAccountPayload;
 import uk.gov.pay.connector.junit.DropwizardConfig;

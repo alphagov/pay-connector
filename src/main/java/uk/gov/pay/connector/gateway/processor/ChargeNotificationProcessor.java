@@ -18,10 +18,10 @@ import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 
 public class ChargeNotificationProcessor {
 

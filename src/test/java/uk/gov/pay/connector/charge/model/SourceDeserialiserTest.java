@@ -9,7 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.pay.commons.model.Source;
+import uk.gov.service.payments.commons.model.Source;
 
 import java.io.IOException;
 

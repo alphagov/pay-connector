@@ -10,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.Address;

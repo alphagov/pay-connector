@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.commons.testing.port.PortFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;

@@ -24,9 +24,9 @@ import java.util.Optional;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
-import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class ParityCheckWorker {
     private static final int PAGE_SIZE = 100;

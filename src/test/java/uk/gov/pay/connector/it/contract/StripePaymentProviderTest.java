@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;

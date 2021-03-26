@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.model;
 
-import uk.gov.pay.commons.model.WrappedStringValue;
+import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 /**
  * A session identifier that a payment provider requires us to store

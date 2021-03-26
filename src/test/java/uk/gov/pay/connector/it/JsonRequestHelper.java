@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it;
 
 import com.google.gson.JsonObject;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 

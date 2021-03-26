@@ -7,10 +7,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.pay.commons.api.json.ApiResponseInstantSerializer;
-import uk.gov.pay.commons.api.json.ExternalMetadataSerialiser;
-import uk.gov.pay.commons.model.SupportedLanguage;
-import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
+import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonInclude(Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)

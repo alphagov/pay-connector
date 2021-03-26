@@ -27,8 +27,8 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
-import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
-import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundExpungeService {
 

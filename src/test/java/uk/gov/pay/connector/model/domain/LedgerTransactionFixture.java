@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.commons.model.CardExpiryDate;
-import uk.gov.pay.commons.model.Source;
-import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;

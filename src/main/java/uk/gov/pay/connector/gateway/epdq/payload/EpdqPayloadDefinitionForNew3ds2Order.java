@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
 import org.apache.http.NameValuePair;
-import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.common.model.domain.Address;
 
 import java.time.Clock;

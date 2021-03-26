@@ -9,7 +9,7 @@ import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
 import java.time.ZonedDateTime;
 
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonSnakeCase
 public class TransactionEvent implements Comparable<TransactionEvent> {

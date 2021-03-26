@@ -4,8 +4,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import uk.gov.pay.commons.model.CardExpiryDate;
-import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -42,7 +42,7 @@ import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -53,7 +53,7 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 import static uk.gov.pay.connector.tasks.HistoricalEventEmitter.TERMINAL_AUTHENTICATION_STATES;
 import static uk.gov.pay.connector.tasks.service.ParityCheckService.FIELD_NAME;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeParityChecker {
 

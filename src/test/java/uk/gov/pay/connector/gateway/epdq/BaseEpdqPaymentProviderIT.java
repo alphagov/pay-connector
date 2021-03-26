@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.mockito.Mock;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;

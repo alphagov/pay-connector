@@ -6,7 +6,7 @@ import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;

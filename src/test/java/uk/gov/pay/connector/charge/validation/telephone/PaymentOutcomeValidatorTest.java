@@ -2,7 +2,7 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
