@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.specification.RequestSpecification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.junit.DropwizardConfig;

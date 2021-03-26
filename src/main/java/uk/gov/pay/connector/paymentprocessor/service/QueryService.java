@@ -8,15 +8,15 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.logging.LoggingKeys;
+import uk.gov.service.payments.logging.LoggingKeys;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class QueryService {
     private final PaymentProviders providers;

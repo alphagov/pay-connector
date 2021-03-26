@@ -2,7 +2,7 @@ package uk.gov.pay.connector.util;
 
 import org.eclipse.persistence.config.SessionCustomizer;
 import org.eclipse.persistence.sessions.Session;
-import uk.gov.pay.commons.utils.xray.XRaySessionProfiler;
+import uk.gov.service.payments.commons.utils.xray.XRaySessionProfiler;
 
 public class ConnectorSessionCustomiserWithXrayProfiling extends ConnectorSessionCustomiser implements SessionCustomizer {
     

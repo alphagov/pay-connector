@@ -23,9 +23,9 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeCredentials.STRIPE_ACCOUNT_ID_KEY;
-import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
-import static uk.gov.pay.logging.LoggingKeys.LEDGER_EVENT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
 
 public class PayoutEmitterService {
 

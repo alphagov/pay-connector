@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
-import uk.gov.pay.commons.testing.port.PortFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;

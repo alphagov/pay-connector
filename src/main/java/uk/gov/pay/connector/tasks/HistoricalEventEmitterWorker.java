@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static uk.gov.pay.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
+import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 
 public class HistoricalEventEmitterWorker {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitterWorker.class);

@@ -12,13 +12,13 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import java.util.Optional;
 
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
-import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.SECURE_TOKEN;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
 
 public class LoggingMDCRequestFilter implements ContainerRequestFilter {
 

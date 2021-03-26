@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import uk.gov.pay.commons.model.WrappedStringValue;
+import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 /**
  * A unique session ID that Worldpay requires us to send with a request to

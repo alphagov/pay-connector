@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class EmittedEventsBackfillService {
     private final Logger logger = LoggerFactory.getLogger(getClass());

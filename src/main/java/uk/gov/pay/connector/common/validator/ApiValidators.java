@@ -2,7 +2,7 @@ package uk.gov.pay.connector.common.validator;
 
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 
 import java.time.ZonedDateTime;

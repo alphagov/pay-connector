@@ -7,7 +7,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;

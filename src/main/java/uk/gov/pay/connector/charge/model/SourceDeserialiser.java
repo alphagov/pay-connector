@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import uk.gov.pay.commons.model.Source;
+import uk.gov.service.payments.commons.model.Source;
 
 import java.io.IOException;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.commons.model.Source.CARD_API;
-import static uk.gov.pay.commons.model.Source.CARD_PAYMENT_LINK;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class SourceDeserialiser extends JsonDeserializer<Source> {
     public SourceDeserialiser() {

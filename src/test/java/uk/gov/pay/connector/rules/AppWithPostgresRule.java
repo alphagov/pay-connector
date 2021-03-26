@@ -12,7 +12,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.commons.testing.port.PortFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 

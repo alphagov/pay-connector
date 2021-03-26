@@ -31,10 +31,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class PayoutReconcileProcess {
 
