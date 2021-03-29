@@ -37,13 +37,12 @@ import java.util.regex.Pattern;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OFF;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTIONAL;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 
 public class UserNotificationService {
