@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.charge.model;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.commons.model.WrappedStringValue;
+import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 public class LastDigitsCardNumber extends WrappedStringValue {
 

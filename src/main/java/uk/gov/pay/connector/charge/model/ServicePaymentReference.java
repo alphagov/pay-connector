@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.model;
 
-import uk.gov.pay.commons.model.WrappedStringValue;
+import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 public class ServicePaymentReference extends WrappedStringValue {
 

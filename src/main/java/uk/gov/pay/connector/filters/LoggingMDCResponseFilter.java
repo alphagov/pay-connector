@@ -7,13 +7,13 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import java.util.List;
 
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
-import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
-import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
-import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
-import static uk.gov.pay.logging.LoggingKeys.SECURE_TOKEN;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
 
 public class LoggingMDCResponseFilter implements ContainerResponseFilter {
     @Override

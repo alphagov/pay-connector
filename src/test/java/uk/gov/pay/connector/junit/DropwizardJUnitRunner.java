@@ -9,7 +9,7 @@ import org.junit.runners.model.FrameworkField;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.MultipleFailureException;
 import org.junit.runners.model.Statement;
-import uk.gov.pay.commons.testing.port.PortFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;

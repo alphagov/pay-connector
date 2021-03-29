@@ -2,8 +2,8 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
-import uk.gov.pay.commons.model.CardExpiryDate;
-import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
