@@ -14,7 +14,7 @@ import static java.util.Objects.isNull;
 
 public class DateTimeUtils {
 
-    private static final ZoneId UTC = ZoneId.of("Z");
+    private static final ZoneId UTC = ZoneOffset.UTC;
     private static final ZoneId EUROPE_LONDON = ZoneId.of("Europe/London");
     private static DateTimeFormatter dateTimeFormatterAny = DateTimeFormatter.ISO_ZONED_DATE_TIME;
     private static DateTimeFormatter localDateFormatter = DateTimeFormatter.ISO_DATE;
