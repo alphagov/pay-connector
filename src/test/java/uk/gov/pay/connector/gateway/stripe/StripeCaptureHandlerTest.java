@@ -55,6 +55,7 @@ public class StripeCaptureHandlerTest {
     private CaptureGatewayRequest captureGatewayRequest;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
     private GatewayAccountEntity gatewayAccount;
+    private String transactionId = "ch_1231231123123";
 
     @Before
     public void setup() {
@@ -64,7 +65,6 @@ public class StripeCaptureHandlerTest {
 
         gatewayAccount = buildGatewayAccountEntity();
 
-        final String transactionId = "ch_1231231123123";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId(transactionId)
@@ -108,7 +108,7 @@ public class StripeCaptureHandlerTest {
                 .withAmount(10001L)
                 .build();
 
-        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        CaptureGatewayRequest captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
@@ -132,7 +132,7 @@ public class StripeCaptureHandlerTest {
                 .withAmount(1L)
                 .build();
 
-        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        CaptureGatewayRequest captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
@@ -147,6 +147,7 @@ public class StripeCaptureHandlerTest {
         assertThat(captureResponse.getFee().get(), is(51L));
     }
     
+    @Test
     public void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
@@ -162,9 +163,8 @@ public class StripeCaptureHandlerTest {
         assertTrue(response.isSuccessful());
         assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().isPresent(), is(true));
-        assertThat(response.getTransactionId().get(), is("ch_123456"));
-        assertThat(response.getFee().isPresent(), is(true));
-        assertThat(response.getFee().get(), is(0L));
+        assertThat(response.getTransactionId().get(), is(transactionId));
+        assertThat(response.getFee().isPresent(), is(false));
     }
 
     @Test
