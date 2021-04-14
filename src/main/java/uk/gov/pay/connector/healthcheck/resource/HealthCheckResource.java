@@ -4,6 +4,8 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -15,13 +17,15 @@ import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
 @Path("/")
 public class HealthCheckResource {
 
-    private Environment environment;
+    private final Environment environment;
+    private final Logger logger = LoggerFactory.getLogger(HealthCheckResource.class);
 
     @Inject
     public HealthCheckResource(Environment environment) {
@@ -43,9 +47,11 @@ public class HealthCheckResource {
                         )
                 );
 
-        Response.ResponseBuilder res = allHealthy(results.values()) ? Response.ok() : status(503);
-
-        return res.entity(response).build();
+        if (allHealthy(results.values())) {
+            return Response.ok(response).build();
+        }
+        logger.error("Healthcheck Failure: {}", response);
+        return Response.status(503).entity(response).build();
     }
 
     private boolean allHealthy(Collection<HealthCheck.Result> results) {
