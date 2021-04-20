@@ -1,0 +1,31 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "03:00"
+  open-pull-requests-limit: 10
+  labels:
+  - dependencies
+  - govuk-pay
+  - java
+  ignore:
+  - dependency-name: com.amazonaws:aws-java-sdk-sqs
+    versions:
+    - "> 1.11.598"
+    - "< 1.12"
+  - dependency-name: org.liquibase:liquibase-core
+    versions:
+    - ">= 4.3.a"
+    - "< 4.4"
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "03:00"
+  open-pull-requests-limit: 10
+  labels:
+  - dependencies
+  - govuk-pay
+  - java
