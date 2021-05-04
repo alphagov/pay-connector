@@ -1577,4 +1577,29 @@
             <column name="allow_telephone_payment_notifications" value="false"/>
         </update>
     </changeSet>
+
+    <changeSet id="build gateway_accounts_credentials table" author="">
+        <createTable tableName="gateway_accounts_credentials">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="bigint">
+                <constraints foreignKeyName="fk__gateway_accounts_credentials_gateway_accounts"
+                             referencedTableName="gateway_accounts"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="payment_provider" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credentials" type="json" defaultValue="{}">
+                <constraints nullable="false" unique="false"/>
+            </column>
+            <column name="role" type="varchar(10)" defaultValue="PRIMARY" remarks="possible values (PRIMARY/SECONDARY)">
+                <constraints nullable="false" unique="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
