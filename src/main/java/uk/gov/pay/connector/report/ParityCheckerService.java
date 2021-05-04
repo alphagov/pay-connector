@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.tasks;
+package uk.gov.pay.connector.report;
 
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.RandomUtils;
@@ -15,6 +15,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import javax.inject.Inject;
@@ -28,23 +29,23 @@ import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
-public class ParityCheckWorker {
+public class ParityCheckerService {
     private static final int PAGE_SIZE = 100;
-    private static final Logger logger = LoggerFactory.getLogger(ParityCheckWorker.class);
+    private static final Logger logger = LoggerFactory.getLogger(ParityCheckerService.class);
     private final ChargeDao chargeDao;
-    private ChargeService chargeService;
+    private final ChargeService chargeService;
 
-    private EmittedEventDao emittedEventDao;
-    private StateTransitionService stateTransitionService;
-    private EventService eventService;
-    private RefundService refundService;
-    private RefundDao refundDao;
-    private ParityCheckService parityCheckService;
+    private final EmittedEventDao emittedEventDao;
+    private final StateTransitionService stateTransitionService;
+    private final EventService eventService;
+    private final RefundService refundService;
+    private final RefundDao refundDao;
+    private final ParityCheckService parityCheckService;
     private HistoricalEventEmitter historicalEventEmitter;
     private long maxId;
 
     @Inject
-    public ParityCheckWorker(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
+    public ParityCheckerService(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
                              StateTransitionService stateTransitionService, EventService eventService,
                              RefundService refundService, RefundDao refundDao, ParityCheckService parityCheckService) {
         this.chargeDao = chargeDao;
@@ -57,8 +58,8 @@ public class ParityCheckWorker {
         this.parityCheckService = parityCheckService;
     }
 
-    public void execute(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords,
-                        Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
+    public void checkParity(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords,
+                            Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.tasks;
+package uk.gov.pay.connector.events;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -16,7 +17,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
@@ -61,7 +61,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class HistoricalEventEmitterWorkerTest {
+public class HistoricalEventEmitterServiceTest {
 
     @Mock
     ChargeDao chargeDao;
@@ -78,13 +78,15 @@ public class HistoricalEventEmitterWorkerTest {
     @Mock
     RefundDao refundDao;
 
-    HistoricalEventEmitterWorker worker;
+    HistoricalEventEmitterService historicalEventEmitterService;
     private ChargeEntity chargeEntity;
+    private ConnectorConfiguration connectorConfiguration;
 
     @Before
     public void setUp() {
-        worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, emittedEventDao,
-                stateTransitionService, eventService, chargeService);
+        connectorConfiguration = new ConnectorConfiguration();
+        historicalEventEmitterService = new HistoricalEventEmitterService(chargeDao, refundDao, chargeEventDao, emittedEventDao,
+                stateTransitionService, eventService, chargeService, connectorConfiguration);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         when(cardDetails.getLastDigitsCardNumber()).thenReturn(LastDigitsCardNumber.of("1234"));
         chargeEntity = ChargeEntityFixture
@@ -104,7 +106,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
@@ -122,7 +124,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         chargeEntity.getEvents().clear();
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
     }
@@ -131,7 +133,7 @@ public class HistoricalEventEmitterWorkerTest {
     public void iteratesThroughSpecifiedRange() {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.of(100L), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.of(100L), 1L);
 
         verify(chargeDao, times(100)).findById(and(geq(1L), leq(100L)));
         verify(stateTransitionService, times(100)).offerStateTransition(any(), any(), isNotNull());
@@ -142,7 +144,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
         when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(true);
 
-        worker.execute(1L, OptionalLong.of(1L), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.of(1L), 1L);
 
         verify(chargeDao, times(1)).findById(1L);
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
@@ -161,7 +163,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
@@ -190,7 +192,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(eventService, times(1)).emitAndRecordEvent(any(PaymentDetailsEntered.class), isNotNull());
     }
@@ -208,7 +210,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(eventService, times(1)).emitAndRecordEvent(any(BackfillerRecreatedUserEmailCollected.class), isNotNull());
     }
@@ -233,7 +235,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(eventService, never()).emitAndRecordEvent(any(PaymentDetailsEntered.class), any());
     }
@@ -251,7 +253,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verifyNoInteractions(eventService);
     }
@@ -286,7 +288,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(),
@@ -318,7 +320,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
@@ -345,7 +347,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService).offerStateTransition(argument.capture(), any(RefundCreatedByService.class), isNotNull());
@@ -383,7 +385,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
@@ -412,7 +414,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(chargeDao.findById(any())).thenReturn(Optional.of(chargeEntity));
         when(chargeEventDao.findChargeEvents(eventDate, eventDate, 1, 100)).thenReturn(chargeEventEntities);
 
-        worker.executeForDateRange(eventDate, eventDate, 1L);
+        historicalEventEmitterService.emitHistoricEventsByDate(eventDate, eventDate, 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
@@ -433,7 +435,7 @@ public class HistoricalEventEmitterWorkerTest {
         when(refundDao.getRefundHistoryByDateRange(eventDate, eventDate, 1, 100)).thenReturn(List.of(refundHistory));
         when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory, refundHistory2));
 
-        worker.executeForDateRange(eventDate, eventDate, 1L);
+        historicalEventEmitterService.emitHistoricEventsByDate(eventDate, eventDate, 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
@@ -444,10 +446,7 @@ public class HistoricalEventEmitterWorkerTest {
 
     @Test
     public void executeForRefundsOnly_shouldNotProcessIfRefundRecordDoesNotExist() {
-        when(refundDao.findMaxId()).thenReturn(1L);
-        when(refundDao.findById(1L)).thenReturn(Optional.empty());
-
-        worker.executeForRefundsOnly(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verifyNoInteractions(emittedEventDao);
         verify(refundDao, never()).searchAllHistoryByChargeExternalId(any());
@@ -462,12 +461,11 @@ public class HistoricalEventEmitterWorkerTest {
 
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         when(refundDao.findById(1L)).thenReturn(Optional.of(refundEntity));
-        when(refundDao.findMaxId()).thenReturn(1L);
         when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(false);
 
         when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory, refundHistory2));
 
-        worker.executeForRefundsOnly(1L, OptionalLong.empty(), 1L);
+        historicalEventEmitterService.emitRefundEventsOnlyById(1L, OptionalLong.of(1L), 1L);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
