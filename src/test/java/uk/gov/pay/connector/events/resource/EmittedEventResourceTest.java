@@ -52,6 +52,21 @@ public class EmittedEventResourceTest {
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
     }
 
+
+    @Test
+    public void shouldReturn500OnNonStandardRecordTypes() {
+        Response response = resources
+                .target("/v1/tasks/historical-event-emitter")
+                .queryParam("start_id", 1L)
+                .queryParam("max_id", 1L)
+                .queryParam("record_type", "SOMETHING_ELSE")
+                .queryParam("do_not_retry_emit_until_duration", 1L)
+                .request()
+                .post(Entity.json(""));
+
+        assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+    }
+
     @Test
     public void shouldReturn200OnHistorictEventByDate() {
         Response response = resources
