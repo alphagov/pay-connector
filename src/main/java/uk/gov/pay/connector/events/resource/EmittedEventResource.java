@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events.resource;
 
 import uk.gov.pay.connector.events.EmittedEventsBackfillService;
 import uk.gov.pay.connector.events.HistoricalEventEmitterService;
+import uk.gov.pay.connector.tasks.RecordType;
 
 import javax.inject.Inject;
 import javax.ws.rs.POST;
@@ -18,6 +19,7 @@ import java.util.concurrent.Executors;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.status;
+import static uk.gov.pay.connector.tasks.RecordType.CHARGE;
 
 @Path("/")
 public class EmittedEventResource {
@@ -45,12 +47,20 @@ public class EmittedEventResource {
     @Produces(APPLICATION_JSON)
     public Response emitHistoricEvents(@QueryParam("start_id") Long startId,
                                        @QueryParam("max_id") Long maybeMaxId,
+                                       @QueryParam("record_type")  String maybeRecordType,
                                        @QueryParam("do_not_retry_emit_until_duration") Long doNotRetryEmitUntilDuration) {
         //We run this task in the background and response 200 so the request from toolbox does not time out
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> historicalEventEmitterService.emitHistoricEventsById(startId, 
-                OptionalLong.of(maybeMaxId),
-                doNotRetryEmitUntilDuration));
+        RecordType recordType = maybeRecordType == null ? CHARGE : RecordType.fromString(maybeRecordType);
+        if (recordType == CHARGE) {
+            executor.execute(() -> historicalEventEmitterService.emitHistoricEventsById(startId,
+                    OptionalLong.of(maybeMaxId),
+                    doNotRetryEmitUntilDuration));
+        } else {
+            executor.execute(() -> historicalEventEmitterService.emitRefundEventsOnlyById(startId,
+                    OptionalLong.of(maybeMaxId),
+                    doNotRetryEmitUntilDuration));
+        }
         return status(OK).build();
     }
 

@@ -122,13 +122,6 @@ public class HistoricalEventEmitterService {
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
-    private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {
-        OptionalLong doNotRetryEmitUntil = getOptionalLongParam(parameters,
-                "do_not_retry_emit_until");
-        return doNotRetryEmitUntil.orElse(
-                eventEmitterConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());
-    }
-
     // needs to be public for transactional annotation
     @Transactional
     public void emitEventsFor(long currentId) {

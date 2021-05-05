@@ -23,7 +23,8 @@ public enum RecordType {
 
     public static RecordType fromString(String recordTypeParam) {
         for (RecordType type : values()) {
-            if (StringUtils.equals(type.getValue(), recordTypeParam)) {
+            if (StringUtils.equals(type.getValue(), recordTypeParam) ||
+                    StringUtils.equals(type.getValue().toUpperCase(), recordTypeParam)) {
                 return type;
             }
         }

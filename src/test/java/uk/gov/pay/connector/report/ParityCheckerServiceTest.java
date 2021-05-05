@@ -286,7 +286,7 @@ public class ParityCheckerServiceTest {
         when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(refundHistoryList);
         when(ledgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.empty());
 
-        parityCheckerService.executeForRefundsOnly(0L, null, doNotReprocessValidRecords, "DATA_MISMATCH", 1L);
+        parityCheckerService.checkParityForRefundsOnly(0L, null, doNotReprocessValidRecords, "DATA_MISMATCH", 1L);
 
         verify(refundDao, times(2)).findByParityCheckStatus(eq(DATA_MISMATCH), anyInt(), any());
         verify(refundService, times(1)).updateRefundParityStatus(refundEntity.getExternalId(), MISSING_IN_LEDGER);
@@ -300,7 +300,7 @@ public class ParityCheckerServiceTest {
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, 0L)).thenReturn(List.of(refundEntity));
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, refundEntity.getId())).thenReturn(List.of());
 
-        parityCheckerService.executeForRefundsOnly(0L, null, true, "EXISTS_IN_LEDGER", 1L);
+        parityCheckerService.checkParityForRefundsOnly(0L, null, true, "EXISTS_IN_LEDGER", 1L);
 
         verify(refundService, never()).updateRefundParityStatus(any(), any());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), notNull());
@@ -315,7 +315,7 @@ public class ParityCheckerServiceTest {
         when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(refundHistoryList);
         when(ledgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.empty());
 
-        parityCheckerService.executeForRefundsOnly(1L, null, true, null, null);
+        parityCheckerService.checkParityForRefundsOnly(1L, null, true, null, null);
 
         verify(refundService, times(1)).updateRefundParityStatus(refundEntity.getExternalId(), MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
@@ -328,7 +328,7 @@ public class ParityCheckerServiceTest {
         when(refundDao.findMaxId()).thenReturn(1L);
         when(refundDao.findById(1L)).thenReturn(Optional.of(refundEntity));
 
-        parityCheckerService.executeForRefundsOnly(1L, null, true, null, null);
+        parityCheckerService.checkParityForRefundsOnly(1L, null, true, null, null);
 
         verify(refundService, never()).updateRefundParityStatus(any(), any());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), notNull());

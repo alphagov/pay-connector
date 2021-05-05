@@ -86,8 +86,8 @@ public class ParityCheckerService {
         MDC.remove(MDC_REQUEST_ID_KEY);
     }
 
-    public void executeForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
-                                      String parityCheckStatus, Long doNotRetryEmitUntilDuration) {
+    public void checkParityForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
+                                          String parityCheckStatus, Long doNotRetryEmitUntilDuration) {
         String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);

@@ -44,6 +44,7 @@ public class EmittedEventResourceTest {
                 .target("/v1/tasks/historical-event-emitter")
                 .queryParam("start_id", 1L)
                 .queryParam("max_id", 1L)
+                .queryParam("record_type", "charge")
                 .queryParam("do_not_retry_emit_until_duration", 1L)
                 .request()
                 .post(Entity.json(""));
