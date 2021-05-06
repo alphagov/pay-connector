@@ -2856,7 +2856,7 @@ Content-Type: application/json
 
 -----------------------------------------------------------------------------------------------------------
 
-## POST /tasks/historical-event-emitter
+## POST /v1/tasks/historical-event-emitter
 
 Task to emit payment or refunds events for a given `start_id` and `max_id` range. 
 
@@ -2873,9 +2873,9 @@ Historical event emitter task doesn't emit event, if event was emitted previousl
 
 ### Request example
 
-POST `/tasks/historical-event-emitter`
+POST `/v1/tasks/historical-event-emitter`
 ```
-curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter?start_id=10001'
+curl -v -XPOST '127.0.0.1:8080/v1/tasks/historical-event-emitter?start_id=10001'
 ```
 
 ### Response example
@@ -2895,7 +2895,7 @@ curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter?start_id=10001'
 ```
 -----------------------------------------------------------------------------------------------------------
 
-## POST /tasks/historical-event-emitter-by-date
+## POST /v1/tasks/historical-event-emitter-by-date
 
 Task to emit payment and refunds events for a given `start_date` and `end_date` range. 
 
@@ -2911,9 +2911,9 @@ Historical event emitter by date task doesn't emit event, if event was emitted p
 
 ### Request example
 
-POST `/tasks/historical-event-emitter-by-date`
+POST `/v1/tasks/historical-event-emitter-by-date`
 ```
-curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter-by-date?start_date=2016-01-25T13:23:55Z&end_date=2016-01-25T13:23:55Z'
+curl -v -XPOST '127.0.0.1:8080/v1/tasks/historical-event-emitter-by-date?start_date=2016-01-25T13:23:55Z&end_date=2016-01-25T13:23:55Z'
 ```
 
 ### Response example
@@ -2933,7 +2933,7 @@ curl -v -XPOST '127.0.0.1:9301/tasks/historical-event-emitter-by-date?start_date
 ```
 -----------------------------------------------------------------------------------------------------------
 
-## POST /tasks/parity-checker
+## POST /v1/tasks/parity-checker
 
 Task to parity check charges or refunds with ledger for a given `start_id` and `max_id` range or by `parity_check_status`.
 Parity checker compares fields of ledger transaction to charge/refund record in connector. 
@@ -2953,9 +2953,9 @@ When parity check fails, new events are emitted even when the events have been e
 
 ### Request example
 
-POST `/tasks/parity-checker`
+POST `/v1/tasks/parity-checker`
 ```
-curl -v -XPOST '127.0.0.1:9301/tasks/parity-checker?parity_check_status=DATA_MISMATCH'
+curl -v -XPOST '127.0.0.1:8080/v1/tasks/parity-checker?parity_check_status=DATA_MISMATCH'
 ```
 
 ### Response example
