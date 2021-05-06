@@ -56,6 +56,21 @@ public class ParityCheckerResourceTest {
     }
 
     @Test
+    public void parityCheckRefundsWorksWithNoRecordType() {
+        Response response = resources
+                .target("/v1/tasks/parity-checker")
+                .queryParam("start_id", 1L)
+                .queryParam("max_id", 1L)
+                .queryParam("do_not_reprocess_valid_records", true)
+                .queryParam("do_not_retry_emit_until", 1L)
+                .request()
+                .post(Entity.json(""));
+
+        assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
+    }
+
+
+    @Test
     public void parityCheckRefundsFailsWithNonStandardRecordType() {
         Response response = resources
                 .target("/v1/tasks/parity-checker")
@@ -67,7 +82,7 @@ public class ParityCheckerResourceTest {
                 .request()
                 .post(Entity.json(""));
 
-        assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+        assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
     }
 
 }

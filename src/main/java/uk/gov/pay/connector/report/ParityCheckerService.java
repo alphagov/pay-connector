@@ -42,7 +42,6 @@ public class ParityCheckerService {
     private final RefundDao refundDao;
     private final ParityCheckService parityCheckService;
     private HistoricalEventEmitter historicalEventEmitter;
-    private long maxId;
 
     @Inject
     public ParityCheckerService(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
@@ -60,6 +59,7 @@ public class ParityCheckerService {
 
     public void checkParity(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords,
                             Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
+        Long maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
@@ -68,7 +68,6 @@ public class ParityCheckerService {
             if (parityCheckStatus.isPresent()) {
                 checkParityForParityCheckStatus(parityCheckStatus.get());
             } else {
-                maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
                 checkParityForIdRange(startId, maxId, doNotReprocessValidRecords);
             }
         } catch (NullPointerException e) {

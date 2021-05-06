@@ -445,7 +445,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeForRefundsOnly_shouldNotProcessIfRefundRecordDoesNotExist() {
+    public void emitHistoricEventsById_shouldNotProcessIfRecordDoesNotExist() {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verifyNoInteractions(emittedEventDao);
