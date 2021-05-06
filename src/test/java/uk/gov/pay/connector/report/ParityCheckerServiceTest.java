@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.tasks;
+package uk.gov.pay.connector.report;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +26,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.pay.connector.tasks.service.RefundParityChecker;
@@ -60,7 +61,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ParityCheckWorkerTest {
+public class ParityCheckerServiceTest {
     @Mock
     private ChargeDao chargeDao;
     @Mock
@@ -86,7 +87,7 @@ public class ParityCheckWorkerTest {
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
 
-    private ParityCheckWorker worker;
+    private ParityCheckerService parityCheckerService;
     private ChargeEntity chargeEntity;
     private RefundEntity refundEntity;
     private List<RefundHistory> refundHistoryList;
@@ -101,7 +102,7 @@ public class ParityCheckWorkerTest {
         parityCheckService = new ParityCheckService(ledgerService, chargeService, historicalEventEmitter,
                 chargeParityChecker, refundParityChecker, refundService);
 
-        worker = new ParityCheckWorker(chargeDao, chargeService, emittedEventDao,
+        parityCheckerService = new ParityCheckerService(chargeDao, chargeService, emittedEventDao,
                 stateTransitionService, eventService, refundService, refundDao, parityCheckService);
         chargeEntity = aValidChargeEntity()
                 .withCardDetails(defaultCardDetails())
@@ -138,7 +139,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
-        worker.execute(1L, Optional.empty(), true,
+        parityCheckerService.checkParity(1L, Optional.empty(), true,
                 emptyParityCheckStatus, null);
 
         verify(chargeService, never()).updateChargeParityStatus(any(), any());
@@ -153,7 +154,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
@@ -179,7 +180,7 @@ public class ParityCheckWorkerTest {
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(refundEntity.getExternalId(), CREATED)).thenReturn(Optional.of(refundHistory));
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
@@ -195,7 +196,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("started").build()));
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
         verify(ledgerService, times(1)).getTransaction(any());
@@ -212,7 +213,7 @@ public class ParityCheckWorkerTest {
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), MISSING_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
@@ -229,7 +230,7 @@ public class ParityCheckWorkerTest {
                 aValidLedgerTransaction().withStatus("failed").build()));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), DATA_MISMATCH);
         verify(ledgerService, times(2)).getTransaction(any());
@@ -242,7 +243,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
-        worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus,
+        parityCheckerService.checkParity(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus,
                 120L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(),
@@ -256,7 +257,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
-        worker.execute(1L, Optional.of(1L), doNotReprocessValidRecords, emptyParityCheckStatus, 120L);
+        parityCheckerService.checkParity(1L, Optional.of(1L), doNotReprocessValidRecords, emptyParityCheckStatus, 120L);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
@@ -269,7 +270,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findByParityCheckStatus(DATA_MISMATCH, 100, 0L)).thenReturn(List.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
-        worker.execute(0L, Optional.empty(), doNotReprocessValidRecords, Optional.of("DATA_MISMATCH"), 1L);
+        parityCheckerService.checkParity(0L, Optional.empty(), doNotReprocessValidRecords, Optional.of("DATA_MISMATCH"), 1L);
 
         verify(chargeDao, times(2)).findByParityCheckStatus(eq(DATA_MISMATCH), anyInt(), any());
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), MISSING_IN_LEDGER);
@@ -285,7 +286,7 @@ public class ParityCheckWorkerTest {
         when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(refundHistoryList);
         when(ledgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.empty());
 
-        worker.executeForRefundsOnly(0L, null, doNotReprocessValidRecords, "DATA_MISMATCH", 1L);
+        parityCheckerService.checkParityForRefundsOnly(0L, null, doNotReprocessValidRecords, "DATA_MISMATCH", 1L);
 
         verify(refundDao, times(2)).findByParityCheckStatus(eq(DATA_MISMATCH), anyInt(), any());
         verify(refundService, times(1)).updateRefundParityStatus(refundEntity.getExternalId(), MISSING_IN_LEDGER);
@@ -299,7 +300,7 @@ public class ParityCheckWorkerTest {
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, 0L)).thenReturn(List.of(refundEntity));
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, refundEntity.getId())).thenReturn(List.of());
 
-        worker.executeForRefundsOnly(0L, null, true, "EXISTS_IN_LEDGER", 1L);
+        parityCheckerService.checkParityForRefundsOnly(0L, null, true, "EXISTS_IN_LEDGER", 1L);
 
         verify(refundService, never()).updateRefundParityStatus(any(), any());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), notNull());
@@ -314,7 +315,7 @@ public class ParityCheckWorkerTest {
         when(refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId())).thenReturn(refundHistoryList);
         when(ledgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.empty());
 
-        worker.executeForRefundsOnly(1L, null, true, null, null);
+        parityCheckerService.checkParityForRefundsOnly(1L, null, true, null, null);
 
         verify(refundService, times(1)).updateRefundParityStatus(refundEntity.getExternalId(), MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
@@ -327,7 +328,7 @@ public class ParityCheckWorkerTest {
         when(refundDao.findMaxId()).thenReturn(1L);
         when(refundDao.findById(1L)).thenReturn(Optional.of(refundEntity));
 
-        worker.executeForRefundsOnly(1L, null, true, null, null);
+        parityCheckerService.checkParityForRefundsOnly(1L, null, true, null, null);
 
         verify(refundService, never()).updateRefundParityStatus(any(), any());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), notNull());

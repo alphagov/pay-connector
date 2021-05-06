@@ -1,32 +1,37 @@
-package uk.gov.pay.connector.tasks;
+package uk.gov.pay.connector.events;
 
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 
-public class HistoricalEventEmitterWorker {
-    private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitterWorker.class);
+public class HistoricalEventEmitterService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitterService.class);
     private static final int PAGE_SIZE = 100;
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
@@ -36,12 +41,14 @@ public class HistoricalEventEmitterWorker {
     private final EventService eventService;
     private final RefundDao refundDao;
     private HistoricalEventEmitter historicalEventEmitter;
+    private final EventEmitterConfig eventEmitterConfig;
     private long maxId;
 
     @Inject
-    public HistoricalEventEmitterWorker(ChargeDao chargeDao, RefundDao refundDao, ChargeEventDao chargeEventDao,
-                                        EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService,
-                                        EventService eventService, ChargeService chargeService) {
+    HistoricalEventEmitterService(ChargeDao chargeDao, RefundDao refundDao, ChargeEventDao chargeEventDao,
+                                  EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService,
+                                  EventService eventService, ChargeService chargeService,
+                                  ConnectorConfiguration connectorConfiguration) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.chargeEventDao = chargeEventDao;
@@ -49,9 +56,10 @@ public class HistoricalEventEmitterWorker {
         this.stateTransitionService = stateTransitionService;
         this.eventService = eventService;
         this.chargeService = chargeService;
+        this.eventEmitterConfig = connectorConfiguration.getEventEmitterConfig();
     }
 
-    public void execute(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
+    public void emitHistoricEventsById(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
             MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
@@ -74,12 +82,7 @@ public class HistoricalEventEmitterWorker {
         logger.info("Terminating");
     }
 
-    private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService,
-                eventService, stateTransitionService, doNotRetryEmitUntilDuration);
-    }
-
-    public void executeForDateRange(ZonedDateTime startDate, ZonedDateTime endDate, Long doNotRetryEmitUntilDuration) {
+    public void emitHistoricEventsByDate(ZonedDateTime startDate, ZonedDateTime endDate, Long doNotRetryEmitUntilDuration) {
         MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
 
         initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
@@ -89,7 +92,7 @@ public class HistoricalEventEmitterWorker {
         processRefundEvents(startDate, endDate);
     }
 
-    public void executeForRefundsOnly(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
+    public void emitRefundEventsOnlyById(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
             MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
@@ -111,6 +114,12 @@ public class HistoricalEventEmitterWorker {
         }
 
         logger.info("Terminating");
+    }
+
+
+    private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService,
+                eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
     // needs to be public for transactional annotation
@@ -142,7 +151,8 @@ public class HistoricalEventEmitterWorker {
                     refundDao.getRefundHistoryByDateRange(startDate, endDate, page, PAGE_SIZE);
 
             if (!refundHistoryList.isEmpty()) {
-                logger.info("Processing refunds events [page {}, no.of refund events {}] by date range", page, refundHistoryList.size());
+                logger.info("Processing refunds events [page {}, no.of refund events {}] by date range", page,
+                        refundHistoryList.size());
                 refundHistoryList
                         .stream()
                         .map(refundHistory -> refundHistory.getChargeExternalId())
@@ -162,7 +172,8 @@ public class HistoricalEventEmitterWorker {
             List<ChargeEventEntity> chargeEvents = chargeEventDao.findChargeEvents(startDate, endDate, page, PAGE_SIZE);
 
             if (!chargeEvents.isEmpty()) {
-                logger.info("Processing charge events [page {}, no.of.events {}] by date range", page, chargeEvents.size());
+                logger.info("Processing charge events [page {}, no.of.events {}] by date range", page,
+                        chargeEvents.size());
                 chargeEvents.stream().map(chargeEvent -> chargeEvent.getChargeEntity().getId())
                         .distinct()
                         .forEach(this::processChargeEventsForCharge);

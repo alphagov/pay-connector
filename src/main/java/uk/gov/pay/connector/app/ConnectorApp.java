@@ -22,6 +22,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
+import uk.gov.pay.connector.report.resource.ParityCheckerResource;
 import uk.gov.service.payments.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.service.payments.commons.utils.xray.Xray;
@@ -60,9 +61,6 @@ import uk.gov.pay.connector.queue.managed.PayoutReconcileMessageReceiver;
 import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
 import uk.gov.pay.connector.refund.resource.RefundsResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
-import uk.gov.pay.connector.tasks.HistoricalEventEmitterByDateRangeTask;
-import uk.gov.pay.connector.tasks.HistoricalEventEmitterTask;
-import uk.gov.pay.connector.tasks.ParityCheckTask;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
@@ -147,6 +145,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(EmittedEventResource.class));
         environment.jersey().register(injector.getInstance(GatewayAccount3dsFlexCredentialsResource.class));
         environment.jersey().register(injector.getInstance(GatewayCleanupResource.class));
+        environment.jersey().register(injector.getInstance(ParityCheckerResource.class));
         environment.jersey().register(injector.getInstance(LoggingMDCRequestFilter.class));
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
 
@@ -164,10 +163,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("database", new DatabaseHealthCheck(configuration.getDataSourceFactory()));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
         environment.healthChecks().register("sqsQueue", injector.getInstance(SQSHealthCheck.class));
-
-        environment.admin().addTask(injector.getInstance(HistoricalEventEmitterTask.class));
-        environment.admin().addTask(injector.getInstance(HistoricalEventEmitterByDateRangeTask.class));
-        environment.admin().addTask(injector.getInstance(ParityCheckTask.class));
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");

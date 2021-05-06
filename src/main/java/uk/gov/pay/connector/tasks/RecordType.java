@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.tasks;
 
-import org.apache.commons.lang3.StringUtils;
-
 public enum RecordType {
 
     CHARGE("charge"),
@@ -23,7 +21,7 @@ public enum RecordType {
 
     public static RecordType fromString(String recordTypeParam) {
         for (RecordType type : values()) {
-            if (StringUtils.equals(type.getValue(), recordTypeParam)) {
+            if (type.getValue().equals(recordTypeParam) || type.getValue().toUpperCase().equals(recordTypeParam)) {
                 return type;
             }
         }
