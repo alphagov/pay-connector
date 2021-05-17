@@ -65,6 +65,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "credentials", columnDefinition = "json")
     @Convert(converter = CredentialsConverter.class)
     private Map<String, String> credentials;
+    
+    @OneToMany(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
+    private List<GatewayAccountCredentialsEntity> credentialEntries;
 
     @Column(name = "service_name")
     private String serviceName;
@@ -183,7 +186,22 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @JsonView(Views.ApiView.class)
     public Map<String, String> getCredentials() {
-        return credentials;
+        return this.credentialEntries
+                .stream()
+                .filter(credential -> credential.getRole() == GatewayAccountCredentialsRole.PRIMARY)
+                .findFirst()
+                .map(GatewayAccountCredentialsEntity::getCredentials)
+                .orElse(null);
+    }
+
+    @JsonView(Views.ApiView.class)
+    public Map<String, String> getCredentials(String paymentProvider) {
+        return this.credentialEntries
+                .stream()
+                .filter(credential -> credential.getGatewayName() == paymentProvider)
+                .findFirst()
+                .map(GatewayAccountCredentialsEntity::getCredentials)
+                .orElse(null);
     }
 
     @JsonView(Views.ApiView.class)

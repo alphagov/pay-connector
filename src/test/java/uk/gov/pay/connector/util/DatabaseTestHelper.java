@@ -39,7 +39,7 @@ public class DatabaseTestHelper {
     public DatabaseTestHelper(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
-
+    
     public void addGatewayAccount(AddGatewayAccountParams params) {
         try {
             PGobject jsonObject = new PGobject();
@@ -84,6 +84,27 @@ public class DatabaseTestHelper {
                             .bind("allow_google_pay", params.isAllowGooglePay())
                             .bind("requires_3ds", params.isRequires3ds())
                             .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
+                            .execute());
+            addGatewayAccountCredentials(params.getAccountId(), params.getPaymentGateway(), params.getCredentials());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void addGatewayAccountCredentials(String gatewayAccountId, String paymentProvider, Map<String, String> credentials) {
+        try {
+            PGobject jsonObject = new PGobject();
+            jsonObject.setType("json");
+            if (credentials == null || credentials.size() == 0) {
+                jsonObject.setValue("{}");
+            } else {
+                jsonObject.setValue(new Gson().toJson(credentials));
+            }
+            jdbi.withHandle(h ->
+                    h.createUpdate("INSERT INTO gateway_accounts_credentials(account_id, payment_provider, credentials) VALUES (:account_id, :payment_provider, :credentials)")
+                            .bind("account_id", Long.valueOf(gatewayAccountId))
+                            .bind("payment_provider", paymentProvider)
+                            .bindBySqlType("credentials", jsonObject, OTHER)
                             .execute());
         } catch (SQLException e) {
             throw new RuntimeException(e);
