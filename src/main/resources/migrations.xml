@@ -1577,4 +1577,12 @@
             <column name="allow_telephone_payment_notifications" value="false"/>
         </update>
     </changeSet>
+
+    <changeSet id="create empty table to test concourse db migration" author="">
+        <createTable tableName="test_concourse_db_migration">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
