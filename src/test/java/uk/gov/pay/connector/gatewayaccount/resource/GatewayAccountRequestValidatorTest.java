@@ -72,7 +72,9 @@ public class GatewayAccountRequestValidatorTest {
             "replace, allow_telephone_payment_notifications, null, Field [value] is required",
             "replace, allow_telephone_payment_notifications, unfalse, Value [unfalse] must be of type boolean for path [allow_telephone_payment_notifications]",
             "replace, worldpay_exemption_engine_enabled, null, Field [value] is required",
-            "replace, worldpay_exemption_engine_enabled, unfalse, Value [unfalse] must be of type boolean for path [worldpay_exemption_engine_enabled]"
+            "replace, worldpay_exemption_engine_enabled, unfalse, Value [unfalse] must be of type boolean for path [worldpay_exemption_engine_enabled]",
+            "replace, send_payer_ip_address_to_gateway, null, Field [value] is required",
+            "replace, send_payer_ip_address_to_gateway, unfalse, Value [unfalse] must be of type boolean for path [send_payer_ip_address_to_gateway]"
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<>() {{

@@ -391,6 +391,34 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
+    public void shouldUpdateSendPayerIpAddressToGatewayToFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", "send_payer_ip_address_to_gateway",
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setSendPayerIpAddressToGateway(false);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateSendPayerIpAddressToGatewayToTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", "send_payer_ip_address_to_gateway",
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setSendPayerIpAddressToGateway(true);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
     public void shouldUpdateIntegrationVersion3ds() {
         JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
