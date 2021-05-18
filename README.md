@@ -228,6 +228,17 @@ Task can be invoked by sending request on admin port.
 |[```/v1/frontend/tokens/{chargeTokenId}/used```](docs/api_specification.md#post-v1frontendtokenschargetokenidused) | POST |  Mark a secure redirect token as used.|
 |[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid) | DELETE |  Delete a secure redirect token.|
 
+## SQS Queues
+
+Connector currently has three SQS queues, one of these is used to propagate payment events to Ledger, and the other two are used to distribute events between running instances of connector.
+
+#### Event Queue
+
+The event queue is used to send payment event information to Ledger (such as the payment has been refuned, payment details have been entered), connector pushes these events onto the queue and Ledger retrieves the on the other end. 
+
+#### Capture Queue & Payout Reconcile Queue
+
+These queues are used to distribute events amongst instances of connector for processing, connector places the events onto the queue and then reads of the end of the queue, processing each event as it reads them. This replaced a legacy implementation where a database table was used and connector would scan the database looking for events to process, using a lock to 'claim' an event for processing. The new implementation removes the needs for locks as each connector instance takes the next event on the queue and the distribution is managed by logic within the queue. As connector scales out more instances of connector poll the queue for new events.
 
 ## Licence
 
