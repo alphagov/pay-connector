@@ -323,6 +323,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return allowTelephonePaymentNotifications;
     }
 
+    @JsonProperty("send_payer_ip_address_to_gateway")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isSendPayerIpAddressToGateway() {
+        return sendPayerIpAddressToGateway;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -446,10 +452,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
         this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
-    }
-
-    public boolean isSendPayerIpAddressToGateway() {
-        return sendPayerIpAddressToGateway;
     }
 
     public void setSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
