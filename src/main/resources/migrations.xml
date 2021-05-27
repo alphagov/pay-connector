@@ -1620,4 +1620,10 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="add column payment_provider to charges" author="">
+        <addColumn tableName="charges">
+            <column name="payment_provider" type="varchar(255)">
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
