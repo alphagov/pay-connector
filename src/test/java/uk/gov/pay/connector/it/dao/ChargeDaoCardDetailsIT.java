@@ -52,6 +52,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
                 .withChargeId(chargeId)
                 .withCardDetails(testCardDetails)
                 .withTestAccount(testAccountFixture)
+                .withPaymentProvider(testAccountFixture.getPaymentProvider())
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED)
                 .insert();
     }

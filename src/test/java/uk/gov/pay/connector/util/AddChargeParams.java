@@ -17,6 +17,7 @@ public class AddChargeParams {
     private final Long chargeId;
     private final String externalChargeId;
     private final String gatewayAccountId;
+    private final String paymentProvider;
     private final long amount;
     private final ChargeStatus status;
     private final String returnUrl;
@@ -40,6 +41,7 @@ public class AddChargeParams {
         externalChargeId = builder.externalChargeId;
         amount = builder.amount;
         gatewayAccountId = builder.gatewayAccountId;
+        paymentProvider = builder.paymentProvider;
         status = builder.status;
         returnUrl = builder.returnUrl;
         transactionId = builder.transactionId;
@@ -68,6 +70,10 @@ public class AddChargeParams {
 
     public String getGatewayAccountId() {
         return gatewayAccountId;
+    }
+
+    public String getPaymentProvider() {
+        return paymentProvider;
     }
 
     public long getAmount() {
@@ -142,6 +148,7 @@ public class AddChargeParams {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
         private String gatewayAccountId;
+        private String paymentProvider;
         private long amount = 1000;
         private ChargeStatus status = ChargeStatus.CAPTURED;
         private String returnUrl = "http://somereturn.gov.uk";
@@ -179,6 +186,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withGatewayAccountId(String gatewayAccountId) {
             this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
             return this;
         }
 
@@ -270,7 +282,7 @@ public class AddChargeParams {
 
         public AddChargeParams build() {
             List.of(amount, status, returnUrl, gatewayAccountId, description, reference, externalChargeId)
-                    .forEach(x -> Objects.requireNonNull(x));
+                    .forEach(Objects::requireNonNull);
 
             return new AddChargeParams(this);
         }

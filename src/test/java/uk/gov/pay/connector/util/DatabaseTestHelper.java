@@ -106,12 +106,12 @@ public class DatabaseTestHelper {
                         "status, gateway_account_id, return_url, gateway_transaction_id, " +
                         "description, created_date, reference, version, email, language, " +
                         "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
-                        "external_metadata, card_type) " +
+                        "external_metadata, card_type, payment_provider) " +
                         "VALUES(:id, :external_id, :amount, " +
                         ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                         ":description, :created_date, :reference, :version, :email, :language, " +
                         ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
-                        ":external_metadata, :card_type)")
+                        ":external_metadata, :card_type, :payment_provider)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -131,6 +131,7 @@ public class DatabaseTestHelper {
                         .bind("parity_check_date", addChargeParams.getParityCheckDate())
                         .bindBySqlType("external_metadata", jsonMetadata, OTHER)
                         .bind("card_type", addChargeParams.getCardType())
+                        .bind("payment_provider", addChargeParams.getPaymentProvider())
                         .execute());
     }
 

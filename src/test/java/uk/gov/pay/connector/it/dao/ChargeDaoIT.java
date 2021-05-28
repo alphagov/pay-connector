@@ -86,15 +86,6 @@ public class ChargeDaoIT extends DaoITestBase {
         databaseTestHelper.truncateAllData();
     }
 
-
-    private void assertDateMatch(String createdDateString) {
-        assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
-    }
-
-    private void assertDateMatch(ZonedDateTime createdDateTime) {
-        assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, now()));
-    }
-
     @Test
     public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
         Long chargeId = 56735L;
@@ -106,6 +97,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
@@ -321,6 +313,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .withChargeId(chargeId)
                 .withCreatedDate(createdDate)
                 .withExternalChargeId(externalChargeId)
@@ -346,6 +339,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getCreatedDate(), is(createdDate));
         assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
+        assertThat(charge.getPaymentProvider(), is(testCharge.getPaymentProvider()));
         assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(charge.getExternalMetadata(), is(Optional.empty()));
     }
@@ -387,6 +381,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .withChargeId(chargeId)
                 .withCreatedDate(createdDate)
                 .withExternalChargeId(externalChargeId)
@@ -407,6 +402,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getCreatedDate(), is(createdDate));
         assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
+        assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
         assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
     }
@@ -435,6 +431,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getDescription(), is(DESCRIPTION));
         assertThat(charge.getStatus(), is(CREATED.getValue()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+        assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
         assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
@@ -871,6 +868,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .insert();
         defaultTestCardDetails
                 .withChargeId(defaultTestCharge.chargeId)

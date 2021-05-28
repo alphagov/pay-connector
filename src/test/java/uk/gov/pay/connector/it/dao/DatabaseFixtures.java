@@ -541,6 +541,7 @@ public class DatabaseFixtures {
         Long corporateCardSurcharge = null;
         Instant createdDate = Instant.now();
         TestAccount testAccount;
+        String paymentProvider;
         TestCardDetails cardDetails;
         WalletType walletType;
         ParityCheckStatus parityCheckStatus;
@@ -553,6 +554,11 @@ public class DatabaseFixtures {
 
         public TestCharge withTestAccount(TestAccount account) {
             this.testAccount = account;
+            return this;
+        }
+
+        public TestCharge withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
             return this;
         }
 
@@ -639,6 +645,7 @@ public class DatabaseFixtures {
                     .withChargeId(chargeId)
                     .withExternalChargeId(externalChargeId)
                     .withGatewayAccountId(String.valueOf(testAccount.getAccountId()))
+                    .withPaymentProvider(paymentProvider)
                     .withAmount(amount)
                     .withStatus(chargeStatus)
                     .withReturnUrl(returnUrl)
@@ -716,6 +723,10 @@ public class DatabaseFixtures {
 
         public TestAccount getTestAccount() {
             return testAccount;
+        }
+
+        public String getPaymentProvider() {
+            return paymentProvider;
         }
 
         public Long getCorporateCardSurcharge() {
