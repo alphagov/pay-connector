@@ -56,6 +56,7 @@ public class ChargeEntityFixture {
     private Source source = null;
     private boolean moto;
     private Exemption3ds exemption3ds;
+    private String paymentProvider;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -114,6 +115,7 @@ public class ChargeEntityFixture {
                 description,
                 reference,
                 gatewayAccountEntity,
+                paymentProvider,
                 email,
                 createdDate,
                 language,
@@ -132,6 +134,7 @@ public class ChargeEntityFixture {
         chargeEntity.setSource(source);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
+        chargeEntity.setPaymentProvider(paymentProvider);
 
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
@@ -286,4 +289,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
+    public ChargeEntityFixture withPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
+        return this;
+    }
 }

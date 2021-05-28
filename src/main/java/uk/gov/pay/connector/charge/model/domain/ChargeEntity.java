@@ -169,6 +169,9 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Enumerated(EnumType.STRING)
     private Exemption3ds exemption3ds;
 
+    @Column(name = "payment_provider")
+    private String paymentProvider;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -181,6 +184,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             String description,
             ServicePaymentReference reference,
             GatewayAccountEntity gatewayAccount,
+            String paymentProvider,
             String email,
             Instant createdDate,
             SupportedLanguage language,
@@ -197,6 +201,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.description = description;
         this.reference = reference;
         this.gatewayAccount = gatewayAccount;
+        this.paymentProvider = paymentProvider;
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.email = email;
@@ -283,6 +288,14 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public Exemption3ds getExemption3ds() {
         return exemption3ds;
+    }
+
+    public String getPaymentProvider() {
+        return paymentProvider;
+    }
+
+    public void setPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
     }
 
     public void setExternalId(String externalId) {
@@ -456,6 +469,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private String returnUrl;
         private String email;
         private GatewayAccountEntity gatewayAccount;
+        private String paymentProvider;
         private String description;
         private ServicePaymentReference reference;
         private SupportedLanguage language;
@@ -488,6 +502,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
         public WebChargeEntityBuilder withGatewayAccount(GatewayAccountEntity gatewayAccount) {
             this.gatewayAccount = gatewayAccount;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
             return this;
         }
 
@@ -534,6 +553,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     description,
                     reference,
                     gatewayAccount,
+                    paymentProvider,
                     email,
                     Instant.now(),
                     language,
@@ -552,6 +572,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private String email;
         private CardDetailsEntity cardDetails;
         private GatewayAccountEntity gatewayAccount;
+        private String paymentProvider;
         private String description;
         private ServicePaymentReference reference;
         private ExternalMetadata externalMetadata;
@@ -588,6 +609,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             return this;
         }
 
+        public TelephoneChargeEntityBuilder withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
+            return this;
+        }
+
         public TelephoneChargeEntityBuilder withDescription(String description) {
             this.description = description;
             return this;
@@ -611,6 +637,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     description,
                     reference,
                     gatewayAccount,
+                    paymentProvider,
                     email,
                     Instant.now(),
                     SupportedLanguage.ENGLISH,
