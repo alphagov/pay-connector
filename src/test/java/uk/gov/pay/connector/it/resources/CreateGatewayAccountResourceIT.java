@@ -10,9 +10,11 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -94,6 +97,12 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
         assertThat(gatewayAccount.isPresent(), is(true));
         assertThat(gatewayAccount.get().getCredentials().get("stripe_account_id"), is("abc"));
+
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
+        assertThat(gatewayAccountCredentialsList.size(), is(1));
+        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is("abc"));
+        assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
+        assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
     }
 
     @Test
@@ -108,6 +117,19 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
 
         assertCorrectCreateResponse(response, TEST);
         assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
+
+        String gatewayAccountId = response.extract()
+                .body()
+                .jsonPath()
+                .getString("gateway_account_id");
+        Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
+        assertThat(gatewayAccount.isPresent(), is(true));
+
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
+        assertThat(gatewayAccountCredentialsList.size(), is(1));
+        assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
+        assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("sandbox"));
+        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().isEmpty(), is(true));
     }
 
     @Test
