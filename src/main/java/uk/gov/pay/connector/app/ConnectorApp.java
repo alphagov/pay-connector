@@ -46,7 +46,7 @@ import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
-import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccount3dsFlexCredentialsResource;
+import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsResource;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
@@ -143,7 +143,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
         environment.jersey().register(injector.getInstance(EmittedEventResource.class));
-        environment.jersey().register(injector.getInstance(GatewayAccount3dsFlexCredentialsResource.class));
+        environment.jersey().register(injector.getInstance(GatewayAccountCredentialsResource.class));
         environment.jersey().register(injector.getInstance(GatewayCleanupResource.class));
         environment.jersey().register(injector.getInstance(ParityCheckerResource.class));
         environment.jersey().register(injector.getInstance(LoggingMDCRequestFilter.class));

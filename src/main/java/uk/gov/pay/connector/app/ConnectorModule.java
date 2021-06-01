@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.QUERY;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
+import static uk.gov.pay.connector.gateway.GatewayOperation.VALIDATE_CREDENTIALS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 public class ConnectorModule extends AbstractModule {
@@ -176,6 +177,13 @@ public class ConnectorModule extends AbstractModule {
     @Named("WorldpayInquiryGatewayClient")
     public GatewayClient worldpayInquiryGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayValidateCredentialsGatewayClient")
+    public GatewayClient worldpayValidateCredentialsGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, VALIDATE_CREDENTIALS, environment.metrics());
     }
 
     @Provides

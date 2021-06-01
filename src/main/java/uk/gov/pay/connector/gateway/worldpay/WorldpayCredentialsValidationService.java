@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.inject.Inject;
-import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
@@ -18,6 +16,7 @@ import java.net.URI;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayCredentialsCheckAuthHeader;
@@ -27,15 +26,14 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayCredentialsValidationService.class);
 
-    private final GatewayClient gatewayClient;
     private final Map<String, URI> gatewayUrlMap;
+    private final GatewayClient gatewayClient;
 
     @Inject
     public WorldpayCredentialsValidationService(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
-                                                GatewayClientFactory gatewayClientFactory,
-                                                Environment environment) {
+                                                @Named("WorldpayValidateCredentialsGatewayClient") GatewayClient gatewayClient) {
         this.gatewayUrlMap = gatewayUrlMap;
-        gatewayClient = gatewayClientFactory.createGatewayClient(WORLDPAY, environment.metrics());
+        this.gatewayClient = gatewayClient;
     }
 
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, WorldpayCredentials worldpayCredentials) {
@@ -73,7 +71,7 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
             }
         } catch (GatewayException.GatewayErrorException e) {
             return e.getStatus().map(status -> {
-                if (status == 401) {
+                if (status == SC_UNAUTHORIZED) {
                     return false;
                 }
                 throw new UnexpectedValidateCredentialsResponse();

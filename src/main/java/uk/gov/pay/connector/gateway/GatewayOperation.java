@@ -5,7 +5,8 @@ public enum GatewayOperation {
     CAPTURE("capture"),
     REFUND("refund"),
     QUERY("query"),
-    CANCEL("cancel");
+    CANCEL("cancel"),
+    VALIDATE_CREDENTIALS("validate_credentials");
 
     private final String description;
 

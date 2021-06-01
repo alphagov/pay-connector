@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredentialsResponse;
@@ -40,15 +39,6 @@ class WorldpayCredentialsValidationServiceTest {
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
 
     @Mock
-    private GatewayClientFactory gatewayClientFactory;
-
-    @Mock
-    private Environment environment;
-
-    @Mock
-    private MetricRegistry metricRegistry;
-
-    @Mock
     GatewayClient gatewayClient;
 
     @Mock
@@ -65,13 +55,9 @@ class WorldpayCredentialsValidationServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(environment.metrics()).thenReturn(metricRegistry);
-        when(gatewayClientFactory.createGatewayClient(any(), any())).thenReturn(gatewayClient);
-
         worldpayCredentialsValidationService = new WorldpayCredentialsValidationService(
                 GATEWAY_URL_MAP,
-                gatewayClientFactory,
-                environment);
+                gatewayClient);
     }
 
     @Test

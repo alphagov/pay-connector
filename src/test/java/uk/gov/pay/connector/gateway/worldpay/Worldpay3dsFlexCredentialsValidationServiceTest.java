@@ -175,9 +175,6 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         
         var exception = assertThrows(NotAWorldpayGatewayAccountException.class,
                 () -> service.validateCredentials(gatewayAccount, getValid3dsFlexCredentials()));
-        assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_NOT_FOUND);
-        assertEquals(exception.getMessage(), format("Gateway account with id %s is not a Worldpay account.", gatewayAccount.getId()));
-        assertThat(exception, is(instanceOf(WebApplicationException.class)));
     }
 
     private Worldpay3dsFlexCredentials getValid3dsFlexCredentials() {

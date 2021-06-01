@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -21,7 +22,6 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -35,11 +35,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class GatewayAccount3dsFlexCredentialsResourceIT {
+public class GatewayAccountCredentialsResourceIT {
     private DatabaseFixtures.TestAccount testAccount;
 
-    private static final String ACCOUNTS_API_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
+    private static final String UPDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
     private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
+    private static final String VALIDATE_WORLDPAY_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-credentials";
 
     public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
     public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
@@ -50,6 +51,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
     
     private DatabaseTestHelper databaseTestHelper;
     private WireMockServer wireMockServer;
+    private WorldpayMockClient worldpayMockClient;
     private DatabaseFixtures databaseFixtures;
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -59,6 +61,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         accountId = nextLong(2, 10000);
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
+        worldpayMockClient = new WorldpayMockClient(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
                 .withIntegrationVersion3ds(2)
@@ -201,7 +204,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         ));
         givenSetup()
                 .body(payload)
-                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
@@ -219,7 +222,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         ));
         givenSetup()
                 .body(payload)
-                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
         
@@ -233,7 +236,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         ));
         givenSetup()
                 .body(payload)
-                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
         var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
@@ -248,7 +251,7 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
             "issuer, Field [issuer] must be 24 lower-case hexadecimal characters",
             "organisational_unit_id, Field [organisational_unit_id] must be 24 lower-case hexadecimal characters",
     })
-    public void missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
+    public void update3dsFlexCredentials_missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
         Map<String, String> jsonFields = new HashMap<>();
         jsonFields.put("issuer", "57992a087a0c4849895ab8a2"); // pragma: allowlist secret`
         jsonFields.put("organisational_unit_id", "57992a087a0c4849895ab8a2"); // pragma: allowlist secret`
@@ -257,25 +260,25 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
 
         givenSetup()
                 .body(objectMapper.writeValueAsString(jsonFields))
-                .post(format(ACCOUNTS_API_URL, testAccount.getAccountId()))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(422)
                 .body("message[0]", is(expectedErrorMessage));
     }
 
     @Test
-    public void nonExistentGatewayAccountReturns404() throws JsonProcessingException {
+    public void update3dsFlexCredentials_nonExistentGatewayAccountReturns404() throws JsonProcessingException {
         Long fakeAccountId = RandomUtils.nextLong();
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
-                .post(format(ACCOUNTS_API_URL, fakeAccountId))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, fakeAccountId))
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
     }
 
     @Test
-    public void nonWorldpayGatewayAccountReturns404() throws JsonProcessingException {
+    public void update3dsFlexCredentials_nonWorldpayGatewayAccountReturns404() throws JsonProcessingException {
         long fakeAccountId = RandomUtils.nextLong();
         databaseFixtures.aTestAccount().withPaymentProvider("smartpay")
                 .withIntegrationVersion3ds(2)
@@ -283,10 +286,123 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .insert();
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
-                .post(format(ACCOUNTS_API_URL, fakeAccountId))
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, fakeAccountId))
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_nonWorldpayGatewayAccountReturns404() throws JsonProcessingException {
+        long accountId = RandomUtils.nextLong();
+        databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("smartpay").insert();
+        givenSetup()
+                .body(getValidWorldpayCredentials())
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(404)
+                .body("message[0]", is(format("Gateway account with id %s is not a Worldpay account.", accountId)));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_nonExistentGatewayAccountReturns404() throws JsonProcessingException {
+        long accountId = RandomUtils.nextLong();
+        givenSetup()
+                .body(getValidWorldpayCredentials())
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(404)
+                .body("message[0]", is(format("Gateway Account with id [%s] not found.", accountId)));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returns422WhenUsernameMissing() throws JsonProcessingException {
+        long accountId = RandomUtils.nextLong();
+        String body = objectMapper.writeValueAsString(Map.of(
+                "username","",
+                "password", "valid-password",
+                "merchant_id", "valid-merchant-id"
+        ));
+        givenSetup()
+                .body(body)
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Field [username] is required"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returns422WhenPasswordMissing() throws JsonProcessingException {
+        long accountId = RandomUtils.nextLong();
+        String body = objectMapper.writeValueAsString(Map.of(
+                "username","valid-username",
+                "password", "",
+                "merchant_id", "valid-merchant-id"
+        ));
+        givenSetup()
+                .body(body)
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Field [password] is required"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returns422WhenMerchantIdMissing() throws JsonProcessingException {
+        long accountId = RandomUtils.nextLong();
+        String body = objectMapper.writeValueAsString(Map.of(
+                "username","valid-username",
+                "password", "valid-password",
+                "merchant_id", ""
+        ));
+        givenSetup()
+                .body(body)
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Field [merchant_id] is required"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returnsValid() throws JsonProcessingException {
+        worldpayMockClient.mockCredentialsValidationValid();
+        
+        long accountId = RandomUtils.nextLong();
+        databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
+        givenSetup()
+                .body(getValidWorldpayCredentials())
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(200)
+                .body("result", is("valid"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returnsInvalid() throws JsonProcessingException {
+        worldpayMockClient.mockCredentialsValidationInvalid();
+
+        long accountId = RandomUtils.nextLong();
+        databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
+        givenSetup()
+                .body(getValidWorldpayCredentials())
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(200)
+                .body("result", is("invalid"));
+    }
+
+    @Test
+    public void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() throws JsonProcessingException {
+        worldpayMockClient.mockCredentialsValidationUnexpectedResponse();
+
+        long accountId = RandomUtils.nextLong();
+        databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
+        givenSetup()
+                .body(getValidWorldpayCredentials())
+                .post(format(VALIDATE_WORLDPAY_CREDENTIALS_URL, accountId))
+                .then()
+                .statusCode(500)
+                .body("message[0]", is("Worldpay returned an unexpected response when validating credentials"));
     }
 
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
@@ -294,5 +410,13 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 "issuer", VALID_ISSUER,
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", VALID_JWT_MAC_KEY));
+    }
+    
+    private String getValidWorldpayCredentials() throws JsonProcessingException {
+        return objectMapper.writeValueAsString(Map.of(
+                "username","valid-user-name",
+                "password", "valid-password",
+                "merchant_id", "valid-merchant-id"
+        ));
     }
 }
