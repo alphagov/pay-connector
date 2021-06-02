@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +62,9 @@ public class GatewayAccountServiceTest {
     @Mock
     private Worldpay3dsFlexCredentialsEntity mockWorldpay3dsFlexCredentialsEntity;
 
+    @Mock
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+
     private GatewayAccountService gatewayAccountService;
     
     private static final Long GATEWAY_ACCOUNT_ID = 100L;
@@ -71,7 +75,8 @@ public class GatewayAccountServiceTest {
 
     @Before
     public void setUp() {
-        gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao);
+        gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao,
+                mockGatewayAccountCredentialsService);
         when(mockGatewayAccountEntity.getType()).thenReturn("test");
         when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
         when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");

@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
@@ -54,17 +55,20 @@ public class GatewayAccountService {
 
     private final GatewayAccountDao gatewayAccountDao;
     private final CardTypeDao cardTypeDao;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
     @Inject
-    public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao) {
+    public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao,
+                                 GatewayAccountCredentialsService gatewayAccountCredentialsService) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.cardTypeDao = cardTypeDao;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
         return gatewayAccountDao.findById(gatewayAccountId);
     }
-    
+
     public List<GatewayAccountResourceDTO> searchGatewayAccounts(GatewayAccountSearchParams params) {
         return gatewayAccountDao.search(params).stream()
                 .map(GatewayAccountResourceDTO::new)
@@ -92,6 +96,9 @@ public class GatewayAccountService {
         gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
 
         gatewayAccountDao.persist(gatewayAccountEntity);
+
+        gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity,
+                gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
 
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }

@@ -9,6 +9,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
@@ -31,6 +32,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +150,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "allow_telephone_payment_notifications")
     private boolean allowTelephonePaymentNotifications;
 
+    @OneToMany(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
+    @JsonIgnore
+    private List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = new ArrayList<>();
+
     public GatewayAccountEntity() {
     }
 
@@ -184,6 +190,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView(Views.ApiView.class)
     public Map<String, String> getCredentials() {
         return credentials;
+    }
+
+    public List<GatewayAccountCredentialsEntity> getGatewayAccountCredentials() {
+        return gatewayAccountCredentials;
     }
 
     @JsonView(Views.ApiView.class)
