@@ -2731,6 +2731,53 @@ HTTP/1.1 404 Not Found
 HTTP/1.1 404 Not Found
 ```
 -----------------------------------------------------------------------------------------------------------
+## POST /v1/api/accounts/{accountId}/worldpay/check-credentials
+
+Check with Worldpay that the PSP credentials are real and valid.
+
+### Request example
+
+```
+POST /v1/api/accounts/123/worldpay/check-credentials
+[
+    {
+        "username": "xxx",
+        "password": "xxx",
+        "merchant_id": "xxx
+    },
+]
+```
+
+### Request field description
+| Field  | Required | Description                               |
+| ------ |:--------:|------------- |
+| `username`    | X | The username |
+| `password`  | X | The password |
+| `merchant_id` | X | The merchant id |
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+{
+    "result": "valid"
+}
+```
+
+### Response errors
+
+#### Specified `accountId` does not exist
+
+```
+HTTP/1.1 404 Not Found
+```
+
+#### Specified `accountId` is not a Worldpay gateway account
+
+```
+HTTP/1.1 404 Not Found
+```
+-----------------------------------------------------------------------------------------------------------
 ## GET /v1/api/reports/performance-report
 
 Retrieves performance summary
