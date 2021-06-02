@@ -20,6 +20,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANC
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_VALID_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -87,6 +90,21 @@ public class WorldpayMockClient {
     public void mockRefundError() {
         String refundResponse = load(WORLDPAY_REFUND_ERROR_RESPONSE);
         paymentServiceResponse(refundResponse);
+    }
+    
+    public void mockCredentialsValidationValid() {
+        String credentialsValidResponse = load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_VALID_RESPONSE);
+        paymentServiceResponse(credentialsValidResponse);
+    }
+
+    public void mockCredentialsValidationInvalid() {
+        String credentialsValidResponse = load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE);
+        paymentServiceResponse(credentialsValidResponse);
+    }
+
+    public void mockCredentialsValidationUnexpectedResponse() {
+        String credentialsValidResponse = load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE);
+        paymentServiceResponse(credentialsValidResponse);
     }
 
     public void mockAuthorisationGatewayError() {

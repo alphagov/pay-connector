@@ -4,9 +4,11 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import javax.ws.rs.WebApplicationException;
 
+import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
+
 public class UnexpectedValidateCredentialsResponse extends WebApplicationException {
     
     public UnexpectedValidateCredentialsResponse() {
-        super(HttpStatus.INTERNAL_SERVER_ERROR_500);
+        super(serviceErrorResponse("Worldpay returned an unexpected response when validating credentials"));
     }
 }
