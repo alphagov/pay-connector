@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -30,15 +29,11 @@ public class GatewayAccountCredentialsService {
     public void createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
                                                 Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateState(gatewayAccountEntity, paymentProvider, credentials);
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
+                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
 
         if (state == ACTIVE) {
-            gatewayAccountCredentialsEntity
-                    = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials,
-                    state, Instant.now());
-        } else {
-            gatewayAccountCredentialsEntity
-                    = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
+            gatewayAccountCredentialsEntity.setActiveStartDate(Instant.now());
         }
 
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
@@ -47,18 +42,14 @@ public class GatewayAccountCredentialsService {
     private GatewayAccountCredentialState calculateState(GatewayAccountEntity gatewayAccountEntity,
                                                          String paymentProvider, Map<String, String> credentials) {
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(paymentProvider);
-        if (paymentGatewayName == SANDBOX) {
-            return ACTIVE;
-        }
-        if (paymentGatewayName == STRIPE && !credentials.isEmpty()) {
-            boolean hasActiveCredentials =
-                    gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
-            if (hasActiveCredentials){
-                return ENTERED;
-            }
+        boolean isFirstCredentials = !gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
+        boolean credentialsPrePopulated = !credentials.isEmpty();
+
+        if ((isFirstCredentials && credentialsPrePopulated) || paymentGatewayName == SANDBOX) {
             return ACTIVE;
         }
 
-        return CREATED;
+        return credentialsPrePopulated ? ENTERED : CREATED;
     }
+
 }

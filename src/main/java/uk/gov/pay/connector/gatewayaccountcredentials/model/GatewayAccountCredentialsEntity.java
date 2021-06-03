@@ -75,13 +75,6 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         this.createdDate = Instant.now();
     }
 
-    public GatewayAccountCredentialsEntity(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
-                                           Map<String, String> credentials, GatewayAccountCredentialState state,
-                                           Instant activeStartDate) {
-        this(gatewayAccountEntity, paymentProvider, credentials, state);
-        this.activeStartDate = activeStartDate;
-    }
-
     public Long getId() {
         return id;
     }
@@ -116,5 +109,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     public GatewayAccountEntity getGatewayAccountEntity() {
         return gatewayAccountEntity;
+    }
+
+    public void setActiveStartDate(Instant activeStartDate) {
+        this.activeStartDate = activeStartDate;
     }
 }
