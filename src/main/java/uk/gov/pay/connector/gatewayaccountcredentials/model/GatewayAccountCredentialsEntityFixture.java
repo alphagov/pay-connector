@@ -1,0 +1,55 @@
+package uk.gov.pay.connector.gatewayaccountcredentials.model;
+
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+
+import java.time.Instant;
+import java.util.Map;
+
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+
+public final class GatewayAccountCredentialsEntityFixture {
+    private Instant activeStartDate = Instant.now();
+    private String paymentProvider = WORLDPAY.getName();
+    private Map<String, String> credentials = Map.of();
+    private GatewayAccountCredentialState state = CREATED;
+    private GatewayAccountEntity gatewayAccountEntity;
+
+    private GatewayAccountCredentialsEntityFixture() {
+    }
+
+    public static GatewayAccountCredentialsEntityFixture aGatewayAccountCredentialsEntity() {
+        return new GatewayAccountCredentialsEntityFixture();
+    }
+
+    public GatewayAccountCredentialsEntityFixture withActiveStartDate(Instant activeStartDate) {
+        this.activeStartDate = activeStartDate;
+        return this;
+    }
+
+    public GatewayAccountCredentialsEntityFixture withPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
+        return this;
+    }
+
+    public GatewayAccountCredentialsEntityFixture withCredentials(Map<String, String> credentials) {
+        this.credentials = credentials;
+        return this;
+    }
+
+    public GatewayAccountCredentialsEntityFixture withState(GatewayAccountCredentialState state) {
+        this.state = state;
+        return this;
+    }
+
+    public GatewayAccountCredentialsEntityFixture withGatewayAccountEntity(GatewayAccountEntity gatewayAccountEntity) {
+        this.gatewayAccountEntity = gatewayAccountEntity;
+        return this;
+    }
+
+    public GatewayAccountCredentialsEntity build() {
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
+        gatewayAccountCredentialsEntity.setActiveStartDate(activeStartDate);
+        return gatewayAccountCredentialsEntity;
+    }
+}

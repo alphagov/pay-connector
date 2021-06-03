@@ -5,8 +5,6 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.postgresql.util.PGobject;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
@@ -17,6 +15,8 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -60,8 +60,8 @@ public class DatabaseTestHelper {
                             ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                             ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                             ":corporate_prepaid_credit_card_surcharge_amount, " +
-                            ":corporate_prepaid_debit_card_surcharge_amount, "+
-                            ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, "+
+                            ":corporate_prepaid_debit_card_surcharge_amount, " +
+                            ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
                             ":allow_apple_pay, :allow_google_pay, :requires_3ds, :allow_telephone_payment_notifications)")
                             .bind("id", Long.valueOf(params.getAccountId()))
                             .bind("external_id", params.getExternalId())
@@ -151,6 +151,7 @@ public class DatabaseTestHelper {
                          String userEmail, String chargeExternalId) {
         return addRefund(externalId, amount, status, gatewayTransactionId, createdDate, submittedByUserExternalId, userEmail, chargeExternalId, null, null);
     }
+
     public int addRefund(String externalId, long amount, RefundStatus status,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail, String chargeExternalId, ParityCheckStatus parityCheckStatus, ZonedDateTime parityCheckDate) {
@@ -552,7 +553,7 @@ public class DatabaseTestHelper {
                         .first()
         );
     }
-    
+
     public String getExemption3ds(Long chargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT exemption_3ds from charges WHERE id = :charge_id")
@@ -880,12 +881,12 @@ public class DatabaseTestHelper {
                                                 String organisationalUnitId,
                                                 Long version) {
         insertWorldpay3dsFlexCredential(
-            gatewayAccountId,
-            jwtMacKey,
-            issuer,
-            organisationalUnitId,
-            version,
-            false);
+                gatewayAccountId,
+                jwtMacKey,
+                issuer,
+                organisationalUnitId,
+                version,
+                false);
     }
 
     public void insertWorldpay3dsFlexCredential(Long gatewayAccountId,
@@ -895,15 +896,15 @@ public class DatabaseTestHelper {
                                                 Long version,
                                                 boolean isExemptionEngineEnabled) {
         jdbi.withHandle(handle ->
-            handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine) " +
-                    "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
-                .bind("gatewayAccountId", gatewayAccountId)
-                .bind("jwtMacKey", jwtMacKey)
-                .bind("issuer", issuer)
-                .bind("organisationalUnitId", organisationalUnitId)
-                .bind("version", version)
-                .bind("exemption_engine", isExemptionEngineEnabled)
-                .execute()
+                handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine) " +
+                        "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .bind("jwtMacKey", jwtMacKey)
+                        .bind("issuer", issuer)
+                        .bind("organisationalUnitId", organisationalUnitId)
+                        .bind("version", version)
+                        .bind("exemption_engine", isExemptionEngineEnabled)
+                        .execute()
         );
     }
 
@@ -921,5 +922,13 @@ public class DatabaseTestHelper {
                         .bind("accountId", accountId)
                         .mapToMap()
                         .first());
+    }
+
+    public List<Map<String, Object>> getGatewayAccountCredentials(long accountId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials where gateway_account_id = :accountId")
+                        .bind("accountId", accountId)
+                        .mapToMap()
+                        .list());
     }
 }

@@ -21,6 +21,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
@@ -74,16 +75,23 @@ public class GatewayAccountResource {
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
 
     @Inject
-    public GatewayAccountResource(GatewayAccountService gatewayAccountService, GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
+    public GatewayAccountResource(GatewayAccountService gatewayAccountService,
+                                  GatewayAccountDao gatewayDao,
+                                  CardTypeDao cardTypeDao,
+                                  ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
-                                  GatewayAccountRequestValidator validator, GatewayAccountServicesFactory gatewayAccountServicesFactory) {
+                                  GatewayAccountCredentialsService gatewayAccountCredentialsService,
+                                  GatewayAccountRequestValidator validator, 
+                                  GatewayAccountServicesFactory gatewayAccountServicesFactory) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
         providerCredentialFields = newHashMap();
@@ -234,6 +242,7 @@ public class GatewayAccountResource {
                             }
 
                             gatewayAccount.setCredentials(credentialsPayload);
+                            gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccount, credentialsPayload);
                             return Response.ok().build();
                         }
                 )

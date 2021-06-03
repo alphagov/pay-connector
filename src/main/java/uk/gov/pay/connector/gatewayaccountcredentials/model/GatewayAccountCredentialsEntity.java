@@ -114,4 +114,12 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     public void setActiveStartDate(Instant activeStartDate) {
         this.activeStartDate = activeStartDate;
     }
+
+    public void setCredentials(Map<String, String> credentials) {
+        this.credentials = credentials;
+    }
+
+    public void setState(GatewayAccountCredentialState state) {
+        this.state = state;
+    }
 }

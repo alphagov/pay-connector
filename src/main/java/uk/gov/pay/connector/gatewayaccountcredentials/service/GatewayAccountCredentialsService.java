@@ -8,13 +8,17 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class GatewayAccountCredentialsService {
 
@@ -50,6 +54,34 @@ public class GatewayAccountCredentialsService {
         }
 
         return credentialsPrePopulated ? ENTERED : CREATED;
+    }
+
+    /**
+     * This method is for updating the gateway_account_credentials table when the old endpoint for patching
+     * credentials is called. This is a temporary measure while we completely switch over to using the
+     * gateway_account_credentials table for storing and getting credentials.
+     */
+    @Transactional
+    public void updateGatewayAccountCredentialsForLegacyEndpoint(GatewayAccountEntity gatewayAccountEntity,
+                                                                 Map<String, String> credentials) {
+        List<GatewayAccountCredentialsEntity> credentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (credentialsEntities.isEmpty()) {
+            // Backfill hasn't been run for this gateway account, no need to add to gateway_account_credentials table
+            // as row will be added when backfill is run.
+            return;
+        }
+        if (credentialsEntities.size() > 1) {
+            throw new WebApplicationException(serviceErrorResponse(
+                    format("Expected exactly one gateway_account_credentials entity, found %s",
+                            credentialsEntities.size())));
+        }
+
+        var credentialsEntity = credentialsEntities.get(0);
+        credentialsEntity.setCredentials(credentials);
+        if (credentialsEntity.getState() != ACTIVE) {
+            credentialsEntity.setState(ACTIVE);
+            credentialsEntity.setActiveStartDate(Instant.now());
+        }
     }
 
 }

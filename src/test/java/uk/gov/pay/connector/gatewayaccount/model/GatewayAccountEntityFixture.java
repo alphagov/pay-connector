@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ public final class GatewayAccountEntityFixture {
     private List<CardTypeEntity> cardTypes = newArrayList();
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
     private boolean sendPayerIpAddressToGateway;
+    private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
 
     private GatewayAccountEntityFixture() {
     }
@@ -159,6 +162,11 @@ public final class GatewayAccountEntityFixture {
         this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
         return this;
     }
+    
+    public GatewayAccountEntityFixture withGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> credentials) {
+        this.gatewayAccountCredentialsEntities = credentials;
+        return this;
+    }
 
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
@@ -185,6 +193,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
+        gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
         return gatewayAccountEntity;
     }
 }

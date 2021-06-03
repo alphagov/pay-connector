@@ -14,9 +14,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.HashUtil;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -25,6 +27,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,6 +44,9 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
     @Mock
     HashUtil hashUtil;
+    
+    @Mock
+    GatewayAccountEntity gatewayAccount;
 
     @Before
     public void setup() {
@@ -48,7 +55,6 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
     @Test
     public void shouldCreateNotificationCredentialsIfNotPresentAndEncryptPassword() throws CredentialsException {
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
 
         when(gatewayAccount.getNotificationCredentials()).thenReturn(null);
@@ -71,7 +77,6 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
     @Test
     public void shouldUpdateExistingNotificationCredentialIfPresent() throws CredentialsException {
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
 
@@ -92,7 +97,6 @@ public class GatewayAccountNotificationCredentialsServiceTest {
         expectedException.expect(CredentialsException.class);
         expectedException.expectMessage("Invalid password length");
 
-        GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobsecret");
 
         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);

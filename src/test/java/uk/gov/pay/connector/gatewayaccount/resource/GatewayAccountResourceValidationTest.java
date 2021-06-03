@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit.ResourceTestRule;
 import org.junit.ClassRule;
 import org.junit.Test;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -42,7 +42,7 @@ public class GatewayAccountResourceValidationTest {
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
             .addResource(new GatewayAccountResource(null, null, null, mockConnectorConfiguration,
-                    null, new GatewayAccountRequestValidator(new RequestValidator()), null))
+                    null, null, new GatewayAccountRequestValidator(new RequestValidator()), null))
             .build();
 
     @Test
@@ -105,7 +105,7 @@ public class GatewayAccountResourceValidationTest {
     @Test
     public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeOperationIsMissing() {
         JsonNode jsonNode = objectMapper.valueToTree(
-                Map.of("path", "corporate_prepaid_credit_card_surcharge_amount","value", 250));
+                Map.of("path", "corporate_prepaid_credit_card_surcharge_amount", "value", 250));
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()
@@ -150,7 +150,7 @@ public class GatewayAccountResourceValidationTest {
     @Test
     public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeAmountValueIsMissing() {
         JsonNode jsonNode = objectMapper.valueToTree(
-                Map.of("op", "replace","path", "corporate_prepaid_credit_card_surcharge_amount"));
+                Map.of("op", "replace", "path", "corporate_prepaid_credit_card_surcharge_amount"));
         Response response = resources.client()
                 .target("/v1/api/accounts/12")
                 .request()

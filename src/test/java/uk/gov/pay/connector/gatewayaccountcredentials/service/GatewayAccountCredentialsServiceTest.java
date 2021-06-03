@@ -12,16 +12,22 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
+import javax.ws.rs.WebApplicationException;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
 public class GatewayAccountCredentialsServiceTest {
@@ -117,5 +123,48 @@ public class GatewayAccountCredentialsServiceTest {
         assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
         assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
         assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+    }
+
+    @Test
+    public void shouldUpdateGatewayCredentialsIfExactlyOneRecordAndSetToActive() {
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withState(CREATED)
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity))
+                .build();
+
+        var credentials = Map.of("username", "foo");
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials);
+
+        assertThat(gatewayAccountEntity.getGatewayAccountCredentials(), hasSize(1));
+        GatewayAccountCredentialsEntity updatedCredentials = gatewayAccountEntity.getGatewayAccountCredentials().get(0);
+        assertThat(updatedCredentials.getCredentials(), is(credentials));
+        assertThat(updatedCredentials.getState(), is(ACTIVE));
+        assertThat(updatedCredentials.getActiveStartDate(), is(notNullValue()));
+    }
+
+    @Test
+    void shouldNotUpdateIfNoCredentialsRecordsExist() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .build();
+
+        var credentials = Map.of("username", "foo");
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials);
+
+        assertThat(gatewayAccountEntity.getGatewayAccountCredentials(), hasSize(0));
+    }
+
+    @Test
+    void shouldThrowExceptionIfMoreThanOneCredentialsRecord() {
+        GatewayAccountCredentialsEntity credentialsEntity1 = aGatewayAccountCredentialsEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity2 = aGatewayAccountCredentialsEntity().build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(credentialsEntity1, credentialsEntity2))
+                .build();
+
+        var credentials = Map.of("username", "foo");
+        assertThrows(WebApplicationException.class, () ->
+                gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials));
     }
 }
