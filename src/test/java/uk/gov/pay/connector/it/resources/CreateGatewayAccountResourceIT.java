@@ -22,6 +22,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -103,6 +104,7 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is("abc"));
         assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
         assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
+        assertThat(gatewayAccountCredentialsList.get(0).getActiveStartDate(), is(notNullValue()));
     }
 
     @Test
