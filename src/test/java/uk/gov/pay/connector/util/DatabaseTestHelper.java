@@ -661,6 +661,13 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void enableProviderSwitch(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE gateway_accounts set provider_switch_enabled=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
 
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->

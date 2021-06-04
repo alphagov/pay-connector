@@ -152,6 +152,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @OneToMany(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = new ArrayList<>();
+    
+    @Column(name = "provider_switch_enabled")
+    private boolean providerSwitchEnabled;
 
     public GatewayAccountEntity() {
     }
@@ -475,6 +478,16 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> gatewayAccountCredentials) {
         this.gatewayAccountCredentials = gatewayAccountCredentials;
+    }
+
+    @JsonProperty("provider_switch_enabled")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isProviderSwitchEnabled() {
+        return providerSwitchEnabled;
+    }
+
+    public void setProviderSwitchEnabled(boolean providerSwitchEnabled) {
+        this.providerSwitchEnabled = providerSwitchEnabled;
     }
 
     public class Views {
