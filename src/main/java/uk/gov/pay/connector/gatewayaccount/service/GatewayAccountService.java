@@ -48,6 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
 
 public class GatewayAccountService {
 
@@ -203,6 +204,10 @@ public class GatewayAccountService {
                         .orElseThrow(() -> new MissingWorldpay3dsFlexCredentialsEntityException(gatewayAccountEntity.getId(), FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED));
                     worldpay3dsFlexCredentialsEntity.setExemptionEngineEnabled(gatewayAccountRequest.valueAsBoolean());
                 }
+            ),
+            entry(
+                FIELD_PROVIDER_SWITCH_ENABLED,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean())
             )
     );
 
