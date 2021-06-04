@@ -1626,4 +1626,10 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="add provider_switch_enabled to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="provider_switch_enabled" type="boolean" defaultValue="false">
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
