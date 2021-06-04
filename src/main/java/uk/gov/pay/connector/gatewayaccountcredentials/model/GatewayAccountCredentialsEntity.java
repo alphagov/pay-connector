@@ -1,9 +1,14 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
 import javax.persistence.Column;
@@ -25,11 +30,11 @@ import java.util.Map;
 @Table(name = "gateway_account_credentials")
 @SequenceGenerator(name = "gateway_account_credentials_id_seq",
         sequenceName = "gateway_account_credentials_id_seq", allocationSize = 1)
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_account_credentials_id_seq")
-    @JsonIgnore
     private Long id;
 
     @Column(name = "payment_provider")
@@ -75,6 +80,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         this.createdDate = Instant.now();
     }
 
+    @JsonProperty("gateway_account_credential_id")
     public Long getId() {
         return id;
     }
@@ -95,14 +101,17 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return lastUpdatedByUserExternalId;
     }
 
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
     public Instant getCreatedDate() {
         return createdDate;
     }
 
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
     public Instant getActiveStartDate() {
         return activeStartDate;
     }
 
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
     public Instant getActiveEndDate() {
         return activeEndDate;
     }

@@ -583,6 +583,12 @@ public class DatabaseTestHelper {
                             .bindBySqlType("credentials", pgCredentials, OTHER)
                             .execute()
             );
+            jdbi.withHandle(handle ->
+                    handle.createUpdate("UPDATE gateway_account_credentials set credentials=:credentials WHERE gateway_account_id=:gatewayAccountId")
+                            .bind("gatewayAccountId", accountId)
+                            .bindBySqlType("credentials", pgCredentials, OTHER)
+                            .execute()
+            );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

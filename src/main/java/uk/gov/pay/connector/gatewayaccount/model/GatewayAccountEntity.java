@@ -151,7 +151,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     private boolean allowTelephonePaymentNotifications;
 
     @OneToMany(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
-    @JsonIgnore
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = new ArrayList<>();
 
     public GatewayAccountEntity() {
@@ -192,6 +191,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return credentials;
     }
 
+    @JsonProperty("gateway_account_credentials")
+    @JsonView(Views.ApiView.class)
     public List<GatewayAccountCredentialsEntity> getGatewayAccountCredentials() {
         return gatewayAccountCredentials;
     }
