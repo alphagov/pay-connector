@@ -472,6 +472,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
     }
 
+    public void setGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> gatewayAccountCredentials) {
+        this.gatewayAccountCredentials = gatewayAccountCredentials;
+    }
+
     public class Views {
         public class ApiView {
         }

@@ -6,12 +6,13 @@ import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
+import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -36,7 +38,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -306,6 +308,13 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
 
         Map<String, String> currentCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials, is(gatewayAccountPayload.getCredentials()));
+
+        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentials(Long.parseLong(accountId));
+        assertThat(gatewayAccountCredentials, hasSize(1));
+        Map<String, Object> updatedGatewayAccountCredentials = gatewayAccountCredentials.get(0);
+        assertThat(updatedGatewayAccountCredentials, hasEntry("state", ACTIVE.toString()));
+        Map<String, String> credentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(credentials, hasEntry("merchant_id", "a-merchant-id"));
     }
 
     @Test
