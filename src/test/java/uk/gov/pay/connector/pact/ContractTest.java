@@ -11,8 +11,6 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -21,8 +19,11 @@ import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -63,12 +64,14 @@ public class ContractTest {
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
+    private static WorldpayMockClient worldpayMockClient;
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeClass
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
+        worldpayMockClient = new WorldpayMockClient(wireMockRule);
     }
 
     @Before
@@ -465,5 +468,14 @@ public class ContractTest {
                 .build());
         dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
         dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
+    }
+
+    @State("a Worldpay gateway account with id 333 exists and stub for validating credentials is set up")
+    public void aWorldpayGatewayAccountWithCredentialsExists() {
+        worldpayMockClient.mockCredentialsValidationValid();
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("333")
+                .withPaymentGateway(WORLDPAY.getName())
+                .build());
     }
 }
