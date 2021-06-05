@@ -3020,3 +3020,35 @@ curl -v -XPOST '127.0.0.1:8080/v1/tasks/parity-checker?parity_check_status=DATA_
 < Date: Wed, 25 Sep 2020 08:15:48 GMT
 < Content-Length: 0
 ```
+
+-----------------------------------------------------------------------------------------------------------
+
+## POST /v1/api/accounts/{accountId}/credentials
+
+This endpoint adds a new credential to this account.
+
+### Request example
+
+```
+POST /v1/api/accounts/123/credentials
+Content-Type: application/json
+
+{
+    "payment_provider": "worldpay"
+}
+```
+
+#### Request body description
+
+| Field                    | required | Description                                                      | Supported Values     |
+| ------------------------ |:--------:| ---------------------------------------------------------------- |----------------------|
+| `payment_provider`       | X        | The payment provider for these credentials.          | worldpay, stripe |
+| `credentials`                   |          | JSON blob containing credentials.                                  |  |
+
+### Response example
+
+```
+200 OK
+```
+
+-----------------------------------------------------------------------------------------------------------
