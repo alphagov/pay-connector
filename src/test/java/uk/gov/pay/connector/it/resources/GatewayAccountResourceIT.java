@@ -12,6 +12,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -19,6 +20,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -393,6 +395,55 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void createGatewayAccountsCredentials_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "worldpay")))
+                .post("/v1/frontend/accounts/" + gatewayAccountId + "/credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsWithCredentials_responseShouldBe200_Ok() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        Map credentials = Map.of("stripe_account_id", "some-account-id");
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
+                .post("/v1/frontend/accounts/" + gatewayAccountId + "/credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        // this could use /v1/frontend/accounts when functionality to serialise all credentials as a list is merged
+        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentials(Long.parseLong(gatewayAccountId));
+        assertThat(gatewayAccountCredentials.size(), is(2));
+        assertThat(gatewayAccountCredentials.get(1).get("payment_provider"), is("stripe"));
+        assertThat(gatewayAccountCredentials.get(1).get("credentials").toString().contains("some-account-id"), is(true));
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsInvalidProvider_responseShouldBe422() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "epdq")))
+                .post("/v1/frontend/accounts/" + gatewayAccountId + "/credentials")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsMissingCredentials_responseShouldBe400() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        Map credentials = Map.of("merchant_id", "a-merchant-id");
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "worldpay", "credentials", credentials)))
+                .post("/v1/frontend/accounts/" + gatewayAccountId + "/credentials")
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+    }
+
+
+        @Test
     public void patchGatewayAccountAnalyticsId_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()

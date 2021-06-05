@@ -73,4 +73,8 @@ public class StripeGatewayConfig extends Configuration {
     public List<String> getAllowedCidrs() {
         return allowedCidrs;
     }
+
+    public List<String> getCredentials() {
+        return List.of("stripe_account_id");
+    }
 }
