@@ -541,7 +541,7 @@ public class DatabaseFixtures {
         Long corporateCardSurcharge = null;
         Instant createdDate = Instant.now();
         TestAccount testAccount;
-        String paymentProvider;
+        String paymentProvider = "sandbox";
         TestCardDetails cardDetails;
         WalletType walletType;
         ParityCheckStatus parityCheckStatus;

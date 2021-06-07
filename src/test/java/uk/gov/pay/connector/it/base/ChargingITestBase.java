@@ -207,7 +207,7 @@ public class ChargingITestBase {
     }
 
     protected String createNewChargeWithNoTransactionIdOrEmailAddress(ChargeStatus status) {
-        return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null).toString();
+        return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider).toString();
     }
 
     protected String createNewChargeWithNoTransactionId(ChargeStatus status) {
@@ -219,7 +219,7 @@ public class ChargingITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper).toString();
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider).toString();
     }
 
     protected RequestSpecification givenSetup() {
@@ -342,7 +342,7 @@ public class ChargingITestBase {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), fromDate, transactionId);
+        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), fromDate, transactionId, paymentProvider);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         databaseTestHelper.updateChargeCardDetails(
@@ -352,12 +352,13 @@ public class ChargingITestBase {
     }
 
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
-                           ServicePaymentReference reference, Instant createdDate, String transactionId) {
+                           ServicePaymentReference reference, Instant createdDate, String transactionId, String paymentProvider) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(AMOUNT)
+                .withPaymentProvider(paymentProvider)
                 .withStatus(chargeStatus)
                 .withTransactionId(transactionId)
                 .withReference(reference)
@@ -372,7 +373,7 @@ public class ChargingITestBase {
     protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null);
+        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
