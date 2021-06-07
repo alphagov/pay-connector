@@ -61,6 +61,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         databaseTestHelper.blockPrepaidCards(Long.valueOf(accountId));
         databaseTestHelper.allowMoto(Long.valueOf(accountId));
         databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
+        databaseTestHelper.enableProviderSwitch(Long.valueOf(accountId));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -94,7 +95,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("integration_version_3ds", is(1))
                 .body("block_prepaid_cards", is(true))
                 .body("allow_moto", is(true))
-                .body("allow_telephone_payment_notifications", is(true));
+                .body("allow_telephone_payment_notifications", is(true))
+                .body("provider_switch_enabled", is(true));
     }
 
     @Test
