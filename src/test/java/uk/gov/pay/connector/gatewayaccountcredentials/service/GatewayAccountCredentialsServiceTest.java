@@ -8,6 +8,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -21,6 +25,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -35,11 +40,28 @@ public class GatewayAccountCredentialsServiceTest {
     @Mock
     GatewayAccountCredentialsDao mockGatewayAccountCredentialsDao;
 
+    @Mock
+    ConnectorConfiguration connectorConfiguration;
+    @Mock
+    WorldpayConfig worldpayConfig;
+    @Mock
+    StripeGatewayConfig stripeGatewayConfig;
+    @Mock
+    GatewayConfig gatewayConfig;
+
     GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
     @BeforeEach
     void setup() {
-        gatewayAccountCredentialsService = new GatewayAccountCredentialsService(mockGatewayAccountCredentialsDao);
+        when(worldpayConfig.getCredentials()).thenReturn(List.of());
+        when(gatewayConfig.getCredentials()).thenReturn(List.of());
+        when(stripeGatewayConfig.getCredentials()).thenReturn(List.of());
+        when(connectorConfiguration.getWorldpayConfig()).thenReturn(worldpayConfig);
+        when(connectorConfiguration.getSmartpayConfig()).thenReturn(gatewayConfig);
+        when(connectorConfiguration.getEpdqConfig()).thenReturn(gatewayConfig);
+        when(connectorConfiguration.getStripeConfig()).thenReturn(stripeGatewayConfig);
+
+        gatewayAccountCredentialsService = new GatewayAccountCredentialsService(mockGatewayAccountCredentialsDao, connectorConfiguration);
     }
 
     @Test

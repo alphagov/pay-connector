@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -12,7 +13,9 @@ import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -23,10 +26,17 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 public class GatewayAccountCredentialsService {
 
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
+    private final Map<String, List<String>> providerCredentialFields;
 
     @Inject
-    public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
+    public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao,
+                                            ConnectorConfiguration configuration) {
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
+        providerCredentialFields = newHashMap();
+        providerCredentialFields.put("worldpay", configuration.getWorldpayConfig().getCredentials());
+        providerCredentialFields.put("smartpay", configuration.getSmartpayConfig().getCredentials());
+        providerCredentialFields.put("epdq", configuration.getEpdqConfig().getCredentials());
+        providerCredentialFields.put("stripe", configuration.getStripeConfig().getCredentials());
     }
 
     @Transactional
@@ -84,4 +94,9 @@ public class GatewayAccountCredentialsService {
         }
     }
 
+    public List<String> getMissingCredentialsFields(Map<String, String> credentials, String paymentProvider) {
+        return providerCredentialFields.get(paymentProvider).stream()
+                .filter(requiredField -> !credentials.containsKey(requiredField))
+                .collect(Collectors.toList());
+    }
 }

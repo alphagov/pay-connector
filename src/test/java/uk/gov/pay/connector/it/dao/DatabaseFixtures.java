@@ -521,7 +521,6 @@ public class DatabaseFixtures {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }
             emailNotifications.forEach((type, notification) -> databaseTestHelper.addEmailNotification(this.getAccountId(), notification.getTemplate(), notification.isEnabled(), type));
-
             return this;
         }
 

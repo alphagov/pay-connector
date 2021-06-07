@@ -85,6 +85,16 @@ public class DatabaseTestHelper {
                             .bind("requires_3ds", params.isRequires3ds())
                             .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
                             .execute());
+            if (params.getCredentials() != null) {
+                jdbi.withHandle(handle ->
+                        handle.createUpdate("INSERT INTO gateway_account_credentials(credentials, gateway_account_id, payment_provider, state) VALUES (:credentials, :gatewayAccountId, :paymentProvider, :state)")
+                                .bind("gatewayAccountId", Long.valueOf(params.getAccountId()))
+                                .bindBySqlType("credentials", jsonObject, OTHER)
+                                .bind("paymentProvider", params.getPaymentGateway())
+                                .bind("state", "ACTIVE")
+                                .execute()
+                );
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -4,11 +4,13 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -19,19 +21,30 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
+import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
 public class GatewayAccountCredentialsResource {
-
     private final GatewayAccountService gatewayAccountService;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final Worldpay3dsFlexCredentialsService worldpay3dsFlexCredentialsService;
     private final Worldpay3dsFlexCredentialsValidationService worldpay3dsFlexCredentialsValidationService;
     private final WorldpayCredentialsValidationService worldpayCredentialsValidationService;
 
     @Inject
     public GatewayAccountCredentialsResource(GatewayAccountService gatewayAccountService,
+                                             GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                              Worldpay3dsFlexCredentialsService worldpay3dsFlexCredentialsService,
                                              Worldpay3dsFlexCredentialsValidationService worldpay3dsFlexCredentialsValidationService,
                                              WorldpayCredentialsValidationService worldpayCredentialsValidationService) {
@@ -39,6 +52,7 @@ public class GatewayAccountCredentialsResource {
         this.worldpay3dsFlexCredentialsService = worldpay3dsFlexCredentialsService;
         this.worldpay3dsFlexCredentialsValidationService = worldpay3dsFlexCredentialsValidationService;
         this.worldpayCredentialsValidationService = worldpayCredentialsValidationService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
     @POST
@@ -83,6 +97,34 @@ public class GatewayAccountCredentialsResource {
                 .map(gatewayAccountEntity -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials))
                 .map(ValidationResult::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+    }
+
+    @POST
+    @Path("/v1/api/accounts/{accountId}/credentials")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+        String paymentProvider = gatewayAccountCredentialsRequest.getPaymentProvider();
+        if (paymentProvider == null) {
+            return fieldsMissingResponse(Collections.singletonList(PAYMENT_PROVIDER_FIELD_NAME));
+        }
+        if (!(paymentProvider.equals(WORLDPAY.getName()) || paymentProvider.equals(STRIPE.getName()))) {
+            return badRequestResponse(format("Operation not supported for payment provider '%s'", paymentProvider));
+        }
+        if (gatewayAccountCredentialsRequest.getCredentialsAsMap() != null) {
+            List<String> missingCredentialsFields = gatewayAccountCredentialsService.getMissingCredentialsFields(gatewayAccountCredentialsRequest.getCredentialsAsMap(), paymentProvider);
+            if (!missingCredentialsFields.isEmpty()) {
+                return fieldsMissingResponse(missingCredentialsFields);
+            }
+        }
+
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
+                .map(gatewayAccount -> {
+                    Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
+                    gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, paymentProvider, credentials);
+                    return Response.ok().build();
+                })
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     private class ValidationResult {

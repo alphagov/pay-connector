@@ -7,19 +7,16 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -48,12 +45,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -71,13 +65,11 @@ public class GatewayAccountResource {
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
-    private static final String PAYMENT_PROVIDER_FIELD_NAME = "payment_provider";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
-    private final Map<String, List<String>> providerCredentialFields;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountRequestValidator validator;
@@ -85,9 +77,7 @@ public class GatewayAccountResource {
 
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
-                                  GatewayAccountDao gatewayDao,
                                   CardTypeDao cardTypeDao,
-                                  ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   GatewayAccountRequestValidator validator, 
@@ -98,11 +88,6 @@ public class GatewayAccountResource {
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
-        providerCredentialFields = newHashMap();
-        providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
-        providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
-        providerCredentialFields.put("epdq", conf.getEpdqConfig().getCredentials());
-        providerCredentialFields.put("stripe", conf.getStripeConfig().getCredentials());
     }
 
     @GET
@@ -243,7 +228,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                         {
                             Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
-                            List<String> missingCredentialsFields = checkMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
+                            List<String> missingCredentialsFields = gatewayAccountCredentialsService.getMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingCredentialsFields.isEmpty()) {
                                 return fieldsMissingResponse(missingCredentialsFields);
                             }
@@ -255,35 +240,6 @@ public class GatewayAccountResource {
                 )
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    @POST
-    @Path("/v1/frontend/accounts/{accountId}/credentials")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    public Response createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
-        String paymentProvider = gatewayAccountCredentialsRequest.getPaymentProvider();
-        if (paymentProvider == null) {
-            return fieldsMissingResponse(Collections.singletonList(PAYMENT_PROVIDER_FIELD_NAME));
-        }
-        if (!(paymentProvider.equals(WORLDPAY.getName()) || paymentProvider.equals(STRIPE.getName()))) {
-            return badRequestResponse(format("Operation not supported for payment provider '%s'", paymentProvider));
-        }
-        if (gatewayAccountCredentialsRequest.getCredentialsAsMap() != null) {
-            List<String> missingCredentialsFields = checkMissingCredentialsFields(gatewayAccountCredentialsRequest.getCredentialsAsMap(), paymentProvider);
-            if (!missingCredentialsFields.isEmpty()) {
-                return fieldsMissingResponse(missingCredentialsFields);
-            }
-        }
-
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccount -> {
-                    Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
-                    gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, paymentProvider, credentials);
-                   return Response.ok().build();
-                })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     @PATCH
@@ -437,11 +393,5 @@ public class GatewayAccountResource {
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    private List<String> checkMissingCredentialsFields(Map<String, String> credentialsPayload, String provider) {
-        return providerCredentialFields.get(provider).stream()
-                .filter(requiredField -> !credentialsPayload.containsKey(requiredField))
-                .collect(Collectors.toList());
     }
 }

@@ -44,7 +44,7 @@ public class GatewayAccountResourceValidationTest {
 
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
-            .addResource(new GatewayAccountResource(null, null, null, mockConnectorConfiguration,
+            .addResource(new GatewayAccountResource(null, null,
                     null, null, new GatewayAccountRequestValidator(new RequestValidator()), null))
             .build();
 

@@ -10,12 +10,15 @@ import java.util.Map;
 public class GatewayAccountCredentialsRequest {
     private String paymentProvider;
     private Map<String, String> credentials;
-    
-    public GatewayAccountCredentialsRequest(@JsonProperty("payment_provider") String paymentProvider, @JsonProperty("credentials") Map<String, String> credentials) {
+    public static final String PAYMENT_PROVIDER_FIELD_NAME = "payment_provider";
+
+
+    public GatewayAccountCredentialsRequest(@JsonProperty(PAYMENT_PROVIDER_FIELD_NAME) String paymentProvider, @JsonProperty("credentials") Map<String, String> credentials) {
         this.credentials = credentials;
         this.paymentProvider = paymentProvider;
     }
 
+    @JsonProperty(PAYMENT_PROVIDER_FIELD_NAME)
     public String getPaymentProvider() {
         return paymentProvider;
     }
