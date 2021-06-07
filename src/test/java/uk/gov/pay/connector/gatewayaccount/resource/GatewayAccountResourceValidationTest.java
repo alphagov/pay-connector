@@ -7,6 +7,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
@@ -27,6 +28,7 @@ public class GatewayAccountResourceValidationTest {
 
     private static ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
     private static WorldpayConfig mockWorldpayConfig = mock(WorldpayConfig.class);
+    private static StripeGatewayConfig mockStripeConfig = mock(StripeGatewayConfig.class);
     private static GatewayConfig mockGatewayConfig = mock(GatewayConfig.class);
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -37,6 +39,7 @@ public class GatewayAccountResourceValidationTest {
         when(mockConnectorConfiguration.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
         when(mockConnectorConfiguration.getSmartpayConfig()).thenReturn(mockGatewayConfig);
         when(mockConnectorConfiguration.getEpdqConfig()).thenReturn(mockGatewayConfig);
+        when(mockConnectorConfiguration.getStripeConfig()).thenReturn(mockStripeConfig);
     }
 
     @ClassRule
