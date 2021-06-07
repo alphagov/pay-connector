@@ -8,7 +8,6 @@ import junitparams.converters.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.common.exception.ValidationException;
-import uk.gov.pay.connector.common.validator.RequestValidator;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +22,7 @@ import static org.junit.Assert.assertThrows;
 @RunWith(JUnitParamsRunner.class)
 public class StripeAccountSetupRequestValidatorTest {
 
-    private final StripeAccountSetupRequestValidator validator = new StripeAccountSetupRequestValidator(new RequestValidator());
+    private final StripeAccountSetupRequestValidator validator = new StripeAccountSetupRequestValidator();
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Parameters({

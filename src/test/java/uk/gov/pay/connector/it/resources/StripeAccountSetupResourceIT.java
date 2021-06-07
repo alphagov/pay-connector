@@ -138,13 +138,13 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
         givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
-                        "op", "not_replace",
+                        "op", "remove",
                         "path", "bank_account",
                         "value", true))))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(400)
-                .body("message", contains("Operation [not_replace] not supported for path [bank_account]"))
+                .body("message", contains("Operation [remove] not supported for path [bank_account]"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
