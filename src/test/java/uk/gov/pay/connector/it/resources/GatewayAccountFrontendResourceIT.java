@@ -76,6 +76,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("gateway_account_credentials[0].credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
                 .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
                 .body("gateway_account_credentials[0].state", is("CREATED"))
+                .body("gateway_account_credentials[0].password", is(nullValue()))
+                .body("gateway_account_credentials[0].gateway_account_id", is(Integer.parseInt(accountId)))
                 .body("email_collection_mode", is("MANDATORY"))
                 .body("email_notifications.PAYMENT_CONFIRMED.template_body", is(nullValue()))
                 .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))

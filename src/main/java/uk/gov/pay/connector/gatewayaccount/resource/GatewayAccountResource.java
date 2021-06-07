@@ -131,6 +131,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                 {
                     gatewayAccount.getCredentials().remove("password");
+                    gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
                     return Response.ok(gatewayAccount).build();
                 })
                 .orElseGet(() -> notFoundResponse(format("Account with external id %s not found.", externalId)));
@@ -172,6 +173,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                 {
                     gatewayAccount.getCredentials().remove("password");
+                    gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
                     return Response.ok(gatewayAccount).build();
                 })
                 .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));

@@ -120,6 +120,11 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return gatewayAccountEntity;
     }
 
+    @JsonProperty("gateway_account_id")
+    public Long getGatewayAccountId() {
+        return gatewayAccountEntity.getId();
+    }
+
     public void setActiveStartDate(Instant activeStartDate) {
         this.activeStartDate = activeStartDate;
     }
