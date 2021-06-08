@@ -12,14 +12,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
@@ -52,13 +52,13 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
-import static uk.gov.service.payments.commons.model.Source.CARD_API;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(

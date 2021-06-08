@@ -285,7 +285,6 @@ public class StripeResourceAuthorizeIT {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
-                .withPaymentProvider("stripe")
                 .withGatewayAccountId(accountId)
                 .withAmount(Long.valueOf(AMOUNT))
                 .withStatus(chargeStatus)

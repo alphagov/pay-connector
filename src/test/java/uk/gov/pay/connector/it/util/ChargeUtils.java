@@ -25,15 +25,13 @@ public class ChargeUtils {
                 .put("delayed_capture", true).build());
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
-                                                                DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider) {
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper, String emailAddress) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId.toString())
                 .withGatewayAccountId(accountId)
-                .withPaymentProvider(paymentProvider)
                 .withAmount(6234L)
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
@@ -42,11 +40,8 @@ public class ChargeUtils {
         return externalChargeId;
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
-                                                                String accountId, DatabaseTestHelper databaseTestHelper,
-                                                                String paymentProvider) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId,
-                databaseTestHelper, "email@fake.test", paymentProvider);
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, "email@fake.test");
     }
 
     public static class ExternalChargeId {

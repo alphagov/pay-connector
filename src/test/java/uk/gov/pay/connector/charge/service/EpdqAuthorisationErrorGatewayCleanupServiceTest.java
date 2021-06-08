@@ -82,7 +82,6 @@ public class EpdqAuthorisationErrorGatewayCleanupServiceTest {
                 .build();
         charge = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider("epdq")
                 .withStatus(ChargeStatus.AUTHORISATION_ERROR)
                 .build();
 
