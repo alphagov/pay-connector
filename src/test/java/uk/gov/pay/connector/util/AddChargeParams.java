@@ -148,7 +148,7 @@ public class AddChargeParams {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
         private String gatewayAccountId;
-        private String paymentProvider;
+        private String paymentProvider = "sandbox";
         private long amount = 1000;
         private ChargeStatus status = ChargeStatus.CAPTURED;
         private String returnUrl = "http://somereturn.gov.uk";

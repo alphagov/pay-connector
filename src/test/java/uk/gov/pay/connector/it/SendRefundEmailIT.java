@@ -83,7 +83,7 @@ public class SendRefundEmailIT {
         String payIdSub = "2";
         String refundExternalId = "999999";
 
-        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
+        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper, "epdq");
         databaseTestHelper.addRefund(refundExternalId,
                 100,  REFUND_SUBMITTED, transactionId + "/" + payIdSub,
                 ZonedDateTime.now(), chargeId.toString());

@@ -172,7 +172,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String refundExternalId = "999999";
         int refundAmount = 1000;
 
-        ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
+        ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper, getPaymentProvider());
         databaseTestHelper.addRefund(refundExternalId, 1000,
                 REFUND_SUBMITTED, transactionId + "/" + payIdSub, ZonedDateTime.now(),
                 externalChargeId.toString());

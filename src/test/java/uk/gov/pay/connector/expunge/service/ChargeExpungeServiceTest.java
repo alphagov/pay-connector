@@ -89,6 +89,7 @@ public class ChargeExpungeServiceTest {
     public void expunge_shouldNotExpungeChargeIfInNonTerminalStateAndUpdateParityCheckStatusToSkipped() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CREATED)
+                .withPaymentProvider("epdq")
                 .build();
         when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
                 .thenReturn(Optional.of(chargeEntity));
@@ -165,6 +166,7 @@ public class ChargeExpungeServiceTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))
+                .withPaymentProvider("epdq")
                 .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
                 .build();
 
