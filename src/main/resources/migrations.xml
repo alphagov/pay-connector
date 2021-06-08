@@ -1632,4 +1632,11 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="add external id to gateway_account_credentials table" author="">
+        <addColumn tableName="gateway_account_credentials">
+            <column name="external_id" type="varchar(32)" defaultValueComputed="replace(uuid_generate_v4()::VARCHAR,'-'::text,''::text)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
