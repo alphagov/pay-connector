@@ -7,13 +7,11 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
@@ -47,7 +45,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -73,31 +70,27 @@ public class GatewayAccountResource {
     private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
-    private final Map<String, List<String>> providerCredentialFields;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
+    private final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
 
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
-                                  GatewayAccountDao gatewayDao,
                                   CardTypeDao cardTypeDao,
-                                  ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   GatewayAccountRequestValidator validator, 
-                                  GatewayAccountServicesFactory gatewayAccountServicesFactory) {
+                                  GatewayAccountServicesFactory gatewayAccountServicesFactory,
+                                  GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
-        providerCredentialFields = newHashMap();
-        providerCredentialFields.put("worldpay", conf.getWorldpayConfig().getCredentials());
-        providerCredentialFields.put("smartpay", conf.getSmartpayConfig().getCredentials());
-        providerCredentialFields.put("epdq", conf.getEpdqConfig().getCredentials());
+        this.gatewayAccountCredentialsRequestValidator = gatewayAccountCredentialsRequestValidator;
     }
 
     @GET
@@ -238,7 +231,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                         {
                             Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
-                            List<String> missingCredentialsFields = checkMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
+                            List<String> missingCredentialsFields = gatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingCredentialsFields.isEmpty()) {
                                 return fieldsMissingResponse(missingCredentialsFields);
                             }
@@ -403,11 +396,5 @@ public class GatewayAccountResource {
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    private List<String> checkMissingCredentialsFields(Map<String, String> credentialsPayload, String provider) {
-        return providerCredentialFields.get(provider).stream()
-                .filter(requiredField -> !credentialsPayload.containsKey(requiredField))
-                .collect(Collectors.toList());
     }
 }

@@ -42,6 +42,9 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private List<String> allowedCidrs;
 
+    @NotNull
+    private List<String> credentials;
+
     public String getUrl() {
         return url;
     }
@@ -72,5 +75,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public List<String> getAllowedCidrs() {
         return allowedCidrs;
+    }
+
+    public List<String> getCredentials() {
+        return credentials;
     }
 }

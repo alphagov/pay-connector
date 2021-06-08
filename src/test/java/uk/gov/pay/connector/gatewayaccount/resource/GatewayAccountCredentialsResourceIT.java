@@ -29,9 +29,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -45,10 +47,10 @@ public class GatewayAccountCredentialsResourceIT {
     public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
     public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
     public static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
-    
+
     @DropwizardTestContext
     protected TestContext testContext;
-    
+
     private DatabaseTestHelper databaseTestHelper;
     private WireMockServer wireMockServer;
     private WorldpayMockClient worldpayMockClient;
@@ -66,13 +68,14 @@ public class GatewayAccountCredentialsResourceIT {
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
+                .withCredentials(Map.of("merchant_id", "a-merchant-id", "username", "a-username", "password", "a-password"))
                 .insert();
     }
 
     protected RequestSpecification givenSetup() {
         return given().port(testContext.getPort()).contentType(JSON);
     }
-    
+
     @Test
     public void validate_valid_3ds_flex_credentials() throws Exception {
         wireMockServer.stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
@@ -96,7 +99,7 @@ public class GatewayAccountCredentialsResourceIT {
                 "issuer", invalidIssuer,
                 "organisational_unit_id", invalidOrgUnitId,
                 "jwt_mac_key", invalidJwtMacKey));
-        
+
         givenSetup()
                 .body(payload)
                 .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
@@ -194,7 +197,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.name()))
                 .body("message[0]", is(expectedErrorMessage));
     }
-    
+
     @Test
     public void setWorldpay3dsFlexCredentialsWhenThereAreNonExisting() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
@@ -225,7 +228,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                 .then()
                 .statusCode(200);
-        
+
         String newIssuer = "43f0917f101a4428b69d5fb9"; // pragma: allowlist secret`
         String newOrgUnitId = "44992a087a0c4849895cc9a3"; // pragma: allowlist secret`
         String updatedJwtMacKey = "512ee2a9-4a3e-46d4-86df-8e2ac3d6a6a8"; // pragma: allowlist secret`
@@ -366,7 +369,7 @@ public class GatewayAccountCredentialsResourceIT {
     @Test
     public void checkWorldpayCredentials_returnsValid() throws JsonProcessingException {
         worldpayMockClient.mockCredentialsValidationValid();
-        
+
         long accountId = RandomUtils.nextLong();
         databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
         givenSetup()
@@ -403,6 +406,42 @@ public class GatewayAccountCredentialsResourceIT {
                 .then()
                 .statusCode(500)
                 .body("message[0]", is("Worldpay returned an unexpected response when validating credentials"));
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsWithCredentials_responseShouldBe200_Ok() {
+        Map credentials = Map.of("stripe_account_id", "some-account-id");
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
+                .post("/v1/api/accounts/" + accountId + "/credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/frontend/accounts/" + accountId)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("gateway_account_credentials.size()", is(2))
+                .body("gateway_account_credentials[1].payment_provider", is("stripe"))
+                .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"));;
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsMissingAccount_responseShouldBe404() {
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "worldpay")))
+                .post("/v1/api/accounts/10000/credentials")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    public void createGatewayAccountsCredentialsValidatesRequestBusinessLogic_responseShouldBe400() {
+        givenSetup()
+                .body(toJson(Map.of("payment_provider", "epdq")))
+                .post("/v1/api/accounts/10000/credentials")
+                .then()
+                .statusCode(400);
     }
 
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
