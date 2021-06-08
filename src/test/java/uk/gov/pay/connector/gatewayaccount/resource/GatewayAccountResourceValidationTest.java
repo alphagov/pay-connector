@@ -5,10 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit.ResourceTestRule;
 import org.junit.ClassRule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.GatewayConfig;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -21,31 +17,23 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class GatewayAccountResourceValidationTest {
 
-    private static ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
-    private static WorldpayConfig mockWorldpayConfig = mock(WorldpayConfig.class);
-    private static StripeGatewayConfig mockStripeConfig = mock(StripeGatewayConfig.class);
-    private static GatewayConfig mockGatewayConfig = mock(GatewayConfig.class);
     private static ObjectMapper objectMapper = new ObjectMapper();
+    private static GatewayAccountCredentialsRequestValidator mockGatewayAccountCredentialsRequestValidator = mock(GatewayAccountCredentialsRequestValidator.class);
 
     static {
-        when(mockWorldpayConfig.getCredentials()).thenReturn(List.of());
-        when(mockGatewayConfig.getCredentials()).thenReturn(List.of());
-
-        when(mockConnectorConfiguration.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
-        when(mockConnectorConfiguration.getSmartpayConfig()).thenReturn(mockGatewayConfig);
-        when(mockConnectorConfiguration.getEpdqConfig()).thenReturn(mockGatewayConfig);
-        when(mockConnectorConfiguration.getStripeConfig()).thenReturn(mockStripeConfig);
+        when(mockGatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(any(), any())).thenReturn(List.of());
     }
 
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
             .addResource(new GatewayAccountResource(null, null,
-                    null, null, new GatewayAccountRequestValidator(new RequestValidator()), null))
+                    null, null, new GatewayAccountRequestValidator(new RequestValidator()), null, mockGatewayAccountCredentialsRequestValidator))
             .build();
 
     @Test

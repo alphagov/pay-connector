@@ -74,6 +74,7 @@ public class GatewayAccountResource {
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
+    private final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
 
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
@@ -81,13 +82,15 @@ public class GatewayAccountResource {
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   GatewayAccountRequestValidator validator, 
-                                  GatewayAccountServicesFactory gatewayAccountServicesFactory) {
+                                  GatewayAccountServicesFactory gatewayAccountServicesFactory,
+                                  GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
+        this.gatewayAccountCredentialsRequestValidator = gatewayAccountCredentialsRequestValidator;
     }
 
     @GET
@@ -228,7 +231,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount ->
                         {
                             Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
-                            List<String> missingCredentialsFields = gatewayAccountCredentialsService.getMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
+                            List<String> missingCredentialsFields = gatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingCredentialsFields.isEmpty()) {
                                 return fieldsMissingResponse(missingCredentialsFields);
                             }

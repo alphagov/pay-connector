@@ -21,17 +21,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
@@ -41,18 +34,21 @@ public class GatewayAccountCredentialsResource {
     private final Worldpay3dsFlexCredentialsService worldpay3dsFlexCredentialsService;
     private final Worldpay3dsFlexCredentialsValidationService worldpay3dsFlexCredentialsValidationService;
     private final WorldpayCredentialsValidationService worldpayCredentialsValidationService;
+    private final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
 
     @Inject
     public GatewayAccountCredentialsResource(GatewayAccountService gatewayAccountService,
                                              GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                              Worldpay3dsFlexCredentialsService worldpay3dsFlexCredentialsService,
                                              Worldpay3dsFlexCredentialsValidationService worldpay3dsFlexCredentialsValidationService,
-                                             WorldpayCredentialsValidationService worldpayCredentialsValidationService) {
+                                             WorldpayCredentialsValidationService worldpayCredentialsValidationService,
+                                             GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator) {
         this.gatewayAccountService = gatewayAccountService;
         this.worldpay3dsFlexCredentialsService = worldpay3dsFlexCredentialsService;
         this.worldpay3dsFlexCredentialsValidationService = worldpay3dsFlexCredentialsValidationService;
         this.worldpayCredentialsValidationService = worldpayCredentialsValidationService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
+        this.gatewayAccountCredentialsRequestValidator = gatewayAccountCredentialsRequestValidator;
     }
 
     @POST
@@ -104,24 +100,12 @@ public class GatewayAccountCredentialsResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
-        String paymentProvider = gatewayAccountCredentialsRequest.getPaymentProvider();
-        if (paymentProvider == null) {
-            return fieldsMissingResponse(Collections.singletonList(PAYMENT_PROVIDER_FIELD_NAME));
-        }
-        if (!(paymentProvider.equals(WORLDPAY.getName()) || paymentProvider.equals(STRIPE.getName()))) {
-            return badRequestResponse(format("Operation not supported for payment provider '%s'", paymentProvider));
-        }
-        if (gatewayAccountCredentialsRequest.getCredentialsAsMap() != null) {
-            List<String> missingCredentialsFields = gatewayAccountCredentialsService.getMissingCredentialsFields(gatewayAccountCredentialsRequest.getCredentialsAsMap(), paymentProvider);
-            if (!missingCredentialsFields.isEmpty()) {
-                return fieldsMissingResponse(missingCredentialsFields);
-            }
-        }
+        gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
-                    gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, paymentProvider, credentials);
+                    gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));

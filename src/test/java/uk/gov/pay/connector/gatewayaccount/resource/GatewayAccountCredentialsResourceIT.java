@@ -29,7 +29,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
@@ -410,15 +409,6 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void createGatewayAccountsCredentials_responseShouldBe200_Ok() {
-        givenSetup()
-                .body(toJson(Map.of("payment_provider", "worldpay")))
-                .post("/v1/api/accounts/" + accountId + "/credentials")
-                .then()
-                .statusCode(OK.getStatusCode());
-    }
-
-    @Test
     public void createGatewayAccountsCredentialsWithCredentials_responseShouldBe200_Ok() {
         Map credentials = Map.of("stripe_account_id", "some-account-id");
         givenSetup()
@@ -437,22 +427,21 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void createGatewayAccountsCredentialsInvalidProvider_responseShouldBe422() {
+    public void createGatewayAccountsCredentialsMissingAccount_responseShouldBe404() {
         givenSetup()
-                .body(toJson(Map.of("payment_provider", "epdq")))
-                .post("/v1/api/accounts/" + accountId + "/credentials")
+                .body(toJson(Map.of("payment_provider", "worldpay")))
+                .post("/v1/api/accounts/10000/credentials")
                 .then()
-                .statusCode(400);
+                .statusCode(404);
     }
 
     @Test
-    public void createGatewayAccountsCredentialsMissingCredentials_responseShouldBe400() {
-        Map credentials = Map.of("merchant_id", "a-merchant-id");
+    public void createGatewayAccountsCredentialsValidatesRequestBusinessLogic_responseShouldBe400() {
         givenSetup()
-                .body(toJson(Map.of("payment_provider", "worldpay", "credentials", credentials)))
-                .post("/v1/api/accounts/" + accountId + "/credentials")
+                .body(toJson(Map.of("payment_provider", "epdq")))
+                .post("/v1/api/accounts/10000/credentials")
                 .then()
-                .statusCode(BAD_REQUEST.getStatusCode());
+                .statusCode(400);
     }
 
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {

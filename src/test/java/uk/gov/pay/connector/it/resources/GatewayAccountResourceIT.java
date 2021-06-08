@@ -392,7 +392,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(OK.getStatusCode());
     }
 
-        @Test
+    @Test
     public void patchGatewayAccountAnalyticsId_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
         givenSetup()

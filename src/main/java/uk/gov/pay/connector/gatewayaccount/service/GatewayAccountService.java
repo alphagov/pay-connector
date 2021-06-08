@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gatewayaccount.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -21,7 +20,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +28,6 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Map.entry;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
