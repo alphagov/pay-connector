@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.common.model.api.jsonpatch;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.io.IOException;
 import java.util.Map;
 
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
@@ -15,6 +13,7 @@ import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIEL
 public class JsonPatchRequest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
+    private static JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(objectMapper);
     
     private JsonPatchOp op;
     private String path;
@@ -54,16 +53,7 @@ public class JsonPatchRequest {
     }
 
     public Map<String, String> valueAsObject() {
-        if (value != null) {
-            if ((value.isTextual() && !isEmpty(value.asText())) || (!value.isNull() && value.isObject())) {
-                try {
-                    return objectMapper.readValue(value.traverse(), new TypeReference<Map<String, String>>() {});
-                } catch (IOException e) {
-                    throw new RuntimeException("Malformed JSON object in value", e);
-                }
-            }
-        }
-        return null;
+        return jsonObjectMapper.getAsMap(value);
     }
 
 

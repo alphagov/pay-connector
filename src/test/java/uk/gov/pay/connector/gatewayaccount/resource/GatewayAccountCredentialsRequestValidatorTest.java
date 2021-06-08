@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,26 +14,30 @@ import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayAccountCredentialsRequestValidatorTest {
     @Mock
-    ConnectorConfiguration connectorConfiguration;
+    private ConnectorConfiguration connectorConfiguration;
     @Mock
-    WorldpayConfig worldpayConfig;
+    private WorldpayConfig worldpayConfig;
     @Mock
-    StripeGatewayConfig stripeGatewayConfig;
+    private StripeGatewayConfig stripeGatewayConfig;
     @Mock
-    GatewayConfig gatewayConfig;
+    private GatewayConfig gatewayConfig;
 
-    GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private GatewayAccountCredentialsRequestValidator validator;
 
     @Before
     public void before() {
@@ -43,33 +49,68 @@ public class GatewayAccountCredentialsRequestValidatorTest {
         when(connectorConfiguration.getEpdqConfig()).thenReturn(gatewayConfig);
         when(connectorConfiguration.getStripeConfig()).thenReturn(stripeGatewayConfig);
 
-        gatewayAccountCredentialsRequestValidator = new GatewayAccountCredentialsRequestValidator(connectorConfiguration);
+        validator = new GatewayAccountCredentialsRequestValidator(connectorConfiguration);
     }
 
     @Test
     public void shouldNotThrowWithValidRequest() {
         var request = new GatewayAccountCredentialsRequest("worldpay", Map.of("merchant_id", "some-merchant-id"));
-        assertDoesNotThrow(() -> gatewayAccountCredentialsRequestValidator.validateCreate(request));
+        assertDoesNotThrow(() -> validator.validateCreate(request));
     }
 
     @Test
     public void shouldThrowWhenPaymentProviderIsMissing() {
         var request = new GatewayAccountCredentialsRequest(null, null);
-        var thrown = assertThrows(ValidationException.class, () -> gatewayAccountCredentialsRequestValidator.validateCreate(request));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Field(s) missing: [payment_provider]"));
     }
 
     @Test
     public void shouldThrowWhenPaymentProviderIsNotStripeOrWorldpay() {
         var request = new GatewayAccountCredentialsRequest("smartpay", null);
-        var thrown = assertThrows(ValidationException.class, () -> gatewayAccountCredentialsRequestValidator.validateCreate(request));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Operation not supported for payment provider 'smartpay'"));
     }
 
     @Test
     public void shouldThrowWhenCredentialsAreMissing() {
         var request = new GatewayAccountCredentialsRequest("worldpay", Map.of("missing_merchant_id", "some-merchant-id"));
-        var thrown = assertThrows(ValidationException.class, () -> gatewayAccountCredentialsRequestValidator.validateCreate(request));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Field(s) missing: [merchant_id]"));
+    }
+
+    @Test
+    public void shouldThrowWhenPatchRequestInvalid() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(Map.of("path", "credentials",
+                        "op", "add",
+                        "value", "something")));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials]"));
+    }
+
+    @Test
+    public void shouldThrowWhenCredentialsFieldsAreMissingFromPatchRequest() {
+        Map<String, Object> credentials = Map.of(
+                "missing_merchant_id", "some-merchant-id"
+        );
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", credentials)));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Value for path [credentials] op [replace] is missing field(s): [merchant_id]"));
+    }
+
+    @Test
+    public void shouldNotThrowWhenValidPatchRequest() {
+        Map<String, Object> credentials = Map.of(
+                "merchant_id", "some-merchant-id"
+        );
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", credentials)));
+        assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay"));
     }
 }

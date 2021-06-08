@@ -61,6 +61,11 @@ class PatchRequestValidatorTest {
                         put("path", "foo");
                         put("value", null);
                     }})),
+                    Arguments.of("Field [value] is required", buildPatchRequest(new HashMap<>() {{
+                        put("operation", "add");
+                        put("path", "foo");
+                        put("value", Map.of());
+                    }})),
 
                     Arguments.of("Field [path] must be one of [bar, foo]", buildPatchRequest(Map.of("operation", "add", "path", "baz", "value", true))),
                     Arguments.of("Operation [replace] not supported for path [foo]", buildPatchRequest(Map.of("operation", "replace", "path", "foo", "value", true)))

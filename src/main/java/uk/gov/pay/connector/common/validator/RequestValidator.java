@@ -3,6 +3,7 @@ package uk.gov.pay.connector.common.validator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class RequestValidator {
         return applyCheck(payload, isNotBoolean(), fieldNames, "Field [%s] must be a boolean");
     }
 
-    public static  List<String> checkIsString(JsonNode payload, String... fieldNames) {
+    public static List<String> checkIsString(JsonNode payload, String... fieldNames) {
         return applyCheck(payload, isNotString(), fieldNames, "Field [%s] must be a string");
     }
 
@@ -61,6 +62,8 @@ public class RequestValidator {
                 return isNullValue().apply(jsonElement);
             } else if (jsonElement instanceof ArrayNode) {
                 return notExistOrEmptyArray().apply(jsonElement);
+            } else if (jsonElement instanceof ObjectNode) {
+                return notExistOrEmptyObject().apply(jsonElement);
             } else {
                 return notExistOrBlankText().apply(jsonElement);
             }
@@ -71,6 +74,13 @@ public class RequestValidator {
         return jsonElement -> (
                 jsonElement == null ||
                         ((jsonElement instanceof ArrayNode) && (jsonElement.size() == 0))
+        );
+    }
+
+    private static Function<JsonNode, Boolean> notExistOrEmptyObject() {
+        return jsonElement -> (
+                jsonElement == null ||
+                        ((jsonElement instanceof ObjectNode) && jsonElement.isEmpty())
         );
     }
 
