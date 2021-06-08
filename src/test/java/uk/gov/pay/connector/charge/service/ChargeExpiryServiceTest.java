@@ -126,7 +126,6 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
         when(expiredCharge.getStatus()).thenReturn(EXPIRED.toString());
-        when(expiredCharge.getPaymentProvider()).thenReturn("worldpay");
         return expiredCharge;
     }
 
@@ -190,7 +189,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now())
                 .withStatus(status)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -229,7 +227,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now())
                 .withStatus(status)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -318,7 +315,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now())
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -341,7 +337,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(AWAITING_CAPTURE_REQUEST)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -349,7 +344,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(AUTHORISATION_SUCCESS)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -377,7 +371,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -400,7 +393,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
@@ -418,7 +410,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
@@ -436,7 +427,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
@@ -454,7 +444,6 @@ public class ChargeExpiryServiceTest {
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
-                .withPaymentProvider("worldpay")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 

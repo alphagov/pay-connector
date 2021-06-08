@@ -79,7 +79,6 @@ public class GatewayAuthFailuresIT {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(testAccount)
-                .withPaymentProvider(PAYMENT_PROVIDER)
                 .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
                 .withTransactionId(TRANSACTION_ID);
 

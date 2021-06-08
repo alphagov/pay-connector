@@ -128,7 +128,6 @@ public class FrontendContractTest {
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .withPaymentProvider("worldpay")
                 .build());
 
         dbHelper.updateCharge3dsFlexChallengeDetails(chargeId,

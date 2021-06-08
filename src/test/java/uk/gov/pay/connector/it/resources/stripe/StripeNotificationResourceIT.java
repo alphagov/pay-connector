@@ -262,7 +262,6 @@ public class StripeNotificationResourceIT {
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(1000L)
-                .withPaymentProvider("stripe")
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
                 .build());

@@ -295,7 +295,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
-        String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper, getPaymentProvider()).toString();
+        String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper).toString();
         String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
         givenSetup()
