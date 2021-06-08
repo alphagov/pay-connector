@@ -182,6 +182,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                         .withChargeId(chargeId)
                         .withGatewayAccountId(gatewayAccountId)
                         .withExternalChargeId(chargeExternalId)
+                        .withPaymentProvider(paymentProvider.getName())
                         .withStatus(chargeStatus)
                         .build()
         );

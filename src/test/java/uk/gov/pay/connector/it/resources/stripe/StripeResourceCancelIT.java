@@ -118,6 +118,7 @@ public class StripeResourceCancelIT {
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(Long.valueOf(AMOUNT))
+                .withPaymentProvider("stripe")
                 .withStatus(chargeStatus)
                 .withTransactionId(transactionId)
                 .build());
