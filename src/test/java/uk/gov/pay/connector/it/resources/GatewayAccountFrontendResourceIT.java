@@ -317,7 +317,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         Map<String, String> currentCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(accountId));
         assertThat(currentCredentials, is(gatewayAccountPayload.getCredentials()));
 
-        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentials(Long.parseLong(accountId));
+        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsForAccount(Long.parseLong(accountId));
         assertThat(gatewayAccountCredentials, hasSize(1));
         Map<String, Object> updatedGatewayAccountCredentials = gatewayAccountCredentials.get(0);
         assertThat(updatedGatewayAccountCredentials, hasEntry("state", ACTIVE.toString()));

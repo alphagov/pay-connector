@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
@@ -15,15 +18,17 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
@@ -99,16 +104,34 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+    public GatewayAccountCredentials createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
-                    gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
-                    return Response.ok().build();
+                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                 })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+    }
+
+    @PATCH
+    @Path("/v1/api/accounts/{accountId}/credentials/{credentialsId}")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public GatewayAccountCredentials updateGatewayAccountCredentials(
+            @PathParam("accountId") Long gatewayAccountId,
+            @PathParam("credentialsId") Long credentialsId,
+            JsonNode payload) {
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
+                .map(gatewayAccountEntity -> {
+                    gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountEntity.getGatewayName());
+                    List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
+                            .map(JsonPatchRequest::from)
+                            .collect(Collectors.toList());
+                    return gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, updateRequests);
+                })
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     private class ValidationResult {

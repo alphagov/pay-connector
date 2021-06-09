@@ -947,11 +947,19 @@ public class DatabaseTestHelper {
                         .first());
     }
 
-    public List<Map<String, Object>> getGatewayAccountCredentials(long accountId) {
+    public List<Map<String, Object>> getGatewayAccountCredentialsForAccount(long accountId) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_account_credentials where gateway_account_id = :accountId")
                         .bind("accountId", accountId)
                         .mapToMap()
                         .list());
+    }
+
+    public Map<String, Object> getGatewayAccountCredentialsById(long credentialsId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials where id = :id")
+                        .bind("id", credentialsId)
+                        .mapToMap()
+                        .first());
     }
 }
