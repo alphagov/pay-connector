@@ -18,6 +18,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class GatewayAccountCredentialsService {
@@ -39,6 +40,7 @@ public class GatewayAccountCredentialsService {
         if (state == ACTIVE) {
             gatewayAccountCredentialsEntity.setActiveStartDate(Instant.now());
         }
+        gatewayAccountCredentialsEntity.setExternalId(randomUuid());
 
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
     }

@@ -15,6 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
@@ -42,6 +43,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
                 = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        gatewayAccountCredentialsEntity.setExternalId(randomUuid());
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 
         boolean result = gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountId);

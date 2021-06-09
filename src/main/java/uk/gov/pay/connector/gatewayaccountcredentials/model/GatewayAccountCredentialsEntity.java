@@ -68,6 +68,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     @JsonIgnore
     private GatewayAccountEntity gatewayAccountEntity;
 
+    @Column(name = "external_id")
+    private String externalId;
+
     public GatewayAccountCredentialsEntity() {
     }
 
@@ -120,6 +123,10 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return gatewayAccountEntity;
     }
 
+    public String getExternalId() {
+        return externalId;
+    }
+
     @JsonProperty("gateway_account_id")
     public Long getGatewayAccountId() {
         return gatewayAccountEntity.getId();
@@ -135,5 +142,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     public void setState(GatewayAccountCredentialState state) {
         this.state = state;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 }
