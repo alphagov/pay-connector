@@ -60,6 +60,9 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Mock
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
 
+    private GatewayAccountEntity gatewayAccountEntity;
+    private ChargeEntity chargeEntity;
+
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     
@@ -85,7 +88,6 @@ public class Worldpay3dsFlexJwtServiceTest {
         when(mockChargeSweepConfig.getDefaultChargeExpiryThreshold()).thenReturn(TOKEN_EXPIRY_DURATION_SECONDS);
         when(mockConfiguration.getLinks()).thenReturn(mockLinksConfig);
         when(mockConfiguration.getChargeSweepConfig()).thenReturn(mockChargeSweepConfig);
-        
         worldpay3dsFlexJwtService = new Worldpay3dsFlexJwtService(new JwtGenerator(), mockConfiguration);
     }
 
@@ -120,7 +122,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 .withWorldpayChallengeTransactionId("a-transaction-id")
                 .build();
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .build();
@@ -134,7 +136,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     public void shouldNotReturnChallengeTokenIfChallengeDataNotPresent() {
         Auth3dsRequiredEntity auth3DsRequiredEntity = anAuth3dsRequiredEntity().build();
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
                 .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .build();
@@ -150,11 +152,11 @@ public class Worldpay3dsFlexJwtServiceTest {
         when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
         when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
 
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName(WORLDPAY.getName())
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+        chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
         
@@ -233,12 +235,13 @@ public class Worldpay3dsFlexJwtServiceTest {
         when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn(null);
         when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
         when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+        chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
@@ -252,12 +255,12 @@ public class Worldpay3dsFlexJwtServiceTest {
         when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn("me");
         when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn(null);
         when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+        chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage(
@@ -272,12 +275,12 @@ public class Worldpay3dsFlexJwtServiceTest {
         when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn("me");
         when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
         when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn(null);
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+        chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
@@ -288,13 +291,13 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateChallengeToken_shouldThrowExceptionForNonWorldpayAccount() {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(SMARTPAY.getName())
-                .withCredentials(VALID_CREDENTIALS)
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+
+        chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         expectedException.expect(Worldpay3dsFlexJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +

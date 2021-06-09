@@ -4,9 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -26,6 +23,9 @@ import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.net.URI;
 import java.time.ZoneOffset;
@@ -55,11 +55,11 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.service.payments.commons.model.Source.CARD_API;
-import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class ChargeServiceCreateTest extends ChargeServiceTest {
     
@@ -476,7 +476,24 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
     }
+    
+    @Test
+    public void shouldCreateAChargeWhenGatewayAccountCredentialsHasOneEntry() {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
+        final ChargeCreateRequest request = requestBuilder.
+                withSource(CARD_API).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
+    }
 
     @Test
     public void shouldCreateATelephoneChargeForSuccess() {
@@ -798,7 +815,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeResponseForFailure() {
-
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
@@ -835,6 +851,24 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(chargeResponse.getState().isFinished(), is(true));
         assertThat(chargeResponse.getState().getMessage(), is("Payment method rejected"));
         assertThat(chargeResponse.getState().getCode(), is("P0010"));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeWhenGatewayAccountCredentialsHasOneEntry() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .withPaymentOutcome(paymentOutcome)
+                .build();
+
+        populateChargeEntity();
+
+        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
     }
 
     @Test

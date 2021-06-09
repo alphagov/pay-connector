@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -52,6 +51,9 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.northamericaregion.UsState;
@@ -59,6 +61,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
@@ -208,6 +211,18 @@ public class ChargeServiceTest {
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
+
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider("sandbox")
+                .withCredentials(Map.of())
+                .withState(GatewayAccountCredentialState.CREATED)
+                .build();
+
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
+        gatewayAccountCredentialsEntities.add(gatewayAccountCredentialsEntity);
+        gatewayAccount.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
 
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);

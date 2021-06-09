@@ -38,8 +38,7 @@ class GatewayAccountEntityTest {
                 .withPaymentProvider("sandbox")
                 .build();
         gatewayAccountCredentialsEntities.add(gatewayAccountCredentialsEntity);
-        gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
-        assertThat(gatewayAccountEntity.getGatewayNameFromGatewayAccountCredentials(), is("sandbox"));
+        assertThat(gatewayAccountEntity.getGatewayName(), is("sandbox"));
     }
 
     @Test
@@ -65,16 +64,15 @@ class GatewayAccountEntityTest {
         gatewayAccountCredentialsEntities.add(latestActiveGatewayAccountCredential);
         gatewayAccountCredentialsEntities.add(earlierActiveGatewayAccountCredential);
         gatewayAccountCredentialsEntities.add(latestRetiredGatewayAccountCredential);
-
         gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
 
-        assertThat(gatewayAccountEntity.getGatewayNameFromGatewayAccountCredentials(), is("stripe"));
+        assertThat(gatewayAccountEntity.getGatewayName(), is("stripe"));
     }
 
     @Test
     void shouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of());
-        assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayNameFromGatewayAccountCredentials());
+        gatewayAccountEntity.setGatewayAccountCredentials(new ArrayList<>());
+        assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayName());
     }
 
     @Test

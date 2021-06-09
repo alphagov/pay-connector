@@ -9,8 +9,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AddressFixture;
@@ -50,6 +51,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -82,6 +84,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
@@ -399,15 +402,21 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldRespondAuthorisationFailed_When3dsRequiredConflictingConfigurationOfCardTypeWithGatewayAccount() {
 
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture
+                .anAuthCardDetails()
+                .build();
+        CardTypeEntity cardTypeEntity = CardTypeEntityBuilder
+                .aCardTypeEntity()
+                .withRequires3ds(true)
+                .withBrand(authCardDetails.getCardBrand())
+                .build();
 
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
-        CardTypeEntity cardTypeEntity = new CardTypeEntity();
-        cardTypeEntity.setRequires3ds(true);
-        cardTypeEntity.setBrand(authCardDetails.getCardBrand());
-        gatewayAccountEntity.setType(GatewayAccountType.LIVE);
-        gatewayAccountEntity.setGatewayName("worldpay");
-        gatewayAccountEntity.setRequires3ds(false);
+        GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture
+                .aGatewayAccountEntity()
+                .withType(GatewayAccountType.LIVE)
+                .withGatewayName(WORLDPAY.getName())
+                .withRequires3ds(false)
+                .build();
 
         ChargeEntity charge = ChargeEntityFixture
                 .aValidChargeEntity()

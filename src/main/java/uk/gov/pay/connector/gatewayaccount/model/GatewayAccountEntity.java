@@ -48,6 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
+
 @Entity
 @Table(name = "gateway_accounts")
 @SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq",
@@ -185,11 +186,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("payment_provider")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getGatewayName() {
-        return gatewayName;
-    }
-
-    @JsonIgnore
-    public String getGatewayNameFromGatewayAccountCredentials() {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
         if (gatewayAccountCredentialsEntities.size() == 1) {
             GatewayAccountCredentialsEntity entity = gatewayAccountCredentialsEntities.get(0);

@@ -1,11 +1,14 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import org.junit.Test;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,6 +45,13 @@ public class GatewayAccountResourceDTOTest {
         entity.setMotoMaskCardSecurityCodeInput(true);
         entity.setAllowTelephonePaymentNotifications(true);
         entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
+        entity.setGatewayAccountCredentials(List.of(
+                GatewayAccountCredentialsEntityFixture.
+                        aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("testGatewayName")
+                        .withState(GatewayAccountCredentialState.ACTIVE)
+                        .build()
+        ));
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));

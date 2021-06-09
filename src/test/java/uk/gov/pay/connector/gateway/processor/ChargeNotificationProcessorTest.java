@@ -17,19 +17,17 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.ResourceType;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeNotificationProcessorTest {
@@ -43,9 +41,6 @@ public class ChargeNotificationProcessorTest {
     protected GatewayAccountEntity gatewayAccount;
 
     @Mock
-    protected GatewayAccountDao mockedGatewayAccountDao;
-
-    @Mock
     protected ChargeService chargeService;
     
     @Mock
@@ -53,7 +48,9 @@ public class ChargeNotificationProcessorTest {
     
     @Before
     public void setUp() {
-        gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        gatewayAccount = GatewayAccountEntityFixture
+                .aGatewayAccountEntity()
+                .build();
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         chargeNotificationProcessor = new ChargeNotificationProcessor(chargeService, eventService);
     }

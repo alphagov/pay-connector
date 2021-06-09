@@ -18,8 +18,12 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
 import uk.gov.pay.connector.gateway.worldpay.exception.ThreeDsFlexDdcServiceUnavailableException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
@@ -30,9 +34,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -46,6 +50,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
@@ -59,6 +65,8 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     private Map<String, String> threeDsFlexDdcUrls = Map.of(
             "test", "https://a/test/url", 
             "live", "https://a/live/url");
+
+    private GatewayAccountEntity gatewayAccountEntity;
 
     @Mock
     private ClientFactory clientFactory;
@@ -95,28 +103,31 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
     @ParameterizedTest
     @ValueSource(strings = { "test", "live" })
     void should_return_true_if_account_credentials_are_valid_for_a_gateway_account(String type) {
-        var gatewayAccount = aGatewayAccountEntity()
+        gatewayAccountEntity = aGatewayAccountEntity()
                 .withType(GatewayAccountType.fromString(type))
-                .withGatewayName("worldpay")
+                .withGatewayName(WORLDPAY.getName())
                 .build();
+
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
-        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials), 
+        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccountEntity)), eq(flexCredentials), 
                 any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
         
-        assertTrue(service.validateCredentials(gatewayAccount, flexCredentials));
+        assertTrue(service.validateCredentials(gatewayAccountEntity, flexCredentials));
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "test", "live" })
     void should_return_true_false_account_credentials_are_invalid_for_a_live_gateway_account(String type) {
-        var gatewayAccount = aGatewayAccountEntity()
-                .withGatewayName("worldpay")
-                .withType(GatewayAccountType.fromString(type)).build();
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(WORLDPAY.getName())
+                .withType(GatewayAccountType.fromString(type))
+                .build();
+
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
@@ -124,57 +135,74 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_BAD_REQUEST);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
-        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
+        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccountEntity)), eq(flexCredentials),
                 any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
 
-        assertFalse(service.validateCredentials(gatewayAccount, flexCredentials));
+        assertFalse(service.validateCredentials(gatewayAccountEntity, flexCredentials));
     }
 
     @ParameterizedTest
     @ValueSource(ints = { 100, 204, 303, 404, 500 })
     void should_throw_exception_if_response_from_3ds_flex_ddc_endpoint_is_not_200_or_400(int responseCode) {
-        var gatewayAccount = aGatewayAccountEntity().withGatewayName("worldpay").withType(LIVE).build();
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(WORLDPAY.getName())
+                .withType(LIVE)
+                .build();
+
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(response.getStatus()).thenReturn(responseCode);
         when(client.target(threeDsFlexDdcUrls.get("live"))).thenReturn(webTarget);
-        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
+        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccountEntity)), eq(flexCredentials),
                 any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData))))).thenReturn(response);
 
         var exception = assertThrows(ThreeDsFlexDdcServiceUnavailableException.class,
-                () -> service.validateCredentials(gatewayAccount, flexCredentials));
+                () -> service.validateCredentials(gatewayAccountEntity, flexCredentials));
         assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_SERVICE_UNAVAILABLE);
         assertThat(exception, is(instanceOf(WebApplicationException.class)));
     }
     
     @Test
     void should_throw_exception_if_processingException_thrown_when_communicating_with_3ds_flex_ddc_endpoint() {
-        var gatewayAccount = aGatewayAccountEntity().withGatewayName("worldpay").withType(LIVE).build();
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(WORLDPAY.getName())
+                .withType(LIVE)
+                .build();
+        
         Worldpay3dsFlexCredentials flexCredentials = getValid3dsFlexCredentials();
 
         when(client.target(threeDsFlexDdcUrls.get("live"))).thenReturn(webTarget);
-        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccount)), eq(flexCredentials),
+        when(worldpay3dsFlexJwtService.generateDdcToken(eq(GatewayAccount.valueOf(gatewayAccountEntity)), eq(flexCredentials),
                 any(Instant.class))).thenReturn(DDC_TOKEN);
         var expectedFormData = new MultivaluedHashMap<String, String>(){{add("JWT", DDC_TOKEN);}};
         when(invocationBuilder.post(argThat(new EntityMatcher(Entity.form(expectedFormData)))))
                 .thenThrow(new ProcessingException("Some I/O failure"));
 
         var exception = assertThrows(ThreeDsFlexDdcServiceUnavailableException.class,
-                () -> service.validateCredentials(gatewayAccount, flexCredentials));
+                () -> service.validateCredentials(gatewayAccountEntity, flexCredentials));
         assertEquals(exception.getResponse().getStatus(), HttpStatus.SC_SERVICE_UNAVAILABLE);
         assertThat(exception, is(instanceOf(WebApplicationException.class)));
     }
 
     @Test
     void should_throw_exception_if_gateway_account_is_not_a_worldpay_account() {
-        var gatewayAccount = aGatewayAccountEntity().withGatewayName("stripe").build();
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(STRIPE.getName())
+                .build();
+
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
         
-        var exception = assertThrows(NotAWorldpayGatewayAccountException.class,
-                () -> service.validateCredentials(gatewayAccount, getValid3dsFlexCredentials()));
+        assertThrows(NotAWorldpayGatewayAccountException.class, () -> service.validateCredentials(gatewayAccountEntity, getValid3dsFlexCredentials()));
     }
 
     private Worldpay3dsFlexCredentials getValid3dsFlexCredentials() {
