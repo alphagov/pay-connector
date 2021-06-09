@@ -7,7 +7,6 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.mockito.Mock;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -26,9 +25,11 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -40,6 +41,7 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -57,6 +59,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
@@ -117,8 +120,8 @@ public abstract class BaseEpdqPaymentProviderIT {
         when(linksConfig.getFrontendUrl()).thenReturn("http://www.frontend.example.com");
 
         provider = new EpdqPaymentProvider(
-                configuration, 
-                gatewayClientFactory, 
+                configuration,
+                gatewayClientFactory,
                 environment,
                 Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC));
     }
@@ -142,11 +145,11 @@ public abstract class BaseEpdqPaymentProviderIT {
     String successAuth3ds2Request() {
         return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS2_REQUEST);
     }
-    
+
     String successAuth3ds2RequestWithProvidedParameters() {
         return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS2_REQUEST_WITH_PROVIDED_PARAMETERS);
     }
-    
+
     String successAuth3dsRequest() {
         return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS_REQUEST);
     }
@@ -237,6 +240,17 @@ public abstract class BaseEpdqPaymentProviderIT {
                 CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
         ));
         gatewayAccount.setType(TEST);
+
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("epdq")
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "merchant-id",
+                        CREDENTIALS_USERNAME, "username",
+                        CREDENTIALS_PASSWORD, "password",
+                        CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
+                ))
+                .build();
+        gatewayAccount.setGatewayAccountCredentials(List.of(credentialsEntity));
         return gatewayAccount;
     }
 
@@ -296,13 +310,13 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .build();
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
-    
+
     private CardAuthorisationGatewayRequest buildTestAuthorisation3ds2Request(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .build();
-        
+
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
@@ -311,14 +325,14 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .build();
-        
+
         Address address = new Address();
         address.setLine1("The Money Pool");
         address.setLine2("1 Gold Way");
         address.setPostcode("DO11 4RS");
         address.setCity("London");
         address.setCountry("GB");
-        
+
         AuthCardDetails authCardDetails = buildTestAuthCardDetails();
         authCardDetails.setJsScreenColorDepth("15");
         authCardDetails.setJsScreenHeight("1500");
@@ -329,7 +343,7 @@ public abstract class BaseEpdqPaymentProviderIT {
         authCardDetails.setUserAgentHeader("Opera/9.0");
         authCardDetails.setIpAddress("8.8.8.8");
         authCardDetails.setAddress(address);
-        
+
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 

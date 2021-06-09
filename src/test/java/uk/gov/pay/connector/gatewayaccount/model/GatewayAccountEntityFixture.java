@@ -14,6 +14,7 @@ import java.util.Map;
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 public final class GatewayAccountEntityFixture {
     private Long id = 1L;
@@ -162,7 +163,7 @@ public final class GatewayAccountEntityFixture {
         this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
         return this;
     }
-    
+
     public GatewayAccountEntityFixture withGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> credentials) {
         this.gatewayAccountCredentialsEntities = credentials;
         return this;
@@ -193,6 +194,14 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
+
+        if (credentials != null && gatewayAccountCredentialsEntities != null
+                && gatewayAccountCredentialsEntities.isEmpty()) {
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withPaymentProvider(gatewayName).build();
+            gatewayAccountCredentialsEntities.add(credentialsEntity);
+        }
+
         gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
         return gatewayAccountEntity;
     }

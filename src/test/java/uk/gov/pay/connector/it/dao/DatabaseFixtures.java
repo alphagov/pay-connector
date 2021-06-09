@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -338,6 +341,11 @@ public class DatabaseFixtures {
         private boolean motoMaskCardNumberInput;
         private boolean motoMaskCardSecurityCodeInput;
         private boolean allowTelephonePaymentNotifications;
+        private final Map<String, String> defaultCredentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, "merchant-id",
+                CREDENTIALS_USERNAME, "username",
+                CREDENTIALS_PASSWORD, "password"
+        );
 
         public long getAccountId() {
             return accountId;
@@ -493,6 +501,11 @@ public class DatabaseFixtures {
 
         public TestAccount withAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {
             this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
+            return this;
+        }
+
+        public TestAccount withDefaultCredentials() {
+            this.credentials = defaultCredentials; 
             return this;
         }
 

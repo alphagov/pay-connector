@@ -34,17 +34,15 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.ws.rs.WebApplicationException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static java.util.Comparator.comparing;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -159,7 +157,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @OneToMany(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = new ArrayList<>();
-    
+
     @Column(name = "provider_switch_enabled")
     private boolean providerSwitchEnabled;
 
@@ -201,11 +199,23 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         Optional<GatewayAccountCredentialsEntity> gatewayAccountCredential = gatewayAccountCredentialsEntities
                 .stream()
                 .filter(entity -> entity.getState() == ACTIVE)
-                .max(Comparator.comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
+                .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
 
         return gatewayAccountCredential
                 .map(GatewayAccountCredentialsEntity::getPaymentProvider)
                 .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(format("Credentials not found for gateway account [%s]", getId()))));
+    }
+
+    public Map<String, String> getCredentials(String paymentProvider) {
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
+
+        return gatewayAccountCredentialsEntities.stream()
+                .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
+                .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate))
+                .map(GatewayAccountCredentialsEntity::getCredentials)
+                .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
+                        format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
+                                getId(), paymentProvider))));
     }
 
     @JsonProperty("gateway_merchant_id")
