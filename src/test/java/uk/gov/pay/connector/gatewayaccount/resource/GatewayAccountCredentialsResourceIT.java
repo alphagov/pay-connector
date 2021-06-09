@@ -32,6 +32,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -423,7 +424,8 @@ public class GatewayAccountCredentialsResourceIT {
                 .statusCode(OK.getStatusCode())
                 .body("gateway_account_credentials.size()", is(2))
                 .body("gateway_account_credentials[1].payment_provider", is("stripe"))
-                .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"));;
+                .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
+                .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
     }
 
     @Test
