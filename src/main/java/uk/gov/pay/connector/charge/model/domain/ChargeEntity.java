@@ -337,7 +337,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return new StructuredArgument[]{
                 kv(PAYMENT_EXTERNAL_ID, externalId),
                 kv(GATEWAY_ACCOUNT_ID, getGatewayAccount().getId()),
-                kv(PROVIDER, getGatewayAccount().getGatewayName()),
+                kv(PROVIDER, paymentProvider),
                 kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType())
         };
     }
@@ -400,7 +400,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     }
 
     public PaymentGatewayName getPaymentGatewayName() {
-        return PaymentGatewayName.valueFrom(gatewayAccount.getGatewayName());
+        return PaymentGatewayName.valueFrom(paymentProvider);
     }
 
     public Auth3dsRequiredEntity get3dsRequiredDetails() {

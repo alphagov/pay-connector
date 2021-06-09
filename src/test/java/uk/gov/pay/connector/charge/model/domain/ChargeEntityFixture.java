@@ -56,7 +56,7 @@ public class ChargeEntityFixture {
     private Source source = null;
     private boolean moto;
     private Exemption3ds exemption3ds;
-    private String paymentProvider;
+    private String paymentProvider = "sandbox";
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();

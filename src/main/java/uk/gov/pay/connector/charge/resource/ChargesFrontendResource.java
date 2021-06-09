@@ -162,6 +162,7 @@ public class ChargesFrontendResource {
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
+                .withProviderName(charge.getPaymentProvider())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
@@ -190,7 +191,7 @@ public class ChargesFrontendResource {
             auth3dsData.setHtmlOut(charge.get3dsRequiredDetails().getHtmlOut());
             auth3dsData.setMd(charge.get3dsRequiredDetails().getMd());
 
-            if (charge.getGatewayAccount().getGatewayName().equals(WORLDPAY.getName())) {
+            if (WORLDPAY.getName().equals(charge.getPaymentProvider())) {
                 worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
                         auth3dsData::setWorldpayChallengeJwt);
             }
