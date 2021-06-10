@@ -10,7 +10,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -26,8 +25,10 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.XPathUtils;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -365,16 +366,18 @@ class WorldpayAuthoriseHandlerTest {
     }
     
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("worldpay");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password"
-        ));
-        gatewayAccount.setType(TEST);
+        GatewayAccountEntity gatewayAccount = GatewayAccountEntityFixture
+                .aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName(WORLDPAY.getName())
+                .withRequires3ds(false)
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"
+                ))
+                .build();
+
         return gatewayAccount;
     }
 

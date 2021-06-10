@@ -12,13 +12,13 @@ import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public abstract class BaseSmartpayPaymentProviderTest {
@@ -60,15 +61,17 @@ public abstract class BaseSmartpayPaymentProviderTest {
     }
 
     GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("smartpay");
-        gatewayAccount.setCredentials(ImmutableMap.of(
-                "username", "theUsername",
-                "password", "thePassword",
-                "merchant_id", "theMerchantCode"
-        ));
-        gatewayAccount.setType(TEST);
+        GatewayAccountEntity gatewayAccount = GatewayAccountEntityFixture
+                .aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName(SMARTPAY.getName())
+                .withCredentials(ImmutableMap.of(
+                        "username", "theUsername",
+                        "password", "thePassword",
+                        "merchant_id", "theMerchantCode"
+                ))
+                .withType(TEST)
+                .build();
 
         return gatewayAccount;
     }

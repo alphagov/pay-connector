@@ -27,6 +27,9 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -39,7 +42,9 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -101,6 +106,9 @@ public class RefundServiceTest {
     private StateTransitionService mockStateTransitionService;
     @Mock
     private LedgerService mockLedgerService;
+    private GatewayAccountEntity account;
+    private ChargeEntity chargeEntity;
+    private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntityList = new ArrayList<>();
 
     @Before
     public void setUp() {
@@ -117,11 +125,17 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long refundAmount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
@@ -166,10 +180,16 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long refundAmount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
 
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");
@@ -232,11 +252,17 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long refundAmount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
@@ -260,11 +286,18 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "smartpay";
+        String providerName = SMARTPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SMARTPAY.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
@@ -310,14 +343,20 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
         String generatedReference = "generated-reference";
 
         String providerReference = "worldpay-reference";
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
@@ -352,12 +391,18 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
         String generatedReference = "generated-reference";
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
@@ -389,13 +434,20 @@ public class RefundServiceTest {
     public void shouldRefundAndSendEmail_whenGatewayRefundStateIsComplete_forChargeWithNoCorporateSurcharge() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        String providerName = "sandbox";
+        String providerName = SANDBOX.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
         String reference = "reference";
 
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId(reference)
                 .withExternalId(externalChargeId)
@@ -410,14 +462,21 @@ public class RefundServiceTest {
     public void shouldRefundAndSendEmail_whenGatewayRefundStatusIsComplete_forChargeWithCorporateSurcharge() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        String providerName = "sandbox";
+        String providerName = SANDBOX.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
         String reference = "reference";
 
         long corporateSurcharge = 50L;
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        chargeEntity = aValidChargeEntity()
                 .withCorporateSurcharge(corporateSurcharge)
                 .withGatewayAccountEntity(account)
                 .withTransactionId(reference)
@@ -469,9 +528,16 @@ public class RefundServiceTest {
     public void shouldFailWhenChargeRefundIsNotAvailable() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        GatewayAccountEntity account = new GatewayAccountEntity("sandbox", newHashMap(), TEST);
+        account = new GatewayAccountEntity(SANDBOX.getName(), newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withExternalId(externalChargeId)
                 .withTransactionId("transactionId")
@@ -494,9 +560,16 @@ public class RefundServiceTest {
         Long amount = 1000L;
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        GatewayAccountEntity account = new GatewayAccountEntity("sandbox", newHashMap(), TEST);
+        account = new GatewayAccountEntity(SANDBOX.getName(), newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withAmount(amount)
                 .withExternalId(externalChargeId)
                 .withGatewayAccountEntity(account)
@@ -522,9 +595,16 @@ public class RefundServiceTest {
         Long corporateSurcharge = 250L;
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        GatewayAccountEntity account = new GatewayAccountEntity("sandbox", newHashMap(), TEST);
+        account = new GatewayAccountEntity(SANDBOX.getName(), newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withAmount(amount)
                 .withExternalId(externalChargeId)
                 .withCorporateSurcharge(corporateSurcharge)
@@ -551,9 +631,16 @@ public class RefundServiceTest {
     public void shouldFailWhenANewRefundHasBeenCreatedSincePreviouslyQueried() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
-        GatewayAccountEntity account = new GatewayAccountEntity("sandbox", newHashMap(), TEST);
+        account = new GatewayAccountEntity(SANDBOX.getName(), newHashMap(), TEST);
         account.setId(accountId);
-        ChargeEntity chargeEntity = aValidChargeEntity()
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
                 .withAmount(1000L)
                 .withExternalId(externalChargeId)
                 .withGatewayAccountEntity(account)
@@ -612,10 +699,16 @@ public class RefundServiceTest {
         String externalChargeId = "chargeId";
         Long amount = 100L;
         Long accountId = 2L;
-        String providerName = "worldpay";
+        String providerName = WORLDPAY.getName();
 
-        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
         ChargeEntity capturedCharge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")

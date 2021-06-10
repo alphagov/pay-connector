@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -24,9 +27,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 
 public class ChargeEntityFixture {
 
@@ -66,10 +71,21 @@ public class ChargeEntityFixture {
         GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");
+
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody("template body");
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
         accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
+
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(accountEntity)
+                .withPaymentProvider("sandbox")
+                .withCredentials(Map.of())
+                .withState(CREATED)
+                .build();
+        accountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+
         return accountEntity;
     }
 
