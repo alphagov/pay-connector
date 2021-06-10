@@ -122,10 +122,10 @@ public class CardCaptureService {
                 charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
                 captureResponse, oldStatus, nextStatus);
 
-        metricRegistry.counter(format("gateway-operations.%s.%s.%s.capture.result.%s",
+        metricRegistry.counter(format("gateway-operations.%s.%s.capture.result.%s",
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getGatewayAccount().getType(),
-                charge.getGatewayAccount().getId(), nextStatus.toString())).inc();
+                nextStatus.toString())).inc();
 
         if (captureResponse.isSuccessful() && charge.isDelayedCapture()) {
             userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());

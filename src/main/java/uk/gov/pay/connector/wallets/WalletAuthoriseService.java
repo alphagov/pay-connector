@@ -117,10 +117,9 @@ public class WalletAuthoriseService {
 
         LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
                 walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
-        metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
+        metricRegistry.counter(format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 chargeEntity.getGatewayAccount().getGatewayName(),
                 chargeEntity.getGatewayAccount().getType(),
-                chargeEntity.getGatewayAccount().getId(),
                 walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
                 successOrFailure)).inc();
     }
