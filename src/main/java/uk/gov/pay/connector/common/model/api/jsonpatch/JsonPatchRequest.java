@@ -28,6 +28,10 @@ public class JsonPatchRequest {
         return path;
     }
     
+    public boolean valueIsString() { 
+        return value.isTextual();
+    }
+
     public boolean valueIsBoolean() {
         return value.isBoolean();
     }

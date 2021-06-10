@@ -33,6 +33,7 @@ public class GatewayAccountCredentialsRequestValidator {
     private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
 
     public static final String FIELD_CREDENTIALS = "credentials";
+    public static final String FIELD_LAST_UPDATED_BY_USER = "last_updated_by_user_external_id";
 
     @Inject
     public GatewayAccountCredentialsRequestValidator(ConnectorConfiguration configuration) {
@@ -75,7 +76,8 @@ public class GatewayAccountCredentialsRequestValidator {
     
     public void validatePatch(JsonNode patchRequest, String paymentProvider) {
         Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
-                new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), (operation) -> validateReplaceCredentialsOperation(operation, paymentProvider)
+                new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), (operation) -> validateReplaceCredentialsOperation(operation, paymentProvider),
+                new PatchPathOperation(FIELD_LAST_UPDATED_BY_USER, JsonPatchOp.REPLACE), JsonPatchRequestValidator::throwIfValueNotString
         );
         var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         patchRequestValidator.validate(patchRequest);
