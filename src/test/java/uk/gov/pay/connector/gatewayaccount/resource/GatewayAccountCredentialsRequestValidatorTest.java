@@ -99,7 +99,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                         "op", "replace",
                         "value", credentials)));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
-        assertThat(thrown.getErrors().get(0), is("Value for path [credentials] op [replace] is missing field(s): [merchant_id]"));
+        assertThat(thrown.getErrors().get(0), is("Value for path [credentials] is missing field(s): [merchant_id]"));
     }
 
     @Test

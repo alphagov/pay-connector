@@ -3,6 +3,7 @@ package uk.gov.pay.connector.common.validator;
 import com.fasterxml.jackson.databind.JsonNode;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,15 +19,15 @@ import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIEL
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
 
-public class PatchRequestValidator {
+public class JsonPatchRequestValidator {
 
     private static final Set<String> allowedOps = Arrays.stream(JsonPatchOp.values())
             .map(jsonPatchOp -> jsonPatchOp.name().toLowerCase(Locale.ROOT))
             .collect(Collectors.toSet());
-    
-    private final Map<PatchPathOperation, Consumer<JsonNode>> operationValidators;
 
-    public PatchRequestValidator(Map<PatchPathOperation, Consumer<JsonNode>> operationValidators) {
+    private final Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators;
+
+    public JsonPatchRequestValidator(Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators) {
         this.operationValidators = operationValidators;
     }
 
@@ -67,7 +68,14 @@ public class PatchRequestValidator {
                 throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]", op, path)));
             }
 
-            operationValidators.get(pathOperation).accept(jsonNode);
+            JsonPatchRequest request = JsonPatchRequest.from(jsonNode);
+            operationValidators.get(pathOperation).accept(request);
+        }
+    }
+
+    public static void throwIfValueNotBoolean(JsonPatchRequest request) {
+        if (!request.valueIsBoolean()) {
+            throw new ValidationException(Collections.singletonList(format("Value for path [%s] must be a boolean", request.getPath())));
         }
     }
 }
