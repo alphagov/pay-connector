@@ -91,6 +91,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.fromString(status))
                 .withGatewayTransactionId(payId)
+                .withPaymentProvider(EPDQ.getName())
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
@@ -104,6 +105,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(USER_CANCEL_SUBMITTED)
+                .withPaymentProvider(EPDQ.getName())
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
@@ -117,6 +119,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(EXPIRE_CANCEL_SUBMITTED)
+                .withPaymentProvider(EPDQ.getName())
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
@@ -130,6 +133,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CAPTURED)
+                .withPaymentProvider(EPDQ.getName())
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));

@@ -119,7 +119,7 @@ public class EpdqNotificationService {
 
         GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
 
-        if (!isValidNotificationSignature(notification, gatewayAccountEntity)) {
+        if (!isValidNotificationSignature(notification, gatewayAccountEntity, charge)) {
             return true;
         }
 
@@ -153,10 +153,11 @@ public class EpdqNotificationService {
         return true;
     }
 
-    private boolean isValidNotificationSignature(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
+    private boolean isValidNotificationSignature(EpdqNotification notification, 
+                                                 GatewayAccountEntity gatewayAccountEntity, Charge charge) {
         String actualSignature = signatureGenerator.sign(
                 getParams(notification, false),
-                getShaOutPassphrase(gatewayAccountEntity)
+                getShaOutPassphrase(gatewayAccountEntity, charge)
         );
 
         final String expectedShaSignature = getExpectedShaSignature(notification);
@@ -183,8 +184,8 @@ public class EpdqNotificationService {
                 .get(withShaSignature);
     }
 
-    private String getShaOutPassphrase(GatewayAccountEntity gatewayAccountEntity) {
-        return gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
+    private String getShaOutPassphrase(GatewayAccountEntity gatewayAccountEntity, Charge charge) {
+        return gatewayAccountEntity.getCredentials(charge.getPaymentGatewayName()).get(CREDENTIALS_SHA_OUT_PASSPHRASE);
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, Charge charge) {

@@ -22,7 +22,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 abstract class BaseEpdqNotificationServiceTest {
     private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(List.of("102.22.31.0/24", "9.9.9.9/32"));
@@ -55,10 +57,15 @@ abstract class BaseEpdqNotificationServiceTest {
                 new IpAddressMatcher(new InetAddressValidator()),
                 ALLOWED_IP_ADDRESSES
         );
-        gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(EPDQ.getName())
+                .withCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut))
+                .withId(1L)
+                .build();
+
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(EPDQ.getName())
                 .build());
     }
 
