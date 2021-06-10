@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -11,10 +15,13 @@ import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -30,9 +37,13 @@ public class GatewayAccountCredentialsService {
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
     }
 
+    public Optional<GatewayAccountCredentialsEntity> getGatewayAccountCredentials(long id) {
+        return gatewayAccountCredentialsDao.findById(id);
+    }
+
     @Transactional
-    public void createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
-                                                Map<String, String> credentials) {
+    public GatewayAccountCredentials createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
+                                                                     Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateState(gatewayAccountEntity, paymentProvider, credentials);
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
                 = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
@@ -43,6 +54,7 @@ public class GatewayAccountCredentialsService {
         gatewayAccountCredentialsEntity.setExternalId(randomUuid());
 
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+        return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
     }
 
     private GatewayAccountCredentialState calculateState(GatewayAccountEntity gatewayAccountEntity,
@@ -84,6 +96,20 @@ public class GatewayAccountCredentialsService {
             credentialsEntity.setState(ACTIVE);
             credentialsEntity.setActiveStartDate(Instant.now());
         }
+    }
+
+    @Transactional
+    public GatewayAccountCredentials updateGatewayAccountCredentials(long gatewayAccountCredentialsId, List<JsonPatchRequest> updateRequests) {
+        return getGatewayAccountCredentials(gatewayAccountCredentialsId).map(
+                gatewayAccountCredentialsEntity -> {
+                    for (JsonPatchRequest updateRequest : updateRequests) {
+                        if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
+                            gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
+                        }
+                    }
+
+                    return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
+                }).orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(gatewayAccountCredentialsId));
     }
 
 }

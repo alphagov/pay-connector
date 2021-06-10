@@ -3,10 +3,13 @@ package uk.gov.pay.connector.gatewayaccountcredentials.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 
@@ -21,6 +24,10 @@ public class GatewayAccountCredentialsDao extends JpaDao<GatewayAccountCredentia
     @Override
     public void persist(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         super.persist(gatewayAccountCredentialsEntity);
+    }
+    
+    public Optional<GatewayAccountCredentialsEntity> findById(Long id) {
+        return super.findById(GatewayAccountCredentialsEntity.class, id);
     }
 
     public boolean hasActiveCredentials(Long gatewayAccountId) {

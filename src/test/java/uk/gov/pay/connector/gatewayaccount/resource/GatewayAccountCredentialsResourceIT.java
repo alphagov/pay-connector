@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.google.gson.Gson;
 import io.restassured.specification.RequestSpecification;
 import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
@@ -8,20 +9,23 @@ import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.rules.WorldpayMockClient;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -34,6 +38,9 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -44,6 +51,7 @@ public class GatewayAccountCredentialsResourceIT {
     private static final String UPDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
     private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
     private static final String VALIDATE_WORLDPAY_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-credentials";
+    private static final String PATCH_CREDENTIALS_URL = "v1/api/accounts/%s/credentials/%s";
 
     public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
     public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
@@ -119,16 +127,16 @@ public class GatewayAccountCredentialsResourceIT {
                 .then()
                 .statusCode(HttpStatus.SC_SERVICE_UNAVAILABLE);
     }
-    
+
     @Test
     public void should_return_404_when_validating_3ds_flex_credentials_if_gateway_account_does_not_exist() throws Exception {
         givenSetup()
                 .body(getCheck3dsConfigPayloadForValidCredentials())
-                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId-1))
+                .post(format(VALIDATE_3DS_FLEX_CREDENTIALS_URL, accountId - 1))
                 .then()
                 .statusCode(HttpStatus.SC_NOT_FOUND);
     }
-    
+
     @Test
     public void should_return_422_if_organisation_unit_id_not_in_correct_format() throws Exception {
         var payload = objectMapper.writeValueAsString(Map.of("issuer", VALID_ISSUER,
@@ -137,7 +145,7 @@ public class GatewayAccountCredentialsResourceIT {
 
         verifyIncorrectFormat(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
     }
-    
+
     @Test
     public void should_return_422_if_organisation_unit_id_is_null() throws Exception {
         var jsonFields = new HashMap<String, String>();
@@ -157,7 +165,7 @@ public class GatewayAccountCredentialsResourceIT {
 
         verifyIncorrectFormat(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
     }
-    
+
     @Test
     public void should_return_422_if_issuer_is_null() throws Exception {
         var jsonFields = new HashMap<String, String>();
@@ -177,7 +185,7 @@ public class GatewayAccountCredentialsResourceIT {
 
         verifyIncorrectFormat(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
     }
-    
+
     @Test
     public void should_return_422_if_jwt_mac_key_is_null() throws Exception {
         var jsonFields = new HashMap<String, String>();
@@ -251,7 +259,7 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     @Parameters({
-            "jwt_mac_key, Field [jwt_mac_key] must be a UUID in its lowercase canonical representation", 
+            "jwt_mac_key, Field [jwt_mac_key] must be a UUID in its lowercase canonical representation",
             "issuer, Field [issuer] must be 24 lower-case hexadecimal characters",
             "organisational_unit_id, Field [organisational_unit_id] must be 24 lower-case hexadecimal characters",
     })
@@ -323,7 +331,7 @@ public class GatewayAccountCredentialsResourceIT {
     public void checkWorldpayCredentials_returns422WhenUsernameMissing() throws JsonProcessingException {
         long accountId = RandomUtils.nextLong();
         String body = objectMapper.writeValueAsString(Map.of(
-                "username","",
+                "username", "",
                 "password", "valid-password",
                 "merchant_id", "valid-merchant-id"
         ));
@@ -339,7 +347,7 @@ public class GatewayAccountCredentialsResourceIT {
     public void checkWorldpayCredentials_returns422WhenPasswordMissing() throws JsonProcessingException {
         long accountId = RandomUtils.nextLong();
         String body = objectMapper.writeValueAsString(Map.of(
-                "username","valid-username",
+                "username", "valid-username",
                 "password", "",
                 "merchant_id", "valid-merchant-id"
         ));
@@ -355,7 +363,7 @@ public class GatewayAccountCredentialsResourceIT {
     public void checkWorldpayCredentials_returns422WhenMerchantIdMissing() throws JsonProcessingException {
         long accountId = RandomUtils.nextLong();
         String body = objectMapper.writeValueAsString(Map.of(
-                "username","valid-username",
+                "username", "valid-username",
                 "password", "valid-password",
                 "merchant_id", ""
         ));
@@ -446,16 +454,94 @@ public class GatewayAccountCredentialsResourceIT {
                 .statusCode(400);
     }
 
+    @Test
+    public void patchGatewayAccountCredentialsValidRequest_responseShouldBe200() {
+        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+
+        Map<String, String> newCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-merchant-id");
+        givenSetup()
+                .body(toJson(Collections.singletonList(
+                        Map.of("op", "replace",
+                                "path", "credentials",
+                                "value", newCredentials))))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials", hasKey("username"))
+                .body("credentials", hasKey("merchant_id"))
+                .body("credentials", not(hasKey("password")))
+                .body("credentials.username", is("new-username"))
+                .body("credentials.merchant_id", is("new-merchant-id"));
+
+        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(updatedCredentials, hasEntry("username", "new-username"));
+        assertThat(updatedCredentials, hasEntry("password", "new-password"));
+        assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
+    }
+
+    @Test
+    public void patchGatewayAccountCredentialsInvalidRequestBody_shouldReturn400() {
+        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+
+        givenSetup()
+                .body(toJson(Collections.singletonList(
+                        Map.of("op", "replace",
+                                "path", "credentials"))))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(400)
+                .body("message[0]", is("Field [value] is required"));
+    }
+
+    @Test
+    public void patchGatewayAccountCredentialsGatewayAccountNotFound_shouldReturn404() {
+        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+
+        Map<String, String> newCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-merchant-id");
+        givenSetup()
+                .body(toJson(Collections.singletonList(
+                        Map.of("op", "replace",
+                                "path", "credentials",
+                                "value", newCredentials))))
+                .patch(format(PATCH_CREDENTIALS_URL, 10000, credentialsId))
+                .then()
+                .statusCode(404)
+                .body("message[0]", is("Gateway Account with id [10000] not found."));
+    }
+
+    @Test
+    public void patchGatewayAccountCredentialsGatewayAccountCredentialsNotFound_shouldReturn404() {
+
+        Map<String, String> newCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-merchant-id");
+        givenSetup()
+                .body(toJson(Collections.singletonList(
+                        Map.of("op", "replace",
+                                "path", "credentials",
+                                "value", newCredentials))))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, 999999))
+                .then()
+                .statusCode(404)
+                .body("message[0]", is("Gateway account credentials with id [999999] not found."));
+    }
+
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
         return objectMapper.writeValueAsString(Map.of(
                 "issuer", VALID_ISSUER,
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", VALID_JWT_MAC_KEY));
     }
-    
+
     private String getValidWorldpayCredentials() throws JsonProcessingException {
         return objectMapper.writeValueAsString(Map.of(
-                "username","valid-user-name",
+                "username", "valid-user-name",
                 "password", "valid-password",
                 "merchant_id", "valid-merchant-id"
         ));

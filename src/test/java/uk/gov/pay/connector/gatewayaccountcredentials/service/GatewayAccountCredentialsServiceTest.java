@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,15 +10,20 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.WebApplicationException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -31,9 +38,11 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 
 @ExtendWith(MockitoExtension.class)
 public class GatewayAccountCredentialsServiceTest {
-
+    
     @Mock
     GatewayAccountCredentialsDao mockGatewayAccountCredentialsDao;
+    
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
@@ -166,5 +175,38 @@ public class GatewayAccountCredentialsServiceTest {
         var credentials = Map.of("username", "foo");
         assertThrows(WebApplicationException.class, () ->
                 gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials));
+    }
+
+    @Test
+    void shouldUpdateGatewayAccountCredentials() {
+        long credentialsId = 1;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
+        
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(getValidUpdateCredentialsRequest()));
+        
+        assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
+    }
+
+    @Test
+    void shouldThrowForNotFoundCredentialsId() {
+        long credentialsId = 1;
+        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.empty());
+        assertThrows(GatewayAccountCredentialsNotFoundException.class, () ->
+                gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId,
+                        Collections.singletonList(getValidUpdateCredentialsRequest())));
+    }
+    
+    private JsonPatchRequest getValidUpdateCredentialsRequest() {
+        JsonNode request = objectMapper.valueToTree(
+                Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", Map.of(
+                                "merchant_id", "new-merchant-id"
+                        )));
+        return JsonPatchRequest.from(request);
     }
 }
