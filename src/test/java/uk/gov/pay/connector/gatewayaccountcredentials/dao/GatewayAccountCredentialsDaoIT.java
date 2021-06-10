@@ -57,6 +57,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
+                .withCredentials(null)
                 .withServiceName("a cool service")
                 .build());
 

@@ -156,6 +156,8 @@ public class GatewayAccountCredentialsServiceTest {
     @Test
     void shouldNotUpdateIfNoCredentialsRecordsExist() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withCredentials(null)
+                .withGatewayAccountCredentials(List.of())
                 .build();
 
         var credentials = Map.of("username", "foo");

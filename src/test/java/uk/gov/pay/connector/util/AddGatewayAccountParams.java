@@ -138,7 +138,7 @@ public class AddGatewayAccountParams {
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "provider";
-        private Map<String, String> credentials;
+        private Map<String, String> credentials = Map.of();
         private String serviceName = "service name";
         private GatewayAccountType type = TEST;
         private String description = "description";
@@ -188,7 +188,7 @@ public class AddGatewayAccountParams {
         public AddGatewayAccountParamsBuilder withEpdqCredentials() {
             this.credentials = epdqCredentials;
             return this;
-        }
+        }        
 
         public AddGatewayAccountParamsBuilder withServiceName(String serviceName) {
             this.serviceName = serviceName;

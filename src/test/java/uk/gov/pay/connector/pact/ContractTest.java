@@ -243,6 +243,7 @@ public class ContractTest {
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(params.get("gateway_account_id"))
                 .withPaymentGateway("sandbox")
+                .withCredentials(Map.of())
                 .withServiceName("a cool service")
                 .build());
     }
@@ -475,6 +476,7 @@ public class ContractTest {
         worldpayMockClient.mockCredentialsValidationValid();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
+                .withDefaultCredentials()
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }
