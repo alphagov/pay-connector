@@ -7,8 +7,9 @@ import com.google.inject.Inject;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
+import uk.gov.pay.connector.common.validator.JsonPatchRequestValidator;
 import uk.gov.pay.connector.common.validator.PatchPathOperation;
-import uk.gov.pay.connector.common.validator.PatchRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -21,7 +22,6 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
@@ -74,19 +74,19 @@ public class GatewayAccountCredentialsRequestValidator {
     }
     
     public void validatePatch(JsonNode patchRequest, String paymentProvider) {
-        Map<PatchPathOperation, Consumer<JsonNode>> operationValidators = Map.of(
+        Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
                 new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), (operation) -> validateReplaceCredentialsOperation(operation, paymentProvider)
         );
-        var patchRequestValidator = new PatchRequestValidator(operationValidators);
+        var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         patchRequestValidator.validate(patchRequest);
     }
     
-    private void validateReplaceCredentialsOperation(JsonNode operation, String paymentProvider) {
-        Map<String, String> credentialsMap = jsonObjectMapper.getAsMap(operation.get(FIELD_VALUE));
+    private void validateReplaceCredentialsOperation(JsonPatchRequest request, String paymentProvider) {
+        Map<String, String> credentialsMap = request.valueAsObject();
         List<String> missingCredentialsFields = getMissingCredentialsFields(credentialsMap, paymentProvider);
         if (!missingCredentialsFields.isEmpty()) {
-            throw new ValidationException(Collections.singletonList(format("Value for path [%s] op [%s] is missing field(s): [%s]", 
-                    FIELD_CREDENTIALS, JsonPatchOp.REPLACE.name().toLowerCase(Locale.ROOT), COMMA_JOINER.join(missingCredentialsFields))));
+            throw new ValidationException(Collections.singletonList(format("Value for path [%s] is missing field(s): [%s]", 
+                    FIELD_CREDENTIALS, COMMA_JOINER.join(missingCredentialsFields))));
         }
     }
 }

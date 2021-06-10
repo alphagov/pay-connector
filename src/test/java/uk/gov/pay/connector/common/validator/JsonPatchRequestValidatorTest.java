@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-class PatchRequestValidatorTest {
+class JsonPatchRequestValidatorTest {
     
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -76,12 +77,12 @@ class PatchRequestValidatorTest {
     @ParameterizedTest
     @ArgumentsSource(InvalidValuesTestProvider.class)
     void shouldThrowExceptionWhenValidationFails(String expectedErrorMessage, JsonNode request) {
-        Map<PatchPathOperation, Consumer<JsonNode>> operationValidators = Map.of(
+        Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
                 new PatchPathOperation("foo", JsonPatchOp.ADD), (node) -> {},
                 new PatchPathOperation("bar", JsonPatchOp.REPLACE), (node) -> {}
         );
         
-        var patchRequestValidator = new PatchRequestValidator(operationValidators);
+        var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         ValidationException validationException = assertThrows(ValidationException.class,
                 () -> patchRequestValidator.validate(request));
 
@@ -98,22 +99,22 @@ class PatchRequestValidatorTest {
                 "value", 1));
         JsonNode request = objectMapper.valueToTree(List.of(fooOperation, barOperation));
         
-        Consumer<JsonNode> addFooValidator = mock(Consumer.class);
-        doAnswer((node) -> null).when(addFooValidator).accept(eq(fooOperation));
+        Consumer<JsonPatchRequest> addFooValidator = mock(Consumer.class);
+        doAnswer((node) -> null).when(addFooValidator).accept(eq(JsonPatchRequest.from(fooOperation)));
 
-        Consumer<JsonNode> replaceBarValidator = mock(Consumer.class);
-        doAnswer((node) -> null).when(replaceBarValidator).accept(eq(barOperation));
+        Consumer<JsonPatchRequest> replaceBarValidator = mock(Consumer.class);
+        doAnswer((node) -> null).when(replaceBarValidator).accept(eq(JsonPatchRequest.from(barOperation)));
         
-        Map<PatchPathOperation, Consumer<JsonNode>> operationValidators = Map.of(
+        Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
                 new PatchPathOperation("foo", JsonPatchOp.ADD), addFooValidator,
                 new PatchPathOperation("bar", JsonPatchOp.REPLACE), replaceBarValidator
         );
         
-        var patchRequestValidator = new PatchRequestValidator(operationValidators);
+        var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
 
         patchRequestValidator.validate(request);
-        verify(addFooValidator).accept(eq(fooOperation));
-        verify(replaceBarValidator).accept(eq(barOperation));
+        verify(addFooValidator).accept(eq(JsonPatchRequest.from(fooOperation)));
+        verify(replaceBarValidator).accept(eq(JsonPatchRequest.from(barOperation)));
     }
 
     private static JsonNode buildPatchRequest(Map<Object, Object> data) {
