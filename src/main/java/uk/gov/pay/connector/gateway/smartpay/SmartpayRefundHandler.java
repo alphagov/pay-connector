@@ -4,7 +4,6 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
-import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 
@@ -33,7 +32,9 @@ public class SmartpayRefundHandler implements RefundHandler {
                     gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), 
                     buildRefundOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(
+                            getCredentials(request)
+                    ));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
@@ -44,12 +45,12 @@ public class SmartpayRefundHandler implements RefundHandler {
         return SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder()
                 .withReference(request.getRefundExternalId())
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(getMerchantCode(request))
+                .withMerchantCode(getCredentials(request).get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmount())
                 .build();
     }
 
-    private String getMerchantCode(GatewayRequest request) {
-        return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
+    private Map<String, String> getCredentials(RefundGatewayRequest request) {
+        return request.getGatewayAccount().getCredentials(request.getCharge().getPaymentGatewayName());
     }
 }

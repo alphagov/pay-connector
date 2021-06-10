@@ -25,6 +25,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
@@ -52,6 +53,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
+                .withPaymentProvider(SMARTPAY.getName())
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
@@ -77,6 +79,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(SMARTPAY.getName())
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
@@ -97,6 +100,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(SMARTPAY.getName())
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
@@ -125,6 +129,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(SMARTPAY.getName())
                 .build();
         Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
         auth3dsResult.setMd("Some smart text here");

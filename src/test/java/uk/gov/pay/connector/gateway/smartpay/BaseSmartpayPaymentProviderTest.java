@@ -10,7 +10,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 
@@ -27,6 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public abstract class BaseSmartpayPaymentProviderTest {
@@ -50,9 +50,9 @@ public abstract class BaseSmartpayPaymentProviderTest {
     public void setup() {
         GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
-        when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.SMARTPAY), any(MetricRegistry.class)))
+        when(mockClientFactory.createWithDropwizardClient(eq(SMARTPAY), any(MetricRegistry.class)))
                 .thenReturn(mockClient);
-        when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
+        when(configuration.getGatewayConfigFor(SMARTPAY)).thenReturn(gatewayConfig);
         when(gatewayConfig.getUrls()).thenReturn(ImmutableMap.of(TEST.toString(), "http://smartpay.url"));
         when(environment.metrics()).thenReturn(metricRegistry);
         when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
@@ -61,8 +61,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
     }
 
     GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = GatewayAccountEntityFixture
-                .aGatewayAccountEntity()
+        return aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(SMARTPAY.getName())
                 .withCredentials(ImmutableMap.of(
@@ -72,8 +71,6 @@ public abstract class BaseSmartpayPaymentProviderTest {
                 ))
                 .withType(TEST)
                 .build();
-
-        return gatewayAccount;
     }
 
     void mockSmartpayResponse(int httpStatus, String responsePayload) {

@@ -21,7 +21,6 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -89,7 +88,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), 
                 buildAuthoriseOrderFor(request), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(
+                        getCredentials(request.getCharge(), request.getGatewayAccount())
+                ));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
@@ -108,7 +109,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         try {
             GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), build3dsResponseAuthOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(
+                            getCredentials(request.getCharge(), request.getGatewayAccount())
+                    ));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
             if (gatewayResponse.getBaseResponse().isEmpty())
@@ -143,7 +146,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), buildCancelOrderFor(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(
+                        getCredentials(request.getCharge(), request.getGatewayAccount())
+                ));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }
 
@@ -176,7 +181,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         }
 
         return smartpayOrderRequestBuilder
-                .withMerchantCode(getMerchantCode(request))
+                .withMerchantCode(getMerchantCode(request.getCharge(), request.getGatewayAccount()))
                 .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
@@ -188,19 +193,23 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder()
                 .withPaResponse(request.getAuth3dsResult().getPaResponse())
                 .withMd(request.getAuth3dsResult().getMd())
-                .withMerchantCode(getMerchantCode(request))
+                .withMerchantCode(getMerchantCode(request.getCharge(), request.getGatewayAccount()))
                 .build();
     }
 
     private GatewayOrder buildCancelOrderFor(CancelGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(getMerchantCode(request))
+                .withMerchantCode(getMerchantCode(request.getCharge(), request.getGatewayAccount()))
                 .build();
     }
 
-    private String getMerchantCode(GatewayRequest request) {
-        return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
+    private String getMerchantCode(ChargeEntity chargeEntity, GatewayAccountEntity gatewayAccountEntity) {
+        return gatewayAccountEntity.getCredentials(chargeEntity.getPaymentProvider()).get(CREDENTIALS_MERCHANT_ID);
+    }
+
+    private Map<String, String> getCredentials(ChargeEntity chargeEntity, GatewayAccountEntity gatewayAccountEntity) {
+        return gatewayAccountEntity.getCredentials(chargeEntity.getPaymentProvider());
     }
 
 }

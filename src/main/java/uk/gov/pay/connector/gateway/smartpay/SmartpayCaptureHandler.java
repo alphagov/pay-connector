@@ -29,11 +29,12 @@ public class SmartpayCaptureHandler implements CaptureHandler {
     public CaptureResponse capture(CaptureGatewayRequest request) {
         try {
             GatewayClient.Response response = client.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), 
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    request.getGatewayAccount(),
                     buildCaptureOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
-            return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, SmartpayCaptureResponse.class), PENDING);
+                    getGatewayAccountCredentialsAsAuthHeader(getCredentials(request)));
+            return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, SmartpayCaptureResponse.class),
+                    PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
@@ -42,8 +43,12 @@ public class SmartpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrderFor(CaptureGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(getCredentials(request).get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmountAsString())
                 .build();
+    }
+
+    private Map<String, String> getCredentials(CaptureGatewayRequest request) {
+        return request.getGatewayAccount().getCredentials(request.getCharge().getPaymentProvider());
     }
 }

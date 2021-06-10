@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -59,13 +60,14 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withPaymentProvider("smartpay")
+                .withPaymentProvider(SMARTPAY.getName())
                 .withAccountId(Long.valueOf(accountId));
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withAmount(100L)
+                .withPaymentProvider(SMARTPAY.getName())
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
