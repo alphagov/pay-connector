@@ -93,10 +93,9 @@ public class StateTransitionService {
 
     private void incrementPerGatewayAccountStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
         metricRegistry.counter(String.format(
-                "state-transition.%s.%s.%s.to.%s",
+                "state-transition.%s.%s.to.%s",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
                 targetChargeState)).inc();
     }
     
