@@ -7,6 +7,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public final class GatewayAccountCredentialsEntityFixture {
     private Instant activeStartDate = Instant.now();
@@ -14,6 +15,7 @@ public final class GatewayAccountCredentialsEntityFixture {
     private Map<String, String> credentials = Map.of();
     private GatewayAccountCredentialState state = CREATED;
     private GatewayAccountEntity gatewayAccountEntity;
+    private String externalId = randomUuid();
 
     private GatewayAccountCredentialsEntityFixture() {
     }
@@ -47,9 +49,15 @@ public final class GatewayAccountCredentialsEntityFixture {
         return this;
     }
 
+    public GatewayAccountCredentialsEntityFixture withExternalId(String externalId) {
+        this.externalId = externalId;
+        return this;
+    }
+
     public GatewayAccountCredentialsEntity build() {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
         gatewayAccountCredentialsEntity.setActiveStartDate(activeStartDate);
+        gatewayAccountCredentialsEntity.setExternalId(externalId);
         return gatewayAccountCredentialsEntity;
     }
 }
