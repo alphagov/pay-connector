@@ -73,6 +73,12 @@ public class JsonPatchRequestValidator {
         }
     }
 
+    public static void throwIfValueNotString(JsonPatchRequest request) {
+        if (!request.valueIsString()) {
+            throw new ValidationException(Collections.singletonList(format("Value for path [%s] must be a string", request.getPath())));
+        }
+    }
+
     public static void throwIfValueNotBoolean(JsonPatchRequest request) {
         if (!request.valueIsBoolean()) {
             throw new ValidationException(Collections.singletonList(format("Value for path [%s] must be a boolean", request.getPath())));

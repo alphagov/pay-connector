@@ -24,6 +24,7 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
@@ -462,10 +463,14 @@ public class GatewayAccountCredentialsResourceIT {
                 "password", "new-password",
                 "merchant_id", "new-merchant-id");
         givenSetup()
-                .body(toJson(Collections.singletonList(
+                .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials",
-                                "value", newCredentials))))
+                                "value", newCredentials),
+                        Map.of("op", "replace",
+                                "path", "last_updated_by_user_external_id",
+                                "value", "a-new-user-external-id")
+                        )))
                 .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
                 .then()
                 .statusCode(200)
@@ -474,9 +479,12 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials", hasKey("merchant_id"))
                 .body("credentials", not(hasKey("password")))
                 .body("credentials.username", is("new-username"))
-                .body("credentials.merchant_id", is("new-merchant-id"));
+                .body("credentials.merchant_id", is("new-merchant-id"))
+                .body("last_updated_by_user_external_id", is("a-new-user-external-id"));
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
+        
         Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasEntry("username", "new-username"));
         assertThat(updatedCredentials, hasEntry("password", "new-password"));

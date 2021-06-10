@@ -147,4 +147,8 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
+
+    public void setLastUpdatedByUserExternalId(String lastUpdatedByUserExternalId) {
+        this.lastUpdatedByUserExternalId = lastUpdatedByUserExternalId;
+    }
 }

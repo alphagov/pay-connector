@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -38,10 +40,10 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 
 @ExtendWith(MockitoExtension.class)
 public class GatewayAccountCredentialsServiceTest {
-    
+
     @Mock
     GatewayAccountCredentialsDao mockGatewayAccountCredentialsDao;
-    
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     GatewayAccountCredentialsService gatewayAccountCredentialsService;
@@ -185,28 +187,42 @@ public class GatewayAccountCredentialsServiceTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
         when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
-        
-        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(getValidUpdateCredentialsRequest()));
-        
+
+        JsonNode replaceCredentialsNode = objectMapper.valueToTree(
+                Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", Map.of(
+                                "merchant_id", "new-merchant-id"
+                        )));
+        JsonNode replaceLastUserNode = objectMapper.valueToTree(
+                Map.of("path", "last_updated_by_user_external_id",
+                        "op", "replace",
+                        "value", "new-user-external-id")
+        );
+
+        List<JsonPatchRequest> patchRequests = Stream.of(replaceCredentialsNode, replaceLastUserNode)
+                .map(JsonPatchRequest::from)
+                .collect(Collectors.toList());
+
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, patchRequests);
+
         assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
+        assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
     }
 
     @Test
     void shouldThrowForNotFoundCredentialsId() {
         long credentialsId = 1;
         when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.empty());
+
+        List<JsonPatchRequest> patchRequests = Collections.singletonList(JsonPatchRequest.from(objectMapper.valueToTree(
+                Map.of("path", "last_updated_by_user_external_id",
+                        "op", "replace",
+                        "value", "new-user-external-id")
+        )));
+
         assertThrows(GatewayAccountCredentialsNotFoundException.class, () ->
                 gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId,
-                        Collections.singletonList(getValidUpdateCredentialsRequest())));
-    }
-    
-    private JsonPatchRequest getValidUpdateCredentialsRequest() {
-        JsonNode request = objectMapper.valueToTree(
-                Map.of("path", "credentials",
-                        "op", "replace",
-                        "value", Map.of(
-                                "merchant_id", "new-merchant-id"
-                        )));
-        return JsonPatchRequest.from(request);
+                        patchRequests));
     }
 }

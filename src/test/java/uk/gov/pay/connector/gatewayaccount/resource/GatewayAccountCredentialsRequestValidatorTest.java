@@ -103,14 +103,31 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
+    public void shouldThrowWhenLastUpdatedByUserExternalIdIsNotAString() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "last_updated_by_user_external_id",
+                                "op", "replace",
+                                "value", 1)
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Value for path [last_updated_by_user_external_id] must be a string"));
+    }
+
+    @Test
     public void shouldNotThrowWhenValidPatchRequest() {
         Map<String, Object> credentials = Map.of(
                 "merchant_id", "some-merchant-id"
         );
         JsonNode request = objectMapper.valueToTree(
-                Collections.singletonList(Map.of("path", "credentials",
-                        "op", "replace",
-                        "value", credentials)));
+                List.of(
+                        Map.of("path", "credentials",
+                                "op", "replace",
+                                "value", credentials),
+                        Map.of("path", "last_updated_by_user_external_id",
+                                "op", "replace",
+                                "value", "a-user-external-id")
+                ));
         assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay"));
     }
 }
