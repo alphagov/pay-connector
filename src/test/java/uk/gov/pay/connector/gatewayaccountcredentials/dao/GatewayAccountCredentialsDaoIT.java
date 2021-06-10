@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,5 +65,26 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         boolean result = gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountId);
 
         assertThat(result, is(false));
+    }
+
+    @Test
+    public void findsCredentialByExternalId() {
+        long gatewayAccountId = nextLong();
+        String externalCredentialId = randomUuid();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("stripe")
+                .withServiceName("a cool service")
+                .build());
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
+                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+
+        Optional<GatewayAccountCredentialsEntity> optionalEntity = gatewayAccountCredentialsDao.findByExternalId(externalCredentialId);
+
+        assertThat(optionalEntity.isPresent(), is(true));
+        assertThat(optionalEntity.get().getExternalId(), is(externalCredentialId));
     }
 }
