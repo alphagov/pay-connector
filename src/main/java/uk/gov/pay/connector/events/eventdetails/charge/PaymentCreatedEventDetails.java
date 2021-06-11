@@ -71,7 +71,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withReference(charge.getReference().toString())
                 .withReturnUrl(charge.getReturnUrl())
                 .withGatewayAccountId(charge.getGatewayAccount().getId())
-                .withPaymentProvider(charge.getGatewayAccount().getGatewayName())
+                .withPaymentProvider(charge.getPaymentProvider())
                 .withLanguage(charge.getLanguage().toString())
                 .withDelayedCapture(charge.isDelayedCapture())
                 .withLive(charge.getGatewayAccount().isLive())

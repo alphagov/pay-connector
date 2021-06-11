@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Before;
-import org.junit.Test;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
 import java.util.Map;
@@ -19,8 +19,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class PaymentNotificationCreatedTest {
 
@@ -30,8 +30,8 @@ public class PaymentNotificationCreatedTest {
 
     private ChargeEntityFixture chargeEntityFixture;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
@@ -43,7 +43,7 @@ public class PaymentNotificationCreatedTest {
     }
 
     @Test
-    public void whenAllTheDataIsAvailable() throws JsonProcessingException {
+    void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ExternalMetadata externalMetadata = new ExternalMetadata(Map.of(
                 "processor_id", "processorID",
                 "auth_code", "012345",
@@ -81,7 +81,7 @@ public class PaymentNotificationCreatedTest {
     }
 
     @Test
-    public void whenCardDetailsAndMetadataAreNotAvailable() throws JsonProcessingException {
+    void whenCardDetailsAndMetadataAreNotAvailable() throws JsonProcessingException {
         chargeEntityFixture
                 .withCardDetails(null)
                 .withExternalMetadata(null);
@@ -114,7 +114,7 @@ public class PaymentNotificationCreatedTest {
     }
 
     @Test
-    public void whenCardDetailsIsAvailableButNotAllItsFieldsAre() throws JsonProcessingException {
+    void whenCardDetailsIsAvailableButNotAllItsFieldsAre() throws JsonProcessingException {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardHolderName("Mr Test");
 
