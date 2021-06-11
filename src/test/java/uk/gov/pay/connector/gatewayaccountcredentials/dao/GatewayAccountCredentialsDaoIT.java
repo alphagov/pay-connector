@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +16,8 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -53,12 +56,17 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void hasActiveCredentialsShouldReturnFalseIfGatewayAccountHasNoCredentials() {
+    public void hasActiveCredentialsShouldReturnFalseIfGatewayAccountHasNoActiveCredentials() {
         long gatewayAccountId = nextLong();
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withState(CREATED)
+                .withPaymentProvider("stripe")
+                .withGatewayAccountId(gatewayAccountId)
+                .build();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
-                .withCredentials(null)
+                .withGatewayAccountCredentials(credentialsParams)
                 .withServiceName("a cool service")
                 .build());
 

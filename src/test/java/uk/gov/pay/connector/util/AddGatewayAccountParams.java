@@ -12,6 +12,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
@@ -20,7 +21,7 @@ public class AddGatewayAccountParams {
             CREDENTIALS_USERNAME, "username",
             CREDENTIALS_PASSWORD, "password"
     );
-    
+
     private static final Map<String, String> epdqCredentials = Map.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "username",
@@ -28,11 +29,11 @@ public class AddGatewayAccountParams {
             CREDENTIALS_SHA_IN_PASSPHRASE, "sha-in",
             CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-out"
     );
-    
+
     private String accountId;
     private String externalId;
     private String paymentGateway;
-    private Map<String, String> credentials;
+    private AddGatewayAccountCredentialsParams credentials;
     private String serviceName;
     private GatewayAccountType type;
     private String description;
@@ -67,7 +68,7 @@ public class AddGatewayAccountParams {
         return paymentGateway;
     }
 
-    public Map<String, String> getCredentials() {
+    public AddGatewayAccountCredentialsParams getCredentials() {
         return credentials;
     }
 
@@ -138,7 +139,8 @@ public class AddGatewayAccountParams {
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "provider";
-        private Map<String, String> credentials = Map.of();
+        private Map<String, String> credentialsMap = Map.of();
+        private AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams;
         private String serviceName = "service name";
         private GatewayAccountType type = TEST;
         private String description = "description";
@@ -176,19 +178,24 @@ public class AddGatewayAccountParams {
         }
 
         public AddGatewayAccountParamsBuilder withCredentials(Map<String, String> credentials) {
-            this.credentials = credentials;
+            this.credentialsMap = credentials;
             return this;
         }
-        
+
+        public AddGatewayAccountParamsBuilder withGatewayAccountCredentials(AddGatewayAccountCredentialsParams credentials) {
+            this.gatewayAccountCredentialsParams = credentials;
+            return this;
+        }
+
         public AddGatewayAccountParamsBuilder withDefaultCredentials() {
-            this.credentials = defaultCredentials;
+            this.credentialsMap = defaultCredentials;
             return this;
         }
-        
+
         public AddGatewayAccountParamsBuilder withEpdqCredentials() {
-            this.credentials = epdqCredentials;
+            this.credentialsMap = epdqCredentials;
             return this;
-        }        
+        }
 
         public AddGatewayAccountParamsBuilder withServiceName(String serviceName) {
             this.serviceName = serviceName;
@@ -234,7 +241,7 @@ public class AddGatewayAccountParams {
             this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
             return this;
         }
-        
+
         public AddGatewayAccountParamsBuilder withAllowMoto(boolean allowMoto) {
             this.allowMoto = allowMoto;
             return this;
@@ -249,17 +256,17 @@ public class AddGatewayAccountParams {
             this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
             return this;
         }
-        
+
         public AddGatewayAccountParamsBuilder withAllowApplePay(boolean allowApplePay) {
             this.allowApplePay = allowApplePay;
             return this;
         }
-        
+
         public AddGatewayAccountParamsBuilder withAllowGooglePay(boolean allowGooglePay) {
             this.allowGooglePay = allowGooglePay;
             return this;
         }
-        
+
         public AddGatewayAccountParamsBuilder withRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
             return this;
@@ -271,6 +278,13 @@ public class AddGatewayAccountParams {
         }
 
         public AddGatewayAccountParams build() {
+            if (gatewayAccountCredentialsParams == null) {
+                gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                        .withPaymentProvider(paymentGateway)
+                        .withGatewayAccountId(Long.parseLong(accountId))
+                        .withCredentials(credentialsMap).build();
+            }
+            
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
             addGatewayAccountParams.accountId = this.accountId;
             addGatewayAccountParams.externalId = this.externalId;
@@ -279,7 +293,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.analyticsId = this.analyticsId;
             addGatewayAccountParams.corporatePrepaidCreditCardSurchargeAmount = this.corporatePrepaidCreditCardSurchargeAmount;
             addGatewayAccountParams.type = this.type;
-            addGatewayAccountParams.credentials = this.credentials;
+            addGatewayAccountParams.credentials = this.gatewayAccountCredentialsParams;
             addGatewayAccountParams.description = this.description;
             addGatewayAccountParams.serviceName = this.serviceName;
             addGatewayAccountParams.corporateCreditCardSurchargeAmount = this.corporateCreditCardSurchargeAmount;
