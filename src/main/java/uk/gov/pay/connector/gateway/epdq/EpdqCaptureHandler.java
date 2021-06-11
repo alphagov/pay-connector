@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -9,7 +8,6 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
 import java.util.Map;
@@ -41,7 +39,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
                     url, 
                     request.getGatewayAccount(), 
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(getCredentials(request.getCharge(), request.getGatewayAccount())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -50,18 +48,11 @@ public class EpdqCaptureHandler implements CaptureHandler {
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-
-        Map<String, String> credentials = getCredentials(request.getCharge(), request.getGatewayAccount());
-
-        epdqPayloadDefinitionForCaptureOrder.setUserId(credentials.get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForCaptureOrder.setPassword(credentials.get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForCaptureOrder.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForCaptureOrder.setPayId(request.getTransactionId());
-        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
-    }
-
-    private Map<String, String> getCredentials(ChargeEntity chargeEntity, GatewayAccountEntity gatewayAccountEntity) {
-        return gatewayAccountEntity.getCredentials(chargeEntity.getPaymentProvider());
     }
 }
