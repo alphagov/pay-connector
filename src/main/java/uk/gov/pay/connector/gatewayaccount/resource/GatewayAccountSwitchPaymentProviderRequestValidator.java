@@ -7,7 +7,7 @@ import java.util.Collections;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest.GATEWAY_ACCOUNT_CREDENTIALS_ID_FIELD;
+import static uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest.GATEWAY_ACCOUNT_CREDENTIAL_EXTERNAL_ID;
 import static uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest.USER_EXTERNAL_ID_FIELD;
 
 public class GatewayAccountSwitchPaymentProviderRequestValidator {
@@ -16,8 +16,8 @@ public class GatewayAccountSwitchPaymentProviderRequestValidator {
         if (isBlank(request.getUserExternalId())) {
             throw new ValidationException(Collections.singletonList(format("Field [%s] is required", USER_EXTERNAL_ID_FIELD)));
         }
-        if (isBlank(request.getGatewayAccountCredentialId())) {
-            throw new ValidationException(Collections.singletonList(format("Field [%s] is required", GATEWAY_ACCOUNT_CREDENTIALS_ID_FIELD)));
+        if (isBlank(request.getGACredentialExternalId())) {
+            throw new ValidationException(Collections.singletonList(format("Field [%s] is required", GATEWAY_ACCOUNT_CREDENTIAL_EXTERNAL_ID)));
         }
     }
 }
