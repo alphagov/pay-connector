@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
 import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
@@ -18,7 +17,6 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayCredentialsCheckAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 
@@ -37,10 +35,6 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
     }
 
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, WorldpayCredentials worldpayCredentials) {
-        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())) {
-            throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
-        }
-
         GatewayOrder order = aWorldpayInquiryRequestBuilder()
                 .withTransactionId("an-order-id-that-will-not-exist")
                 .withMerchantCode(worldpayCredentials.getMerchantId())
