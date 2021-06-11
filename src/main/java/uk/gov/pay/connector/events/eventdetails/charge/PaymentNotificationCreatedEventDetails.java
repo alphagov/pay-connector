@@ -75,7 +75,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 cardDetails.map(CardDetailsEntity::getCardBrand).orElse(null),
                 cardDetails.flatMap(CardDetailsEntity::getCardTypeDetails).map(CardBrandLabelEntity::getLabel).orElse(null),
                 charge.getGatewayAccount().isLive(),
-                charge.getGatewayAccount().getGatewayName(),
+                charge.getPaymentProvider(),
                 charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null),
                 charge.getSource(),
                 charge.getLanguage().toString());

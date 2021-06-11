@@ -1,17 +1,16 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -25,7 +24,6 @@ import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.Ch
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 @SuppressWarnings("PMD.UnusedPrivateMethod")
-@RunWith(JUnitParamsRunner.class)
 public class PaymentCreatedTest {
 
     private final String paymentId = "jweojfewjoifewj";
@@ -51,7 +49,7 @@ public class PaymentCreatedTest {
     }
 
     @Test
-    public void serializesPayloadForCreatedWithoutCardDetails() throws JsonProcessingException {
+    void serializesPayloadForCreatedWithoutCardDetails() throws JsonProcessingException {
         var paymentCreatedEvent = preparePaymentCreatedEvent();
 
         assertBasePaymentCreatedDetails(paymentCreatedEvent);
@@ -60,7 +58,7 @@ public class PaymentCreatedTest {
     }
 
     @Test
-    public void serializesPayloadForCreatedWithCardDetailsAndEmail() throws JsonProcessingException {
+    void serializesPayloadForCreatedWithCardDetailsAndEmail() throws JsonProcessingException {
         chargeEntityFixture
                 .withEmail("test@email.gov.uk")
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity());
@@ -72,17 +70,8 @@ public class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.email", equalTo("test@email.gov.uk")));
     }
 
-
-    private Object[] eventStatusesForNonCreatedAndNonAuthWithCardDetails() {
-        return new Object[]{
-                new Object[]{ChargeStatus.USER_CANCELLED},
-                new Object[]{ChargeStatus.SYSTEM_CANCELLED},
-                new Object[]{ChargeStatus.EXPIRED}
-        };
-    }
-
-    @Test
-    @Parameters(method = "eventStatusesForNonCreatedAndNonAuthWithCardDetails")
+    @ParameterizedTest
+    @MethodSource("eventStatusesForNonCreatedAndNonAuthWithCardDetails")
     public void serializesPayloadForNonCreatedWithCardDetails(ChargeStatus status) throws JsonProcessingException {
         chargeEntityFixture
                 .withStatus(ChargeStatus.USER_CANCELLED)
@@ -99,9 +88,17 @@ public class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasNoJsonPath("$.event_details.email"));
     }
 
-    @Test
-    @Parameters(method = "eventStatuses")
-    public void serializesPayloadForNonCreatedWithoutCardDetailsWhenContainsChargeEvent(ChargeStatus status) throws JsonProcessingException {
+    private static Object[] eventStatusesForNonCreatedAndNonAuthWithCardDetails() {
+        return new Object[]{
+                new Object[]{ChargeStatus.USER_CANCELLED},
+                new Object[]{ChargeStatus.SYSTEM_CANCELLED},
+                new Object[]{ChargeStatus.EXPIRED}
+        };
+    }
+
+    @ParameterizedTest
+    @MethodSource("eventStatuses")
+    void serializesPayloadForNonCreatedWithoutCardDetailsWhenContainsChargeEvent(ChargeStatus status) throws JsonProcessingException {
         chargeEntityFixture
                 .withStatus(ChargeStatus.SYSTEM_CANCELLED)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
@@ -117,7 +114,7 @@ public class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasNoJsonPath("$.event_details.email"));
     }
 
-    private Object[] eventStatuses() {
+    private static Object[] eventStatuses() {
         return new Object[]{
                 new Object[]{ChargeStatus.AUTHORISATION_ABORTED},
                 new Object[]{ChargeStatus.AUTHORISATION_SUCCESS},
@@ -159,7 +156,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
         assertThat(actual, hasJsonPath("$.event_details.return_url", equalTo("http://example.com")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().toString())));
-        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
+        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getPaymentProvider())));
         assertThat(actual, hasJsonPath("$.event_details.language", equalTo(chargeEntity.getLanguage().toString())));
         assertThat(actual, hasJsonPath("$.event_details.delayed_capture", equalTo(chargeEntity.isDelayedCapture())));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.key1", equalTo("value1")));
