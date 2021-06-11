@@ -30,10 +30,6 @@ public class CancelGatewayRequest implements GatewayRequest {
         return GatewayOperation.CANCEL;
     }
 
-    public ChargeEntity getCharge() {
-        return charge;
-    }
-
     public String getExternalChargeId() {
         return charge.getExternalId();
     }

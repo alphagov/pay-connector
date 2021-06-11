@@ -289,7 +289,6 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withGatewayAccountEntity(buildTestGatewayAccountWith3dsEntity())
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("payId")
-                .withPaymentProvider("epdq")
                 .build();
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         auth3dsResult.setAuth3dsResult(auth3dsFrontendResult);
@@ -308,7 +307,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
-                .withPaymentProvider("epdq")
                 .build();
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
@@ -317,7 +315,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
-                .withPaymentProvider("epdq")
                 .build();
 
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
@@ -327,7 +324,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
-                .withPaymentProvider("epdq")
                 .build();
 
         Address address = new Address();
@@ -355,7 +351,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
-                .withPaymentProvider("epdq")
                 .build();
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
@@ -379,7 +374,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         return aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withTransactionId("payId")
-                .withPaymentProvider("epdq")
                 .build();
     }
 

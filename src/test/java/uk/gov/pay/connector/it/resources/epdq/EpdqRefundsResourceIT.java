@@ -65,7 +65,6 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withAmount(100L)
-                .withPaymentProvider("epdq")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
@@ -108,7 +107,6 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withAmount(100L)
-                .withPaymentProvider("epdq")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURE_SUBMITTED)
                 .insert();
