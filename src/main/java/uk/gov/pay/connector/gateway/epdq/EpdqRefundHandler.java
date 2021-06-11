@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq;
 
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
@@ -10,6 +11,7 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForRefundOrder;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
 import java.util.Map;
@@ -41,7 +43,9 @@ public class EpdqRefundHandler implements RefundHandler {
                     url, 
                     request.getGatewayAccount(), 
                     buildRefundOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(
+                            getCredentials(request.getCharge(), request.getGatewayAccount()))
+            );
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
         } catch (GenericGatewayException | GatewayException.GatewayConnectionTimeoutException | GatewayErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
@@ -50,12 +54,21 @@ public class EpdqRefundHandler implements RefundHandler {
 
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
-        epdqPayloadDefinitionForRefundOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForRefundOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForRefundOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+
+        Map<String, String> credentials = getCredentials(request.getCharge(), request.getGatewayAccount());
+        epdqPayloadDefinitionForRefundOrder.setUserId(credentials.get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForRefundOrder.setPassword(credentials.get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForRefundOrder.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForRefundOrder.setPayId(request.getTransactionId());
         epdqPayloadDefinitionForRefundOrder.setAmount(request.getAmount());
-        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase(
+                getCredentials(request.getCharge(), request.getGatewayAccount())
+                .get(CREDENTIALS_SHA_IN_PASSPHRASE)
+        );
         return epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
+    }
+
+    private Map<String, String> getCredentials(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        return gatewayAccountEntity.getCredentials(charge.getPaymentGatewayName());
     }
 }

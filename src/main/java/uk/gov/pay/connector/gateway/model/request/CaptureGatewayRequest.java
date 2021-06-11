@@ -39,6 +39,10 @@ public class CaptureGatewayRequest implements GatewayRequest {
         return GatewayOperation.CAPTURE;
     }
 
+    public ChargeEntity getCharge() {
+        return charge;
+    }
+
     public static CaptureGatewayRequest valueOf(ChargeEntity charge) {
         return new CaptureGatewayRequest(charge);
     }
