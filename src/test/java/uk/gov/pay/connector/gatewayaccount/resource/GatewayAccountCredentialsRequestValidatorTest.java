@@ -115,6 +115,30 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
+    public void shouldThrowWhenStateIsNotAString() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "state",
+                                "op", "replace",
+                                "value", 1)
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Value for path [state] must be a string"));
+    }
+
+    @Test
+    public void shouldThrowWhenStateIsNotAllowedValue() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "state",
+                                "op", "replace",
+                                "value", "HAPPY")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Value for path [state] must be one of [ACTIVE, CREATED, ENTERED, RETIRED, VERIFIED_WITH_LIVE_PAYMENT]"));
+    }
+
+    @Test
     public void shouldNotThrowWhenValidPatchRequest() {
         Map<String, Object> credentials = Map.of(
                 "merchant_id", "some-merchant-id"
@@ -126,7 +150,10 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", credentials),
                         Map.of("path", "last_updated_by_user_external_id",
                                 "op", "replace",
-                                "value", "a-user-external-id")
+                                "value", "a-user-external-id"),
+                        Map.of("path", "state",
+                                "op", "replace",
+                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
                 ));
         assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay"));
     }

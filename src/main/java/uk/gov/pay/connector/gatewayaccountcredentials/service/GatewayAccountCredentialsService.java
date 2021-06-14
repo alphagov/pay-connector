@@ -23,6 +23,7 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsRequestValidator.FIELD_LAST_UPDATED_BY_USER;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -108,6 +109,8 @@ public class GatewayAccountCredentialsService {
                             gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
                         } else if (updateRequest.getPath().equals(FIELD_LAST_UPDATED_BY_USER) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
                             gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
+                        } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
+                            gatewayAccountCredentialsEntity.setState(GatewayAccountCredentialState.valueOf(updateRequest.valueAsString()));
                         }
                     }
 
