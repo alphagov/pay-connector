@@ -35,13 +35,13 @@ public class GatewayAccountSwitchPaymentProviderRequestValidatorTest {
     public void shouldThrowWhenGatewayAccountCredentialIdIsNull() {
         var request = new GatewayAccountSwitchPaymentProviderRequest("some-user-external-id", null);
         var thrown = assertThrows(ValidationException.class, () -> GatewayAccountSwitchPaymentProviderRequestValidator.validate(request));
-        assertThat(thrown.getErrors().get(0), is("Field [gateway_account_credential_id] is required"));
+        assertThat(thrown.getErrors().get(0), is("Field [gateway_account_credential_external_id] is required"));
     }
 
     @Test
     public void shouldThrowWhenGatewayAccountCredentialIdIsBlank() {
         var request = new GatewayAccountSwitchPaymentProviderRequest("some-user-external-id", "");
         var thrown = assertThrows(ValidationException.class, () -> GatewayAccountSwitchPaymentProviderRequestValidator.validate(request));
-        assertThat(thrown.getErrors().get(0), is("Field [gateway_account_credential_id] is required"));
+        assertThat(thrown.getErrors().get(0), is("Field [gateway_account_credential_external_id] is required"));
     }
 }

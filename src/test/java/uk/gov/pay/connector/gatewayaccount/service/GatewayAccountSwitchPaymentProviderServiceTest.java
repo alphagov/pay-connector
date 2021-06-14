@@ -71,7 +71,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Account credential with ACTIVE state not found.", request.getGatewayAccountCredentialId())));
+        assertThat(thrown.getMessage(), is(format("Account credential with ACTIVE state not found.", request.getGACredentialExternalId())));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(NotFoundException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Account credential with id [%s] not found.", request.getGatewayAccountCredentialId())));
+        assertThat(thrown.getMessage(), is(format("Account credential with id [%s] not found.", request.getGACredentialExternalId())));
     }
 
     @Test
@@ -93,12 +93,12 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
                 .withState(ACTIVE)
                 .build();
         var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(request.getGatewayAccountCredentialId())
+                .withExternalId(request.getGACredentialExternalId())
                 .withState(ENTERED)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Credential with id [%s] is not in correct state.", request.getGatewayAccountCredentialId())));
+        assertThat(thrown.getMessage(), is(format("Credential with id [%s] is not in correct state.", request.getGACredentialExternalId())));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
                 .withState(ACTIVE)
                 .build();
         var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(request.getGatewayAccountCredentialId())
+                .withExternalId(request.getGACredentialExternalId())
                 .withState(VERIFIED_WITH_LIVE_PAYMENT)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));

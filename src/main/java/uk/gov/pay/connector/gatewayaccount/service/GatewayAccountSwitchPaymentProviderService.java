@@ -42,15 +42,15 @@ public class GatewayAccountSwitchPaymentProviderService {
         var activeCredentialEntity = credentials
                 .stream()
                 .filter(credential -> ACTIVE.equals(credential.getState())).findFirst()
-                .orElseThrow(() -> new BadRequestException(format("Account credential with ACTIVE state not found.", request.getGatewayAccountCredentialId())));
+                .orElseThrow(() -> new BadRequestException(format("Account credential with ACTIVE state not found.", request.getGACredentialExternalId())));
 
         var switchToCredentialsEntity = credentials
                 .stream()
-                .filter(credential -> request.getGatewayAccountCredentialId().equals(credential.getExternalId())).findFirst()
-                .orElseThrow(() -> new NotFoundException(format("Account credential with id [%s] not found.", request.getGatewayAccountCredentialId())));
+                .filter(credential -> request.getGACredentialExternalId().equals(credential.getExternalId())).findFirst()
+                .orElseThrow(() -> new NotFoundException(format("Account credential with id [%s] not found.", request.getGACredentialExternalId())));
 
         if (!switchToCredentialsEntity.getState().equals(VERIFIED_WITH_LIVE_PAYMENT)) {
-            throw new BadRequestException(format("Credential with id [%s] is not in correct state.", request.getGatewayAccountCredentialId()));
+            throw new BadRequestException(format("Credential with id [%s] is not in correct state.", request.getGACredentialExternalId()));
         }
 
         switchToCredentialsEntity.setLastUpdatedByUserExternalId(request.getUserExternalId());
