@@ -31,6 +31,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -39,7 +40,7 @@ public class EpdqCaptureHandlerTest {
 
     private EpdqCaptureHandler epdqCaptureHandler;
 
-    @Mock 
+    @Mock
     private GatewayClient client;
     @Mock
     private Response response;
@@ -72,12 +73,12 @@ public class EpdqCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception{
+    public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-error-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap())).thenReturn(testResponse);
-        
+
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
@@ -87,7 +88,7 @@ public class EpdqCaptureHandlerTest {
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
-        
+
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
@@ -100,24 +101,24 @@ public class EpdqCaptureHandlerTest {
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("epdq");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of(
-                CREDENTIALS_MERCHANT_ID, "merchant-id",
-                CREDENTIALS_USERNAME, "username",
-                CREDENTIALS_PASSWORD, "password",
-                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("epdq")
+                .withRequires3ds(false)
+                .withType(TEST)
+                .withCredentials(ImmutableMap.of(
+                        CREDENTIALS_MERCHANT_ID, "merchant-id",
+                        CREDENTIALS_USERNAME, "username",
+                        CREDENTIALS_PASSWORD, "password",
+                        CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
+                )).build();
     }
 
     private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
+                .withPaymentProvider("epdq")
                 .build();
         return CaptureGatewayRequest.valueOf(chargeEntity);
     }

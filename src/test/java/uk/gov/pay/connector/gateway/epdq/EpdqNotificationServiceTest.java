@@ -51,6 +51,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withPaymentProvider(EPDQ.getName())
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
         charge.setHistoric(true);

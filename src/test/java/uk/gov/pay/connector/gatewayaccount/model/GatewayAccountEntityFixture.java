@@ -198,7 +198,9 @@ public final class GatewayAccountEntityFixture {
         if (credentials != null && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider(gatewayName).build();
+                    .withPaymentProvider(gatewayName)
+                    .withCredentials(credentials)
+                    .build();
             gatewayAccountCredentialsEntities.add(credentialsEntity);
         }
 
