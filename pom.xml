@@ -24,7 +24,7 @@
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <jjwt.version>0.11.2</jjwt.version>
         <pact.version>3.6.15</pact.version>
-        <mockito.version>3.11.0</mockito.version>
+        <mockito.version>3.11.1</mockito.version>
         <PACT_BROKER_URL/>
         <PACT_BROKER_USERNAME/>
         <PACT_BROKER_PASSWORD/>
