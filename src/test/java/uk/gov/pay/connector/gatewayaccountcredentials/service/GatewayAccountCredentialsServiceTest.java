@@ -14,6 +14,7 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.WebApplicationException;
@@ -187,6 +188,7 @@ public class GatewayAccountCredentialsServiceTest {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withState(CREATED)
                 .build();
         when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
 
@@ -201,8 +203,13 @@ public class GatewayAccountCredentialsServiceTest {
                         "op", "replace",
                         "value", "new-user-external-id")
         );
+        JsonNode replaceStateNode = objectMapper.valueToTree(
+                Map.of("path", "state",
+                        "op", "replace",
+                        "value", "VERIFIED_WITH_LIVE_PAYMENT")
+        );
 
-        List<JsonPatchRequest> patchRequests = Stream.of(replaceCredentialsNode, replaceLastUserNode)
+        List<JsonPatchRequest> patchRequests = Stream.of(replaceCredentialsNode, replaceLastUserNode, replaceStateNode)
                 .map(JsonPatchRequest::from)
                 .collect(Collectors.toList());
 
@@ -210,6 +217,7 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
         assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
+        assertThat(credentialsEntity.getState(), is(GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT));
     }
 
     @Test

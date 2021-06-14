@@ -260,7 +260,10 @@ public class GatewayAccountCredentialsResourceIT {
                                 "value", newCredentials),
                         Map.of("op", "replace",
                                 "path", "last_updated_by_user_external_id",
-                                "value", "a-new-user-external-id")
+                                "value", "a-new-user-external-id"),
+                        Map.of("op", "replace",
+                                "path", "state",
+                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
                         )))
                 .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
                 .then()
@@ -272,7 +275,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials.username", is("new-username"))
                 .body("credentials.merchant_id", is("new-merchant-id"))
                 .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
-                .body("state", is("ACTIVE"))
+                .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
                 .body("created_date", is("2021-01-01T00:00:00.000Z"))
                 .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
                 .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
