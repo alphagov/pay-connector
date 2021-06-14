@@ -45,6 +45,7 @@ public class GatewayAccountCredentials {
         this.paymentProvider = entity.getPaymentProvider();
         this.state = entity.getState();
         this.lastUpdatedByUserExternalId = entity.getLastUpdatedByUserExternalId();
+        this.createdDate = entity.getCreatedDate();
         this.activeStartDate = entity.getActiveStartDate();
         this.activeEndDate = entity.getActiveEndDate();
         this.gatewayAccountId = entity.getGatewayAccountEntity().getId();

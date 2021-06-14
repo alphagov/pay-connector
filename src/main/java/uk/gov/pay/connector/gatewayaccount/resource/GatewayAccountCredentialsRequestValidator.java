@@ -69,6 +69,9 @@ public class GatewayAccountCredentialsRequestValidator {
     }
 
     public List<String> getMissingCredentialsFields(Map<String, String> credentials, String paymentProvider) {
+        if (!providerCredentialFields.containsKey(paymentProvider)) {
+            throw new UnsupportedOperationException(format("Cannot perform operation for payment provider [%s]", paymentProvider));
+        }
         return providerCredentialFields.get(paymentProvider).stream()
                 .filter(requiredField -> !credentials.containsKey(requiredField))
                 .collect(Collectors.toList());

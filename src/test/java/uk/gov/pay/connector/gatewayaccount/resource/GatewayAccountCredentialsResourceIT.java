@@ -12,14 +12,19 @@ import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +44,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -49,7 +56,7 @@ public class GatewayAccountCredentialsResourceIT {
     private static final String UPDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
     private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
     private static final String VALIDATE_WORLDPAY_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-credentials";
-    private static final String PATCH_CREDENTIALS_URL = "v1/api/accounts/%s/credentials/%s";
+    private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
 
     public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
     public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
@@ -62,20 +69,43 @@ public class GatewayAccountCredentialsResourceIT {
     private WireMockServer wireMockServer;
     private WorldpayMockClient worldpayMockClient;
     private DatabaseFixtures databaseFixtures;
+    private Long credentialsId;
+    private String credentialsExternalId;
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() {
         accountId = nextLong(2, 10000);
+        credentialsId = nextLong(2, 10000);
+        credentialsExternalId = randomUuid();
+        
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
+        LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
+        LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
+        LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
+
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withId(credentialsId)
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider("worldpay")
+                .withCreatedDate(createdDate.toInstant(ZoneOffset.UTC))
+                .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
+                .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withExternalId(credentialsExternalId)
+                .withCredentials(Map.of(
+                        "merchant_id", "a-merchant-id",
+                        "username", "a-username",
+                        "password", "a-password"))
+                .build();
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
-                .withCredentials(Map.of("merchant_id", "a-merchant-id", "username", "a-username", "password", "a-password"))
+                .withGatewayAccountCredentials(credentialsParams)
                 .insert();
     }
 
@@ -180,7 +210,7 @@ public class GatewayAccountCredentialsResourceIT {
     public void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() throws JsonProcessingException {
         worldpayMockClient.mockCredentialsValidationUnexpectedResponse();
 
-        long accountId = RandomUtils.nextLong();
+        long accountId = nextLong(2, 10000);
         databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
         givenSetup()
                 .body(getValidWorldpayCredentials())
@@ -220,8 +250,6 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsValidRequest_responseShouldBe200() {
-        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
-
         Map<String, String> newCredentials = Map.of("username", "new-username",
                 "password", "new-password",
                 "merchant_id", "new-merchant-id");
@@ -243,7 +271,13 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials", not(hasKey("password")))
                 .body("credentials.username", is("new-username"))
                 .body("credentials.merchant_id", is("new-merchant-id"))
-                .body("last_updated_by_user_external_id", is("a-new-user-external-id"));
+                .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
+                .body("state", is("ACTIVE"))
+                .body("created_date", is("2021-01-01T00:00:00.000Z"))
+                .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
+                .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
+                .body("external_id", is(credentialsExternalId))
+                .body("payment_provider", is("worldpay"));
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
         assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));

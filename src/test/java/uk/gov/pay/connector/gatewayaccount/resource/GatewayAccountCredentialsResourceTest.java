@@ -60,11 +60,11 @@ public class GatewayAccountCredentialsResourceTest {
             .addProvider(ValidationExceptionMapper.class)
             .build();
 
-    public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
-    public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
-    public static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
+    private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
+    private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
+    private static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
 
-    public static final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
+    private static final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
             "issuer", VALID_ISSUER,
             "organisational_unit_id", VALID_ORG_UNIT_ID,
             "jwt_mac_key", VALID_JWT_MAC_KEY);
@@ -81,7 +81,7 @@ public class GatewayAccountCredentialsResourceTest {
             .withGatewayName("worldpay")
             .build();
     private final long smartpayAccountId = 333;
-    public final GatewayAccountEntity smartpayGatewayAccountEntity = aGatewayAccountEntity()
+    private final GatewayAccountEntity smartpayGatewayAccountEntity = aGatewayAccountEntity()
             .withId(smartpayAccountId)
             .withGatewayName("smartpay")
             .build();
@@ -112,7 +112,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void organisationalUnitIdNull_shouldReturn422() throws Exception {
+    void organisationalUnitIdNull_shouldReturn422() throws Exception {
         var payload = new HashMap<String, String>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", null);
@@ -122,7 +122,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void issuerNotInCorrectFormat_shouldReturn422() throws Exception {
+    void issuerNotInCorrectFormat_shouldReturn422() throws Exception {
         var payload = Map.of("issuer", "44992i087n0v4849895al9i3",
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", VALID_JWT_MAC_KEY);
@@ -131,7 +131,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void issuerNull_shouldReturn422() throws Exception {
+    void issuerNull_shouldReturn422() throws Exception {
         var payload = new HashMap<String, String>();
         payload.put("issuer", null);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -141,7 +141,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void jwtMacKeyNotInCorrectFormat_shouldReturn422() throws Exception {
+    void jwtMacKeyNotInCorrectFormat_shouldReturn422() throws Exception {
         var payload = Map.of("issuer", VALID_ISSUER,
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", "hihihihi");
@@ -150,7 +150,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void jwtMacKeyNull_shouldReturn422() throws Exception {
+    void jwtMacKeyNull_shouldReturn422() throws Exception {
         var payload = new HashMap<String, String>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -176,7 +176,7 @@ public class GatewayAccountCredentialsResourceTest {
             "issuer, Field [issuer] must be 24 lower-case hexadecimal characters",
             "organisational_unit_id, Field [organisational_unit_id] must be 24 lower-case hexadecimal characters",
     })
-    public void update3dsFlexCredentials_missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
+    void update3dsFlexCredentials_missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
         Map<String, String> payload = new HashMap<>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -194,7 +194,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void update3dsFlexCredentials_nonExistentGatewayAccountReturns404() {
+    void update3dsFlexCredentials_nonExistentGatewayAccountReturns404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
         Response response = resources
                 .target(format("/v1/api/accounts/%s/3ds-flex-credentials", accountId))
@@ -206,7 +206,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void update3dsFlexCredentials_nonWorldpayGatewayAccountReturns404() {
+    void update3dsFlexCredentials_nonWorldpayGatewayAccountReturns404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(smartpayGatewayAccountEntity));
         Response response = resources
                 .target(format("/v1/api/accounts/%s/3ds-flex-credentials", accountId))
@@ -218,7 +218,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_nonWorldpayGatewayAccountReturns404() {
+    void checkWorldpayCredentials_nonWorldpayGatewayAccountReturns404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(smartpayGatewayAccountEntity));
         Response response = resources
                 .target(format("/v1/api/accounts/%s/worldpay/check-credentials", accountId))
@@ -230,7 +230,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_nonExistentGatewayAccountReturns404() {
+    void checkWorldpayCredentials_nonExistentGatewayAccountReturns404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
         Response response = resources
                 .target(format("/v1/api/accounts/%s/worldpay/check-credentials", accountId))
@@ -242,7 +242,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_returns422WhenUsernameMissing() {
+    void checkWorldpayCredentials_returns422WhenUsernameMissing() {
         var payload = Map.of(
                 "username", "",
                 "password", "valid-password",
@@ -259,7 +259,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_returns422WhenPasswordMissing() throws JsonProcessingException {
+    void checkWorldpayCredentials_returns422WhenPasswordMissing() throws JsonProcessingException {
         var payload = Map.of(
                 "username", "valid-username",
                 "password", "",
@@ -276,7 +276,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_returns422WhenMerchantIdMissing() throws JsonProcessingException {
+    void checkWorldpayCredentials_returns422WhenMerchantIdMissing() throws JsonProcessingException {
         var payload = Map.of(
                 "username", "valid-username",
                 "password", "valid-password",
@@ -293,7 +293,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_returnsValid() {
+    void checkWorldpayCredentials_returnsValid() {
         WorldpayCredentials worldpayCredentials = new WorldpayCredentials(
                 validCheckWorldpayCredentialsPayload.get("merchant_id"),
                 validCheckWorldpayCredentialsPayload.get("username"),
@@ -316,7 +316,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void checkWorldpayCredentials_returnsInvalid() {
+    void checkWorldpayCredentials_returnsInvalid() {
         WorldpayCredentials worldpayCredentials = new WorldpayCredentials(
                 validCheckWorldpayCredentialsPayload.get("merchant_id"),
                 validCheckWorldpayCredentialsPayload.get("username"),
@@ -352,7 +352,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    public void patchGatewayAccountCredentialsGatewayAccountNotFound_shouldReturn404() {
+    void patchGatewayAccountCredentialsGatewayAccountNotFound_shouldReturn404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
 
         var payload = Collections.singletonList(

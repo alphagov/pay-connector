@@ -2625,14 +2625,14 @@ HTTP/1.1 404 Not Found
 HTTP/1.1 404 Not Found
 ```
 
-## POST /v1/api/accounts/{accountId}/stripe-setup
+## PATCH /v1/api/accounts/{accountId}/stripe-setup
 
 Updates which Stripe Connect account setup tasks have been completed for a given `accountId`
 
 ### Request example
 
 ```
-POST /v1/api/accounts/123/stripe-setup
+PATCH /v1/api/accounts/123/stripe-setup
 [
     {
         "op": "replace",
@@ -3052,3 +3052,58 @@ Content-Type: application/json
 ```
 
 -----------------------------------------------------------------------------------------------------------
+
+## PATCH /v1/api/accounts/{accountId}/credentials/{credentialsId}
+
+Updates the gateway account credentials with the given `credentials` id for a given `accountId`.
+
+### Request example
+
+```
+PATCH /v1/api/accounts/123/credentials/456
+[
+    {
+        "op": "replace",
+        "path": "credentials",
+        "value": {
+            "username": "foo",
+            "password": "bar",
+            "merchant_id": "baz"
+        }
+    },
+    {
+        "op": "replace",
+        "path": "last_updated_by_user_external_id",
+        "value": "abc123"
+    }
+]
+```
+
+### Request field description
+| Field  | Required | Description                               |
+| ------ |:--------:|------------- |
+| `op`    | X | Must be `"replace"` |
+| `path`  | X | The field to update (`"credentials"` or `"last_updated_by_user_external_id"`) |
+| `value` | X | The value to update the field with |
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+
+{
+  "external_id": "cbb184e7389e4babb52f5628466b226b",
+  "payment_provider": "worldpay",
+  "credentials": {
+    "merchant_id": "baz",
+    "username": "foo"
+  },
+  "state": "ACTIVE",
+  "last_updated_by_user_external_id": "abc123",
+  "created_date": "2021-06-11T13:43:51.464Z",
+  "active_start_date": "2021-06-11T13:43:51.464Z",
+  "active_end_date": null,
+  "gateway_account_id": 1,
+  "gateway_account_credential_id": 1
+}
+```

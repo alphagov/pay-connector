@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
@@ -23,7 +24,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -320,7 +321,8 @@ public class DatabaseFixtures {
         long accountId = RandomUtils.nextLong(1, 99999);
         String externalId = randomUuid();
         private String paymentProvider = "sandbox";
-        private Map<String, String> credentials = new HashMap<>();
+        private Map<String, String> credentialsMap = Map.of();
+        private AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams;
         private String serviceName = "service_name";
         private String description = "a description";
         private String analyticsId = "an analytics id";
@@ -359,8 +361,8 @@ public class DatabaseFixtures {
             return paymentProvider;
         }
 
-        public Map<String, String> getCredentials() {
-            return credentials;
+        public AddGatewayAccountCredentialsParams getCredentials() {
+            return gatewayAccountCredentialsParams;
         }
 
         public String getServiceName() {
@@ -424,7 +426,12 @@ public class DatabaseFixtures {
         }
 
         public TestAccount withCredentials(Map<String, String> credentials) {
-            this.credentials = credentials;
+            this.credentialsMap = credentials;
+            return this;
+        }
+        
+        public TestAccount withGatewayAccountCredentials(AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams) {
+            this.gatewayAccountCredentialsParams = gatewayAccountCredentialsParams;
             return this;
         }
 
@@ -505,16 +512,24 @@ public class DatabaseFixtures {
         }
 
         public TestAccount withDefaultCredentials() {
-            this.credentials = defaultCredentials; 
+            this.credentialsMap = defaultCredentials;
             return this;
         }
 
         public TestAccount insert() {
+            if (gatewayAccountCredentialsParams == null) {
+                gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(accountId)
+                        .withPaymentProvider(paymentProvider)
+                        .withCredentials(credentialsMap)
+                        .build();
+            }
+            
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
                     .withExternalId(externalId)
                     .withPaymentGateway(paymentProvider)
-                    .withCredentials(credentials)
+                    .withGatewayAccountCredentials(gatewayAccountCredentialsParams)
                     .withServiceName(serviceName)
                     .withType(type)
                     .withDescription(description)

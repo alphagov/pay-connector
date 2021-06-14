@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -23,80 +24,63 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static java.sql.Types.OTHER;
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
 
     private Jdbi jdbi;
+    private InstantToUtcTimestampWithoutTimeZoneConverter instantConverter = new InstantToUtcTimestampWithoutTimeZoneConverter();
 
     public DatabaseTestHelper(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
 
     public void addGatewayAccount(AddGatewayAccountParams params) {
-        try {
-            PGobject jsonObject = new PGobject();
-            jsonObject.setType("json");
-            if (params.getCredentials() == null || params.getCredentials().size() == 0) {
-                jsonObject.setValue("{}");
-            } else {
-                jsonObject.setValue(new Gson().toJson(params.getCredentials()));
-            }
-            jdbi.withHandle(h ->
-                    h.createUpdate("INSERT INTO gateway_accounts (id, external_id, payment_provider, credentials, " +
-                            "service_name, type, description, analytics_id, email_collection_mode, " +
-                            "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
-                            "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
-                            "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
-                            "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, allow_telephone_payment_notifications) " +
-                            "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
-                            ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
-                            ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
-                            ":corporate_prepaid_credit_card_surcharge_amount, " +
-                            ":corporate_prepaid_debit_card_surcharge_amount, " +
-                            ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
-                            ":allow_apple_pay, :allow_google_pay, :requires_3ds, :allow_telephone_payment_notifications)")
-                            .bind("id", Long.valueOf(params.getAccountId()))
-                            .bind("external_id", params.getExternalId())
-                            .bind("payment_provider", params.getPaymentGateway())
-                            .bindBySqlType("credentials", jsonObject, OTHER)
-                            .bind("service_name", params.getServiceName())
-                            .bind("type", params.getType())
-                            .bind("description", params.getDescription())
-                            .bind("analytics_id", params.getAnalyticsId())
-                            .bind("email_collection_mode", params.getEmailCollectionMode())
-                            .bind("integration_version_3ds", params.getIntegrationVersion3ds())
-                            .bind("corporate_credit_card_surcharge_amount", params.getCorporateCreditCardSurchargeAmount())
-                            .bind("corporate_debit_card_surcharge_amount", params.getCorporateDebitCardSurchargeAmount())
-                            .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
-                            .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
-                            .bind("allow_moto", params.isAllowMoto())
-                            .bind("moto_mask_card_number_input", params.isMotoMaskCardNumberInput())
-                            .bind("moto_mask_card_security_code_input", params.isMotoMaskCardSecurityCodeInput())
-                            .bind("allow_apple_pay", params.isAllowApplePay())
-                            .bind("allow_google_pay", params.isAllowGooglePay())
-                            .bind("requires_3ds", params.isRequires3ds())
-                            .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
-                            .execute());
-            if (params.getCredentials() != null) {
-                jdbi.withHandle(handle ->
-                        handle.createUpdate("INSERT INTO gateway_account_credentials(credentials, gateway_account_id, payment_provider, state) VALUES (:credentials, :gatewayAccountId, :paymentProvider, :state)")
-                                .bind("gatewayAccountId", Long.valueOf(params.getAccountId()))
-                                .bindBySqlType("credentials", jsonObject, OTHER)
-                                .bind("paymentProvider", params.getPaymentGateway())
-                                .bind("state", "ACTIVE")
-                                .execute()
-                );
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        jdbi.withHandle(h ->
+                h.createUpdate("INSERT INTO gateway_accounts (id, external_id, payment_provider, credentials, " +
+                        "service_name, type, description, analytics_id, email_collection_mode, " +
+                        "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
+                        "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
+                        "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
+                        "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, allow_telephone_payment_notifications) " +
+                        "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
+                        ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
+                        ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
+                        ":corporate_prepaid_credit_card_surcharge_amount, " +
+                        ":corporate_prepaid_debit_card_surcharge_amount, " +
+                        ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
+                        ":allow_apple_pay, :allow_google_pay, :requires_3ds, :allow_telephone_payment_notifications)")
+                        .bind("id", Long.valueOf(params.getAccountId()))
+                        .bind("external_id", params.getExternalId())
+                        .bind("payment_provider", params.getPaymentGateway())
+                        .bindBySqlType("credentials", buildCredentialsJson(params.getCredentials()), OTHER)
+                        .bind("service_name", params.getServiceName())
+                        .bind("type", params.getType())
+                        .bind("description", params.getDescription())
+                        .bind("analytics_id", params.getAnalyticsId())
+                        .bind("email_collection_mode", params.getEmailCollectionMode())
+                        .bind("integration_version_3ds", params.getIntegrationVersion3ds())
+                        .bind("corporate_credit_card_surcharge_amount", params.getCorporateCreditCardSurchargeAmount())
+                        .bind("corporate_debit_card_surcharge_amount", params.getCorporateDebitCardSurchargeAmount())
+                        .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
+                        .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
+                        .bind("allow_moto", params.isAllowMoto())
+                        .bind("moto_mask_card_number_input", params.isMotoMaskCardNumberInput())
+                        .bind("moto_mask_card_security_code_input", params.isMotoMaskCardSecurityCodeInput())
+                        .bind("allow_apple_pay", params.isAllowApplePay())
+                        .bind("allow_google_pay", params.isAllowGooglePay())
+                        .bind("requires_3ds", params.isRequires3ds())
+                        .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
+                        .execute());
+        if (params.getCredentials() != null) {
+            insertGatewayAccountCredentials(params.getCredentials());
         }
     }
 
@@ -130,7 +114,7 @@ public class DatabaseTestHelper {
                         .bind("return_url", addChargeParams.getReturnUrl())
                         .bind("gateway_transaction_id", addChargeParams.getTransactionId())
                         .bind("description", addChargeParams.getDescription())
-                        .bind("created_date", LocalDateTime.ofInstant(addChargeParams.getCreatedDate(), ZoneOffset.UTC))
+                        .bind("created_date", LocalDateTime.ofInstant(addChargeParams.getCreatedDate(), UTC))
                         .bind("reference", addChargeParams.getReference().toString())
                         .bind("version", addChargeParams.getVersion())
                         .bind("email", addChargeParams.getEmail())
@@ -961,5 +945,42 @@ public class DatabaseTestHelper {
                         .bind("id", credentialsId)
                         .mapToMap()
                         .first());
+    }
+
+    public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
+        PGobject credentialsJson = buildCredentialsJson(params);
+
+        jdbi.withHandle(handle ->
+                handle.createUpdate("INSERT INTO gateway_account_credentials(id, credentials, gateway_account_id," +
+                        " payment_provider, state, last_updated_by_user_external_id, created_date, active_start_date, " +
+                        "active_end_date, external_id) " +
+                        "VALUES (:id, :credentials, :gatewayAccountId, :paymentProvider, :state, :lastUpdatedByUser, " +
+                        ":createdDate, :activeStartDate, :activeEndDate, :externalId)")
+                        .bind("id", params.getId())
+                        .bind("gatewayAccountId", params.getGatewayAccountId())
+                        .bindBySqlType("credentials", credentialsJson, OTHER)
+                        .bind("paymentProvider", params.getPaymentProvider())
+                        .bind("state", params.getState())
+                        .bind("lastUpdatedByUser", params.getLastUpdatedByUserExternalId())
+                        .bind("createdDate", instantConverter.convertToDatabaseColumn(params.getCreatedDate()))
+                        .bind("activeStartDate", instantConverter.convertToDatabaseColumn(params.getActiveStartDate()))
+                        .bind("activeEndDate", instantConverter.convertToDatabaseColumn(params.getActiveEndDate()))
+                        .bind("externalId", params.getExternalId())
+                        .execute());
+    }
+
+    private PGobject buildCredentialsJson(AddGatewayAccountCredentialsParams params) {
+        try {
+            PGobject credentialsJson = new PGobject();
+            credentialsJson.setType("json");
+            if (params.getCredentials().size() == 0) {
+                credentialsJson.setValue("{}");
+            } else {
+                credentialsJson.setValue(new Gson().toJson(params.getCredentials()));
+            }
+            return credentialsJson;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
