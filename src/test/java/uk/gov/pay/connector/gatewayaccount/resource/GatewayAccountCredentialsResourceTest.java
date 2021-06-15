@@ -340,6 +340,18 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
+    void createGatewayAccountCredentialsMissingBody_shouldReturn422() {
+        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
+
+        Response response = resources
+                .target(format("/v1/api/accounts/%s/credentials", accountId))
+                .request()
+                .post(null);
+
+        assertThat(response.getStatus(), is(422));
+    }
+
+    @Test
     void patchGatewayAccountCredentialsGatewayAccountNotFound_shouldReturn404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
 
