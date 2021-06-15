@@ -12,6 +12,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
+import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
@@ -19,15 +20,18 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -75,6 +79,7 @@ public class GatewayAccountResource {
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
     private final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
+    private final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
 
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
@@ -83,6 +88,7 @@ public class GatewayAccountResource {
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   GatewayAccountRequestValidator validator, 
                                   GatewayAccountServicesFactory gatewayAccountServicesFactory,
+                                  GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService,
                                   GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
@@ -90,6 +96,7 @@ public class GatewayAccountResource {
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
+        this.gatewayAccountSwitchPaymentProviderService = gatewayAccountSwitchPaymentProviderService;
         this.gatewayAccountCredentialsRequestValidator = gatewayAccountCredentialsRequestValidator;
     }
 
@@ -396,5 +403,31 @@ public class GatewayAccountResource {
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    @POST
+    @Path("/v1/api/accounts/{accountId}/switch-psp")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response switchPaymentProvider(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountSwitchPaymentProviderRequest request) {
+        GatewayAccountSwitchPaymentProviderRequestValidator.validate(request);
+
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
+                .map(gatewayAccountEntity -> {
+                    if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
+                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                    }
+                    try {
+                        gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
+                    } catch (BadRequestException ex) {
+                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        return badRequestResponse(ex.getMessage());
+                    } catch (NotFoundException ex) {
+                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        return notFoundResponse(ex.getMessage());
+                    }
+                    return Response.ok().build();
+                })
+                .orElseGet(() -> notFoundResponse(format("The gateway account id [%s] does not exist.", gatewayAccountId)));
     }
 }

@@ -51,6 +51,7 @@ public class AddGatewayAccountParams {
     private boolean allowGooglePay;
     private boolean requires3ds;
     private boolean allowTelephonePaymentNotifications;
+    private boolean providerSwitchEnabled;
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
@@ -136,6 +137,10 @@ public class AddGatewayAccountParams {
         return allowTelephonePaymentNotifications;
     }
 
+    public boolean isProviderSwitchEnabled() {
+        return providerSwitchEnabled;
+    }
+
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "provider";
@@ -159,6 +164,7 @@ public class AddGatewayAccountParams {
         private boolean requires3ds;
         private String externalId = randomUuid();
         private boolean allowTelephonePaymentNotifications;
+        private boolean providerSwitchEnabled = false;
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -277,6 +283,11 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withProviderSwitchEnabled(boolean providerSwitchEnabled) {
+            this.providerSwitchEnabled = providerSwitchEnabled;
+            return this;
+        }
+
         public AddGatewayAccountParams build() {
             if (gatewayAccountCredentialsParams == null) {
                 gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
@@ -307,6 +318,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.allowGooglePay = this.allowGooglePay;
             addGatewayAccountParams.requires3ds = this.requires3ds;
             addGatewayAccountParams.allowTelephonePaymentNotifications = this.allowTelephonePaymentNotifications;
+            addGatewayAccountParams.providerSwitchEnabled = this.providerSwitchEnabled;
             return addGatewayAccountParams;
         }
 
