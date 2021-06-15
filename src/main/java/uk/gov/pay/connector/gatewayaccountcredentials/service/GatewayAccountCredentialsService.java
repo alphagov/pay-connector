@@ -15,9 +15,9 @@ import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
@@ -86,18 +86,31 @@ public class GatewayAccountCredentialsService {
             // as row will be added when backfill is run.
             return;
         }
-        if (credentialsEntities.size() > 1) {
-            throw new WebApplicationException(serviceErrorResponse(
-                    format("Expected exactly one gateway_account_credentials entity, found %s",
-                            credentialsEntities.size())));
-        }
 
-        var credentialsEntity = credentialsEntities.get(0);
+        var credentialsEntity = getSingleOrActiveGatewayAccountCredential(gatewayAccountEntity);
         credentialsEntity.setCredentials(credentials);
         if (credentialsEntity.getState() != ACTIVE) {
             credentialsEntity.setState(ACTIVE);
             credentialsEntity.setActiveStartDate(Instant.now());
         }
+    }
+
+    private GatewayAccountCredentialsEntity getSingleOrActiveGatewayAccountCredential(GatewayAccountEntity gatewayAccountEntity) {
+        var gatewayAccountCredentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (gatewayAccountCredentialsEntities.size() == 1) {
+            return gatewayAccountCredentialsEntities.get(0);
+        }
+
+        List<GatewayAccountCredentialsEntity> activeCredentials = gatewayAccountCredentialsEntities.stream()
+                .filter(entity -> entity.getState() == ACTIVE)
+                .collect(Collectors.toList());
+
+        if (activeCredentials.size() != 1) {
+            throw new WebApplicationException(serviceErrorResponse(
+                    format("Cannot determine which gateway_account_credentials to update for gateway account %s",
+                            gatewayAccountEntity.getId())));
+        }
+        return activeCredentials.get(0);
     }
 
     @Transactional

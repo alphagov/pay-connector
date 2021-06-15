@@ -157,6 +157,27 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
+    public void shouldUpdateActiveCredentialsIfMultiple() {
+        GatewayAccountCredentialsEntity createdCredentials = aGatewayAccountCredentialsEntity()
+                .withState(CREATED)
+                .withCredentials(Map.of())
+                .build();
+        GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                .withState(ACTIVE)
+                .withCredentials(Map.of())
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(createdCredentials, activeCredentials))
+                .build();
+
+        var credentials = Map.of("username", "foo");
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials);
+
+        assertThat(activeCredentials.getCredentials(), is(credentials));
+        assertThat(createdCredentials.getCredentials(), is(Map.of()));
+    }
+
+    @Test
     void shouldNotUpdateIfNoCredentialsRecordsExist() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withCredentials(null)
@@ -170,9 +191,22 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfMoreThanOneCredentialsRecord() {
-        GatewayAccountCredentialsEntity credentialsEntity1 = aGatewayAccountCredentialsEntity().build();
-        GatewayAccountCredentialsEntity credentialsEntity2 = aGatewayAccountCredentialsEntity().build();
+    void shouldThrowExceptionIfMoreThanOneActiveGatewayAccountCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntity1 = aGatewayAccountCredentialsEntity().withState(ACTIVE).build();
+        GatewayAccountCredentialsEntity credentialsEntity2 = aGatewayAccountCredentialsEntity().withState(ACTIVE).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(credentialsEntity1, credentialsEntity2))
+                .build();
+
+        var credentials = Map.of("username", "foo");
+        WebApplicationException exception = assertThrows(WebApplicationException.class, () ->
+                gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccountEntity, credentials));
+    }
+
+    @Test
+    void shouldThrowExceptionIfMultipleCredentialsAndNoneActive() {
+        GatewayAccountCredentialsEntity credentialsEntity1 = aGatewayAccountCredentialsEntity().withState(CREATED).build();
+        GatewayAccountCredentialsEntity credentialsEntity2 = aGatewayAccountCredentialsEntity().withState(CREATED).build();
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayAccountCredentials(List.of(credentialsEntity1, credentialsEntity2))
                 .build();
