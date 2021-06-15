@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
@@ -106,7 +107,7 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public GatewayAccountCredentials createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+    public GatewayAccountCredentials createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
