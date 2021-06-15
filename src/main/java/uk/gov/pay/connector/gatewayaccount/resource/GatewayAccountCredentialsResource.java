@@ -97,12 +97,7 @@ public class GatewayAccountCredentialsResource {
     public ValidationResult validateWorldpayCredentials(@PathParam("accountId") Long gatewayAccountId,
                                                         @Valid WorldpayCredentials worldpayCredentials) {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccountEntity -> {
-                    if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())) {
-                        throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
-                    }
-                    return worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
-                })
+                .map(gatewayAccountEntity -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials))
                 .map(ValidationResult::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }

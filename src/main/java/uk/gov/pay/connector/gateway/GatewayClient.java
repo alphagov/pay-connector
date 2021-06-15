@@ -56,13 +56,23 @@ public class GatewayClient {
                                                  List<HttpCookie> cookies,
                                                  Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+        return postRequestFor(url, account.getGatewayName(), account.getType(), request, cookies, headers);
+    }
 
-        String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
+    public GatewayClient.Response postRequestFor(URI url,
+                                                 String gatewayName,
+                                                 String gatewayAccountType,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies,
+                                                 Map<String, String> headers)
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+
+        String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName, gatewayAccountType, request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            LOGGER.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
+            LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName, gatewayAccountType);
 
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
@@ -75,11 +85,11 @@ public class GatewayClient {
             } else {
                 if (statusCode >= INTERNAL_SERVER_ERROR.getStatusCode()) {
                     LOGGER.warn("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
-                            statusCode, url, account.getType(), request.getOrderRequestType());
+                            statusCode, url, gatewayAccountType, request.getOrderRequestType());
                     incrementFailureCounter(metricRegistry, metricsPrefix);
                 } else {
                     LOGGER.warn("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
-                            statusCode, url, account.getType(), request.getOrderRequestType());
+                            statusCode, url, gatewayAccountType, request.getOrderRequestType());
                 }
                 throw new GatewayErrorException("Non-success HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
             }
