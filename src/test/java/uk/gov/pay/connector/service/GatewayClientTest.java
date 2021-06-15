@@ -29,7 +29,7 @@ import java.net.SocketException;
 import java.net.URI;
 
 import static java.util.Collections.emptyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -55,9 +55,9 @@ public class GatewayClientTest {
     @Mock
     private MetricRegistry mockMetricRegistry;
     @Mock
-    private Histogram mockHistogram;
+    private Histogram mockResponseTimeHistogram;
     @Mock
-    private Counter mockCounter;
+    private Counter mockFailureCounter;
 
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
@@ -69,9 +69,9 @@ public class GatewayClientTest {
     public void setup() {
         gatewayClient = new GatewayClient(mockClient,
                 mockMetricRegistry);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        doAnswer(invocationOnMock -> null).when(mockCounter).inc();
+        when(mockMetricRegistry.histogram("gateway-operations.worldpay.test.authorise.response_time")).thenReturn(mockResponseTimeHistogram);
+        when(mockMetricRegistry.counter("gateway-operations.worldpay.test.authorise.failures")).thenReturn(mockFailureCounter);
+        doAnswer(invocationOnMock -> null).when(mockFailureCounter).inc();
 
         WebTarget mockWebTarget = mock(WebTarget.class);
 
@@ -80,7 +80,7 @@ public class GatewayClientTest {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenReturn(mockResponse);
 
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn("worldpay");
-        when(mockGatewayAccountEntity.getType()).thenReturn("worldpay");
+        when(mockGatewayAccountEntity.getType()).thenReturn("test");
 
         when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
         when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
@@ -92,12 +92,14 @@ public class GatewayClientTest {
         when(mockResponse.getStatus()).thenReturn(500);
         gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
         verify(mockResponse).close();
+        verify(mockFailureCounter).inc();
     }
 
     @Test(expected = GatewayException.GenericGatewayException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
         gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
+        verify(mockFailureCounter).inc();
     }
 
     @Test
@@ -110,5 +112,6 @@ public class GatewayClientTest {
         InOrder inOrder = Mockito.inOrder(mockBuilder);
         inOrder.verify(mockBuilder).header("Cookie", "machine=value");
         inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, mediaType));
+        verify(mockResponseTimeHistogram).update(anyLong());
     }
 }

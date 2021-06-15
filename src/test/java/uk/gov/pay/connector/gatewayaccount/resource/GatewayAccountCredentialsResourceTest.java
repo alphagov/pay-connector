@@ -218,18 +218,6 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void checkWorldpayCredentials_nonWorldpayGatewayAccountReturns404() {
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(smartpayGatewayAccountEntity));
-        Response response = resources
-                .target(format("/v1/api/accounts/%s/worldpay/check-credentials", accountId))
-                .request()
-                .post(Entity.json(validCheckWorldpayCredentialsPayload));
-
-        assertThat(response.getStatus(), is(404));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Gateway account with id %s is not a Worldpay account.", smartpayAccountId)));
-    }
-
-    @Test
     void checkWorldpayCredentials_nonExistentGatewayAccountReturns404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
         Response response = resources

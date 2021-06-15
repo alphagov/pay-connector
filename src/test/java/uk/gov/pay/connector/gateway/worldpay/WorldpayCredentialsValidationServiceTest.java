@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import java.net.URI;
 import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE;
@@ -44,12 +45,12 @@ class WorldpayCredentialsValidationServiceTest {
 
     private WorldpayCredentialsValidationService worldpayCredentialsValidationService;
 
-    private GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-            .withGatewayName(WORLDPAY.getName())
+    private final GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+            .withGatewayName(SMARTPAY.getName())
             .withType(TEST)
             .build();
 
-    private WorldpayCredentials worldpayCredentials = new WorldpayCredentials("A_MERCHANT_ID", "user123", "test");
+    private final WorldpayCredentials worldpayCredentials = new WorldpayCredentials("A_MERCHANT_ID", "user123", "test");
 
     @BeforeEach
     void setUp() {
@@ -62,7 +63,7 @@ class WorldpayCredentialsValidationServiceTest {
     void shouldReturnTrue_ifWorldpayRespondsWithStatus200AndErrorCode5() throws GatewayException {
         when(response.getEntity()).thenReturn(load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_VALID_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
         boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
@@ -73,7 +74,7 @@ class WorldpayCredentialsValidationServiceTest {
     void shouldReturnFalse_ifWorldpayRespondsWithStatus200AndErrorCode4() throws GatewayException {
         when(response.getEntity()).thenReturn(load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
         boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
@@ -82,7 +83,7 @@ class WorldpayCredentialsValidationServiceTest {
 
     @Test
     void shouldReturnFalse_ifWorldpayRespondsWithStatus401() throws GatewayException {
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Error", "Error", 401));
 
         boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
@@ -93,7 +94,7 @@ class WorldpayCredentialsValidationServiceTest {
     void shouldThrowException_whenErrorCodeUnexpected() throws GatewayException {
         when(response.getEntity()).thenReturn(load(WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE));
 
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
         assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));
@@ -101,7 +102,7 @@ class WorldpayCredentialsValidationServiceTest {
 
     @Test
     void shouldThrowException_whenErrorStatusCodeNot401() throws GatewayException {
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Error", "Error", 403));
 
         assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));
@@ -109,7 +110,7 @@ class WorldpayCredentialsValidationServiceTest {
 
     @Test
     void shouldWrapGatewayException() throws GatewayException {
-        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), any(GatewayOrder.class), anyMap()))
+        when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq("worldpay"), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(GatewayException.GenericGatewayException.class);
 
         assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));

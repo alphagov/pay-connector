@@ -6,12 +6,14 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 
 import javax.inject.Named;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -43,8 +45,10 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
         try {
             GatewayClient.Response response = gatewayClient.postRequestFor(
                     gatewayUrlMap.get(gatewayAccountEntity.getType()),
-                    gatewayAccountEntity,
+                    PaymentGatewayName.WORLDPAY.getName(),
+                    gatewayAccountEntity.getType(),
                     order,
+                    Collections.emptyList(),
                     getWorldpayCredentialsCheckAuthHeader(worldpayCredentials)
             );
 
