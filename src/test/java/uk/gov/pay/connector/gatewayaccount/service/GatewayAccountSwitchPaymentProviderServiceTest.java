@@ -75,7 +75,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialsNonExistent() {
+    public void shouldThrowExceptionWhenCredentialNonExistent() {
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withState(ACTIVE)
                 .build();

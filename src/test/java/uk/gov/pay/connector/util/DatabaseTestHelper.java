@@ -49,14 +49,16 @@ public class DatabaseTestHelper {
                         "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                         "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
                         "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
-                        "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, allow_telephone_payment_notifications) " +
+                        "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
+                        "allow_telephone_payment_notifications, provider_switch_enabled) " +
                         "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
                         ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                         ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                         ":corporate_prepaid_credit_card_surcharge_amount, " +
                         ":corporate_prepaid_debit_card_surcharge_amount, " +
                         ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
-                        ":allow_apple_pay, :allow_google_pay, :requires_3ds, :allow_telephone_payment_notifications)")
+                        ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
+                        ":allow_telephone_payment_notifications, :provider_switch_enabled)")
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("payment_provider", params.getPaymentGateway())
@@ -78,6 +80,7 @@ public class DatabaseTestHelper {
                         .bind("allow_google_pay", params.isAllowGooglePay())
                         .bind("requires_3ds", params.isRequires3ds())
                         .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
+                        .bind("provider_switch_enabled", params.isProviderSwitchEnabled())
                         .execute());
         if (params.getCredentials() != null) {
             insertGatewayAccountCredentials(params.getCredentials());
@@ -937,6 +940,14 @@ public class DatabaseTestHelper {
                         .bind("accountId", accountId)
                         .mapToMap()
                         .list());
+    }
+
+    public Map<String, Object> getGatewayAccountCredentialByExternalId(String credentialExternalId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials where external_id = :externalId")
+                        .bind("externalId", credentialExternalId)
+                        .mapToMap()
+                        .first());
     }
 
     public Map<String, Object> getGatewayAccountCredentialsById(long credentialsId) {

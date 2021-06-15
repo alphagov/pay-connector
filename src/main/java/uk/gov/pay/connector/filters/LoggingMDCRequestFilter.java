@@ -37,10 +37,12 @@ public class LoggingMDCRequestFilter implements ContainerRequestFilter {
         var gatewayAccountEntity = chargeEntity.map(ChargeEntity::getGatewayAccount)
                 .or(() -> getAccountFromRequest(requestContext));
 
-        chargeEntity.ifPresent(charge -> MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId()));
+        chargeEntity.ifPresent(charge -> {
+            MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
+            MDC.put(PROVIDER, charge.getPaymentProvider());
+        });
         gatewayAccountEntity.ifPresent(gatewayAccount -> {
             MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccount.getId().toString());
-            MDC.put(PROVIDER, gatewayAccount.getGatewayName());
             MDC.put(GATEWAY_ACCOUNT_TYPE, gatewayAccount.getType());
         });
 

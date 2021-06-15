@@ -41,6 +41,7 @@ public final class GatewayAccountEntityFixture {
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
     private boolean sendPayerIpAddressToGateway;
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
+    private boolean providerSwitchEnabled = false;
 
     private GatewayAccountEntityFixture() {
     }
@@ -169,6 +170,11 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withProviderSwitchEnabled(boolean providerSwitchEnabled) {
+        this.providerSwitchEnabled = providerSwitchEnabled;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -194,6 +200,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
+        gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
 
         if (credentials != null && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {

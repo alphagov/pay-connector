@@ -42,7 +42,7 @@ public class GatewayAccountSwitchPaymentProviderService {
         var activeCredentialEntity = credentials
                 .stream()
                 .filter(credential -> ACTIVE.equals(credential.getState())).findFirst()
-                .orElseThrow(() -> new BadRequestException(format("Account credential with ACTIVE state not found.", request.getGACredentialExternalId())));
+                .orElseThrow(() -> new BadRequestException("Account credential with ACTIVE state not found."));
 
         var switchToCredentialsEntity = credentials
                 .stream()
@@ -62,6 +62,9 @@ public class GatewayAccountSwitchPaymentProviderService {
         activeCredentialEntity.setActiveEndDate(Instant.now());
 
         gatewayAccountEntity.setProviderSwitchEnabled(false);
+        gatewayAccountEntity
+                .setIntegrationVersion3ds(switchToCredentialsEntity.getPaymentProvider().
+                        equalsIgnoreCase("worldpay") ? 1 : 2);
 
         gatewayAccountCredentialsDao.merge(switchToCredentialsEntity);
         gatewayAccountCredentialsDao.merge(activeCredentialEntity);
