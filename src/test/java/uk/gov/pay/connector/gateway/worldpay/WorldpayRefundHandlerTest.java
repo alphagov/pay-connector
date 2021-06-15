@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,23 +40,24 @@ class WorldpayRefundHandlerTest {
     private final URI WORLDPAY_URL = URI.create("http://worldpay.url");
 
     private final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
-    
+
     private ChargeEntityFixture chargeEntityFixture;
 
     private GatewayAccountEntity gatewayAccountEntity;
-    
+
     private WorldpayRefundHandler worldpayRefundHandler;
-    
-    @Mock private GatewayClient refundGatewayClient;
-    
+
+    @Mock
+    private GatewayClient refundGatewayClient;
+
     @BeforeEach
     void setup() {
         gatewayAccountEntity = aServiceAccount();
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
-        
+
         worldpayRefundHandler = new WorldpayRefundHandler(refundGatewayClient, GATEWAY_URL_MAP);
     }
-    
+
     @Test
     void test_refund_request_contains_reference() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture.withTransactionId("transaction-id").build();
@@ -89,16 +92,16 @@ class WorldpayRefundHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("worldpay");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("worldpay")
+                .withRequires3ds(false)
+                .withCredentials(ImmutableMap.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"
+                ))
+                .withType(TEST)
+                .build();
     }
 }

@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
@@ -70,9 +71,6 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionE
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
@@ -98,19 +96,30 @@ public class WorldpayPaymentProviderTest {
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
-    
-    @Mock private GatewayClient authoriseClient;
-    @Mock private GatewayClient cancelClient;
-    @Mock private GatewayClient inquiryClient;
-    @Mock private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
-    @Mock private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
-    @Mock private WorldpayCaptureHandler worldpayCaptureHandler;
-    @Mock private WorldpayRefundHandler worldpayRefundHandler;
-    @Mock private GatewayClient.Response response = mock(GatewayClient.Response.class);
-    @Mock private Appender<ILoggingEvent> mockAppender;
-    @Mock private ChargeDao chargeDao;
-    @Mock private EventService eventService;
-    
+
+    @Mock
+    private GatewayClient authoriseClient;
+    @Mock
+    private GatewayClient cancelClient;
+    @Mock
+    private GatewayClient inquiryClient;
+    @Mock
+    private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
+    @Mock
+    private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
+    @Mock
+    private WorldpayCaptureHandler worldpayCaptureHandler;
+    @Mock
+    private WorldpayRefundHandler worldpayRefundHandler;
+    @Mock
+    private GatewayClient.Response response = mock(GatewayClient.Response.class);
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+    @Mock
+    private ChargeDao chargeDao;
+    @Mock
+    private EventService eventService;
+
     private WorldpayPaymentProvider worldpayPaymentProvider;
     private ChargeEntityFixture chargeEntityFixture;
     protected GatewayAccountEntity gatewayAccountEntity;
@@ -119,21 +128,22 @@ public class WorldpayPaymentProviderTest {
     @BeforeEach
     void setup() {
         worldpayPaymentProvider = new WorldpayPaymentProvider(
-                GATEWAY_URL_MAP, 
-                authoriseClient, 
-                cancelClient, 
-                inquiryClient, 
-                worldpayWalletAuthorisationHandler, 
-                worldpayAuthoriseHandler, 
-                worldpayCaptureHandler, 
-                worldpayRefundHandler, 
-                new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)), 
+                GATEWAY_URL_MAP,
+                authoriseClient,
+                cancelClient,
+                inquiryClient,
+                worldpayWalletAuthorisationHandler,
+                worldpayAuthoriseHandler,
+                worldpayCaptureHandler,
+                worldpayRefundHandler,
+                new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 chargeDao,
                 eventService);
-        
+
         gatewayAccountEntity = aServiceAccount();
-        gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
+//        gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
+
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
 
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -143,7 +153,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     void should_not_update_exemption_3ds_null_when_authorisation_results_in_error() {
-        
+
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -153,15 +163,15 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
-        
+
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verify(chargeDao, never()).merge(any(ChargeEntity.class));
     }
-    
+
     @Test
     void should_not_include_exemption_if_account_has_no_worldpay_3ds_flex_credentials() throws Exception {
-        
+
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(null);
@@ -171,9 +181,9 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
-        
+
         worldpayPaymentProvider.authorise(cardAuthRequest);
-        
+
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
     }
@@ -197,7 +207,7 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
-        
+
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
@@ -213,7 +223,7 @@ public class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
-        
+
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
@@ -225,7 +235,7 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     void should_set_exemption_rejected_when_request_made_with_an_exemption() throws Exception {
-        
+
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -268,17 +278,17 @@ public class WorldpayPaymentProviderTest {
     void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_3ds_challenge_required() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_3DS_FLEX_RESPONSE);
     }
-    
+
     @Test
     void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_request_for_3ds() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_3DS_RESPONSE);
     }
-    
+
     @Test
     void should_not_retry_without_exemption_when_authorising_with_exemption_results_in_exemption_honoured_but_authorisation_refused() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE);
     }
-    
+
     @Test
     void should_not_retry_without_exemption_flag_when_authorising_with_exemption_flag_results_in_authorised() throws Exception {
         verifyAuthorisationNotRetried(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE);
@@ -314,7 +324,7 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
-        
+
         worldpayPaymentProvider.authorise(cardAuthRequest);
 
         verifyChargeUpdatedWith(EXEMPTION_HONOURED);
@@ -332,21 +342,21 @@ public class WorldpayPaymentProviderTest {
         String gatewayTransactionId = randomUUID().toString();
         chargeEntityFixture.withGatewayTransactionId(gatewayTransactionId);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        
+
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
-        
+
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
-        
+
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
         assertNotEquals(cardAuthRequest.getCharge().getGatewayTransactionId(), gatewayTransactionId);
-        
+
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
@@ -360,7 +370,7 @@ public class WorldpayPaymentProviderTest {
                     "exemptionResponse result: REJECTED, exemptionResponse reason: HIGH_RISK)";
             return loggingEvent.getMessage().contains(log);
         }));
-        assertTrue(logs.stream().anyMatch(loggingEvent -> 
+        assertTrue(logs.stream().anyMatch(loggingEvent ->
                 loggingEvent.getMessage().contains("AUTHORISATION READY -> AUTHORISATION READY")));
     }
 
@@ -389,7 +399,7 @@ public class WorldpayPaymentProviderTest {
         when(response.getEntity()).thenReturn(load(WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE));
         when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenReturn(response);
-        
+
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
@@ -400,7 +410,7 @@ public class WorldpayPaymentProviderTest {
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().getResourceExternalId(), is(chargeEntity.getExternalId()));
-        assertThat(((Gateway3dsExemptionResultObtainedEventDetails) eventCaptor.getValue().getEventDetails()).getExemption3ds(), 
+        assertThat(((Gateway3dsExemptionResultObtainedEventDetails) eventCaptor.getValue().getEventDetails()).getExemption3ds(),
                 is(exemption3ds.toString()));
         assertThat(eventCaptor.getValue().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
     }
@@ -414,7 +424,7 @@ public class WorldpayPaymentProviderTest {
 
         when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 401 from gateway"));
-        
+
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
@@ -439,7 +449,7 @@ public class WorldpayPaymentProviderTest {
 
         when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 401 from gateway"));
-        
+
         var request = new Auth3dsResponseGatewayRequest(chargeEntity, new Auth3dsResult());
         worldpayPaymentProvider.authorise3dsResponse(request);
 
@@ -467,7 +477,7 @@ public class WorldpayPaymentProviderTest {
 
         when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
-        
+
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
 
         ArgumentCaptor<List<HttpCookie>> cookies = ArgumentCaptor.forClass(List.class);
@@ -495,7 +505,7 @@ public class WorldpayPaymentProviderTest {
 
         when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
-        
+
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
@@ -520,13 +530,13 @@ public class WorldpayPaymentProviderTest {
 
         when(inquiryClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenReturn(response);
-        
+
         ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
-        
+
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
         assertThat(chargeQueryResponse.foundCharge(), is(true));
     }
-    
+
     @Test
     void should_construct_gateway_3DS_authorisation_response_with_paRequest_issuerUrl_and_machine_cookie_if_worldpay_asks_us_to_do_3ds_again() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture.withProviderSessionId("original-machine-cookie").build();
@@ -545,13 +555,13 @@ public class WorldpayPaymentProviderTest {
         Gateway3DSAuthorisationResponse result = worldpayPaymentProvider.authorise3dsResponse(auth3dsResponseGatewayRequest);
 
         assertThat(result.getGateway3dsRequiredParams().isPresent(), is(true));
-        assertThat(result.getGateway3dsRequiredParams().get().toAuth3dsRequiredEntity().getPaRequest(), 
+        assertThat(result.getGateway3dsRequiredParams().get().toAuth3dsRequiredEntity().getPaRequest(),
                 is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
         assertThat(result.getGateway3dsRequiredParams().get().toAuth3dsRequiredEntity().getIssuerUrl(),
                 is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
 
-        assertThat(result.getProviderSessionIdentifier().isPresent(), is (true));
-        assertThat(result.getProviderSessionIdentifier().get(), is (ProviderSessionIdentifier.of("new-machine-cookie-value")));
+        assertThat(result.getProviderSessionIdentifier().isPresent(), is(true));
+        assertThat(result.getProviderSessionIdentifier().get(), is(ProviderSessionIdentifier.of("new-machine-cookie-value")));
     }
 
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
@@ -559,18 +569,14 @@ public class WorldpayPaymentProviderTest {
         auth3dsResult.setPaResponse("I am an opaque 3D Secure PA response from the card issuer");
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
-    
+
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("worldpay");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return GatewayAccountEntityFixture.aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("worldpay")
+                .withRequires3ds(false)
+                .withCredentials(gatewayAccountCredentials)
+                .withType(TEST)
+                .build();
     }
 }

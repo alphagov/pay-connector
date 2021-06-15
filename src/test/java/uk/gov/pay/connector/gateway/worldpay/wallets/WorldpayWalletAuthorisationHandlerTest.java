@@ -25,7 +25,6 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
@@ -37,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
@@ -66,7 +66,10 @@ public class WorldpayWalletAuthorisationHandlerTest {
     public void setUp() throws Exception {
         worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
         chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
-        gatewayAccountEntity = new GatewayAccountEntity("worldpay", new HashMap<>(), TEST);
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName("worldpay")
+                .withType(TEST)
+                .withCredentials(gatewayAccountCredentials).build();        
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         gatewayAccountEntity.setCredentials(gatewayAccountCredentials);

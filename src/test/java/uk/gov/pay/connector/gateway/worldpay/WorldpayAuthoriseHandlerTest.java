@@ -62,9 +62,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
@@ -93,7 +90,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP);
 
         gatewayAccountEntity = aServiceAccount();
-        gatewayAccountEntity.setCredentials( Map.of("merchant_id", "MERCHANTCODE"));
+
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
     }
 
@@ -371,11 +368,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withRequires3ds(false)
-                .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
-                ))
+                .withCredentials(Map.of("merchant_id", "MERCHANTCODE"))
                 .build();
 
         return gatewayAccount;

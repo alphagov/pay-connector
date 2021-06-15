@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -134,7 +135,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 gatewayUrlMap.get(gatewayAccountEntity.getType()),
                 gatewayAccountEntity,
                 buildQuery(charge, gatewayAccountEntity),
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials())
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials(getPaymentGatewayName().getName()))
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -162,7 +163,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private GatewayOrder buildQuery(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         return aWorldpayInquiryRequestBuilder()
                 .withTransactionId(charge.getGatewayTransactionId())
-                .withMerchantCode(gatewayAccountEntity.getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(gatewayAccountEntity.getCredentials(getPaymentGatewayName().getName()).get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
@@ -255,7 +256,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getGatewayAccount(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(getCredentials(request)));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
             calculateAndStoreExemption(request.getCharge(), gatewayResponse);
@@ -294,7 +295,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 request.getGatewayAccount(), buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(getCredentials(request)));
         return getWorldpayGatewayResponse(response);
     }
 
@@ -313,14 +314,18 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(getCredentials(request).get(CREDENTIALS_MERCHANT_ID))
                 .build();
+    }
+
+    private Map<String, String> getCredentials(GatewayRequest request) {
+        return request.getGatewayAccount().getCredentials(getPaymentGatewayName().getName());
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
         return aWorldpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(getCredentials(request).get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
