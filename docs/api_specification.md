@@ -3075,6 +3075,11 @@ PATCH /v1/api/accounts/123/credentials/456
         "op": "replace",
         "path": "last_updated_by_user_external_id",
         "value": "abc123"
+    },
+    {
+        "op": "replace",
+        "path": "state",
+        "value": "VERIFIED_WITH_LIVE_PAYMENT"
     }
 ]
 ```
@@ -3083,8 +3088,13 @@ PATCH /v1/api/accounts/123/credentials/456
 | Field  | Required | Description                               |
 | ------ |:--------:|------------- |
 | `op`    | X | Must be `"replace"` |
-| `path`  | X | The field to update (`"credentials"` or `"last_updated_by_user_external_id"`) |
+| `path`  | X | The field to update (`"credentials"`, `"last_updated_by_user_external_id"` or `"state"`) |
 | `value` | X | The value to update the field with |
+
+### Notes
+
+The only allowed value for `"op": "replace", "path": "state"` is `"VERIFIED_BY_LIVE_USER`". This is because connector
+performs all other state transitions.
 
 ### Response example
 

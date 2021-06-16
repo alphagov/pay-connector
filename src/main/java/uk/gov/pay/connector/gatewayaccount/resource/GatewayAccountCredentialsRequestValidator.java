@@ -10,9 +10,7 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.common.validator.JsonPatchRequestValidator;
 import uk.gov.pay.connector.common.validator.PatchPathOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,15 +22,12 @@ import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 
 public class GatewayAccountCredentialsRequestValidator {
 
     private final Map<String, List<String>> providerCredentialFields;
     private final Joiner COMMA_JOINER = Joiner.on(", ");
-    private static final List<String> allowedStateValues = Arrays.stream(GatewayAccountCredentialState.values())
-            .map(Enum::name)
-            .sorted()
-            .collect(Collectors.toList());
 
     public static final String FIELD_CREDENTIALS = "credentials";
     public static final String FIELD_LAST_UPDATED_BY_USER = "last_updated_by_user_external_id";
@@ -79,7 +74,7 @@ public class GatewayAccountCredentialsRequestValidator {
                 .filter(requiredField -> !credentials.containsKey(requiredField))
                 .collect(Collectors.toList());
     }
-    
+
     public void validatePatch(JsonNode patchRequest, String paymentProvider) {
         Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
                 new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), (operation) -> validateReplaceCredentialsOperation(operation, paymentProvider),
@@ -89,22 +84,22 @@ public class GatewayAccountCredentialsRequestValidator {
         var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         patchRequestValidator.validate(patchRequest);
     }
-    
+
     private void validateReplaceCredentialsOperation(JsonPatchRequest request, String paymentProvider) {
         Map<String, String> credentialsMap = request.valueAsObject();
         List<String> missingCredentialsFields = getMissingCredentialsFields(credentialsMap, paymentProvider);
         if (!missingCredentialsFields.isEmpty()) {
-            throw new ValidationException(Collections.singletonList(format("Value for path [%s] is missing field(s): [%s]", 
+            throw new ValidationException(Collections.singletonList(format("Value for path [%s] is missing field(s): [%s]",
                     FIELD_CREDENTIALS, COMMA_JOINER.join(missingCredentialsFields))));
         }
     }
-    
+
     private void validateReplaceStateOperation(JsonPatchRequest request) {
         JsonPatchRequestValidator.throwIfValueNotString(request);
-        
-        if (!allowedStateValues.contains(request.valueAsString())) {
-            throw new ValidationException(Collections.singletonList(format("Value for path [%s] must be one of [%s]",
-                    request.getPath(), String.join(", ", allowedStateValues))));
+
+        if (!request.valueAsString().equals(VERIFIED_WITH_LIVE_PAYMENT.name())) {
+            throw new ValidationException(Collections.singletonList(format("Operation with path [%s] can only be used to update state to [%s]",
+                    request.getPath(), VERIFIED_WITH_LIVE_PAYMENT.name())));
         }
     }
 }
