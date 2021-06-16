@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
 import io.restassured.specification.RequestSpecification;
-import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
