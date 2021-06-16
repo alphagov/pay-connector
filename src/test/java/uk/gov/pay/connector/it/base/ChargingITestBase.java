@@ -57,11 +57,11 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargingITestBase {
 
-    private static final String ADDRESS_LINE_1 = "The Money Pool";
-    private static final String ADDRESS_CITY = "London";
-    private static final String ADDRESS_POSTCODE = "DO11 4RS";
-    private static final String ADDRESS_COUNTRY_GB = "GB";
-    private static final String CVC = "123";
+    protected static final String ADDRESS_LINE_1 = "The Money Pool";
+    protected static final String ADDRESS_CITY = "London";
+    protected static final String ADDRESS_POSTCODE = "DO11 4RS";
+    protected static final String ADDRESS_COUNTRY_GB = "GB";
+    protected static final String CVC = "123";
 
     protected static final String RETURN_URL = "http://service.url/success-page/";
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
