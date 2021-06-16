@@ -3107,3 +3107,26 @@ HTTP/1.1 200 OK
   "gateway_account_credential_id": 1
 }
 ```
+
+## POST /v1/tasks/expired-charges-sweep
+
+
+This endpoint is for services to switch to new payment provider.
+
+### Request example
+
+```
+POST /v1/accounts/123/switch-psp
+```
+
+| Field                    | required | Description                                                      
+| ------------------------ |:--------:| ---------------------------------------------------------------- 
+| `user_external_id`       | X        | The user's external id          
+| `gateway_account_credential_external_id`            | X        | The credential's external id that we are switching to                                 |  |
+
+### Response example
+
+```
+200 OK
+Content-Type: application/json
+```
