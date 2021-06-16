@@ -132,10 +132,10 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                 Collections.singletonList(
                         Map.of("path", "state",
                                 "op", "replace",
-                                "value", "HAPPY")
+                                "value", "ACTIVE")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
-        assertThat(thrown.getErrors().get(0), is("Value for path [state] must be one of [ACTIVE, CREATED, ENTERED, RETIRED, VERIFIED_WITH_LIVE_PAYMENT]"));
+        assertThat(thrown.getErrors().get(0), is("Operation with path [state] can only be used to update state to [VERIFIED_WITH_LIVE_PAYMENT]"));
     }
 
     @Test
