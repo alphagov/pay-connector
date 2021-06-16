@@ -46,7 +46,7 @@ public class GatewayAccountCredentialsService {
     @Transactional
     public GatewayAccountCredentials createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
                                                                      Map<String, String> credentials) {
-        GatewayAccountCredentialState state = calculateState(gatewayAccountEntity, paymentProvider, credentials);
+        GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
                 = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
 
@@ -59,8 +59,8 @@ public class GatewayAccountCredentialsService {
         return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
     }
 
-    private GatewayAccountCredentialState calculateState(GatewayAccountEntity gatewayAccountEntity,
-                                                         String paymentProvider, Map<String, String> credentials) {
+    private GatewayAccountCredentialState calculateStateForNewCredentials(GatewayAccountEntity gatewayAccountEntity,
+                                                                          String paymentProvider, Map<String, String> credentials) {
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(paymentProvider);
         boolean isFirstCredentials = !gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
         boolean credentialsPrePopulated = !credentials.isEmpty();
@@ -120,6 +120,9 @@ public class GatewayAccountCredentialsService {
                     for (JsonPatchRequest updateRequest : updateRequests) {
                         if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
                             gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
+                            if (gatewayAccountCredentialsEntity.getState() == CREATED) {
+                                updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
+                            }
                         } else if (updateRequest.getPath().equals(FIELD_LAST_UPDATED_BY_USER) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
                             gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
                         } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
@@ -129,6 +132,15 @@ public class GatewayAccountCredentialsService {
 
                     return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
                 }).orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(gatewayAccountCredentialsId));
+    }
+    
+    private void updateStateForEnteredCredentials(GatewayAccountCredentialsEntity credentialsEntity) {
+        if (credentialsEntity.getGatewayAccountEntity().getGatewayAccountCredentials().size() == 1) {
+            credentialsEntity.setState(ACTIVE);
+            credentialsEntity.setActiveStartDate(Instant.now());
+        } else {
+            credentialsEntity.setState(ENTERED);
+        }
     }
 
 }

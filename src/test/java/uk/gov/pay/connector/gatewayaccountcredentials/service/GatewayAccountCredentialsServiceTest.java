@@ -14,7 +14,6 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.WebApplicationException;
@@ -37,6 +36,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -224,6 +224,7 @@ public class GatewayAccountCredentialsServiceTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withState(CREATED)
                 .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
         when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
 
         JsonNode replaceCredentialsNode = objectMapper.valueToTree(
@@ -251,7 +252,78 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
         assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
-        assertThat(credentialsEntity.getState(), is(GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT));
+        assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
+    }
+
+    @Test
+    void shouldChangeStateToActive_whenCredentialsInCreatedStateUpdated_andOnlyOneCredential() {
+        long credentialsId = 1;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withState(CREATED)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
+
+        JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", Map.of(
+                                "merchant_id", "new-merchant-id"
+                        ))));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+        
+        assertThat(credentialsEntity.getState(), is(ACTIVE));
+    }
+
+    @Test
+    void shouldChangeStateToEntered_whenCredentialsInCreatedStateUpdated_andMoreThanOneCredential() {
+        long credentialsId = 1;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity credentialsBeingUpdated = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withState(CREATED)
+                .build();
+        GatewayAccountCredentialsEntity otherCredentials = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsBeingUpdated, otherCredentials));
+        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsBeingUpdated));
+
+        JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", Map.of(
+                                "merchant_id", "new-merchant-id"
+                        ))));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+
+        assertThat(credentialsBeingUpdated.getState(), is(ENTERED));
+        assertThat(otherCredentials.getState(), is(ACTIVE));
+    }
+
+    @Test
+    void shouldNotChangeState_whenCredentialsNotInCreatedState() {
+        long credentialsId = 1;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
+
+        JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                Map.of("path", "credentials",
+                        "op", "replace",
+                        "value", Map.of(
+                                "merchant_id", "new-merchant-id"
+                        ))));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+
+        assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
     }
 
     @Test
