@@ -12,9 +12,8 @@ import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.payout.PayoutUpdated;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.QueueException;
 
 import java.time.ZonedDateTime;
@@ -33,16 +32,16 @@ public class PayoutEmitterService {
 
     private final EventService eventService;
     private final boolean shouldEmitPayoutEvents;
-    private final GatewayAccountDao gatewayAccountDao;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
     @Inject
     public PayoutEmitterService(EventService eventService,
                                 ConnectorConfiguration connectorConfiguration,
-                                GatewayAccountDao gatewayAccountDao) {
+                                GatewayAccountCredentialsService gatewayAccountCredentialsService) {
 
         this.eventService = eventService;
         shouldEmitPayoutEvents = connectorConfiguration.getEmitPayoutEvents();
-        this.gatewayAccountDao = gatewayAccountDao;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
     public void emitPayoutEvent(Class<? extends PayoutEvent> eventClass, ZonedDateTime eventDate,
@@ -89,18 +88,7 @@ public class PayoutEmitterService {
     }
 
     private Event getPayoutCreatedEvent(String connectAccount, StripePayout payout) {
-        Optional<GatewayAccountEntity> mayBeGatewayAccount = gatewayAccountDao.findByCredentialsKeyValue(
-                STRIPE_ACCOUNT_ID_KEY, connectAccount);
-
-        if (mayBeGatewayAccount.isPresent()) {
-            return PayoutCreated.from(mayBeGatewayAccount.get().getId(), payout);
-        } else {
-            logger.error(format("Gateway account with Stripe connect account not found: connect_account_id [%s] ", connectAccount),
-                    kv(GATEWAY_PAYOUT_ID, payout.getId()),
-                    kv(CONNECT_ACCOUNT_ID, connectAccount));
-            throw new GatewayAccountNotFoundException(
-                    format("Gateway account with Stripe connect account ID %s not found.", connectAccount));
-
-        }
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue(STRIPE_ACCOUNT_ID_KEY, connectAccount);
+        return PayoutCreated.from(gatewayAccountEntity.getId(), payout);
     }
 }

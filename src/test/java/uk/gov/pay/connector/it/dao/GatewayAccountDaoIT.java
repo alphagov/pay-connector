@@ -147,22 +147,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByCredentialsKeyValue_shouldFindGatewayAccount() {
-        var credMap = Map.of("some_payment_provider_account_id", "accountid");
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("test provider")
-                .withServiceName("service name")
-                .withCredentials(credMap)
-                .build());
-
-        Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        Map<String, String> credentialsMap = maybeGatewayAccount.get().getCredentials();
-        assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
-    }
-
-    @Test
     public void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
         DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
 

@@ -19,14 +19,12 @@ import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.payout.PayoutUpdated;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.QueueException;
 
-import javax.ws.rs.WebApplicationException;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.CoreMatchers.is;
@@ -47,32 +45,34 @@ public class PayoutEmitterServiceTest {
     @Mock
     ConnectorConfiguration mockConnectorConfiguration;
     @Mock
-    GatewayAccountDao mockGatewayAccountDao;
+    GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     private PayoutEmitterService payoutEmitterService;
     private StripePayout payout;
     private ZonedDateTime eventDate = parse("2019-09-04T18:43:23Z");
-    private GatewayAccountEntity gatewayAccountEntity;
+    private String connectAccount = "connect-account";
     @Captor
     private ArgumentCaptor<PayoutEvent> payoutArgumentCaptor;
 
     @Before
     public void setUp() {
-        gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
+        GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture
+                .aGatewayAccountEntity()
                 .withId(1234L)
                 .build();
-        when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
-        when(mockGatewayAccountDao.findByCredentialsKeyValue(STRIPE_ACCOUNT_ID_KEY, "connect-account"))
-                .thenReturn(Optional.of(gatewayAccountEntity));
 
-        payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountDao);
+        when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
+        when(mockGatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue(STRIPE_ACCOUNT_ID_KEY, connectAccount))
+                .thenReturn(gatewayAccountEntity);
+
+        payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
         payout = new StripePayout("po_123", 1213L, 1589846400L,
                 null, "pending", "card", null);
     }
 
     @Test
     public void emitPayoutEventForPayoutCreatedShouldEmitCorrectEvent() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
 
@@ -88,7 +88,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void shouldEmitPayoutUpdatedEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate, "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutUpdated payoutEvent = (PayoutUpdated) payoutArgumentCaptor.getValue();
@@ -117,7 +117,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void shouldEmitPayoutPaidEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate, "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutPaid payoutEvent = (PayoutPaid) payoutArgumentCaptor.getValue();
@@ -137,18 +137,15 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void emitPayoutEventShouldEmitEventIfFeatureFlagToEmitEventsIsEnabled() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
         verify(mockEventService).emitEvent(any(), anyBoolean());
     }
 
     @Test
     public void emitPayoutEventShouldNotEmitEventIfFeatureFlagToEmitEventsIsDisabled() throws QueueException {
         when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(false);
-        when(mockGatewayAccountDao.findByCredentialsKeyValue(STRIPE_ACCOUNT_ID_KEY, "connect-account"))
-                .thenReturn(Optional.of(gatewayAccountEntity));
-        payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountDao);
-
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, "connect-account", payout);
+        payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
     }
 
@@ -156,14 +153,5 @@ public class PayoutEmitterServiceTest {
     public void emitPayoutEventShouldNotEmitEventForAnUnknownPayoutEvent() throws QueueException {
         payoutEmitterService.emitPayoutEvent(PayoutEvent.class, eventDate, null, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
-    }
-
-    @Test(expected = WebApplicationException.class)
-    public void emitPayoutEventShouldNotEmitPayoutCreatedEventIfGatewayAccountNotFound() {
-        when(mockGatewayAccountDao.findByCredentialsKeyValue(STRIPE_ACCOUNT_ID_KEY, "connect-account"))
-                .thenReturn(Optional.empty());
-        payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountDao);
-
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, "connect-account", payout);
     }
 }
