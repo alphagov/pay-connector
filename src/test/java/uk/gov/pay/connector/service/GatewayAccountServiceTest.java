@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -525,5 +526,24 @@ public class GatewayAccountServiceTest {
         exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
 
         gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+    }
+
+    @Test
+    public void shouldUpdateGatewayAccountCredentialWhenSettingMerchantId() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", CREDENTIALS_GATEWAY_MERCHANT_ID,
+                "value", "ABCDEF123ABCDEF")));
+
+        Map<String, String> credentials = Map.of("gateway_merchant_id", "ABCDEF123ABCDEF");
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentials);
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountCredentialsService).updateGatewayAccountCredentialMerchantId(mockGatewayAccountEntity, "ABCDEF123ABCDEF");
     }
 }

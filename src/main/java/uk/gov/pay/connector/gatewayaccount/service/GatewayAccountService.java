@@ -124,6 +124,8 @@ public class GatewayAccountService {
                     Map<String, String> updatedCredentials = new HashMap<>(credentials);
                     updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
                     gatewayAccountEntity.setCredentials(updatedCredentials);
+
+                    updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, gatewayAccountRequest.valueAsString());
                 }
             ),
             entry(
@@ -221,5 +223,9 @@ public class GatewayAccountService {
         if (!WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
             throw new NotSupportedGatewayAccountException(gatewayAccountEntity.getId(), WORLDPAY.getName(), path);
         }
+    }
+
+    private void updateGatewayAccountCredentialMerchantId(GatewayAccountEntity gatewayAccountEntity, String merchantAccountId) {
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, merchantAccountId);
     }
 }
