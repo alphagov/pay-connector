@@ -205,4 +205,22 @@ public class GatewayAccountResourceSwitchPspValidationTest {
         String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Account is not configured to switch PSP or already switched PSP."));
     }
+
+    @Test
+    public void shouldNotThrowNullPointerWhenNoPayloadPresent() throws JsonProcessingException {
+        String payload = new String();
+
+        gatewayAccountEntity.setProviderSwitchEnabled(true);
+        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+
+        Response response = resources.client()
+                .target("/v1/api/accounts/1/switch-psp")
+                .request()
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+        assertThat(errorMessage, is("must not be null"));
+    }
 }

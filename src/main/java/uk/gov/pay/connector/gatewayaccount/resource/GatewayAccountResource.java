@@ -409,7 +409,7 @@ public class GatewayAccountResource {
     @Path("/v1/api/accounts/{accountId}/switch-psp")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response switchPaymentProvider(@PathParam("accountId") Long gatewayAccountId, @Valid GatewayAccountSwitchPaymentProviderRequest request) {
+    public Response switchPaymentProvider(@PathParam("accountId") Long gatewayAccountId, @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
         GatewayAccountSwitchPaymentProviderRequestValidator.validate(request);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
