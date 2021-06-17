@@ -119,6 +119,7 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
         wireMockServer.verify(
                 postRequestedFor(urlPathEqualTo(String.format("/epdq/%s", ROUTE_FOR_MAINTENANCE_ORDER)))
                         .withRequestBody(equalTo(order.createGatewayOrder().getPayload()))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
         );
     }
 
