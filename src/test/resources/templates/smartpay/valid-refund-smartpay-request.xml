@@ -4,13 +4,13 @@
     <soap:Body>
         <ns1:refund xmlns:ns1="http://payment.services.adyen.com">
             <ns1:modificationRequest>
-                <merchantAccount xmlns="http://payment.services.adyen.com">MerchantAccount</merchantAccount>
+                <merchantAccount xmlns="http://payment.services.adyen.com">{{merchantAccount}}</merchantAccount>
                 <modificationAmount xmlns="http://payment.services.adyen.com">
                     <currency xmlns="http://common.services.adyen.com">GBP</currency>
-                    <value xmlns="http://common.services.adyen.com">200</value>
+                    <value xmlns="http://common.services.adyen.com">{{amount}}</value>
                 </modificationAmount>
-                <originalReference xmlns="http://payment.services.adyen.com">MyTransactionId</originalReference>
-                <reference xmlns="http://payment.services.adyen.com">Reference</reference>
+                <originalReference xmlns="http://payment.services.adyen.com">{{transactionId}}</originalReference>
+                <reference xmlns="http://payment.services.adyen.com">{{reference}}</reference>
             </ns1:modificationRequest>
         </ns1:refund>
     </soap:Body>

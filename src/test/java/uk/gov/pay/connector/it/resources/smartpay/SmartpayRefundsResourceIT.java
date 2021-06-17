@@ -7,13 +7,13 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,12 +21,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToXml;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -40,6 +45,8 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -68,6 +75,7 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
+                .withTransactionId(randomAlphanumeric(10))
                 .insert();
         pspReference = randomNumeric(16);
     }
@@ -103,6 +111,14 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(pspReference), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", pspReference));
+
+        String requestBody = load(SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST)
+                .replace("{{amount}}", refundAmount.toString())
+                .replace("{{transactionId}}", defaultTestCharge.getTransactionId())
+                .replace("{{reference}}", refundsFoundByChargeExternalId.get(0).get("external_id").toString())
+                .replace("{{merchantAccount}}", "merchant-id");
+
+        verifyRefundRequest("/pal/servlet/soap/Payment", requestBody);
     }
 
     @Test
@@ -449,4 +465,12 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
         return refundId;
     }
 
+    private void verifyRefundRequest(String path, String body) {
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(path))
+                        .withHeader("Content-Type", equalTo("application/xml"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withRequestBody(equalToXml(body))
+        );
+    }
 }

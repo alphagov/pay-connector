@@ -15,6 +15,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.Instant;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static io.restassured.http.ContentType.JSON;
@@ -129,7 +130,8 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
                                 null
                         )
                 )
-                        .withRequestBody(matching(body))
+                .withRequestBody(matching(body))
+                .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
         );
     }
 

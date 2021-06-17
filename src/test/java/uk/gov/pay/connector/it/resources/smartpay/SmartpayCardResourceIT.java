@@ -11,18 +11,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToXml;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -38,6 +42,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
@@ -66,6 +72,26 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+
+        String requestBody = load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST)
+                .replace("{{amount}}", "6234")
+                .replace("{{addressLine1}}", "The Money Pool")
+                .replace("{{addressLine2}}", "line 2")
+                .replace("{{postCode}}", "DO11 4RS")
+                .replace("{{merchantAccount}}", "merchant-id")
+                .replace("{{reference}}", chargeId)
+                .replace("{{shopperReference}}", "Test description");
+
+        verifyRequest("/pal/servlet/soap/Payment",requestBody);
+    }
+
+    private void verifyRequest(String expectedPath, String expectedBody) {
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(expectedPath))
+                        .withHeader("Content-Type", equalTo("application/xml"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withRequestBody(equalToXml(expectedBody))
+        );
     }
 
     @Test
@@ -232,7 +258,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
     private String buildCardDetailsWith(String cvc) {
 
         return buildJsonAuthorisationDetailsFor(
-                "Mr.Payment",
+                "Mr. Payment",
                 "5555444433331111",
                 cvc,
                 "08/18",
