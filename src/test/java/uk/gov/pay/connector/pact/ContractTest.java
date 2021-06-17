@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -47,6 +49,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -472,11 +475,27 @@ public class ContractTest {
     }
 
     @State("a Worldpay gateway account with id 333 exists and stub for validating credentials is set up")
-    public void aWorldpayGatewayAccountWithCredentialsExists() {
+    public void aWorldpayGatewayAccountWithExistsWithStubForValidatingSetup() {
         worldpayMockClient.mockCredentialsValidationValid();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
                 .withDefaultCredentials()
+                .withPaymentGateway(WORLDPAY.getName())
+                .build());
+    }
+    
+    @State("a Worldpay gateway account with id 333 with gateway account credentials with id 444")
+    public void aWorldpayGatewayAccountWithCredentialsWithIdExists() {
+        AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withId(444)
+                .withExternalId("an-external-id")
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.CREATED)
+                .withGatewayAccountId(333)
+                .build();
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("333")
+                .withGatewayAccountCredentials(gatewayAccountCredentialsParams)
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }
