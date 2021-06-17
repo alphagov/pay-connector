@@ -7,19 +7,23 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForRefundOrder;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -39,6 +43,11 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -98,6 +107,19 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", format("3014644340/%s", paySubId)));
+
+        EpdqPayloadDefinitionForRefundOrder order = new EpdqPayloadDefinitionForRefundOrder();
+        order.setAmount(refundAmount.toString());
+        order.setPayId(defaultTestCharge.getTransactionId());
+        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
+        order.setUserId(credentials.get(CREDENTIALS_USERNAME));
+        order.setPassword(credentials.get(CREDENTIALS_PASSWORD));
+        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(String.format("/epdq/%s", ROUTE_FOR_MAINTENANCE_ORDER)))
+                        .withRequestBody(equalTo(order.createGatewayOrder().getPayload()))
+        );
     }
 
     @Test

@@ -7,16 +7,24 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.io.IOException;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -28,7 +36,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_NEW_ORDER;
 import static uk.gov.pay.connector.gateway.model.Auth3dsResult.Auth3dsResultOutcome.AUTHORISED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
@@ -37,7 +50,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 public class EpdqCardResourceIT extends ChargingITestBase {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
-    
+
     private String authorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
 
@@ -59,6 +72,8 @@ public class EpdqCardResourceIT extends ChargingITestBase {
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+
+        verifyPostToPath(String.format("/epdq/%s", ROUTE_FOR_NEW_ORDER), getExpectedAuthRequestBody(chargeId));
     }
 
     @Test
@@ -134,7 +149,7 @@ public class EpdqCardResourceIT extends ChargingITestBase {
                 .body("message", contains("Wallets are not supported for ePDQ"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     public void shouldNotAuthorise_whenTransactionIsInError() {
         epdqMockClient.mockAuthorisationError();
@@ -171,5 +186,36 @@ public class EpdqCardResourceIT extends ChargingITestBase {
         String expectedErrorMessage = "This transaction was deferred.";
         String expectedChargeStatus = AUTHORISATION_SUBMITTED.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(authorisationDetails, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    private void verifyPostToPath(String path, String body) {
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(path))
+                        .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withRequestBody(equalTo(body))
+        );
+    }
+
+    private String getExpectedAuthRequestBody(String chargeId) {
+        EpdqPayloadDefinitionForNewOrder epdqPayloadDefinition = new EpdqPayloadDefinitionForNewOrder();
+        epdqPayloadDefinition.setAmount("6234");
+        epdqPayloadDefinition.setOrderId(chargeId);
+        epdqPayloadDefinition.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinition.setUserId(credentials.get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinition.setPassword(credentials.get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinition.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+
+        Address address = new Address(ADDRESS_LINE_1, null, ADDRESS_POSTCODE, ADDRESS_CITY, ADDRESS_CITY, ADDRESS_COUNTRY_GB);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Scrooge McDuck")
+                .withCardNo("4444333322221111")
+                .withCvc("123")
+                .withEndDate(CardExpiryDate.valueOf("11/99"))
+                .withAddress(address)
+                .build();
+        epdqPayloadDefinition.setAuthCardDetails(authCardDetails);
+
+        return epdqPayloadDefinition.createGatewayOrder().getPayload();
     }
 }
