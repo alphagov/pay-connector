@@ -5,7 +5,7 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
-import uk.gov.pay.connector.gateway.worldpay.exception.NotAWorldpayGatewayAccountException;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
@@ -126,14 +125,20 @@ public class GatewayAccountCredentialsResource {
             @PathParam("accountId") Long gatewayAccountId,
             @PathParam("credentialsId") Long credentialsId,
             JsonNode payload) {
+
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccountEntity -> {
-                    gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountEntity.getGatewayName());
-                    List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
-                            .map(JsonPatchRequest::from)
-                            .collect(Collectors.toList());
-                    return gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, updateRequests);
-                })
+                .map(gatewayAccountEntity -> gatewayAccountEntity.getGatewayAccountCredentials()
+                        .stream()
+                        .filter(c -> c.getId().equals(credentialsId))
+                        .findFirst()
+                        .map(gatewayAccountCredentialsEntity -> {
+                            gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountCredentialsEntity.getPaymentProvider());
+                            List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
+                                    .map(JsonPatchRequest::from)
+                                    .collect(Collectors.toList());
+                            return gatewayAccountCredentialsService.updateGatewayAccountCredentials(gatewayAccountCredentialsEntity, updateRequests);
+                        })
+                        .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(credentialsId)))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
