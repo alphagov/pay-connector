@@ -11,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -20,7 +19,6 @@ import javax.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -218,14 +216,13 @@ public class GatewayAccountCredentialsServiceTest {
 
     @Test
     void shouldUpdateGatewayAccountCredentials() {
-        long credentialsId = 1;
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withState(CREATED)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
-        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
+
 
         JsonNode replaceCredentialsNode = objectMapper.valueToTree(
                 Map.of("path", "credentials",
@@ -248,8 +245,9 @@ public class GatewayAccountCredentialsServiceTest {
                 .map(JsonPatchRequest::from)
                 .collect(Collectors.toList());
 
-        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, patchRequests);
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
+        verify(mockGatewayAccountCredentialsDao).merge(credentialsEntity);
         assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
         assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
         assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
@@ -257,14 +255,12 @@ public class GatewayAccountCredentialsServiceTest {
 
     @Test
     void shouldChangeStateToActive_whenCredentialsInCreatedStateUpdated_andOnlyOneCredential() {
-        long credentialsId = 1;
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withState(CREATED)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
-        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
 
         JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
                 Map.of("path", "credentials",
@@ -272,14 +268,13 @@ public class GatewayAccountCredentialsServiceTest {
                         "value", Map.of(
                                 "merchant_id", "new-merchant-id"
                         ))));
-        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
         
         assertThat(credentialsEntity.getState(), is(ACTIVE));
     }
 
     @Test
     void shouldChangeStateToEntered_whenCredentialsInCreatedStateUpdated_andMoreThanOneCredential() {
-        long credentialsId = 1;
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         GatewayAccountCredentialsEntity credentialsBeingUpdated = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
@@ -290,7 +285,6 @@ public class GatewayAccountCredentialsServiceTest {
                 .withState(ACTIVE)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsBeingUpdated, otherCredentials));
-        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsBeingUpdated));
 
         JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
                 Map.of("path", "credentials",
@@ -298,7 +292,7 @@ public class GatewayAccountCredentialsServiceTest {
                         "value", Map.of(
                                 "merchant_id", "new-merchant-id"
                         ))));
-        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsBeingUpdated, Collections.singletonList(patchRequest));
 
         assertThat(credentialsBeingUpdated.getState(), is(ENTERED));
         assertThat(otherCredentials.getState(), is(ACTIVE));
@@ -306,14 +300,12 @@ public class GatewayAccountCredentialsServiceTest {
 
     @Test
     void shouldNotChangeState_whenCredentialsNotInCreatedState() {
-        long credentialsId = 1;
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withState(VERIFIED_WITH_LIVE_PAYMENT)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
-        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.of(credentialsEntity));
 
         JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
                 Map.of("path", "credentials",
@@ -321,24 +313,8 @@ public class GatewayAccountCredentialsServiceTest {
                         "value", Map.of(
                                 "merchant_id", "new-merchant-id"
                         ))));
-        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId, Collections.singletonList(patchRequest));
+        gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
 
         assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
-    }
-
-    @Test
-    void shouldThrowForNotFoundCredentialsId() {
-        long credentialsId = 1;
-        when(mockGatewayAccountCredentialsDao.findById(credentialsId)).thenReturn(Optional.empty());
-
-        List<JsonPatchRequest> patchRequests = Collections.singletonList(JsonPatchRequest.from(objectMapper.valueToTree(
-                Map.of("path", "last_updated_by_user_external_id",
-                        "op", "replace",
-                        "value", "new-user-external-id")
-        )));
-
-        assertThrows(GatewayAccountCredentialsNotFoundException.class, () ->
-                gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsId,
-                        patchRequests));
     }
 }

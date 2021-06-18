@@ -4,7 +4,6 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -114,26 +113,23 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentials updateGatewayAccountCredentials(long gatewayAccountCredentialsId, List<JsonPatchRequest> updateRequests) {
-        return getGatewayAccountCredentials(gatewayAccountCredentialsId).map(
-                gatewayAccountCredentialsEntity -> {
-                    for (JsonPatchRequest updateRequest : updateRequests) {
-                        if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                            gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
-                            if (gatewayAccountCredentialsEntity.getState() == CREATED) {
-                                updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
-                            }
-                        } else if (updateRequest.getPath().equals(FIELD_LAST_UPDATED_BY_USER) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                            gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
-                        } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                            gatewayAccountCredentialsEntity.setState(GatewayAccountCredentialState.valueOf(updateRequest.valueAsString()));
-                        }
-                    }
-
-                    return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
-                }).orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(gatewayAccountCredentialsId));
+    public GatewayAccountCredentials updateGatewayAccountCredentials(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, List<JsonPatchRequest> updateRequests) {
+        for (JsonPatchRequest updateRequest : updateRequests) {
+            if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
+                gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
+                if (gatewayAccountCredentialsEntity.getState() == CREATED) {
+                    updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
+                }
+            } else if (updateRequest.getPath().equals(FIELD_LAST_UPDATED_BY_USER) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
+                gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
+            } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
+                gatewayAccountCredentialsEntity.setState(GatewayAccountCredentialState.valueOf(updateRequest.valueAsString()));
+            }
+        }
+        gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
+        return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
     }
-    
+
     private void updateStateForEnteredCredentials(GatewayAccountCredentialsEntity credentialsEntity) {
         if (credentialsEntity.getGatewayAccountEntity().getGatewayAccountCredentials().size() == 1) {
             credentialsEntity.setState(ACTIVE);
