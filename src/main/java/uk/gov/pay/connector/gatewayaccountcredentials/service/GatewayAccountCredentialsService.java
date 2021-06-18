@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +32,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class GatewayAccountCredentialsService {
 
+    private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
     @Inject
@@ -94,6 +96,22 @@ public class GatewayAccountCredentialsService {
         }
     }
 
+    @Transactional
+    public void updateGatewayAccountCredentialMerchantId(GatewayAccountEntity gatewayAccountEntity, String merchantAccountId) {
+        List<GatewayAccountCredentialsEntity> credentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (credentialsEntities.isEmpty()) {
+            // Backfill hasn't been run for this gateway account, no need to add to gateway_account_credentials table
+            // as row will be added when backfill is run.
+            return;
+        }
+
+        var credentialsEntity = getSingleOrActiveGatewayAccountCredential(gatewayAccountEntity);
+        Map<String, String> credentials = new HashMap<>(credentialsEntity.getCredentials());
+        credentials.put(GATEWAY_MERCHANT_ID, merchantAccountId);
+        credentialsEntity.setCredentials(credentials);
+        gatewayAccountCredentialsDao.merge(credentialsEntity);
+    }
+
     private GatewayAccountCredentialsEntity getSingleOrActiveGatewayAccountCredential(GatewayAccountEntity gatewayAccountEntity) {
         var gatewayAccountCredentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
         if (gatewayAccountCredentialsEntities.size() == 1) {
@@ -138,5 +156,4 @@ public class GatewayAccountCredentialsService {
             credentialsEntity.setState(ENTERED);
         }
     }
-
 }

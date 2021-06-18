@@ -2,10 +2,13 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.postgresql.util.PGobject;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -19,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -28,7 +32,11 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -836,5 +844,40 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void shouldPatchMerchantIdOnGatewayAccountCredential() throws JsonProcessingException {
+        String gatewayAccountId = "1000024";
+        String credentialExtId = randomUuid();
+        String merchantId = "abcdef123abcdef";
+        databaseTestHelper.addGatewayAccount(
+                anAddGatewayAccountParams()
+                        .withAccountId(gatewayAccountId)
+                        .withPaymentGateway("worldpay")
+                        .withCredentials(Map.of("username", "GATEWAYUSERNAME"))
+                        .withProviderSwitchEnabled(true)
+                        .build());
+
+        AddGatewayAccountCredentialsParams gatewayAccountCredential = anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
+                        .withCredentials(Map.of("username", "GATEWAYUSERNAME"))
+                        .withExternalId(credentialExtId)
+                        .withState(ACTIVE)
+                        .build();
+        databaseTestHelper.insertGatewayAccountCredentials(gatewayAccountCredential);
+
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                "path", "credentials/gateway_merchant_id", "value", merchantId));
+
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        Map<String, Object> credential = databaseTestHelper.getGatewayAccountCredentialByExternalId(credentialExtId);
+        Map<String, String> credentials = new Gson().fromJson(((PGobject)credential.get("credentials")).getValue(), Map.class);
+        assertThat(credentials.get("gateway_merchant_id"), is(merchantId));
     }
 }

@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -19,6 +20,7 @@ import javax.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -316,5 +319,22 @@ public class GatewayAccountCredentialsServiceTest {
         gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
 
         assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
+    }
+
+    @Test
+    public void shouldSetMerchantId() {
+        String merchantAccountId = "ABCDEF123ABCDEF";
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(WORLDPAY.getName())
+                .build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withCredentials(Map.of())
+                .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, merchantAccountId);
+        assertThat(credentialsEntity.getCredentials().get("gateway_merchant_id"), is(merchantAccountId));
     }
 }
