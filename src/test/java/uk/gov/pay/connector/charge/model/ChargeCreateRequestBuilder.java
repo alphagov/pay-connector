@@ -16,6 +16,7 @@ public final class ChargeCreateRequestBuilder {
     private ExternalMetadata externalMetadata;
     private Source source;
     private boolean moto;
+    private String paymentProvider;
 
     private ChargeCreateRequestBuilder() {
     }
@@ -79,8 +80,13 @@ public final class ChargeCreateRequestBuilder {
         return this;   
     }
 
+    public ChargeCreateRequestBuilder withPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
+        return this;
+    }
+
     public ChargeCreateRequest build() {
         return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
-                prefilledCardHolderDetails, externalMetadata, source, moto);
+                prefilledCardHolderDetails, externalMetadata, source, moto, paymentProvider);
     }
 }

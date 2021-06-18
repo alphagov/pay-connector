@@ -35,6 +35,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
@@ -104,7 +105,7 @@ public class GatewayAccountCredentialsResourceIT {
         testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
-                .withGatewayAccountCredentials(credentialsParams)
+                .withGatewayAccountCredentials(singletonList(credentialsParams))
                 .insert();
     }
 
@@ -295,7 +296,7 @@ public class GatewayAccountCredentialsResourceIT {
         Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
 
         givenSetup()
-                .body(toJson(Collections.singletonList(
+                .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials"))))
                 .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
@@ -310,7 +311,7 @@ public class GatewayAccountCredentialsResourceIT {
                 "password", "new-password",
                 "merchant_id", "new-merchant-id");
         givenSetup()
-                .body(toJson(Collections.singletonList(
+                .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials",
                                 "value", newCredentials))))

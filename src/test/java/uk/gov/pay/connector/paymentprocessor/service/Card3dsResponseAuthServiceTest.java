@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -72,6 +73,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private NorthAmericanRegionMapper northAmericanRegionMapper;
     @Mock
     private RefundService mockedRefundService;
+    @Mock
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
@@ -98,7 +101,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockConfiguration.getAuthorisation3dsConfig()).thenReturn(mockAuthorisation3dsConfig);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
-                null, mockConfiguration, null, mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, northAmericanRegionMapper);
+                null, mockConfiguration, null, mockStateTransitionService, ledgerService,
+                mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);

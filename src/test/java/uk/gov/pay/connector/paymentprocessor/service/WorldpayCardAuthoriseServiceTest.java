@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
@@ -102,7 +103,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class), 
-                mock(EventService.class), mock(NorthAmericanRegionMapper.class));
+                mock(EventService.class), mock(GatewayAccountCredentialsService.class), mock(NorthAmericanRegionMapper.class));
         
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,

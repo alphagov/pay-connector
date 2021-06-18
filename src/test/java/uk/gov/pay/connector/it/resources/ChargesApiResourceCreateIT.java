@@ -8,16 +8,21 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.math.RandomUtils;
+import org.glassfish.jersey.server.JSONP;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -55,6 +60,8 @@ import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -833,7 +840,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() throws Exception {
         String postBody = toJson(Map.of(
@@ -894,5 +901,102 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         return "https://localhost:" + testContext.getPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
+    }
+
+    @Test
+    public void shouldCreateChargeForProvidedPaymentProvider() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ENTERED)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountCredentialsParams activeCredentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("sandbox")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PROVIDER_KEY, "worldpay"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_PROVIDER_KEY, is("worldpay"));
+    }
+
+    @Test
+    public void shouldReturn400WhenNoCredentialsForProviderSpecified() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("sandbox")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withGatewayAccountCredentials(List.of(credentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PROVIDER_KEY, "worldpay"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", contains("Account does not support payment provider [worldpay]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void shouldReturn400WhenNoCredentialsInUsableStateForProvider() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.CREATED)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withGatewayAccountCredentials(List.of(credentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PROVIDER_KEY, "worldpay"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", contains("Account does not have credentials in a usable state for payment provider [worldpay]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 }

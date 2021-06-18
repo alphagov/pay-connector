@@ -3,6 +3,8 @@ package uk.gov.pay.connector.util;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
@@ -33,7 +35,7 @@ public class AddGatewayAccountParams {
     private String accountId;
     private String externalId;
     private String paymentGateway;
-    private AddGatewayAccountCredentialsParams credentials;
+    private List<AddGatewayAccountCredentialsParams> credentials;
     private String serviceName;
     private GatewayAccountType type;
     private String description;
@@ -69,7 +71,7 @@ public class AddGatewayAccountParams {
         return paymentGateway;
     }
 
-    public AddGatewayAccountCredentialsParams getCredentials() {
+    public List<AddGatewayAccountCredentialsParams> getCredentials() {
         return credentials;
     }
 
@@ -145,7 +147,7 @@ public class AddGatewayAccountParams {
         private String accountId;
         private String paymentGateway = "provider";
         private Map<String, String> credentialsMap = Map.of();
-        private AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams;
+        private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service name";
         private GatewayAccountType type = TEST;
         private String description = "description";
@@ -188,7 +190,7 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withGatewayAccountCredentials(AddGatewayAccountCredentialsParams credentials) {
+        public AddGatewayAccountParamsBuilder withGatewayAccountCredentials(List<AddGatewayAccountCredentialsParams> credentials) {
             this.gatewayAccountCredentialsParams = credentials;
             return this;
         }
@@ -290,12 +292,13 @@ public class AddGatewayAccountParams {
 
         public AddGatewayAccountParams build() {
             if (gatewayAccountCredentialsParams == null) {
-                gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
-                        .withPaymentProvider(paymentGateway)
-                        .withGatewayAccountId(Long.parseLong(accountId))
-                        .withCredentials(credentialsMap).build();
+                gatewayAccountCredentialsParams = Collections.singletonList(
+                        anAddGatewayAccountCredentialsParams()
+                                .withPaymentProvider(paymentGateway)
+                                .withGatewayAccountId(Long.parseLong(accountId))
+                                .withCredentials(credentialsMap).build());
             }
-            
+
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
             addGatewayAccountParams.accountId = this.accountId;
             addGatewayAccountParams.externalId = this.externalId;

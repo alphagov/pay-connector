@@ -7,16 +7,20 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -27,13 +31,17 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredent
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
+import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class GatewayAccountCredentialsService {
 
     private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
+    
+    private final Set<GatewayAccountCredentialState> USABLE_STATES = Set.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
 
     @Inject
     public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
@@ -155,5 +163,28 @@ public class GatewayAccountCredentialsService {
         } else {
             credentialsEntity.setState(ENTERED);
         }
+    }
+    
+    public GatewayAccountCredentialsEntity getUsableCredentialsForProvider(GatewayAccountEntity gatewayAccountEntity, String paymentProvider) {
+        List<GatewayAccountCredentialsEntity> credentialsForProvider = gatewayAccountEntity.getGatewayAccountCredentials()
+                .stream()
+                .filter(gatewayAccountCredentialsEntity -> gatewayAccountCredentialsEntity.getPaymentProvider().equals(paymentProvider))
+                .collect(Collectors.toList());
+
+        if (credentialsForProvider.isEmpty()) {
+            throw new NoCredentialsExistForProviderException(paymentProvider);
+        }
+
+        List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider.stream().filter(gatewayAccountCredentialsEntity ->
+                USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
+                .collect(Collectors.toList());
+        
+        if (credentialsInState.isEmpty()) {
+            throw new NoCredentialsInUsableStateException(paymentProvider);
+        }
+        if (credentialsInState.size() > 1) {
+            throw new WebApplicationException(badRequestResponse(Collections.singletonList("Multiple usable credentials exist for payment provider [%s], unable to determine which to use.")));
+        }
+        return credentialsInState.get(0);
     }
 }

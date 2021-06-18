@@ -4,8 +4,6 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -58,6 +56,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -67,6 +66,8 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -122,6 +123,7 @@ public class ChargeService {
     private final Boolean shouldEmitPaymentStateTransitionEvents;
     private final RefundService refundService;
     private final EventService eventService;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
     @Inject
@@ -136,6 +138,7 @@ public class ChargeService {
                          LedgerService ledgerService,
                          RefundService refundService,
                          EventService eventService,
+                         GatewayAccountCredentialsService gatewayAccountCredentialsService,
                          NorthAmericanRegionMapper northAmericanRegionMapper) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
@@ -150,6 +153,7 @@ public class ChargeService {
         this.ledgerService = ledgerService;
         this.refundService = refundService;
         this.eventService = eventService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.northAmericanRegionMapper = northAmericanRegionMapper;
     }
 
@@ -228,13 +232,22 @@ public class ChargeService {
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
+            if (chargeRequest.getPaymentProvider() != null) {
+                // check usable credentials exist
+                gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccount, chargeRequest.getPaymentProvider());
+            }
+
+            String paymentProvider = chargeRequest.getPaymentProvider() != null ?
+                    chargeRequest.getPaymentProvider() :
+                    gatewayAccount.getGatewayName();
+
             ChargeEntity chargeEntity = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withReturnUrl(chargeRequest.getReturnUrl())
                     .withDescription(chargeRequest.getDescription())
                     .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
                     .withGatewayAccount(gatewayAccount)
-                    .withPaymentProvider(gatewayAccount.getGatewayName())
+                    .withPaymentProvider(paymentProvider)
                     .withEmail(chargeRequest.getEmail())
                     .withLanguage(language)
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
@@ -439,7 +452,7 @@ public class ChargeService {
                 .withDescription(chargeEntity.getDescription())
                 .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
-                .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
+                .withProviderName(chargeEntity.getPaymentProvider())
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withEmail(chargeEntity.getEmail())

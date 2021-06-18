@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,7 +67,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
-                .withGatewayAccountCredentials(credentialsParams)
+                .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
                 .withServiceName("a cool service")
                 .build());
 

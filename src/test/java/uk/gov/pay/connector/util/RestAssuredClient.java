@@ -73,6 +73,10 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postCreateCharge(String postBody) {
+        return postCreateCharge(postBody, accountId);
+    }
+
+    public ValidatableResponse postCreateCharge(String postBody, String accountId) {
         String requestPath = "/v1/api/accounts/{accountId}/charges"
                 .replace("{accountId}", accountId);
 
