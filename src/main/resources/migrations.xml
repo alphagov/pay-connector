@@ -1643,6 +1643,7 @@
     <changeSet id="add send_payer_email_to_gateway column to gateway_accounts table" author="">
         <addColumn tableName="gateway_accounts">
             <column name="send_payer_email_to_gateway" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>

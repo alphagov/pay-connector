@@ -75,6 +75,8 @@ public class GatewayAccountRequestValidatorTest {
             "replace, worldpay_exemption_engine_enabled, unfalse, Value [unfalse] must be of type boolean for path [worldpay_exemption_engine_enabled]",
             "replace, send_payer_ip_address_to_gateway, null, Field [value] is required",
             "replace, send_payer_ip_address_to_gateway, unfalse, Value [unfalse] must be of type boolean for path [send_payer_ip_address_to_gateway]",
+            "replace, send_payer_email_to_gateway, null, Field [value] is required",
+            "replace, send_payer_email_to_gateway, unfalse, Value [unfalse] must be of type boolean for path [send_payer_email_to_gateway]",
             "replace, provider_switch_enabled, null, Field [value] is required",
             "replace, provider_switch_enabled, unfalse, Value [unfalse] must be of type boolean for path [provider_switch_enabled]"
     })

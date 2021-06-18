@@ -44,6 +44,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS = "allow_telephone_payment_notifications";
     public static final String FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED = "worldpay_exemption_engine_enabled";
     public static final String FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY = "send_payer_ip_address_to_gateway";
+    public static final String FIELD_SEND_PAYER_EMAIL_TO_GATEWAY = "send_payer_email_to_gateway";
     public static final String FIELD_PROVIDER_SWITCH_ENABLED = "provider_switch_enabled";
 
     private static final List<String> VALID_PATHS = List.of(
@@ -65,6 +66,7 @@ public class GatewayAccountRequestValidator {
             FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
             FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
             FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
+            FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
             FIELD_PROVIDER_SWITCH_ENABLED);
 
     private final RequestValidator requestValidator;
@@ -103,6 +105,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS:
             case FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED:
             case FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY:
+            case FIELD_SEND_PAYER_EMAIL_TO_GATEWAY:
             case FIELD_PROVIDER_SWITCH_ENABLED:
                 validateReplaceBooleanValue(payload);
                 break;
