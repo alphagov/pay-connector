@@ -14,6 +14,8 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.WebApplicationException;
@@ -37,6 +39,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
@@ -336,5 +339,58 @@ public class GatewayAccountCredentialsServiceTest {
 
         gatewayAccountCredentialsService.updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, merchantAccountId);
         assertThat(credentialsEntity.getCredentials().get("gateway_merchant_id"), is(merchantAccountId));
+    }
+
+    @Test
+    void shouldThrowForNoCredentialsForProvider() {
+        GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("smartpay").withState(ENTERED).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
+
+        NoCredentialsExistForProviderException exception = assertThrows(NoCredentialsExistForProviderException.class,
+                () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
+        assertThat(exception.getMessage(), is("Account does not support payment provider [worldpay]"));
+    }
+
+    @Test
+    void shouldThrowForNoCredentialsInUsableState() {
+        GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(CREATED).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
+
+        NoCredentialsInUsableStateException exception = assertThrows(NoCredentialsInUsableStateException.class,
+                () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
+        assertThat(exception.getMessage(), is("Account does not have credentials in a usable state for payment provider [worldpay]"));
+    }
+
+
+    @Test
+    void shouldThrowIfMultipleUsableCredentials() {
+        GatewayAccountCredentialsEntity credentials1 = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(ENTERED).build();
+        GatewayAccountCredentialsEntity credentials2 = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(VERIFIED_WITH_LIVE_PAYMENT).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(credentials1, credentials2)).build();
+
+        assertThrows(WebApplicationException.class,
+                () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
+    }
+
+    @Test
+    void shouldReturnSingleUsableCredentialForPaymentProvider() {
+        GatewayAccountCredentialsEntity credentials1 = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(ENTERED).build();
+        GatewayAccountCredentialsEntity credentials2 = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(CREATED).build();
+        GatewayAccountCredentialsEntity credentials3 = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(RETIRED).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(credentials1, credentials2, credentials3)).build();
+
+        GatewayAccountCredentialsEntity result = gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, credentials1.getPaymentProvider());
+        assertThat(result, is(credentials1));
     }
 }

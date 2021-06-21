@@ -2,9 +2,6 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
-import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -16,14 +13,18 @@ import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -322,7 +323,7 @@ public class DatabaseFixtures {
         String externalId = randomUuid();
         private String paymentProvider = "sandbox";
         private Map<String, String> credentialsMap = Map.of();
-        private AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams;
+        private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service_name";
         private String description = "a description";
         private String analyticsId = "an analytics id";
@@ -361,7 +362,7 @@ public class DatabaseFixtures {
             return paymentProvider;
         }
 
-        public AddGatewayAccountCredentialsParams getCredentials() {
+        public List<AddGatewayAccountCredentialsParams> getCredentials() {
             return gatewayAccountCredentialsParams;
         }
 
@@ -429,8 +430,8 @@ public class DatabaseFixtures {
             this.credentialsMap = credentials;
             return this;
         }
-        
-        public TestAccount withGatewayAccountCredentials(AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams) {
+
+        public TestAccount withGatewayAccountCredentials(List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams) {
             this.gatewayAccountCredentialsParams = gatewayAccountCredentialsParams;
             return this;
         }
@@ -518,13 +519,14 @@ public class DatabaseFixtures {
 
         public TestAccount insert() {
             if (gatewayAccountCredentialsParams == null) {
-                gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
-                        .withGatewayAccountId(accountId)
-                        .withPaymentProvider(paymentProvider)
-                        .withCredentials(credentialsMap)
-                        .build();
+                gatewayAccountCredentialsParams = Collections.singletonList(
+                        anAddGatewayAccountCredentialsParams()
+                                .withGatewayAccountId(accountId)
+                                .withPaymentProvider(paymentProvider)
+                                .withCredentials(credentialsMap)
+                                .build());
             }
-            
+
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
                     .withExternalId(externalId)

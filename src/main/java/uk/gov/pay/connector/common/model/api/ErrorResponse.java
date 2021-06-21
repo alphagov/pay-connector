@@ -12,13 +12,17 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class ErrorResponse {
     
     @JsonProperty("error_identifier")
-    private final ErrorIdentifier identifier;
+    private ErrorIdentifier identifier;
     
     @JsonProperty("message")
-    private final List<String> messages;
+    private List<String> messages;
     
     @JsonProperty("reason")
-    private final String reason;
+    private String reason;
+    
+    public ErrorResponse() {
+        // for Jackson deserialization
+    }
     
     public ErrorResponse(ErrorIdentifier identifier, List<String> messages, String reason) {
         this.identifier = identifier;

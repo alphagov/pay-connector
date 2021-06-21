@@ -54,6 +54,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.northamericaregion.UsState;
@@ -168,6 +169,9 @@ public class ChargeServiceTest {
 
     @Mock
     protected RefundService mockedRefundService;
+    
+    @Mock
+    protected GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     @Mock
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
@@ -232,7 +236,8 @@ public class ChargeServiceTest {
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockNorthAmericanRegionMapper);
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
+                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper);
     }
 
     @After

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
+import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -65,6 +66,10 @@ public class ChargeCreateRequest {
     
     @JsonProperty("moto")
     private boolean moto;
+    
+    @JsonProperty("payment_provider")
+    @ValidPaymentProvider
+    private String paymentProvider;
 
     public ChargeCreateRequest() {
         // for Jackson
@@ -80,7 +85,8 @@ public class ChargeCreateRequest {
                         PrefilledCardHolderDetails prefilledCardHolderDetails,
                         ExternalMetadata externalMetadata,
                         Source source,
-                        boolean moto) {
+                        boolean moto,
+                        String paymentProvider) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -92,6 +98,7 @@ public class ChargeCreateRequest {
         this.externalMetadata = externalMetadata;
         this.source = source;
         this.moto = moto;
+        this.paymentProvider = paymentProvider;
     }
 
     public long getAmount() {
@@ -138,6 +145,10 @@ public class ChargeCreateRequest {
         return moto;
     }
 
+    public String getPaymentProvider() {
+        return paymentProvider;
+    }
+
     public String toStringWithoutPersonalIdentifiableInformation() {
         return "ChargeCreateRequest{" +
                 "amount=" + amount +
@@ -147,6 +158,7 @@ public class ChargeCreateRequest {
                 ", source=" + source +
                 ", moto=" + moto +
                 (language != null ? ", language=" + language.toString() : "") +
+                (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
                 '}';
     }
 }

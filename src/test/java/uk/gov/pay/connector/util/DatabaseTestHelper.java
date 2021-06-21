@@ -62,7 +62,7 @@ public class DatabaseTestHelper {
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("payment_provider", params.getPaymentGateway())
-                        .bindBySqlType("credentials", buildCredentialsJson(params.getCredentials()), OTHER)
+                        .bindBySqlType("credentials", buildCredentialsJson(params.getCredentials().get(0)), OTHER)
                         .bind("service_name", params.getServiceName())
                         .bind("type", params.getType())
                         .bind("description", params.getDescription())
@@ -83,7 +83,7 @@ public class DatabaseTestHelper {
                         .bind("provider_switch_enabled", params.isProviderSwitchEnabled())
                         .execute());
         if (params.getCredentials() != null) {
-            insertGatewayAccountCredentials(params.getCredentials());
+            params.getCredentials().forEach(this::insertGatewayAccountCredentials);
         }
     }
 

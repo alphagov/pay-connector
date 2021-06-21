@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
@@ -495,7 +496,7 @@ public class ContractTest {
                 .build();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
-                .withGatewayAccountCredentials(gatewayAccountCredentialsParams)
+                .withGatewayAccountCredentials(singletonList(gatewayAccountCredentialsParams))
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }
