@@ -145,6 +145,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "send_payer_ip_address_to_gateway")
     private boolean sendPayerIpAddressToGateway;
 
+    @Column(name = "send_payer_email_to_gateway")
+    private boolean sendPayerEmailToGateway;
+
     @ManyToMany
     @JoinTable(
             name = "accepted_card_types",
@@ -374,6 +377,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return sendPayerIpAddressToGateway;
     }
 
+    @JsonProperty("send_payer_email_to_gateway")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isSendPayerEmailToGateway() {
+        return sendPayerEmailToGateway;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -501,6 +510,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
         this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+    }
+
+    public void setSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+        this.sendPayerEmailToGateway = sendPayerEmailToGateway;
     }
 
     public void setAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {

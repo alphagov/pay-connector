@@ -983,7 +983,8 @@ Content-Type: application/json
 A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_pay`, `block_prepaid_cards`, `credentials/gateway_merchant_id`,
 `notify_settings`, `email_collection_mode`, `corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`,
 `corporate_prepaid_credit_card_surcharge_amount`, `corporate_prepaid_debit_card_surcharge_amount`, `allow_zero_amount`, `allow_moto`,
-`moto_mask_card_number_input`, `moto_mask_card_security_code_input`, `allow_telephone_payment_notifications`, `integration_version_3ds` or
+`moto_mask_card_number_input`, `moto_mask_card_security_code_input`, `allow_telephone_payment_notifications`, 
+`send_payer_ip_address_to_gateway`, `send_payer_email_to_gateway`, `integration_version_3ds` or
 `worldpay_exemption_engine_enabled` using a JSON Patch-esque message body.
 
 ### Request example

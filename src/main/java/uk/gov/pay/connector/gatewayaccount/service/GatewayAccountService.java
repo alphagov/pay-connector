@@ -46,6 +46,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
@@ -197,6 +198,10 @@ public class GatewayAccountService {
             entry(
                 FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
                 (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerIpAddressToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                 FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,

@@ -81,6 +81,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.getCorporatePrepaidCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
         assertThat(account.isSendPayerIpAddressToGateway(), is(false));
+        assertThat(account.isSendPayerEmailToGateway(), is(false));
         assertThat(account.isProviderSwitchEnabled(), is(false));
 
         databaseTestHelper.getAccountCredentials(account.getId());

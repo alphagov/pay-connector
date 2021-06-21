@@ -425,6 +425,34 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
+    public void shouldUpdateSendPayerEmailToGatewayToFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", "send_payer_email_to_gateway",
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setSendPayerEmailToGateway(false);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateSendPayerEmailToGatewayToTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", "send_payer_email_to_gateway",
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setSendPayerEmailToGateway(true);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
     public void shouldUpdateProviderSwitchEnabledToTrue() {
         JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
