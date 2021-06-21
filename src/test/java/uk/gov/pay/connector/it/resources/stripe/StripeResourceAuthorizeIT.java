@@ -303,6 +303,7 @@ public class StripeResourceAuthorizeIT {
     private void verifyPaymentIntentRequest(String url, String externalChargeId, String stripeAccountId) {
         wireMockServer.verify(postRequestedFor(urlEqualTo(url))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("amount", "6234")))
                 .withRequestBody(containing(queryParamWithValue("confirm", "true")))
                 .withRequestBody(containing(queryParamWithValue("on_behalf_of", stripeAccountId)))
@@ -320,6 +321,7 @@ public class StripeResourceAuthorizeIT {
     private void verifyPaymentMethodRequest(String url) {
         wireMockServer.verify(postRequestedFor(urlEqualTo(url))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("billing_details[name]", "Scrooge McDuck")))
                 .withRequestBody(containing(queryParamWithValue("type", "card")))
                 .withRequestBody(containing(queryParamWithValue("card[exp_month]", "11")))

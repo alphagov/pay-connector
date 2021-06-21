@@ -2,14 +2,19 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -62,7 +67,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
         assertNotEquals(databaseTestHelper.getChargeByExternalId(chargeId), gatewayTransactionId);
     }
-    
+
     @Test
     public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 
@@ -147,6 +152,33 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+
+        verifyRequestBodyToWorldpay("/jsp/merchant/xml/paymentService.jsp");
+    }
+
+    private void verifyRequestBodyToWorldpay(String path) {
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(path))
+                        .withHeader("Content-Type", equalTo("application/xml"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withRequestBody(matchingXPath(getMatchingXPath("paymentService", "merchantCode", "merchant-id")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("description", "Test description")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("amount", "value", "6234")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("amount", "currencyCode", "GBP")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cardHolderName", "Scrooge McDuck")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cardNumber", "4242424242424242")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("date", "month", "11")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("date", "year", "2099")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cvc", "123")))
+        );
+    }
+
+    public String getMatchingXPath(String path, String attribute, String value) {
+        return format("//%s[@%s=\"%s\"]", path, attribute, value);
+    }
+
+    public String getMatchingXPathForText(String path, String value) {
+        return format("//%s[text()=\"%s\"]", path, value);
     }
 
     @Test
@@ -202,7 +234,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
-    
+
     @Test
     public void shouldAuthoriseCharge_For3dsRequiredCharge() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
