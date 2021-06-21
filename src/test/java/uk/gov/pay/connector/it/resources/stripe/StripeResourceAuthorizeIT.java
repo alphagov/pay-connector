@@ -11,8 +11,6 @@ import org.hamcrest.collection.IsIn;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -23,16 +21,22 @@ import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.io.IOException;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
+import static java.net.URLEncoder.encode;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
@@ -67,7 +71,7 @@ public class StripeResourceAuthorizeIT {
     private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");
     private static final String CARD_NUMBER = "4242424242424242";
     private static final String AMOUNT = "6234";
-    private static final String CARD_TYPE = "CREDIT"; 
+    private static final String CARD_TYPE = "CREDIT";
 
     private static final String ADDRESS_LINE_1 = "The Money Pool";
     private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
@@ -97,15 +101,14 @@ public class StripeResourceAuthorizeIT {
     public void setup() {
         wireMockServer = testContext.getWireMockServer();
         stripeMockClient = new StripeMockClient(wireMockServer);
-        
+
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
 
-        
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
-    
+
     @Test
     public void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
         stripeMockClient.mockAuthorisationFailedWithPaymentIntents();
@@ -125,7 +128,7 @@ public class StripeResourceAuthorizeIT {
 
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.toString());
     }
-    
+
     @Test
     public void authoriseCharge() {
         stripeMockClient.mockCreatePaymentMethod();
@@ -139,7 +142,7 @@ public class StripeResourceAuthorizeIT {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then();
-        
+
         validatableResponse
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
@@ -147,11 +150,9 @@ public class StripeResourceAuthorizeIT {
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
-                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
-
+        verifyPaymentMethodRequest("/v1/payment_methods");
+        verifyPaymentIntentRequest("/v1/payment_intents", externalChargeId, stripeAccountId);
     }
-
 
     @Test
     public void shouldAuthoriseChargeWithoutBillingAddress() {
@@ -258,14 +259,13 @@ public class StripeResourceAuthorizeIT {
                 .post(captureChargeUrlFor(externalChargeId))
                 .then().statusCode(NO_CONTENT_204);
 
-
         assertConnectorHasRecordedChargeAsReadyForCapture(externalChargeId);
     }
 
     private void assertConnectorHasRecordedChargeAsReadyForCapture(String externalChargeId) {
         /*
          * There's a race condition where the background capture queue may attempt to capture the charge before we check
-         * the status. We care whether it has progressed to CAPTURE_APPROVED or beyond.  
+         * the status. We care whether it has progressed to CAPTURE_APPROVED or beyond.
          */
         connectorRestApiClient
                 .withChargeId(externalChargeId)
@@ -276,7 +276,7 @@ public class StripeResourceAuthorizeIT {
                         CAPTURE_READY.getValue(),
                         CAPTURED.getValue(),
                         CAPTURE_SUBMITTED.getValue()
-                        ));
+                ));
     }
 
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
@@ -298,6 +298,44 @@ public class StripeResourceAuthorizeIT {
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(status));
+    }
+
+    private void verifyPaymentIntentRequest(String url, String externalChargeId, String stripeAccountId) {
+        wireMockServer.verify(postRequestedFor(urlEqualTo(url))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(containing(queryParamWithValue("amount", "6234")))
+                .withRequestBody(containing(queryParamWithValue("confirm", "true")))
+                .withRequestBody(containing(queryParamWithValue("on_behalf_of", stripeAccountId)))
+                .withRequestBody(containing(queryParamWithValue("transfer_group", externalChargeId)))
+                .withRequestBody(containing(queryParamWithValue("capture_method", "manual")))
+                .withRequestBody(containing(queryParamWithValue("description", "Test description")))
+                .withRequestBody(containing(queryParamWithValue("confirmation_method", "automatic")))
+                .withRequestBody(containing(queryParamWithValue("payment_method", "pm_1FHEP1EZsufgnuO0Y22yNAKu")))
+                .withRequestBody(containing(queryParamWithValue("currency", "GBP")))
+                .withRequestBody(containing(queryParamWithValue("return_url",
+                        format("http://Frontend//card_details/%s/3ds_required_in", externalChargeId))))
+        );
+    }
+
+    private void verifyPaymentMethodRequest(String url) {
+        wireMockServer.verify(postRequestedFor(urlEqualTo(url))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(containing(queryParamWithValue("billing_details[name]", "Scrooge McDuck")))
+                .withRequestBody(containing(queryParamWithValue("type", "card")))
+                .withRequestBody(containing(queryParamWithValue("card[exp_month]", "11")))
+                .withRequestBody(containing(queryParamWithValue("billing_details[address[line1]]", "The Money Pool")))
+                .withRequestBody(containing(queryParamWithValue("card[exp_year]", "99")))
+                .withRequestBody(containing(queryParamWithValue("card[cvc]", "123")))
+                .withRequestBody(containing(queryParamWithValue("billing_details[address[postal_code]]", "DO11 4RS")))
+                .withRequestBody(containing(queryParamWithValue("billing_details[address[line2]]", "Moneybags Avenue")))
+                .withRequestBody(containing(queryParamWithValue("card[number]", "4242424242424242")))
+                .withRequestBody(containing(queryParamWithValue("billing_details[address[city]]", "London")))
+                .withRequestBody(containing(queryParamWithValue("billing_details[address[country]]", "GB")))
+        );
+    }
+
+    private String queryParamWithValue(String queryParam, String value) {
+        return String.join("=", encode(queryParam, UTF_8), encode(value, UTF_8));
     }
 
     private String addCharge() {
