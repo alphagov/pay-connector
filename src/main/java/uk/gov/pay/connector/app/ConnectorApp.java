@@ -49,7 +49,7 @@ import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
-import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountCredentialsResource;
+import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsResource;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gatewayaccount.resource;
+package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;

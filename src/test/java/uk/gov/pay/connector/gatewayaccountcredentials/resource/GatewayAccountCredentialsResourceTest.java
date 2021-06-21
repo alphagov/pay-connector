@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gatewayaccount.resource;
+package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
@@ -34,7 +34,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class GatewayAccountCredentialsResourceTest {
