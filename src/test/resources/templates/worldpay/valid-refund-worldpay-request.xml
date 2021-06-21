@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
         "http://dtd.worldpay.com/paymentService_v1.dtd">
-<paymentService version="1.4" merchantCode="MERCHANTCODE">
+<paymentService version="1.4" merchantCode="{{merchantCode}}">
     <modify>
-        <orderModification orderCode="MyUniqueTransactionId!">
-            <refund reference="reference">
-                <amount currencyCode="GBP" exponent="2" value="200"/>
+        <orderModification orderCode="{{transactionId}}">
+            <refund reference="{{refundReference}}">
+                <amount currencyCode="GBP" exponent="2" value="{{amount}}"/>
             </refund>
         </orderModification>
     </modify>

@@ -46,7 +46,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
 public class WorldpayOrderRequestBuilderTest {
-    
+
     protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
     protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
 
@@ -411,7 +411,11 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST), actualRequest.getPayload());
+        String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST)
+                .replace("{{merchantCode}}", "MERCHANTCODE")
+                .replace("{{transactionId}}", "MyUniqueTransactionId!");
+
+        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
     }
 
@@ -425,7 +429,13 @@ public class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST), actualRequest.getPayload());
+        String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST)
+                .replace("{{merchantCode}}", "MERCHANTCODE")
+                .replace("{{transactionId}}", "MyUniqueTransactionId!")
+                .replace("{{refundReference}}", "reference")
+                .replace("{{amount}}", "200");
+
+        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
     }
 
