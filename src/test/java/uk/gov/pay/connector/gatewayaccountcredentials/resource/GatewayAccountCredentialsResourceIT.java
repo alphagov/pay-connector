@@ -321,6 +321,35 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("message[0]", is("Gateway account credentials with id [999999] not found."));
     }
 
+    @Test
+    public void patchGatewayAccountCredentialsGatewayMerchantId() {
+        Map<String, String> newCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-merchant-id");
+        givenSetup()
+                .body(toJson(List.of(
+                        Map.of("op", "replace",
+                                "path", "credentials/gateway_merchant_id",
+                                "value", "abcdef123abcdef"))))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials", hasKey("username"))
+                .body("credentials", hasKey("merchant_id"))
+                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("gateway_merchant_id"))
+                .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(updatedCredentials, hasEntry("username", "a-username"));
+        assertThat(updatedCredentials, hasEntry("password", "a-password"));
+        assertThat(updatedCredentials, hasEntry("merchant_id", "a-merchant-id"));
+        assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+    }
+
     private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
         return objectMapper.writeValueAsString(Map.of(
                 "issuer", VALID_ISSUER,
