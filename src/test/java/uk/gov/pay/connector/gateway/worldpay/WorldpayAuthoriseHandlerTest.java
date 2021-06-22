@@ -372,7 +372,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withGatewayName(WORLDPAY.getName())
                 .withRequires3ds(false)
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                         CREDENTIALS_USERNAME, "worldpay-password",
                         CREDENTIALS_PASSWORD, "password"
                 ))

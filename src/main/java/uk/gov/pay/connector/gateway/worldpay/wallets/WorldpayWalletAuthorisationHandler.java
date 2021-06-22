@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -38,7 +39,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), 
                 buildWalletAuthoriseOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
         
         return getWorldpayGatewayResponse(response);
     }
@@ -61,7 +62,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();

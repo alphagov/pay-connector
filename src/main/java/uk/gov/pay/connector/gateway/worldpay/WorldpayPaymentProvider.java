@@ -134,7 +134,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 gatewayUrlMap.get(gatewayAccountEntity.getType()),
                 gatewayAccountEntity,
                 buildQuery(charge, gatewayAccountEntity),
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials())
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials(WORLDPAY.getName()))
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -162,7 +162,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private GatewayOrder buildQuery(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         return aWorldpayInquiryRequestBuilder()
                 .withTransactionId(charge.getGatewayTransactionId())
-                .withMerchantCode(gatewayAccountEntity.getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(gatewayAccountEntity.getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
@@ -255,7 +255,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getGatewayAccount(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
             calculateAndStoreExemption(request.getCharge(), gatewayResponse);
@@ -294,7 +294,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 request.getGatewayAccount(), buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
         return getWorldpayGatewayResponse(response);
     }
 
@@ -313,14 +313,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
         return aWorldpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
