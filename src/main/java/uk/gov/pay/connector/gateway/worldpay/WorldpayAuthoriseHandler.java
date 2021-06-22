@@ -17,6 +17,7 @@ import java.util.Map;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
@@ -53,7 +54,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     request.getGatewayAccount(),
                     WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
 
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));

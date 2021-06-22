@@ -73,6 +73,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORL
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
@@ -98,42 +99,51 @@ public class WorldpayPaymentProviderTest {
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
-    
-    @Mock private GatewayClient authoriseClient;
-    @Mock private GatewayClient cancelClient;
-    @Mock private GatewayClient inquiryClient;
-    @Mock private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
-    @Mock private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
-    @Mock private WorldpayCaptureHandler worldpayCaptureHandler;
-    @Mock private WorldpayRefundHandler worldpayRefundHandler;
-    @Mock private GatewayClient.Response response = mock(GatewayClient.Response.class);
-    @Mock private Appender<ILoggingEvent> mockAppender;
-    @Mock private ChargeDao chargeDao;
-    @Mock private EventService eventService;
-    
+
+    @Mock
+    private GatewayClient authoriseClient;
+    @Mock
+    private GatewayClient cancelClient;
+    @Mock
+    private GatewayClient inquiryClient;
+    @Mock
+    private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
+    @Mock
+    private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
+    @Mock
+    private WorldpayCaptureHandler worldpayCaptureHandler;
+    @Mock
+    private WorldpayRefundHandler worldpayRefundHandler;
+    @Mock
+    private GatewayClient.Response response = mock(GatewayClient.Response.class);
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+    @Mock
+    private ChargeDao chargeDao;
+    @Mock
+    private EventService eventService;
+
     private WorldpayPaymentProvider worldpayPaymentProvider;
     private ChargeEntityFixture chargeEntityFixture;
     protected GatewayAccountEntity gatewayAccountEntity;
-    private Map<String, String> gatewayAccountCredentials = Map.of("merchant_id", "MERCHANTCODE");
 
     @BeforeEach
     void setup() {
         worldpayPaymentProvider = new WorldpayPaymentProvider(
-                GATEWAY_URL_MAP, 
-                authoriseClient, 
-                cancelClient, 
-                inquiryClient, 
-                worldpayWalletAuthorisationHandler, 
-                worldpayAuthoriseHandler, 
-                worldpayCaptureHandler, 
-                worldpayRefundHandler, 
-                new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)), 
+                GATEWAY_URL_MAP,
+                authoriseClient,
+                cancelClient,
+                inquiryClient,
+                worldpayWalletAuthorisationHandler,
+                worldpayAuthoriseHandler,
+                worldpayCaptureHandler,
+                worldpayRefundHandler,
+                new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class)),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 chargeDao,
                 eventService);
-        
+
         gatewayAccountEntity = aServiceAccount();
-        gatewayAccountEntity.setCredentials(gatewayAccountCredentials);
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
 
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
@@ -509,7 +519,7 @@ public class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+        assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getGatewayAccountCredentials().get(0).getCredentials())));
     }
 
     @Test
@@ -559,18 +569,18 @@ public class WorldpayPaymentProviderTest {
         auth3dsResult.setPaResponse("I am an opaque 3D Secure PA response from the card issuer");
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
-    
+
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("worldpay");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("worldpay")
+                .withRequires3ds(false)
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"
+                ))
+                .withType(TEST)
+                .build();
     }
 }

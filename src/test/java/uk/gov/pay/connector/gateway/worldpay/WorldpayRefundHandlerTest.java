@@ -27,9 +27,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,16 +91,16 @@ class WorldpayRefundHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("worldpay");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName(WORLDPAY.getName())
+                .withRequires3ds(false)
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"
+                ))
+                .withType(TEST)
+                .build();
     }
 }
