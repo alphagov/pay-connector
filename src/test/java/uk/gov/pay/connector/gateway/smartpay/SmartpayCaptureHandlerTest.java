@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -35,8 +36,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(JUnitParamsRunner.class)
@@ -65,13 +67,13 @@ public class SmartpayCaptureHandlerTest {
         TestResponse testResponse = new TestResponse(this.response);
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenReturn(testResponse);
-        
+
         ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
         if (corporateSurchargeAmount != null) {
             chargeEntity.setCorporateSurcharge(corporateSurchargeAmount);
         }
         CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
-        
+
         assertTrue(gatewayResponse.isSuccessful());
         assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
 
@@ -94,18 +96,18 @@ public class SmartpayCaptureHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("smartpay");
-        gatewayAccount.setCredentials(ImmutableMap.of(
-                "username", "theUsername",
-                "password", "thePassword",
-                "merchant_id", "theMerchantCode"
-        ));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("smartpay")
+                .withCredentials(Map.of(
+                        "username", "theUsername",
+                        "password", "thePassword",
+                        "merchant_id", "theMerchantCode"
+                ))
+                .withType(TEST)
+                .build();
     }
-    
+
     private class TestResponse extends GatewayClient.Response {
 
         protected TestResponse(Response delegate) {

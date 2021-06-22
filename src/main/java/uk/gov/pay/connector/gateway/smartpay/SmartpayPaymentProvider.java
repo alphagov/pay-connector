@@ -89,7 +89,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), 
                 buildAuthoriseOrderFor(request), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
@@ -108,7 +108,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         try {
             GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                     request.getGatewayAccount(), build3dsResponseAuthOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
             if (gatewayResponse.getBaseResponse().isEmpty())
@@ -143,7 +143,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), buildCancelOrderFor(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }
 
@@ -200,7 +200,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     private String getMerchantCode(GatewayRequest request) {
-        return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
+        return request.getGatewayAccount().getCredentials(SMARTPAY.getName()).get(CREDENTIALS_MERCHANT_ID);
     }
 
 }
