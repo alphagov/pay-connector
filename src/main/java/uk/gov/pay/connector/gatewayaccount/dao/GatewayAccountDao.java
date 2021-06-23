@@ -46,8 +46,10 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
     }
 
     public boolean isATelephonePaymentNotificationAccount(String merchantId) {
-        String query = "SELECT count(g) FROM gateway_accounts g where g.credentials->>?1 = ?2 " +
-                " and allow_telephone_payment_notifications is true";
+        String query = "SELECT count(g) FROM gateway_accounts g, gateway_account_credentials gac " +
+                " where g.id = gac.gateway_account_id " +
+                " AND gac.credentials->>?1 = ?2 " +
+                " and g.allow_telephone_payment_notifications is true";
 
         var count = (Number) entityManager.get()
                 .createNativeQuery(query)
