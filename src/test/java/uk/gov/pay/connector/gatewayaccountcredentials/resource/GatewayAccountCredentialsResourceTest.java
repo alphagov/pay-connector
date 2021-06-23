@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
+import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.ws.rs.client.Entity;
@@ -30,6 +33,8 @@ import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,16 +44,16 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 public class GatewayAccountCredentialsResourceTest {
 
     private static final GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
-    private static final GatewayAccountCredentialsService gatewayAccountCredentialsService = mock(GatewayAccountCredentialsService.class);
     private static final Worldpay3dsFlexCredentialsService worldpay3dsFlexCredentialsService = mock(Worldpay3dsFlexCredentialsService.class);
     private static final Worldpay3dsFlexCredentialsValidationService worldpay3dsFlexCredentialsValidationService = mock(Worldpay3dsFlexCredentialsValidationService.class);
     private static final WorldpayCredentialsValidationService worldpayCredentialsValidationService = mock(WorldpayCredentialsValidationService.class);
     private static final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator = mock(GatewayAccountCredentialsRequestValidator.class);
+    private static final GatewayAccountCredentialsDao credentialDao = mock(GatewayAccountCredentialsDao.class);
 
     public static ResourceExtension resources = ResourceExtension.builder()
             .addResource(new GatewayAccountCredentialsResource(
                     gatewayAccountService,
-                    gatewayAccountCredentialsService,
+                    new GatewayAccountCredentialsService(credentialDao),
                     worldpay3dsFlexCredentialsService,
                     worldpay3dsFlexCredentialsValidationService,
                     worldpayCredentialsValidationService,
@@ -366,6 +371,58 @@ public class GatewayAccountCredentialsResourceTest {
 
         assertThat(response.getStatus(), is(404));
         assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway Account with id [111] not found."));
+    }
+
+    @Test
+    void patchGatewayAccountCredentialsReturnsInvalid_whenNotWorldpayProvider() {
+        var credentials = Map.of("op", "replace",
+                "path", "credentials/gateway_merchant_id",
+                "value", "abcdef123abcdef");
+        var payload = Collections.singletonList(
+                credentials
+        );
+        GatewayAccountCredentialsEntity credentialsEntity = mock(GatewayAccountCredentialsEntity.class);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
+        when(credentialsEntity.getId()).thenReturn(1L);
+        when(credentialsEntity.getCredentials()).thenReturn(credentials);
+        when(credentialsEntity.getPaymentProvider()).thenReturn("stripe");
+        doNothing().when(gatewayAccountCredentialsRequestValidator).validatePatch(any(JsonNode.class), any(String.class));
+
+        Response response = resources
+                .target(format("/v1/api/accounts/%s/credentials/1", accountId))
+                .request()
+                .method("PATCH", Entity.json(payload));
+
+        assertThat(response.getStatus(), is(400));
+        assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway 'stripe' does not support digital wallets."));
+    }
+
+    @Test
+    void patchGatewayAccountCredentialsReturnsInvalid_whenCredentialsIsEmpty() {
+        var credentials = Map.of("op", "replace",
+                "path", "credentials/gateway_merchant_id",
+                "value", "abcdef123abcdef");
+        var payload = Collections.singletonList(
+                credentials
+        );
+        GatewayAccountCredentialsEntity credentialsEntity = mock(GatewayAccountCredentialsEntity.class);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
+        when(credentialsEntity.getId()).thenReturn(1L);
+        when(credentialsEntity.getCredentials()).thenReturn(Map.of());
+        when(credentialsEntity.getPaymentProvider()).thenReturn("worldpay");
+        doNothing().when(gatewayAccountCredentialsRequestValidator).validatePatch(any(JsonNode.class), any(String.class));
+
+        Response response = resources
+                .target(format("/v1/api/accounts/%s/credentials/1", accountId))
+                .request()
+                .method("PATCH", Entity.json(payload));
+
+        assertThat(response.getStatus(), is(400));
+        assertThat(extractErrorMessagesFromResponse(response).get(0), is("Account credentials are required to set a Gateway Merchant ID."));
     }
 
     private List extractErrorMessagesFromResponse(Response response) {

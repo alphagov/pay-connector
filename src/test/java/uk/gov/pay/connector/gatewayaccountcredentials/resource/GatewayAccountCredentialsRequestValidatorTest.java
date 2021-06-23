@@ -153,8 +153,46 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "a-user-external-id"),
                         Map.of("path", "state",
                                 "op", "replace",
-                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
+                                "value", "VERIFIED_WITH_LIVE_PAYMENT"),
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "replace",
+                                "value", "abcdef123abcdef")
                 ));
         assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay"));
+    }
+
+    @Test
+    public void shouldThrowWhenOperationNotAllowedForGatewayMerchantId() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "add",
+                                "value", "abcdef123abcdef")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials/gateway_merchant_id]"));
+    }
+
+    @Test
+    public void shouldThrowWhenValueIsNotValidForGatewayMerchantId() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "replace",
+                                "value", "ABCDEF123abcdef")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Field [credentials/gateway_merchant_id] value [ABCDEF123abcdef] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]"));
+    }
+
+    @Test
+    public void shouldThrowWhenValueIsMissing() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "replace")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        assertThat(thrown.getErrors().get(0), is("Field [value] is required"));
     }
 }

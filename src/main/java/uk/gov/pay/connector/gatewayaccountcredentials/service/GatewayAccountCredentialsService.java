@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -25,8 +26,11 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_LAST_UPDATED_BY_USER;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.GATEWAY_MERCHANT_ID_PATH;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -150,6 +154,14 @@ public class GatewayAccountCredentialsService {
                 gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
             } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
                 gatewayAccountCredentialsEntity.setState(GatewayAccountCredentialState.valueOf(updateRequest.valueAsString()));
+            } else if (updateRequest.getPath().equals(GATEWAY_MERCHANT_ID_PATH)) {
+                if (gatewayAccountCredentialsEntity.getCredentials().isEmpty()) {
+                    throw new ValidationException(List.of("Account credentials are required to set a Gateway Merchant ID."));
+                }
+                if (!gatewayAccountCredentialsEntity.getPaymentProvider().equalsIgnoreCase(WORLDPAY.getName())) {
+                    throw new ValidationException(List.of(format("Gateway '%s' does not support digital wallets.", gatewayAccountCredentialsEntity.getPaymentProvider())));
+                }
+                gatewayAccountCredentialsEntity.getCredentials().put(FIELD_GATEWAY_MERCHANT_ID, updateRequest.valueAsString());
             }
         }
         gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
