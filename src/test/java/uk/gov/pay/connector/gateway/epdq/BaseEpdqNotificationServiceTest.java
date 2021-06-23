@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.NameValuePair;
@@ -14,14 +13,17 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
 abstract class BaseEpdqNotificationServiceTest {
@@ -55,8 +57,11 @@ abstract class BaseEpdqNotificationServiceTest {
                 new IpAddressMatcher(new InetAddressValidator()),
                 ALLOWED_IP_ADDRESSES
         );
-        gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
+        gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
+                .withGatewayName(EPDQ.getName())
+                .withCredentials(Map.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut))
+                .build();
+        
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
