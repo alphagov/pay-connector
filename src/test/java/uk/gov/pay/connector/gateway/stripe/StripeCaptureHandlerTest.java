@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +20,8 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.Map;
+
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -33,9 +34,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
@@ -248,12 +250,12 @@ public class StripeCaptureHandlerTest {
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("stripe");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+                .withId(1L)
+                .withGatewayName("stripe")
+                .withRequires3ds(false)
+                .withType(TEST)
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .build();
     }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +14,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripePaymentIntentRequestTest {
@@ -29,7 +30,6 @@ public class StripePaymentIntentRequestTest {
     @Mock
     private ChargeEntity charge;
 
-    @Mock
     private GatewayAccountEntity gatewayAccount;
 
     @Mock
@@ -48,7 +48,11 @@ public class StripePaymentIntentRequestTest {
 
     @Before
     public void setUp() {
-        when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", stripeConnectAccountId));
+        gatewayAccount = aGatewayAccountEntity()
+                .withGatewayName("stripe")
+                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
+                .build();
+
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getAmount()).thenReturn(amount);

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.google.common.collect.ImmutableMap;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +20,8 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Map;
+
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,9 +29,10 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -116,12 +118,12 @@ public class StripeCancelHandlerTest {
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("stripe");
-        gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
-        gatewayAccount.setType(TEST);
-        return gatewayAccount;
+        return aGatewayAccountEntity()
+        .withId(1L)
+        .withGatewayName("stripe")
+        .withRequires3ds(false)
+        .withType(TEST)
+        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+        .build();
     }
 }
