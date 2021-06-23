@@ -146,7 +146,11 @@ public class GatewayAccountCredentialsService {
     public GatewayAccountCredentials updateGatewayAccountCredentials(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, List<JsonPatchRequest> updateRequests) {
         for (JsonPatchRequest updateRequest : updateRequests) {
             if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                gatewayAccountCredentialsEntity.setCredentials(updateRequest.valueAsObject());
+                HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+                updateRequest.valueAsObject().forEach((key, value) -> {
+                    updatableMap.put(key, value);
+                });
+                gatewayAccountCredentialsEntity.setCredentials(updatableMap);
                 if (gatewayAccountCredentialsEntity.getState() == CREATED) {
                     updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
                 }

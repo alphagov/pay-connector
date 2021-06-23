@@ -323,9 +323,6 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsGatewayMerchantId() {
-        Map<String, String> newCredentials = Map.of("username", "new-username",
-                "password", "new-password",
-                "merchant_id", "new-merchant-id");
         givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
@@ -347,6 +344,52 @@ public class GatewayAccountCredentialsResourceIT {
         assertThat(updatedCredentials, hasEntry("username", "a-username"));
         assertThat(updatedCredentials, hasEntry("password", "a-password"));
         assertThat(updatedCredentials, hasEntry("merchant_id", "a-merchant-id"));
+        assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+    }
+
+    @Test
+    public void patchGatewayAccountCredentialsShouldNotOverWriteOtherExistingCredentials() {
+        givenSetup()
+                .body(toJson(List.of(
+                        Map.of("op", "replace",
+                                "path", "credentials/gateway_merchant_id",
+                                "value", "abcdef123abcdef"))))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials", hasKey("username"))
+                .body("credentials", hasKey("merchant_id"))
+                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("gateway_merchant_id"))
+                .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+        Map<String, Object> newCredentials =  Map.of("op", "replace",
+                "path", "credentials",
+                "value", Map.of("username", "new-username",
+                        "password", "new-password",
+                        "merchant_id", "new-merchant-id"));
+
+        givenSetup()
+                .body(toJson(List.of(newCredentials)))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials", hasKey("username"))
+                .body("credentials.username", is("new-username"))
+                .body("credentials", hasKey("merchant_id"))
+                .body("credentials.merchant_id", is("new-merchant-id"))
+                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("gateway_merchant_id"))
+                .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(updatedCredentials, hasEntry("username", "new-username"));
+        assertThat(updatedCredentials, hasEntry("password", "new-password"));
+        assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
         assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
     }
 
