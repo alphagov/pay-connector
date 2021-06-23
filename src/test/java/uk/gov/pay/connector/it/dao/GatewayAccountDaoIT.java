@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -10,6 +9,8 @@ import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.Arrays;
@@ -35,18 +36,21 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountDaoIT extends DaoITestBase {
 
     private GatewayAccountDao gatewayAccountDao;
+    private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private DatabaseFixtures databaseFixtures;
     private long gatewayAccountId;
 
     @Before
     public void setUp() {
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
+        gatewayAccountCredentialsDao = env.getInstance(GatewayAccountCredentialsDao.class);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         gatewayAccountId = nextLong();
     }
@@ -558,22 +562,59 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void isATelephonePaymentNotificationAccount_shouldReturnResultCorrectly() {
+    public void isATelephonePaymentNotificationAccount_shouldReturnTrueIfTelephonePaymentNotificationsAreEnabled() {
         long id = nextLong();
         String externalId = randomUuid();
-        Map<String, String> credentials = ImmutableMap.of(
-                CREDENTIALS_MERCHANT_ID, "merchant-id"
-        );
+        Map<String, String> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
 
         databaseFixtures
                 .aTestAccount()
                 .withAccountId(id)
                 .withExternalId(externalId)
-                .withCredentials(credentials)
                 .withAllowTelephonePaymentNotifications(true)
                 .insert();
+
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(id).get();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider("test provider")
+                .withCredentials(credentials)
+                .build();
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+
         boolean result = gatewayAccountDao.isATelephonePaymentNotificationAccount("merchant-id");
         assertThat(result, is(true));
+    }
+
+    @Test
+    public void isATelephonePaymentNotificationAccount_shouldReturnFalseIfTelephonePaymentNotificationsAreNotEnabled() {
+        long id = nextLong();
+        String externalId = randomUuid();
+        Map<String, String> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
+
+        databaseFixtures.aTestAccount()
+                .withAccountId(id)
+                .withExternalId(externalId)
+                .withAllowTelephonePaymentNotifications(false)
+                .insert();  
+        databaseFixtures.aTestAccount()
+                .withAccountId(nextLong())
+                .withExternalId(randomUuid())
+                .withPaymentProvider("random payment provider")
+                .withAllowTelephonePaymentNotifications(true)
+                .insert();
+
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(id).get();
+
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider("test provider")
+                .withCredentials(credentials)
+                .build();
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+
+        boolean result = gatewayAccountDao.isATelephonePaymentNotificationAccount("merchant-id");
+        assertThat(result, is(false));
     }
 
     private DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
