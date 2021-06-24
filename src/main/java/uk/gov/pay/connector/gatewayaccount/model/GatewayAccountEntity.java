@@ -189,20 +189,23 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("payment_provider")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getGatewayName() {
+        return getCurrentOrActiveGatewayAccountCredential()
+                .map(GatewayAccountCredentialsEntity::getPaymentProvider)
+                .orElseThrow(() -> new WebApplicationException(
+                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]",
+                                getId()))));
+    }
+
+    private Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential() {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
-        if (gatewayAccountCredentialsEntities.size() == 1) {
-            GatewayAccountCredentialsEntity entity = gatewayAccountCredentialsEntities.get(0);
-            return entity.getPaymentProvider();
+        if (getGatewayAccountCredentials().size() == 1) {
+            return Optional.of(gatewayAccountCredentialsEntities.get(0));
         }
 
-        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredential = gatewayAccountCredentialsEntities
+        return gatewayAccountCredentialsEntities
                 .stream()
                 .filter(entity -> entity.getState() == ACTIVE)
                 .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
-
-        return gatewayAccountCredential
-                .map(GatewayAccountCredentialsEntity::getPaymentProvider)
-                .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(format("Credentials not found for gateway account [%s]", getId()))));
     }
 
     public Map<String, String> getCredentials(String paymentProvider) {
@@ -220,7 +223,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("gateway_merchant_id")
     @JsonView(Views.FrontendView.class)
     public String getGatewayMerchantId() {
-        return credentials.get("gateway_merchant_id");
+        return getCurrentOrActiveGatewayAccountCredential()
+                .map(credentialsEntity -> credentialsEntity.getCredentials().get("gateway_merchant_id"))
+                .orElse(null);
     }
 
     @JsonView(Views.ApiView.class)
@@ -296,7 +301,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("allow_google_pay")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public boolean isAllowGooglePay() {
-        return allowGooglePay && isNotBlank(credentials.get("gateway_merchant_id"));
+        return allowGooglePay && isNotBlank(getGatewayMerchantId());
     }
 
     @JsonProperty("allow_apple_pay")
