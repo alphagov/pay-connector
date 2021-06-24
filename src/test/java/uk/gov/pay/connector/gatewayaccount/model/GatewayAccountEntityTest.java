@@ -14,6 +14,7 @@ import java.util.Map;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -127,5 +128,61 @@ class GatewayAccountEntityTest {
         assertThrows(WebApplicationException.class, () -> {
             gatewayAccountEntity.getCredentials("sandbox");
         }, "No credentials exists for payment provider");
+    }
+
+    @Test
+    public void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .build();
+        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+    }
+
+    @Test
+    public void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+                .build();
+        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
+    }
+
+    @Test
+    public void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+                .build();
+        gatewayAccountEntity.setAllowGooglePay(false);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+    }
+
+    @Test
+    public void getGatewayMerchantIdShouldReturnIdAvailableOnCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThat(gatewayAccountEntity.getGatewayMerchantId(), is("some-id"));
+    }
+
+    @Test
+    public void getGatewayMerchantIdShouldReturnNullIfMerchantIdIsNotAvailableOnCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThat(gatewayAccountEntity.getGatewayMerchantId(), is(nullValue()));
     }
 }
