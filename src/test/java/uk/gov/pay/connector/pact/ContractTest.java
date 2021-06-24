@@ -500,4 +500,26 @@ public class ContractTest {
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }
+
+    @State("a Worldpay gateway account with id 444 with gateway account credentials with id 555 and valid credentials")
+    public void aWorldpayGatewayAccountWithFilledCredentialsWithIdExists() {
+        Map<String, String> credentials = Map.of(
+                "merchant_id", "a-merchant-id",
+                "username", "a-username",
+                "password", "blablabla");
+
+        AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withId(555)
+                .withExternalId("an-external-id")
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.CREATED)
+                .withGatewayAccountId(444)
+                .withCredentials(credentials)
+                .build();
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("444")
+                .withGatewayAccountCredentials(singletonList(gatewayAccountCredentialsParams))
+                .withPaymentGateway(WORLDPAY.getName())
+                .build());
+    }
 }
