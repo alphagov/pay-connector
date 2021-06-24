@@ -598,6 +598,7 @@ Content-Type: application/json
 | `reference`              | X         | The reference issued by the government service for this payment                       |
 | `gateway_account_id`     | X         | The gateway account to use for this charge                                            |
 | `return_url`             | X         | The url to return the user to after the payment process has completed                 |
+| `payment_provider`       |           | The payment provider (if available for gateway account) to use and assign to the charge |
 | `language`               |           | A supported ISO-639-1 language code e.g. `"cy"` — defaults to `"en"` if not specified |
 | `delayed_capture`        |           | Whether the payment requires an explicit request to capture — defaults to false       |
 | `prefilled_cardholder_details.cardholder_name` | | Cardholder name to be prefilled on frontend card details page |
