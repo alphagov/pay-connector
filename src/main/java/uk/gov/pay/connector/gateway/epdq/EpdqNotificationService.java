@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -32,6 +31,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.SHASIGN_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -41,7 +41,7 @@ import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class EpdqNotificationService {
 
-    private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.EPDQ.getName();
+    private static final String PAYMENT_GATEWAY_NAME = EPDQ.getName();
     private static final Logger logger = LoggerFactory.getLogger(EpdqNotificationService.class);
     private final ChargeService chargeService;
     private final SignatureGenerator signatureGenerator;
@@ -147,7 +147,7 @@ public class EpdqNotificationService {
         } else {
             final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
             newRefundStatus.ifPresent(refundStatus -> refundNotificationProcessor.invoke(
-                    PaymentGatewayName.EPDQ, refundStatus, gatewayAccountEntity,
+                    EPDQ, refundStatus, gatewayAccountEntity,
                     notification.getReference(), notification.getTransactionId(), charge));
         }
         return true;
@@ -184,7 +184,7 @@ public class EpdqNotificationService {
     }
 
     private String getShaOutPassphrase(GatewayAccountEntity gatewayAccountEntity) {
-        return gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
+        return gatewayAccountEntity.getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_OUT_PASSPHRASE);
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, Charge charge) {
