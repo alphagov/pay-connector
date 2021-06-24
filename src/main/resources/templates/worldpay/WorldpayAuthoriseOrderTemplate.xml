@@ -39,13 +39,20 @@
                 </#if>
                 </#if>
             </paymentDetails>
-            <#if requires3ds>
+            <#if requires3ds || payerEmail??>
             <shopper>
+                <#if payerEmail??>
+                <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
+                </#if>
+                <#if requires3ds>
                 <browser>
                     <acceptHeader>${authCardDetails.acceptHeader?xml}</acceptHeader>
                     <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
                 </browser>
+                </#if>
             </shopper>
+            </#if>
+            <#if requires3ds>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
             <additional3DSData
                 dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()?xml}"
