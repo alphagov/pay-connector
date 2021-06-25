@@ -14,6 +14,7 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
 import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
@@ -48,11 +49,16 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
 
         boolean is3dsRequired = request.getGatewayAccount().isRequires3ds();
         boolean isSendIpAddress = request.getGatewayAccount().isSendPayerIpAddressToGateway();
+        boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
 
         var builder = aWorldpayAuthoriseWalletOrderRequestBuilder(request.getWalletAuthorisationData().getWalletType());
 
         if (is3dsRequired && isSendIpAddress) {
             builder.withPayerIpAddress(request.getWalletAuthorisationData().getPaymentInfo().getIpAddress());
+        }
+
+        if (isSendPayerEmailToGateway) {
+            Optional.ofNullable(request.getWalletAuthorisationData().getPaymentInfo().getEmail()).ifPresent(builder::withPayerEmail);
         }
 
         return builder
