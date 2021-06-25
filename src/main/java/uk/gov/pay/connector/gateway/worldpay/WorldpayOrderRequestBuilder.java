@@ -30,6 +30,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private boolean requires3ds;
         private String paResponse3ds;
         private String payerIpAddress;
+        private String payerEmail;
         private String state;
         private boolean exemptionEngineEnabled;
 
@@ -105,6 +106,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setPayerIpAddress(String payerIpAddress) {
             this.payerIpAddress = payerIpAddress;
+        }
+
+        public String getPayerEmail() {
+            return payerEmail;
+        }
+
+        public void setPayerEmail(String payerEmail) {
+            this.payerEmail = payerEmail;
         }
 
         public String getState() {
@@ -218,6 +227,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withPayerIpAddress(String payerIpAddress) {
         worldpayTemplateData.setPayerIpAddress(payerIpAddress);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPayerEmail(String payerEmail) {
+        worldpayTemplateData.setPayerEmail(payerEmail);
         return this;
     }
 
