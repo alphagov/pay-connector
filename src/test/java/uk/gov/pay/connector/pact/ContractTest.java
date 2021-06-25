@@ -45,6 +45,8 @@ import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
@@ -53,6 +55,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ContractTest {
     
@@ -521,5 +524,41 @@ public class ContractTest {
                 .withGatewayAccountCredentials(singletonList(gatewayAccountCredentialsParams))
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
+    }
+
+    @State("a Worldpay gateway account with id 444 with two credentials ready to be switched")
+    public void anAccountWithTwoCredentialsReadyForSwitchPsp() {
+        String gatewayAccountId = "444";
+        String activeExtId = "555aaa000";
+        String switchToExtId = "switchto1234";
+        dbHelper.addGatewayAccount(
+                anAddGatewayAccountParams()
+                        .withAccountId(gatewayAccountId)
+                        .withPaymentGateway("smartpay")
+                        .withServiceName("a cool service")
+                        .withProviderSwitchEnabled(true)
+                        .build());
+
+        AddGatewayAccountCredentialsParams activeParams =
+                AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
+                        .anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
+                        .withCredentials(Map.of())
+                        .withExternalId(activeExtId)
+                        .withState(ACTIVE)
+                        .withPaymentProvider("smartpay")
+                        .build();
+        dbHelper.insertGatewayAccountCredentials(activeParams);
+
+        AddGatewayAccountCredentialsParams switchToParams =
+                AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
+                        .anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
+                        .withCredentials(Map.of())
+                        .withExternalId(switchToExtId)
+                        .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                        .withPaymentProvider("worldpay")
+                        .build();
+        dbHelper.insertGatewayAccountCredentials(switchToParams);
     }
 }
