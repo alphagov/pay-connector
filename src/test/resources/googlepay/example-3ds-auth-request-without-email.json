@@ -1,0 +1,15 @@
+{
+  "payment_info": {
+    "last_digits_card_number": "4242",
+    "brand": "visa",
+    "cardholder_name": "Example Name",
+    "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8",
+    "user_agent_header": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36",
+    "ip_address": "8.8.8.8"
+  },
+  "encrypted_payment_data": {
+    "signature": "MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl",
+    "protocol_version": "ECv1",
+    "signed_message": "aSignedMessage"
+  }
+}

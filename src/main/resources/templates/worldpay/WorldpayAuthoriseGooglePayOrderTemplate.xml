@@ -20,12 +20,17 @@
                 </#if>
                 </#if>
             </paymentDetails>
-            <#if requires3ds>
+            <#if requires3ds || payerEmail??>
             <shopper>
+                <#if payerEmail??>
+                <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
+                </#if>
+                <#if requires3ds>
                 <browser>
                     <acceptHeader>${walletAuthorisationData.paymentInfo.acceptHeader?xml}</acceptHeader>
                     <userAgentHeader>${walletAuthorisationData.paymentInfo.userAgentHeader?xml}</userAgentHeader>
                 </browser>
+                </#if>
             </shopper>
             </#if>
         </order>
