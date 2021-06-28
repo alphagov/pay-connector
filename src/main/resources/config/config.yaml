@@ -112,6 +112,7 @@ stripe:
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-false}
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-1000}
+  transferDelay: ${STRIPE_TRANSFER_DELAY:-2000}
   credentials: ['stripe_account_id']
 
 executorServiceConfig:

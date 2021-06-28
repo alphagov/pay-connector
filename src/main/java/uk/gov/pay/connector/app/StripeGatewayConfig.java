@@ -40,6 +40,11 @@ public class StripeGatewayConfig extends Configuration {
 
     @Valid
     @NotNull
+    @Min(1)
+    private int transferDelay;
+
+    @Valid
+    @NotNull
     private List<String> allowedCidrs;
 
     @NotNull
@@ -79,5 +84,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public List<String> getCredentials() {
         return credentials;
+    }
+
+    public int getTransferDelay() {
+        return transferDelay;
     }
 }
