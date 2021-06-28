@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -12,16 +14,13 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.net.URI;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripePaymentMethodRequestTest {
@@ -43,7 +42,7 @@ public class StripePaymentMethodRequestTest {
 
     @Mock
     ChargeEntity charge;
-
+    @Mock
     GatewayAccountEntity gatewayAccount;
     @Mock
     StripeAuthTokens stripeAuthTokens;
@@ -53,11 +52,7 @@ public class StripePaymentMethodRequestTest {
 
     @Before
     public void setUp() {
-        gatewayAccount = aGatewayAccountEntity()
-                .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
-                .build();
-
+        when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", stripeConnectAccountId));
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
@@ -70,6 +65,7 @@ public class StripePaymentMethodRequestTest {
         authCardDetails.setEndDate(CardExpiryDate.valueOf(endMonth + "/" + endYear));
 
         CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
     }

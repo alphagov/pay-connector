@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,18 +10,17 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeTransferInRequestTest {
@@ -38,7 +38,7 @@ public class StripeTransferInRequestTest {
     RefundEntity refundEntity;
     @Mock
     Charge charge;
-
+    @Mock
     GatewayAccountEntity gatewayAccount;
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
@@ -50,10 +50,7 @@ public class StripeTransferInRequestTest {
 
     @Before
     public void setUp() {
-        gatewayAccount = aGatewayAccountEntity()
-                .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
-                .build();
+        when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", stripeConnectAccountId));
 
         when(charge.getExternalId()).thenReturn(chargeExternalId);
 

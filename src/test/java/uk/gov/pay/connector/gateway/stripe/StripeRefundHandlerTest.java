@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,11 +20,10 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferReversalRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
-
-import java.util.Map;
 
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -36,8 +36,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
@@ -48,7 +46,7 @@ public class StripeRefundHandlerTest {
     private StripeRefundHandler refundHandler;
     private RefundGatewayRequest refundRequest;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
-    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
 
     @Mock
     private GatewayClient gatewayClient;
@@ -61,13 +59,10 @@ public class StripeRefundHandlerTest {
     public void setUp() throws Exception {
         refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig, objectMapper);
 
-        gatewayAccount =  aGatewayAccountEntity()
-                .withId(123L)
-                .withGatewayName("stripe")
-                .withRequires3ds(false)
-                .withType(LIVE)
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
-                .build();
+        gatewayAccount.setId(123L);
+        gatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
+        gatewayAccount.setType(GatewayAccountType.LIVE);
+        gatewayAccount.setGatewayName("stripe");
 
         RefundEntity refundEntity = RefundEntityFixture
                 .aValidRefundEntity()

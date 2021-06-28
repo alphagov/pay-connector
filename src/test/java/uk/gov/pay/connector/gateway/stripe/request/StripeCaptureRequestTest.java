@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,14 +14,11 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeCaptureRequestTest {
@@ -35,7 +33,7 @@ public class StripeCaptureRequestTest {
 
     @Mock
     ChargeEntity charge;
-
+    @Mock
     GatewayAccountEntity gatewayAccount;
     @Mock
     StripeAuthTokens stripeAuthTokens;
@@ -44,12 +42,9 @@ public class StripeCaptureRequestTest {
 
     @Before
     public void setUp() {
-        gatewayAccount = aGatewayAccountEntity()
-                .withId(gatewayAccountId)
-                .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
-                .withType(LIVE)
-                .build();
+        when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
+        when(gatewayAccount.getId()).thenReturn(gatewayAccountId);
+        when(gatewayAccount.isLive()).thenReturn(true);
 
         when(charge.getGatewayTransactionId()).thenReturn(stripeChargeId);
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);

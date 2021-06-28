@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,18 +10,14 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
-import java.util.Map;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeRequestTest {
@@ -31,7 +28,7 @@ public class StripeRequestTest {
     RefundEntity refundEntity;
     @Mock
     Charge charge;
-
+    @Mock
     GatewayAccountEntity gatewayAccount;
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
@@ -42,10 +39,7 @@ public class StripeRequestTest {
 
     @Before
     public void setUp() {
-        gatewayAccount = aGatewayAccountEntity()
-                .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", "stripe_connect_account_id"))
-                .build();
+        when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", "stripe_connect_account_id"));
         when(charge.getGatewayTransactionId()).thenReturn("gatewayTransactionId");
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getLive()).thenReturn("live");
@@ -58,13 +52,13 @@ public class StripeRequestTest {
 
     @Test
     public void shouldSetCorrectAuthorizationHeaderForLiveAccount() {
-        gatewayAccount.setType(LIVE);
+        when(gatewayAccount.isLive()).thenReturn(true);
         assertThat(stripeRefundRequest.getHeaders().get("Authorization"), is("Bearer live"));
     }
     
     @Test
     public void shouldSetCorrectAuthorizationHeaderForTestAccount() {
-        gatewayAccount.setType(TEST);
+        when(gatewayAccount.isLive()).thenReturn(false);
         assertThat(stripeRefundRequest.getHeaders().get("Authorization"), is("Bearer test"));
     }
 }
