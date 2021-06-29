@@ -14,6 +14,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -39,7 +40,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
                     url, 
                     request.getGatewayAccount(), 
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -48,11 +49,11 @@ public class EpdqCaptureHandler implements CaptureHandler {
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForCaptureOrder.setPayId(request.getTransactionId());
-        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }
 }

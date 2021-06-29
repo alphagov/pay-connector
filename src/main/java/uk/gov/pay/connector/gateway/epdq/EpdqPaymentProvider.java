@@ -118,7 +118,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url, 
                 request.getGatewayAccount(), 
                 buildAuthoriseOrder(request, frontendUrl), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
@@ -146,7 +146,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url, 
                 request.getGatewayAccount(), 
                 buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
 
@@ -161,7 +161,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 url,
                 gatewayAccount, 
                 buildQueryOrderRequestFor(charge, gatewayAccount),
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials(EPDQ.getName())));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
@@ -195,7 +195,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     url, 
                     request.getGatewayAccount(), 
                     buildQueryOrderRequestFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
@@ -281,20 +281,20 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private GatewayOrder buildQueryOrderRequestFor(Auth3dsResponseGatewayRequest request) {
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setOrderId(request.getChargeExternalId());
-        epdqPayloadDefinitionForQueryOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForQueryOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForQueryOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForQueryOrder.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForQueryOrder.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForQueryOrder.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
     private GatewayOrder buildQueryOrderRequestFor(Charge charge, GatewayAccountEntity gatewayAccount) {
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setOrderId(charge.getExternalId());
-        epdqPayloadDefinitionForQueryOrder.setPassword(gatewayAccount.getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForQueryOrder.setUserId(gatewayAccount.getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForQueryOrder.setPspId(gatewayAccount.getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(gatewayAccount.getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForQueryOrder.setPassword(gatewayAccount.getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForQueryOrder.setUserId(gatewayAccount.getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForQueryOrder.setPspId(gatewayAccount.getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(gatewayAccount.getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
@@ -312,12 +312,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
         }
 
         epdqPayloadDefinition.setOrderId(request.getChargeExternalId());
-        epdqPayloadDefinition.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinition.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinition.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinition.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinition.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinition.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinition.setAmount(request.getAmount());
         epdqPayloadDefinition.setAuthCardDetails(request.getAuthCardDetails());
-        epdqPayloadDefinition.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinition.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinition.createGatewayOrder();
     }
 
@@ -327,10 +327,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 .ifPresentOrElse(
                         epdqPayloadDefinitionForCancelOrder::setPayId,
                         () -> epdqPayloadDefinitionForCancelOrder.setOrderId(request.getExternalChargeId()));
-        epdqPayloadDefinitionForCancelOrder.setUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForCancelOrder.setPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForCancelOrder.setPspId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForCancelOrder.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCancelOrder.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCancelOrder.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
     }
 }
