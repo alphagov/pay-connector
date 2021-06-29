@@ -286,6 +286,16 @@ public class ContractTest {
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10));
     }
 
+    @State("a charge with gateway account id 42 and charge id abcdef1234 exists")
+    public void createChargeWithHardCodedParams() {
+        String gatewayAccountId = "42";
+        String chargeExternalId = "abcdef1234";
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), false);
+    }
+
     @State("a charge with delayed capture true exists")
     public void createChargeWithDelayedCaptureTrue(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
