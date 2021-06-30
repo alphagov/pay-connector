@@ -35,16 +35,6 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public Optional<GatewayAccountEntity> findByCredentialsKeyValue(String key, String value) {
-        String query = "SELECT * FROM gateway_accounts where credentials->>?1 = ?2";
-
-        return entityManager.get()
-                .createNativeQuery(query, GatewayAccountEntity.class)
-                .setParameter(1, key)
-                .setParameter(2, value)
-                .getResultList().stream().findFirst();
-    }
-
     public boolean isATelephonePaymentNotificationAccount(String merchantId) {
         String query = "SELECT count(g) FROM gateway_accounts g, gateway_account_credentials gac " +
                 " where g.id = gac.gateway_account_id " +

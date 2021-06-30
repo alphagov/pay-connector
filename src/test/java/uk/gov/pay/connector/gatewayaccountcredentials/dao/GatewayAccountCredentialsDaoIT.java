@@ -6,6 +6,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -15,6 +16,7 @@ import java.util.Optional;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -95,5 +97,37 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
 
         assertThat(optionalEntity.isPresent(), is(true));
         assertThat(optionalEntity.get().getExternalId(), is(externalCredentialId));
+    }
+
+    @Test
+    public void findByCredentialsKeyValue_shouldFindGatewayAccountCredentialEntity() {
+        long gatewayAccountId = nextLong();
+        var credMap = Map.of("some_payment_provider_account_id", "accountid");
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("test provider")
+                .withServiceName("service name")
+                .withCredentials(credMap)
+                .build());
+
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider("test provider")
+                .withCredentials(credMap)
+                .build();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntityTwo = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider("test provider")
+                .build();
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntityOne);
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntityTwo);
+
+        Optional<GatewayAccountCredentialsEntity> maybeGatewayAccountCredentials = gatewayAccountCredentialsDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
+        assertThat(maybeGatewayAccountCredentials.isPresent(), is(true));
+        Map<String, String> credentialsMap = maybeGatewayAccountCredentials.get().getCredentials();
+        assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
     }
 }

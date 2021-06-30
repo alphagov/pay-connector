@@ -17,8 +17,9 @@ import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayoutStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
@@ -43,7 +44,7 @@ public class PayoutReconcileProcess {
     private StripeClientWrapper stripeClientWrapper;
     private StripeGatewayConfig stripeGatewayConfig;
     private ConnectorConfiguration connectorConfiguration;
-    private GatewayAccountDao gatewayAccountDao;
+    private GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private EventService eventService;
     private PayoutEmitterService payoutEmitterService;
 
@@ -52,14 +53,14 @@ public class PayoutReconcileProcess {
                                   StripeClientWrapper stripeClientWrapper,
                                   StripeGatewayConfig stripeGatewayConfig,
                                   ConnectorConfiguration connectorConfiguration,
-                                  GatewayAccountDao gatewayAccountDao,
+                                  GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   EventService eventService,
                                   PayoutEmitterService payoutEmitterService) {
         this.payoutReconcileQueue = payoutReconcileQueue;
         this.stripeClientWrapper = stripeClientWrapper;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.connectorConfiguration = connectorConfiguration;
-        this.gatewayAccountDao = gatewayAccountDao;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.eventService = eventService;
         this.payoutEmitterService = payoutEmitterService;
     }
@@ -159,10 +160,10 @@ public class PayoutReconcileProcess {
     }
 
     private String getStripeApiKey(String stripeAccountId) {
-        return gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId)
-                .map(gatewayAccountEntity ->
-                        gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest())
-                .orElseThrow(() -> new RuntimeException(format("Gateway account with Stripe connect account ID [%s] not found.", stripeAccountId)));
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService
+                .findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
+
+         return gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
 
     private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {

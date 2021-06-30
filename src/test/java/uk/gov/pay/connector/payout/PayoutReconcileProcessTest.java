@@ -29,10 +29,11 @@ import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 import uk.gov.pay.connector.queue.payout.Payout;
@@ -42,7 +43,6 @@ import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -78,7 +78,7 @@ public class PayoutReconcileProcessTest {
     private StripeAuthTokens stripeAuthTokens;
 
     @Mock
-    private GatewayAccountDao gatewayAccountDao;
+    private GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
     @Mock
     private EventService eventService;
@@ -95,6 +95,9 @@ public class PayoutReconcileProcessTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+
     private final String stripeAccountId = "acct_2RDpWRLXEC2XwBWp";
     private final String stripeApiKey = "a-fake-api-key";
     private final String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
@@ -104,9 +107,12 @@ public class PayoutReconcileProcessTest {
 
     @Before
     public void setUp() throws Exception {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(GatewayAccountType.TEST).build();
-        when(gatewayAccountDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId))
-                .thenReturn(Optional.of(gatewayAccountEntity));
+        gatewayAccountEntity = aGatewayAccountEntity()
+                .withType(GatewayAccountType.TEST)
+                .build();
+
+        when(gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId))
+                .thenReturn(gatewayAccountEntity);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getTest()).thenReturn(stripeApiKey);
 
@@ -200,18 +206,6 @@ public class PayoutReconcileProcessTest {
                 .thenReturn(List.of());
 
         payoutReconcileProcess.processPayouts();
-
-        verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
-    }
-
-    @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfGatewayAccountNotFound() throws Exception {
-        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage("non-existent-connect-account-id");
-
-        payoutReconcileProcess.processPayouts();
-
-        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Gateway account with Stripe connect account ID [non-existent-connect-account-id] not found"));
 
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }

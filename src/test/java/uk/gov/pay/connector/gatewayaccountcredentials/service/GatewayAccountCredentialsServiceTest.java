@@ -12,10 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.WebApplicationException;
@@ -32,8 +33,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -392,5 +395,45 @@ public class GatewayAccountCredentialsServiceTest {
 
         GatewayAccountCredentialsEntity result = gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, credentials1.getPaymentProvider());
         assertThat(result, is(credentials1));
+    }
+
+    @Test
+    void shouldReturnStripeGatewayAccountForGatewayAccountCredentials() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(STRIPE.getName())
+                .build();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withCredentials(Map.of("stripe_account_id", "stripeAccountId"))
+                .withPaymentProvider(STRIPE.getName())
+                .build();
+
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(eq("stripe_account_id"), eq("stripeAccountId"))).thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+
+        gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue("stripe_account_id", "stripeAccountId");
+
+        assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
+        assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
+    }
+
+    @Test
+    void shouldThrowRuntimeExceptionIfGatewayAccountNotFound() {
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", "stripeAccountId"))
+                .withPaymentProvider(STRIPE.getName())
+                .build();
+
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(eq("stripe_account_id"), eq("stripeAccountId"))).thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+
+        assertThrows(GatewayAccountNotFoundException.class,
+                () -> gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue("stripe_account_id", "stripeAccountId"));
+    }
+
+    @Test
+    void shouldThrowRuntimeExceptionIfGatewayAccountCredentialsNotFound() {
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(eq("stripe_account_id"), eq("stripeAccountId"))).thenReturn(Optional.empty());
+
+        assertThrows(GatewayAccountCredentialsNotFoundException.class,
+                () -> gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue("stripe_account_id", "stripeAccountId"));
     }
 }

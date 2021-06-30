@@ -10,4 +10,8 @@ public class GatewayAccountCredentialsNotFoundException extends WebApplicationEx
     public GatewayAccountCredentialsNotFoundException(Long id) {
         super(notFoundResponse(format("Gateway account credentials with id [%s] not found.", id)));
     }
+
+    public GatewayAccountCredentialsNotFoundException(String message) {
+        super(notFoundResponse(message));
+    }
 }
