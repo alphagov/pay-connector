@@ -13,6 +13,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -460,10 +461,27 @@ public class GatewayAccountServiceTest {
                 "value", true)));
 
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        when(mockGatewayAccountEntity.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+        when(mockGatewayAccountCredentialsService.hasActiveCredentials(GATEWAY_ACCOUNT_ID)).thenReturn(true);
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(mockGatewayAccountEntity).setProviderSwitchEnabled(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void enableProviderSwitchShouldThrowErrorIfAnActiveCredentialDoesNotExist() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", "provider_switch_enabled",
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        exceptionRule.expect(GatewayAccountWithoutAnActiveCredentialException.class);
+        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
+
+        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
     }
 
     @Test

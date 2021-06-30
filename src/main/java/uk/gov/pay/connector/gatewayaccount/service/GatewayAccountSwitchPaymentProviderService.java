@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -14,11 +16,18 @@ import java.time.Instant;
 import java.util.List;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.USER_EXTERNAL_ID;
 
 public class GatewayAccountSwitchPaymentProviderService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountSwitchPaymentProviderService.class);
 
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private final GatewayAccountDao gatewayAccountDao;
@@ -69,5 +78,13 @@ public class GatewayAccountSwitchPaymentProviderService {
         gatewayAccountCredentialsDao.merge(switchToCredentialsEntity);
         gatewayAccountCredentialsDao.merge(activeCredentialEntity);
         gatewayAccountDao.merge(gatewayAccountEntity);
+
+        LOGGER.info("Gateway account [id={}] switched to new payment provider", gatewayAccountEntity.getId(),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv(PROVIDER, activeCredentialEntity.getPaymentProvider()),
+                kv("new_payment_provider", switchToCredentialsEntity.getPaymentProvider()),
+                kv(USER_EXTERNAL_ID, request.getUserExternalId())
+        );
     }
 }

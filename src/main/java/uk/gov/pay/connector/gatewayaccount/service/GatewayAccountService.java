@@ -7,6 +7,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
@@ -29,6 +30,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
@@ -46,10 +48,13 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class GatewayAccountService {
 
@@ -214,9 +219,24 @@ public class GatewayAccountService {
             ),
             entry(
                 FIELD_PROVIDER_SWITCH_ENABLED,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean())
+                (JsonPatchRequest gatewayAccountRequest, GatewayAccountEntity gatewayAccountEntity) -> {
+                    throwIfNoActiveCredentialExist(gatewayAccountEntity);
+                    gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean());
+
+                    logger.info("Enabled switching payment provider for gateway account [id={}]",
+                            gatewayAccountEntity.getId(),
+                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                            kv(PROVIDER, gatewayAccountEntity.getGatewayName()));
+                }
             )
     );
+
+    private void throwIfNoActiveCredentialExist(GatewayAccountEntity gatewayAccountEntity) {
+        if (!gatewayAccountCredentialsService.hasActiveCredentials(gatewayAccountEntity.getId())) {
+            throw new GatewayAccountWithoutAnActiveCredentialException(gatewayAccountEntity.getId());
+        }
+    }
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
         if (!WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {

@@ -44,7 +44,7 @@ public class GatewayAccountCredentialsService {
 
     private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
-    
+
     private final Set<GatewayAccountCredentialState> USABLE_STATES = Set.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
 
     @Inject
@@ -180,7 +180,7 @@ public class GatewayAccountCredentialsService {
             credentialsEntity.setState(ENTERED);
         }
     }
-    
+
     public GatewayAccountCredentialsEntity getUsableCredentialsForProvider(GatewayAccountEntity gatewayAccountEntity, String paymentProvider) {
         List<GatewayAccountCredentialsEntity> credentialsForProvider = gatewayAccountEntity.getGatewayAccountCredentials()
                 .stream()
@@ -194,7 +194,7 @@ public class GatewayAccountCredentialsService {
         List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider.stream().filter(gatewayAccountCredentialsEntity ->
                 USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
                 .collect(Collectors.toList());
-        
+
         if (credentialsInState.isEmpty()) {
             throw new NoCredentialsInUsableStateException(paymentProvider);
         }
@@ -202,5 +202,9 @@ public class GatewayAccountCredentialsService {
             throw new WebApplicationException(badRequestResponse(Collections.singletonList("Multiple usable credentials exist for payment provider [%s], unable to determine which to use.")));
         }
         return credentialsInState.get(0);
+    }
+
+    public boolean hasActiveCredentials(Long gatewayAccountId) {
+        return gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountId);
     }
 }
