@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
@@ -43,17 +45,22 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
-
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 
 @Entity
 @Table(name = "gateway_accounts")
 @SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq",
         sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
 public class GatewayAccountEntity extends AbstractVersionedEntity {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountEntity.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
@@ -202,10 +209,25 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
             return Optional.of(gatewayAccountCredentialsEntities.get(0));
         }
 
-        return gatewayAccountCredentialsEntities
+        Optional<GatewayAccountCredentialsEntity> mayBeActiveCredential = gatewayAccountCredentialsEntities
                 .stream()
                 .filter(entity -> entity.getState() == ACTIVE)
                 .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
+
+        if (mayBeActiveCredential.isPresent()) {
+            return mayBeActiveCredential;
+        } else {
+            LOGGER.info("Gateway account [id={}] has multiple credentials but no active credential found", getId(),
+                    kv(GATEWAY_ACCOUNT_ID, getId()),
+                    kv(GATEWAY_ACCOUNT_TYPE, getType())
+            );
+
+            return gatewayAccountCredentialsEntities
+                    .stream()
+                    .filter(entity -> entity.getState() != RETIRED)
+                    .min(comparing(GatewayAccountCredentialsEntity::getCreatedDate))
+                    .or(() -> getGatewayAccountCredentials().stream().findFirst());
+        }
     }
 
     public Map<String, String> getCredentials(String paymentProvider) {

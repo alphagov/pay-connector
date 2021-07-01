@@ -18,6 +18,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 class GatewayAccountEntityTest {
@@ -34,7 +36,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void shouldReturnSandboxAsPaymentProviderNameForSingleGatewayAccountCredentialEntity() {
+    void getGatewayNameShouldReturnPaymentProviderOfOnlyCredentialAvailable() {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("sandbox")
                 .build();
@@ -43,35 +45,79 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void shouldReturnStripeAsPaymentProviderNameForLatestGatewayAccountCredentialEntity() {
+    void getGatewayNameShouldReturnPaymentProviderOfLatestActiveCredentialIfMultipleCredentialsExists() {
         GatewayAccountCredentialsEntity latestActiveGatewayAccountCredential = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("stripe")
                 .withState(ACTIVE)
+                .withActiveStartDate(Instant.parse("2021-08-30T10:00:00Z"))
                 .build();
 
         GatewayAccountCredentialsEntity earlierActiveGatewayAccountCredential = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("sandbox")
                 .withState(ACTIVE)
+                .withActiveStartDate(Instant.parse("2021-01-30T10:00:00Z"))
                 .build();
 
         GatewayAccountCredentialsEntity latestRetiredGatewayAccountCredential = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("sandbox")
                 .withState(GatewayAccountCredentialState.RETIRED)
+                .withActiveStartDate(Instant.parse("2021-09-30T10:00:00Z"))
                 .build();
 
-        latestActiveGatewayAccountCredential.setActiveStartDate(Instant.parse("2021-08-04T10:00:00Z"));
-        earlierActiveGatewayAccountCredential.setActiveStartDate(Instant.parse("2021-01-03T10:00:00Z"));
-        latestRetiredGatewayAccountCredential.setActiveStartDate(Instant.parse("2021-09-04T10:00:00Z"));
-        gatewayAccountCredentialsEntities.add(latestActiveGatewayAccountCredential);
-        gatewayAccountCredentialsEntities.add(earlierActiveGatewayAccountCredential);
-        gatewayAccountCredentialsEntities.add(latestRetiredGatewayAccountCredential);
-        gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(latestActiveGatewayAccountCredential,
+                earlierActiveGatewayAccountCredential, latestRetiredGatewayAccountCredential));
 
         assertThat(gatewayAccountEntity.getGatewayName(), is("stripe"));
     }
 
     @Test
-    void shouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
+    void getGatewayNameShouldReturnPaymentProviderOfFirstNonRetiredCredentialIfNoActiveCredentialExist() {
+        GatewayAccountCredentialsEntity retiredCredential = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("stripe")
+                .withState(RETIRED)
+                .withCreatedDate(Instant.parse("2021-01-15T10:00:00Z"))
+                .build();
+
+        GatewayAccountCredentialsEntity earliestCreatedCredential = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withState(CREATED)
+                .withCreatedDate(Instant.parse("2021-02-28T10:00:00Z"))
+                .build();
+
+        GatewayAccountCredentialsEntity latestCreatedCredential = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("sandbox")
+                .withState(GatewayAccountCredentialState.CREATED)
+                .withCreatedDate(Instant.parse("2021-10-30T10:00:00Z"))
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(retiredCredential,
+                earliestCreatedCredential, latestCreatedCredential));
+
+        assertThat(gatewayAccountEntity.getGatewayName(), is("worldpay"));
+    }
+
+    @Test
+    void getGatewayNameShouldReturnPaymentProviderOfRetiredCredentialIfOnlyRetiredCredentialExist() {
+        GatewayAccountCredentialsEntity retiredCredential = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("stripe")
+                .withState(RETIRED)
+                .withCreatedDate(Instant.parse("2021-01-15T10:00:00Z"))
+                .build();
+
+        GatewayAccountCredentialsEntity latestRetiredCredential = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withState(RETIRED)
+                .withCreatedDate(Instant.parse("2021-02-28T10:00:00Z"))
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(retiredCredential,
+                retiredCredential, latestRetiredCredential));
+
+        assertThat(gatewayAccountEntity.getGatewayName(), is("stripe"));
+    }
+
+    @Test
+    void getGatewayNameshouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
         gatewayAccountEntity.setGatewayAccountCredentials(new ArrayList<>());
         assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayName());
     }
