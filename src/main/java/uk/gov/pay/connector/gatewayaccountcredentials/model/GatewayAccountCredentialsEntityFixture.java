@@ -16,12 +16,18 @@ public final class GatewayAccountCredentialsEntityFixture {
     private GatewayAccountCredentialState state = CREATED;
     private GatewayAccountEntity gatewayAccountEntity;
     private String externalId = randomUuid();
+    private Instant createdDate = Instant.now();
 
     private GatewayAccountCredentialsEntityFixture() {
     }
 
     public static GatewayAccountCredentialsEntityFixture aGatewayAccountCredentialsEntity() {
         return new GatewayAccountCredentialsEntityFixture();
+    }
+
+    public GatewayAccountCredentialsEntityFixture withCreatedDate(Instant createdDate) {
+        this.createdDate = createdDate;
+        return this;
     }
 
     public GatewayAccountCredentialsEntityFixture withActiveStartDate(Instant activeStartDate) {
@@ -56,6 +62,7 @@ public final class GatewayAccountCredentialsEntityFixture {
 
     public GatewayAccountCredentialsEntity build() {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
+        gatewayAccountCredentialsEntity.setCreatedDate(createdDate);
         gatewayAccountCredentialsEntity.setActiveStartDate(activeStartDate);
         gatewayAccountCredentialsEntity.setExternalId(externalId);
         return gatewayAccountCredentialsEntity;

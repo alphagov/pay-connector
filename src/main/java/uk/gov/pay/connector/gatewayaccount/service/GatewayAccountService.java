@@ -223,11 +223,13 @@ public class GatewayAccountService {
                     throwIfNoActiveCredentialExist(gatewayAccountEntity);
                     gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean());
 
-                    logger.info("Enabled switching payment provider for gateway account [id={}]",
-                            gatewayAccountEntity.getId(),
-                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
-                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                            kv(PROVIDER, gatewayAccountEntity.getGatewayName()));
+                    if(gatewayAccountRequest.valueAsBoolean()) {
+                        logger.info("Enabled switching payment provider for gateway account [id={}]",
+                                gatewayAccountEntity.getId(),
+                                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                                kv(PROVIDER, gatewayAccountEntity.getGatewayName()));
+                    }
                 }
             )
     );
