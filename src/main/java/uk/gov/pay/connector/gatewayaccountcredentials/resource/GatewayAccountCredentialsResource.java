@@ -132,7 +132,7 @@ public class GatewayAccountCredentialsResource {
                         .filter(c -> c.getId().equals(credentialsId))
                         .findFirst()
                         .map(gatewayAccountCredentialsEntity -> {
-                            gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountCredentialsEntity.getPaymentProvider());
+                            gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountCredentialsEntity.getPaymentProvider(), gatewayAccountCredentialsEntity.getCredentials());
                             List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
                                     .map(JsonPatchRequest::from)
                                     .collect(Collectors.toList());
@@ -142,7 +142,7 @@ public class GatewayAccountCredentialsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
-    private class ValidationResult {
+    private final class ValidationResult {
         private final String result;
 
         private ValidationResult(boolean isValid) {

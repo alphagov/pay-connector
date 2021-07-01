@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -16,9 +15,11 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -47,19 +47,16 @@ public class GatewayAccountCredentialsService {
     private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
-    private final Set<GatewayAccountCredentialState> USABLE_STATES = Set.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
+    private final Set<GatewayAccountCredentialState> USABLE_STATES = EnumSet.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
 
     @Inject
     public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
     }
 
-    public Optional<GatewayAccountCredentialsEntity> getGatewayAccountCredentials(long id) {
-        return gatewayAccountCredentialsDao.findById(id);
-    }
-
     @Transactional
-    public GatewayAccountCredentials createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
+    public GatewayAccountCredentials createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
+                                                                     String paymentProvider,
                                                                      Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
@@ -110,6 +107,11 @@ public class GatewayAccountCredentialsService {
         }
     }
 
+    /**
+     * This method is for updating the gateway_account_credentials table for `gateway_merchant_id` when the
+     * old endpoint for patching `gateway_merchant_id`` is called. This is a temporary measure while we
+     * completely switch over to using the gateway_account_credentials table.
+     */
     @Transactional
     public void updateGatewayAccountCredentialMerchantId(GatewayAccountEntity gatewayAccountEntity, String merchantAccountId) {
         List<GatewayAccountCredentialsEntity> credentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
@@ -145,33 +147,48 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentials updateGatewayAccountCredentials(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, List<JsonPatchRequest> updateRequests) {
+    public GatewayAccountCredentials updateGatewayAccountCredentials(
+            GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
+            Iterable<JsonPatchRequest> updateRequests) {
         for (JsonPatchRequest updateRequest : updateRequests) {
-            if (updateRequest.getPath().equals(FIELD_CREDENTIALS) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
-                updateRequest.valueAsObject().forEach((key, value) -> {
-                    updatableMap.put(key, value);
-                });
-                gatewayAccountCredentialsEntity.setCredentials(updatableMap);
-                if (gatewayAccountCredentialsEntity.getState() == CREATED) {
-                    updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
-                }
-            } else if (updateRequest.getPath().equals(FIELD_LAST_UPDATED_BY_USER) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(updateRequest.valueAsString());
-            } else if (updateRequest.getPath().equals(FIELD_STATE) && updateRequest.getOp() == JsonPatchOp.REPLACE) {
-                gatewayAccountCredentialsEntity.setState(GatewayAccountCredentialState.valueOf(updateRequest.valueAsString()));
-            } else if (updateRequest.getPath().equals(GATEWAY_MERCHANT_ID_PATH)) {
-                if (gatewayAccountCredentialsEntity.getCredentials().isEmpty()) {
-                    throw new ValidationException(List.of("Account credentials are required to set a Gateway Merchant ID."));
-                }
-                if (!gatewayAccountCredentialsEntity.getPaymentProvider().equalsIgnoreCase(WORLDPAY.getName())) {
-                    throw new ValidationException(List.of(format("Gateway '%s' does not support digital wallets.", gatewayAccountCredentialsEntity.getPaymentProvider())));
-                }
-                gatewayAccountCredentialsEntity.getCredentials().put(FIELD_GATEWAY_MERCHANT_ID, updateRequest.valueAsString());
+            if (JsonPatchOp.REPLACE == updateRequest.getOp()) {
+                updateGatewayAccountCredentialField(updateRequest, gatewayAccountCredentialsEntity);
             }
         }
         gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
         return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
+    }
+
+    private void updateGatewayAccountCredentialField(JsonPatchRequest patchRequest,
+                                                     GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        switch (patchRequest.getPath()) {
+            case FIELD_CREDENTIALS:
+                updateCredentials(patchRequest, gatewayAccountCredentialsEntity);
+                break;
+            case FIELD_LAST_UPDATED_BY_USER:
+                gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(patchRequest.valueAsString());
+                break;
+            case FIELD_STATE:
+                gatewayAccountCredentialsEntity.setState(
+                        GatewayAccountCredentialState.valueOf(patchRequest.valueAsString()));
+                break;
+            case GATEWAY_MERCHANT_ID_PATH:
+                HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+                updatableMap.put(FIELD_GATEWAY_MERCHANT_ID, patchRequest.valueAsString());
+                gatewayAccountCredentialsEntity.setCredentials(updatableMap);
+                break;
+            default:
+                throw new BadRequestException("Unexpected path for patch operation: " + patchRequest.getPath());
+        }
+    }
+
+    private void updateCredentials(JsonPatchRequest patchRequest, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+        patchRequest.valueAsObject().forEach(updatableMap::put);
+        gatewayAccountCredentialsEntity.setCredentials(updatableMap);
+        if (gatewayAccountCredentialsEntity.getState() == CREATED) {
+            updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
+        }
     }
 
     private void updateStateForEnteredCredentials(GatewayAccountCredentialsEntity credentialsEntity) {

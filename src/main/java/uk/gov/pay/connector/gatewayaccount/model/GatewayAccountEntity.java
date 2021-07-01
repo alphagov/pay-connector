@@ -217,7 +217,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         if (mayBeActiveCredential.isPresent()) {
             return mayBeActiveCredential;
         } else {
-            LOGGER.info("Gateway account [id={}] has multiple credentials but no active credential found", getId(),
+            LOGGER.warn("Gateway account [id={}] has multiple credentials but no active credential found", getId(),
                     kv(GATEWAY_ACCOUNT_ID, getId()),
                     kv(GATEWAY_ACCOUNT_TYPE, getType())
             );

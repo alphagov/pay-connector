@@ -85,7 +85,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                 Collections.singletonList(Map.of("path", "credentials",
                         "op", "add",
                         "value", "something")));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials]"));
     }
 
@@ -98,7 +98,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                 Collections.singletonList(Map.of("path", "credentials",
                         "op", "replace",
                         "value", credentials)));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Value for path [credentials] is missing field(s): [merchant_id]"));
     }
 
@@ -110,7 +110,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace",
                                 "value", 1)
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Value for path [last_updated_by_user_external_id] must be a string"));
     }
 
@@ -122,7 +122,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace",
                                 "value", 1)
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Value for path [state] must be a string"));
     }
 
@@ -134,7 +134,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace",
                                 "value", "ACTIVE")
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Operation with path [state] can only be used to update state to [VERIFIED_WITH_LIVE_PAYMENT]"));
     }
 
@@ -158,7 +158,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace",
                                 "value", "abcdef123abcdef")
                 ));
-        assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay"));
+        assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay", Map.of("cred-key1", "cred-value-1")));
     }
 
     @Test
@@ -169,7 +169,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "add",
                                 "value", "abcdef123abcdef")
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials/gateway_merchant_id]"));
     }
 
@@ -181,18 +181,42 @@ public class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace",
                                 "value", "ABCDEF123abcdef")
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of("cred-key-1", "cred-value-1")));
         assertThat(thrown.getErrors().get(0), is("Field [credentials/gateway_merchant_id] value [ABCDEF123abcdef] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]"));
     }
 
     @Test
-    public void shouldThrowWhenValueIsMissing() {
+    public void shouldThrowWhenValueIsMissingForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",
                                 "op", "replace")
                 ));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay"));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
         assertThat(thrown.getErrors().get(0), is("Field [value] is required"));
+    }
+
+    @Test
+    public void shouldThrowIfPaymentProviderIsNotWorldpayForGatewayMerchantId() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "replace",
+                                "value", "123456789012311")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "stripe", Map.of()));
+        assertThat(thrown.getErrors().get(0), is("Gateway 'stripe' does not support digital wallets."));
+    }
+
+    @Test
+    public void shouldThrowIfCredentialsAreEmptyOnGatewayAccountCredentialsForGatewayMerchantId() {
+        JsonNode request = objectMapper.valueToTree(
+                Collections.singletonList(
+                        Map.of("path", "credentials/gateway_merchant_id",
+                                "op", "replace",
+                                "value", "invalid-value")
+                ));
+        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", Map.of()));
+        assertThat(thrown.getErrors().get(0), is("Account credentials are required to set a Gateway Merchant ID."));
     }
 }

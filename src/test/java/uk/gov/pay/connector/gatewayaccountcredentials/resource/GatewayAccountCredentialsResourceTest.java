@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
@@ -17,7 +15,6 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.ws.rs.client.Entity;
@@ -33,8 +30,6 @@ import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -116,7 +111,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void organisationalUnitIdNull_shouldReturn422() throws Exception {
+    void organisationalUnitIdNull_shouldReturn422() {
         var payload = new HashMap<String, String>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", null);
@@ -126,7 +121,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void issuerNotInCorrectFormat_shouldReturn422() throws Exception {
+    void issuerNotInCorrectFormat_shouldReturn422() {
         var payload = Map.of("issuer", "44992i087n0v4849895al9i3",
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", VALID_JWT_MAC_KEY);
@@ -135,7 +130,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void issuerNull_shouldReturn422() throws Exception {
+    void issuerNull_shouldReturn422() {
         var payload = new HashMap<String, String>();
         payload.put("issuer", null);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -145,7 +140,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void jwtMacKeyNotInCorrectFormat_shouldReturn422() throws Exception {
+    void jwtMacKeyNotInCorrectFormat_shouldReturn422() {
         var payload = Map.of("issuer", VALID_ISSUER,
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
                 "jwt_mac_key", "hihihihi");
@@ -154,7 +149,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void jwtMacKeyNull_shouldReturn422() throws Exception {
+    void jwtMacKeyNull_shouldReturn422() {
         var payload = new HashMap<String, String>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -180,7 +175,7 @@ public class GatewayAccountCredentialsResourceTest {
             "issuer, Field [issuer] must be 24 lower-case hexadecimal characters",
             "organisational_unit_id, Field [organisational_unit_id] must be 24 lower-case hexadecimal characters",
     })
-    void update3dsFlexCredentials_missingFieldsReturnCorrectError(String key, String expectedErrorMessage) throws JsonProcessingException {
+    void update3dsFlexCredentials_missingFieldsReturnCorrectError(String key, String expectedErrorMessage) {
         Map<String, String> payload = new HashMap<>();
         payload.put("issuer", VALID_ISSUER);
         payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
@@ -251,7 +246,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void checkWorldpayCredentials_returns422WhenPasswordMissing() throws JsonProcessingException {
+    void checkWorldpayCredentials_returns422WhenPasswordMissing() {
         var payload = Map.of(
                 "username", "valid-username",
                 "password", "",
@@ -268,7 +263,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
 
     @Test
-    void checkWorldpayCredentials_returns422WhenMerchantIdMissing() throws JsonProcessingException {
+    void checkWorldpayCredentials_returns422WhenMerchantIdMissing() {
         var payload = Map.of(
                 "username", "valid-username",
                 "password", "valid-password",
@@ -329,7 +324,7 @@ public class GatewayAccountCredentialsResourceTest {
         });
         assertThat(responseBody, hasEntry("result", "invalid"));
     }
-    
+
     @Test
     void createGatewayAccountCredentialsGatewayAccountNotFound_shouldReturn404() {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
@@ -371,58 +366,6 @@ public class GatewayAccountCredentialsResourceTest {
 
         assertThat(response.getStatus(), is(404));
         assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway Account with id [111] not found."));
-    }
-
-    @Test
-    void patchGatewayAccountCredentialsReturnsInvalid_whenNotWorldpayProvider() {
-        var credentials = Map.of("op", "replace",
-                "path", "credentials/gateway_merchant_id",
-                "value", "abcdef123abcdef");
-        var payload = Collections.singletonList(
-                credentials
-        );
-        GatewayAccountCredentialsEntity credentialsEntity = mock(GatewayAccountCredentialsEntity.class);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
-        when(credentialsEntity.getId()).thenReturn(1L);
-        when(credentialsEntity.getCredentials()).thenReturn(credentials);
-        when(credentialsEntity.getPaymentProvider()).thenReturn("stripe");
-        doNothing().when(gatewayAccountCredentialsRequestValidator).validatePatch(any(JsonNode.class), any(String.class));
-
-        Response response = resources
-                .target(format("/v1/api/accounts/%s/credentials/1", accountId))
-                .request()
-                .method("PATCH", Entity.json(payload));
-
-        assertThat(response.getStatus(), is(400));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway 'stripe' does not support digital wallets."));
-    }
-
-    @Test
-    void patchGatewayAccountCredentialsReturnsInvalid_whenCredentialsIsEmpty() {
-        var credentials = Map.of("op", "replace",
-                "path", "credentials/gateway_merchant_id",
-                "value", "abcdef123abcdef");
-        var payload = Collections.singletonList(
-                credentials
-        );
-        GatewayAccountCredentialsEntity credentialsEntity = mock(GatewayAccountCredentialsEntity.class);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
-        when(credentialsEntity.getId()).thenReturn(1L);
-        when(credentialsEntity.getCredentials()).thenReturn(Map.of());
-        when(credentialsEntity.getPaymentProvider()).thenReturn("worldpay");
-        doNothing().when(gatewayAccountCredentialsRequestValidator).validatePatch(any(JsonNode.class), any(String.class));
-
-        Response response = resources
-                .target(format("/v1/api/accounts/%s/credentials/1", accountId))
-                .request()
-                .method("PATCH", Entity.json(payload));
-
-        assertThat(response.getStatus(), is(400));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is("Account credentials are required to set a Gateway Merchant ID."));
     }
 
     private List extractErrorMessagesFromResponse(Response response) {
