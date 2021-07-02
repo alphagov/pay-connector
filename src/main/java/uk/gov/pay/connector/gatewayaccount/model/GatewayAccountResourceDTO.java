@@ -86,6 +86,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("moto_mask_card_security_code_input")
     private boolean motoMaskCardSecurityCodeInput;
 
+    @JsonProperty("provider_switch_enabled")
+    private boolean providerSwitchEnabled;
+
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
     private Worldpay3dsFlexCredentials worldpay3dsFlexCredentials;
@@ -118,6 +121,7 @@ public class GatewayAccountResourceDTO {
         this.motoMaskCardSecurityCodeInput = gatewayAccountEntity.isMotoMaskCardSecurityCodeInput();
         this.allowTelephonePaymentNotifications = gatewayAccountEntity.isAllowTelephonePaymentNotifications();
         this.worldpay3dsFlexCredentials = gatewayAccountEntity.getWorldpay3dsFlexCredentials().orElse(null);
+        this.providerSwitchEnabled = gatewayAccountEntity.isProviderSwitchEnabled();
     }
 
     public long getAccountId() {
@@ -218,6 +222,10 @@ public class GatewayAccountResourceDTO {
 
     public boolean isAllowTelephonePaymentNotifications() {
         return allowTelephonePaymentNotifications;
+    }
+
+    public boolean isProviderSwitchEnabled() {
+        return providerSwitchEnabled;
     }
 
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {

@@ -185,7 +185,8 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("allow_apple_pay", is(false))
                 .body("allow_zero_amount", is(false))
                 .body("integration_version_3ds", is(2))
-                .body("allow_telephone_payment_notifications", is(true));
+                .body("allow_telephone_payment_notifications", is(true))
+                .body("provider_switch_enabled", is(false));
     }
 
     @Test
