@@ -89,6 +89,7 @@ import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
@@ -248,7 +249,7 @@ public class ChargeService {
                     .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
                     .withGatewayAccount(gatewayAccount)
                     .withPaymentProvider(paymentProvider)
-                    .withEmail(chargeRequest.getEmail())
+                    .withEmail(isBlank(chargeRequest.getEmail()) ? null : chargeRequest.getEmail())
                     .withLanguage(language)
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
