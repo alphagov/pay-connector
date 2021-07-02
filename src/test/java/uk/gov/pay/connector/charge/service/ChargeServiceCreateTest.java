@@ -175,6 +175,23 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     }
 
     @Test
+    public void shouldCreateAChargeWithBlankEmailAddress() {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        final ChargeCreateRequest request = requestBuilder.withEmail("").build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getEmail(), is(nullValue()));
+    }
+
+    @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
