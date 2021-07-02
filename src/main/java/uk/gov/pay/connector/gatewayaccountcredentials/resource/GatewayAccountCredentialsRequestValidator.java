@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -29,6 +31,7 @@ public class GatewayAccountCredentialsRequestValidator {
 
     private final Map<String, List<String>> providerCredentialFields;
     private final Joiner COMMA_JOINER = Joiner.on(", ");
+    private static final Pattern WORLDPAY_MERCHANT_ID_PATTERN = Pattern.compile("[0-9a-f]{15}");
 
     public static final String FIELD_CREDENTIALS = "credentials";
     public static final String FIELD_LAST_UPDATED_BY_USER = "last_updated_by_user_external_id";
@@ -78,12 +81,12 @@ public class GatewayAccountCredentialsRequestValidator {
                 .collect(Collectors.toList());
     }
 
-    public void validatePatch(JsonNode patchRequest, String paymentProvider) {
+    public void validatePatch(JsonNode patchRequest, String paymentProvider, Map<String, String> credentials) {
         Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
-                new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), (operation) -> validateReplaceCredentialsOperation(operation, paymentProvider),
+                new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider),
                 new PatchPathOperation(FIELD_LAST_UPDATED_BY_USER, JsonPatchOp.REPLACE), JsonPatchRequestValidator::throwIfValueNotString,
                 new PatchPathOperation(FIELD_STATE, JsonPatchOp.REPLACE), this::validateReplaceStateOperation,
-                new PatchPathOperation(GATEWAY_MERCHANT_ID_PATH, JsonPatchOp.REPLACE), this::validateGatewayMerchantId
+                new PatchPathOperation(GATEWAY_MERCHANT_ID_PATH, JsonPatchOp.REPLACE), request -> validateGatewayMerchantId(request, paymentProvider, credentials)
         );
         var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         patchRequestValidator.validate(patchRequest);
@@ -106,13 +109,22 @@ public class GatewayAccountCredentialsRequestValidator {
         }
     }
 
-    private void validateGatewayMerchantId(JsonPatchRequest request) {
+    private void validateGatewayMerchantId(JsonPatchRequest request, String paymentProvider,
+                                           Map<String, String> credentials) {
+        if (!WORLDPAY.getName().equals(paymentProvider)) {
+            throw new ValidationException(List.of(format("Gateway '%s' does not support digital wallets.", paymentProvider)));
+        }
+        if (credentials.isEmpty()) {
+            throw new ValidationException(List.of("Account credentials are required to set a Gateway Merchant ID."));
+        }
+
         throwIfValueNotString(request);
         throwIfNotValidMerchantId(request.valueAsString(), GATEWAY_MERCHANT_ID_PATH);
     }
 
     private void throwIfNotValidMerchantId(String value, String field) {
-        if (!value.matches("[0-9a-f]{15}")) {
+        Matcher matcher = WORLDPAY_MERCHANT_ID_PATTERN.matcher(value);
+        if (!matcher.matches()) {
             throw new ValidationException(Collections.singletonList(format("Field [%s] value [%s] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]", field, value)));
         }
     }

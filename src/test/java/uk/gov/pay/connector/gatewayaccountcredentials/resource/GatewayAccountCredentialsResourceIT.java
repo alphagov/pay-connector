@@ -46,7 +46,6 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -76,37 +75,16 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Before
     public void setUp() {
-        accountId = nextLong(2, 10000);
-        credentialsId = nextLong(2, 10000);
-        credentialsExternalId = randomUuid();
-        
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
-        LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
-        LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
-        LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
 
-        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
-                .withId(credentialsId)
-                .withGatewayAccountId(accountId)
-                .withPaymentProvider("worldpay")
-                .withCreatedDate(createdDate.toInstant(ZoneOffset.UTC))
-                .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
-                .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
-                .withState(GatewayAccountCredentialState.ACTIVE)
-                .withExternalId(credentialsExternalId)
-                .withCredentials(Map.of(
-                        "merchant_id", "a-merchant-id",
-                        "username", "a-username",
-                        "password", "a-password"))
-                .build();
-        testAccount = databaseFixtures.aTestAccount().withPaymentProvider("worldpay")
-                .withIntegrationVersion3ds(2)
-                .withAccountId(accountId)
-                .withGatewayAccountCredentials(singletonList(credentialsParams))
-                .insert();
+        testAccount = addGatewayAccountAndCredential("worldpay");
+        accountId = testAccount.getAccountId();
+
+        credentialsId = testAccount.getCredentials().get(0).getId();
+        credentialsExternalId = testAccount.getCredentials().get(0).getExternalId();
     }
 
     protected RequestSpecification givenSetup() {
@@ -264,7 +242,7 @@ public class GatewayAccountCredentialsResourceIT {
                         Map.of("op", "replace",
                                 "path", "state",
                                 "value", "VERIFIED_WITH_LIVE_PAYMENT")
-                        )))
+                )))
                 .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
                 .then()
                 .statusCode(200)
@@ -284,8 +262,8 @@ public class GatewayAccountCredentialsResourceIT {
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
         assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
-        
-        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasEntry("username", "new-username"));
         assertThat(updatedCredentials, hasEntry("password", "new-password"));
         assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
@@ -304,7 +282,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .statusCode(400)
                 .body("message[0]", is("Field [value] is required"));
     }
-    
+
     @Test
     public void patchGatewayAccountCredentialsGatewayAccountCredentialsNotFound_shouldReturn404() {
         Map<String, String> newCredentials = Map.of("username", "new-username",
@@ -340,11 +318,27 @@ public class GatewayAccountCredentialsResourceIT {
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
 
-        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasEntry("username", "a-username"));
         assertThat(updatedCredentials, hasEntry("password", "a-password"));
         assertThat(updatedCredentials, hasEntry("merchant_id", "a-merchant-id"));
         assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+    }
+
+    @Test
+    public void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe");
+        AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
+
+        givenSetup()
+                .body(toJson(singletonList(
+                        Map.of("op", "replace",
+                                "path", "credentials/gateway_merchant_id",
+                                "value", "abcdef123abcdef"))))
+                .patch(format(PATCH_CREDENTIALS_URL, params.getGatewayAccountId(), params.getId()))
+                .then()
+                .statusCode(400)
+                .body("message[0]", is("Gateway 'stripe' does not support digital wallets."));
     }
 
     @Test
@@ -406,5 +400,31 @@ public class GatewayAccountCredentialsResourceIT {
                 "password", "valid-password",
                 "merchant_id", "valid-merchant-id"
         ));
+    }
+
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
+        long accountId = nextLong(2, 10000);
+        LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
+        LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
+        LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
+
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(paymentProvider)
+                .withCreatedDate(createdDate.toInstant(ZoneOffset.UTC))
+                .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
+                .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withCredentials(Map.of(
+                        "merchant_id", "a-merchant-id",
+                        "username", "a-username",
+                        "password", "a-password"))
+                .build();
+
+        return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
+                .withIntegrationVersion3ds(2)
+                .withAccountId(accountId)
+                .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
+                .insert();
     }
 }
