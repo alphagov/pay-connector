@@ -1353,7 +1353,7 @@
     <changeSet id="default block_prepaid_cards column to false" author="">
         <addDefaultValue tableName="gateway_accounts" columnName="block_prepaid_cards" defaultValue="false" />
     </changeSet>
-    
+
     <changeSet id="update current block_prepaid_cards column to default value" author="">
         <update tableName="gateway_accounts">
             <column name="block_prepaid_cards" value="false" />
@@ -1447,7 +1447,7 @@
                                columnName="charge_id"
                                tableName="refunds_history"/>
     </changeSet>
-    
+
     <changeSet id="drop index on charge_id on refunds table" author="">
         <dropIndex tableName="refunds" indexName="idx_refunds_charge_id"/>
     </changeSet>
@@ -1644,6 +1644,16 @@
         <addColumn tableName="gateway_accounts">
             <column name="send_payer_email_to_gateway" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add gateway_account_credential_id to charges" author="">
+        <addColumn tableName="charges">
+            <column name="gateway_account_credential_id" type="bigserial">
+                <constraints foreignKeyName="fk__charges_gateway_account_credentials"
+                             referencedTableName="gateway_account_credentials"
+                             referencedColumnNames="id" nullable="true"/>
             </column>
         </addColumn>
     </changeSet>
