@@ -8,7 +8,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -29,7 +28,7 @@ import static javax.ws.rs.core.Response.Status.Family.familyOf;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 public class GatewayClient {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
@@ -39,40 +38,31 @@ public class GatewayClient {
         this.client = client;
         this.metricRegistry = metricRegistry;
     }
-    
+
     public GatewayClient.Response postRequestFor(URI url, PaymentGatewayName gatewayName, String gatewayAccountType, GatewayOrder request, Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        return postRequestFor(url, gatewayName.getName(), gatewayAccountType, request, emptyList(), headers);
+        return postRequestFor(url, gatewayName, gatewayAccountType, request, emptyList(), headers);
     }
 
     public GatewayClient.Response postRequestFor(GatewayClientRequest request)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        return postRequestFor(request.getUrl(), request.getGatewayAccount().getGatewayName(), request.getGatewayAccount().getType(), request.getGatewayOrder(), emptyList(), request.getHeaders());
+        return postRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder(), emptyList(), request.getHeaders());
     }
 
     public GatewayClient.Response postRequestFor(URI url,
-                                                 GatewayAccountEntity account,
-                                                 GatewayOrder request,
-                                                 List<HttpCookie> cookies,
-                                                 Map<String, String> headers)
-            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        return postRequestFor(url, account.getGatewayName(), account.getType(), request, cookies, headers);
-    }
-
-    public GatewayClient.Response postRequestFor(URI url,
-                                                 String gatewayName,
-                                                 String gatewayAccountType,
-                                                 GatewayOrder request,
-                                                 List<HttpCookie> cookies,
-                                                 Map<String, String> headers)
+                                                  PaymentGatewayName gatewayName,
+                                                  String gatewayAccountType,
+                                                  GatewayOrder request,
+                                                  List<HttpCookie> cookies,
+                                                  Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
 
-        String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName, gatewayAccountType, request.getOrderRequestType());
+        String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName, gatewayAccountType);
+            LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));

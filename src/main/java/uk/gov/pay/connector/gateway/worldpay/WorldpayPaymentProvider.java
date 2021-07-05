@@ -253,7 +253,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
-                    request.getGatewayAccount(),
+                    WORLDPAY,
+                    request.getGatewayAccount().getType(),
                     build3dsResponseAuthOrder(request),
                     cookies,
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
