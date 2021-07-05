@@ -105,7 +105,7 @@ public class CardAuthoriseService {
             
             metricRegistry.counter(String.format(
                     "gateway-operations.%s.%s.authorise.%s.result.%s",
-                    updatedCharge.getGatewayAccount().getGatewayName(),
+                    updatedCharge.getPaymentProvider(),
                     updatedCharge.getGatewayAccount().getType(),
                     authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
                     newStatus.toString())).inc();

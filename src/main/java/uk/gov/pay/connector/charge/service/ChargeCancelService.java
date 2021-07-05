@@ -145,7 +145,7 @@ public class ChargeCancelService {
                 chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getAmount(),
                 OperationType.CANCELLATION.getValue(),
-                chargeEntity.getGatewayAccount().getGatewayName(),
+                chargeEntity.getPaymentProvider(),
                 chargeEntity.getGatewayAccount().getType(),
                 lockState);
 

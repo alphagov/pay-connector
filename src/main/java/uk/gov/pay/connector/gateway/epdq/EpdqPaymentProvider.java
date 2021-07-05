@@ -211,7 +211,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, gatewayAccountId={}, frontendstatus={}, gatewaystatus={}",
                         request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
                 metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
-                        request.getGatewayAccount().getGatewayName(),
+                        EPDQ.getName(),
                         request.getAuth3dsResult().getAuth3dsResultOutcome(),
                         authoriseStatus.name()))
                         .inc();

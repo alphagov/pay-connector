@@ -206,7 +206,7 @@ public class ChargeExpiryService {
                                             "provider. Attempting to update charge state to [%s]", status.getValue()),
                                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                                     kv(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId()),
-                                    kv(PROVIDER, chargeEntity.getGatewayAccount().getGatewayName()));
+                                    kv(PROVIDER, chargeEntity.getPaymentProvider()));
 
                             // first try to transition to the terminal state gracefully if allowed, otherwise force the
                             // transition
@@ -368,7 +368,7 @@ public class ChargeExpiryService {
                     chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getAmount(),
                     OperationType.CANCELLATION.getValue(),
-                    gatewayAccount.getGatewayName(),
+                    chargeEntity.getPaymentProvider(),
                     gatewayAccount.getType(),
                     newStatus);
 

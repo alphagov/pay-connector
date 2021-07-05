@@ -65,7 +65,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertFalse(response.isSuccessful());
-        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "AUTHORISED", REJECTED.name()));
+        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", "epdq", "AUTHORISED", REJECTED.name()));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }
 
@@ -76,7 +76,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isException());
-        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "AUTHORISED", "ERROR"));
+        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", "epdq", "AUTHORISED", "ERROR"));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }
 
@@ -87,7 +87,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isException());
-        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "ERROR", AUTHORISED.name()));
+        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", "epdq", "ERROR", AUTHORISED.name()));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }
 
@@ -98,7 +98,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertFalse(response.isSuccessful());
-        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "DECLINED", AUTHORISED.name()));
+        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", "epdq", "DECLINED", AUTHORISED.name()));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }
 
@@ -109,7 +109,7 @@ public class EpdqPaymentProvider3dsIT extends BaseEpdqPaymentProviderIT {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertFalse(response.isSuccessful());
-        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "DECLINED", ERROR.name()));
+        verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", "epdq", "DECLINED", ERROR.name()));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }
 }

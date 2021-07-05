@@ -123,7 +123,7 @@ public class CardCaptureService {
                 captureResponse, oldStatus, nextStatus);
 
         metricRegistry.counter(format("gateway-operations.%s.%s.capture.result.%s",
-                charge.getGatewayAccount().getGatewayName(),
+                charge.getPaymentProvider(),
                 charge.getGatewayAccount().getType(),
                 nextStatus.toString())).inc();
 
