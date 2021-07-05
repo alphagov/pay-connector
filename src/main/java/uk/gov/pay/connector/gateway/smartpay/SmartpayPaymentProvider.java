@@ -86,8 +86,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = client.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), 
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                SMARTPAY,
+                request.getGatewayAccount().getType(),
                 buildAuthoriseOrderFor(request), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
@@ -106,8 +107,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
         
         try {
-            GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), build3dsResponseAuthOrderFor(request),
+            GatewayClient.Response response = client.postRequestFor(
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    SMARTPAY,
+                    request.getGatewayAccount().getType(),
+                    build3dsResponseAuthOrderFor(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
@@ -141,8 +145,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), buildCancelOrderFor(request),
+        GatewayClient.Response response = client.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                SMARTPAY,
+                request.getGatewayAccount().getType(),
+                buildCancelOrderFor(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }

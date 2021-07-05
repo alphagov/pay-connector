@@ -62,7 +62,7 @@ class WorldpayRefundHandlerTest {
         ChargeEntity chargeEntity = chargeEntityFixture.withTransactionId("transaction-id").build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
 
-        when(refundGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+        when(refundGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         worldpayRefundHandler.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity));
@@ -84,7 +84,8 @@ class WorldpayRefundHandlerTest {
 
         verify(refundGatewayClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
+                eq(WORLDPAY),
+                eq("test"),
                 argThat(argument -> argument.getPayload().equals(expectedRefundRequest) &&
                         argument.getOrderRequestType().equals(OrderRequestType.REFUND)),
                 anyMap());

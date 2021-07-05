@@ -39,15 +39,15 @@ public class GatewayClient {
         this.client = client;
         this.metricRegistry = metricRegistry;
     }
-
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers)
+    
+    public GatewayClient.Response postRequestFor(URI url, PaymentGatewayName gatewayName, String gatewayAccountType, GatewayOrder request, Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        return postRequestFor(url, account, request, emptyList(), headers);
+        return postRequestFor(url, gatewayName.getName(), gatewayAccountType, request, emptyList(), headers);
     }
 
     public GatewayClient.Response postRequestFor(GatewayClientRequest request)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        return postRequestFor(request.getUrl(), request.getGatewayAccount(), request.getGatewayOrder(), request.getHeaders());
+        return postRequestFor(request.getUrl(), request.getGatewayAccount().getGatewayName(), request.getGatewayAccount().getType(), request.getGatewayOrder(), emptyList(), request.getHeaders());
     }
 
     public GatewayClient.Response postRequestFor(URI url,

@@ -37,8 +37,9 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayException {
         
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), 
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                WORLDPAY,
+                request.getGatewayAccount().getType(),
                 buildWalletAuthoriseOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
         

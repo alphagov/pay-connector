@@ -115,8 +115,9 @@ public class EpdqPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_NEW_ORDER));
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                url, 
-                request.getGatewayAccount(), 
+                url,
+                EPDQ,
+                request.getGatewayAccount().getType(),
                 buildAuthoriseOrder(request, frontendUrl), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
@@ -143,8 +144,9 @@ public class EpdqPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
         GatewayClient.Response response = cancelClient.postRequestFor(
-                url, 
-                request.getGatewayAccount(), 
+                url,
+                EPDQ,
+                request.getGatewayAccount().getType(),
                 buildCancelOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
@@ -159,7 +161,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(gatewayAccount.getType()), ROUTE_FOR_QUERY_ORDER));
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 url,
-                gatewayAccount, 
+                EPDQ,
+                gatewayAccount.getType(),
                 buildQueryOrderRequestFor(charge, gatewayAccount),
                 getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials(EPDQ.getName())));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
@@ -192,8 +195,9 @@ public class EpdqPaymentProvider implements PaymentProvider {
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    url, 
-                    request.getGatewayAccount(), 
+                    url,
+                    EPDQ,
+                    request.getGatewayAccount().getType(),
                     buildQueryOrderRequestFor(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);

@@ -34,9 +34,11 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
@@ -65,7 +67,7 @@ public class SmartpayCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(successCaptureResponse());
         TestResponse testResponse = new TestResponse(this.response);
-        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+        when(client.postRequestFor(any(URI.class), eq(SMARTPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(testResponse);
 
         ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
@@ -81,7 +83,8 @@ public class SmartpayCaptureHandlerTest {
 
         verify(client).postRequestFor(
                 any(URI.class),
-                any(GatewayAccountEntity.class),
+                eq(SMARTPAY),
+                eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
