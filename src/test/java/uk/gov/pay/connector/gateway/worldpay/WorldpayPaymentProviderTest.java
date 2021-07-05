@@ -398,7 +398,7 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
         when(response.getEntity()).thenReturn(load(WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE));
-        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"),  any(GatewayOrder.class), anyList(), anyMap()))
                 .thenReturn(response);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
@@ -423,7 +423,7 @@ public class WorldpayPaymentProviderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 401 from gateway"));
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
@@ -432,7 +432,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(authoriseClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
+                eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyList(),
                 anyMap());
@@ -448,7 +448,7 @@ public class WorldpayPaymentProviderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 401 from gateway"));
 
         var request = new Auth3dsResponseGatewayRequest(chargeEntity, new Auth3dsResult());
@@ -458,7 +458,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(authoriseClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
+                eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyList(),
                 anyMap());
@@ -476,7 +476,7 @@ public class WorldpayPaymentProviderTest {
                 .withProviderSessionId(providerSessionId)
                 .build();
 
-        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
@@ -485,7 +485,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(authoriseClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
+                eq(WORLDPAY), eq("test"),
                 ArgumentCaptor.forClass(GatewayOrder.class).capture(),
                 cookies.capture(),
                 ArgumentCaptor.forClass(Map.class).capture());
@@ -504,7 +504,7 @@ public class WorldpayPaymentProviderTest {
                 .withProviderSessionId(providerSessionId)
                 .build();
 
-        when(authoriseClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
@@ -514,7 +514,7 @@ public class WorldpayPaymentProviderTest {
 
         verify(authoriseClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
+                eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyList(),
                 headers.capture());
@@ -545,7 +545,7 @@ public class WorldpayPaymentProviderTest {
         when(response.getEntity()).thenReturn(load(WORLDPAY_3DS_RESPONSE));
         when(response.getResponseCookies()).thenReturn(Map.of(WORLDPAY_MACHINE_COOKIE_NAME, "new-machine-cookie-value"));
 
-        when(authoriseClient.postRequestFor(eq(WORLDPAY_URL), eq(chargeEntity.getGatewayAccount()), any(GatewayOrder.class),
+        when(authoriseClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"),  any(GatewayOrder.class),
                 eq(List.of(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, "original-machine-cookie"))), anyMap()))
                 .thenReturn(response);
 

@@ -102,10 +102,10 @@ public class StripeCaptureRequestTest {
     }
     
     @Test
-    public void shouldContainCorrectGatewayAccount() {
+    public void shouldHaveCorrectGatewayAccountType() {
         assertThat(
-                stripeCaptureRequest.getGatewayAccount().getId(),
-                is(gatewayAccountId)
+                stripeCaptureRequest.getGatewayAccountType(),
+                is(gatewayAccount.getType())
         );
     }
 }

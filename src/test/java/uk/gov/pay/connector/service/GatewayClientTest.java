@@ -52,17 +52,12 @@ public class GatewayClientTest {
     private Response mockResponse;
     @Mock
     private Builder mockBuilder;
-
     @Mock
     private MetricRegistry mockMetricRegistry;
     @Mock
     private Histogram mockResponseTimeHistogram;
     @Mock
     private Counter mockFailureCounter;
-
-    @Mock
-    private GatewayAccountEntity mockGatewayAccountEntity;
-
     @Mock
     private GatewayOrder mockGatewayOrder;
 
@@ -79,10 +74,7 @@ public class GatewayClientTest {
         when(mockClient.target(WORLDPAY_API_ENDPOINT)).thenReturn(mockWebTarget);
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenReturn(mockResponse);
-
-        when(mockGatewayAccountEntity.getGatewayName()).thenReturn("worldpay");
-        when(mockGatewayAccountEntity.getType()).thenReturn("test");
-
+        
         when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
         when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
         when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
@@ -107,7 +99,7 @@ public class GatewayClientTest {
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         when(mockResponse.getStatus()).thenReturn(200);
 
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, 
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder, 
                 ImmutableList.of(new HttpCookie("machine", "value")), emptyMap());
 
         InOrder inOrder = Mockito.inOrder(mockBuilder);

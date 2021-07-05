@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
@@ -10,5 +11,6 @@ public interface GatewayClientRequest {
     URI getUrl();
     GatewayOrder getGatewayOrder();
     Map<String, String> getHeaders();
-    GatewayAccountEntity getGatewayAccount();
+    String getGatewayAccountType();
+    PaymentGatewayName getPaymentProvider();
 }

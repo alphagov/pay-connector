@@ -5,6 +5,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
@@ -23,11 +24,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public abstract class StripeRequest implements GatewayClientRequest {
-
-    protected GatewayAccountEntity gatewayAccount;
+    
     private String idempotencyKey;
+    private GatewayAccountEntity gatewayAccount;
     protected StripeGatewayConfig stripeGatewayConfig;
     protected String stripeConnectAccountId;
+    protected String gatewayAccountType;
 
     protected StripeRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig) {
         if (gatewayAccount == null) {
@@ -40,16 +42,22 @@ public abstract class StripeRequest implements GatewayClientRequest {
         }
         
         this.gatewayAccount = gatewayAccount;
+        this.gatewayAccountType = gatewayAccount.getType();
         this.idempotencyKey = idempotencyKey;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.stripeConnectAccountId = stripeAccountId;
     }
 
-    public final GatewayAccountEntity getGatewayAccount() {
-        return gatewayAccount;
+    @Override
+    public PaymentGatewayName getPaymentProvider() {
+        return STRIPE;
     }
 
-    
+    @Override
+    public String getGatewayAccountType() {
+        return gatewayAccountType;
+    }
+
     public final URI getUrl() {
         return URI.create(stripeGatewayConfig.getUrl() + urlPath());
     }

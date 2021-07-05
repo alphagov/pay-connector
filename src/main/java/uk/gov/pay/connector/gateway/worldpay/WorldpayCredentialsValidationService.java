@@ -45,7 +45,7 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
         try {
             GatewayClient.Response response = gatewayClient.postRequestFor(
                     gatewayUrlMap.get(gatewayAccountEntity.getType()),
-                    PaymentGatewayName.WORLDPAY.getName(),
+                    PaymentGatewayName.WORLDPAY,
                     gatewayAccountEntity.getType(),
                     order,
                     Collections.emptyList(),
