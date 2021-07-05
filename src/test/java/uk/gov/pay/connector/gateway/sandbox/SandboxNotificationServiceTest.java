@@ -19,11 +19,11 @@ class SandboxNotificationServiceTest {
 
     @Test
     void shouldReturnTrueWhenForwardedIpAddressIsInAllowedIpAddresses() {
-        assertTrue(notificationService.handleNotificationFor("3.3.3.1, 102.108.0.6"));
+        assertTrue(notificationService.handleNotificationFor("102.108.0.6, 3.3.3.1"));
     }
 
     @Test
     void shouldReturnFalseWhenForwardedIpAddressIsNotInAllowedIpAddresses() {
-        assertFalse(notificationService.handleNotificationFor("2.2.2.2, 102.108.0.6"));
+        assertFalse(notificationService.handleNotificationFor("102.108.0.6, 2.2.2.2"));
     }
 }

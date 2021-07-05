@@ -36,7 +36,7 @@ public class IpDomainMatcherTest {
     public void reverseDnsShouldCorrectlyMatchValidForwardedHeaderToDomain() {
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord("195.35.90.1"))).thenReturn(Optional.of("worldpay.com."));
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord("8.8.8.8"))).thenReturn(Optional.of("dns.google."));
-        assertThat(ipDomainMatcher.ipMatchesDomain("195.35.90.1, 8.8.8.8", "worldpay.com"), is(true));
+        assertThat(ipDomainMatcher.ipMatchesDomain("8.8.8.8, 195.35.90.1", "worldpay.com"), is(true));
         assertThat(ipDomainMatcher.ipMatchesDomain("8.8.8.8, 8.8.8.8", "worldpay.com"), is(false));
     }
 
