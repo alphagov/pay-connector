@@ -39,8 +39,9 @@ public class EpdqRefundHandler implements RefundHandler {
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
             GatewayClient.Response response = client.postRequestFor(
-                    url, 
-                    request.getGatewayAccount(), 
+                    url,
+                    EPDQ,
+                    request.getGatewayAccount().getType(),
                     buildRefundOrder(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);

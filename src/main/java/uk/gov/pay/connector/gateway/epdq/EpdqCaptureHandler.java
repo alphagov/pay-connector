@@ -38,7 +38,8 @@ public class EpdqCaptureHandler implements CaptureHandler {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
             GatewayClient.Response response = client.postRequestFor(
                     url, 
-                    request.getGatewayAccount(), 
+                    EPDQ,
+                    request.getGatewayAccount().getType(), 
                     buildCaptureOrder(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);

@@ -52,7 +52,8 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
-                    request.getGatewayAccount(),
+                    WORLDPAY,
+                    request.getGatewayAccount().getType(),
                     WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
 

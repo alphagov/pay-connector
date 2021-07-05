@@ -24,6 +24,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -65,7 +66,8 @@ public class GooglePayForWorldpayTest {
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"), 
-                gatewayAccount, 
+                WORLDPAY,
+                "test",
                 gatewayOrder, 
                 getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials()));
         assertThat(response.getStatus(), is(HttpStatus.SC_OK));

@@ -35,8 +35,9 @@ public class WorldpayRefundHandler implements RefundHandler {
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
             GatewayClient.Response response = client.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), 
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    WORLDPAY,
+                    request.getGatewayAccount().getType(),
                     buildRefundOrder(request), 
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);

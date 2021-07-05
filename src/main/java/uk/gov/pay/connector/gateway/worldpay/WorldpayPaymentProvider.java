@@ -132,7 +132,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
                 gatewayUrlMap.get(gatewayAccountEntity.getType()),
-                gatewayAccountEntity,
+                WORLDPAY,
+                gatewayAccountEntity.getType(),
                 buildQuery(charge, gatewayAccountEntity),
                 getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials(WORLDPAY.getName()))
         );
@@ -292,8 +293,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
-        GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()),
-                request.getGatewayAccount(), buildCancelOrder(request),
+        GatewayClient.Response response = cancelClient.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                WORLDPAY,
+                request.getGatewayAccount().getType(),
+                buildCancelOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
         return getWorldpayGatewayResponse(response);
     }

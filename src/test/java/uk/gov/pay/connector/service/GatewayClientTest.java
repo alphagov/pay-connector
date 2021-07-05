@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientTest {
@@ -90,7 +91,7 @@ public class GatewayClientTest {
     @Test(expected = GatewayException.GatewayErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder, emptyMap());
         verify(mockResponse).close();
         verify(mockFailureCounter).inc();
     }
@@ -98,7 +99,7 @@ public class GatewayClientTest {
     @Test(expected = GatewayException.GenericGatewayException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder, emptyMap());
         verify(mockFailureCounter).inc();
     }
 
