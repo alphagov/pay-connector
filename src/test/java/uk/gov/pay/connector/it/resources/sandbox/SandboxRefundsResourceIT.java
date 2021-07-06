@@ -40,6 +40,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
@@ -71,6 +72,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
+                .withPaymentProvider(SANDBOX.getName())
                 .insert();
     }
 
@@ -306,6 +308,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
+                .withPaymentProvider(SANDBOX.getName())
                 .build();
         ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
 
@@ -318,6 +321,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .withPaymentProvider(SANDBOX.getName())
                 .build();
         ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
@@ -340,6 +344,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
+                .withPaymentProvider(SANDBOX.getName())
                 .build();
         ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
 
@@ -352,6 +357,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
+                .withPaymentProvider(SANDBOX.getName())
                 .build();
         ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 

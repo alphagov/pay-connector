@@ -391,7 +391,7 @@ public class ChargeServiceTest {
                 .withDescription(chargeEntity.getDescription())
                 .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
-                .withProviderName(chargeEntity.getGatewayAccount().getGatewayName())
+                .withProviderName(chargeEntity.getPaymentProvider())
                 .withCreatedDate(chargeEntity.getCreatedDate())
                 .withEmail(chargeEntity.getEmail())
                 .withRefunds(refunds)

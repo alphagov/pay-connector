@@ -103,6 +103,7 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getDescription(), transaction.getDescription(), "description");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReference().toString(), transaction.getReference(), "reference");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getLanguage(), transaction.getLanguage(), "language");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getPaymentProvider(), transaction.getPaymentProvider(), "payment_provider");
 
         // email may be empty in connector but not in ledger, if service provides email but turns off email address collection
         fieldsMatch = fieldsMatch && (
@@ -206,7 +207,6 @@ public class ChargeParityChecker {
 
     private boolean matchGatewayAccountFields(GatewayAccountEntity gatewayAccount, LedgerTransaction transaction) {
         boolean fieldsMatch = isEquals(gatewayAccount.getId().toString(), transaction.getGatewayAccountId(), "gateway_account_id");
-        fieldsMatch = fieldsMatch && isEquals(gatewayAccount.getGatewayName(), transaction.getPaymentProvider(), "payment_provider");
         fieldsMatch = fieldsMatch && isEquals(gatewayAccount.isLive(), transaction.getLive(), "live");
         return fieldsMatch;
     }

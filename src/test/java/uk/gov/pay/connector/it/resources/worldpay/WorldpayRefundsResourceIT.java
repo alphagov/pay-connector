@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
@@ -73,6 +74,7 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .withTransactionId("MyUniqueTransactionId!")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
+                .withPaymentProvider(WORLDPAY.getName())
                 .insert();
     }
 
