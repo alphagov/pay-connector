@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -76,6 +77,7 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .withTransactionId(randomAlphanumeric(10))
+                .withPaymentProvider(SMARTPAY.getName())
                 .insert();
         pspReference = randomNumeric(16);
     }

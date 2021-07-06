@@ -79,7 +79,7 @@ public class RefundService {
                 () -> new GatewayAccountNotFoundException(accountId));
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
-                .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
+                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
                 .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity));
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId(), gatewayAccountEntity, charge);
         return new ChargeRefundResponse(gatewayRefundResponse, refund);
@@ -275,7 +275,7 @@ public class RefundService {
         ExternalChargeRefundAvailability refundAvailability;
 
         refundAvailability = providers
-                .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
+                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
                 .getExternalChargeRefundAvailability(charge, refundList);
         checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
 

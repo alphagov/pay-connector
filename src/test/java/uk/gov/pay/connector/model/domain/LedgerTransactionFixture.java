@@ -96,7 +96,7 @@ public class LedgerTransactionFixture {
         ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), List.of(CREATED, PAYMENT_NOTIFICATION_CREATED)));
         if (chargeEntity.getGatewayAccount() != null) {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-            ledgerTransactionFixture.withPaymentProvider(gatewayAccount.getGatewayName());
+            ledgerTransactionFixture.withPaymentProvider(chargeEntity.getPaymentProvider());
             ledgerTransactionFixture.withGatewayAccountId(gatewayAccount.getId());
             ledgerTransactionFixture.isLive(gatewayAccount.isLive());
         }

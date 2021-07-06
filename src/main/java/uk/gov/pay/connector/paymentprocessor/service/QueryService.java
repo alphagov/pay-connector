@@ -29,11 +29,11 @@ public class QueryService {
     }
     
     public ChargeQueryResponse getChargeGatewayStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) throws GatewayException {
-        return providers.byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
+        return providers.byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
                 .queryPaymentStatus(charge, gatewayAccountEntity);
     }   
     public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) throws GatewayException {
-        return providers.byName(PaymentGatewayName.valueFrom(charge.getGatewayAccount().getGatewayName()))
+        return providers.byName(charge.getPaymentGatewayName())
                 .queryPaymentStatus(Charge.from(charge), charge.getGatewayAccount());
     }
 
