@@ -6,7 +6,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 public class IpDomainMatcher {
     
@@ -20,7 +25,10 @@ public class IpDomainMatcher {
     }
 
     private String extractForwardedIp(String forwardedAddress) {
-        String extractedIp = forwardedAddress.split(",")[0];
+        List<String> ipAddresses = asList(forwardedAddress.replaceAll("\\s","").split(","));
+        // We want the last address in the forwardedAddress parameter as that's the address we trust 
+        Collections.reverse(ipAddresses);
+        String extractedIp = ipAddresses.get(0);
         LOGGER.debug("Extracted ip {} from X-Forwarded-For '{}'", extractedIp, forwardedAddress);
         return extractedIp;
     }

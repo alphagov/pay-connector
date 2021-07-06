@@ -30,14 +30,14 @@ class IpAddressMatcherTest {
     }
 
     @Test
-    void shouldReturnTrueWhenFirstOfForwardedIpAddressesMatches() {
-        String ipAddresses = "1.2.3.4, 102.106.2.1";
+    void shouldReturnTrueWhenLastOfForwardedIpAddressesMatches() {
+        String ipAddresses = "102.106.2.1, 1.2.3.4";
 
         assertTrue(ipAddressMatcher.isMatch(ipAddresses, ALLOWED_IP_ADDRESSES));
     }
 
     @Test
-    void shouldReturnFalseWhenFirstOfForwardedIpAddressesDoesNotMatch() {
+    void shouldReturnFalseWhenLastOfForwardedIpAddressesDoesNotMatch() {
         String ipAddresses = "1.1.1.1, 102.106.2.1";
 
         assertFalse(ipAddressMatcher.isMatch(ipAddresses, ALLOWED_IP_ADDRESSES));

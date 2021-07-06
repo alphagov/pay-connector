@@ -13,7 +13,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SandboxNotificationResourceIT extends ChargingITestBase {
-    private static final String SANDBOX_IP_ADDRESS = "3.3.3.3, 1.1.1.1";
+    private static final String SANDBOX_IP_ADDRESS = "1.1.1.1, 3.3.3.3";
     private static final String UNEXPECTED_IP_ADDRESS = "3.4.3.1, 1.1.1.1";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/sandbox";
 

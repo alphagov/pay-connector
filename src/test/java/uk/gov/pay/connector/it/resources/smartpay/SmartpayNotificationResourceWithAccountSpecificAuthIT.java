@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends ChargingITestBase {
-    private static final String SMARTPAY_IP_ADDRESS = "6.6.6.6, 1.1.1.1";
+    private static final String SMARTPAY_IP_ADDRESS = "1.1.1.1, 6.6.6.6";
     private static final String UNEXPECTED_IP_ADDRESS = "3.4.2.1";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
     private static final String RESPONSE_EXPECTED_BY_SMARTPAY = "[accepted]";

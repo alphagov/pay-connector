@@ -43,7 +43,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @ExtendWith(MockitoExtension.class)
 class SmartpayNotificationServiceTest {
-    private static final String FORWARDED_IP_ADDRESSES = "1.7.8.6, 2.14.3.6";
+    private static final String FORWARDED_IP_ADDRESSES = "2.14.3.6, 1.7.8.6";
     private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(List.of("1.7.8.0/24", "9.9.9.9/32"));
 
     private final String originalReference = "original-reference";

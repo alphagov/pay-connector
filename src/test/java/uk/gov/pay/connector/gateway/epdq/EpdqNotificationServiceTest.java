@@ -25,7 +25,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 
 @ExtendWith(MockitoExtension.class)
 class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
-    protected static final String FORWARDED_IP_ADDRESSES = "102.22.31.106, 102.108.0.6";
+    protected static final String FORWARDED_IP_ADDRESSES = "102.108.0.6, 102.22.31.106";
 
     @BeforeEach
     void setup() {
