@@ -64,7 +64,7 @@ public class RefundNotificationProcessor {
         RefundEntity refundEntity = optionalRefundEntity.get();
         RefundStatus oldStatus = refundEntity.getStatus();
 
-        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus);
+        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
 
         if (RefundStatus.REFUNDED.equals(newStatus)) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
@@ -78,7 +78,7 @@ public class RefundNotificationProcessor {
                 oldStatus,
                 newStatus,
                 gatewayAccountEntity.getId(),
-                gatewayAccountEntity.getGatewayName(),
+                charge.getPaymentGatewayName(),
                 gatewayAccountEntity.getType());
     }
 }

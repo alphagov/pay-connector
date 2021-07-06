@@ -95,7 +95,7 @@ public class StateTransitionService {
         metricRegistry.counter(String.format(
                 "state-transition.%s.%s.to.%s",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                chargeEventEntity.getChargeEntity().getPaymentProvider(),
                 targetChargeState)).inc();
     }
     
@@ -103,7 +103,7 @@ public class StateTransitionService {
         metricRegistry.meter(String.format(
                 "state-transition.%s.%s.to.%s.rate",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                chargeEventEntity.getChargeEntity().getPaymentProvider(),
                 targetChargeState)).mark();
     }
 
@@ -111,7 +111,7 @@ public class StateTransitionService {
         metricRegistry.counter(String.format(
                 "state-transition.%s.%s.to.%s",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
-                chargeEventEntity.getChargeEntity().getGatewayAccount().getGatewayName(),
+                chargeEventEntity.getChargeEntity().getPaymentProvider(),
                 targetChargeState)).inc();
     }
 

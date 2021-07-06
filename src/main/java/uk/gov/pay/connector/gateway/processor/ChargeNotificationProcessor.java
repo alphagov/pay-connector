@@ -66,7 +66,7 @@ public class ChargeNotificationProcessor {
                 newStatus,
                 gatewayTransactionId,
                 gatewayAccount.getId(),
-                gatewayAccount.getGatewayName(),
+                chargeEntity.getPaymentProvider(),
                 gatewayAccount.getType());
     }
     
@@ -76,11 +76,11 @@ public class ChargeNotificationProcessor {
             return true;
         } catch (InvalidForceStateTransitionException ie) {
             logger.error(format("%s (%s) notification '%s' could not force transition from %s to %s",
-                    gatewayAccount.getGatewayName(), gatewayAccount.getId(), gatewayTransactionId, oldStatus, newStatus),
+                    chargeEntity.getPaymentProvider(), gatewayAccount.getId(), gatewayTransactionId, oldStatus, newStatus),
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
                     kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
                     kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
-                    kv(PROVIDER, gatewayAccount.getGatewayName()));
+                    kv(PROVIDER, chargeEntity.getPaymentProvider()));
             return false;
         }
     }
@@ -94,7 +94,7 @@ public class ChargeNotificationProcessor {
                 kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
                 kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
-                kv(PROVIDER, gatewayAccount.getGatewayName()));
+                kv(PROVIDER, charge.getPaymentGatewayName()));
         
         Event event = new CaptureConfirmedByGatewayNotification(charge.getExternalId(), ZonedDateTime.now());
         eventService.emitEvent(event);

@@ -757,7 +757,7 @@ public class RefundServiceTest {
                 .build();
         RefundEntity refundEntity = aValidRefundEntity().withAmount(100L).build();
 
-        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), CREATED);
+        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), CREATED, Charge.from(charge));
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, CREATED);
     }
 

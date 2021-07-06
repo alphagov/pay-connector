@@ -625,7 +625,7 @@ public class ChargeService {
                         gatewayAccount.getId(),
                         chargeEntity.getAmount(),
                         operationType.getValue(),
-                        gatewayAccount.getGatewayName(),
+                        chargeEntity.getPaymentProvider(),
                         gatewayAccount.getType(),
                         operationType.getLockingStatus());
 

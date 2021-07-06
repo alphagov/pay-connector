@@ -64,7 +64,7 @@ public class AuthorisationService {
 
     void emitAuthorisationMetric(ChargeEntity charge, String operation) {
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.result.%s",
-                charge.getGatewayAccount().getGatewayName(),
+                charge.getPaymentProvider(),
                 charge.getGatewayAccount().getType(),
                 operation,
                 charge.getStatus())
