@@ -238,14 +238,14 @@ public class ChargeService {
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
+            GatewayAccountCredentialsEntity gatewayAccountCredential;
             if (chargeRequest.getPaymentProvider() != null) {
                 // check usable credentials exist
-                gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccount, chargeRequest.getPaymentProvider());
+                gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentialsForProvider(
+                        gatewayAccount, chargeRequest.getPaymentProvider());
+            } else {
+                gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
             }
-
-            String paymentProvider = chargeRequest.getPaymentProvider() != null ?
-                    chargeRequest.getPaymentProvider() :
-                    gatewayAccount.getGatewayName();
 
             ChargeEntity chargeEntity = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
@@ -253,7 +253,8 @@ public class ChargeService {
                     .withDescription(chargeRequest.getDescription())
                     .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
                     .withGatewayAccount(gatewayAccount)
-                    .withPaymentProvider(paymentProvider)
+                    .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                    .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
                     .withEmail(isBlank(chargeRequest.getEmail()) ? null : chargeRequest.getEmail())
                     .withLanguage(language)
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
