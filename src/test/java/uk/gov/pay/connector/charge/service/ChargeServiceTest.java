@@ -186,6 +186,7 @@ public class ChargeServiceTest {
 
     protected ChargeService service;
     protected GatewayAccountEntity gatewayAccount;
+    protected GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @Before
     public void setUp() {
@@ -216,7 +217,7 @@ public class ChargeServiceTest {
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
 
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+        gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withPaymentProvider("sandbox")

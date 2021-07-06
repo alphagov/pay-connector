@@ -56,6 +56,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
@@ -182,12 +183,16 @@ public class ChargeService {
                 null
         );
 
+        GatewayAccountCredentialsEntity gatewayAccountCredential
+                = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
+
         ChargeEntity chargeEntity = aTelephoneChargeEntity()
                 .withAmount(telephoneChargeRequest.getAmount())
                 .withDescription(telephoneChargeRequest.getDescription())
                 .withReference(ServicePaymentReference.of(telephoneChargeRequest.getReference()))
                 .withGatewayAccount(gatewayAccount)
-                .withPaymentProvider(gatewayAccount.getGatewayName())
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
                 .withEmail(telephoneChargeRequest.getEmailAddress().orElse(null))
                 .withExternalMetadata(storeExtraFieldsInMetaData(telephoneChargeRequest))
                 .withGatewayTransactionId(telephoneChargeRequest.getProviderId())

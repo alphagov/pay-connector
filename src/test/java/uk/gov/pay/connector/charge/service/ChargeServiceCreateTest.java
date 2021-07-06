@@ -65,6 +65,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     
     @Test
     public void shouldReturnAResponseForExistingCharge() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
@@ -514,6 +517,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForSuccess() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         Map<String, Object> metadata = Map.of(
@@ -533,6 +539,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
@@ -562,6 +569,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForFailureCodeOfP0010() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
@@ -615,6 +625,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForFailureCodeOfP0050() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0050", supplemental);
 
@@ -668,6 +681,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeAndTruncateMetaDataOver50Characters() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         String stringGreaterThan50 = StringUtils.repeat("*", 51);
         String stringOf50 = StringUtils.repeat("*", 50);
 
@@ -726,6 +742,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeAndNotTruncateMetaDataOf50Characters() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+        
         String stringOf50 = StringUtils.repeat("*", 50);
 
         Supplemental supplemental = new Supplemental(stringOf50, stringOf50);
@@ -783,6 +802,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateAnExternalTelephoneChargeWithSource() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
@@ -795,9 +817,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_EXTERNAL_TELEPHONE));
     }
 
-
     @Test
     public void shouldCreateATelephoneChargeResponseForSuccess() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
 
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
@@ -808,6 +831,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
 
         assertThat(chargeResponse.getAmount(), is(100L));
         assertThat(chargeResponse.getReference().toString(), is("Some reference"));
@@ -832,6 +856,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeResponseForFailure() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
@@ -872,6 +899,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeWhenGatewayAccountCredentialsHasOneEntry() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder

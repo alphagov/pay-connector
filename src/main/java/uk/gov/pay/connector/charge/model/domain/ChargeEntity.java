@@ -253,6 +253,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return gatewayAccount;
     }
 
+    public GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity() {
+        return gatewayAccountCredentialsEntity;
+    }
+
     public String getDescription() {
         return description;
     }

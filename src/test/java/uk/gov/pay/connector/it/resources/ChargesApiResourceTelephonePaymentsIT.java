@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -16,16 +17,17 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -70,8 +72,8 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForOnlyRequiredFields() {
-        databaseTestHelper.allowTelephonePaymentNotifications(Long.valueOf(accountId));
-        connectorRestApiClient
+        databaseTestHelper.allowTelephonePaymentNotifications(Long.parseLong(accountId));
+        ValidatableResponse response = connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -87,7 +89,14 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("payment_outcome.status", is("success"))
                 .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
-                .body("state.finished", is(true));
+                .body("state.finished", is(true))
+                .body("charge_id", is(notNullValue()));
+
+        String chargeExternalId = response.extract().path("charge_id").toString();
+        String actualGatewayAccountCredentialId = databaseTestHelper.getChargeByExternalId(chargeExternalId).get("gateway_account_credential_id").toString();
+        String expectedGatewayAccountCredentialId = databaseTestHelper.getGatewayAccountCredentialsForAccount(Long.parseLong(accountId)).get(0).get("id").toString();
+
+        assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
     }
     
     @Test
