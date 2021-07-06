@@ -2,6 +2,8 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -27,18 +29,20 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
-
 
 public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
+    private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
     @Before
     public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
+        gatewayAccountCredentialsDao = env.getInstance(GatewayAccountCredentialsDao.class);
     }
 
     private void createChargeWithIdAndDetails(long chargeId, DatabaseFixtures.TestCardDetails testCardDetails) {
@@ -71,7 +75,6 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         long chargeId = nextLong();
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
-
 
         assertThat(chargeDaoOptional.isPresent(), is(true));
 
@@ -123,9 +126,14 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
+        GatewayAccountCredentialsEntity credentialsEntity = new GatewayAccountCredentialsEntity(testAccount, "sandbox", Map.of(), ACTIVE);
+        credentialsEntity.setExternalId(randomUuid());
+        gatewayAccountCredentialsDao.persist(credentialsEntity);
 
         Address billingAddress = AddressFixture.anAddress().build();
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
+                .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", CardType.DEBIT, new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
@@ -140,9 +148,14 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
+        GatewayAccountCredentialsEntity credentialsEntity = new GatewayAccountCredentialsEntity(testAccount, "sandbox", Map.of(), ACTIVE);
+        credentialsEntity.setExternalId(randomUuid());
+        gatewayAccountCredentialsDao.persist(credentialsEntity);
 
         Address billingAddress = AddressFixture.anAddress().build();
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
+                .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);

@@ -7,25 +7,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
-import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +34,6 @@ import java.util.Optional;
 import static java.time.ZonedDateTime.now;
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
-import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -59,6 +56,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 
 public class ChargeDaoIT extends DaoITestBase {
@@ -74,11 +72,21 @@ public class ChargeDaoIT extends DaoITestBase {
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
 
+    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+
     @Before
     public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
+
+        gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        gatewayAccountCredentialsEntity = new GatewayAccountCredentialsEntity(gatewayAccount,
+                defaultTestAccount.getPaymentProvider(), Map.of(), ACTIVE);
+        gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().get(0).getId());
     }
 
     @After
@@ -119,13 +127,10 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldCreateANewCharge() {
-
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .build();
 
         assertThat(chargeEntity.getId(), is(nullValue()));
@@ -137,9 +142,6 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldCreateANewChargeWith3dsDetails() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         String paRequest = "3dsPaRequest";
         String issuerUrl = "https://issuer.example.com/3ds";
         String htmlOut = "<body><div>Some HTML</div></body>";
@@ -162,6 +164,7 @@ public class ChargeDaoIT extends DaoITestBase {
         var chargeEntity = aValidChargeEntity()
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
                 .build();
 
@@ -183,13 +186,11 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldCreateANewChargeWithProviderSessionId() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         String providerSessionId = "provider-session-id-value";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withProviderSessionId(providerSessionId)
                 .build();
 
@@ -204,9 +205,6 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldCreateANewChargeWithExternalMetadata() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         ExternalMetadata expectedExternalMetadata = new ExternalMetadata(
                 Map.of("key1", "String1",
                         "key2", 123,
@@ -214,6 +212,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withExternalMetadata(expectedExternalMetadata)
                 .build();
 
@@ -226,11 +225,9 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void shouldCreateANewChargeWithSource() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withSource(Source.CARD_API)
                 .build();
 
@@ -257,30 +254,29 @@ public class ChargeDaoIT extends DaoITestBase {
             assertThat(ex.getConstraintViolations().iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
         }
     }
-    
+
     @Test
     public void should_update_charge_with_exemption_3ds() {
-        var gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-        ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(gatewayAccount).build();
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
         chargeDao.persist(chargeEntity);
 
         assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds());
-        
+
         chargeEntity.setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
         chargeDao.merge(chargeEntity);
-        
-        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds(), 
+
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds(),
                 Exemption3ds.EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
     public void shouldCreateNewChargeWithParityCheckStatus() {
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withParityStatus(ParityCheckStatus.EXISTS_IN_LEDGER)
                 .build();
 
@@ -742,7 +738,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
     }
-    
+
     @Test
     public void findChargesByParityCheckStatus() {
         DatabaseFixtures
