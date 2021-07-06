@@ -1643,7 +1643,6 @@
     <changeSet id="add send_payer_email_to_gateway column to gateway_accounts table" author="">
         <addColumn tableName="gateway_accounts">
             <column name="send_payer_email_to_gateway" type="boolean" defaultValue="false">
-                <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>
@@ -1656,6 +1655,10 @@
                              referencedColumnNames="id" nullable="true"/>
             </column>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="set send_payer_email_to_gateway to not null" author="">
+        <addNotNullConstraint tableName="gateway_accounts" columnName="send_payer_email_to_gateway"/>
     </changeSet>
 
 </databaseChangeLog>
