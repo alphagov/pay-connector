@@ -339,7 +339,7 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
                     if (chargePatchRequest.getPath().equals(ChargesApiResource.EMAIL_KEY)) {
-                        chargeEntity.setEmail(sanitize(chargePatchRequest.getValue()));
+                        chargeEntity.setEmail(chargePatchRequest.getValue());
                         eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity, now(UTC)));
                     }
                     return Optional.of(chargeEntity);

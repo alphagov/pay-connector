@@ -325,24 +325,6 @@ public class ChargesFrontendResourceIT {
     }
 
     @Test
-    public void sanitize_patchValidEmailOnChargeWithReplaceOp_shouldReturnOk_withSanitizedData() {
-
-        String chargeId = postToCreateACharge(expectedAmount);
-        String email = "r-12-34-5  Ju&^6501-76@example.com";
-        String sanitizedEmail = "r-**-**-*  Ju&^****-**@example.com";
-
-        String patchBody = createPatch("replace", "email", email);
-
-        ValidatableResponse response = connectorRestApi
-                .withChargeId(chargeId)
-                .patchCharge(patchBody);
-
-        response.statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("email", is(sanitizedEmail));
-    }
-
-    @Test
     public void patchValidEmailOnChargeWithAnyOpExceptReplace_shouldReturnBadRequest() {
         String chargeId = postToCreateACharge(expectedAmount);
         String patchBody = createPatch("delete", "email", "a@b.c");
