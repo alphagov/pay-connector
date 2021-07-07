@@ -25,6 +25,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String reference;
     private final String returnUrl;
     private final Long gatewayAccountId;
+    private final String credentialExternalId;
     private final String paymentProvider;
     private final String language;
     private final boolean delayedCapture;
@@ -47,6 +48,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.reference = builder.reference;
         this.returnUrl = builder.returnUrl;
         this.gatewayAccountId = builder.gatewayAccountId;
+        this.credentialExternalId = builder.credentialExternalId;
         this.paymentProvider = builder.paymentProvider;
         this.language = builder.language;
         this.delayedCapture = builder.delayedCapture;
@@ -82,6 +84,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
+        }
+
+        if (charge.getGatewayAccountCredentialsEntity() != null) {
+            builder.withCredentialExternalId(charge.getGatewayAccountCredentialsEntity().getExternalId());
         }
 
         return builder.build();
@@ -135,6 +141,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
     public String getGatewayAccountId() {
         return gatewayAccountId.toString();
+    }
+
+    public String getCredentialExternalId() {
+        return credentialExternalId;
     }
 
     public String getPaymentProvider() {
@@ -207,6 +217,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(reference, that.reference) &&
                 Objects.equals(returnUrl, that.returnUrl) &&
                 Objects.equals(gatewayAccountId, that.gatewayAccountId) &&
+                Objects.equals(credentialExternalId, that.credentialExternalId) &&
                 Objects.equals(paymentProvider, that.paymentProvider) &&
                 Objects.equals(language, that.language) &&
                 Objects.equals(delayedCapture, that.delayedCapture) &&
@@ -225,8 +236,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
     @Override
     public int hashCode() {
-        return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language,
-                delayedCapture, live, externalMetadata, source);
+        return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, credentialExternalId,
+                paymentProvider, language, delayedCapture, live, externalMetadata, source);
     }
 
     public static class Builder {
@@ -250,6 +261,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private String addressCountry;
         private Source source;
         private boolean moto;
+        private String credentialExternalId;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -352,6 +364,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withMoto(boolean moto) {
             this.moto = moto;
+            return this;
+        }
+
+        public Builder withCredentialExternalId(String credentialExternalId) {
+            this.credentialExternalId = credentialExternalId;
             return this;
         }
     }

@@ -24,14 +24,14 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
 
 public class PaymentNotificationCreatedTest {
 
-    private final String paymentId = "jweojfewjoifewj";
-    private final String time = "2018-03-12T16:25:01.123456Z";
     private final String providerId = "validTransactionId";
 
     private ChargeEntityFixture chargeEntityFixture;
 
     @BeforeEach
     void setUp() {
+        String paymentId = "jweojfewjoifewj";
+        String time = "2018-03-12T16:25:01.123456Z";
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
@@ -78,6 +78,8 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.processor_id", equalTo("processorID")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.auth_code", equalTo("012345")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.telephone_number", equalTo("+447700900796")));
+        assertThat(actual, hasJsonPath("$.event_details.credential_external_id", equalTo(chargeEntity.getGatewayAccountCredentialsEntity().getExternalId())));
+        assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
     }
 
     @Test
@@ -120,6 +122,7 @@ public class PaymentNotificationCreatedTest {
 
         chargeEntityFixture
                 .withCardDetails(cardDetailsEntity)
+                .withGatewayAccountCredentialsEntity(null)
                 .withExternalMetadata(null);
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -147,5 +150,6 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.processor_id"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.auth_code"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.telephone_number"));
+        assertThat(actual, hasNoJsonPath("$.event_details.credential_external_id"));
     }
 }

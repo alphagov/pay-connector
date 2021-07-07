@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -17,6 +18,7 @@ import java.util.Optional;
 public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
     private final Long gatewayAccountId;
+    private final String credentialExternalId;
     private final Long amount;
     private final String reference;
     private final String description;
@@ -34,7 +36,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final String language;
     private Source source;
 
-    private PaymentNotificationCreatedEventDetails(Long gatewayAccountId, Long amount, String reference,
+    private PaymentNotificationCreatedEventDetails(Long gatewayAccountId, String credentialExternalId, Long amount, String reference,
                                                    String description, String gatewayTransactionId,
                                                    String firstDigitsCardNumber, String lastDigitsCardNumber,
                                                    String cardholderName, String email, String expiryDate,
@@ -42,6 +44,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                                                    String paymentProvider, Map<String, Object> externalMetadata,
                                                    Source source, String language) {
         this.gatewayAccountId = gatewayAccountId;
+        this.credentialExternalId = credentialExternalId;
         this.amount = amount;
         this.reference = reference;
         this.description = description;
@@ -62,7 +65,11 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
         Optional<CardDetailsEntity> cardDetails = Optional.ofNullable(charge.getCardDetails());
+        String credentialExternalId = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
+                .map(GatewayAccountCredentialsEntity::getExternalId)
+                .orElse(null);
         return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(),
+                credentialExternalId,
                 charge.getAmount(),
                 charge.getReference().toString(),
                 charge.getDescription(),
@@ -87,6 +94,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         if (o == null || getClass() != o.getClass()) return false;
         PaymentNotificationCreatedEventDetails that = (PaymentNotificationCreatedEventDetails) o;
         return Objects.equals(gatewayAccountId, that.gatewayAccountId) &&
+                Objects.equals(credentialExternalId, that.credentialExternalId) &&
                 Objects.equals(amount, that.amount) &&
                 Objects.equals(reference, that.reference) &&
                 Objects.equals(description, that.description) &&
@@ -106,13 +114,17 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
     @Override
     public int hashCode() {
-        return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
+        return Objects.hash(gatewayAccountId, credentialExternalId, amount, reference, description, gatewayTransactionId,
                 firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, expiryDate,
                 cardBrand, cardBrandLabel, live, externalMetadata, source, language);
     }
 
     public Long getGatewayAccountId() {
         return gatewayAccountId;
+    }
+
+    public String getCredentialExternalId() {
+        return credentialExternalId;
     }
 
     public Long getAmount() {

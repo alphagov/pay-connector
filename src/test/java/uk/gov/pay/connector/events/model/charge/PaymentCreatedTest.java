@@ -58,6 +58,16 @@ public class PaymentCreatedTest {
     }
 
     @Test
+    void serializesPayloadForCreatedWithoutCredentialExternalId() throws JsonProcessingException {
+        chargeEntity = chargeEntityFixture
+                .withGatewayAccountCredentialsEntity(null)
+                .build();
+        var paymentCreatedEvent = PaymentCreated.from(chargeEntity).toJsonString();
+
+        assertThat(paymentCreatedEvent, hasNoJsonPath("$.event_details.credential_external_id"));
+    }
+
+    @Test
     void serializesPayloadForCreatedWithCardDetailsAndEmail() throws JsonProcessingException {
         chargeEntityFixture
                 .withEmail("test@email.gov.uk")
@@ -156,6 +166,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
         assertThat(actual, hasJsonPath("$.event_details.return_url", equalTo("http://example.com")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().toString())));
+        assertThat(actual, hasJsonPath("$.event_details.credential_external_id", equalTo(chargeEntity.getGatewayAccountCredentialsEntity().getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getPaymentProvider())));
         assertThat(actual, hasJsonPath("$.event_details.language", equalTo(chargeEntity.getLanguage().toString())));
         assertThat(actual, hasJsonPath("$.event_details.delayed_capture", equalTo(chargeEntity.isDelayedCapture())));

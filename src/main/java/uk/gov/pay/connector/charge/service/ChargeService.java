@@ -240,7 +240,6 @@ public class ChargeService {
 
             GatewayAccountCredentialsEntity gatewayAccountCredential;
             if (chargeRequest.getPaymentProvider() != null) {
-                // check usable credentials exist
                 gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentialsForProvider(
                         gatewayAccount, chargeRequest.getPaymentProvider());
             } else {
