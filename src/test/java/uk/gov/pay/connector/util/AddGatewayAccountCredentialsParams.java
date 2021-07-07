@@ -63,7 +63,7 @@ public class AddGatewayAccountCredentialsParams {
     }
 
     public static final class AddGatewayAccountCredentialsParamsBuilder {
-        private long id = RandomUtils.nextLong(2, 10000);;
+        private long id = RandomUtils.nextLong(2, 1000000);
         private Instant createdDate = Instant.now();
         private Instant activeStartDate = null;
         private Instant activeEndDate = null;

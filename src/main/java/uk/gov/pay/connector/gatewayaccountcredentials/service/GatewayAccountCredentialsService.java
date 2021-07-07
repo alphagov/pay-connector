@@ -234,6 +234,13 @@ public class GatewayAccountCredentialsService {
         return credentialsInState.get(0);
     }
 
+    public GatewayAccountCredentialsEntity getCurrentOrActiveCredential(GatewayAccountEntity gatewayAccountEntity) {
+        return gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
+                .orElseThrow(() -> new WebApplicationException(
+                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]",
+                                gatewayAccountEntity.getId()))));
+    }
+
     public boolean hasActiveCredentials(Long gatewayAccountId) {
         return gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountId);
     }

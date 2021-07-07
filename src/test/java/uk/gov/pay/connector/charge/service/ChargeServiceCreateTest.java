@@ -65,6 +65,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     
     @Test
     public void shouldReturnAResponseForExistingCharge() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
@@ -146,6 +149,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -181,6 +185,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withEmail("").build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -198,6 +203,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -212,6 +218,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(false).build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -226,6 +233,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         Map<String, Object> metadata = Map.of(
                 "key1", "string",
@@ -247,6 +255,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withLanguage(SupportedLanguage.WELSH).build();
 
@@ -265,6 +274,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         gatewayAccount.setAllowZeroAmount(true);
 
@@ -295,6 +305,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         gatewayAccount.setAllowMoto(true);
         ChargeCreateRequest request = requestBuilder.withMoto(true).build();
@@ -325,6 +336,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         var cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
@@ -354,6 +366,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         var cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
@@ -386,6 +399,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         var cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
@@ -417,6 +431,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
@@ -439,6 +454,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         var cardHolderDetails = new PrefilledCardHolderDetails();
         var address = new PrefilledAddress("Line1", null, "AB1 CD2", "London", null, null);
@@ -469,6 +485,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         ChargeCreateRequest request = requestBuilder.build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -485,6 +502,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
@@ -501,6 +519,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
@@ -514,6 +533,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForSuccess() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         Map<String, Object> metadata = Map.of(
@@ -533,6 +555,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
@@ -562,6 +585,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForFailureCodeOfP0010() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
@@ -615,6 +641,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeForFailureCodeOfP0050() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0050", supplemental);
 
@@ -668,6 +697,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeAndTruncateMetaDataOver50Characters() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         String stringGreaterThan50 = StringUtils.repeat("*", 51);
         String stringOf50 = StringUtils.repeat("*", 50);
 
@@ -726,6 +758,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeAndNotTruncateMetaDataOf50Characters() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+        
         String stringOf50 = StringUtils.repeat("*", 50);
 
         Supplemental supplemental = new Supplemental(stringOf50, stringOf50);
@@ -783,6 +818,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateAnExternalTelephoneChargeWithSource() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
@@ -795,9 +833,10 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_EXTERNAL_TELEPHONE));
     }
 
-
     @Test
     public void shouldCreateATelephoneChargeResponseForSuccess() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
 
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
@@ -808,6 +847,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
 
         assertThat(chargeResponse.getAmount(), is(100L));
         assertThat(chargeResponse.getReference().toString(), is("Some reference"));
@@ -832,6 +872,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeResponseForFailure() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
@@ -872,6 +915,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
     @Test
     public void shouldCreateATelephoneChargeWhenGatewayAccountCredentialsHasOneEntry() {
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
@@ -895,6 +941,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
         ChargeResponse response = service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
@@ -925,6 +972,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);

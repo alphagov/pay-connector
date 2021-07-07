@@ -203,7 +203,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                                 getId()))));
     }
 
-    private Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential() {
+    public Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential() {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
         if (getGatewayAccountCredentials().size() == 1) {
             return Optional.of(gatewayAccountCredentialsEntities.get(0));

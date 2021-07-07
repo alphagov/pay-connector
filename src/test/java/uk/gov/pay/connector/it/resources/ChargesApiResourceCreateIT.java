@@ -9,7 +9,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
-import org.glassfish.jersey.server.JSONP;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -212,6 +211,10 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
+        String expectedGatewayAccountCredentialId = databaseTestHelper.getGatewayAccountCredentialsForAccount(getTestAccount().getAccountId()).get(0).get("id").toString();
+        String actualGatewayAccountCredentialId = databaseTestHelper.getChargeByExternalId(externalChargeId).get("gateway_account_credential_id").toString();
+
+        assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
     }
 
     @Test
