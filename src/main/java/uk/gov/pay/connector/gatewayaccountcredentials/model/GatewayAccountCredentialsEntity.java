@@ -132,6 +132,10 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return gatewayAccountEntity.getId();
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public void setActiveStartDate(Instant activeStartDate) {
         this.activeStartDate = activeStartDate;
     }

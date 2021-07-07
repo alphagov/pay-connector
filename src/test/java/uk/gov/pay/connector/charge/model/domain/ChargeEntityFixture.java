@@ -1,13 +1,6 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -17,11 +10,16 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,6 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 public class ChargeEntityFixture {
 
@@ -44,6 +43,7 @@ public class ChargeEntityFixture {
     private ServicePaymentReference reference = ServicePaymentReference.of("This is a reference");
     private ChargeStatus status = ChargeStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = defaultGatewayAccountCredentialsEntity();
     private String transactionId;
     private Instant createdDate = Instant.now();
     private List<ChargeEventEntity> events = new ArrayList<>();
@@ -77,16 +77,18 @@ public class ChargeEntityFixture {
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
         accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
 
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
-                .aGatewayAccountCredentialsEntity()
-                .withGatewayAccountEntity(accountEntity)
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = defaultGatewayAccountCredentialsEntity();
+        accountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+
+        return accountEntity;
+    }
+
+    public static GatewayAccountCredentialsEntity defaultGatewayAccountCredentialsEntity() {
+        return aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("sandbox")
                 .withCredentials(Map.of())
                 .withState(CREATED)
                 .build();
-        accountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
-
-        return accountEntity;
     }
 
     public static CardDetailsEntity defaultCardDetails() {
@@ -131,6 +133,7 @@ public class ChargeEntityFixture {
                 description,
                 reference,
                 gatewayAccountEntity,
+                gatewayAccountCredentialsEntity,
                 paymentProvider,
                 email,
                 createdDate,
@@ -181,6 +184,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withGatewayAccountEntity(GatewayAccountEntity gatewayAccountEntity) {
         this.gatewayAccountEntity = gatewayAccountEntity;
+        return this;
+    }
+
+    public ChargeEntityFixture withGatewayAccountCredentialsEntity(GatewayAccountCredentialsEntity credentialsEntity) {
+        this.gatewayAccountCredentialsEntity = credentialsEntity;
         return this;
     }
 

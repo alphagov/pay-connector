@@ -6,11 +6,6 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.SupportedLanguageJpaConverter;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
@@ -23,9 +18,15 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.SupportedLanguageJpaConverter;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -57,12 +58,12 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -111,6 +112,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
+
+    @ManyToOne
+    @JoinColumn(name = "gateway_account_credential_id", updatable = false)
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @OneToOne(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
     private FeeEntity fee;
@@ -184,6 +189,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             String description,
             ServicePaymentReference reference,
             GatewayAccountEntity gatewayAccount,
+            GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
             String paymentProvider,
             String email,
             Instant createdDate,
@@ -201,6 +207,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.description = description;
         this.reference = reference;
         this.gatewayAccount = gatewayAccount;
+        this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
         this.paymentProvider = paymentProvider;
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
@@ -469,6 +476,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private String returnUrl;
         private String email;
         private GatewayAccountEntity gatewayAccount;
+        private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
         private String paymentProvider;
         private String description;
         private ServicePaymentReference reference;
@@ -502,6 +510,12 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
         public WebChargeEntityBuilder withGatewayAccount(GatewayAccountEntity gatewayAccount) {
             this.gatewayAccount = gatewayAccount;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withGatewayAccountCredentialsEntity(
+                GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+            this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
             return this;
         }
 
@@ -553,6 +567,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     description,
                     reference,
                     gatewayAccount,
+                    gatewayAccountCredentialsEntity,
                     paymentProvider,
                     email,
                     Instant.now(),
@@ -572,6 +587,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private String email;
         private CardDetailsEntity cardDetails;
         private GatewayAccountEntity gatewayAccount;
+        private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
         private String paymentProvider;
         private String description;
         private ServicePaymentReference reference;
@@ -609,6 +625,12 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             return this;
         }
 
+        public TelephoneChargeEntityBuilder withGatewayAccountCredentialsEntity(
+                GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+            this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
+            return this;
+        }
+
         public TelephoneChargeEntityBuilder withPaymentProvider(String paymentProvider) {
             this.paymentProvider = paymentProvider;
             return this;
@@ -637,6 +659,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     description,
                     reference,
                     gatewayAccount,
+                    gatewayAccountCredentialsEntity,
                     paymentProvider,
                     email,
                     Instant.now(),
