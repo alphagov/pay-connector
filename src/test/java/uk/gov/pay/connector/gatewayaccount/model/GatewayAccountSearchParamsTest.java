@@ -26,6 +26,7 @@ public class GatewayAccountSearchParamsTest {
         params.setRequires3ds("true");
         params.setType("live");
         params.setPaymentProvider("stripe");
+        params.setProviderSwitchEnabled("true");
 
         List<String> filterTemplates = params.getFilterTemplates();
         assertThat(filterTemplates, containsInAnyOrder(
@@ -35,7 +36,8 @@ public class GatewayAccountSearchParamsTest {
                 " gae.allowGooglePay = :allowGooglePay",
                 " gae.requires3ds = :requires3ds",
                 " gae.type = :type",
-                " gae.gatewayName = :gatewayName"));
+                " gae.gatewayName = :gatewayName",
+                " gae.providerSwitchEnabled = :providerSwitchEnabled"));
     }
 
     @Test
@@ -65,9 +67,10 @@ public class GatewayAccountSearchParamsTest {
         params.setRequires3ds("true");
         params.setType("live");
         params.setPaymentProvider("stripe");
+        params.setProviderSwitchEnabled("true");
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, aMapWithSize(7));
+        assertThat(queryMap, aMapWithSize(8));
         assertThat(queryMap, hasEntry("accountIds", List.of("1", "2")));
         assertThat(queryMap, hasEntry("allowMoto", false));
         assertThat(queryMap, hasEntry("allowApplePay", true));
@@ -75,6 +78,7 @@ public class GatewayAccountSearchParamsTest {
         assertThat(queryMap, hasEntry("requires3ds", true));
         assertThat(queryMap, hasEntry("type", LIVE));
         assertThat(queryMap, hasEntry("gatewayName", "stripe"));
+        assertThat(queryMap, hasEntry("providerSwitchEnabled", true));
     }
 
     @Test

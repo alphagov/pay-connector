@@ -19,6 +19,7 @@ public class GatewayAccountSearchParams {
     private static final String REQUIRES_3DS_SQL_FIELD = "requires3ds";
     private static final String TYPE_SQL_FIELD = "type";
     private static final String PAYMENT_PROVIDER_SQL_FIELD = "gatewayName";
+    private static final String PROVIDER_SWITCH_ENABLED_SQL_FIELD = "providerSwitchEnabled";
     
     @QueryParam("accountIds")
     private CommaDelimitedSetParameter accountIds;
@@ -55,6 +56,11 @@ public class GatewayAccountSearchParams {
             message = "Parameter [payment_provider] must be one of 'sandbox', 'worldpay', 'smartpay', 'epdq' or 'stripe'")
     private String paymentProvider;
 
+    @QueryParam("provider_switch_enabled")
+    @Pattern(regexp = "true|false",
+            message = "Parameter [provider_switch_enabled] must be true or false")
+    private String providerSwitchEnabled;
+
     public void setAccountIds(CommaDelimitedSetParameter accountIds) {
         this.accountIds = accountIds;
     }
@@ -83,6 +89,10 @@ public class GatewayAccountSearchParams {
         this.paymentProvider = paymentProvider;
     }
 
+    public void setProviderSwitchEnabled(String providerSwitchEnabled) {
+        this.providerSwitchEnabled = providerSwitchEnabled;
+    }
+
     public List<String> getFilterTemplates() {
         List<String> filters = new ArrayList<>();
 
@@ -107,7 +117,10 @@ public class GatewayAccountSearchParams {
         if (StringUtils.isNotEmpty(paymentProvider)) {
             filters.add(" gae.gatewayName = :" + PAYMENT_PROVIDER_SQL_FIELD);
         }
-        
+        if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
+            filters.add(" gae.providerSwitchEnabled = :" + PROVIDER_SWITCH_ENABLED_SQL_FIELD);
+        }
+
         return List.copyOf(filters);
     }
     
@@ -135,6 +148,9 @@ public class GatewayAccountSearchParams {
         if (StringUtils.isNotEmpty(paymentProvider)) {
             queryMap.put(PAYMENT_PROVIDER_SQL_FIELD, paymentProvider);
         }
+        if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
+            queryMap.put(PROVIDER_SWITCH_ENABLED_SQL_FIELD, Boolean.valueOf(providerSwitchEnabled));
+        }
         
         return queryMap;
     }
@@ -149,6 +165,7 @@ public class GatewayAccountSearchParams {
                 ", requires3ds='" + requires3ds + '\'' +
                 ", type='" + type + '\'' +
                 ", paymentProvider='" + paymentProvider + '\'' +
+                ", providerSwitchEnabled='" + providerSwitchEnabled + '\'' +
                 '}';
     }
 }
