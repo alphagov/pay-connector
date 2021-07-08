@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.google.inject.persist.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -28,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -41,8 +44,14 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAcc
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.USER_EXTERNAL_ID;
 
 public class GatewayAccountCredentialsService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountCredentialsService.class);
 
     private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
@@ -156,6 +165,16 @@ public class GatewayAccountCredentialsService {
             }
         }
         gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
+
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsEntity.getGatewayAccountEntity();
+        LOGGER.info("Updated credentials for gateway account [id={}]", gatewayAccountEntity.getId(),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv(PROVIDER, gatewayAccountCredentialsEntity.getPaymentProvider()),
+                kv("state", gatewayAccountCredentialsEntity.getState()),
+                kv(USER_EXTERNAL_ID, gatewayAccountCredentialsEntity.getLastUpdatedByUserExternalId())
+        );
+
         return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
     }
 
