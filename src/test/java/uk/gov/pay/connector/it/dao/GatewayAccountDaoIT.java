@@ -502,6 +502,29 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void shouldSearchForAccountsByProviderSwitchEnabled() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("sandbox")
+                .withProviderSwitchEnabled(true)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withProviderSwitchEnabled(false)
+                .withPaymentGateway("sandbox")
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setProviderSwitchEnabled("true");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+    }
+
+    @Test
     public void shouldSaveNotifySettings() {
         String fuser = "fuser";
         String notifyAPIToken = "a_token";
