@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.refund.model.domain.HistoryCustomizer;
+import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 
 import java.util.Vector;
 

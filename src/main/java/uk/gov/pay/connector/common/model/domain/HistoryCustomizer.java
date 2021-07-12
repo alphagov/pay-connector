@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.refund.model.domain;
+package uk.gov.pay.connector.common.model.domain;
 
 import org.eclipse.persistence.config.DescriptorCustomizer;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
