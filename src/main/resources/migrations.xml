@@ -1661,4 +1661,22 @@
         <addNotNullConstraint tableName="gateway_accounts" columnName="send_payer_email_to_gateway"/>
     </changeSet>
 
+    <changeSet id="build gateway_account_credentials_history table" author="">
+        <createTable tableName="gateway_account_credentials_history">
+            <column name="id" type="bigserial"/>
+            <column name="payment_provider" type="varchar(255)"/>
+            <column name="credentials" type="json"/>
+            <column name="state" type="varchar(255)"/>
+            <column name="active_start_date" type="timestamp without timezone"/>
+            <column name="active_end_date" type="timestamp without timezone"/>
+            <column name="created_date" type="timestamp without timezone"/>
+            <column name="last_updated_by_user_external_id" type="varchar(255)"/>
+            <column name="version" type="bigint" defaultValue="0"/>
+            <column name="gateway_account_id" type="bigserial"/>
+            <column name="external_id" type="varchar(32)"/>
+            <column name="history_start_date" type="timestamp without timezone"/>
+            <column name="history_end_date" type="timestamp without timezone"/>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
