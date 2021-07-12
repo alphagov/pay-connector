@@ -72,7 +72,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
-                .statusCode(404);
+                .statusCode(200);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                         "value", true))))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
-                .statusCode(404);
+                .statusCode(200);
     }
 
     private void addCompletedTask(long gatewayAccountId, StripeAccountSetupTask task) {

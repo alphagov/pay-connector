@@ -43,7 +43,6 @@ public class StripeAccountSetupResource {
     @Produces(APPLICATION_JSON)
     public StripeAccountSetup getStripeAccountSetup(@PathParam("accountId") Long accountId) {
         return gatewayAccountService.getGatewayAccount(accountId)
-                .filter(StripeAccountUtils::isStripeGatewayAccount)
                 .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
                 .orElseThrow(NotFoundException::new);
     }
@@ -53,7 +52,6 @@ public class StripeAccountSetupResource {
     @Consumes(APPLICATION_JSON)
     public Response patchStripeAccountSetup(@PathParam("accountId") Long accountId, JsonNode payload) {
         return gatewayAccountService.getGatewayAccount(accountId)
-                .filter(StripeAccountUtils::isStripeGatewayAccount)
                 .map(gatewayAccountEntity -> {
                     stripeAccountSetupRequestValidator.validatePatchRequest(payload);
                     List<StripeAccountSetupUpdateRequest> updateRequests = StreamSupport
