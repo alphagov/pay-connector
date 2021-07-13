@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
+import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
@@ -31,6 +33,7 @@ import java.util.Map;
 @SequenceGenerator(name = "gateway_account_credentials_id_seq",
         sequenceName = "gateway_account_credentials_id_seq", allocationSize = 1)
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@Customizer(HistoryCustomizer.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     @Id

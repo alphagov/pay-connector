@@ -11,15 +11,21 @@ import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
@@ -129,5 +135,41 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         assertThat(maybeGatewayAccountCredentials.isPresent(), is(true));
         Map<String, String> credentialsMap = maybeGatewayAccountCredentials.get().getCredentials();
         assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
+    }
+
+    @Test
+    public void shouldPersistHistory() {
+        long gatewayAccountId = nextLong();
+        String externalCredentialId = randomUuid();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .build());
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
+                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+
+        List<Map<String, Object>> credentialsForAccount = databaseTestHelper.getGatewayAccountCredentialsForAccount(gatewayAccountId);
+        assertThat(credentialsForAccount, hasSize(2));
+        long credentialsId = (long) credentialsForAccount.get(1).get("id");
+        
+        List<Map<String, Object>> historyRows = databaseTestHelper.getGatewayAccountCredentialsHistory(credentialsId);
+        assertThat(historyRows, hasSize(1));
+        assertThat(historyRows.get(0).get("state"), is("ACTIVE"));
+        assertThat(historyRows.get(0).get("history_start_date"), not(nullValue()));
+        assertThat(historyRows.get(0).get("history_end_date"), is(nullValue()));
+        
+        gatewayAccountCredentialsEntity.setState(RETIRED);
+        gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
+
+        List<Map<String, Object>> historyRowsAfterUpdate = databaseTestHelper.getGatewayAccountCredentialsHistory(credentialsId);
+        assertThat(historyRowsAfterUpdate, hasSize(2));
+        assertThat(historyRowsAfterUpdate.get(0).get("state"), is("ACTIVE"));
+        assertThat(historyRowsAfterUpdate.get(0).get("history_start_date"), not(nullValue()));
+        assertThat(historyRowsAfterUpdate.get(0).get("history_end_date"), not(nullValue()));
+        assertThat(historyRowsAfterUpdate.get(1).get("state"), is("RETIRED"));
+        assertThat(historyRowsAfterUpdate.get(1).get("history_start_date"), not(nullValue()));
+        assertThat(historyRowsAfterUpdate.get(1).get("history_end_date"), is(nullValue()));
     }
 }

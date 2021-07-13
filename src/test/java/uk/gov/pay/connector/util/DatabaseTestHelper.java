@@ -958,6 +958,14 @@ public class DatabaseTestHelper {
                         .first());
     }
 
+    public List<Map<String, Object>> getGatewayAccountCredentialsHistory(long credentialsId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials_history where id = :id")
+                        .bind("id", credentialsId)
+                        .mapToMap()
+                        .list());
+    }
+
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
         PGobject credentialsJson = buildCredentialsJson(params);
 
