@@ -29,6 +29,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class WorldpayMockClient {
 
+    public static final String WORLDPAY_URL = "/jsp/merchant/xml/paymentService.jsp";
     private WireMockServer wireMockServer;
 
     public WorldpayMockClient(WireMockServer wireMockServer) {
@@ -109,7 +110,7 @@ public class WorldpayMockClient {
 
     public void mockAuthorisationGatewayError() {
         wireMockServer.stubFor(
-                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                post(urlPathEqualTo(WORLDPAY_URL))
                         .willReturn(
                                 aResponse().withStatus(404)
                         )
@@ -124,7 +125,7 @@ public class WorldpayMockClient {
 
     public void mockServerFault() {
         wireMockServer.stubFor(
-                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                post(urlPathEqualTo(WORLDPAY_URL))
                         .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
         );
     }
@@ -132,7 +133,7 @@ public class WorldpayMockClient {
     private void paymentServiceResponse(String responseBody) {
         //FIXME - This mocking approach is very poor. Needs to be revisited. Story PP-900 created.
         wireMockServer.stubFor(
-                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                post(urlPathEqualTo(WORLDPAY_URL))
                         .willReturn(
                                 aResponse()
                                         .withHeader(CONTENT_TYPE, TEXT_XML)
@@ -144,7 +145,7 @@ public class WorldpayMockClient {
 
     private void bodyMatchingPaymentServiceResponse(String xpathContent, String responseBody) {
         wireMockServer.stubFor(
-                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                post(urlPathEqualTo(WORLDPAY_URL))
                         .withRequestBody(matchingXPath(xpathContent))
                         .willReturn(
                                 aResponse()
@@ -156,12 +157,12 @@ public class WorldpayMockClient {
     }
 
     public void mockResponsesForExemptionEngineSoftDecline() {
-        wireMockServer.stubFor(post(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")).inScenario("Exemption Engine soft decline")
+        wireMockServer.stubFor(post(urlEqualTo(WORLDPAY_URL)).inScenario("Exemption Engine soft decline")
                 .whenScenarioStateIs(STARTED)
                 .willReturn(aResponse().withStatus(200).withBody(load(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE)))
                 .willSetStateTo("Soft decline triggered"));
 
-        wireMockServer.stubFor(post(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")).inScenario("Exemption Engine soft decline")
+        wireMockServer.stubFor(post(urlEqualTo(WORLDPAY_URL)).inScenario("Exemption Engine soft decline")
                 .whenScenarioStateIs("Soft decline triggered")
                 .willReturn(aResponse().withStatus(200).withBody(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE))));
     }

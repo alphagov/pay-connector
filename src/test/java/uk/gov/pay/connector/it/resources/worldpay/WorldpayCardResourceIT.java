@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthor
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
+import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -153,7 +154,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
 
-        verifyRequestBodyToWorldpay("/jsp/merchant/xml/paymentService.jsp");
+        verifyRequestBodyToWorldpay(WORLDPAY_URL);
     }
 
     private void verifyRequestBodyToWorldpay(String path) {
