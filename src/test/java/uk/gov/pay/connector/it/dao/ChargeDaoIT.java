@@ -871,11 +871,12 @@ public class ChargeDaoIT extends DaoITestBase {
                 .update();
     }
 
-    private TestCharge insertTestChargeWithStatus(DatabaseFixtures.TestAccount epdqAccount, ChargeStatus created) {
+    private TestCharge insertTestChargeWithStatus(DatabaseFixtures.TestAccount testAccount, ChargeStatus created) {
         return DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper).aTestCharge()
-                .withTestAccount(epdqAccount)
+                .withTestAccount(testAccount)
                 .withChargeStatus(created)
+                .withPaymentProvider(testAccount.getPaymentProvider())
                 .insert();
     }
 

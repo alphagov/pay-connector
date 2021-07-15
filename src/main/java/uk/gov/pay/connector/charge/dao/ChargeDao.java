@@ -113,7 +113,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         String query = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.gatewayTransactionId = :gatewayTransactionId " +
-                "AND c.gatewayAccount.gatewayName = :provider";
+                "AND c.paymentProvider = :provider";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
@@ -269,7 +269,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public List<ChargeEntity> findWithPaymentProviderAndStatusIn(String provider, List<ChargeStatus> statuses, int limit) {
         return entityManager.get()
-                .createQuery("SELECT c FROM ChargeEntity c WHERE c.gatewayAccount.gatewayName = :provider AND c.status in :statuses", ChargeEntity.class)
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.paymentProvider = :provider AND c.status in :statuses", ChargeEntity.class)
                 .setParameter("provider", provider)
                 .setParameter("statuses", statuses)
                 .setMaxResults(limit)
