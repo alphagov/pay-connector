@@ -225,35 +225,6 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path("/v1/frontend/accounts/{accountId}/credentials")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    @JsonView(GatewayAccountEntity.Views.ApiView.class)
-    public Response updateGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String, Object> gatewayAccountPayload) {
-        if (!gatewayAccountPayload.containsKey(CREDENTIALS_FIELD_NAME)) {
-            return fieldsMissingResponse(Collections.singletonList(CREDENTIALS_FIELD_NAME));
-        }
-
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccount ->
-                        {
-                            Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
-                            List<String> missingCredentialsFields = gatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
-                            if (!missingCredentialsFields.isEmpty()) {
-                                return fieldsMissingResponse(missingCredentialsFields);
-                            }
-
-                            gatewayAccount.setCredentials(credentialsPayload);
-                            gatewayAccountCredentialsService.updateGatewayAccountCredentialsForLegacyEndpoint(gatewayAccount, credentialsPayload);
-                            return Response.ok().build();
-                        }
-                )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
-    @PATCH
     @Path("/v1/frontend/accounts/{accountId}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
