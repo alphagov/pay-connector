@@ -16,7 +16,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.ADD;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REMOVE;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REPLACE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
@@ -26,7 +25,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOT
 
 public class GatewayAccountRequestValidator {
 
-    public static final String CREDENTIALS_GATEWAY_MERCHANT_ID = "credentials/gateway_merchant_id";
     public static final String FIELD_ALLOW_APPLE_PAY = "allow_apple_pay";
     public static final String FIELD_ALLOW_GOOGLE_PAY = "allow_google_pay";
     public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
@@ -48,7 +46,6 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_PROVIDER_SWITCH_ENABLED = "provider_switch_enabled";
 
     private static final List<String> VALID_PATHS = List.of(
-            CREDENTIALS_GATEWAY_MERCHANT_ID,
             FIELD_NOTIFY_SETTINGS,
             FIELD_EMAIL_COLLECTION_MODE,
             FIELD_ALLOW_APPLE_PAY,
@@ -86,9 +83,6 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]", FIELD_OPERATION, path)));
 
         switch (path) {
-            case CREDENTIALS_GATEWAY_MERCHANT_ID:
-                validateGatewayMerchantId(payload, CREDENTIALS_GATEWAY_MERCHANT_ID);
-                break;
             case FIELD_NOTIFY_SETTINGS:
                 validateNotifySettingsRequest(payload);
                 break;
@@ -119,13 +113,6 @@ public class GatewayAccountRequestValidator {
                 validateIntegrationVersion3ds(payload);
                 break;
         }
-    }
-
-    private void validateGatewayMerchantId(JsonNode payload, String field) {
-        throwIfInvalidFieldOperation(payload, ADD, REPLACE);
-        throwIfNullFieldValue(payload.get(FIELD_VALUE));
-        throwIfBlankFieldValue(payload.get(FIELD_VALUE));
-        throwIfNotValidMerchantId(payload.get(FIELD_VALUE), field);
     }
 
     private void throwIfBlankFieldValue(JsonNode valueNode) {

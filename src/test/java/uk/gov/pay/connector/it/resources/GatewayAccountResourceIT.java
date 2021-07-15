@@ -846,39 +846,4 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
     }
-
-    @Test
-    public void shouldPatchMerchantIdOnGatewayAccountCredential() throws JsonProcessingException {
-        String gatewayAccountId = "1000024";
-        String credentialExtId = randomUuid();
-        String merchantId = "abcdef123abcdef";
-        databaseTestHelper.addGatewayAccount(
-                anAddGatewayAccountParams()
-                        .withAccountId(gatewayAccountId)
-                        .withPaymentGateway("worldpay")
-                        .withCredentials(Map.of("username", "GATEWAYUSERNAME"))
-                        .withProviderSwitchEnabled(true)
-                        .build());
-
-        AddGatewayAccountCredentialsParams gatewayAccountCredential = anAddGatewayAccountCredentialsParams()
-                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
-                        .withCredentials(Map.of("username", "GATEWAYUSERNAME"))
-                        .withExternalId(credentialExtId)
-                        .withState(ACTIVE)
-                        .build();
-        databaseTestHelper.insertGatewayAccountCredentials(gatewayAccountCredential);
-
-        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                "path", "credentials/gateway_merchant_id", "value", merchantId));
-
-        givenSetup()
-                .body(payload)
-                .patch("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(OK.getStatusCode());
-
-        Map<String, Object> credential = databaseTestHelper.getGatewayAccountCredentialByExternalId(credentialExtId);
-        Map<String, String> credentials = new Gson().fromJson(((PGobject)credential.get("credentials")).getValue(), Map.class);
-        assertThat(credentials.get("gateway_merchant_id"), is(merchantId));
-    }
 }

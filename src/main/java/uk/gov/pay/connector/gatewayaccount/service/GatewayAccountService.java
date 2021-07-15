@@ -8,7 +8,6 @@ import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
-import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -22,7 +21,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +30,6 @@ import java.util.stream.Collectors;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_MOTO;
@@ -119,21 +116,6 @@ public class GatewayAccountService {
     }
 
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater = Map.ofEntries(
-            entry(
-                CREDENTIALS_GATEWAY_MERCHANT_ID,
-                (gatewayAccountRequest, gatewayAccountEntity) -> {
-                    Map<String, String> credentials = gatewayAccountEntity.getCredentials();
-                    if (credentials.isEmpty()) {
-                        throw new MerchantIdWithoutCredentialsException();
-                    }
-                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                    Map<String, String> updatedCredentials = new HashMap<>(credentials);
-                    updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
-                    gatewayAccountEntity.setCredentials(updatedCredentials);
-
-                    updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, gatewayAccountRequest.valueAsString());
-                }
-            ),
             entry(
                 FIELD_ALLOW_GOOGLE_PAY,
                 (gatewayAccountRequest, gatewayAccountEntity) -> {
