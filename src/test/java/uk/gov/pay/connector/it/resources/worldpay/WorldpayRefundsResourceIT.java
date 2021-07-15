@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +14,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -44,8 +46,14 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
+import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -116,7 +124,46 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .replace("{{refundReference}}", refundsFoundByChargeExternalId.get(0).get("external_id").toString())
                 .replace("{{amount}}", "100");
 
-        verifyRequestBodyToWorldpay("/jsp/merchant/xml/paymentService.jsp", expectedRequestBody);
+        verifyRequestBodyToWorldpay(WORLDPAY_URL, expectedRequestBody);
+    }
+
+    public void shouldBeAbleToRequestForRetiredCredentials() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(STRIPE.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .build();
+        AddGatewayAccountCredentialsParams worldpayCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withGatewayAccountId(accountId)
+                .withState(RETIRED)
+                .withCredentials(Map.of(
+                        "username", "a-username",
+                        "password", "a-password",
+                        "merchant_id", "a-merchant-if"))
+                .build();
+        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(accountId)
+                .withGatewayAccountCredentials(List.of(stripeCredentialsParams, worldpayCredentialsParams));
+        DatabaseFixtures.TestCharge charge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withAmount(100L)
+                .withTransactionId("MyUniqueTransactionId2!")
+                .withTestAccount(testAccount)
+                .withChargeStatus(CAPTURED)
+                .withPaymentProvider(WORLDPAY.getName())
+                .insert();
+        
+        Long refundAmount = 100L;
+
+        worldpayMockClient.mockRefundSuccess();
+        ValidatableResponse validatableResponse = postRefundFor(charge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
+        assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
+
+        wireMockServer.verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
     }
 
     private void verifyRequestBodyToWorldpay(String path, String body) {

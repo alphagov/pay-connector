@@ -14,6 +14,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToXml;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -39,7 +40,7 @@ public class WorldpayChargeCancelResourceIT extends ChargingITestBase {
                 .replace("{{merchantCode}}", "merchant-id")
                 .replace("{{transactionId}}", "MyUniqueTransactionId!");
 
-        verifyRequestBodyToWorldpay("/jsp/merchant/xml/paymentService.jsp", expectedRequestBody);
+        verifyRequestBodyToWorldpay(WORLDPAY_URL, expectedRequestBody);
     }
 
     private void verifyRequestBodyToWorldpay(String path, String body) {

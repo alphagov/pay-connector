@@ -6,12 +6,14 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,11 +44,18 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
+import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -280,7 +291,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
-    
+
     @Test
     public void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());
@@ -449,6 +460,44 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .body("card_details.billing_address.city.", is("Charge2 City"))
                 .body("card_details.billing_address.county.", is("Charge2 County"))
                 .body("card_details.billing_address.country.", is("DE"));
+    }
+
+    @Test
+    public void shouldUseActivePaymentProviderWhenMultipleCredentials() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(STRIPE.getName())
+                .withGatewayAccountId(accountId)
+                .withState(RETIRED)
+                .build();
+        AddGatewayAccountCredentialsParams worldpayCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .withCredentials(Map.of(
+                        "username", "a-username",
+                        "password", "a-password",
+                        "merchant_id", "a-merchant-if"))
+                .build();
+        withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(accountId)
+                .withGatewayAccountCredentials(List.of(stripeCredentialsParams, worldpayCredentialsParams))
+                .insert();
+
+        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, null,
+                String.valueOf(accountId), databaseTestHelper, WORLDPAY.getName());
+
+        worldpayMockClient.mockAuthorisationSuccess();
+
+        givenSetup()
+                .body(buildJsonAuthorisationDetailsFor("4444333322221111", "visa"))
+                .post(authoriseChargeUrlFor(chargeId.toString()))
+                .then()
+                .statusCode(200)
+                .body("status", is(AUTHORISATION_SUCCESS.toString()));
+        
+        wireMockServer.verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
     }
 
     private List<ValidatableResponse> invokeAll(List<Callable<ValidatableResponse>> tasks) throws InterruptedException {
