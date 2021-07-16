@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -30,15 +29,12 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -264,13 +260,13 @@ public class GatewayAccountCredentialsServiceTest {
     @Test
     void shouldThrowForNoCredentialsInUsableState() {
         GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay").withState(RETIRED).build();
+                .withPaymentProvider("worldpay").withState(CREATED).build();
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
 
         NoCredentialsInUsableStateException exception = assertThrows(NoCredentialsInUsableStateException.class,
                 () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
-        assertThat(exception.getMessage(), is("Account does not have credentials in a usable state for payment provider [worldpay]"));
+        assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
     }
 
 
@@ -294,7 +290,7 @@ public class GatewayAccountCredentialsServiceTest {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
 
-        GatewayAccountCredentialsNotConfiguredException exception = assertThrows(GatewayAccountCredentialsNotConfiguredException.class,
+        NoCredentialsInUsableStateException exception = assertThrows(NoCredentialsInUsableStateException.class,
                 () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
         assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
     }
@@ -352,6 +348,21 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThrows(GatewayAccountCredentialsNotFoundException.class,
                 () -> gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue("stripe_account_id", "stripeAccountId"));
+    }
+
+    @Test
+    void shouldThrowNoCredentialsInUsableStateExceptionIfGatewayAccountCredentialInCreatedState() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withState(CREATED)
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+            .withCredentials(null)
+            .withGatewayAccountCredentials(List.of(credentialsEntityWorldpay))
+            .build();
+
+        assertThrows(NoCredentialsInUsableStateException.class,
+                () -> gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccountEntity));
     }
 
     @Test

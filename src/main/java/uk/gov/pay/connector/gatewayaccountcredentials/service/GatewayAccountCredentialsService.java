@@ -11,7 +11,6 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -54,7 +53,6 @@ public class GatewayAccountCredentialsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountCredentialsService.class);
 
-    private static final String GATEWAY_MERCHANT_ID = "gateway_merchant_id";
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
     private final Set<GatewayAccountCredentialState> USABLE_STATES = EnumSet.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
@@ -179,17 +177,13 @@ public class GatewayAccountCredentialsService {
             throw new NoCredentialsExistForProviderException(paymentProvider);
         }
 
-        if (credentialsForProvider.size() == 1 && CREATED.equals(credentialsForProvider.get(0).getState())) {
-            throw new GatewayAccountCredentialsNotConfiguredException();
-        }
-
         List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider
                 .stream()
                 .filter(gatewayAccountCredentialsEntity -> USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
                 .collect(Collectors.toList());
 
         if (credentialsInState.isEmpty()) {
-            throw new NoCredentialsInUsableStateException(paymentProvider);
+            throw new NoCredentialsInUsableStateException();
         }
         if (credentialsInState.size() > 1) {
             throw new WebApplicationException(badRequestResponse(Collections.singletonList("Multiple usable credentials exist for payment provider [%s], unable to determine which to use.")));
@@ -198,10 +192,15 @@ public class GatewayAccountCredentialsService {
     }
 
     public GatewayAccountCredentialsEntity getCurrentOrActiveCredential(GatewayAccountEntity gatewayAccountEntity) {
-        return gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
                 .orElseThrow(() -> new WebApplicationException(
-                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]",
-                                gatewayAccountEntity.getId()))));
+                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]", gatewayAccountEntity.getId()))));
+
+        if (CREATED.equals(gatewayAccountCredentialsEntity.getState())) {
+            throw new NoCredentialsInUsableStateException();
+        }
+
+        return gatewayAccountCredentialsEntity;
     }
 
     public boolean hasActiveCredentials(Long gatewayAccountId) {

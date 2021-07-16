@@ -9,6 +9,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
+import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.Response.Status.OK;
@@ -23,7 +24,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTestBase {
-    
+
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -31,23 +32,15 @@ public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTes
         String gatewayAccountId = "1000024";
         String activeExtId = randomUuid();
         String switchToExtId = randomUuid();
-        databaseTestHelper.addGatewayAccount(
-                anAddGatewayAccountParams()
-                .withAccountId(gatewayAccountId)
-                .withPaymentGateway("stripe")
-                .withServiceName("a cool service")
-                .withProviderSwitchEnabled(true)
-                .build());
 
         AddGatewayAccountCredentialsParams activeParams =
-            AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
-                    .anAddGatewayAccountCredentialsParams()
-                    .withGatewayAccountId(Long.valueOf(gatewayAccountId))
-                    .withCredentials(Map.of())
-                    .withExternalId(activeExtId)
-                    .withState(ACTIVE)
-                    .build();
-        databaseTestHelper.insertGatewayAccountCredentials(activeParams);
+                AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
+                        .anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
+                        .withCredentials(Map.of())
+                        .withExternalId(activeExtId)
+                        .withState(ACTIVE)
+                        .build();
 
         AddGatewayAccountCredentialsParams switchToParams =
                 AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
@@ -58,7 +51,15 @@ public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTes
                         .withState(VERIFIED_WITH_LIVE_PAYMENT)
                         .withPaymentProvider("stripe")
                         .build();
-        databaseTestHelper.insertGatewayAccountCredentials(switchToParams);
+
+        databaseTestHelper.addGatewayAccount(
+                anAddGatewayAccountParams()
+                        .withAccountId(gatewayAccountId)
+                        .withPaymentGateway("stripe")
+                        .withServiceName("a cool service")
+                        .withProviderSwitchEnabled(true)
+                        .withGatewayAccountCredentials(List.of(activeParams, switchToParams))
+                        .build());
 
         String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
                 "gateway_account_credential_external_id", switchToExtId));
@@ -70,8 +71,8 @@ public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTes
                 .statusCode(OK.getStatusCode());
 
         Map<String, Object> account = databaseTestHelper.getGatewayAccount(Long.valueOf(gatewayAccountId));
-        assertThat((Integer)account.get("integration_version_3ds"), is(2));
-        assertThat((Boolean)account.get("provider_switch_enabled"), is(false));
+        assertThat((Integer) account.get("integration_version_3ds"), is(2));
+        assertThat((Boolean) account.get("provider_switch_enabled"), is(false));
 
         Map<String, Object> retiredCredentials = databaseTestHelper.getGatewayAccountCredentialByExternalId(activeExtId);
         assertThat(retiredCredentials.get("state").toString(), is(RETIRED.name()));

@@ -1004,8 +1004,8 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", contains("Account does not have credentials in a usable state for payment provider [worldpay]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Payment provider details are not configured on this account"))
+                .body("error_identifier", is(ErrorIdentifier.ACCOUNT_NOT_LINKED_WITH_PSP.toString()));
     }
 
     @Test
@@ -1028,37 +1028,6 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Status.BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", contains("Payment provider details are not configured on this account"))
-                .body("error_identifier", is(ErrorIdentifier.ACCOUNT_NOT_LINKED_WITH_PSP.toString()));
-    }
-
-    @Test
-    public void shouldReturn400WhenCredentialsInCreatedStateForProvider() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
-                .withState(GatewayAccountCredentialState.CREATED)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withPaymentGateway("worldpay")
-                .withGatewayAccountCredentials(List.of(credentials))
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_PROVIDER_KEY, "worldpay"
         ));
 
         connectorRestApiClient

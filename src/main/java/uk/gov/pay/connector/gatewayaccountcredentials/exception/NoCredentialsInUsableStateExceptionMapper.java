@@ -18,7 +18,7 @@ public class NoCredentialsInUsableStateExceptionMapper implements ExceptionMappe
     public Response toResponse(NoCredentialsInUsableStateException exception) {
         LOGGER.info(exception.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, exception.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.ACCOUNT_NOT_LINKED_WITH_PSP, exception.getMessage());
         return Response.status(400)
                 .entity(errorResponse)
                 .type(APPLICATION_JSON)
