@@ -6,14 +6,14 @@ import java.time.Instant;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public final class GatewayAccountCredentialsEntityFixture {
     private Instant activeStartDate = Instant.now();
     private String paymentProvider = WORLDPAY.getName();
     private Map<String, String> credentials = Map.of();
-    private GatewayAccountCredentialState state = CREATED;
+    private GatewayAccountCredentialState state = ACTIVE;
     private GatewayAccountEntity gatewayAccountEntity;
     private String externalId = randomUuid();
     private Instant createdDate = Instant.now();

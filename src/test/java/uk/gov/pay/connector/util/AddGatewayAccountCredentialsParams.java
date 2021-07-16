@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountCredentialsParams {
@@ -69,7 +69,7 @@ public class AddGatewayAccountCredentialsParams {
         private Instant activeEndDate = null;
         private String paymentProvider = WORLDPAY.getName();
         private Map<String, String> credentials = Map.of();
-        private GatewayAccountCredentialState state = CREATED;
+        private GatewayAccountCredentialState state = ACTIVE;
         private String externalId = randomUuid();
         private String lastUpdatedByUserExternalId;
         private long gatewayAccountId;

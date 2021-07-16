@@ -222,7 +222,7 @@ public class ChargeServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withPaymentProvider("sandbox")
                 .withCredentials(Map.of())
-                .withState(GatewayAccountCredentialState.CREATED)
+                .withState(GatewayAccountCredentialState.ACTIVE)
                 .build();
 
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
