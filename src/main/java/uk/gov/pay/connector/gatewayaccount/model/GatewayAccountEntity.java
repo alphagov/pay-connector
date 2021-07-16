@@ -11,6 +11,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -49,7 +50,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -205,9 +206,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential() {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
-        if (getGatewayAccountCredentials().size() == 1) {
-            return Optional.of(gatewayAccountCredentialsEntities.get(0));
-        }
 
         Optional<GatewayAccountCredentialsEntity> mayBeActiveCredential = gatewayAccountCredentialsEntities
                 .stream()
@@ -222,11 +220,20 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                     kv(GATEWAY_ACCOUNT_TYPE, getType())
             );
 
-            return gatewayAccountCredentialsEntities
+            Optional<GatewayAccountCredentialsEntity> mayBeNonCreatedCredential = gatewayAccountCredentialsEntities
                     .stream()
-                    .filter(entity -> entity.getState() != RETIRED)
-                    .min(comparing(GatewayAccountCredentialsEntity::getCreatedDate))
-                    .or(() -> getGatewayAccountCredentials().stream().findFirst());
+                    .filter(entity -> entity.getState() != CREATED)
+                    .min(comparing(GatewayAccountCredentialsEntity::getCreatedDate));
+
+            if (mayBeNonCreatedCredential.isPresent()) {
+                return mayBeNonCreatedCredential;
+            }
+
+            if (gatewayAccountCredentialsEntities.size() == 1) {
+                throw new GatewayAccountCredentialsNotConfiguredException();
+            }
+
+            return Optional.empty();
         }
     }
 

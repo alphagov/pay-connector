@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -178,8 +179,13 @@ public class GatewayAccountCredentialsService {
             throw new NoCredentialsExistForProviderException(paymentProvider);
         }
 
-        List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider.stream().filter(gatewayAccountCredentialsEntity ->
-                USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
+        if (credentialsForProvider.size() == 1 && CREATED.equals(credentialsForProvider.get(0).getState())) {
+            throw new GatewayAccountCredentialsNotConfiguredException();
+        }
+
+        List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider
+                .stream()
+                .filter(gatewayAccountCredentialsEntity -> USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
                 .collect(Collectors.toList());
 
         if (credentialsInState.isEmpty()) {

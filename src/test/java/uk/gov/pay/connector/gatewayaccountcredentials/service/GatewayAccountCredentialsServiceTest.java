@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -62,7 +63,7 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    public void createCredentialsForSandboxShouldCreateRecordWithActiveState() {
+    void createCredentialsForSandboxShouldCreateRecordWithActiveState() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
 
         ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
@@ -78,7 +79,7 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    public void createCredentialsForStripeAndWithCredentialsShouldCreateRecordWithActiveState() {
+    void createCredentialsForStripeAndWithCredentialsShouldCreateRecordWithActiveState() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         when(mockGatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId())).thenReturn(false);
 
@@ -95,7 +96,7 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    public void createCredentialsForStripeShouldCreateRecordWithEnteredStateIfAnActiveGatewayAccountCredentialExists() {
+    void createCredentialsForStripeShouldCreateRecordWithEnteredStateIfAnActiveGatewayAccountCredentialExists() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
         when(mockGatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId())).thenReturn(true);
 
@@ -112,7 +113,7 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    public void createCredentialsForStripeAndWithOutCredentialsShouldCreateRecordWithCreatedState() {
+    void createCredentialsForStripeAndWithOutCredentialsShouldCreateRecordWithCreatedState() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
 
         ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
@@ -129,7 +130,7 @@ public class GatewayAccountCredentialsServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"worldpay", "epdq", "smartpay"})
-    public void createCredentialsForProvidersShouldCreateRecordWithCreatedState(String paymentProvider) {
+    void createCredentialsForProvidersShouldCreateRecordWithCreatedState(String paymentProvider) {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
 
         ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
@@ -263,7 +264,7 @@ public class GatewayAccountCredentialsServiceTest {
     @Test
     void shouldThrowForNoCredentialsInUsableState() {
         GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay").withState(CREATED).build();
+                .withPaymentProvider("worldpay").withState(RETIRED).build();
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
 
@@ -284,6 +285,18 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThrows(WebApplicationException.class,
                 () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
+    }
+
+    @Test
+    void shouldThrowForCredentialsOnlyInCreatedState() {
+        GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay").withState(CREATED).build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
+
+        GatewayAccountCredentialsNotConfiguredException exception = assertThrows(GatewayAccountCredentialsNotConfiguredException.class,
+                () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
+        assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
     }
 
     @Test
@@ -339,5 +352,16 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThrows(GatewayAccountCredentialsNotFoundException.class,
                 () -> gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue("stripe_account_id", "stripeAccountId"));
+    }
+
+    @Test
+    void shouldThrowWebApplicationExceptionIfNoCredentialsFound() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withCredentials(null)
+                .withGatewayAccountCredentials(List.of())
+                .build();
+
+        assertThrows(WebApplicationException.class,
+                () -> gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccountEntity));
     }
 }

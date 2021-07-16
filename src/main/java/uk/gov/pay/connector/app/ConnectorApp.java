@@ -22,6 +22,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredExceptionMapper;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderExceptionMapper;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateExceptionMapper;
@@ -129,6 +130,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new TelephonePaymentNotificationsNotAllowedExceptionMapper());
         environment.jersey().register(new NoCredentialsExistForProviderExceptionMapper());
         environment.jersey().register(new NoCredentialsInUsableStateExceptionMapper());
+        environment.jersey().register(new GatewayAccountCredentialsNotConfiguredExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

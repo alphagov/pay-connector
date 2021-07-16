@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.GatewayAccountCredentialsNotConfiguredException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
@@ -36,15 +37,6 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void getGatewayNameShouldReturnPaymentProviderOfOnlyCredentialAvailable() {
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("sandbox")
-                .build();
-        gatewayAccountCredentialsEntities.add(gatewayAccountCredentialsEntity);
-        assertThat(gatewayAccountEntity.getGatewayName(), is("sandbox"));
-    }
-
-    @Test
     void getGatewayNameShouldReturnPaymentProviderOfLatestActiveCredentialIfMultipleCredentialsExists() {
         GatewayAccountCredentialsEntity latestActiveGatewayAccountCredential = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("stripe")
@@ -71,7 +63,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void getGatewayNameShouldReturnPaymentProviderOfFirstNonRetiredCredentialIfNoActiveCredentialExist() {
+    void getGatewayNameShouldReturnPaymentProviderOfFirstNonCreatedCredentialIfNoActiveCredentialExist() {
         GatewayAccountCredentialsEntity retiredCredential = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("stripe")
                 .withState(RETIRED)
@@ -93,37 +85,27 @@ class GatewayAccountEntityTest {
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(retiredCredential,
                 earliestCreatedCredential, latestCreatedCredential));
 
-        assertThat(gatewayAccountEntity.getGatewayName(), is("worldpay"));
-    }
-
-    @Test
-    void getGatewayNameShouldReturnPaymentProviderOfRetiredCredentialIfOnlyRetiredCredentialExist() {
-        GatewayAccountCredentialsEntity retiredCredential = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("stripe")
-                .withState(RETIRED)
-                .withCreatedDate(Instant.parse("2021-01-15T10:00:00Z"))
-                .build();
-
-        GatewayAccountCredentialsEntity latestRetiredCredential = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withState(RETIRED)
-                .withCreatedDate(Instant.parse("2021-02-28T10:00:00Z"))
-                .build();
-
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(retiredCredential,
-                retiredCredential, latestRetiredCredential));
-
         assertThat(gatewayAccountEntity.getGatewayName(), is("stripe"));
     }
 
     @Test
-    void getGatewayNameshouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
+    void getGatewayNameShouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
         gatewayAccountEntity.setGatewayAccountCredentials(new ArrayList<>());
         assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayName());
     }
 
     @Test
-    public void getCredentialsByProviderShouldReturnCorrectCredential() {
+    void getGatewayNameShouldThrowGatewayAccountCredentialsNotConfiguredExceptionForGatewayAccountCredentialsInCreatedState() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withState(CREATED)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+        assertThrows(GatewayAccountCredentialsNotConfiguredException.class, () -> gatewayAccountEntity.getGatewayName());
+    }
+
+    @Test
+    void getCredentialsByProviderShouldReturnCorrectCredential() {
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of("stripe-accnt-id", "some-id"))
                 .withPaymentProvider("stripe").build();
@@ -138,7 +120,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void getCredentialsByProviderShouldReturnLatestActiveCredentialIfMultipleExists() {
+    void getCredentialsByProviderShouldReturnLatestActiveCredentialIfMultipleExists() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpayLatest = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("username", "latest-creds-user-name"))
@@ -156,7 +138,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void getCredentialsByProviderShouldThrowErrorIfNoCredentialsAreAvailable() {
+    void getCredentialsByProviderShouldThrowErrorIfNoCredentialsAreAvailable() {
         gatewayAccountEntity.setGatewayAccountCredentials(List.of());
         assertThrows(WebApplicationException.class, () -> {
             gatewayAccountEntity.getCredentials("worldpay");
@@ -164,7 +146,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void getCredentialsByProviderShouldThrowErrorIfNoCredentialsForPaymentProviderIsAvailable() {
+    void getCredentialsByProviderShouldThrowErrorIfNoCredentialsForPaymentProviderIsAvailable() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("username", "some-user-name"))
@@ -177,9 +159,10 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
+                .withState(ACTIVE)
                 .build();
         gatewayAccountEntity.setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
@@ -188,10 +171,11 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+                .withState(ACTIVE)
                 .build();
         gatewayAccountEntity.setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
@@ -200,7 +184,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
@@ -212,9 +196,10 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void getGatewayMerchantIdShouldReturnIdAvailableOnCredentials() {
+    void getGatewayMerchantIdShouldReturnIdAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
+                .withState(ACTIVE)
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
@@ -223,9 +208,10 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    public void getGatewayMerchantIdShouldReturnNullIfMerchantIdIsNotAvailableOnCredentials() {
+    void getGatewayMerchantIdShouldReturnNullIfMerchantIdIsNotAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
+                .withState(ACTIVE)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
