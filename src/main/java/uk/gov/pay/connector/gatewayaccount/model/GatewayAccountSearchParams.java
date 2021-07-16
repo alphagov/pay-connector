@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.QueryParam;
@@ -9,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class GatewayAccountSearchParams {
 
@@ -20,10 +21,12 @@ public class GatewayAccountSearchParams {
     private static final String TYPE_SQL_FIELD = "type";
     private static final String PAYMENT_PROVIDER_SQL_FIELD = "gatewayName";
     private static final String PROVIDER_SWITCH_ENABLED_SQL_FIELD = "providerSwitchEnabled";
-    
+
     @QueryParam("accountIds")
-    private CommaDelimitedSetParameter accountIds;
-    
+    @Pattern(regexp = "^[\\d,]+$",
+            message = "Parameter [accountIds] must be a comma separated list of numbers")
+    private String accountIds;
+
     // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
     // moto enabled/disabled
     @QueryParam("moto_enabled")
@@ -35,7 +38,7 @@ public class GatewayAccountSearchParams {
     @Pattern(regexp = "true|false",
             message = "Parameter [apple_pay_enabled] must be true or false")
     private String applePayEnabled;
-    
+
     @QueryParam("google_pay_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [google_pay_enabled] must be true or false")
@@ -45,7 +48,7 @@ public class GatewayAccountSearchParams {
     @Pattern(regexp = "true|false",
             message = "Parameter [requires_3ds] must be true or false")
     private String requires3ds;
-    
+
     @QueryParam("type")
     @Pattern(regexp = "live|test",
             message = "Parameter [type] must be 'live' or 'test'")
@@ -61,7 +64,7 @@ public class GatewayAccountSearchParams {
             message = "Parameter [provider_switch_enabled] must be true or false")
     private String providerSwitchEnabled;
 
-    public void setAccountIds(CommaDelimitedSetParameter accountIds) {
+    public void setAccountIds(String accountIds) {
         this.accountIds = accountIds;
     }
 
@@ -93,42 +96,71 @@ public class GatewayAccountSearchParams {
         this.providerSwitchEnabled = providerSwitchEnabled;
     }
 
+    private List<String> getAccountIdsAsList() {
+        return isBlank(accountIds)
+                ? new ArrayList<>()
+                : List.of(accountIds.split(","));
+    }
+
     public List<String> getFilterTemplates() {
         List<String> filters = new ArrayList<>();
 
-        if (accountIds != null && accountIds.isNotEmpty()) {
-            filters.add(" gae.id IN :" + ACCOUNT_IDS_SQL_FIELD);
+        List<String> accountIdsList = getAccountIdsAsList();
+        if (!accountIdsList.isEmpty()) {
+            StringBuilder filter = new StringBuilder(" ga.id IN (");
+            for (int i = 0; i < accountIdsList.size(); i++) {
+                filter.append("#").append(ACCOUNT_IDS_SQL_FIELD).append(i);
+                if (i != accountIdsList.size() - 1) {
+                    filter.append(",");
+                }
+            }
+            filter.append(")");
+            filters.add(filter.toString());
         }
         if (StringUtils.isNotEmpty(motoEnabled)) {
-            filters.add(" gae.allowMoto = :" + ALLOW_MOTO_SQL_FIELD);
+            filters.add(" ga.allow_moto = #" + ALLOW_MOTO_SQL_FIELD);
         }
         if (StringUtils.isNotEmpty(applePayEnabled)) {
-            filters.add(" gae.allowApplePay = :" + ALLOW_APPLE_PAY_SQL_FIELD);
+            filters.add(" ga.allow_apple_pay = #" + ALLOW_APPLE_PAY_SQL_FIELD);
         }
         if (StringUtils.isNotEmpty(googlePayEnabled)) {
-            filters.add(" gae.allowGooglePay = :" + ALLOW_GOOGLE_PAY_SQL_FIELD);
+            filters.add(" ga.allow_google_pay = #" + ALLOW_GOOGLE_PAY_SQL_FIELD);
         }
         if (StringUtils.isNotEmpty(requires3ds)) {
-            filters.add(" gae.requires3ds = :" + REQUIRES_3DS_SQL_FIELD);
+            filters.add(" ga.requires_3ds = #" + REQUIRES_3DS_SQL_FIELD);
         }
         if (StringUtils.isNotEmpty(type)) {
-            filters.add(" gae.type = :" + TYPE_SQL_FIELD);
+            filters.add(" ga.type = #" + TYPE_SQL_FIELD);
         }
         if (StringUtils.isNotEmpty(paymentProvider)) {
-            filters.add(" gae.gatewayName = :" + PAYMENT_PROVIDER_SQL_FIELD);
+            filters.add(" ga.id in ( " +
+                    "  select gateway_account_id " +
+                    "  from ( " +
+                    "    select gateway_account_id, payment_provider, row_number() over(partition by gateway_account_id order by " +
+                    "    (case when state='ACTIVE' then 1 when state = 'RETIRED' then 1000 else 2 end) asc, created_date asc ) rn  " +
+                    "    from gateway_account_credentials gac " +
+                    "    where gac.gateway_account_id = ga.id " +
+                    "  ) a " +
+                    "  where rn = 1 " +
+                    "  and a.payment_provider = #" + PAYMENT_PROVIDER_SQL_FIELD +
+                    ")");
         }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
-            filters.add(" gae.providerSwitchEnabled = :" + PROVIDER_SWITCH_ENABLED_SQL_FIELD);
+            filters.add(" ga.provider_switch_enabled = #" + PROVIDER_SWITCH_ENABLED_SQL_FIELD);
         }
 
         return List.copyOf(filters);
     }
-    
+
     public Map<String, Object> getQueryMap() {
         HashMap<String, Object> queryMap = new HashMap<>();
-        
-        if (accountIds != null && accountIds.isNotEmpty()) {
-            queryMap.put(ACCOUNT_IDS_SQL_FIELD, accountIds.getParameters());
+
+        List<String> accountIdsList = getAccountIdsAsList();
+        if (!accountIdsList.isEmpty()) {
+            for (int i = 0; i < accountIdsList.size(); i++) {
+                String id = accountIdsList.get(i);
+                queryMap.put(ACCOUNT_IDS_SQL_FIELD + i, Long.valueOf(id));
+            }
         }
         if (StringUtils.isNotEmpty(motoEnabled)) {
             queryMap.put(ALLOW_MOTO_SQL_FIELD, Boolean.valueOf(motoEnabled));
@@ -143,7 +175,7 @@ public class GatewayAccountSearchParams {
             queryMap.put(REQUIRES_3DS_SQL_FIELD, Boolean.valueOf(requires3ds));
         }
         if (StringUtils.isNotEmpty(type)) {
-            queryMap.put(TYPE_SQL_FIELD, GatewayAccountType.fromString(type));
+            queryMap.put(TYPE_SQL_FIELD, type.toUpperCase());
         }
         if (StringUtils.isNotEmpty(paymentProvider)) {
             queryMap.put(PAYMENT_PROVIDER_SQL_FIELD, paymentProvider);
@@ -151,7 +183,7 @@ public class GatewayAccountSearchParams {
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
             queryMap.put(PROVIDER_SWITCH_ENABLED_SQL_FIELD, Boolean.valueOf(providerSwitchEnabled));
         }
-        
+
         return queryMap;
     }
 

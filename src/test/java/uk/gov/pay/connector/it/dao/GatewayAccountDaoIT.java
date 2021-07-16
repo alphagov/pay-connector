@@ -5,13 +5,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,10 +33,15 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -365,7 +370,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                 .build());
 
         var params = new GatewayAccountSearchParams();
-        params.setAccountIds(new CommaDelimitedSetParameter(gatewayAccountId_1 + "," + gatewayAccountId_2));
+        params.setAccountIds(gatewayAccountId_1 + "," + gatewayAccountId_2);
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(2));
@@ -482,23 +487,51 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
     @Test
     public void shouldSearchForAccountsByPaymentProvider() {
-        long gatewayAccountId_1 = nextLong();
+        long gatewayAccountId1 = nextLong();
+        long gatewayAccountId2 = nextLong();
+        long gatewayAccountId3 = nextLong();
+        AddGatewayAccountCredentialsParams account1_credentials1 = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(CREATED)
+                .withGatewayAccountId(gatewayAccountId1)
+                .build();
+        AddGatewayAccountCredentialsParams account1_credentials2 = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .withGatewayAccountId(gatewayAccountId1)
+                .build();
+        AddGatewayAccountCredentialsParams account2_credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .withGatewayAccountId(gatewayAccountId2)
+                .build();
+        AddGatewayAccountCredentialsParams account3_credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(CREATED)
+                .withGatewayAccountId(gatewayAccountId3)
+                .build();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withPaymentGateway("sandbox")
+                .withAccountId(String.valueOf(gatewayAccountId1))
+                .withGatewayAccountCredentials(List.of(account1_credentials1, account1_credentials2))
                 .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withPaymentGateway("stripe")
+                .withAccountId(String.valueOf(gatewayAccountId2))
+                .withGatewayAccountCredentials(List.of(account2_credentials))
+                .build());
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId3))
+                .withGatewayAccountCredentials(List.of(account3_credentials))
                 .build());
 
         var params = new GatewayAccountSearchParams();
-        params.setPaymentProvider("stripe");
+        params.setPaymentProvider("worldpay");
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts, containsInAnyOrder(
+                hasProperty("id", is(gatewayAccountId2)),
+                hasProperty("id", is(gatewayAccountId3))
+        ));
     }
 
     @Test
