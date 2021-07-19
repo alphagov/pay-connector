@@ -56,14 +56,14 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 "" :
                 " WHERE " + String.join(" AND ", filterTemplates);
 
-        String queryTemplate = "SELECT gae" +
-                " FROM GatewayAccountEntity gae" +
+        String queryTemplate = "SELECT ga.*" +
+                " FROM gateway_accounts ga" +
                 whereClause +
-                " ORDER BY gae.id";
+                " ORDER BY ga.id";
 
         var query = entityManager
                 .get()
-                .createQuery(queryTemplate, GatewayAccountEntity.class);
+                .createNativeQuery(queryTemplate, GatewayAccountEntity.class);
 
         params.getQueryMap().forEach(query::setParameter);
 
