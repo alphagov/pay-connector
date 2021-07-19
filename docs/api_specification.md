@@ -981,7 +981,7 @@ Content-Type: application/json
 
 ## PATCH /v1/api/accounts/{accountId}
 
-A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_pay`, `block_prepaid_cards`, `credentials/gateway_merchant_id`,
+A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_pay`, `block_prepaid_cards`,
 `notify_settings`, `email_collection_mode`, `corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`,
 `corporate_prepaid_credit_card_surcharge_amount`, `corporate_prepaid_debit_card_surcharge_amount`, `allow_zero_amount`, `allow_moto`,
 `moto_mask_card_number_input`, `moto_mask_card_security_code_input`, `allow_telephone_payment_notifications`, 
@@ -1402,64 +1402,8 @@ Content-Type: application/json
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                                 |
 | `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                             |
 
------------------------------------------------------------------------------------------------------------
-## PUT /v1/frontend/accounts/{accountId}
-   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Update gateway credentials associated with this account
-
-### Request example
-
-```
-PUT /v1/frontend/accounts/111222333
-Content-Type: application/json
-
-{
-    "username": "a-user-name",
-    "password": "a-password",
-    "merchant_id": "a-merchant-id"
-}
-```
-
-#### Request body description
-
-| Field                    | Description                               |
-| ------------------------ | ----------------------------------------- |
-| `username`               | The payment provider's username for this gateway account    |
-| `password`               | The payment provider's password for this gateway account    |
-| `merchant_id`            | The payment provider's merchant id for this gateway account (if applicable)    |
-
-Note: The fields in the JSON document vary depending on the payment provider assigned to the given account. For instance Worldpay requires username, password and merchant_id, whereas Smartpay only requires username and password.
-
-### Response for a successful update
-
-```
-200 OK
-```
-
-### Response when account id is not found
-
-```
-HTTP/1.1 404 Not Found
-Content-Type: application/json
-
-{
-    "message": "The gateway account id '111222333' does not exist"
-}
-```
-
-### Response if mandatory fields are missing
-
-```
-HTTP/1.1 400 Bad Request
-Content-Type: application/json
-
-{
-    "message": "The following fields are missing: [username]"
-}
-```
-
------------------------------------------------------------------------------------------------------------
 
 ## GET /v1/frontend/charges/{chargeId}
 
