@@ -304,6 +304,142 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     }
 
     @Test
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsForAWorldpayAccountSuccessfully() {
+        String accountId = createAGatewayAccountFor("worldpay");
+
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
+                .withMerchantId("a-merchant-id");
+
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
+                .then()
+                .statusCode(200);
+
+        Map<String, String> currentCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(accountId));
+        assertThat(currentCredentials, is(gatewayAccountPayload.getCredentials()));
+
+        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsForAccount(Long.parseLong(accountId));
+        assertThat(gatewayAccountCredentials, hasSize(1));
+        Map<String, Object> updatedGatewayAccountCredentials = gatewayAccountCredentials.get(0);
+        assertThat(updatedGatewayAccountCredentials, hasEntry("state", ACTIVE.toString()));
+        Map<String, String> credentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(credentials, hasEntry("merchant_id", "a-merchant-id"));
+    }
+
+    @Test
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsForASmartpayAccountSuccessfully() {
+        String accountId = createAGatewayAccountFor("smartpay");
+
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
+
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
+                .then()
+                .statusCode(200);
+
+        Map<String, String> currentCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(accountId));
+        assertThat(currentCredentials, is(gatewayAccountPayload.getCredentials()));
+    }
+
+    @Test
+    public void updateCredentials_shouldUpdateGatewayAccountCredentialsWithSpecialCharactersInUserNamesAndPassword() {
+        String accountId = createAGatewayAccountFor("smartpay");
+
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
+                .withUsername("someone@some{[]where&^%>?\\/")
+                .withPassword("56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w");
+
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
+                .then()
+                .statusCode(200);
+
+        Map<String, String> currentCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(accountId));
+        assertThat(currentCredentials, is(gatewayAccountPayload.getCredentials()));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfMissingCredentials() {
+        String accountId = createAGatewayAccountFor("worldpay");
+
+        updateGatewayAccountCredentialsWith(accountId, new HashMap<>())
+                .then()
+                .statusCode(400)
+                .body("message", contains("Field(s) missing: [credentials]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith2RequiredCredentialsMisses1Credential() {
+        String accountId = createAGatewayAccountFor("smartpay");
+
+        Map<String, Object> credentials = new GatewayAccountPayload()
+                .withUsername("a-username")
+                .withServiceName("a-service-name")
+                .buildCredentialsPayload();
+
+        updateGatewayAccountCredentialsWith(accountId, credentials)
+                .then()
+                .statusCode(400)
+                .body("message", contains("Field(s) missing: [password]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses1Credential() {
+        String accountId = createAGatewayAccountFor("worldpay");
+
+        Map<String, Object> credentials = new GatewayAccountPayload()
+                .withUsername("a-username")
+                .withServiceName("a-service-name")
+                .withPassword("a-password")
+                .buildCredentialsPayload();
+
+        updateGatewayAccountCredentialsWith(accountId, credentials)
+                .then()
+                .statusCode(400)
+                .body("message", contains("Field(s) missing: [merchant_id]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses2Credentials() {
+        String accountId = createAGatewayAccountFor("worldpay");
+
+        Map<String, Object> credentials = new GatewayAccountPayload()
+                .withUsername("a-username")
+                .withServiceName("a-service-name")
+                .buildCredentialsPayload();
+
+        updateGatewayAccountCredentialsWith(accountId, credentials)
+                .then()
+                .statusCode(400)
+                .body("message", contains("Field(s) missing: [password, merchant_id]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdIsNotNumeric() {
+        Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
+        updateGatewayAccountCredentialsWith("NO_NUMERIC_ACCOUNT_ID", credentials)
+                .then()
+                .contentType(JSON)
+                .statusCode(NOT_FOUND.getStatusCode())
+                .body("code", is(404))
+                .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
+    public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdDoesNotExist() {
+        String nonExistingAccountId = "111111111";
+        createAGatewayAccountFor("smartpay");
+
+        Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
+        updateGatewayAccountCredentialsWith(nonExistingAccountId, credentials)
+                .then()
+                .statusCode(404)
+                .body("message", contains("The gateway account id '111111111' does not exist"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
     public void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
         String accountId = createAGatewayAccountFor("smartpay");
 
@@ -460,6 +596,12 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 databaseTestHelper.getAcceptedCardTypesByAccountId(gatewayAccount.getAccountId());
 
         assertEquals(0, acceptedCardTypes.size());
+    }
+
+    private Response updateGatewayAccountCredentialsWith(String accountId, Map<String, Object> credentials) {
+        return givenSetup().accept(JSON)
+                .body(credentials)
+                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
     }
 
     private Response updateGatewayAccountServiceNameWith(String accountId, Map<String, String> serviceName) {

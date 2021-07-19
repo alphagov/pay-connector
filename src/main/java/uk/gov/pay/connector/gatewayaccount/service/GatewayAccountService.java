@@ -233,4 +233,8 @@ public class GatewayAccountService {
             throw new NotSupportedGatewayAccountException(gatewayAccountEntity.getId(), WORLDPAY.getName(), path);
         }
     }
+
+    private void updateGatewayAccountCredentialMerchantId(GatewayAccountEntity gatewayAccountEntity, String merchantAccountId) {
+        gatewayAccountCredentialsService.updateGatewayAccountCredentialMerchantId(gatewayAccountEntity, merchantAccountId);
+    }
 }

@@ -92,6 +92,68 @@ public class GatewayAccountCredentialsService {
         return credentialsPrePopulated ? ENTERED : CREATED;
     }
 
+    /**
+     * This method is for updating the gateway_account_credentials table when the old endpoint for patching
+     * credentials is called. This is a temporary measure while we completely switch over to using the
+     * gateway_account_credentials table for storing and getting credentials.
+     */
+    @Transactional
+    public void updateGatewayAccountCredentialsForLegacyEndpoint(GatewayAccountEntity gatewayAccountEntity,
+                                                                 Map<String, String> credentials) {
+        List<GatewayAccountCredentialsEntity> credentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (credentialsEntities.isEmpty()) {
+            // Backfill hasn't been run for this gateway account, no need to add to gateway_account_credentials table
+            // as row will be added when backfill is run.
+            return;
+        }
+
+        var credentialsEntity = getSingleOrActiveGatewayAccountCredential(gatewayAccountEntity);
+        credentialsEntity.setCredentials(credentials);
+        if (credentialsEntity.getState() != ACTIVE) {
+            credentialsEntity.setState(ACTIVE);
+            credentialsEntity.setActiveStartDate(Instant.now());
+        }
+    }
+
+    /**
+     * This method is for updating the gateway_account_credentials table for `gateway_merchant_id` when the
+     * old endpoint for patching `gateway_merchant_id`` is called. This is a temporary measure while we
+     * completely switch over to using the gateway_account_credentials table.
+     */
+    @Transactional
+    public void updateGatewayAccountCredentialMerchantId(GatewayAccountEntity gatewayAccountEntity, String merchantAccountId) {
+        List<GatewayAccountCredentialsEntity> credentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (credentialsEntities.isEmpty()) {
+            // Backfill hasn't been run for this gateway account, no need to add to gateway_account_credentials table
+            // as row will be added when backfill is run.
+            return;
+        }
+
+        var credentialsEntity = getSingleOrActiveGatewayAccountCredential(gatewayAccountEntity);
+        Map<String, String> credentials = new HashMap<>(credentialsEntity.getCredentials());
+        credentials.put(GATEWAY_MERCHANT_ID, merchantAccountId);
+        credentialsEntity.setCredentials(credentials);
+        gatewayAccountCredentialsDao.merge(credentialsEntity);
+    }
+
+    private GatewayAccountCredentialsEntity getSingleOrActiveGatewayAccountCredential(GatewayAccountEntity gatewayAccountEntity) {
+        var gatewayAccountCredentialsEntities = gatewayAccountEntity.getGatewayAccountCredentials();
+        if (gatewayAccountCredentialsEntities.size() == 1) {
+            return gatewayAccountCredentialsEntities.get(0);
+        }
+
+        List<GatewayAccountCredentialsEntity> activeCredentials = gatewayAccountCredentialsEntities.stream()
+                .filter(entity -> entity.getState() == ACTIVE)
+                .collect(Collectors.toList());
+
+        if (activeCredentials.size() != 1) {
+            throw new WebApplicationException(serviceErrorResponse(
+                    format("Cannot determine which gateway_account_credentials to update for gateway account %s",
+                            gatewayAccountEntity.getId())));
+        }
+        return activeCredentials.get(0);
+    }
+
     @Transactional
     public GatewayAccountCredentials updateGatewayAccountCredentials(
             GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
