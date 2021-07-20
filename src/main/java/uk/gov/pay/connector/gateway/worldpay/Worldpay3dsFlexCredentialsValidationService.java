@@ -47,7 +47,7 @@ public class Worldpay3dsFlexCredentialsValidationService {
             throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
         }
         
-        String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity), 
+        String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity),
                 flexCredentials, Instant.now());
 
         var formData = new MultivaluedHashMap<String, String>();

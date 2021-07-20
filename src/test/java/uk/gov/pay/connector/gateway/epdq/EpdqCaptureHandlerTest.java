@@ -15,9 +15,12 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,6 +38,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -103,18 +108,26 @@ public class EpdqCaptureHandlerTest {
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
-        return GatewayAccountEntityFixture.aGatewayAccountEntity()
+        GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("epdq")
                 .withRequires3ds(false)
+                .withType(TEST)
+                .build();
+        GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(ImmutableMap.of(
                         CREDENTIALS_MERCHANT_ID, "merchant-id",
                         CREDENTIALS_USERNAME, "username",
                         CREDENTIALS_PASSWORD, "password",
-                        CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
-                ))
-                .withType(TEST)
+                        CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(EPDQ.getName())
+                .withState(ACTIVE)
                 .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
+
+        return gatewayAccountEntity;
     }
 
     private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {

@@ -25,6 +25,7 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
@@ -42,6 +43,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
@@ -79,10 +82,15 @@ public class WorldpayWalletAuthorisationHandlerTest {
         chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
         gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName("worldpay")
-                .withCredentials(gatewayAccountCredentials)
                 .withType(TEST)
                 .build();
-
+        var creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(gatewayAccountCredentials)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         when(mockGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"),  any(GatewayOrder.class), anyMap()))

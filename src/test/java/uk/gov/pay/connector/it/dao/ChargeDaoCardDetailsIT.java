@@ -2,9 +2,6 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -18,9 +15,11 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,7 +28,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeDaoCardDetailsIT extends DaoITestBase {
@@ -123,10 +124,15 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreCardDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity(SANDBOX.getName(), GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
-        GatewayAccountCredentialsEntity credentialsEntity = new GatewayAccountCredentialsEntity(testAccount, "sandbox", Map.of(), ACTIVE);
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withGatewayAccountEntity(testAccount)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(ACTIVE)
+                .build();
         credentialsEntity.setExternalId(randomUuid());
         gatewayAccountCredentialsDao.persist(credentialsEntity);
 
@@ -145,11 +151,19 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreNullCardTypeDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountType.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
-        GatewayAccountCredentialsEntity credentialsEntity = new GatewayAccountCredentialsEntity(testAccount, "sandbox", Map.of(), ACTIVE);
-        credentialsEntity.setExternalId(randomUuid());
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        "username", "theUsername",
+                        "password", "thePassword",
+                        "merchant_id", "theMerchantCode"))
+                .withGatewayAccountEntity(testAccount)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(ACTIVE)
+                .withExternalId(randomUuid())
+                .build();
         gatewayAccountCredentialsDao.persist(credentialsEntity);
 
         Address billingAddress = AddressFixture.anAddress().build();

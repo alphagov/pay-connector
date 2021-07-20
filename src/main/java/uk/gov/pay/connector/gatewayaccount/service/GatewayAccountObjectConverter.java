@@ -19,11 +19,8 @@ public class GatewayAccountObjectConverter {
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
-        Map<String, String> credentials = gatewayAccountRequest.getCredentialsAsMap();
-
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
                 gatewayAccountRequest.getPaymentProvider(), 
-                credentials,
                 GatewayAccountType.fromString(gatewayAccountRequest.getProviderAccountType()));
 
         gatewayAccountEntity.setExternalId(randomUuid());

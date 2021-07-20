@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.ws.rs.client.Entity;
@@ -34,6 +35,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class GatewayAccountCredentialsResourceTest {
@@ -80,9 +83,15 @@ public class GatewayAccountCredentialsResourceTest {
             .withGatewayName("worldpay")
             .build();
     private final long smartpayAccountId = 333;
+    private final GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+            .withPaymentProvider("smartpay")
+            .withCredentials(Map.of())
+            .withState(CREATED)
+            .build();
     private final GatewayAccountEntity smartpayGatewayAccountEntity = aGatewayAccountEntity()
             .withId(smartpayAccountId)
             .withGatewayName("smartpay")
+            .withGatewayAccountCredentials(List.of(credentialsEntity))
             .build();
 
     @Test

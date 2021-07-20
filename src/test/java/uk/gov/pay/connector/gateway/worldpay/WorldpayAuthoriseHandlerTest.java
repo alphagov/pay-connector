@@ -26,6 +26,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.XPathUtils;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -40,6 +42,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -67,6 +70,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
@@ -88,6 +93,7 @@ class WorldpayAuthoriseHandlerTest {
 
     private ChargeEntityFixture chargeEntityFixture;
     private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity creds;
     private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
     
     @BeforeEach
@@ -95,7 +101,16 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP);
 
         gatewayAccountEntity = aServiceAccount();
-        gatewayAccountEntity.setCredentials( Map.of("merchant_id", "MERCHANTCODE"));
+        creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
     }
 
@@ -529,11 +544,6 @@ class WorldpayAuthoriseHandlerTest {
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withRequires3ds(false)
-                .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
-                ))
                 .build();
 
         return gatewayAccount;

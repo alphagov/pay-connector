@@ -33,6 +33,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -53,6 +54,8 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TI
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
@@ -361,12 +364,20 @@ public class StripePaymentProviderTest {
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
-        return aGatewayAccountEntity()
+        var gatewayAccountEntity =  aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("stripe")
                 .withRequires3ds(false)
                 .withType(TEST)
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
                 .build();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+
+        return gatewayAccountEntity;
     }
 }

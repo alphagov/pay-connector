@@ -18,13 +18,11 @@ public class GatewayAccount {
 
     private Long id;
     private String gatewayName;
-    private Map<String, String> credentials;
     private GatewayAccountType type;
 
-    public GatewayAccount(Long id, String gatewayName, Map<String, String> credentials, GatewayAccountType type) {
+    public GatewayAccount(Long id, String gatewayName, GatewayAccountType type) {
         this.id = id;
         this.gatewayName = gatewayName;
-        this.credentials = credentials;
         this.type = type;
     }
 
@@ -38,18 +36,8 @@ public class GatewayAccount {
         return gatewayName;
     }
 
-    public Map<String, String> getCredentials() {
-        return credentials;
-    }
-
-    public Map<String, String> withoutCredentials() {
-        return ImmutableMap.of(
-                "gateway_account_id", String.valueOf(id),
-                "payment_provider", gatewayName);
-    }
-
     public static GatewayAccount valueOf(GatewayAccountEntity entity) {
-        return new GatewayAccount(entity.getId(), entity.getGatewayName(), entity.getCredentials(), GatewayAccountType.fromString(entity.getType()));
+        return new GatewayAccount(entity.getId(), entity.getGatewayName(), GatewayAccountType.fromString(entity.getType()));
     }
 
     @Override
@@ -58,13 +46,12 @@ public class GatewayAccount {
         if (o == null || getClass() != o.getClass()) return false;
         GatewayAccount that = (GatewayAccount) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(gatewayName, that.gatewayName) &&
-                Objects.equals(credentials, that.credentials);
+                Objects.equals(gatewayName, that.gatewayName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, gatewayName, credentials);
+        return Objects.hash(id, gatewayName);
     }
 
     public GatewayAccountType getType() {

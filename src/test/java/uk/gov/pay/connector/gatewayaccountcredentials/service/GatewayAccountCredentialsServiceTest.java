@@ -357,7 +357,6 @@ public class GatewayAccountCredentialsServiceTest {
                 .withState(CREATED)
                 .build();
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-            .withCredentials(null)
             .withGatewayAccountCredentials(List.of(credentialsEntityWorldpay))
             .build();
 
@@ -368,7 +367,6 @@ public class GatewayAccountCredentialsServiceTest {
     @Test
     void shouldThrowWebApplicationExceptionIfNoCredentialsFound() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                .withCredentials(null)
                 .withGatewayAccountCredentials(List.of())
                 .build();
 

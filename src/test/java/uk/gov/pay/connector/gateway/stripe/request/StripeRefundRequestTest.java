@@ -14,13 +14,17 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeRefundRequestTest {
@@ -48,8 +52,14 @@ public class StripeRefundRequestTest {
     public void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
                 .build();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         when(refundEntity.getAmount()).thenReturn(refundAmount);
         when(refundEntity.getExternalId()).thenReturn(refundExternalId);

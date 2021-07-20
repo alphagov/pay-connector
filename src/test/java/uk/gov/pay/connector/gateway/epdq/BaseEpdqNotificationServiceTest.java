@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
@@ -25,6 +26,8 @@ import java.util.Set;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 abstract class BaseEpdqNotificationServiceTest {
     private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(List.of("102.22.31.0/24", "9.9.9.9/32"));
@@ -41,6 +44,7 @@ abstract class BaseEpdqNotificationServiceTest {
     protected RefundNotificationProcessor mockRefundNotificationProcessor;
     protected Charge charge;
     protected GatewayAccountEntity gatewayAccountEntity;
+    protected GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     protected final String payId = "transaction-reference";
     final String payIdSub = "pay-id-sub";
@@ -59,9 +63,16 @@ abstract class BaseEpdqNotificationServiceTest {
         );
         gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
                 .withGatewayName(EPDQ.getName())
-                .withCredentials(Map.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut))
                 .build();
-        
+
+        gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(EPDQ.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());

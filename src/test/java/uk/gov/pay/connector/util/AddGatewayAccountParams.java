@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.util;
 
+import liquibase.pro.packaged.S;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -14,6 +17,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -195,13 +199,23 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withDefaultCredentials() {
-            this.credentialsMap = defaultCredentials;
+        public AddGatewayAccountParamsBuilder withDefaultCredentials(String providerName) {
+            this.gatewayAccountCredentialsParams = List.of(anAddGatewayAccountCredentialsParams()
+                    .withCredentials(defaultCredentials)
+                    .withState(ACTIVE)
+                    .withPaymentProvider(providerName)
+                    .withGatewayAccountId(Long.valueOf(this.accountId))
+                    .build());
             return this;
         }
 
         public AddGatewayAccountParamsBuilder withEpdqCredentials() {
-            this.credentialsMap = epdqCredentials;
+            this.gatewayAccountCredentialsParams = List.of(anAddGatewayAccountCredentialsParams()
+                    .withCredentials(defaultCredentials)
+                    .withState(ACTIVE)
+                    .withPaymentProvider(EPDQ.getName())
+                    .withGatewayAccountId(Long.valueOf(this.accountId))
+                    .build());
             return this;
         }
 

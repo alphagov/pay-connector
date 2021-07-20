@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,6 +47,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(JUnitParamsRunner.class)
@@ -140,17 +143,26 @@ public class WorldpayCaptureHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        return aGatewayAccountEntity()
+        var gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("worldpay")
                 .withRequires3ds(false)
-                .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "worlpay-merchant",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
-                ))
                 .withType(TEST)
                 .build();
+
+        var creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
+
+        return gatewayAccountEntity;
     }
 }
 

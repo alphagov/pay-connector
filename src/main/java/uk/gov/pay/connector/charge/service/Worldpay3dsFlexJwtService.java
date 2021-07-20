@@ -7,7 +7,6 @@ import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtPaymentProviderEx
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -19,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 public class Worldpay3dsFlexJwtService {
 
@@ -75,7 +75,7 @@ public class Worldpay3dsFlexJwtService {
     }
 
     private void validateGatewayIsWorldpay(GatewayAccount gatewayAccount) {
-        if (!gatewayAccount.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName())) {
+        if (!gatewayAccount.getGatewayName().equals(WORLDPAY.getName())) {
             throw new Worldpay3dsFlexJwtPaymentProviderException(gatewayAccount.getId());
         }
     }

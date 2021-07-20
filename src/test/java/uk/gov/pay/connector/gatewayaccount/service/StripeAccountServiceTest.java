@@ -8,12 +8,16 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeAccountServiceTest {
@@ -59,10 +63,17 @@ public class StripeAccountServiceTest {
     }
 
     private GatewayAccountEntity aServiceAccount(Map credentials) {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+        var gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName("stripe")
-                .withCredentials(credentials)
                 .build();
+        var creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(credentials)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
 
         return gatewayAccountEntity;
     }

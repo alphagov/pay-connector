@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
@@ -76,10 +75,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "type", nullable = false)
     @Enumerated(EnumType.STRING)
     private GatewayAccountType type;
-
-    @Column(name = "credentials", columnDefinition = "json")
-    @Convert(converter = CredentialsConverter.class)
-    private Map<String, String> credentials;
 
     @Column(name = "service_name")
     private String serviceName;
@@ -175,9 +170,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public GatewayAccountEntity() {
     }
 
-    public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, GatewayAccountType type) {
+    public GatewayAccountEntity(String gatewayName, GatewayAccountType type) {
         this.gatewayName = gatewayName;
-        this.credentials = credentials;
         this.type = type;
     }
 
@@ -248,11 +242,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return getCurrentOrActiveGatewayAccountCredential()
                 .map(credentialsEntity -> credentialsEntity.getCredentials().get("gateway_merchant_id"))
                 .orElse(null);
-    }
-
-    @JsonView(Views.ApiView.class)
-    public Map<String, String> getCredentials() {
-        return credentials;
     }
 
     @JsonProperty("gateway_account_credentials")
@@ -428,10 +417,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
-    }
-
-    public void setCredentials(Map<String, String> credentials) {
-        this.credentials = credentials;
     }
 
     public void setServiceName(String serviceName) {

@@ -18,12 +18,16 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeAuthoriseRequestTest {
@@ -50,8 +54,14 @@ public class StripeAuthoriseRequestTest {
     public void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
-                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
                 .build();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);

@@ -161,7 +161,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         assertThat(createdChargeEntity.getStatus(), is("CREATED"));
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Pay reference")));
@@ -562,7 +561,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
@@ -619,7 +617,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
@@ -675,7 +672,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
@@ -736,7 +732,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
@@ -796,7 +791,6 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
         assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
-        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
         assertThat(createdChargeEntity.getAmount(), is(100L));

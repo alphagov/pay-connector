@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -25,6 +23,10 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+
+import java.util.List;
+import java.util.Map;
 
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.assertTrue;
@@ -32,8 +34,11 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 
@@ -223,8 +228,16 @@ public class StripePaymentProviderTest {
     private ChargeEntity getCharge() {
         gatewayAccountEntity.setId(123L);
         gatewayAccountEntity.setGatewayName(PaymentGatewayName.STRIPE.getName());
+
         String stripeAccountId = "<replace me>";
-        gatewayAccountEntity.setCredentials(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        var creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", stripeAccountId))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
         gatewayAccountEntity.setType(TEST);
         return aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
