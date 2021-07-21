@@ -46,9 +46,9 @@ public class Worldpay3dsFlexCredentialsValidationService {
         if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())) {
             throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
         }
-        
+
         String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity),
-                flexCredentials, Instant.now());
+                flexCredentials, Instant.now(), gatewayAccountEntity.getGatewayName());
 
         var formData = new MultivaluedHashMap<String, String>();
         formData.add("JWT", ddcToken);
