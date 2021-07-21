@@ -1679,4 +1679,8 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="drop credentials from gateway_accounts table" runInTransaction="false" author="">
+        <dropColumn tableName="gateway_accounts" columnName="credentials"/>
+    </changeSet>
+
 </databaseChangeLog>
