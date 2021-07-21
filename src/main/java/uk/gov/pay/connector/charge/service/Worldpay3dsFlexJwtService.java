@@ -41,8 +41,9 @@ public class Worldpay3dsFlexJwtService {
      * @see <a href="https://beta.developer.worldpay.com/docs/wpg/directintegration/3ds2#device-data-collection-ddc-"
      * >Worldpay DDC Documentation</a>
      */
-    public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, Instant chargeCreatedTime) {
-        validateGatewayIsWorldpay(gatewayAccount);
+    public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials,
+                                   Instant chargeCreatedTime, String paymentProvider) {
+        validateGatewayIsWorldpay(gatewayAccount, paymentProvider);
 
         var claims = generateDdcClaims(gatewayAccount, worldpay3dsFlexCredentials, chargeCreatedTime);
         return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
@@ -68,14 +69,14 @@ public class Worldpay3dsFlexJwtService {
         var worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials()
                 .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId()));
 
-        validateGatewayIsWorldpay(gatewayAccount);
+        validateGatewayIsWorldpay(gatewayAccount, chargeEntity.getPaymentProvider());
 
         var claims = generateChallengeClaims(chargeEntity, gatewayAccount, worldpay3dsFlexCredentials);
         return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
     }
 
-    private void validateGatewayIsWorldpay(GatewayAccount gatewayAccount) {
-        if (!gatewayAccount.getGatewayName().equals(WORLDPAY.getName())) {
+    private void validateGatewayIsWorldpay(GatewayAccount gatewayAccount, String paymentProvider) {
+        if (!WORLDPAY.getName().equals(paymentProvider)) {
             throw new Worldpay3dsFlexJwtPaymentProviderException(gatewayAccount.getId());
         }
     }
