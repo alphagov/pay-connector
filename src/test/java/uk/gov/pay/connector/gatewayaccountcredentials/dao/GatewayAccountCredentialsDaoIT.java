@@ -4,9 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -18,14 +16,15 @@ import java.util.Optional;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
@@ -53,9 +52,13 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
-                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountCredentialsEntity.setExternalId(randomUuid());
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 
@@ -93,9 +96,13 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
-                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 
@@ -116,15 +123,13 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
                 .withCredentials(credMap)
                 .build());
 
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
-                .aGatewayAccountCredentialsEntity()
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountCredentialsEntityOne = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider("test provider")
                 .withCredentials(credMap)
                 .build();
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntityTwo = GatewayAccountCredentialsEntityFixture
-                .aGatewayAccountCredentialsEntity()
+        var gatewayAccountCredentialsEntityTwo = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider("test provider")
                 .build();
@@ -144,9 +149,13 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
-                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, "stripe", Map.of(), ACTIVE);
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 

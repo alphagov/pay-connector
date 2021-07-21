@@ -77,6 +77,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
@@ -572,16 +574,25 @@ public class WorldpayPaymentProviderTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        return aGatewayAccountEntity()
+        var gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("worldpay")
                 .withRequires3ds(false)
+                .withType(TEST)
+                .build();
+
+        var creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
                         CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                         CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
-                ))
-                .withType(TEST)
+                        CREDENTIALS_PASSWORD, "password"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
                 .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
+
+        return gatewayAccountEntity;
     }
 }

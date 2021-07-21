@@ -73,7 +73,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         createAccountRecordWithCards();
 
         String paymentProvider = "test provider";
-        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>(), TEST);
+        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, TEST);
 
         account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
@@ -92,8 +92,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.isSendPayerIpAddressToGateway(), is(false));
         assertThat(account.isSendPayerEmailToGateway(), is(false));
         assertThat(account.isProviderSwitchEnabled(), is(false));
-
-        databaseTestHelper.getAccountCredentials(account.getId());
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(account.getId());
 
@@ -126,8 +124,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertTrue(gatewayAccountOpt.isPresent());
         GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
-        Map<String, String> credentialsMap = gatewayAccount.getCredentials();
-        assertThat(credentialsMap.size(), is(0));
         assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
@@ -161,8 +157,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertTrue(gatewayAccountOpt.isPresent());
         GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
-        Map<String, String> credentialsMap = gatewayAccount.getCredentials();
-        assertThat(credentialsMap.size(), is(0));
         assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
@@ -209,62 +203,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldUpdateEmptyCredentials() {
-        String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
-
-        assertThat(gatewayAccount.getCredentials(), is(emptyMap()));
-
-        gatewayAccount.setCredentials(new HashMap<String, String>() {{
-            put("username", "Username");
-            put("password", "Password");
-        }});
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        Optional<GatewayAccountEntity> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(serviceAccountMaybe.isPresent(), is(true));
-        Map<String, String> credentialsMap = serviceAccountMaybe.get().getCredentials();
-        assertThat(credentialsMap, hasEntry("username", "Username"));
-        assertThat(credentialsMap, hasEntry("password", "Password"));
-    }
-
-    @Test
-    public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() {
-        String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        String aUserNameWithSpecialChars = "someone@some{[]where&^%>?\\/";
-        String aPasswordWithSpecialChars = "56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w";
-        var credMap = Map.of("username", aUserNameWithSpecialChars, "password", aPasswordWithSpecialChars);
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
-        gatewayAccount.setCredentials(credMap);
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        Optional<GatewayAccountEntity> serviceAccountMaybe = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(serviceAccountMaybe.isPresent(), is(true));
-        Map<String, String> credentialsMap = serviceAccountMaybe.get().getCredentials();
-        assertThat(credentialsMap, hasEntry("username", aUserNameWithSpecialChars));
-        assertThat(credentialsMap, hasEntry("password", aPasswordWithSpecialChars));
-    }
-
-    @Test
     public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
         String paymentProvider = "test provider";
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
@@ -278,28 +216,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertTrue(gatewayAccountOpt.isPresent());
         GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
         assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
-        assertThat(gatewayAccount.getCredentials().size(), is(0));
-    }
-
-    @Test
-    public void findById_shouldGetCredentialsWhenFindingGatewayAccountById() {
-        String paymentProvider = "test provider";
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "Username");
-        credentials.put("password", "Password");
-
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withCredentials(credentials)
-                .build());
-
-        Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-
-        assertThat(gatewayAccount.isPresent(), is(true));
-        Map<String, String> accountCredentials = gatewayAccount.get().getCredentials();
-        assertThat(accountCredentials, hasEntry("username", "Username"));
-        assertThat(accountCredentials, hasEntry("password", "Password"));
     }
 
     @Test

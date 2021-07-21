@@ -167,7 +167,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 .withAccountId(gatewayAccountId)
                 .withPaymentGateway(paymentProvider.getName())
                 .build());
-        
+
         if (credentials != null) {
             databaseTestHelper.insertWorldpay3dsFlexCredential(
                     Long.valueOf(gatewayAccountId),

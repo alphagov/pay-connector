@@ -8,7 +8,7 @@ import java.util.Collections;
 public class GatewayAccountUtil {
 
     public static void setUpGatewayAccount(DatabaseTestHelper dbHelper, long accountId) {
-        if (dbHelper.getAccountCredentials(accountId) == null) {
+        if (dbHelper.getGatewayAccount(accountId) == null) {
             DatabaseFixtures
                     .withDatabaseTestHelper(dbHelper)
                     .aTestAccount()
@@ -18,7 +18,6 @@ public class GatewayAccountUtil {
                     .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
                     .withServiceName("a cool service")
                     .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
-                    .withDefaultCredentials()
                     .insert();
         } else {
             dbHelper.deleteAllChargesOnAccount(accountId);

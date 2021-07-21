@@ -20,6 +20,7 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
@@ -35,9 +36,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
@@ -250,12 +254,20 @@ public class StripeCaptureHandlerTest {
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {
-        return aGatewayAccountEntity()
+        var gatewayAccountEntity =  aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("stripe")
                 .withRequires3ds(false)
                 .withType(TEST)
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
                 .build();
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+
+        return gatewayAccountEntity;
     }
 }

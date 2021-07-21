@@ -33,7 +33,6 @@ public class GatewayAccountResourceDTOTest {
         entity.setCorporatePrepaidDebitCardSurchargeAmount(500L);
         entity.setAllowApplePay(false);
         entity.setAllowGooglePay(true);
-        entity.setCredentials(Collections.emptyMap());
         entity.setEmailCollectionMode(EmailCollectionMode.MANDATORY);
         entity.setRequires3ds(true);
         entity.setAllowZeroAmount(true);

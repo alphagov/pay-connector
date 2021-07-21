@@ -25,8 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +55,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 
 public class ChargeDaoIT extends DaoITestBase {
@@ -81,11 +80,15 @@ public class ChargeDaoIT extends DaoITestBase {
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
 
-        gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
 
-        gatewayAccountCredentialsEntity = new GatewayAccountCredentialsEntity(gatewayAccount,
-                defaultTestAccount.getPaymentProvider(), Map.of(), ACTIVE);
+        gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().get(0).getId());
     }
 
@@ -120,7 +123,7 @@ public class ChargeDaoIT extends DaoITestBase {
     public void invalidSizeOfReference() {
         expectedEx.expect(RuntimeException.class);
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
         chargeDao.persist(aValidChargeEntity().withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255))).build());
     }
@@ -363,7 +366,6 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(gatewayAccount, is(notNullValue()));
         assertThat(gatewayAccount.getId(), is(defaultTestAccount.getAccountId()));
         assertThat(gatewayAccount.getGatewayName(), is(defaultTestAccount.getPaymentProvider()));
-        assertThat(gatewayAccount.getCredentials(), is(Collections.EMPTY_MAP));
     }
 
     @Test

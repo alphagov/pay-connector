@@ -20,6 +20,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.util.XPathUtils;
 
@@ -27,6 +28,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,6 +43,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(JUnitParamsRunner.class)
@@ -99,16 +103,25 @@ public class SmartpayCaptureHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        return aGatewayAccountEntity()
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("smartpay")
+                .withType(TEST)
+                .build();
+
+        GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
                         "username", "theUsername",
                         "password", "thePassword",
-                        "merchant_id", "theMerchantCode"
-                ))
-                .withType(TEST)
+                        "merchant_id", "theMerchantCode"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(SMARTPAY.getName())
+                .withState(ACTIVE)
                 .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
+
+        return gatewayAccountEntity;
     }
 
     private class TestResponse extends GatewayClient.Response {

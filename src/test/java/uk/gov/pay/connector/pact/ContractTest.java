@@ -448,7 +448,7 @@ public class ContractTest {
                 .withExternalId("abc123")
                 .withPaymentGateway(WORLDPAY.getName())
                 .withAnalyticsId("an-analytics-id")
-                .withDefaultCredentials()
+                .withDefaultCredentials(WORLDPAY.getName())
                 .build());
         dbHelper.insertWorldpay3dsFlexCredential(
                 Long.valueOf(worldpayGatewayAccountId),
@@ -467,7 +467,7 @@ public class ContractTest {
                 .withExternalId("abc123")
                 .withPaymentGateway(SMARTPAY.getName())
                 .withAnalyticsId("an-analytics-id")
-                .withDefaultCredentials()
+                .withDefaultCredentials(SMARTPAY.getName())
                 .build());
         dbHelper.addNotificationCredentialsFor(333L, "notification-username", "notification-password");
         dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
@@ -493,7 +493,7 @@ public class ContractTest {
         worldpayMockClient.mockCredentialsValidationValid();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
-                .withDefaultCredentials()
+                .withDefaultCredentials(WORLDPAY.getName())
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }

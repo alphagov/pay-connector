@@ -50,7 +50,6 @@ public class GooglePayForWorldpayTest {
     @Test
     public void sendPaymentToWorldpay() throws Exception {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
-        gatewayAccount.setCredentials(ImmutableMap.of(CREDENTIALS_USERNAME, worldpayUsername, CREDENTIALS_PASSWORD, worldpayPassword));
         gatewayAccount.setType(GatewayAccountType.TEST);
 
         String payload = load("templates/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml")
@@ -69,7 +68,7 @@ public class GooglePayForWorldpayTest {
                 WORLDPAY,
                 "test",
                 gatewayOrder, 
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials(WORLDPAY.getName())));
         assertThat(response.getStatus(), is(HttpStatus.SC_OK));
         String entity = response.getEntity();
         System.out.println(entity);

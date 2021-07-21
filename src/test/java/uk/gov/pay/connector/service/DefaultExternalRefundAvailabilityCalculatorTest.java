@@ -141,14 +141,14 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
     }
 
     private Charge chargeEntity(ChargeStatus status) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
     private Charge chargeEntity(ChargeStatus status, long amount) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );

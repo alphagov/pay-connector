@@ -214,7 +214,7 @@ public class ChargeServiceTest {
                 .withLastFourDigits("1234")
                 .withFirstSixDigits("123456");
 
-        gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        gatewayAccount = new GatewayAccountEntity("sandbox", TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
 
         gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture

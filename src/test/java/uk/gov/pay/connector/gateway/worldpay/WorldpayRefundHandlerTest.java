@@ -18,6 +18,7 @@ import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +34,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayRefundHandlerTest {
@@ -92,16 +95,25 @@ class WorldpayRefundHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        return aGatewayAccountEntity()
+        var gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withRequires3ds(false)
+                .withType(TEST)
+                .build();
+
+        var creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
                         CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                         CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
-                ))
-                .withType(TEST)
+                        CREDENTIALS_PASSWORD, "password"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
                 .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
+
+        return gatewayAccountEntity;
     }
 }

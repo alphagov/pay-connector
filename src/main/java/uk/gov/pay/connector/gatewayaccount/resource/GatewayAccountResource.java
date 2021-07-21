@@ -131,7 +131,6 @@ public class GatewayAccountResource {
                 .getGatewayAccountByExternal(externalId)
                 .map(gatewayAccount ->
                 {
-                    gatewayAccount.getCredentials().remove("password");
                     gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
                     return Response.ok(gatewayAccount).build();
                 })
@@ -173,7 +172,6 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount ->
                 {
-                    gatewayAccount.getCredentials().remove("password");
                     gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
                     return Response.ok(gatewayAccount).build();
                 })

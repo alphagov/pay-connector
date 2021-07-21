@@ -233,12 +233,6 @@ public abstract class BaseEpdqPaymentProviderIT {
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("epdq");
         gatewayAccount.setRequires3ds(false);
-        gatewayAccount.setCredentials(Map.of(
-                CREDENTIALS_MERCHANT_ID, "merchant-id",
-                CREDENTIALS_USERNAME, "username",
-                CREDENTIALS_PASSWORD, "password",
-                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
-        ));
         gatewayAccount.setType(TEST);
 
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()

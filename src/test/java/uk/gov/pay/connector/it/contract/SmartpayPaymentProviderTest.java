@@ -33,6 +33,8 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -40,6 +42,7 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.not;
@@ -55,7 +58,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -91,7 +97,6 @@ public class SmartpayPaymentProviderTest {
         gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(123L);
         gatewayAccountEntity.setGatewayName("smartpay");
-        gatewayAccountEntity.setCredentials(validSmartPayCredentials);
         gatewayAccountEntity.setType(TEST);
 
         chargeEntity = aValidChargeEntity()
@@ -208,11 +213,17 @@ public class SmartpayPaymentProviderTest {
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
         accountWithInvalidCredentials.setId(11L);
         accountWithInvalidCredentials.setGatewayName("smartpay");
-        accountWithInvalidCredentials.setCredentials(ImmutableMap.of(
-                "merchant_id", "MerchantAccount",
-                "username", "wrong-username",
-                "password", "wrong-password"
-        ));
+        accountWithInvalidCredentials.setGatewayAccountCredentials(
+                        List.of(aGatewayAccountCredentialsEntity()
+                                .withCredentials(Map.of(
+                                        "merchant_id", "MerchantAccount",
+                                        "username", "wrong-username",
+                                        "password", "wrong-password"))
+                                .withGatewayAccountEntity(accountWithInvalidCredentials)
+                                .withPaymentProvider(SMARTPAY.getName())
+                                .withState(ACTIVE)
+                                .build()));
+
         accountWithInvalidCredentials.setType(TEST);
 
         chargeEntity.setGatewayAccount(accountWithInvalidCredentials);
@@ -296,7 +307,7 @@ public class SmartpayPaymentProviderTest {
         when(gatewayConfig.getUrls()).thenReturn(Map.of(TEST.toString(), url));
 
         ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
-        when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
+        when(configuration.getGatewayConfigFor(SMARTPAY)).thenReturn(gatewayConfig);
 
         return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mockEnvironment);
     }

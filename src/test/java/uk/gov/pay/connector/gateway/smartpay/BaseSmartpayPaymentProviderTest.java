@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -20,6 +21,8 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -28,6 +31,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 public abstract class BaseSmartpayPaymentProviderTest {
 
@@ -65,13 +70,19 @@ public abstract class BaseSmartpayPaymentProviderTest {
                 .aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(SMARTPAY.getName())
-                .withCredentials(ImmutableMap.of(
-                        "username", "theUsername",
-                        "password", "thePassword",
-                        "merchant_id", "theMerchantCode"
-                ))
                 .withType(TEST)
                 .build();
+        GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        "username", "theUsername",
+                        "password", "thePassword",
+                        "merchant_id", "theMerchantCode"))
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider(SMARTPAY.getName())
+                .withState(ACTIVE)
+                .build();
+
+        gatewayAccount.setGatewayAccountCredentials(List.of(creds));
 
         return gatewayAccount;
     }

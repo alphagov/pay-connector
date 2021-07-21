@@ -34,8 +34,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundHandler;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -63,8 +61,11 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
@@ -111,15 +112,22 @@ public class WorldpayPaymentProviderTest {
         validGatewayAccount.setId(1234L);
         validGatewayAccount.setGatewayName("worldpay");
         validGatewayAccount.setType(TEST);
-        validGatewayAccount.setGatewayAccountCredentials(List.of(new GatewayAccountCredentialsEntity(validGatewayAccount,
-                "worldpay", validCredentials, GatewayAccountCredentialState.ACTIVE)));
-
+        validGatewayAccount.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
+                .withCredentials(validCredentials)
+                .withGatewayAccountEntity(validGatewayAccount)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build()));
         validGatewayAccountFor3ds = new GatewayAccountEntity();
         validGatewayAccountFor3ds.setId(1234L);
         validGatewayAccountFor3ds.setGatewayName("worldpay");
         validGatewayAccountFor3ds.setType(TEST);
-        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(new GatewayAccountCredentialsEntity(validGatewayAccountFor3ds,
-                "worldpay", validCredentials3ds, GatewayAccountCredentialState.ACTIVE)));
+        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
+                .withCredentials(validCredentials3ds)
+                .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build()));
 
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
@@ -388,9 +396,14 @@ public class WorldpayPaymentProviderTest {
                 "password", "non-existent-password"
         );
 
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, credentials, TEST);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(new GatewayAccountCredentialsEntity(gatewayAccountEntity, "worldpay",
-                credentials, GatewayAccountCredentialState.ACTIVE)));
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, TEST);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
+                .withCredentials(credentials)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build()));
+
         gatewayAccountEntity.setId(gatewayAccountId);
 
         ChargeEntity charge = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();

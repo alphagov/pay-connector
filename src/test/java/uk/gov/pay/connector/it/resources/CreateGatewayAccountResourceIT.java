@@ -97,7 +97,7 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
                 .getString("gateway_account_id");
         Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
         assertThat(gatewayAccount.isPresent(), is(true));
-        assertThat(gatewayAccount.get().getCredentials().get("stripe_account_id"), is("abc"));
+        assertThat(gatewayAccount.get().getCredentials("stripe").get("stripe_account_id"), is("abc"));
 
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
         assertThat(gatewayAccountCredentialsList.size(), is(1));

@@ -8,8 +8,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,6 +25,8 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_PAYMENT_REQUESTED;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_REFUND;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
 class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
@@ -135,7 +140,13 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
     @Test
     void shouldNotUpdateIfShaPhraseExpectedIsIncorrect() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
-        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"));
+        GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
+                .withCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-phrase-out-expected"))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(EPDQ.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);

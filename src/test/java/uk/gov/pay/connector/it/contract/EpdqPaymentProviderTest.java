@@ -367,7 +367,6 @@ public class EpdqPaymentProviderTest {
             gatewayAccountEntity = new GatewayAccountEntity();
             gatewayAccountEntity.setId(123L);
             gatewayAccountEntity.setGatewayName("epdq");
-            gatewayAccountEntity.setCredentials(validEpdqCredentials);
             gatewayAccountEntity.setType(TEST);
             gatewayAccountEntity.setRequires3ds(require3ds);
             

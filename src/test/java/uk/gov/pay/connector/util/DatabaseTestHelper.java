@@ -44,14 +44,14 @@ public class DatabaseTestHelper {
 
     public void addGatewayAccount(AddGatewayAccountParams params) {
         jdbi.withHandle(h ->
-                h.createUpdate("INSERT INTO gateway_accounts (id, external_id, payment_provider, credentials, " +
+                h.createUpdate("INSERT INTO gateway_accounts (id, external_id, payment_provider, " +
                         "service_name, type, description, analytics_id, email_collection_mode, " +
                         "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                         "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
                         "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
                         "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
                         "allow_telephone_payment_notifications, provider_switch_enabled) " +
-                        "VALUES (:id, :external_id, :payment_provider, :credentials, :service_name, :type, " +
+                        "VALUES (:id, :external_id, :payment_provider, :service_name, :type, " +
                         ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                         ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                         ":corporate_prepaid_credit_card_surcharge_amount, " +
@@ -62,7 +62,6 @@ public class DatabaseTestHelper {
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("payment_provider", params.getPaymentGateway())
-                        .bindBySqlType("credentials", buildCredentialsJson(params.getCredentials().get(0)), OTHER)
                         .bind("service_name", params.getServiceName())
                         .bind("type", params.getType())
                         .bind("description", params.getDescription())
@@ -443,18 +442,6 @@ public class DatabaseTestHelper {
         return getChargeTokenId(Long.valueOf(chargeId));
     }
 
-    public Map<String, String> getAccountCredentials(Long gatewayAccountId) {
-
-        String jsonString = jdbi.withHandle(h ->
-                h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
-                        .bind("gatewayAccountId", gatewayAccountId)
-                        .mapTo(String.class)
-                        .findFirst()
-                        .orElse(null)
-        );
-        return new Gson().fromJson(jsonString, Map.class);
-    }
-
     public String getAccountServiceName(Long gatewayAccountId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
@@ -574,12 +561,7 @@ public class DatabaseTestHelper {
             PGobject pgCredentials = new PGobject();
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
-            jdbi.withHandle(handle ->
-                    handle.createUpdate("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
-                            .bind("gatewayAccountId", accountId)
-                            .bindBySqlType("credentials", pgCredentials, OTHER)
-                            .execute()
-            );
+
             jdbi.withHandle(handle ->
                     handle.createUpdate("UPDATE gateway_account_credentials set credentials=:credentials WHERE gateway_account_id=:gatewayAccountId")
                             .bind("gatewayAccountId", accountId)
@@ -931,7 +913,8 @@ public class DatabaseTestHelper {
                 handle.createQuery("SELECT * FROM gateway_accounts WHERE id = :accountId")
                         .bind("accountId", accountId)
                         .mapToMap()
-                        .first());
+                        .findFirst()
+                        .orElse(null));
     }
 
     public List<Map<String, Object>> getGatewayAccountCredentialsForAccount(long accountId) {

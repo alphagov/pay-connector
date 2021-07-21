@@ -33,6 +33,7 @@ class GatewayAccountEntityTest {
         gatewayAccountEntity = GatewayAccountEntityFixture
                 .aGatewayAccountEntity()
                 .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
     }
 
     @Test

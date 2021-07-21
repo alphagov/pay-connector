@@ -180,7 +180,6 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setId(id);
         gatewayAccountEntity.setGatewayName(gatewayName);
         gatewayAccountEntity.setType(type);
-        gatewayAccountEntity.setCredentials(credentials);
         gatewayAccountEntity.setServiceName(serviceName);
         gatewayAccountEntity.setDescription(description);
         gatewayAccountEntity.setAnalyticsId(analyticsId);
@@ -202,7 +201,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
         gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
 
-        if (credentials != null && gatewayAccountCredentialsEntities != null
+        if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withPaymentProvider(gatewayName)
