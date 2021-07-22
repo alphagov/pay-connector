@@ -124,7 +124,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreCardDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity(SANDBOX.getName(), GatewayAccountType.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
@@ -151,7 +151,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
     @Test
     public void persist_shouldStoreNullCardTypeDetails() {
-        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
+        GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()

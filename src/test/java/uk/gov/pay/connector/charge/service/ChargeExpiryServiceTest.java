@@ -119,7 +119,6 @@ public class ChargeExpiryServiceTest {
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
         gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccount.setGatewayName("worldpay");
     }
 
     private ChargeEntity mockExpiredChargeEntity() {

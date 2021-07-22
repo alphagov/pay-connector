@@ -80,7 +80,7 @@ public class ChargeDaoIT extends DaoITestBase {
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
 
-        gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), TEST);
+        gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
 
         gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
@@ -123,7 +123,7 @@ public class ChargeDaoIT extends DaoITestBase {
     public void invalidSizeOfReference() {
         expectedEx.expect(RuntimeException.class);
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
         chargeDao.persist(aValidChargeEntity().withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255))).build());
     }

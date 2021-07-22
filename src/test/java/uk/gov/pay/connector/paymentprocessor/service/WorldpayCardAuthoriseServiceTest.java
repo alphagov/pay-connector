@@ -97,7 +97,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         
         charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         charge.setPaymentProvider("worldpay");
-        charge.getGatewayAccount().setGatewayName("worldpay");
         charge.getGatewayAccount().setRequires3ds(true);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,

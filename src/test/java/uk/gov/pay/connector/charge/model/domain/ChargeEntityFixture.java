@@ -23,7 +23,6 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -68,7 +67,7 @@ public class ChargeEntityFixture {
     }
 
     public static GatewayAccountEntity defaultGatewayAccountEntity() {
-        GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", TEST);
+        GatewayAccountEntity accountEntity = new GatewayAccountEntity(TEST);
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");
 

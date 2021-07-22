@@ -59,7 +59,6 @@ public abstract class CardServiceTest {
 
     protected ChargeEntity createNewChargeWith(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccountEntity.setGatewayName(provider);
         ChargeEntity entity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)

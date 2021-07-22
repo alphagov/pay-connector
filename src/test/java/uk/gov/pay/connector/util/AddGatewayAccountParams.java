@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.util;
 
-import liquibase.pro.packaged.S;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +36,6 @@ public class AddGatewayAccountParams {
 
     private String accountId;
     private String externalId;
-    private String paymentGateway;
     private List<AddGatewayAccountCredentialsParams> credentials;
     private String serviceName;
     private GatewayAccountType type;
@@ -69,10 +66,6 @@ public class AddGatewayAccountParams {
 
     public String getExternalId() {
         return externalId;
-    }
-
-    public String getPaymentGateway() {
-        return paymentGateway;
     }
 
     public List<AddGatewayAccountCredentialsParams> getCredentials() {
@@ -149,7 +142,7 @@ public class AddGatewayAccountParams {
 
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
-        private String paymentGateway = "provider";
+        private String paymentGateway = "sandbox";
         private Map<String, String> credentialsMap = Map.of();
         private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service name";
@@ -316,7 +309,6 @@ public class AddGatewayAccountParams {
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
             addGatewayAccountParams.accountId = this.accountId;
             addGatewayAccountParams.externalId = this.externalId;
-            addGatewayAccountParams.paymentGateway = this.paymentGateway;
             addGatewayAccountParams.corporatePrepaidDebitCardSurchargeAmount = this.corporatePrepaidDebitCardSurchargeAmount;
             addGatewayAccountParams.analyticsId = this.analyticsId;
             addGatewayAccountParams.corporatePrepaidCreditCardSurchargeAmount = this.corporatePrepaidCreditCardSurchargeAmount;

@@ -110,7 +110,6 @@ public class WorldpayPaymentProviderTest {
 
         validGatewayAccount = new GatewayAccountEntity();
         validGatewayAccount.setId(1234L);
-        validGatewayAccount.setGatewayName("worldpay");
         validGatewayAccount.setType(TEST);
         validGatewayAccount.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
                 .withCredentials(validCredentials)
@@ -120,7 +119,6 @@ public class WorldpayPaymentProviderTest {
                 .build()));
         validGatewayAccountFor3ds = new GatewayAccountEntity();
         validGatewayAccountFor3ds.setId(1234L);
-        validGatewayAccountFor3ds.setGatewayName("worldpay");
         validGatewayAccountFor3ds.setType(TEST);
         validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
                 .withCredentials(validCredentials3ds)
@@ -389,14 +387,13 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         Long gatewayAccountId = 112233L;
-        String providerName = "worldpay";
         var credentials = Map.of(
                 "merchant_id", "non-existent-id",
                 "username", "non-existent-username",
                 "password", "non-existent-password"
         );
 
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(TEST);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
                 .withCredentials(credentials)
                 .withGatewayAccountEntity(gatewayAccountEntity)

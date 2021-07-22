@@ -178,7 +178,6 @@ public final class GatewayAccountEntityFixture {
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
-        gatewayAccountEntity.setGatewayName(gatewayName);
         gatewayAccountEntity.setType(type);
         gatewayAccountEntity.setServiceName(serviceName);
         gatewayAccountEntity.setDescription(description);

@@ -9,7 +9,6 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Map;
 
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -20,7 +19,6 @@ public class GatewayAccountObjectConverter {
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
-                gatewayAccountRequest.getPaymentProvider(), 
                 GatewayAccountType.fromString(gatewayAccountRequest.getProviderAccountType()));
 
         gatewayAccountEntity.setExternalId(randomUuid());

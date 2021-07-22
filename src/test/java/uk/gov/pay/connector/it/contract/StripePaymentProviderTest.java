@@ -8,7 +8,6 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -227,7 +226,6 @@ public class StripePaymentProviderTest {
 
     private ChargeEntity getCharge() {
         gatewayAccountEntity.setId(123L);
-        gatewayAccountEntity.setGatewayName(PaymentGatewayName.STRIPE.getName());
 
         String stripeAccountId = "<replace me>";
 

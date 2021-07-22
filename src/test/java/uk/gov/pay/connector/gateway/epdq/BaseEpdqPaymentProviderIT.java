@@ -231,7 +231,6 @@ public abstract class BaseEpdqPaymentProviderIT {
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
-        gatewayAccount.setGatewayName("epdq");
         gatewayAccount.setRequires3ds(false);
         gatewayAccount.setType(TEST);
 
