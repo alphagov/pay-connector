@@ -197,7 +197,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                                 getId()))));
     }
 
-    @JsonIgnore
     public Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential() {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
         if (getGatewayAccountCredentials().size() == 1) {
