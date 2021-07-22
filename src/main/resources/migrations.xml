@@ -1688,4 +1688,8 @@
                                tableName="gateway_accounts"/>
     </changeSet>
 
+    <changeSet id="drop payment_provider from gateway_accounts table" runInTransaction="false" author="">
+        <dropColumn tableName="gateway_accounts" columnName="payment_provider"/>
+    </changeSet>
+
 </databaseChangeLog>
