@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -102,7 +103,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + TOKEN_EXPIRY_DURATION_SECONDS;
         var paymentCreationInstant = Instant.ofEpochSecond(paymentCreationTimeEpochSeconds19August2029);
 
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationInstant);
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationInstant, WORLDPAY.getName());
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
@@ -194,7 +195,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
                 "following credential is unavailable: issuer");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now(), WORLDPAY.getName());
     }
 
     @Test
@@ -207,7 +208,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "Cannot generate Worldpay 3ds Flex JWT for account 1 because the following credential is " +
                         "unavailable: organisational_unit_id");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now(), WORLDPAY.getName());
     }
 
     @Test
@@ -219,7 +220,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
                 "following credential is unavailable: jwt_mac_key");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now(), WORLDPAY.getName());
     }
 
     @Test
@@ -231,7 +232,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +
                 "Payment Provider is not Worldpay.");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, Instant.now(), SANDBOX.getName());
     }
 
     @Test
@@ -305,6 +306,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 .build();
         addGatewayAccountCredentialsEntity(gatewayAccountEntity, SMARTPAY.getName());
         chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
+        chargeEntity.setPaymentProvider(SANDBOX.getName());
 
         expectedException.expect(Worldpay3dsFlexJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +
@@ -327,6 +329,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
                 .withAuth3dsDetailsEntity(auth3DsRequiredEntity)
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
                 .build();
     }
 

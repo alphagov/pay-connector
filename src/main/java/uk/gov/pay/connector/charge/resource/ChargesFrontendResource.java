@@ -85,7 +85,8 @@ public class ChargesFrontendResource {
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
         var worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials()
                 .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId()));
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, chargeEntity.getCreatedDate());
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, 
+                chargeEntity.getCreatedDate(), chargeEntity.getPaymentProvider());
 
         return Response.ok().entity(Map.of("jwt", token)).build();
     }
