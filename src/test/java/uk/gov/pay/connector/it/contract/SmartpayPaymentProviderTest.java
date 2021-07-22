@@ -33,8 +33,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -96,7 +94,6 @@ public class SmartpayPaymentProviderTest {
                 "password", password);
         gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(123L);
-        gatewayAccountEntity.setGatewayName("smartpay");
         gatewayAccountEntity.setType(TEST);
 
         chargeEntity = aValidChargeEntity()
@@ -212,7 +209,6 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
         accountWithInvalidCredentials.setId(11L);
-        accountWithInvalidCredentials.setGatewayName("smartpay");
         accountWithInvalidCredentials.setGatewayAccountCredentials(
                         List.of(aGatewayAccountCredentialsEntity()
                                 .withCredentials(Map.of(

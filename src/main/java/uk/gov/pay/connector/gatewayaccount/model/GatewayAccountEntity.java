@@ -69,9 +69,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "external_id")
     private String externalId;
 
-    @Column(name = "payment_provider")
-    private String gatewayName;
-
     @Column(name = "type", nullable = false)
     @Enumerated(EnumType.STRING)
     private GatewayAccountType type;
@@ -170,8 +167,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public GatewayAccountEntity() {
     }
 
-    public GatewayAccountEntity(String gatewayName, GatewayAccountType type) {
-        this.gatewayName = gatewayName;
+    public GatewayAccountEntity(GatewayAccountType type) {
         this.type = type;
     }
 
@@ -413,10 +409,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setAnalyticsId(String analyticsId) {
         this.analyticsId = analyticsId;
-    }
-
-    public void setGatewayName(String gatewayName) {
-        this.gatewayName = gatewayName;
     }
 
     public void setServiceName(String serviceName) {

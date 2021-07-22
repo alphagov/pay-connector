@@ -134,14 +134,14 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     private static Charge chargeEntity(ChargeStatus status) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
     private static Charge chargeEntity(ChargeStatus status, long amount) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -141,14 +140,14 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
     }
 
     private Charge chargeEntity(ChargeStatus status) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
         );
     }
 
     private Charge chargeEntity(ChargeStatus status, long amount) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(GatewayAccountType.TEST);
         return Charge.from(
                 aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
         );

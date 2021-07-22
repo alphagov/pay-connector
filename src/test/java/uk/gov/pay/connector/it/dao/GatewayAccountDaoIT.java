@@ -14,12 +14,10 @@ import uk.gov.pay.connector.usernotification.model.domain.NotificationCredential
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.Collections.emptyMap;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -73,7 +71,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         createAccountRecordWithCards();
 
         String paymentProvider = "test provider";
-        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, TEST);
+        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
 
         account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));

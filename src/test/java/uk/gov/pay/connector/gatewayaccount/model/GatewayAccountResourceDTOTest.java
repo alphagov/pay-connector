@@ -6,7 +6,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ public class GatewayAccountResourceDTOTest {
         GatewayAccountEntity entity = new GatewayAccountEntity();
         entity.setId(100L);
         entity.setExternalId("some-external-id");
-        entity.setGatewayName("testGatewayName");
         entity.setType(GatewayAccountType.fromString("test"));
         entity.setDescription("aDescription");
         entity.setServiceName("aServiceName");
