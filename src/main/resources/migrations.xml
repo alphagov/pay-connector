@@ -1683,4 +1683,9 @@
         <dropColumn tableName="gateway_accounts" columnName="credentials"/>
     </changeSet>
 
+    <changeSet id="drop not null constraint on payment_provider on table gateway_accounts" author="">
+        <dropNotNullConstraint columnName="payment_provider"
+                               tableName="gateway_accounts"/>
+    </changeSet>
+
 </databaseChangeLog>
