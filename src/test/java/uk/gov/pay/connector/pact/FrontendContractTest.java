@@ -104,7 +104,6 @@ public class FrontendContractTest {
         dbHelper.addCharge(anAddChargeParams()
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentProvider("worldpay")
                 .build());
     }
 
