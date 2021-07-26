@@ -93,6 +93,12 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("worldpay_3ds_flex")
     private Worldpay3dsFlexCredentials worldpay3dsFlexCredentials;
 
+    @JsonProperty("send_payer_ip_address_to_gateway")
+    private boolean sendPayerIpAddressToGateway;
+
+    @JsonProperty("send_payer_email_to_gateway")
+    private boolean sendPayerEmailToGateway;
+
     public GatewayAccountResourceDTO() {
     }
 
@@ -122,6 +128,8 @@ public class GatewayAccountResourceDTO {
         this.allowTelephonePaymentNotifications = gatewayAccountEntity.isAllowTelephonePaymentNotifications();
         this.worldpay3dsFlexCredentials = gatewayAccountEntity.getWorldpay3dsFlexCredentials().orElse(null);
         this.providerSwitchEnabled = gatewayAccountEntity.isProviderSwitchEnabled();
+        this.sendPayerEmailToGateway = gatewayAccountEntity.isSendPayerEmailToGateway();
+        this.sendPayerIpAddressToGateway = gatewayAccountEntity.isSendPayerIpAddressToGateway();
     }
 
     public long getAccountId() {
@@ -226,6 +234,14 @@ public class GatewayAccountResourceDTO {
 
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
+    }
+
+    public boolean isSendPayerIpAddressToGateway() {
+        return sendPayerIpAddressToGateway;
+    }
+
+    public boolean isSendPayerEmailToGateway() {
+        return sendPayerEmailToGateway;
     }
 
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {

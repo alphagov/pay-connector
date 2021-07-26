@@ -183,6 +183,8 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("allow_google_pay", is(false))
                 .body("allow_apple_pay", is(false))
+                .body("send_payer_ip_address_to_gateway", is(false))
+                .body("send_payer_email_to_gateway", is(false))
                 .body("allow_zero_amount", is(false))
                 .body("integration_version_3ds", is(2))
                 .body("allow_telephone_payment_notifications", is(true))
