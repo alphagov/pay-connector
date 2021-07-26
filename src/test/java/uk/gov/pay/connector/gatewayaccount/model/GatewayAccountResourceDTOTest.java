@@ -41,6 +41,8 @@ public class GatewayAccountResourceDTOTest {
         entity.setMotoMaskCardSecurityCodeInput(true);
         entity.setAllowTelephonePaymentNotifications(true);
         entity.setProviderSwitchEnabled(true);
+        entity.setSendPayerEmailToGateway(true);
+        entity.setSendPayerIpAddressToGateway(true);
         entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         entity.setGatewayAccountCredentials(List.of(
                 GatewayAccountCredentialsEntityFixture.
@@ -81,5 +83,7 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.isAllowTelephonePaymentNotifications(), is(entity.isAllowTelephonePaymentNotifications()));
         assertThat(dto.getWorldpay3dsFlexCredentials(), is(entity.getWorldpay3dsFlexCredentials()));
         assertThat(dto.isProviderSwitchEnabled(), is(entity.isProviderSwitchEnabled()));
+        assertThat(dto.isSendPayerIpAddressToGateway(), is(true));
+        assertThat(dto.isSendPayerEmailToGateway(), is(true));
     }
 }
