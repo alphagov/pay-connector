@@ -44,6 +44,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_PAID;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.REFUND_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
@@ -78,6 +79,7 @@ public class StripeNotificationService {
     private final ObjectMapper objectMapper;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
+    private final StripeRefundUpdatedHandler stripeRefundUpdatedHandler;
     private final PayoutReconcileQueue payoutReconcileQueue;
     private final PayoutEmitterService payoutEmitterService;
     private final IpAddressMatcher ipAddressMatcher;
@@ -91,6 +93,7 @@ public class StripeNotificationService {
                                      ChargeService chargeService,
                                      StripeGatewayConfig stripeGatewayConfig,
                                      StripeAccountUpdatedHandler stripeAccountUpdatedHandler,
+                                     StripeRefundUpdatedHandler stripeRefundUpdatedHandler,
                                      PayoutReconcileQueue payoutReconcileQueue,
                                      PayoutEmitterService payoutEmitterService,
                                      IpAddressMatcher ipAddressMatcher,
@@ -99,6 +102,7 @@ public class StripeNotificationService {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
+        this.stripeRefundUpdatedHandler = stripeRefundUpdatedHandler;
         this.payoutReconcileQueue = payoutReconcileQueue;
         this.objectMapper = objectMapper;
         this.stripeGatewayConfig = stripeGatewayConfig;
@@ -135,12 +139,10 @@ public class StripeNotificationService {
             stripeAccountUpdatedHandler.process(notification);
         } else if (isAPayoutNotification(notification)) {
             processPayoutNotification(notification);
+        } else if (isARefundUpdatedNotification(notification)) {
+            stripeRefundUpdatedHandler.process(notification);
         }
         return true;
-    }
-
-    private boolean isAnAccountUpdatedNotification(StripeNotification notification) {
-        return byType(notification.getType()) == ACCOUNT_UPDATED;
     }
 
     private void processPayoutNotification(StripeNotification notification) {
@@ -314,6 +316,14 @@ public class StripeNotificationService {
 
     private boolean isAPayoutNotification(StripeNotification notification) {
         return payoutTypes.contains(byType(notification.getType()));
+    }
+
+    private boolean isAnAccountUpdatedNotification(StripeNotification notification) {
+        return byType(notification.getType()) == ACCOUNT_UPDATED;
+    }
+    
+    private boolean isARefundUpdatedNotification(StripeNotification notification) {
+        return byType(notification.getType()) == REFUND_UPDATED;
     }
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {

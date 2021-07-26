@@ -1,0 +1,31 @@
+{
+  "created": 1326853478,
+  "livemode": false,
+  "id": "evt_00000000000000",
+  "type": "charge.refund.updated",
+  "object": "event",
+  "request": null,
+  "pending_webhooks": 1,
+  "api_version": "2019-05-16",
+  "data": {
+    "object": {
+      "id": "re_123456",
+      "object": "refund",
+      "payment_intent": "pi_123456",
+      "status": "failed",
+      "amount": 1000,
+      "balance_transaction": "txn_123456",
+      "charge": "ch_123456",
+      "created": 1627297208,
+      "currency": "gbp",
+      "failure_balance_transaction": "txn_123456",
+      "failure_reason": "expired_or_canceled_card",
+      "metadata": {
+      },
+      "reason": null,
+      "receipt_number": null,
+      "source_transfer_reversal": null,
+      "transfer_reversal": null
+    }
+  }
+}

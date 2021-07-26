@@ -70,6 +70,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
@@ -102,7 +103,8 @@ class StripeNotificationServiceTest {
     @Captor
     private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
-    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(objectMapper);
+    private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(objectMapper);
+    private final StripeRefundUpdatedHandler stripeRefundUpdatedHandler = new StripeRefundUpdatedHandler(objectMapper);
 
     private final String externalId = "external-id";
     private final String sourceId = "source-id";
@@ -116,6 +118,7 @@ class StripeNotificationServiceTest {
                 mockChargeService,
                 stripeGatewayConfig,
                 stripeAccountUpdatedHandler,
+                stripeRefundUpdatedHandler,
                 mockPayoutReconcileQueue,
                 mockPayoutEmitterService,
                 new IpAddressMatcher(new InetAddressValidator()),
@@ -157,6 +160,23 @@ class StripeNotificationServiceTest {
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getMessage(), containsString("Received an account.updated event for stripe account"));
         assertThat(loggingEvent.getArgumentArray().length, is(4));
+    }
+
+    @Test
+    void shouldLogWhenChargeRefundEventReceivedWithStatusFailed() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeRefundUpdatedHandler.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED);
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getMessage(), containsString("Received a charge.refund.updated event with status failed"));
+        assertThat(loggingEvent.getArgumentArray().length, is(3));
     }
 
     @Test
