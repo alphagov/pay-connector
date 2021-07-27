@@ -50,6 +50,7 @@ import java.net.URL;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -65,6 +66,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -130,8 +132,8 @@ public class EpdqPaymentProviderTest {
                 any())).thenReturn(gatewayClient);
 
         paymentProvider = new EpdqPaymentProvider(
-                mockConnectorConfiguration, 
-                mockGatewayClientFactory, 
+                mockConnectorConfiguration,
+                mockGatewayClientFactory,
                 mockEnvironment,
                 Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC));
     }
@@ -346,11 +348,11 @@ public class EpdqPaymentProviderTest {
     private void setUpFor3ds2AndCheckThatEpdqIsUp() {
         epdqSetupWithStatusCheck(true, true);
     }
-    
+
     private void setUpFor3dsAndCheckThatEpdqIsUp() {
         epdqSetupWithStatusCheck(true, false);
     }
-    
+
     private void setUpAndCheckThatEpdqIsUp() {
         epdqSetupWithStatusCheck(false, false);
     }
@@ -363,12 +365,19 @@ public class EpdqPaymentProviderTest {
                     "username", username,
                     "password", password,
                     "sha_in_passphrase", shaInPassphrase);
-            
+
             gatewayAccountEntity = new GatewayAccountEntity();
             gatewayAccountEntity.setId(123L);
             gatewayAccountEntity.setType(TEST);
             gatewayAccountEntity.setRequires3ds(require3ds);
-            
+
+            gatewayAccountEntity.setGatewayAccountCredentials(
+                    List.of(aGatewayAccountCredentialsEntity()
+                            .withCredentials(validEpdqCredentials)
+                            .withGatewayAccountEntity(gatewayAccountEntity)
+                            .withPaymentProvider(EPDQ.getName())
+                            .build()));
+
             if (requires3ds2) {
                 gatewayAccountEntity.setIntegrationVersion3ds(2);
                 gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
