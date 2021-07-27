@@ -95,6 +95,13 @@ public class SmartpayPaymentProviderTest {
         gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(123L);
         gatewayAccountEntity.setType(TEST);
+        gatewayAccountEntity.setGatewayAccountCredentials(
+                List.of(aGatewayAccountCredentialsEntity()
+                        .withCredentials(validSmartPayCredentials)
+                        .withGatewayAccountEntity(gatewayAccountEntity)
+                        .withPaymentProvider(SMARTPAY.getName())
+                        .withState(ACTIVE)
+                        .build()));
 
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity).build();

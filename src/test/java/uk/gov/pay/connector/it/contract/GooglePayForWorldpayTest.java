@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
@@ -18,6 +17,8 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
@@ -28,16 +29,17 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
 public class GooglePayForWorldpayTest {
-    
+
     //set these manually
     private String merchantCode = "";
     private String worldpayUsername = "";
     private String worldpayPassword = "";
-    
+
     //might have to get these manually as they have a 2 week expiry
     private String signature = "MEYCIQDjmS9Y7zlOoLUuL2EwXbMsJdLG/D2II7oDgQx9fLI8zwIhAIt1kHtDJFcyAxaSVKNwXYVM2/6tOG+Pds+Gcefdyb7i";
     private String protocolVersion = "ECv1";
@@ -46,11 +48,17 @@ public class GooglePayForWorldpayTest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
             config("worldpay.urls.test", "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"));
-    
+
     @Test
     public void sendPaymentToWorldpay() throws Exception {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setType(GatewayAccountType.TEST);
+        gatewayAccount.setGatewayAccountCredentials(
+                List.of(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of(CREDENTIALS_USERNAME, worldpayUsername, CREDENTIALS_PASSWORD, worldpayPassword))
+                        .withGatewayAccountEntity(gatewayAccount)
+                        .withPaymentProvider(WORLDPAY.getName())
+                        .build()));
 
         String payload = load("templates/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml")
                 .replace("${amount}", "100")
@@ -61,13 +69,13 @@ public class GooglePayForWorldpayTest {
                 .replace("${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}", signedMessage);
 
         GatewayClient authoriseClient = getGatewayClient();
-        
+
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"), 
+                URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"),
                 WORLDPAY,
                 "test",
-                gatewayOrder, 
+                gatewayOrder,
                 getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials(WORLDPAY.getName())));
         assertThat(response.getStatus(), is(HttpStatus.SC_OK));
         String entity = response.getEntity();
