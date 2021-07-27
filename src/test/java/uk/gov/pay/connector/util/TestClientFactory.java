@@ -8,6 +8,8 @@ import org.glassfish.jersey.client.spi.ConnectorProvider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
+import static org.glassfish.jersey.client.RequestEntityProcessing.BUFFERED;
+
 public class TestClientFactory {
     public static Client createJerseyClient() {
         return createClientWithApacheConnectorAndTimeout(-1);
@@ -20,6 +22,8 @@ public class TestClientFactory {
         if (readTimeout > 0) {
             clientConfig.property(ClientProperties.READ_TIMEOUT, readTimeout);
         }
+        clientConfig.property(ClientProperties.REQUEST_ENTITY_PROCESSING, BUFFERED);
+
         Client client = ClientBuilder
                 .newBuilder()
                 .withConfig(clientConfig)
