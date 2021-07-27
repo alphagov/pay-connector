@@ -21,6 +21,7 @@ public enum StripeNotificationType {
     PAYOUT_PAID("payout.paid", PayoutPaid.class),
     PAYOUT_UPDATED("payout.updated", PayoutUpdated.class),
     PAYOUT_FAILED("payout.failed", PayoutFailed.class),
+    REFUND_UPDATED("charge.refund.updated"),
     UNKNOWN("");
 
     private final String type;
