@@ -104,7 +104,6 @@ public class GatewayAccountResource {
     @GET
     @Path("/v1/api/accounts/{accountId}")
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
         logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayAccountService
