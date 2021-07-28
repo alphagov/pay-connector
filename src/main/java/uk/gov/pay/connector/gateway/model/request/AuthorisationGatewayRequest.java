@@ -5,6 +5,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Map;
 import java.util.Optional;
 
 public abstract class AuthorisationGatewayRequest implements GatewayRequest {
@@ -32,6 +33,11 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
 
     public String getChargeExternalId() {
         return charge.getExternalId();
+    }
+
+    @Override
+    public Map<String, String> getGatewayCredentials() {
+        return charge.getGatewayAccountCredentialsEntity().getCredentials();
     }
 
     @Override

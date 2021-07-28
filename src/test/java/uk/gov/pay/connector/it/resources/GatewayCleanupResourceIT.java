@@ -23,8 +23,11 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -43,16 +46,26 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         String chargeId3 = addCharge(AUTHORISATION_UNEXPECTED_ERROR);
         String chargeId4 = addCharge(AUTHORISATION_TIMEOUT);
 
+        credentialParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .withState(RETIRED)
+                .withCredentials(credentials)
+                .build();
+
         // add a non-ePDQ charge that shouldn't be picked up
         var worldpayAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(RandomUtils.nextLong())
                 .withPaymentProvider(WORLDPAY.getName())
+                .withGatewayAccountCredentials(List.of(credentialParams))
                 .insert();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withGatewayAccountId(String.valueOf(worldpayAccount.getAccountId()))
+                .withPaymentProvider("worldpay")
                 .withStatus(AUTHORISATION_ERROR)
+                .withGatewayCredentialId(credentialParams.getId())
                 .build());
 
         epdqMockClient.mockCancelSuccess();

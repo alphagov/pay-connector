@@ -10,9 +10,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.expunge.service.LedgerStub;
@@ -23,9 +20,13 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.time.Instant;
 import java.util.List;
@@ -49,9 +50,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -85,6 +88,8 @@ public class ChargingITestBase {
 
     protected WireMockServer wireMockServer;
 
+   protected AddGatewayAccountCredentialsParams credentialParams;
+
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
@@ -107,10 +112,18 @@ public class ChargingITestBase {
         );
         databaseTestHelper = testContext.getDatabaseTestHelper();
 
+        credentialParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(paymentProvider)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .withState(ACTIVE)
+                .withCredentials(credentials)
+                .build();
+
         testAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(Long.parseLong(accountId))
                 .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
                 .withCredentials(credentials)
                 .insert();
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
@@ -219,7 +232,7 @@ public class ChargingITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider).toString();
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider, credentialParams.getId()).toString();
     }
 
     protected RequestSpecification givenSetup() {
@@ -352,7 +365,8 @@ public class ChargingITestBase {
     }
 
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
-                           ServicePaymentReference reference, Instant createdDate, String transactionId, String paymentProvider) {
+                           ServicePaymentReference reference, Instant createdDate, String transactionId,
+                           String paymentProvider) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
@@ -367,6 +381,7 @@ public class ChargingITestBase {
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
                 .withEmail(EMAIL)
+                .withGatewayCredentialId(credentialParams.getId())
                 .build());
     }
 

@@ -147,7 +147,16 @@ public class WorldpayPaymentProviderTest {
                 eventService);
 
         gatewayAccountEntity = aServiceAccount();
-        chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
+        chargeEntityFixture = aValidChargeEntity()
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
+                .withGatewayAccountEntity(gatewayAccountEntity);
 
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
         root.setLevel(Level.INFO);
@@ -504,6 +513,14 @@ public class WorldpayPaymentProviderTest {
                 .withExternalId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withProviderSessionId(providerSessionId)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
                 .build();
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))

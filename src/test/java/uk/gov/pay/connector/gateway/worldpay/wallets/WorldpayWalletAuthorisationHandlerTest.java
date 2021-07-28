@@ -79,7 +79,17 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Before
     public void setUp() throws Exception {
         worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
-        chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withDescription("This is the description")
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
+                .build();
         gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName("worldpay")
                 .withType(TEST)

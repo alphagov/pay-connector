@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -26,7 +25,9 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -61,6 +64,7 @@ public class GatewayAuthFailuresIT {
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+    private AddGatewayAccountCredentialsParams credentialParams;
 
     @Before
     public void setup() {
@@ -75,12 +79,22 @@ public class GatewayAuthFailuresIT {
                 .withPaymentProvider(PAYMENT_PROVIDER)
                 .withCredentials(CREDENTIALS);
 
+        credentialParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(PAYMENT_PROVIDER)
+                .withState(ACTIVE)
+                .withCredentials(CREDENTIALS)
+                .withGatewayAccountId(testAccount.getAccountId())
+                .build();
+
+        testAccount.withGatewayAccountCredentials(List.of(credentialParams));
+
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(testAccount)
                 .withPaymentProvider(PAYMENT_PROVIDER)
                 .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withGatewayCredentialId(credentialParams.getId())
                 .withTransactionId(TRANSACTION_ID);
 
         testAccount.insert();

@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.model.request;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.util.Map;
+
 public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
     private AuthCardDetails authCardDetails;
     
@@ -18,5 +20,9 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
     public static CardAuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {
         return new CardAuthorisationGatewayRequest(charge, authCardDetails);
     }
-    
+
+    @Override
+    public Map<String, String> getGatewayCredentials() {
+        return charge.getGatewayAccountCredentialsEntity().getCredentials();
+    }
 }

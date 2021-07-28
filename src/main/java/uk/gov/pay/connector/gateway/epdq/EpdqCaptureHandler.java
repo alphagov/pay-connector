@@ -41,7 +41,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
                     EPDQ,
                     request.getGatewayAccount().getType(), 
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -50,11 +50,11 @@ public class EpdqCaptureHandler implements CaptureHandler {
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForCaptureOrder.setPayId(request.getTransactionId());
-        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }
 }

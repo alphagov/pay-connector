@@ -90,7 +90,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 SMARTPAY,
                 request.getGatewayAccount().getType(),
                 buildAuthoriseOrderFor(request), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
@@ -112,7 +112,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                     SMARTPAY,
                     request.getGatewayAccount().getType(),
                     build3dsResponseAuthOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
             if (gatewayResponse.getBaseResponse().isEmpty())
@@ -150,7 +150,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 SMARTPAY,
                 request.getGatewayAccount().getType(),
                 buildCancelOrderFor(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }
 
