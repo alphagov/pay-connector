@@ -11,12 +11,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;

@@ -44,6 +44,25 @@ public class ChargeUtils {
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
                                                                 String accountId, DatabaseTestHelper databaseTestHelper,
+                                                                String paymentProvider, Long gatewayCredentialId) {
+        long chargeId = RandomUtils.nextInt();
+        ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(paymentProvider)
+                .withAmount(6234L)
+                .withStatus(status)
+                .withTransactionId(gatewayTransactionId)
+                .withEmail("email@fake.test")
+                .withGatewayCredentialId(gatewayCredentialId)
+                .build());
+        return externalChargeId;
+    }
+
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
+                                                                String accountId, DatabaseTestHelper databaseTestHelper,
                                                                 String paymentProvider) {
         return createNewChargeWithAccountId(status, gatewayTransactionId, accountId,
                 databaseTestHelper, "email@fake.test", paymentProvider);

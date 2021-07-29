@@ -55,7 +55,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
                     WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
 
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));

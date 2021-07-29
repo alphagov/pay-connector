@@ -486,7 +486,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .insert();
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, null,
-                String.valueOf(accountId), databaseTestHelper, WORLDPAY.getName());
+                String.valueOf(accountId), databaseTestHelper, WORLDPAY.getName(), worldpayCredentialsParams.getId());
 
         worldpayMockClient.mockAuthorisationSuccess();
 

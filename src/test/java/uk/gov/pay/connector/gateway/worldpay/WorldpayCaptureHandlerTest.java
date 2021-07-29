@@ -64,6 +64,12 @@ public class WorldpayCaptureHandlerTest {
     @Mock
     private Response response;
 
+    private final Map<String, String> credentials = Map.of(
+            CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+            CREDENTIALS_USERNAME, "worldpay-password",
+            CREDENTIALS_PASSWORD, "password"
+    );
+
     @Before
     public void setup() {
         worldpayCaptureHandler = new WorldpayCaptureHandler(client, ImmutableMap.of(TEST.toString(), URI.create("http://worldpay.test")));
@@ -78,7 +84,13 @@ public class WorldpayCaptureHandlerTest {
         when(client.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(response);
 
-        var chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
+        var chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(credentials)
+                        .build())
+                .build();
         if (corporateSurchargeAmount != null) {
             chargeEntity.setCorporateSurcharge(corporateSurchargeAmount);
         }
@@ -138,6 +150,10 @@ public class WorldpayCaptureHandlerTest {
     private CaptureGatewayRequest getCaptureRequest() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(credentials)
+                        .build())
                 .build();
         return CaptureGatewayRequest.valueOf(chargeEntity);
     }
@@ -151,10 +167,7 @@ public class WorldpayCaptureHandlerTest {
                 .build();
 
         var creds = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"))
+                .withCredentials(credentials)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)

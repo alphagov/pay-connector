@@ -578,6 +578,7 @@ public class DatabaseFixtures {
         ParityCheckStatus parityCheckStatus;
         private String description = "Test description";
         private ZonedDateTime parityCheckDate;
+        Long gatewayCredentialId;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -668,6 +669,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withGatewayCredentialId(Long gatewayCredentialId) {
+            this.gatewayCredentialId = gatewayCredentialId;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -691,6 +697,7 @@ public class DatabaseFixtures {
                     .withCorporateSurcharge(corporateCardSurcharge)
                     .withParityCheckStatus(parityCheckStatus)
                     .withParityCheckDate(parityCheckDate)
+                    .withGatewayCredentialId(gatewayCredentialId)
                     .build());
 
             if (cardDetails != null) {

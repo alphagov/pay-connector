@@ -41,6 +41,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -74,7 +77,17 @@ public class SmartpayCaptureHandlerTest {
         when(client.postRequestFor(any(URI.class), eq(SMARTPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(testResponse);
 
-        ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("smartpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "password",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
+                .build();
         if (corporateSurchargeAmount != null) {
             chargeEntity.setCorporateSurcharge(corporateSurchargeAmount);
         }

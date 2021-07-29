@@ -257,7 +257,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getGatewayAccount().getType(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
             calculateAndStoreExemption(request.getCharge(), gatewayResponse);
@@ -299,7 +299,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
                 buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         return getWorldpayGatewayResponse(response);
     }
 
@@ -318,14 +318,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
         return aWorldpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 

@@ -134,6 +134,14 @@ public class EpdqCaptureHandlerTest {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "merchant-id",
+                                CREDENTIALS_USERNAME, "username",
+                                CREDENTIALS_PASSWORD, "password",
+                                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"
+                        ))
+                        .build())
                 .build();
         return CaptureGatewayRequest.valueOf(chargeEntity);
     }

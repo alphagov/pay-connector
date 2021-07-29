@@ -4,6 +4,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Map;
+
 public class CancelGatewayRequest implements GatewayRequest {
 
     private ChargeEntity charge;
@@ -28,6 +30,11 @@ public class CancelGatewayRequest implements GatewayRequest {
     @Override
     public GatewayOperation getRequestType() {
         return GatewayOperation.CANCEL;
+    }
+
+    @Override
+    public Map<String, String> getGatewayCredentials() {
+        return charge.getGatewayAccountCredentialsEntity().getCredentials();
     }
 
     public String getExternalChargeId() {

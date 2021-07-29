@@ -41,7 +41,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
                 buildWalletAuthoriseOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(WORLDPAY.getName())));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         
         return getWorldpayGatewayResponse(response);
     }
@@ -69,7 +69,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();

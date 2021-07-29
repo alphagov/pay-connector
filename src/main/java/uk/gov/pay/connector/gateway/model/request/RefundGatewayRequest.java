@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.gateway.model.request;
 
+import org.apache.commons.lang3.NotImplementedException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
+
+import java.util.Map;
 
 public class RefundGatewayRequest implements GatewayRequest {
 
@@ -41,6 +44,11 @@ public class RefundGatewayRequest implements GatewayRequest {
     @Override
     public GatewayOperation getRequestType() {
         return GatewayOperation.REFUND;
+    }
+
+    @Override
+    public Map<String, String> getGatewayCredentials() {
+        throw  new NotImplementedException("Method not implemented for Refunds.");
     }
 
     public String getRefundExternalId() {

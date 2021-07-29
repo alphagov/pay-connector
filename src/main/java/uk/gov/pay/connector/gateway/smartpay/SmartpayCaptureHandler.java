@@ -34,7 +34,7 @@ public class SmartpayCaptureHandler implements CaptureHandler {
                     SMARTPAY,
                     request.getGatewayAccount().getType(),
                     buildCaptureOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, SmartpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -44,7 +44,7 @@ public class SmartpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrderFor(CaptureGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayAccount().getCredentials(SMARTPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmountAsString())
                 .build();
     }
