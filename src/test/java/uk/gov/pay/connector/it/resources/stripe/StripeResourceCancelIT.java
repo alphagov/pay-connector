@@ -14,12 +14,14 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -34,7 +36,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -54,6 +58,7 @@ public class StripeResourceCancelIT {
     private TestContext testContext;
 
     private WireMockServer wireMockServer;
+    private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
     @Before
     public void setup() {
@@ -64,12 +69,18 @@ public class StripeResourceCancelIT {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
         stripeMockClient.mockCancelCharge();
+        accountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(paymentProvider)
+                .withGatewayAccountId(Long.valueOf(accountId))
+                .withState(ACTIVE)
+                .withCredentials(Map.of("stripe_account_id", stripeAccountId))
+                .build();
     }
 
     @Test
     public void userCancelCharge() {
 
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
@@ -91,7 +102,7 @@ public class StripeResourceCancelIT {
     @Test
     public void systemCancelCharge() {
 
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
@@ -121,15 +132,16 @@ public class StripeResourceCancelIT {
                 .withPaymentProvider("stripe")
                 .withStatus(chargeStatus)
                 .withTransactionId(transactionId)
+                .withGatewayCredentialId(accountCredentialsParams.getId())
                 .build());
         return externalChargeId;
     }
 
-    private void addGatewayAccount(Map credentials) {
+    private void addGatewayAccount() {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway(paymentProvider)
-                .withCredentials(credentials)
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .build());
     }
 

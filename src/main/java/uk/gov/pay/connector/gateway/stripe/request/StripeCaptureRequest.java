@@ -6,14 +6,15 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public abstract class StripeCaptureRequest extends StripeRequest {
     protected StripeCaptureRequest(
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
-            StripeGatewayConfig stripeGatewayConfig
-    ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            StripeGatewayConfig stripeGatewayConfig,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
     }
     
     @Override

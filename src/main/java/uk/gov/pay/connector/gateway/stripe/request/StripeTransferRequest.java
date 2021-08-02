@@ -18,9 +18,9 @@ public abstract class StripeTransferRequest extends StripeRequest {
             String stripeChargeId,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            String govukPayTransactionExternalId
-    ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            String govukPayTransactionExternalId,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;
         this.govukPayTransactionExternalId = govukPayTransactionExternalId;

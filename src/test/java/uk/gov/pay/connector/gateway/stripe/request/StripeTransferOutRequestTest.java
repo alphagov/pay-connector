@@ -60,6 +60,7 @@ public class StripeTransferOutRequestTest {
 
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
+        when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);

@@ -66,6 +66,7 @@ public class StripeTransferInRequestTest {
         gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         when(charge.getExternalId()).thenReturn(chargeExternalId);
+        when(charge.getPaymentGatewayName()).thenReturn(STRIPE.getName());
 
         when(refundEntity.getAmount()).thenReturn(refundAmount);
         when(refundEntity.getExternalId()).thenReturn(refundExternalId);

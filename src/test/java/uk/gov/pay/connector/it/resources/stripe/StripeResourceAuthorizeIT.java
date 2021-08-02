@@ -19,12 +19,14 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -54,6 +56,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
@@ -61,6 +65,7 @@ import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlF
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -91,6 +96,7 @@ public class StripeResourceAuthorizeIT {
     private String accountId;
     private StripeMockClient stripeMockClient;
     private DatabaseTestHelper databaseTestHelper;
+    private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
     @DropwizardTestContext
     private TestContext testContext;
@@ -107,13 +113,20 @@ public class StripeResourceAuthorizeIT {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+
+        accountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(paymentProvider)
+                .withGatewayAccountId(Long.valueOf(accountId))
+                .withState(ACTIVE)
+                .withCredentials(Map.of("stripe_account_id", stripeAccountId))
+                .build();
     }
 
     @Test
     public void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
         stripeMockClient.mockAuthorisationFailedWithPaymentIntents();
 
-        addGatewayAccountWith3DS2Enabled(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccountWith3DS2Enabled();
 
         String externalChargeId = addCharge();
 
@@ -133,7 +146,7 @@ public class StripeResourceAuthorizeIT {
     public void authoriseCharge() {
         stripeMockClient.mockCreatePaymentMethod();
         stripeMockClient.mockCreatePaymentIntent();
-        addGatewayAccountWith3DS2Enabled(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccountWith3DS2Enabled();
 
         String externalChargeId = addCharge();
 
@@ -158,7 +171,7 @@ public class StripeResourceAuthorizeIT {
     public void shouldAuthoriseChargeWithoutBillingAddress() {
         stripeMockClient.mockCreatePaymentMethod();
         stripeMockClient.mockCreatePaymentIntent();
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
 
         String externalChargeId = addCharge();
 
@@ -180,7 +193,7 @@ public class StripeResourceAuthorizeIT {
 
     @Test
     public void shouldRespondAs3dsRequired_whenAuthorisationRequires3ds() {
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
         stripeMockClient.mockCreatePaymentMethod();
         stripeMockClient.mockCreatePaymentIntentRequiring3DS();
 
@@ -198,7 +211,7 @@ public class StripeResourceAuthorizeIT {
 
     @Test
     public void shouldReturnInternalServerResponseWhenGatewayAccountHasNoStripeAccountId() {
-        addGatewayAccount(emptyMap());
+        addGatewayAccountWithEmptyCredentials();
 
         String externalChargeId = addCharge();
 
@@ -214,7 +227,7 @@ public class StripeResourceAuthorizeIT {
 
     @Test
     public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
 
         String externalChargeId = addCharge();
 
@@ -230,7 +243,7 @@ public class StripeResourceAuthorizeIT {
 
     @Test
     public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAGooglePayPayment() throws IOException {
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
         JsonNode validPayload = Jackson.getObjectMapper().readTree(
                 fixture("googlepay/example-auth-request.json"));
 
@@ -249,7 +262,7 @@ public class StripeResourceAuthorizeIT {
     @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        addGatewayAccount();
 
         String externalChargeId = addChargeWithStatus(AUTHORISATION_SUCCESS);
 
@@ -289,6 +302,7 @@ public class StripeResourceAuthorizeIT {
                 .withGatewayAccountId(accountId)
                 .withAmount(Long.valueOf(AMOUNT))
                 .withStatus(chargeStatus)
+                .withGatewayCredentialId(accountCredentialsParams.getId())
                 .build());
         return externalChargeId;
     }
@@ -344,20 +358,36 @@ public class StripeResourceAuthorizeIT {
         return addChargeWithStatus(ENTERING_CARD_DETAILS);
     }
 
-    private void addGatewayAccount(Map credentials) {
+    private void addGatewayAccount() {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway(paymentProvider)
-                .withCredentials(credentials)
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .withIntegrationVersion3ds(1)
                 .build());
     }
 
-    private void addGatewayAccountWith3DS2Enabled(Map credentials) {
+    private void addGatewayAccountWithEmptyCredentials() {
+        accountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(paymentProvider)
+                .withGatewayAccountId(Long.valueOf(accountId))
+                .withState(ACTIVE)
+                .withCredentials(Map.of())
+                .build();
+
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway(paymentProvider)
-                .withCredentials(credentials)
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
+                .withIntegrationVersion3ds(1)
+                .build());
+    }
+
+    private void addGatewayAccountWith3DS2Enabled() {
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .withIntegrationVersion3ds(2)
                 .build());
     }

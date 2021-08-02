@@ -58,6 +58,7 @@ public class StripeRequestTest {
         gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         when(charge.getGatewayTransactionId()).thenReturn("gatewayTransactionId");
+        when(charge.getPaymentGatewayName()).thenReturn(STRIPE.getName());
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getLive()).thenReturn("live");
         when(stripeAuthTokens.getTest()).thenReturn("test");

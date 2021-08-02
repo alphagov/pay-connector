@@ -30,15 +30,17 @@ public abstract class StripeRequest implements GatewayClientRequest {
     protected StripeGatewayConfig stripeGatewayConfig;
     protected String stripeConnectAccountId;
     protected String gatewayAccountType;
+    protected Map<String, String> credentials;
 
-    protected StripeRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig) {
+    protected StripeRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
+                            StripeGatewayConfig stripeGatewayConfig, Map<String, String>  credentials) {
         if (gatewayAccount == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a gateway account");
         }
 
-        String stripeAccountId = gatewayAccount.getCredentials(STRIPE.getName()).get("stripe_account_id");
+        String stripeAccountId = credentials.get("stripe_account_id");
         if (stripeAccountId == null) {
-            throw new IllegalArgumentException("Cannot create StripeRequest with a gateway account with out a stripe account id set");
+            throw new IllegalArgumentException("Cannot create StripeRequest without a stripe account id in credentials");
         }
         
         this.gatewayAccount = gatewayAccount;
@@ -46,6 +48,7 @@ public abstract class StripeRequest implements GatewayClientRequest {
         this.idempotencyKey = idempotencyKey;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.stripeConnectAccountId = stripeAccountId;
+        this.credentials = credentials;
     }
 
     @Override

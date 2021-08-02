@@ -67,6 +67,7 @@ public class StripeAuthoriseRequestTest {
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getDescription()).thenReturn(description);
         when(charge.getAmount()).thenReturn(amount);
+        when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         

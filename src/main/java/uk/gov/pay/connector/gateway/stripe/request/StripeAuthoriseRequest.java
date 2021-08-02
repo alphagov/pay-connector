@@ -24,16 +24,16 @@ public class StripeAuthoriseRequest extends StripeRequest {
             OrderRequestType orderRequestType,
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
-            StripeGatewayConfig stripeGatewayConfig
-    ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            StripeGatewayConfig stripeGatewayConfig,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.description = description;
         this.sourceId = sourceId;
         this.transferGroup = transferGroup;
         this.orderRequestType = orderRequestType;
     }
-    
+
     public static StripeAuthoriseRequest of(String sourceId, CardAuthorisationGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
                 authorisationRequest.getAmount(),
@@ -43,10 +43,11 @@ public class StripeAuthoriseRequest extends StripeRequest {
                 OrderRequestType.AUTHORISE,
                 authorisationRequest.getGatewayAccount(),
                 authorisationRequest.getChargeExternalId(),
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                authorisationRequest.getGatewayCredentials()
         );
     }
-    
+
     public static StripeAuthoriseRequest of(String sourceId, Auth3dsResponseGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
                 authorisationRequest.getAmount(),
@@ -56,7 +57,8 @@ public class StripeAuthoriseRequest extends StripeRequest {
                 OrderRequestType.AUTHORISE_3DS,
                 authorisationRequest.getGatewayAccount(),
                 authorisationRequest.getChargeExternalId(),
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                authorisationRequest.getGatewayCredentials()
         );
     }
 

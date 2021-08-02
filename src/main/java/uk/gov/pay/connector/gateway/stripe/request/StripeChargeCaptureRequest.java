@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class StripeChargeCaptureRequest extends StripeCaptureRequest {
     private final String stripeIdentifier;
@@ -14,9 +15,9 @@ public class StripeChargeCaptureRequest extends StripeCaptureRequest {
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            String stripeIdentifier
-    ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            String stripeIdentifier,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeIdentifier = stripeIdentifier;
     }
     
@@ -27,7 +28,8 @@ public class StripeChargeCaptureRequest extends StripeCaptureRequest {
                 request.getGatewayAccount(),
                 request.getExternalId(),
                 stripeGatewayConfig,
-                request.getTransactionId()
+                request.getTransactionId(),
+                request.getGatewayCredentials()
         );
     }
 

@@ -54,6 +54,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -117,10 +118,10 @@ public abstract class BaseEpdqPaymentProviderIT {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(PaymentGatewayName.EPDQ), any(GatewayOperation.class), any(MetricRegistry.class))
+                eq(EPDQ), any(GatewayOperation.class), any(MetricRegistry.class))
         ).thenReturn(mockClient);
 
-        when(configuration.getGatewayConfigFor(PaymentGatewayName.EPDQ)).thenReturn(gatewayConfig);
+        when(configuration.getGatewayConfigFor(EPDQ)).thenReturn(gatewayConfig);
         when(gatewayConfig.getUrls()).thenReturn(ImmutableMap.of(TEST.toString(), "http://epdq.url"));
 
         when(configuration.getLinks()).thenReturn(linksConfig);
@@ -230,7 +231,7 @@ public abstract class BaseEpdqPaymentProviderIT {
         return TestTemplateResourceLoader.load(EPDQ_QUERY_PAYMENT_STATUS_ERROR_RESPONSE);
     }
 
-    private RefundGatewayRequest buildTestRefundRequest(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+    private RefundGatewayRequest buildTestRefundRequest(Charge charge, GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity credentialsEntity) {
         RefundEntity refundEntity = new RefundEntity(charge.getAmount() - 100, userExternalId, userEmail, charge.getExternalId());
         return RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity);
     }
@@ -298,7 +299,10 @@ public abstract class BaseEpdqPaymentProviderIT {
     }
 
     RefundGatewayRequest buildTestRefundRequest() {
-        return buildTestRefundRequest(buildTestGatewayAccountWith3dsEntity());
+        return buildTestRefundRequest(buildTestGatewayAccountWith3dsEntity(), aGatewayAccountCredentialsEntity()
+                .withCredentials(credentials)
+                .withPaymentProvider(EPDQ.getName())
+                .build());
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisation3dsRequest(GatewayAccountEntity accountEntity) {
@@ -370,9 +374,9 @@ public abstract class BaseEpdqPaymentProviderIT {
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
-    private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity gatewayAccountEntity) {
+    private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity credentialsEntity) {
         ChargeEntity chargeEntity = buildChargeEntity(gatewayAccountEntity);
-        return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity);
+        return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity, credentialsEntity);
     }
 
     protected ChargeEntity buildChargeEntity() {
@@ -383,6 +387,7 @@ public abstract class BaseEpdqPaymentProviderIT {
     private ChargeEntity buildChargeEntity(GatewayAccountEntity gatewayAccountEntity) {
         return aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(EPDQ.getName())
                 .withTransactionId("payId")
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withCredentials(credentials)

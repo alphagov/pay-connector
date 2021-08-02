@@ -67,6 +67,7 @@ public class StripePaymentIntentRequestTest {
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getAmount()).thenReturn(amount);
         when(charge.getDescription()).thenReturn(description);
+        when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
     }

@@ -10,22 +10,24 @@ import java.util.Map;
 public class StripeTransferReversalRequest extends StripeRequest {
     private String transferId;
 
-    protected StripeTransferReversalRequest(
+    private StripeTransferReversalRequest(
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            String transferId
-    ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            String transferId,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.transferId = transferId;
     }
 
-    public static StripeTransferReversalRequest of(String transferId, RefundGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferReversalRequest of(String transferId, RefundGatewayRequest request,
+                                                   StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferReversalRequest(
                 request.getGatewayAccount(),
                 request.getRefundExternalId(),
                 stripeGatewayConfig,
-                transferId
+                transferId,
+                request.getGatewayCredentials()
         );
     }
 

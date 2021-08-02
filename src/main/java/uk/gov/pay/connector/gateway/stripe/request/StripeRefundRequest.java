@@ -16,20 +16,22 @@ public class StripeRefundRequest extends StripeRequest {
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             String stripeChargeId,
-            StripeGatewayConfig stripeGatewayConfig
-            ) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            StripeGatewayConfig stripeGatewayConfig,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;
     }
     
-    public static StripeRefundRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeRefundRequest of(RefundGatewayRequest request, String stripeChargeId,
+                                         StripeGatewayConfig stripeGatewayConfig) {
         return new StripeRefundRequest(              
                 request.getAmount(),
                 request.getGatewayAccount(),
                 request.getRefundExternalId(),
                 stripeChargeId,
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                request.getGatewayCredentials()
         );
     }
 

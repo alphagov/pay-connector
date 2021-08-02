@@ -75,6 +75,11 @@ public class StripeCaptureHandlerTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId(transactionId)
                 .withAmount(10000L)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
 
         captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
@@ -112,6 +117,11 @@ public class StripeCaptureHandlerTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId(transactionId)
                 .withAmount(10001L)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
 
         CaptureGatewayRequest captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
@@ -136,6 +146,11 @@ public class StripeCaptureHandlerTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId(transactionId)
                 .withAmount(1L)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
 
         CaptureGatewayRequest captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
@@ -220,6 +235,11 @@ public class StripeCaptureHandlerTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId("pi_123")
                 .withAmount(10000L)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
         
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
