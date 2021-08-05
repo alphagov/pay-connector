@@ -19,7 +19,6 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +57,11 @@ public class StripeCancelHandlerTest {
         final String transactionId = "ch_1231231123123";
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(buildGatewayAccountEntity())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .withTransactionId(transactionId)
                 .withAmount(10000L)
                 .build();
@@ -75,6 +79,11 @@ public class StripeCancelHandlerTest {
     public void shouldCancelPaymentSuccessfullyUsingPaymentIntents() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(aValidChargeEntity()
                 .withGatewayAccountEntity(buildGatewayAccountEntity())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                                .withPaymentProvider(STRIPE.getName())
+                                .withState(ACTIVE)
+                                .build())
                 .withTransactionId("pi_123")
                 .withAmount(10000L)
                 .build());

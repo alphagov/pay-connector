@@ -69,7 +69,7 @@ public class StripeRefundHandlerTest {
 
         gatewayAccount =  aGatewayAccountEntity()
                 .withId(123L)
-                .withGatewayName("stripe")
+                .withGatewayName(STRIPE.getName())
                 .withRequires3ds(false)
                 .withType(LIVE)
                 .build();
@@ -88,6 +88,7 @@ public class StripeRefundHandlerTest {
                 .withAmount(100L)
                 .build();
         when(charge.getGatewayTransactionId()).thenReturn("gatewayTransactionId");
+        when(charge.getPaymentGatewayName()).thenReturn(STRIPE.getName());
         refundRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
     }
 

@@ -19,11 +19,11 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private boolean moto;
 
 
-    public StripePaymentIntentRequest(
+    private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            String description, boolean moto, Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
         this.transferGroup = transferGroup;
@@ -37,8 +37,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
             CardAuthorisationGatewayRequest request,
             String paymentMethodId,
             StripeGatewayConfig stripeGatewayConfig,
-            String frontendUrl
-    ) {
+            String frontendUrl) {
         return new StripePaymentIntentRequest(
                 request.getGatewayAccount(),
                 request.getChargeExternalId(),
@@ -49,7 +48,8 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 frontendUrl,
                 request.getChargeExternalId(),
                 request.getDescription(),
-                request.getCharge().isMoto()
+                request.getCharge().isMoto(),
+                request.getGatewayCredentials()
         );
     }
 

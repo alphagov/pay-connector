@@ -10,8 +10,10 @@ import java.util.Map;
 public class StripeChargeCancelRequest extends StripeRequest {
     private final String stripeChargeId;
     
-    private StripeChargeCancelRequest(GatewayAccountEntity gatewayAccount, String stripeChargeId, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+    private StripeChargeCancelRequest(GatewayAccountEntity gatewayAccount, String stripeChargeId,
+                                      String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
+                                      Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;
     }
 
@@ -20,7 +22,8 @@ public class StripeChargeCancelRequest extends StripeRequest {
                 request.getGatewayAccount(),
                 request.getTransactionId(),
                 request.getExternalChargeId(),
-                stripeGatewayConfig
+                stripeGatewayConfig,
+                request.getGatewayCredentials()
         );
     }
 

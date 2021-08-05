@@ -15,10 +15,12 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -31,12 +33,15 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
@@ -64,16 +69,24 @@ public class StripeNotificationResourceIT {
 
     private StripeMockClient stripeMockClient;
 
+    private AddGatewayAccountCredentialsParams accountCredentialsParams;
+
     @Before
     public void setup() {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
+        accountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(STRIPE.getName())
+                .withGatewayAccountId(Long.valueOf(accountId))
+                .withState(ACTIVE)
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .build();
         var gatewayAccountParams = anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway("stripe")
-                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
@@ -256,6 +269,7 @@ public class StripeNotificationResourceIT {
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
+
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -265,6 +279,7 @@ public class StripeNotificationResourceIT {
                 .withPaymentProvider("stripe")
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
+                .withGatewayCredentialId(accountCredentialsParams.getId())
                 .build());
         return externalChargeId;
     }

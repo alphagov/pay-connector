@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.model.request;
 
-import org.apache.commons.lang3.NotImplementedException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.util.Map;
 
@@ -15,13 +15,17 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final String transactionId;
     private final String refundExternalId;
     private final String chargeExternalId;
+    private final GatewayAccountCredentialsEntity credentialsEntity;
 
-    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String refundExternalId, String chargeExternalId) {
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount,
+                                 String amount, String refundExternalId, String chargeExternalId,
+                                 GatewayAccountCredentialsEntity credentialsEntity) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
         this.refundExternalId = refundExternalId;
         this.chargeExternalId = chargeExternalId;
+        this.credentialsEntity = credentialsEntity;
     }
 
     public String getAmount() {
@@ -48,7 +52,7 @@ public class RefundGatewayRequest implements GatewayRequest {
 
     @Override
     public Map<String, String> getGatewayCredentials() {
-        throw  new NotImplementedException("Method not implemented for Refunds.");
+        return credentialsEntity.getCredentials();
     }
 
     public String getRefundExternalId() {
@@ -73,13 +77,15 @@ public class RefundGatewayRequest implements GatewayRequest {
      *          - Their reference to the Refund in smartpay will be returned as `pspReference`.
      * </p>
      */
-    public static RefundGatewayRequest valueOf(Charge charge, RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity) {
+    public static RefundGatewayRequest valueOf(Charge charge, RefundEntity refundEntity,
+                                               GatewayAccountEntity gatewayAccountEntity) {
         return new RefundGatewayRequest(
                 charge.getGatewayTransactionId(),
                 gatewayAccountEntity,
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId(),
-                charge.getExternalId()
+                charge.getExternalId(),
+                gatewayAccountEntity.getGatewayAccountCredentialsEntity(charge.getPaymentGatewayName())
         );
     }
     

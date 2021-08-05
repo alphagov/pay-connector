@@ -310,6 +310,11 @@ public class StripePaymentProviderTest {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
         return buildTestAuthorisationRequest(chargeEntity);
     }
@@ -318,6 +323,11 @@ public class StripePaymentProviderTest {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
         return buildTestUsAuthorisationRequest(chargeEntity);
     }
@@ -327,6 +337,11 @@ public class StripePaymentProviderTest {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("transaction-id")
                 .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .build();
         return mq4ht90j2oir6am585afk58kml;
     }

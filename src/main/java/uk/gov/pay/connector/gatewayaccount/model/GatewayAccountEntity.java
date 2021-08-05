@@ -233,6 +233,16 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                                 getId(), paymentProvider))));
     }
 
+    @JsonIgnore
+    public GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(String paymentProvider) {
+        return gatewayAccountCredentials.stream()
+                .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
+                .findFirst()
+                .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
+                        format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
+                                getId(), paymentProvider))));
+    }
+
     @JsonProperty("gateway_merchant_id")
     @JsonView(Views.FrontendView.class)
     public String getGatewayMerchantId() {

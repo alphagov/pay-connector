@@ -64,6 +64,7 @@ public class StripeCaptureRequestTest {
         when(charge.getGatewayTransactionId()).thenReturn(stripeChargeId);
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
+        when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
         captureGatewayRequest = CaptureGatewayRequest.valueOf(charge);
 

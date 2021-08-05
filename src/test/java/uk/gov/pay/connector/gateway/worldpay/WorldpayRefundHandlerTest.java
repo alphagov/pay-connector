@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
@@ -62,8 +63,23 @@ class WorldpayRefundHandlerTest {
     
     @Test
     void test_refund_request_contains_reference() throws Exception {
-        ChargeEntity chargeEntity = chargeEntityFixture.withTransactionId("transaction-id").build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "worldpay-password",
+                        CREDENTIALS_PASSWORD, "password"
+                ))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withTransactionId("transaction-id")
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
 
         when(refundGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));

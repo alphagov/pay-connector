@@ -20,9 +20,9 @@ public class StripePaymentMethodRequest extends StripeRequest {
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            AuthCardDetails authCardDetails)
-    {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
+            AuthCardDetails authCardDetails,
+            Map<String, String> credentials) {
+        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.authCardDetails = authCardDetails;
         this.northAmericanRegionMapper = new NorthAmericanRegionMapper();
     }
@@ -32,7 +32,8 @@ public class StripePaymentMethodRequest extends StripeRequest {
                 request.getGatewayAccount(),
                 request.getChargeExternalId(),
                 config,
-                request.getAuthCardDetails()
+                request.getAuthCardDetails(),
+                request.getGatewayCredentials()
         );
     }
 

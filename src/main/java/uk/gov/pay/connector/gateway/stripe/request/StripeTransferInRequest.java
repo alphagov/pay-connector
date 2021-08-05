@@ -20,23 +20,26 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             GatewayAccountEntity gatewayAccount,
             String stripeChargeId,
             String idempotencyKey,
-            String transferGroup,
             StripeGatewayConfig stripeGatewayConfig,
-            String govukPayTransactionExternalId
-    ) {
-        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig, govukPayTransactionExternalId);
+            String govukPayTransactionExternalId,
+            Map<String, String> credentials,
+            String transferGroup) {
+        super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig,
+                govukPayTransactionExternalId, credentials);
         this.transferGroup = transferGroup;
     }
 
-    public static StripeTransferInRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferInRequest of(RefundGatewayRequest request, String stripeChargeId,
+                                             StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferInRequest(
                 request.getAmount(),
                 request.getGatewayAccount(),
                 stripeChargeId,
                 request.getRefundExternalId(),
-                request.getChargeExternalId(),
                 stripeGatewayConfig,
-                request.getRefundExternalId()
+                request.getRefundExternalId(),
+                request.getGatewayCredentials(),
+                request.getChargeExternalId()
         );
     }
 

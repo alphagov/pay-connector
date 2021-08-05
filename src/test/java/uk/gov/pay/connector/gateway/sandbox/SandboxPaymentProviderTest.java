@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -18,22 +19,29 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
     private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity credentialsEntity;
 
     private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
     private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
@@ -45,7 +53,13 @@ public class SandboxPaymentProviderTest {
     @Before
     public void setup() {
         provider = new SandboxPaymentProvider();
+        credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of())
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountEntity = new GatewayAccountEntity();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
     }
 
     @Test
@@ -134,9 +148,11 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), RefundEntityFixture.aValidRefundEntity().build(),
-                gatewayAccountEntity));
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withPaymentProvider(SANDBOX.getName())
+                .build();
+        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), RefundEntityFixture.aValidRefundEntity().build(), gatewayAccountEntity));
 
         assertThat(refundResponse.isSuccessful(), is(true));
         assertThat(refundResponse.getReference().isPresent(), is(true));

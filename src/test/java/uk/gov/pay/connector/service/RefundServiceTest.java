@@ -131,16 +131,20 @@ public class RefundServiceTest {
     public void shouldRefundSuccessfully_forWorldpay() {
         Long refundAmount = 100L;
 
-        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+        GatewayAccountCredentialsEntity credentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(account)
                 .withState(GatewayAccountCredentialState.ACTIVE)
-                .build());
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        gatewayAccountCredentialsEntityList.add(credentialsEntity);
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
+                .withPaymentProvider(WORLDPAY.getName())
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
                 .withStatus(CAPTURED)
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
                 .build();
 
         RefundEntity refundEntity = aValidRefundEntity()

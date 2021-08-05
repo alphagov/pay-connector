@@ -232,4 +232,41 @@ class GatewayAccountEntityTest {
 
         assertThat(gatewayAccountEntity.getGatewayMerchantId(), is(nullValue()));
     }
+
+    @Test
+    void getGatewayAccountCredentialsEntityByProviderShouldThrowErrorIfNoCredentialsForPaymentProviderIsAvailable() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("username", "some-user-name"))
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+
+        assertThrows(WebApplicationException.class, () -> {
+            gatewayAccountEntity.getGatewayAccountCredentialsEntity("sandbox");
+        }, "No credentials exists for payment provider");
+    }
+
+    @Test
+    void getGatewayAccountCredentialsEntityByProviderShouldReturnCorrectCredential() {
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe-accnt-id", "some-id"))
+                .withPaymentProvider("stripe").build();
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("username", "some-user-name"))
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity, credentialsEntityWorldpay));
+
+        GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getGatewayAccountCredentialsEntity("worldpay");
+        assertThat(actualCreds.getPaymentProvider(), is("worldpay"));
+        assertThat(actualCreds.getCredentials(), hasEntry("username", "some-user-name"));
+    }
+
+    @Test
+    void getGatewayAccountCredentialsEntityByProviderShouldThrowErrorIfNoCredentialsAreAvailable() {
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of());
+        assertThrows(WebApplicationException.class, () -> {
+            gatewayAccountEntity.getGatewayAccountCredentialsEntity("worldpay");
+        });
+    }
 }
