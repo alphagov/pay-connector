@@ -46,6 +46,7 @@ public class LedgerTransactionFixture {
     private String reference;
     private String email;
     private String gatewayTransactionId;
+    private String credentialExternalId;
     private String returnUrl;
     private SupportedLanguage language;
     private CardDetails cardDetails;
@@ -84,6 +85,7 @@ public class LedgerTransactionFixture {
                         .withEmail(chargeEntity.getEmail())
                         .withReturnUrl(chargeEntity.getReturnUrl())
                         .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
+                        .withCredentialExternalId(chargeEntity.getGatewayAccountCredentialsEntity().getExternalId())
                         .withDelayedCapture(chargeEntity.isDelayedCapture())
                         .withSource(chargeEntity.getSource())
                         .withMoto(chargeEntity.isMoto())
@@ -175,6 +177,7 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setReference(reference);
         ledgerTransaction.setEmail(email);
         ledgerTransaction.setGatewayTransactionId(gatewayTransactionId);
+        ledgerTransaction.setCredentialExternalId(credentialExternalId);
         ledgerTransaction.setReturnUrl(returnUrl);
         ledgerTransaction.setLanguage(language);
         ledgerTransaction.setCardDetails(cardDetails);
@@ -255,6 +258,11 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withGatewayTransactionId(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
+        return this;
+    }
+
+    public LedgerTransactionFixture withCredentialExternalId(String credentialExternalId) {
+        this.credentialExternalId = credentialExternalId;
         return this;
     }
 

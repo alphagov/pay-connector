@@ -155,7 +155,7 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     private Charge getHistoricCharge(ExternalChargeRefundAvailability availability) {
         return new Charge("external-id", 500L, null, "success", "transaction-id",
-                0L, availability.getStatus(), "ref-1", "desc", Instant.now(),
+                "credentials_external_id", 0L, availability.getStatus(), "ref-1", "desc", Instant.now(),
                 "test@example.org", 123L, "epdq", true);
     }
 }
