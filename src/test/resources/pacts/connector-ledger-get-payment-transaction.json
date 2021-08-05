@@ -44,6 +44,7 @@
           "return_url": "https://service-name.gov.uk/transactions/12345",
           "email": "Joe.Bogs@example.org",
           "payment_provider": "sandbox",
+          "credential_external_id": "credential-external-id",
           "created_date": "2020-02-13T16:26:04.204Z",
           "delayed_capture": false,
           "transaction_type": "PAYMENT",

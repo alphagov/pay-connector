@@ -161,8 +161,8 @@ public class Charge {
         this.historic = historic;
     }
 
-    public String getCredentialExternalId() {
-        return credentialExternalId;
+    public Optional<String> getCredentialExternalId() {
+        return Optional.ofNullable(credentialExternalId);
     }
 
     public void setCredentialExternalId(String credentialExternalId) {
