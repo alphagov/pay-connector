@@ -21,6 +21,7 @@ public class LedgerTransaction {
     private String transactionId;
     private Long amount;
     private String gatewayAccountId;
+    private String credentialExternalId;
     private String description;
     private String reference;
     private String email;
@@ -135,6 +136,14 @@ public class LedgerTransaction {
 
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
+    }
+
+    public String getCredentialExternalId() {
+        return credentialExternalId;
+    }
+
+    public void setCredentialExternalId(String credentialExternalId) {
+        this.credentialExternalId = credentialExternalId;
     }
 
     public TransactionState getState() {

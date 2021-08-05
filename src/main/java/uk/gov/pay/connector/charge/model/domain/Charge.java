@@ -13,6 +13,7 @@ public class Charge {
     private String status;
     private String externalStatus;
     private String gatewayTransactionId;
+    private String credentialExternalId;
     private Long corporateSurcharge;
     private String refundAvailabilityStatus;
     private String reference;
@@ -24,13 +25,14 @@ public class Charge {
     private boolean historic;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
-                  Long corporateSurcharge, String refundAvailabilityStatus, String reference,
+                  String credentialExternalId, Long corporateSurcharge, String refundAvailabilityStatus, String reference,
                   String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
         this.externalStatus = externalStatus;
         this.gatewayTransactionId = gatewayTransactionId;
+        this.credentialExternalId = credentialExternalId;
         this.corporateSurcharge = corporateSurcharge;
         this.refundAvailabilityStatus = refundAvailabilityStatus;
         this.reference = reference;
@@ -44,6 +46,11 @@ public class Charge {
 
     public static Charge from(ChargeEntity chargeEntity) {
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+        String credentialExternalId = null;
+
+        if (chargeEntity.getGatewayAccountCredentialsEntity() != null) {
+            credentialExternalId = chargeEntity.getGatewayAccountCredentialsEntity().getExternalId();
+        }
 
         return new Charge(
                 chargeEntity.getExternalId(),
@@ -51,6 +58,7 @@ public class Charge {
                 chargeEntity.getStatus(),
                 chargeStatus.toExternal().toString(),
                 chargeEntity.getGatewayTransactionId(),
+                credentialExternalId,
                 chargeEntity.getCorporateSurcharge().orElse(null),
                 null, 
                 chargeEntity.getReference().toString(),
@@ -80,6 +88,7 @@ public class Charge {
                 null,
                 externalStatus,
                 transaction.getGatewayTransactionId(),
+                transaction.getCredentialExternalId(),
                 transaction.getCorporateCardSurcharge(),
                 externalRefundState,
                 transaction.getReference(),
@@ -136,36 +145,6 @@ public class Charge {
         return email;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        Charge charge = (Charge) obj;
-        return Objects.equals(externalId, charge.externalId) &&
-                Objects.equals(amount, charge.amount) &&
-                Objects.equals(status, charge.status) &&
-                Objects.equals(gatewayTransactionId, charge.gatewayTransactionId) &&
-                Objects.equals(corporateSurcharge, charge.corporateSurcharge) &&
-                Objects.equals(historic, charge.historic) &&
-                Objects.equals(refundAvailabilityStatus, charge.refundAvailabilityStatus) &&
-                Objects.equals(reference, charge.reference) &&
-                Objects.equals(description, charge.description) &&
-                Objects.equals(createdDate, charge.createdDate) &&
-                Objects.equals(email, charge.email);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(externalId, amount, status, externalStatus, gatewayTransactionId, corporateSurcharge,
-                refundAvailabilityStatus, reference, description, createdDate, email, gatewayAccountId,
-                paymentGatewayName, historic);
-    }
-
     public String getExternalStatus() {
         return externalStatus;
     }
@@ -180,5 +159,44 @@ public class Charge {
 
     public void setHistoric(boolean historic) {
         this.historic = historic;
+    }
+
+    public String getCredentialExternalId() {
+        return credentialExternalId;
+    }
+
+    public void setCredentialExternalId(String credentialExternalId) {
+        this.credentialExternalId = credentialExternalId;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Charge charge = (Charge) obj;
+        return Objects.equals(externalId, charge.externalId) &&
+                Objects.equals(amount, charge.amount) &&
+                Objects.equals(status, charge.status) &&
+                Objects.equals(gatewayTransactionId, charge.gatewayTransactionId) &&
+                Objects.equals(credentialExternalId, charge.credentialExternalId) &&
+                Objects.equals(corporateSurcharge, charge.corporateSurcharge) &&
+                Objects.equals(historic, charge.historic) &&
+                Objects.equals(refundAvailabilityStatus, charge.refundAvailabilityStatus) &&
+                Objects.equals(reference, charge.reference) &&
+                Objects.equals(description, charge.description) &&
+                Objects.equals(createdDate, charge.createdDate) &&
+                Objects.equals(email, charge.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(externalId, amount, status, externalStatus, gatewayTransactionId, credentialExternalId, corporateSurcharge,
+                refundAvailabilityStatus, reference, description, createdDate, email, gatewayAccountId,
+                paymentGatewayName, historic);
     }
 }
