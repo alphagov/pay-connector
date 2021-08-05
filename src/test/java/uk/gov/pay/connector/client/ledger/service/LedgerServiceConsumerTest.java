@@ -53,6 +53,7 @@ public class LedgerServiceConsumerTest {
         assertThat(transaction.getTransactionId(), is(externalId));
         assertThat(transaction.getAmount(), is(12000L));
         assertThat(transaction.getGatewayAccountId(), is("3"));
+        assertThat(transaction.getCredentialExternalId(), is("credential-external-id"));
     }
 
     @Test
