@@ -150,9 +150,11 @@ public class ChargeCreateRequest {
     }
 
     public String toStringWithoutPersonalIdentifiableInformation() {
+        // Don't include:
+        // description - some services include PII
+        // reference - can come from user input for payment links, in the past they have mistakenly entered card numbers
         return "ChargeCreateRequest{" +
                 "amount=" + amount +
-                ", reference='" + reference + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
                 ", delayed_capture=" + delayedCapture +
                 ", source=" + source +

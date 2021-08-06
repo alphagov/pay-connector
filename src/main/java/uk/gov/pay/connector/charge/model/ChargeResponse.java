@@ -346,7 +346,9 @@ public class ChargeResponse {
 
     @Override
     public String toString() {
-        // Some services put PII in the description, so don’t include it in the stringification
+        // Don't include:
+        // description - some services include PII
+        // reference - can come from user input for payment links, in the past they have mistakenly entered card numbers
         return "ChargeResponse{" +
                 "dataLinks=" + dataLinks +
                 ", chargeId='" + chargeId + '\'' +
@@ -355,7 +357,6 @@ public class ChargeResponse {
                 ", cardBrand='" + cardBrand + '\'' +
                 ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
-                ", reference='" + reference + '\'' +
                 ", providerName='" + providerName + '\'' +
                 ", createdDate=" + createdDate +
                 ", refundSummary=" + refundSummary +
