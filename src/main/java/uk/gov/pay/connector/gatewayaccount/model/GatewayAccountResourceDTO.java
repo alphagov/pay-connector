@@ -32,6 +32,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("service_name")
     private String serviceName;
 
+    @JsonProperty("service_id")
+    private String serviceId;
+
     @JsonProperty("analytics_id")
     private String analyticsId;
 
@@ -130,6 +133,7 @@ public class GatewayAccountResourceDTO {
         this.providerSwitchEnabled = gatewayAccountEntity.isProviderSwitchEnabled();
         this.sendPayerEmailToGateway = gatewayAccountEntity.isSendPayerEmailToGateway();
         this.sendPayerIpAddressToGateway = gatewayAccountEntity.isSendPayerIpAddressToGateway();
+        this.serviceId = gatewayAccountEntity.getServiceId();
     }
 
     public long getAccountId() {
@@ -154,6 +158,10 @@ public class GatewayAccountResourceDTO {
 
     public String getServiceName() {
         return serviceName;
+    }
+
+    public String getServiceId() {
+        return serviceId;
     }
 
     public String getAnalyticsId() {

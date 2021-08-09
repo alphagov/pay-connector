@@ -325,6 +325,7 @@ public class DatabaseFixtures {
         private Map<String, String> credentialsMap = Map.of();
         private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service_name";
+        private String serviceId = "valid-external-service-id";
         private String description = "a description";
         private String analyticsId = "an analytics id";
         private EmailCollectionMode emailCollectionMode = EmailCollectionMode.OPTIONAL;
@@ -368,6 +369,10 @@ public class DatabaseFixtures {
 
         public String getServiceName() {
             return serviceName;
+        }
+
+        public String getServiceId() {
+            return serviceId;
         }
 
         public String getDescription() {
@@ -438,6 +443,11 @@ public class DatabaseFixtures {
 
         public TestAccount withServiceName(String serviceName) {
             this.serviceName = serviceName;
+            return this;
+        }
+
+        public TestAccount withServiceId(String serviceId) {
+            this.serviceId = serviceId;
             return this;
         }
 
@@ -546,6 +556,7 @@ public class DatabaseFixtures {
                     .withMotoMaskCardNumberInput(motoMaskCardNumberInput)
                     .withMotoMaskCardSecurityCodeInput(motoMaskCardSecurityCodeInput)
                     .withAllowTelephonePaymentNotifications(allowTelephonePaymentNotifications)
+                    .withServiceId(serviceId)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());

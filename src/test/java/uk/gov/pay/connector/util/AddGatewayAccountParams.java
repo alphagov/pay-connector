@@ -38,6 +38,7 @@ public class AddGatewayAccountParams {
     private String externalId;
     private List<AddGatewayAccountCredentialsParams> credentials;
     private String serviceName;
+    private String serviceId;
     private GatewayAccountType type;
     private String description;
     private String analyticsId;
@@ -74,6 +75,10 @@ public class AddGatewayAccountParams {
 
     public String getServiceName() {
         return serviceName;
+    }
+
+    public String getServiceId() {
+        return serviceId;
     }
 
     public GatewayAccountType getType() {
@@ -146,6 +151,7 @@ public class AddGatewayAccountParams {
         private Map<String, String> credentialsMap = Map.of();
         private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service name";
+        private String serviceId = "a-valid-service-external-id";
         private GatewayAccountType type = TEST;
         private String description = "description";
         private String analyticsId;
@@ -214,6 +220,11 @@ public class AddGatewayAccountParams {
 
         public AddGatewayAccountParamsBuilder withServiceName(String serviceName) {
             this.serviceName = serviceName;
+            return this;
+        }
+
+        public AddGatewayAccountParamsBuilder withServiceId(String serviceId) {
+            this.serviceId = serviceId;
             return this;
         }
 
@@ -328,6 +339,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.requires3ds = this.requires3ds;
             addGatewayAccountParams.allowTelephonePaymentNotifications = this.allowTelephonePaymentNotifications;
             addGatewayAccountParams.providerSwitchEnabled = this.providerSwitchEnabled;
+            addGatewayAccountParams.serviceId = this.serviceId;
             return addGatewayAccountParams;
         }
 

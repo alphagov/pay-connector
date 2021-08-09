@@ -188,7 +188,8 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("allow_zero_amount", is(false))
                 .body("integration_version_3ds", is(2))
                 .body("allow_telephone_payment_notifications", is(true))
-                .body("provider_switch_enabled", is(false));
+                .body("provider_switch_enabled", is(false))
+                .body("service_id", is("valid-external-service-id"));
     }
 
     @Test

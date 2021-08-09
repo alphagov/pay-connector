@@ -124,6 +124,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
         assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
+        assertThat(gatewayAccount.getServiceId(), is(accountRecord.getServiceId()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
         assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));

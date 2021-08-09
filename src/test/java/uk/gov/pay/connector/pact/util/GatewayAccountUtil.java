@@ -17,6 +17,7 @@ public class GatewayAccountUtil {
                     .withDescription("aDescription")
                     .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
                     .withServiceName("a cool service")
+                    .withServiceId("a-valid-external-service-id")
                     .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
                     .insert();
         } else {
