@@ -1700,4 +1700,10 @@
             <column name="service_id"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="add service id to charges" author="">
+        <addColumn tableName="charges">
+            <column name="service_id" type="varchar(32)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
