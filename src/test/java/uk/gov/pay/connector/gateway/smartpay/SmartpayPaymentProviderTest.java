@@ -16,6 +16,8 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,6 +28,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
@@ -52,6 +58,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("smartpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "username",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
@@ -77,6 +91,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("smartpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "username",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
@@ -97,6 +119,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("smartpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "username",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
@@ -125,6 +155,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("smartpay")
+                        .withCredentials(Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "username",
+                                CREDENTIALS_PASSWORD, "password"
+                        ))
+                        .build())
                 .build();
         Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
         auth3dsResult.setMd("Some smart text here");
