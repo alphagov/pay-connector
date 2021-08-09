@@ -207,7 +207,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     private String getMerchantCode(GatewayRequest request) {
-        return request.getGatewayAccount().getCredentials(SMARTPAY.getName()).get(CREDENTIALS_MERCHANT_ID);
+        return request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID);
     }
 
 }
