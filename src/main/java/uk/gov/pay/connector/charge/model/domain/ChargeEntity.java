@@ -177,6 +177,9 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Column(name = "payment_provider")
     private String paymentProvider;
 
+    @Column(name = "service_id")
+    private String serviceId;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -279,6 +282,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getServiceId() {
+        return serviceId;
     }
 
     public String getProviderSessionId() {
@@ -473,6 +480,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public void setSource(Source source) {
         this.source = source;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public static final class WebChargeEntityBuilder {

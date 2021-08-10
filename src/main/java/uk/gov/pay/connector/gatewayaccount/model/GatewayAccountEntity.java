@@ -76,6 +76,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "service_name")
     private String serviceName;
 
+    @Column(name = "service_id")
+    private String serviceId;
+
     @Column(name = "description")
     private String description;
 
@@ -278,6 +281,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public String getServiceName() {
         return serviceName;
+    }
+
+    @JsonProperty("service_id")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public String getServiceId() {
+        return serviceId;
     }
 
     @JsonView(Views.FrontendView.class)
