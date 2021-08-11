@@ -58,9 +58,9 @@ public class GatewayAccountResourceTestBase {
     protected String createAGatewayAccountFor(String provider, String desc, String analyticsId) {
         return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, analyticsId));
     }
-    
+
     protected String createAGatewayAccountFor(String provider, String description, String analyticsId, String requires3ds, String type) {
-        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId, requires3ds, type));
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId, requires3ds, type, "a-service-external-id"));
     }
 
     public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
@@ -72,10 +72,14 @@ public class GatewayAccountResourceTestBase {
     }
 
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId) {
-        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test");
+        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test", "a-service-external-id");
     }
 
-    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type) {
+    protected String createAGatewayAccountWithServiceId(String serviceId) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "sandbox", "description", "analytics-id", "", "test", serviceId));
+    }
+
+    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type, String serviceId) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -89,6 +93,9 @@ public class GatewayAccountResourceTestBase {
         }
         if (type != null) {
             payload.put("type", type);
+        }
+        if (serviceId != null) {
+            payload.put("service_id", serviceId);
         }
         return given().port(port)
                 .contentType(JSON)

@@ -16,13 +16,14 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
     public StripeGatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                        @JsonProperty("payment_provider") String paymentProvider,
                                        @JsonProperty("service_name") String serviceName,
+                                       @JsonProperty("service_id") String serviceId,
                                        @JsonProperty("description") String description,
                                        @JsonProperty("analytics_id") String analyticsId,
                                        @JsonProperty("credentials") StripeCredentials credentials,
                                        @JsonProperty("requires_3ds") boolean requires3ds
     ) {
 
-        super(providerAccountType, paymentProvider, serviceName, description, analyticsId, requires3ds);
+        super(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, requires3ds);
         this.credentials = Optional.ofNullable(credentials);
     }
 
