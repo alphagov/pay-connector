@@ -68,16 +68,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void getAccountShouldReturnServiceId() {
-        String gatewayAccountId = createAGatewayAccountWithServiceId("some-special-service-id");
-        givenSetup()
-                .get(ACCOUNTS_API_URL + gatewayAccountId)
-                .then()
-                .statusCode(200)
-                .body("service_id", is("some-special-service-id"));
-    }
-
-    @Test
     public void getAccountShouldReturnDescriptionAndAnalyticsId() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
         givenSetup()

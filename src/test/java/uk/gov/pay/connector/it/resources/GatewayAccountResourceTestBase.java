@@ -60,7 +60,7 @@ public class GatewayAccountResourceTestBase {
     }
 
     protected String createAGatewayAccountFor(String provider, String description, String analyticsId, String requires3ds, String type) {
-        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId, requires3ds, type, "a-service-external-id"));
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId, requires3ds, type, null));
     }
 
     public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
@@ -72,7 +72,7 @@ public class GatewayAccountResourceTestBase {
     }
 
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId) {
-        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test", "a-service-external-id");
+        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test", null);
     }
 
     protected String createAGatewayAccountWithServiceId(String serviceId) {
