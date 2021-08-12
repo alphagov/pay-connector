@@ -197,6 +197,7 @@ public class ChargeService {
                 .withExternalMetadata(storeExtraFieldsInMetaData(telephoneChargeRequest))
                 .withGatewayTransactionId(telephoneChargeRequest.getProviderId())
                 .withCardDetails(cardDetails)
+                .withServiceId(gatewayAccount.getServiceId())
                 .build();
 
         chargeDao.persist(chargeEntity);
@@ -260,6 +261,7 @@ public class ChargeService {
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
                     .withSource(chargeRequest.getSource())
                     .withMoto(chargeRequest.isMoto())
+                    .withServiceId(gatewayAccount.getServiceId())
                     .build();
 
             chargeRequest.getPrefilledCardHolderDetails()

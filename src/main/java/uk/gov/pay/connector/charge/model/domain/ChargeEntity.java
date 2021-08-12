@@ -202,7 +202,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             Source source,
             String gatewayTransactionId,
             CardDetailsEntity cardDetails,
-            boolean moto
+            boolean moto,
+            String serviceId
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -222,6 +223,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.gatewayTransactionId = gatewayTransactionId;
         this.cardDetails = cardDetails;
         this.moto = moto;
+        this.serviceId = serviceId;
     }
 
     public Long getId() {
@@ -500,6 +502,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private ExternalMetadata externalMetadata;
         private Source source;
         private boolean moto;
+        private String serviceId;
 
         private WebChargeEntityBuilder() {
         }
@@ -574,6 +577,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             return this;
         }
 
+        public WebChargeEntityBuilder withServiceId(String serviceId) {
+            this.serviceId = serviceId;
+            return this;
+        }
+
         public ChargeEntity build() {
             return new ChargeEntity(
                     amount,
@@ -592,7 +600,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     source,
                     null,
                     null,
-                    moto);
+                    moto,
+                    serviceId);
         }
     }
 
@@ -607,6 +616,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private String description;
         private ServicePaymentReference reference;
         private ExternalMetadata externalMetadata;
+        private String serviceId;
 
         private TelephoneChargeEntityBuilder() {
         }
@@ -666,6 +676,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             return this;
         }
 
+        public TelephoneChargeEntityBuilder withServiceId(String serviceId) {
+            this.serviceId = serviceId;
+            return this;
+        }
+
         public ChargeEntity build() {
             return new ChargeEntity(
                     amount,
@@ -684,7 +699,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     CARD_EXTERNAL_TELEPHONE,
                     gatewayTransactionId,
                     cardDetails,
-                    false);
+                    false,
+                    serviceId);
         }
     }
 }

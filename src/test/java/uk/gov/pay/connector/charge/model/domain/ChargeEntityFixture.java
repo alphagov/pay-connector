@@ -61,6 +61,7 @@ public class ChargeEntityFixture {
     private boolean moto;
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
+    private String serviceId = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -142,7 +143,8 @@ public class ChargeEntityFixture {
                 source,
                 gatewayTransactionId,
                 cardDetails,
-                moto);
+                moto,
+                serviceId);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
@@ -314,6 +316,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withPaymentProvider(String paymentProvider) {
         this.paymentProvider = paymentProvider;
+        return this;
+    }
+
+    public ChargeEntityFixture withServiceId(String serviceId) {
+        this.serviceId = serviceId;
         return this;
     }
 }
