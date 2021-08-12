@@ -24,6 +24,7 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setExternalId(randomUuid());
 
         gatewayAccountEntity.setServiceName(gatewayAccountRequest.getServiceName());
+        gatewayAccountEntity.setServiceId(gatewayAccountRequest.getServiceId());
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
         gatewayAccountEntity.setAnalyticsId(gatewayAccountRequest.getAnalyticsId());
         gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.getRequires3ds());

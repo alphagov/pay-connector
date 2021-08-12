@@ -435,6 +435,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.serviceName = serviceName;
     }
 
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+    }
+
     public void setCardTypes(List<CardTypeEntity> cardTypes) {
         this.cardTypes = cardTypes;
     }

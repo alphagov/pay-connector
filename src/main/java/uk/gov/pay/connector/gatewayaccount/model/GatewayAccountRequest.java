@@ -29,6 +29,8 @@ public class GatewayAccountRequest {
 
     private String serviceName;
 
+    private final String serviceId;
+
     private String description;
 
     private String analyticsId;
@@ -40,11 +42,13 @@ public class GatewayAccountRequest {
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
+                                 @JsonProperty("service_id") String serviceId,
                                  @JsonProperty("description") String description,
                                  @JsonProperty("analytics_id") String analyticsId,
                                  @JsonProperty("requires_3ds") boolean requires3ds
     ) {
         this.serviceName = serviceName;
+        this.serviceId = serviceId;
         this.description = description;
         this.analyticsId = analyticsId;
         this.requires3ds = requires3ds;
@@ -84,6 +88,10 @@ public class GatewayAccountRequest {
 
     public String getServiceName() {
         return serviceName;
+    }
+
+    public String getServiceId() {
+        return serviceId;
     }
 
     public String getDescription() {
