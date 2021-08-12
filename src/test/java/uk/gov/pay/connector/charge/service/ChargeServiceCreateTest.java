@@ -106,6 +106,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .withGatewayTransactionId("1PROV")
                 .withCardDetails(cardDetails)
+                .withServiceId("a-valid-external-service-id")
                 .build();
 
         when(mockedChargeDao.findByGatewayTransactionIdAndAccount(gatewayAccount.getId(), "1PROV"))

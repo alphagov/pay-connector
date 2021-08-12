@@ -207,6 +207,25 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void shouldCreateANewChargeWithServiceId() {
+        var serviceId = "a-valid-external-service-id";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withServiceId(serviceId)
+                .build();
+
+        assertThat(chargeEntity.getId(), is(nullValue()));
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getServiceId(), is(serviceId));
+    }
+
+    @Test
     public void shouldCreateANewChargeWithExternalMetadata() {
         ExternalMetadata expectedExternalMetadata = new ExternalMetadata(
                 Map.of("key1", "String1",
