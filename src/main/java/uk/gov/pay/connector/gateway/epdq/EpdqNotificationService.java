@@ -16,7 +16,10 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -160,7 +163,8 @@ public class EpdqNotificationService {
         );
 
         final String expectedShaSignature = getExpectedShaSignature(notification);
-        final boolean verified = actualSignature.equalsIgnoreCase(expectedShaSignature);
+        final boolean verified = MessageDigest.isEqual(actualSignature.toUpperCase(Locale.ENGLISH).getBytes(StandardCharsets.UTF_8),
+                expectedShaSignature.toUpperCase(Locale.ENGLISH).getBytes(StandardCharsets.UTF_8));
         if (!verified) {
             logger.error("{} notification {} failed verification. Actual signature [{}] expected [{}]",
                     PAYMENT_GATEWAY_NAME, notification, actualSignature, expectedShaSignature);
