@@ -242,6 +242,35 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("accounts[0].allow_google_pay", is(false));
     }
 
+    @Test
+    public void shouldFilterGetGatewayAccountForExistingAccountByServiceId() {
+        String accountId = createAGatewayAccountFor("worldpay");
+        String serviceId = "someexternalserviceid";
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
+        databaseTestHelper.updateServiceIdFor(Long.parseLong(accountId), serviceId);
+
+        givenSetup().accept(JSON)
+                .get("/v1/frontend/accounts?serviceIds=" + serviceId)
+                .then()
+                .statusCode(200)
+                .body("accounts", hasSize(1))
+                .body("accounts[0].payment_provider", is("worldpay"))
+                .body("accounts[0].gateway_account_id", is(Integer.parseInt(accountId)))
+                .body("accounts[0].service_id", is(serviceId))
+                .body("accounts[0].external_id", is(notNullValue()))
+                .body("accounts[0].description", is(nullValue()))
+                .body("accounts[0].analytics_id", is(nullValue()))
+                .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()));
+        
+        givenSetup().accept(JSON)
+                .get("/v1/frontend/accounts?serviceIds=nonexistingserviceid")
+                .then()
+                .statusCode(200)
+                .body("accounts", hasSize(0));
+    }
+
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))

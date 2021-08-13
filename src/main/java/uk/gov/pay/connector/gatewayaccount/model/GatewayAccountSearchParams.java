@@ -14,6 +14,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class GatewayAccountSearchParams {
 
     private static final String ACCOUNT_IDS_SQL_FIELD = "accountIds";
+    private static final String SERVICE_IDS_SQL_FIELD = "serviceId";
     private static final String ALLOW_MOTO_SQL_FIELD = "allowMoto";
     private static final String ALLOW_APPLE_PAY_SQL_FIELD = "allowApplePay";
     private static final String ALLOW_GOOGLE_PAY_SQL_FIELD = "allowGooglePay";
@@ -26,6 +27,11 @@ public class GatewayAccountSearchParams {
     @Pattern(regexp = "^[\\d,]+$",
             message = "Parameter [accountIds] must be a comma separated list of numbers")
     private String accountIds;
+
+    @QueryParam("serviceIds")
+    @Pattern(regexp = "^(?:[a-zA-Z0-9]++(\\,+|$))*+$",
+            message = "Parameter [serviceIds] must be a comma separated list of alpha numeric strings")
+    private String serviceIds;
 
     // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
     // moto enabled/disabled
@@ -96,10 +102,20 @@ public class GatewayAccountSearchParams {
         this.providerSwitchEnabled = providerSwitchEnabled;
     }
 
+    public void setServiceIds(String serviceIds) {
+        this.serviceIds = serviceIds;
+    }
+
     private List<String> getAccountIdsAsList() {
         return isBlank(accountIds)
                 ? new ArrayList<>()
                 : List.of(accountIds.split(","));
+    }
+
+    private List<String> getServiceIdsAsList() {
+        return isBlank(serviceIds)
+                ? new ArrayList<>()
+                : List.of(serviceIds.split(","));
     }
 
     public List<String> getFilterTemplates() {
@@ -111,6 +127,18 @@ public class GatewayAccountSearchParams {
             for (int i = 0; i < accountIdsList.size(); i++) {
                 filter.append("#").append(ACCOUNT_IDS_SQL_FIELD).append(i);
                 if (i != accountIdsList.size() - 1) {
+                    filter.append(",");
+                }
+            }
+            filter.append(")");
+            filters.add(filter.toString());
+        }
+        List<String> serviceIdsList = getServiceIdsAsList();
+        if (!serviceIdsList.isEmpty()) {
+            StringBuilder filter = new StringBuilder(" ga.service_id IN (");
+            for (int i = 0; i < serviceIdsList.size(); i++) {
+                filter.append("#").append(SERVICE_IDS_SQL_FIELD).append(i);
+                if (i != serviceIdsList.size() - 1) {
                     filter.append(",");
                 }
             }
@@ -162,6 +190,13 @@ public class GatewayAccountSearchParams {
                 queryMap.put(ACCOUNT_IDS_SQL_FIELD + i, Long.valueOf(id));
             }
         }
+        List<String> serviceIdsList = getServiceIdsAsList();
+        if (!serviceIdsList.isEmpty()) {
+            for (int i = 0; i < serviceIdsList.size(); i++) {
+                String id = serviceIdsList.get(i);
+                queryMap.put(SERVICE_IDS_SQL_FIELD + i, id);
+            }
+        }
         if (StringUtils.isNotEmpty(motoEnabled)) {
             queryMap.put(ALLOW_MOTO_SQL_FIELD, Boolean.valueOf(motoEnabled));
         }
@@ -191,6 +226,7 @@ public class GatewayAccountSearchParams {
     public String toString() {
         return "GatewayAccountSearchParams{" +
                 "accountIds=" + accountIds +
+                ", serviceIds=" + serviceIds +
                 ", motoEnabled='" + motoEnabled + '\'' +
                 ", applePayEnabled='" + applePayEnabled + '\'' +
                 ", googlePayEnabled='" + googlePayEnabled + '\'' +
