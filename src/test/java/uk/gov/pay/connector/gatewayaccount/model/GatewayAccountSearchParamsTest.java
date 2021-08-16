@@ -19,6 +19,7 @@ public class GatewayAccountSearchParamsTest {
     public void shouldReturnFilterTemplatesWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("1,2");
+        params.setServiceIds("serviceidone,serviceidtwo,serviceidthree");
         params.setMotoEnabled("false");
         params.setApplePayEnabled("true");
         params.setGooglePayEnabled("true");
@@ -30,6 +31,7 @@ public class GatewayAccountSearchParamsTest {
         List<String> filterTemplates = params.getFilterTemplates();
         assertThat(filterTemplates, containsInAnyOrder(
                 " ga.id IN (#accountIds0,#accountIds1)",
+                " ga.service_id IN (#serviceId0,#serviceId1,#serviceId2)",
                 " ga.allow_moto = #allowMoto",
                 " ga.allow_apple_pay = #allowApplePay",
                 " ga.allow_google_pay = #allowGooglePay",
@@ -70,6 +72,7 @@ public class GatewayAccountSearchParamsTest {
     public void shouldReturnQueryMapWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("1,22");
+        params.setServiceIds("serviceidone,serviceidtwo,serviceidthree");
         params.setMotoEnabled("false");
         params.setApplePayEnabled("true");
         params.setGooglePayEnabled("true");
@@ -79,9 +82,12 @@ public class GatewayAccountSearchParamsTest {
         params.setProviderSwitchEnabled("true");
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, aMapWithSize(9));
+        assertThat(queryMap, aMapWithSize(12));
         assertThat(queryMap, hasEntry("accountIds0", 1L));
         assertThat(queryMap, hasEntry("accountIds1", 22L));
+        assertThat(queryMap, hasEntry("serviceId0", "serviceidone"));
+        assertThat(queryMap, hasEntry("serviceId1", "serviceidtwo"));
+        assertThat(queryMap, hasEntry("serviceId2", "serviceidthree"));
         assertThat(queryMap, hasEntry("allowMoto", false));
         assertThat(queryMap, hasEntry("allowApplePay", true));
         assertThat(queryMap, hasEntry("allowGooglePay", true));

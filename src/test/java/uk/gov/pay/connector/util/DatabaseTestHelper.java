@@ -583,6 +583,15 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void updateServiceIdFor(long accountId, String serviceId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE gateway_accounts set service_id=:serviceId WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .bind("serviceId", serviceId)
+                        .execute()
+        );
+    }
+
     public void updateCorporateCreditCardSurchargeAmountFor(long accountId, long corporateCreditCardSurchargeAmount) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE gateway_accounts set corporate_credit_card_surcharge_amount=:corporateCreditCardSurchargeAmount WHERE id=:gatewayAccountId")

@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class GatewayAccountSearchParams {
 
     private static final String ACCOUNT_IDS_SQL_FIELD = "accountIds";
+    private static final String SERVICE_IDS_SQL_FIELD = "serviceId";
     private static final String ALLOW_MOTO_SQL_FIELD = "allowMoto";
     private static final String ALLOW_APPLE_PAY_SQL_FIELD = "allowApplePay";
     private static final String ALLOW_GOOGLE_PAY_SQL_FIELD = "allowGooglePay";
@@ -26,6 +28,11 @@ public class GatewayAccountSearchParams {
     @Pattern(regexp = "^[\\d,]+$",
             message = "Parameter [accountIds] must be a comma separated list of numbers")
     private String accountIds;
+
+    @QueryParam("serviceIds")
+    @Pattern(regexp = "^(?:[A-z0-9]+,?)+$",
+            message = "Parameter [serviceIds] must be a comma separated list of alphanumeric strings")
+    private String serviceIds;
 
     // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
     // moto enabled/disabled
@@ -96,10 +103,20 @@ public class GatewayAccountSearchParams {
         this.providerSwitchEnabled = providerSwitchEnabled;
     }
 
+    public void setServiceIds(String serviceIds) {
+        this.serviceIds = serviceIds;
+    }
+
     private List<String> getAccountIdsAsList() {
         return isBlank(accountIds)
-                ? new ArrayList<>()
+                ? List.of()
                 : List.of(accountIds.split(","));
+    }
+
+    private List<String> getServiceIdsAsList() {
+        return isBlank(serviceIds)
+                ? List.of()
+                : List.of(serviceIds.split(","));
     }
 
     public List<String> getFilterTemplates() {
@@ -107,14 +124,18 @@ public class GatewayAccountSearchParams {
 
         List<String> accountIdsList = getAccountIdsAsList();
         if (!accountIdsList.isEmpty()) {
-            StringBuilder filter = new StringBuilder(" ga.id IN (");
+            StringJoiner filter = new StringJoiner(",", " ga.id IN (", ")");
             for (int i = 0; i < accountIdsList.size(); i++) {
-                filter.append("#").append(ACCOUNT_IDS_SQL_FIELD).append(i);
-                if (i != accountIdsList.size() - 1) {
-                    filter.append(",");
-                }
+                filter.add("#" + ACCOUNT_IDS_SQL_FIELD + i);
             }
-            filter.append(")");
+            filters.add(filter.toString());
+        }
+        List<String> serviceIdsList = getServiceIdsAsList();
+        if (!serviceIdsList.isEmpty()) {
+            StringJoiner filter = new StringJoiner(",", " ga.service_id IN (", ")");
+            for (int i = 0; i < serviceIdsList.size(); i++) {
+                filter.add("#" + SERVICE_IDS_SQL_FIELD + i);
+            }
             filters.add(filter.toString());
         }
         if (StringUtils.isNotEmpty(motoEnabled)) {
@@ -162,6 +183,13 @@ public class GatewayAccountSearchParams {
                 queryMap.put(ACCOUNT_IDS_SQL_FIELD + i, Long.valueOf(id));
             }
         }
+        List<String> serviceIdsList = getServiceIdsAsList();
+        if (!serviceIdsList.isEmpty()) {
+            for (int i = 0; i < serviceIdsList.size(); i++) {
+                String id = serviceIdsList.get(i);
+                queryMap.put(SERVICE_IDS_SQL_FIELD + i, id);
+            }
+        }
         if (StringUtils.isNotEmpty(motoEnabled)) {
             queryMap.put(ALLOW_MOTO_SQL_FIELD, Boolean.valueOf(motoEnabled));
         }
@@ -191,6 +219,7 @@ public class GatewayAccountSearchParams {
     public String toString() {
         return "GatewayAccountSearchParams{" +
                 "accountIds=" + accountIds +
+                ", serviceIds=" + serviceIds +
                 ", motoEnabled='" + motoEnabled + '\'' +
                 ", applePayEnabled='" + applePayEnabled + '\'' +
                 ", googlePayEnabled='" + googlePayEnabled + '\'' +
