@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -205,5 +207,29 @@ public class GatewayAccountCredentialsService {
 
     public boolean hasActiveCredentials(Long gatewayAccountId) {
         return gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountId);
+    }
+
+    public Optional<GatewayAccountCredentialsEntity> findCredentialFromCharge(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentials = charge
+                .getCredentialExternalId()
+                .flatMap(credentialExternalId -> gatewayAccountEntity.getGatewayAccountCredentials()
+                        .stream()
+                        .filter(gatewayAccountCredential -> credentialExternalId.equals(gatewayAccountCredential.getExternalId()))
+                        .findFirst()
+                );
+
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = gatewayAccountEntity
+                .getGatewayAccountCredentials()
+                .stream()
+                .filter(credential -> credential.getPaymentProvider().equals(charge.getPaymentGatewayName()))
+                .collect(Collectors.toList());
+
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntityByPaymentProvider = gatewayAccountCredentialsEntities
+                .stream()
+                .filter(credential -> credential.getCreatedDate().isBefore(charge.getCreatedDate()))
+                .max(comparing(GatewayAccountCredentialsEntity::getCreatedDate))
+                .or(() -> gatewayAccountCredentialsEntities.stream().findFirst());
+
+        return gatewayAccountCredentials.or(() -> gatewayAccountCredentialsEntityByPaymentProvider);
     }
 }
