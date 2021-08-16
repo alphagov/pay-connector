@@ -245,14 +245,16 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     @Test
     public void shouldFilterGetGatewayAccountForExistingAccountByServiceId() {
         String accountId = createAGatewayAccountFor("worldpay");
+        String secondAccountId = createAGatewayAccountFor("worldpay");
         String serviceId = "someexternalserviceid";
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
         databaseTestHelper.updateServiceIdFor(Long.parseLong(accountId), serviceId);
+        databaseTestHelper.updateServiceIdFor(Long.parseLong(secondAccountId), "notsearchedforserviceid");
 
         givenSetup().accept(JSON)
-                .get("/v1/frontend/accounts?serviceIds=" + serviceId)
+                .get("/v1/frontend/accounts?serviceIds=somemissingserviceid,anotherserviceid," + serviceId)
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(1))

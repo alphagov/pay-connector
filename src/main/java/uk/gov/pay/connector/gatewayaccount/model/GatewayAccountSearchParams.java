@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -29,8 +30,8 @@ public class GatewayAccountSearchParams {
     private String accountIds;
 
     @QueryParam("serviceIds")
-    @Pattern(regexp = "^(?:[a-zA-Z0-9]++(\\,+|$))*+$",
-            message = "Parameter [serviceIds] must be a comma separated list of alpha numeric strings")
+    @Pattern(regexp = "^(?:[A-z0-9]+,?)+$",
+            message = "Parameter [serviceIds] must be a comma separated list of alphanumeric strings")
     private String serviceIds;
 
     // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
@@ -108,13 +109,13 @@ public class GatewayAccountSearchParams {
 
     private List<String> getAccountIdsAsList() {
         return isBlank(accountIds)
-                ? new ArrayList<>()
+                ? List.of()
                 : List.of(accountIds.split(","));
     }
 
     private List<String> getServiceIdsAsList() {
         return isBlank(serviceIds)
-                ? new ArrayList<>()
+                ? List.of()
                 : List.of(serviceIds.split(","));
     }
 
@@ -123,26 +124,18 @@ public class GatewayAccountSearchParams {
 
         List<String> accountIdsList = getAccountIdsAsList();
         if (!accountIdsList.isEmpty()) {
-            StringBuilder filter = new StringBuilder(" ga.id IN (");
+            StringJoiner filter = new StringJoiner(",", " ga.id IN (", ")");
             for (int i = 0; i < accountIdsList.size(); i++) {
-                filter.append("#").append(ACCOUNT_IDS_SQL_FIELD).append(i);
-                if (i != accountIdsList.size() - 1) {
-                    filter.append(",");
-                }
+                filter.add("#" + ACCOUNT_IDS_SQL_FIELD + i);
             }
-            filter.append(")");
             filters.add(filter.toString());
         }
         List<String> serviceIdsList = getServiceIdsAsList();
         if (!serviceIdsList.isEmpty()) {
-            StringBuilder filter = new StringBuilder(" ga.service_id IN (");
+            StringJoiner filter = new StringJoiner(",", " ga.service_id IN (", ")");
             for (int i = 0; i < serviceIdsList.size(); i++) {
-                filter.append("#").append(SERVICE_IDS_SQL_FIELD).append(i);
-                if (i != serviceIdsList.size() - 1) {
-                    filter.append(",");
-                }
+                filter.add("#" + SERVICE_IDS_SQL_FIELD + i);
             }
-            filter.append(")");
             filters.add(filter.toString());
         }
         if (StringUtils.isNotEmpty(motoEnabled)) {
