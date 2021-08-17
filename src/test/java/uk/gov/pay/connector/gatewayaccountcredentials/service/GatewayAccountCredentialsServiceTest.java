@@ -10,6 +10,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
@@ -18,8 +20,10 @@ import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredenti
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 
 import javax.ws.rs.WebApplicationException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -372,5 +378,140 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThrows(WebApplicationException.class,
                 () -> gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccountEntity));
+    }
+
+    @Test
+    void shouldReturnGatewayAccountCredentialForMatchedCredentialExternalId() {
+        GatewayAccountCredentialsEntity aGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .build();
+        GatewayAccountCredentialsEntity aGatewayAccountCredentialsEntityTwo = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntityOne, aGatewayAccountCredentialsEntityTwo))
+                .build();
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntityOne).build());
+        String expectedCredentialsExternalId = aGatewayAccountCredentialsEntityOne.getExternalId();
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
+        assertThat(gatewayAccountCredentialsEntity.get().getExternalId(), is(expectedCredentialsExternalId));
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalIfNoGatewayAccountCredentialsFoundInGatewayAccountEntity() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of());
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withGatewayAccountCredentialsEntity(null).build());
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(false));
+    }
+
+    @Test
+    void shouldReturnGatewayAccountCredentialByPaymentProviderIfNoMatchForCredentialExternalId() {
+        GatewayAccountCredentialsEntity worldpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(SMARTPAY.getName())
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                .build();
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
+        String chargeCredentialExternalId = charge.getCredentialExternalId().get();
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
+        assertThat(gatewayAccountCredentialsEntity.get().getPaymentProvider(), is("worldpay"));
+        assertThat(chargeCredentialExternalId.equals(gatewayAccountCredentialsEntity.get().getExternalId()), is(false));
+    }
+
+    @Test
+    void shouldReturnGatewayAccountCredentialByPaymentProviderIfCredentialExternalIdNotProvided() {
+        GatewayAccountCredentialsEntity worldpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(SMARTPAY.getName())
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                .build();
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
+        charge.setCredentialExternalId(null);
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
+        assertThat(gatewayAccountCredentialsEntity.get().getPaymentProvider(), is("worldpay"));
+    }
+
+    @Test
+    void shouldReturnGatewayAccountCredentialCreatedBeforeChargeIfMultipleCredentialsExistWhenSearchingByPaymentProvider() {
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withCreatedDate(Instant.parse("2021-08-16T10:00:00Z")).withPaymentProvider(WORLDPAY.getName()).build());
+        GatewayAccountCredentialsEntity worldpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCreatedDate(Instant.parse("2021-08-15T13:00:00Z"))
+                .build();
+        GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCreatedDate(Instant.parse("2021-08-17T15:00:00Z"))
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                .build();
+
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
+        assertThat(gatewayAccountCredentialsEntity.get().getPaymentProvider(), is("worldpay"));
+        assertThat(gatewayAccountCredentialsEntity.get().getCreatedDate(), is(Instant.parse("2021-08-15T13:00:00Z")));
+    }
+
+    @Test
+    void shouldReturnFirstGatewayAccountCredentialIfNoneCreatedBeforeChargeWhenSearchingByPaymentProvider() {
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withCreatedDate(Instant.parse("2021-08-16T10:00:00Z")).withPaymentProvider(WORLDPAY.getName()).build());
+        GatewayAccountCredentialsEntity worldpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCreatedDate(Instant.parse("2021-08-17T13:00:00Z"))
+                .build();
+        GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCreatedDate(Instant.parse("2021-08-18T15:00:00Z"))
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                .build();
+
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
+        assertThat(gatewayAccountCredentialsEntity.get().getPaymentProvider(), is("worldpay"));
+        assertThat(gatewayAccountCredentialsEntity.get().getCreatedDate(), is(Instant.parse("2021-08-17T13:00:00Z")));
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalIfNoGatewayAccountCredentialsFoundWhenSearchingByPaymentProvider() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(SMARTPAY.getName())
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(smartpayGatewayAccountCredentialsEntity));
+        Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
+        Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsEntity.isPresent(), is(false));
     }
 }
