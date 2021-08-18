@@ -78,14 +78,15 @@ public class RefundGatewayRequest implements GatewayRequest {
      * </p>
      */
     public static RefundGatewayRequest valueOf(Charge charge, RefundEntity refundEntity,
-                                               GatewayAccountEntity gatewayAccountEntity) {
+                                               GatewayAccountEntity gatewayAccountEntity,
+                                               GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         return new RefundGatewayRequest(
                 charge.getGatewayTransactionId(),
                 gatewayAccountEntity,
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId(),
                 charge.getExternalId(),
-                gatewayAccountEntity.getGatewayAccountCredentialsEntity(charge.getPaymentGatewayName())
+                gatewayAccountCredentialsEntity
         );
     }
     

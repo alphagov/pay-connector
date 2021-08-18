@@ -1,13 +1,12 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -26,10 +25,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class StripeRequestTest {
     private StripeRefundRequest stripeRefundRequest;
-    private String chargeExternalId = "chargeExternalId";
 
     @Mock
     RefundEntity refundEntity;
@@ -41,13 +39,11 @@ public class StripeRequestTest {
     StripeGatewayConfig stripeGatewayConfig;
     @Mock
     StripeAuthTokens stripeAuthTokens;
-    @Mock
-    ChargeDao chargeDao;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
-                .withGatewayName("stripe")
+                .withGatewayName(STRIPE.getName())
                 .build();
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of("stripe_account_id", "stripe_connect_account_id"))
@@ -58,25 +54,24 @@ public class StripeRequestTest {
         gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         when(charge.getGatewayTransactionId()).thenReturn("gatewayTransactionId");
-        when(charge.getPaymentGatewayName()).thenReturn(STRIPE.getName());
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        when(stripeAuthTokens.getLive()).thenReturn("live");
-        when(stripeAuthTokens.getTest()).thenReturn("test");
-        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
+        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount, gatewayAccountCredentialsEntity);
 
         stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, "charge_id", stripeGatewayConfig);
     }
 
 
     @Test
-    public void shouldSetCorrectAuthorizationHeaderForLiveAccount() {
+    void shouldSetCorrectAuthorizationHeaderForLiveAccount() {
         gatewayAccount.setType(LIVE);
+        when(stripeAuthTokens.getLive()).thenReturn("live");
         assertThat(stripeRefundRequest.getHeaders().get("Authorization"), is("Bearer live"));
     }
     
     @Test
-    public void shouldSetCorrectAuthorizationHeaderForTestAccount() {
+    void shouldSetCorrectAuthorizationHeaderForTestAccount() {
         gatewayAccount.setType(TEST);
+        when(stripeAuthTokens.getTest()).thenReturn("test");
         assertThat(stripeRefundRequest.getHeaders().get("Authorization"), is("Bearer test"));
     }
 }

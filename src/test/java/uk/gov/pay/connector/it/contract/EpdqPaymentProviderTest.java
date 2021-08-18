@@ -40,6 +40,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -91,6 +92,7 @@ public class EpdqPaymentProviderTest {
     private String shaInPassphrase = envOrThrow("GDS_CONNECTOR_EPDQ_SHA_IN_PASSPHRASE");
     private ChargeEntity chargeEntity;
     private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
     private EpdqPaymentProvider paymentProvider;
 
     @Mock
@@ -370,13 +372,14 @@ public class EpdqPaymentProviderTest {
             gatewayAccountEntity.setId(123L);
             gatewayAccountEntity.setType(TEST);
             gatewayAccountEntity.setRequires3ds(require3ds);
+            gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withCredentials(validEpdqCredentials)
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(EPDQ.getName())
+                    .build();
 
             gatewayAccountEntity.setGatewayAccountCredentials(
-                    List.of(aGatewayAccountCredentialsEntity()
-                            .withCredentials(validEpdqCredentials)
-                            .withGatewayAccountEntity(gatewayAccountEntity)
-                            .withPaymentProvider(EPDQ.getName())
-                            .build()));
+                    List.of(gatewayAccountCredentialsEntity));
 
             if (requires3ds2) {
                 gatewayAccountEntity.setIntegrationVersion3ds(2);
@@ -400,7 +403,7 @@ public class EpdqPaymentProviderTest {
 
     private RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount) {
         return RefundGatewayRequest.valueOf(Charge.from(chargeEntity), new RefundEntity(refundAmount, userExternalId, userEmail, chargeEntity.getExternalId()),
-                gatewayAccountEntity);
+                gatewayAccountEntity, gatewayAccountCredentialsEntity);
     }
 
     private CancelGatewayRequest buildCancelRequest(ChargeEntity chargeEntity, String transactionId) {

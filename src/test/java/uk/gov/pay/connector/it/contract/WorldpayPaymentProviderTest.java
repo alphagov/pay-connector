@@ -34,6 +34,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundHandler;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -79,6 +80,7 @@ public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
+    private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntity;
     private Map<String, String> validCredentials;
     private Map<String, String> validCredentials3ds;
     private ChargeEntity chargeEntity;
@@ -109,23 +111,19 @@ public class WorldpayPaymentProviderTest {
 
 
         validGatewayAccount = new GatewayAccountEntity();
-        validGatewayAccount.setId(1234L);
-        validGatewayAccount.setType(TEST);
-        validGatewayAccount.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
+        validGatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(validCredentials)
                 .withGatewayAccountEntity(validGatewayAccount)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
-                .build()));
+                .build();
+        validGatewayAccount.setId(1234L);
+        validGatewayAccount.setType(TEST);
+        validGatewayAccount.setGatewayAccountCredentials(List.of());
         validGatewayAccountFor3ds = new GatewayAccountEntity();
         validGatewayAccountFor3ds.setId(1234L);
         validGatewayAccountFor3ds.setType(TEST);
-        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
-                .withCredentials(validCredentials3ds)
-                .withGatewayAccountEntity(validGatewayAccountFor3ds)
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(ACTIVE)
-                .build()));
+        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(validGatewayAccountCredentialsEntity));
 
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
@@ -357,7 +355,7 @@ public class WorldpayPaymentProviderTest {
 
         RefundEntity refundEntity = new RefundEntity(1L, userExternalId, userEmail, chargeEntity.getExternalId());
 
-        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, validGatewayAccount));
+        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, validGatewayAccount, validGatewayAccountCredentialsEntity));
 
         assertTrue(refundResponse.isSuccessful());
     }
