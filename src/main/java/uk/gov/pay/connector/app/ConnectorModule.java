@@ -202,6 +202,13 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @Named("sandboxAuthToken")
+    public String sandboxAuthToken(ConnectorConfiguration config) {
+        return config.getSandboxConfig().getSandboxAuthToken();
+    }
+
+    @Provides
+    @Singleton
     @Named("AllowedSmartpayIpAddresses")
     public Set<String> allowedSmartpayIpAddresses(ConnectorConfiguration config) {
         return CidrUtils.getIpAddresses(config.getSmartpayConfig().getAllowedCidrs());

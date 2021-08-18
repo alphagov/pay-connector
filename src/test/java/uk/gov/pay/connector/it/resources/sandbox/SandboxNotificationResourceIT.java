@@ -22,9 +22,21 @@ public class SandboxNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn200ForSandboxNotifications() {
+    public void shouldReturn200ForSandboxNotificationsFromValidIPAddress() {
         given().port(testContext.getPort())
                 .header("X-Forwarded-For", SANDBOX_IP_ADDRESS)
+                .body("sandbox-notification")
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    public void shouldReturn200ForSandboxNotificationsWithValidAuthToken() {
+        given().port(testContext.getPort())
+                .header("X-Forwarded-For", UNEXPECTED_IP_ADDRESS)
+                .header("Authorization", "let-me-in")
                 .body("sandbox-notification")
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
