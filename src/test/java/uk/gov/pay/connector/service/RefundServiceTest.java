@@ -1,18 +1,15 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
@@ -51,10 +48,13 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -66,6 +66,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -78,21 +79,14 @@ import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixt
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RefundServiceTest {
 
     private RefundService refundService;
     private Long refundId;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @Mock
     private GatewayAccountDao mockGatewayAccountDao;
-    @Mock
-    private ChargeDao mockChargeDao;
-    @Mock
-    private ChargeService mockChargeService;
     @Mock
     private RefundDao mockRefundDao;
     @Mock
@@ -117,18 +111,18 @@ public class RefundServiceTest {
                 .withGatewayAccountCredentials(gatewayAccountCredentialsEntityList)
                 .build();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         refundId = ThreadLocalRandom.current().nextLong();
-        when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
-        when(mockProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        lenient().when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
+        lenient().when(mockProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         refundService = new RefundService(
                 mockRefundDao, mockGatewayAccountDao, mockProviders, mockUserNotificationService, mockStateTransitionService, mockLedgerService
         );
     }
 
     @Test
-    public void shouldRefundSuccessfully_forWorldpay() {
+    void shouldRefundSuccessfully_forWorldpay() {
         Long refundAmount = 100L;
 
         GatewayAccountCredentialsEntity credentialsEntity = GatewayAccountCredentialsEntityFixture
@@ -176,12 +170,10 @@ public class RefundServiceTest {
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setGatewayTransactionId(refundEntity.getExternalId());
-
-        verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test
-    public void shouldRefundSuccessfully_forHistoricPayment() {
+    void shouldRefundSuccessfully_forHistoricPayment() {
         Long refundAmount = 100L;
         
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -243,12 +235,10 @@ public class RefundServiceTest {
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setGatewayTransactionId(refundEntity.getExternalId());
-
-        verifyNoMoreInteractions(mockChargeService);
     }
 
     @Test
-    public void shouldCreateARefundEntitySuccessfully() {
+    void shouldCreateARefundEntitySuccessfully() {
         Long refundAmount = 100L;
 
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -277,7 +267,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldRefundSuccessfully_forSmartpay() {
+    void shouldRefundSuccessfully_forSmartpay() {
         Long amount = 100L;
         
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -324,12 +314,10 @@ public class RefundServiceTest {
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity, never()).setStatus(RefundStatus.REFUNDED);
         verify(spiedRefundEntity).setGatewayTransactionId(reference);
-
-        verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test
-    public void shouldOverrideGeneratedReferenceIfProviderReturnAReference() {
+    void shouldOverrideGeneratedReferenceIfProviderReturnAReference() {
         Long amount = 100L;
 
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -372,7 +360,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldStoreEmptyGatewayReferenceIfGatewayReturnsAnError() {
+    void shouldStoreEmptyGatewayReferenceIfGatewayReturnsAnError() {
         Long amount = 100L;
 
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -411,7 +399,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldRefundAndSendEmail_whenGatewayRefundStateIsComplete_forChargeWithNoCorporateSurcharge() {
+    void shouldRefundAndSendEmail_whenGatewayRefundStateIsComplete_forChargeWithNoCorporateSurcharge() {
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(account)
@@ -433,7 +421,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldRefundAndSendEmail_whenGatewayRefundStatusIsComplete_forChargeWithCorporateSurcharge() {
+    void shouldRefundAndSendEmail_whenGatewayRefundStatusIsComplete_forChargeWithCorporateSurcharge() {
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(account)
@@ -493,7 +481,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldFailWhenChargeRefundIsNotAvailable() {
+    void shouldFailWhenChargeExternalRefundIsNotAvailable() {
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(account)
@@ -507,19 +495,20 @@ public class RefundServiceTest {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build();
 
+        Charge charge = Charge.from(chargeEntity);
+
         when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
+        when(mockRefundDao.findRefundsByChargeExternalId(externalChargeId)).thenReturn(List.of());
+        when(mockProvider.getExternalChargeRefundAvailability(eq(charge), eq(List.of()))).thenReturn(EXTERNAL_UNAVAILABLE);
 
-        expectedException.expect(RefundException.class);
-        expectedException.expectMessage("HTTP 412 Precondition Failed");
-
-        refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(100L, 0, userExternalId));
-
-        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao, mockChargeService);
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 0, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 400 Bad Request"));
+        verify(mockRefundDao, never()).persist(new RefundEntity(chargeEntity.getAmount(), userExternalId, null, null));
     }
 
     @Test
-    public void shouldFailWhenAmountAvailableForRefundMismatchesWithoutCorporateSurcharge() {
+    void shouldFailWhenAmountAvailableForRefundMismatchesWithoutCorporateSurcharge() {
         Long amount = 1000L;
         account.setId(accountId);
         account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
@@ -540,17 +529,15 @@ public class RefundServiceTest {
         when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
         when(mockRefundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of());
 
-        expectedException.expect(RefundException.class);
-        expectedException.expectMessage("HTTP 412 Precondition Failed");
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(amount, amount + 1, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
 
-        refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(amount, amount + 1, userExternalId));
-
-        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockRefundDao);
     }
 
     @Test
-    public void shouldFailWhenAmountAvailableForRefundWithCorporateSurchargeMismatches() {
+    void shouldFailWhenAmountAvailableForRefundWithCorporateSurchargeMismatches() {
         Long amount = 1000L;
         Long corporateSurcharge = 250L;
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -573,18 +560,16 @@ public class RefundServiceTest {
 
         when(mockRefundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of());
 
-        expectedException.expect(RefundException.class);
-        expectedException.expectMessage("HTTP 412 Precondition Failed");
-
         // this should fail because amountAvailableForRefund is not including corporate surcharge
-        refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(amount, amount, userExternalId));
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(amount, amount, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
 
-        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockRefundDao);
     }
 
     @Test
-    public void shouldFailWhenANewRefundHasBeenCreatedSincePreviouslyQueried() {
+    void shouldFailWhenANewRefundHasBeenCreatedSincePreviouslyQueried() {
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(account)
@@ -623,6 +608,9 @@ public class RefundServiceTest {
                 .withStatus(CREATED)
                 .build();
 
+        Charge charge = Charge.from(chargeEntity);
+        charge.setHistoric(true);
+
         // The second time we query, return a different list of refunds containing a new refund and not containing the
         // first refund, which has since been expunged. Both refunds are for the same amount to ensure that we are
         // still including the newly expunged refund in the calculation.
@@ -635,19 +623,45 @@ public class RefundServiceTest {
                 .withParentTransactionId(externalChargeId).build();
         when(mockLedgerService.getRefundsForPayment(accountId, externalChargeId)).thenReturn(refundTransactionsForPayment);
 
-        expectedException.expect(RefundException.class);
-        expectedException.expectMessage("HTTP 412 Precondition Failed");
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 800L, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
 
-        Charge charge = Charge.from(chargeEntity);
-        charge.setHistoric(true);
-        refundService.doRefund(accountId, charge, new RefundRequest(100L, 800L, userExternalId));
-
-        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockRefundDao);
     }
 
     @Test
-    public void shouldUpdateRefundRecordToFailWhenRefundFails() {
+    void shouldFailWhenRefundAmountExceedsRefundAmountAvailable() {
+        var amountAvailableForRefund = 1000L;
+        var amount = amountAvailableForRefund + 1;
+        account.setId(accountId);
+        account.setGatewayAccountCredentials(gatewayAccountCredentialsEntityList);
+        gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(SANDBOX.getName())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build());
+        chargeEntity = aValidChargeEntity()
+                .withAmount(amountAvailableForRefund)
+                .withExternalId(externalChargeId)
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transactionId")
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
+        when(mockRefundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of());
+
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, Charge.from(chargeEntity), new RefundRequest(amount, amountAvailableForRefund, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 400 Bad Request"));
+
+        verifyNoMoreInteractions(mockRefundDao);
+    }
+
+    @Test
+    void shouldUpdateRefundRecordToFailWhenRefundFails() {
         Long amount = 100L;
         
         gatewayAccountCredentialsEntityList.add(GatewayAccountCredentialsEntityFixture
@@ -699,7 +713,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldOfferRefundStateTransition() {
+    void shouldOfferRefundStateTransition() {
         ChargeEntity charge = aValidChargeEntity()
                 .build();
         RefundEntity refundEntity = aValidRefundEntity().withAmount(100L).build();
@@ -709,7 +723,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldFindRefundsGivenValidNotHistoricCharge() {
+    void shouldFindRefundsGivenValidNotHistoricCharge() {
         Charge charge = Charge.from(aValidChargeEntity().build());
         charge.setHistoric(false);
 
@@ -740,7 +754,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldFindRefundsIncludingExpungedRefundsFromLedger() {
+    void shouldFindRefundsIncludingExpungedRefundsFromLedger() {
         Charge charge = Charge.from(aValidChargeEntity().build());
         charge.setHistoric(true);
 
@@ -795,7 +809,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldFindHistoricRefundsForChargeExternalIdAndRefundGatewayTransactionId() {
+    void shouldFindHistoricRefundsForChargeExternalIdAndRefundGatewayTransactionId() {
         Charge charge = Charge.from(aValidChargeEntity().build());
 
         String refundFromLedger1 = "refund-from-ledger1";
@@ -828,7 +842,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    public void shouldRefundOptionalEmptyIfNoHistoricRefundsExistsForChargeExternalIdAndRefundGatewayTransactionId() {
+    void shouldRefundOptionalEmptyIfNoHistoricRefundsExistsForChargeExternalIdAndRefundGatewayTransactionId() {
         Charge charge = Charge.from(aValidChargeEntity().build());
 
         var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
@@ -844,7 +858,7 @@ public class RefundServiceTest {
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
         return object -> {
-            RefundEntity refundEntity = ((RefundEntity) object);
+            RefundEntity refundEntity = object;
             return refundEntity.getAmount() == amount &&
                     refundEntity.getChargeExternalId().equals(chargeEntity.getExternalId());
         };
@@ -852,7 +866,7 @@ public class RefundServiceTest {
 
     private ArgumentMatcher<RefundGatewayRequest> aRefundRequestWith(ChargeEntity capturedCharge, long amountInPence) {
         return object -> {
-            RefundGatewayRequest refundGatewayRequest = ((RefundGatewayRequest) object);
+            RefundGatewayRequest refundGatewayRequest = object;
             return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
                     refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
                     refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
