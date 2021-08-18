@@ -75,8 +75,7 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/sandbox")
-    public Response authoriseSandboxNotifications(String notification, 
-                                                  @HeaderParam("Authorization") String authToken,
+    public Response authoriseSandboxNotifications(@HeaderParam("Authorization") String authToken,
                                                   @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
 
         if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses, authToken)) {

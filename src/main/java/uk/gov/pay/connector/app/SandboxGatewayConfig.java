@@ -10,6 +10,7 @@ public class SandboxGatewayConfig extends Configuration {
     @Valid
     @NotNull
     private List<String> allowedCidrs;
+
     private String sandboxAuthToken;
 
     public List<String> getAllowedCidrs() {
