@@ -37,6 +37,7 @@ worldpay:
 
 sandbox:
   allowedCidrs: ["3.3.3.0/22", "6.6.6.6/32"]
+  sandboxAuthToken: "let-me-in"
 
 smartpay:
   allowedCidrs: ["6.6.6.0/24", "8.8.8.8/32"]

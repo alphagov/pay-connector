@@ -75,9 +75,10 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/sandbox")
-    public Response authoriseSandboxNotifications(String notification,
+    public Response authoriseSandboxNotifications(@HeaderParam("Authorization") String authToken,
                                                   @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
-        if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses)) {
+
+        if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses, authToken)) {
             logRejectionMessage(forwardedIpAddresses, SANDBOX);
             return forbiddenErrorResponse();
         }

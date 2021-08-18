@@ -2195,29 +2195,37 @@ Content-Type: text/plain
 
 ## POST /v1/api/notifications/sandbox
 
-This endpoint handles a notification from the sandbox.
+This endpoint returns a HTTP status code of 200 for authorized requests. This is used for testing purposes. Note that the
+authorization methods for each of the `v1/api/notifications/<PSP>` endpoints uses different authorization methods and a successful response
+from this endpoint does not guarantee that the other notifications endpoints are working as expected. It does provide assurance that
+the requests are being correctly proxied to Connector and that Connector is responding.
 
-It is currently complete insecure.
+Requests are authorised either via the source IP address extracted from the HTTP `x-forwarded-for` header against the expected CIDRs from `SANDBOX_ALLOWED_CIDRS` or by validating the secret
+provided via the HTTP `Authorization` header against the secret within `SANDBOX_AUTH_TOKEN`. The latter use of the HTTP `Authorization` header provides a means to test the endpoint without
+needing to send the request from a fixed IP address.
+
+The request body is not deserialised or processed in any way.
+
 
 ### Request example
 
 ```
-POST /v1/api/notifications/smartpay
+POST /v1/api/notifications/sandbox HTTP/1.1
 Content-Type: application/json
+```
 
-{
-  "transaction_id": "transaction-id-1",
-  "status": "AUTHORISATION SUCCESS"
-}
+With Authorization header
+
+```
+POST /v1/api/notifications/sandbox HTTP/1.1
+Content-Type: application/json
+Authorization: let-me-in
 ```
 
 ### Response example
 
 ```
-200 OK
-Content-Type: text/plain
-
-OK
+HTTP/1.1 200 OK
 ```
 
 ## POST /v1/api/notifications/epdq

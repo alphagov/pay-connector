@@ -70,6 +70,7 @@ worldpay:
 
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS}
+  sandboxAuthToken: ${SANDBOX_AUTH_TOKEN:-}
 
 smartpay:
   allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS}
