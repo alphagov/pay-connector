@@ -1706,4 +1706,12 @@
             <column name="service_id" type="varchar(32)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add send_reference_to_gateway column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="send_reference_to_gateway" type="boolean" defaultValue="false">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
