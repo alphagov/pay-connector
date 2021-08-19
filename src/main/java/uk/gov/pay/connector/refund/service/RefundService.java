@@ -12,8 +12,11 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -33,6 +36,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
@@ -57,6 +61,7 @@ public class RefundService {
     private final UserNotificationService userNotificationService;
     private StateTransitionService stateTransitionService;
     private LedgerService ledgerService;
+    private GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
     @Inject
     public RefundService(RefundDao refundDao,
@@ -64,7 +69,8 @@ public class RefundService {
                          PaymentProviders providers,
                          UserNotificationService userNotificationService,
                          StateTransitionService stateTransitionService,
-                         LedgerService ledgerService
+                         LedgerService ledgerService,
+                         GatewayAccountCredentialsService gatewayAccountCredentialsService
     ) {
         this.refundDao = refundDao;
         this.gatewayAccountDao = gatewayAccountDao;
@@ -72,15 +78,18 @@ public class RefundService {
         this.userNotificationService = userNotificationService;
         this.stateTransitionService = stateTransitionService;
         this.ledgerService = ledgerService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
     public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
+                .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(format("Gateway account credentials for gateway account with id [%s] not found.", gatewayAccountEntity.getExternalId())));
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity));
+                .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity));
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId(), gatewayAccountEntity, charge);
         return new ChargeRefundResponse(gatewayRefundResponse, refund);
     }

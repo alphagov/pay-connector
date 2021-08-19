@@ -64,7 +64,10 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withAccountId(Long.valueOf(accountId));
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withCredentials(credentials);
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -72,7 +75,8 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(SANDBOX.getName())
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
     }
 
@@ -306,9 +310,10 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withCredentialExternalId(credentialParams.getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(SANDBOX.getName())
+                .withPaymentProvider(getPaymentProvider())
                 .build();
         ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
 
@@ -318,10 +323,12 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
 
         LedgerTransaction expungedRefund = aValidLedgerTransaction()
                 .withExternalId("ledger-refund-id")
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
+                .withCredentialExternalId(credentialParams.getExternalId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(SANDBOX.getName())
+                .withPaymentProvider(getPaymentProvider())
                 .build();
         ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
@@ -342,9 +349,10 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withCredentialExternalId(credentialParams.getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(SANDBOX.getName())
+                .withPaymentProvider(getPaymentProvider())
                 .build();
         ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
 
@@ -354,10 +362,12 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
 
         LedgerTransaction expungedRefund = aValidLedgerTransaction()
                 .withExternalId("ledger-refund-id")
+                .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withCredentialExternalId(credentialParams.getExternalId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(SANDBOX.getName())
+                .withPaymentProvider(getPaymentProvider())
                 .build();
         ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
@@ -375,6 +385,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
+                .withCredentialExternalId(credentialParams.getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
                 .build();

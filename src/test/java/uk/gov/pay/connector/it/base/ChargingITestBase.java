@@ -88,7 +88,7 @@ public class ChargingITestBase {
 
     protected WireMockServer wireMockServer;
 
-   protected AddGatewayAccountCredentialsParams credentialParams;
+    protected AddGatewayAccountCredentialsParams credentialParams;
 
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;

@@ -43,7 +43,6 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -68,8 +67,10 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withAccountId(Long.valueOf(accountId))
-                .withPaymentProvider("epdq");
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withCredentials(credentials);
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -77,7 +78,8 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(EPDQ.getName())
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
     }
 
@@ -134,7 +136,7 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURE_SUBMITTED)
-                .withPaymentProvider(EPDQ.getName())
+                .withPaymentProvider(getPaymentProvider())
                 .insert();
 
         Long refundAmount = captureSubmittedCharge.getAmount();
@@ -187,6 +189,8 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(ENTERING_CARD_DETAILS)
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
 
         Long refundAmount = 20L;

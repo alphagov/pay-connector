@@ -44,7 +44,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -67,8 +66,10 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withPaymentProvider("smartpay")
-                .withAccountId(Long.valueOf(accountId));
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withCredentials(credentials);
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -77,7 +78,8 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .withTransactionId(randomAlphanumeric(10))
-                .withPaymentProvider(SMARTPAY.getName())
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
         pspReference = randomNumeric(16);
     }
@@ -163,6 +165,8 @@ public class SmartpayRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURE_SUBMITTED)
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
 
         Long refundAmount = 20L;

@@ -73,7 +73,9 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withAccountId(Long.valueOf(accountId));
+                .withAccountId(Long.parseLong(accountId))
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withCredentials(credentials);
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -82,7 +84,8 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .withTransactionId("MyUniqueTransactionId!")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(WORLDPAY.getName())
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
     }
 
@@ -214,6 +217,8 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURE_SUBMITTED)
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayCredentialId(credentialParams.getId())
                 .insert();
 
         Long refundAmount = 20L;

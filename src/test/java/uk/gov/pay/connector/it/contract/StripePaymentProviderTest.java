@@ -19,6 +19,8 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -56,11 +58,14 @@ public class StripePaymentProviderTest {
 
     private static final Long chargeAmount = 500L;
     private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @Before
     public void setup() {
         stripePaymentProvider = app.getInstanceFromGuiceContainer(StripePaymentProvider.class);
         gatewayAccountEntity = new GatewayAccountEntity();
+        gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity().build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
     }
 
     @Test
@@ -146,7 +151,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeAmount, "some-user-external-id", userEmail, chargeEntity.getExternalId());
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
@@ -162,7 +167,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeAmount / 2, "some-user-external-id", userEmail, chargeEntity.getExternalId());
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
@@ -178,7 +183,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeAmount + 1L, "some-user-external-id", userEmail, chargeEntity.getExternalId());
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.getError().isPresent());
@@ -196,14 +201,14 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeAmount, "some-user-external-id", userEmail, chargeEntity.getExternalId());
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
 
         RefundEntity secondRefundEntity = new RefundEntity(1L, "some-user-external-id", userEmail, chargeEntity.getExternalId());
 
-        refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), secondRefundEntity, gatewayAccountEntity);
+        refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), secondRefundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.getError().isPresent());

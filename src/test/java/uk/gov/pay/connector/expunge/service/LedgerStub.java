@@ -108,10 +108,10 @@ public class LedgerStub {
     }
 
     public void returnErrorForFindRefundsForPayment(String chargeExternalId) {
-        ResponseDefinitionBuilder repsonse = aResponse().withStatus(500);
+        ResponseDefinitionBuilder response = aResponse().withStatus(500);
         String url = format("/v1/transaction/%s/transaction", chargeExternalId);
        wireMockServer.stubFor(WireMock.get(urlPathEqualTo(url))
-                .willReturn(repsonse));
+                .willReturn(response));
 
     }
 

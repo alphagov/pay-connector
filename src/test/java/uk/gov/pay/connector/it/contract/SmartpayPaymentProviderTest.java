@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -72,6 +73,7 @@ public class SmartpayPaymentProviderTest {
     private String password;
     private ChargeEntity chargeEntity;
     private GatewayAccountEntity gatewayAccountEntity;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
     private MetricRegistry mockMetricRegistry;
     private Environment mockEnvironment;
 
@@ -93,15 +95,16 @@ public class SmartpayPaymentProviderTest {
                 "username", username,
                 "password", password);
         gatewayAccountEntity = new GatewayAccountEntity();
+        gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(validSmartPayCredentials)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(SMARTPAY.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountEntity.setId(123L);
         gatewayAccountEntity.setType(TEST);
         gatewayAccountEntity.setGatewayAccountCredentials(
-                List.of(aGatewayAccountCredentialsEntity()
-                        .withCredentials(validSmartPayCredentials)
-                        .withGatewayAccountEntity(gatewayAccountEntity)
-                        .withPaymentProvider(SMARTPAY.getName())
-                        .withState(ACTIVE)
-                        .build()));
+                List.of(gatewayAccountCredentialsEntity));
 
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity).build();
@@ -290,7 +293,7 @@ public class SmartpayPaymentProviderTest {
         assertTrue(captureGatewayResponse.isSuccessful());
 
         RefundEntity refundEntity = new RefundEntity(1L, userExternalId, userEmail, chargeEntity.getExternalId());
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity);
         GatewayRefundResponse refundResponse = smartpay.refund(refundRequest);
 
         assertThat(refundResponse.isSuccessful(), is(true));

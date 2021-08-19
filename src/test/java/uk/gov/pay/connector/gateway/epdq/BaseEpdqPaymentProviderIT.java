@@ -233,7 +233,7 @@ public abstract class BaseEpdqPaymentProviderIT {
 
     private RefundGatewayRequest buildTestRefundRequest(Charge charge, GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity credentialsEntity) {
         RefundEntity refundEntity = new RefundEntity(charge.getAmount() - 100, userExternalId, userEmail, charge.getExternalId());
-        return RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity);
+        return RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity, credentialsEntity);
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
