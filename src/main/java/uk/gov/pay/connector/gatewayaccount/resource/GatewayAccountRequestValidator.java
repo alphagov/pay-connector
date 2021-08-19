@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
@@ -44,6 +43,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY = "send_payer_ip_address_to_gateway";
     public static final String FIELD_SEND_PAYER_EMAIL_TO_GATEWAY = "send_payer_email_to_gateway";
     public static final String FIELD_PROVIDER_SWITCH_ENABLED = "provider_switch_enabled";
+    public static final String FIELD_SEND_REFERENCE_TO_GATEWAY = "send_reference_to_gateway";
 
     private static final List<String> VALID_PATHS = List.of(
             FIELD_NOTIFY_SETTINGS,
@@ -64,7 +64,8 @@ public class GatewayAccountRequestValidator {
             FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
             FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
             FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
-            FIELD_PROVIDER_SWITCH_ENABLED);
+            FIELD_PROVIDER_SWITCH_ENABLED,
+            FIELD_SEND_REFERENCE_TO_GATEWAY);
 
     private final RequestValidator requestValidator;
 
@@ -101,6 +102,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY:
             case FIELD_SEND_PAYER_EMAIL_TO_GATEWAY:
             case FIELD_PROVIDER_SWITCH_ENABLED:
+            case FIELD_SEND_REFERENCE_TO_GATEWAY:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
@@ -112,18 +114,6 @@ public class GatewayAccountRequestValidator {
             case FIELD_INTEGRATION_VERSION_3DS:
                 validateIntegrationVersion3ds(payload);
                 break;
-        }
-    }
-
-    private void throwIfBlankFieldValue(JsonNode valueNode) {
-        if (isBlank(valueNode.asText()))
-            throw new ValidationException(Collections.singletonList(format("Field [%s] cannot be empty", FIELD_VALUE)));
-    }
-
-    private void throwIfNotValidMerchantId(JsonNode valueNode, String field) {
-        boolean isValidWorldpayMerchantId = valueNode.textValue().matches("[0-9a-f]{15}");
-        if (!isValidWorldpayMerchantId) {
-            throw new ValidationException(Collections.singletonList(format("Field [%s] value [%s] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]", field, valueNode.asText())));
         }
     }
 

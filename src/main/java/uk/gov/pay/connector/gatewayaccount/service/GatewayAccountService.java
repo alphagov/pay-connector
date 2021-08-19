@@ -48,6 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_REFERENCE_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -189,6 +190,10 @@ public class GatewayAccountService {
             entry(
                 FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
                 (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                FIELD_SEND_REFERENCE_TO_GATEWAY,
+                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                 FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,

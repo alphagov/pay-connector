@@ -74,7 +74,9 @@ public class GatewayAccountRequestValidatorTest {
             "replace, send_payer_email_to_gateway, null, Field [value] is required",
             "replace, send_payer_email_to_gateway, unfalse, Value [unfalse] must be of type boolean for path [send_payer_email_to_gateway]",
             "replace, provider_switch_enabled, null, Field [value] is required",
-            "replace, provider_switch_enabled, unfalse, Value [unfalse] must be of type boolean for path [provider_switch_enabled]"
+            "replace, provider_switch_enabled, unfalse, Value [unfalse] must be of type boolean for path [provider_switch_enabled]",
+            "replace, send_reference_to_gateway, null, Field [value] is required",
+            "replace, send_reference_to_gateway, unfalse, Value [unfalse] must be of type boolean for path [send_reference_to_gateway]",
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<>() {{

@@ -75,6 +75,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
+        account.setSendReferenceToGateway(true);
 
         gatewayAccountDao.persist(account);
 
@@ -90,6 +91,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.isSendPayerIpAddressToGateway(), is(false));
         assertThat(account.isSendPayerEmailToGateway(), is(false));
         assertThat(account.isProviderSwitchEnabled(), is(false));
+        assertThat(account.isSendReferenceToGateway(), is(true));
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(account.getId());
 

@@ -150,6 +150,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "send_payer_email_to_gateway")
     private boolean sendPayerEmailToGateway;
 
+    @Column(name = "send_reference_to_gateway")
+    private boolean sendReferenceToGateway;
+
     @ManyToMany
     @JoinTable(
             name = "accepted_card_types",
@@ -415,6 +418,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return sendPayerEmailToGateway;
     }
 
+    @JsonProperty("send_reference_to_gateway")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isSendReferenceToGateway() {
+        return sendReferenceToGateway;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -560,6 +569,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setProviderSwitchEnabled(boolean providerSwitchEnabled) {
         this.providerSwitchEnabled = providerSwitchEnabled;
+    }
+
+    public void setSendReferenceToGateway(boolean sendReferenceToGateway) {
+        this.sendReferenceToGateway = sendReferenceToGateway;
     }
 
     public class Views {
