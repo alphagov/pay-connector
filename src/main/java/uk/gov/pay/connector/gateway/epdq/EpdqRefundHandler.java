@@ -43,7 +43,7 @@ public class EpdqRefundHandler implements RefundHandler {
                     EPDQ,
                     request.getGatewayAccount().getType(),
                     buildRefundOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(EPDQ.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
         } catch (GenericGatewayException | GatewayException.GatewayConnectionTimeoutException | GatewayErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());

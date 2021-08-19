@@ -85,7 +85,7 @@ public class RefundService {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
-                .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(format("Gateway account credentials for gateway account with id [%s] not found.", gatewayAccountEntity.getExternalId())));
+                .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(format("Unable to find gateway account credentials to use to refund charge.", gatewayAccountEntity.getExternalId())));
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
