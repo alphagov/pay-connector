@@ -43,6 +43,7 @@ public class GatewayAccountResourceDTOTest {
         entity.setProviderSwitchEnabled(true);
         entity.setSendPayerEmailToGateway(true);
         entity.setSendPayerIpAddressToGateway(true);
+        entity.setSendReferenceToGateway(true);
         entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         entity.setGatewayAccountCredentials(List.of(
                 GatewayAccountCredentialsEntityFixture.
@@ -85,5 +86,6 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.isProviderSwitchEnabled(), is(entity.isProviderSwitchEnabled()));
         assertThat(dto.isSendPayerIpAddressToGateway(), is(true));
         assertThat(dto.isSendPayerEmailToGateway(), is(true));
+        assertThat(dto.isSendReferenceToGateway(), is(true));
     }
 }
