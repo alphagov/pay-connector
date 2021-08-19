@@ -35,7 +35,7 @@ public class SmartpayRefundHandler implements RefundHandler {
                     SMARTPAY,
                     request.getGatewayAccount().getType(),
                     buildRefundOrderFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount().getCredentials(SMARTPAY.getName())));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
