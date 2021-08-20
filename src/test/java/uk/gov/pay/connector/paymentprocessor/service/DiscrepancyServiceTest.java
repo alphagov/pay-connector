@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -28,7 +29,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DiscrepancyServiceTest {
 
     private DiscrepancyService discrepancyService;
@@ -47,13 +48,13 @@ public class DiscrepancyServiceTest {
     @Mock
     private BaseInquiryResponse mockGatewayResponse;
 
-    @Before
-    public void beforeTest() {
+    @BeforeEach
+    void beforeTest() {
         discrepancyService = new DiscrepancyService(chargeService, queryService, expiryService, gatewayAccountService);
     }
 
     @Test
-    public void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan2Days() throws GatewayException {
+    void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan2Days() throws GatewayException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(3)))
                 .withStatus(EXPIRED)
@@ -72,7 +73,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayAndGatewayStatusesMatch() throws GatewayException {
+    void aChargeShouldNotBeCancellable_whenPayAndGatewayStatusesMatch() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(3)))
                 .withStatus(AUTHORISATION_SUCCESS)
@@ -83,7 +84,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayStatusIsSuccess() throws GatewayException {
+    void aChargeShouldNotBeCancellable_whenPayStatusIsSuccess() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(3)))
                 .withStatus(CAPTURED)
@@ -94,7 +95,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayStatusIsUnfinished() throws GatewayException {
+    void aChargeShouldNotBeCancellable_whenPayStatusIsUnfinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(3)))
                 .withStatus(AUTHORISATION_3DS_READY)
@@ -105,7 +106,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenGatewayStatusIsFinished() throws GatewayException {
+    void aChargeShouldNotBeCancellable_whenGatewayStatusIsFinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(3)))
                 .withStatus(EXPIRED)
@@ -116,7 +117,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenChargeIsLessThan2DaysOld() throws GatewayException {
+    void aChargeShouldNotBeCancellable_whenChargeIsLessThan2DaysOld() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(1)))
                 .withStatus(EXPIRED)

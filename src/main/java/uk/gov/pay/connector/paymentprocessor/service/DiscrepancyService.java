@@ -54,7 +54,7 @@ public class DiscrepancyService {
         return chargeIds.stream()
                 .map(chargeExternalId -> chargeService.findCharge(chargeExternalId)
                         .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId)))
-                .map(this::getGatewayStatusComparision);
+                .map(this::getGatewayStatusComparison);
     }
 
     private GatewayStatusComparison resolve(GatewayStatusComparison gatewayStatusComparison) {
@@ -89,7 +89,7 @@ public class DiscrepancyService {
         return charge.getCreatedDate().plus(Duration.ofDays(minimumAge)).isBefore(Instant.now());
     }
 
-    private GatewayStatusComparison getGatewayStatusComparision(Charge charge) {
+    private GatewayStatusComparison getGatewayStatusComparison(Charge charge) {
         return gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())
                 .map(gatewayAccountEntity -> {
                     try {

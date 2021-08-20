@@ -30,7 +30,7 @@ public interface PaymentProvider {
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws GatewayException;
 
-    ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) throws GatewayException;
+    ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException;
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
