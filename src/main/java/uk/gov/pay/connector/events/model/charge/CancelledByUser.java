@@ -7,12 +7,12 @@ import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetai
 import java.time.ZonedDateTime;
 
 public class CancelledByUser extends PaymentEvent {
-    public CancelledByUser(String resourceExternalId, CancelledByUserEventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public CancelledByUser(String serviceId, boolean live, String resourceExternalId, CancelledByUserEventDetails eventDetails, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
     public static CancelledByUser from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
-        return new CancelledByUser(charge.getExternalId(), CancelledByUserEventDetails.from(charge), chargeEvent.getUpdated());
+        return new CancelledByUser(charge.getServiceId(), charge.getGatewayAccount().isLive(), charge.getExternalId(), CancelledByUserEventDetails.from(charge), chargeEvent.getUpdated());
     }
 }

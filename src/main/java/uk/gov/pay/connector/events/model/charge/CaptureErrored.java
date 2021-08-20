@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 
 // In rare circumstances.. only smartpay?
 public class CaptureErrored extends PaymentEventWithoutDetails {
-    public CaptureErrored(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public CaptureErrored(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, timestamp);
     }
 }

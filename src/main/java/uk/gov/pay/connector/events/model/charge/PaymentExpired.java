@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
  * succeeding or failing to expire.
  */
 public class PaymentExpired extends PaymentEventWithoutDetails {
-    public PaymentExpired(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public PaymentExpired(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, timestamp);
     }
 }

@@ -18,10 +18,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
  */
 public class BackfillerRecreatedUserEmailCollected extends PaymentEvent {
 
-    public BackfillerRecreatedUserEmailCollected(String resourceExternalId,
+    public BackfillerRecreatedUserEmailCollected(String serviceId,
+                                                 boolean live,
+                                                 String resourceExternalId,
                                                  UserEmailCollectedEventDetails eventDetails,
                                                  ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
     public static BackfillerRecreatedUserEmailCollected from(ChargeEntity charge) {
@@ -32,6 +34,8 @@ public class BackfillerRecreatedUserEmailCollected extends PaymentEvent {
                 .orElseThrow(() -> new ChargeEventNotFoundRuntimeException(charge.getExternalId()));
 
         return new BackfillerRecreatedUserEmailCollected(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 UserEmailCollectedEventDetails.from(charge),
                 lastEventDate);

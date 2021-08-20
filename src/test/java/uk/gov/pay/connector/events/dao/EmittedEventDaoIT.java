@@ -209,7 +209,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
                 .withDelayedCapture(false)
                 .withLive(false)
                 .build();
-        return new PaymentCreated("my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+        return new PaymentCreated("service-id", true, "my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
     }
 
     private RefundSubmitted aRefundSubmittedEvent(ZonedDateTime eventTimestamp) {

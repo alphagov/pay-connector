@@ -7,14 +7,16 @@ import java.time.ZonedDateTime;
 
 public class UserEmailCollected extends PaymentEvent {
 
-    public UserEmailCollected(String resourceExternalId,
+    public UserEmailCollected(String serviceId, boolean live, String resourceExternalId,
                               UserEmailCollectedEventDetails eventDetails,
                               ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
     public static UserEmailCollected from(ChargeEntity charge, ZonedDateTime eventDate) {
         return new UserEmailCollected(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 UserEmailCollectedEventDetails.from(charge),
                 eventDate);
