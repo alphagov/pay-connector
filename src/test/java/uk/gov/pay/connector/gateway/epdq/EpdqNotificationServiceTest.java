@@ -12,7 +12,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -43,6 +42,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -60,6 +60,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 .build());
         charge.setHistoric(true);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -73,6 +74,7 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 payId,
                 EPDQ_REFUND);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -100,6 +102,20 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
                 EPDQ_REFUND);
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.empty());
+
+        assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    void ifGatewayAccountCredentialsNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
+        final String payload = notificationPayloadForTransaction(
+                payId,
+                EPDQ_REFUND);
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.empty());
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockChargeNotificationProcessor);
@@ -165,6 +181,10 @@ class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
 
     protected void setUpGatewayAccountToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {
         when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(gatewayAccountEntity);
+    }
+
+    protected void setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity) {
+        when(mockGatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)).thenReturn(gatewayAccountCredentialsEntity);
     }
 
     protected void setUpChargeServiceToReturnCharge(Optional<Charge> charge) {

@@ -47,6 +47,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldUpdateChargeToAuthorisationRejected_IfEpdqStatusIs2() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISATION_REFUSED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -57,6 +58,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldUpdateChargeToAuthorisationSuccess_IfEpdqStatusIs5() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -67,6 +69,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldUpdateChargeToCaptured_IfEpdqStatusIs9() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -78,6 +81,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_REQUESTED);
         charge = getCharge(true);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -93,6 +97,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
                 .withGatewayTransactionId(payId)
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -106,6 +111,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
                 .withStatus(USER_CANCEL_SUBMITTED)
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -119,6 +125,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
                 .withStatus(EXPIRE_CANCEL_SUBMITTED)
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -132,6 +139,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
                 .withStatus(CAPTURED)
                 .build());
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -143,6 +151,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = getCharge(false);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -154,6 +163,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         charge = getCharge(true);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -172,6 +182,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldRefund_IfEpdqStatusIs7() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_DELETED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -182,6 +193,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldRefund_IfEpdqStatusIs8() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -192,6 +204,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldBeARefundError_IfEpdqStatusIs83() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_REFUSED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -202,6 +215,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldBeARefundError_IfEpdqStatusIs73() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_DELETION_REFUSED);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
@@ -212,6 +226,7 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     void shouldBeARefundError_IfEpdqStatusIs94() {
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_DECLINED_BY_ACQUIRER);
         setUpGatewayAccountToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        setUpGatewayAccountCredentialsToReturnGatewayAccountCredentialsEntity(Optional.of(gatewayAccountCredentialsEntity));
         setUpChargeServiceToReturnCharge(Optional.of(charge));
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));

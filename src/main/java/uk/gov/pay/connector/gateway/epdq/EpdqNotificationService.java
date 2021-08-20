@@ -13,6 +13,8 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
@@ -51,6 +53,7 @@ public class EpdqNotificationService {
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final IpAddressMatcher ipAddressMatcher;
     private final Set<String> allowedEpdqIpAddresses;
 
@@ -60,6 +63,7 @@ public class EpdqNotificationService {
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    RefundNotificationProcessor refundNotificationProcessor,
                                    GatewayAccountService gatewayAccountService,
+                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                    IpAddressMatcher ipAddressMatcher,
                                    @Named("AllowedEpdqIpAddresses") Set<String> allowedEpdqIpAddresses) {
         this.chargeService = chargeService;
@@ -67,6 +71,7 @@ public class EpdqNotificationService {
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.allowedEpdqIpAddresses = allowedEpdqIpAddresses;
         this.ipAddressMatcher = ipAddressMatcher;
     }
@@ -121,8 +126,22 @@ public class EpdqNotificationService {
         }
 
         GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
+        Optional<GatewayAccountCredentialsEntity> maybeGatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
 
-        if (!isValidNotificationSignature(notification, gatewayAccountEntity)) {
+        if (maybeGatewayAccountCredentialsEntity.isEmpty()) {
+            logger.error(format("%s notification %s could not be processed (associated gateway account credentials not found for charge [%s])",
+                            PAYMENT_GATEWAY_NAME,
+                            notification,
+                            charge.getExternalId()),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()),
+                    kv("gateway_credentials_external_id", charge.getCredentialExternalId()));
+            return true;
+        }
+
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = maybeGatewayAccountCredentialsEntity.get();
+
+        if (!isValidNotificationSignature(notification, gatewayAccountCredentialsEntity)) {
             return true;
         }
 
@@ -156,10 +175,10 @@ public class EpdqNotificationService {
         return true;
     }
 
-    private boolean isValidNotificationSignature(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
+    private boolean isValidNotificationSignature(EpdqNotification notification, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         String actualSignature = signatureGenerator.sign(
                 getParams(notification, false),
-                getShaOutPassphrase(gatewayAccountEntity)
+                getShaOutPassphrase(gatewayAccountCredentialsEntity)
         );
 
         final String expectedShaSignature = getExpectedShaSignature(notification);
@@ -187,8 +206,8 @@ public class EpdqNotificationService {
                 .get(withShaSignature);
     }
 
-    private String getShaOutPassphrase(GatewayAccountEntity gatewayAccountEntity) {
-        return gatewayAccountEntity.getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_OUT_PASSPHRASE);
+    private String getShaOutPassphrase(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        return gatewayAccountCredentialsEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, Charge charge) {

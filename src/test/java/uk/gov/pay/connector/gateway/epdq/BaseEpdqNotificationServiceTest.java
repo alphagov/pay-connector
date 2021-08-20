@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
@@ -39,6 +40,8 @@ abstract class BaseEpdqNotificationServiceTest {
     @Mock
     protected GatewayAccountService mockGatewayAccountService;
     @Mock
+    protected GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    @Mock
     protected ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
     protected RefundNotificationProcessor mockRefundNotificationProcessor;
@@ -58,6 +61,7 @@ abstract class BaseEpdqNotificationServiceTest {
                 mockChargeNotificationProcessor,
                 mockRefundNotificationProcessor,
                 mockGatewayAccountService,
+                mockGatewayAccountCredentialsService,
                 new IpAddressMatcher(new InetAddressValidator()),
                 ALLOWED_IP_ADDRESSES
         );
