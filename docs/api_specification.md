@@ -248,7 +248,8 @@ Content-Type: application/json
             "template_body": null
         }
     },
-    "worldpay_3ds_flex": null
+    "worldpay_3ds_flex": null,
+    "send_reference_to_gateway": false
 }
 ```
 
@@ -276,7 +277,8 @@ Content-Type: application/json
 | `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
 | `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
 | `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
-| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                       |
+| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                   |
+| `send_reference_to_gateway`                      | X              | If enabled, service payment reference is sent to gateway as description. Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false'  |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -327,6 +329,7 @@ Content-Type: application/json
       "allow_telephone_payment_notifications": false,
       "moto_mask_card_number_input": false,
       "moto_mask_card_security_code_input": false,
+      "send_reference_to_gateway": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -365,6 +368,7 @@ Content-Type: application/json
       "allow_moto": false,
       "moto_mask_card_number_input": false,
       "moto_mask_card_security_code_input": false,
+      "send_reference_to_gateway": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -407,6 +411,7 @@ Content-Type: application/json
       "allow_moto": false,
       "moto_mask_card_number_input": false,
       "moto_mask_card_security_code_input": false,
+      "send_reference_to_gateway": false,
       "email_notifications": {
           "REFUND_ISSUED": {
               "version": 1,
@@ -985,7 +990,7 @@ A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_
 `notify_settings`, `email_collection_mode`, `corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`,
 `corporate_prepaid_credit_card_surcharge_amount`, `corporate_prepaid_debit_card_surcharge_amount`, `allow_zero_amount`, `allow_moto`,
 `moto_mask_card_number_input`, `moto_mask_card_security_code_input`, `allow_telephone_payment_notifications`, 
-`send_payer_ip_address_to_gateway`, `send_payer_email_to_gateway`, `integration_version_3ds` or
+`send_payer_ip_address_to_gateway`, `send_payer_email_to_gateway`, `integration_version_3ds`, `send_reference_to_gateway` or
 `worldpay_exemption_engine_enabled` using a JSON Patch-esque message body.
 
 ### Request example

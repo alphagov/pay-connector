@@ -24,6 +24,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-including-state.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-excluding-3ds.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-excluding-3ds-with-email.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITH_REFERENCE_IN_DESCRIPTION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-with-reference-in-description.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-full-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-3ds-with-ip-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-3ds-without-ip-address.xml";
