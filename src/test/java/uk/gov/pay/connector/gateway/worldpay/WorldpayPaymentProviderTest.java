@@ -21,6 +21,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -551,7 +552,8 @@ public class WorldpayPaymentProviderTest {
         when(inquiryClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(response);
 
-        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
 
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
         assertThat(chargeQueryResponse.foundCharge(), is(true));

@@ -21,6 +21,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -306,7 +307,8 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
-        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.of(ChargeStatus.AUTHORISATION_SUCCESS)));
         assertThat(chargeQueryResponse.foundCharge(), is(true));
     }
@@ -314,7 +316,8 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
         setUpAndCheckThatEpdqIsUp();
-        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
         assertThat(chargeQueryResponse.getMappedStatus(), is(Optional.empty()));
         assertThat(chargeQueryResponse.foundCharge(), is(false));
     }

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -129,13 +130,13 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(Charge charge, GatewayAccountEntity gatewayAccountEntity) throws GatewayException {
+    public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
-                gatewayUrlMap.get(gatewayAccountEntity.getType()),
+                gatewayUrlMap.get(chargeQueryGatewayRequest.getGatewayAccount().getType()),
                 WORLDPAY,
-                gatewayAccountEntity.getType(),
-                buildQuery(charge, gatewayAccountEntity),
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getCredentials(WORLDPAY.getName()))
+                chargeQueryGatewayRequest.getGatewayAccount().getType(),
+                buildQuery(chargeQueryGatewayRequest),
+                getGatewayAccountCredentialsAsAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -150,7 +151,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .orElseThrow(() ->
                         new WebApplicationException(format(
                                 "Unable to query charge %s - an error occurred: %s",
-                                charge.getExternalId(),
+                                chargeQueryGatewayRequest.getChargeExternalId(),
                                 worldpayGatewayResponse
                         )));
     }
@@ -160,10 +161,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return true;
     }
 
-    private GatewayOrder buildQuery(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+    private GatewayOrder buildQuery(ChargeQueryGatewayRequest chargeQueryGatewayRequest) {
         return aWorldpayInquiryRequestBuilder()
-                .withTransactionId(charge.getGatewayTransactionId())
-                .withMerchantCode(gatewayAccountEntity.getCredentials(WORLDPAY.getName()).get(CREDENTIALS_MERCHANT_ID))
+                .withTransactionId(chargeQueryGatewayRequest.getTransactionId())
+                .withMerchantCode(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 

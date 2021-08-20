@@ -5,6 +5,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.ErrorType;
@@ -132,7 +133,8 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     public void shouldSuccessfullyQueryChargeStatus() throws Exception {
         mockPaymentProviderResponse(200, successQueryAuthorisedResponse());
         ChargeEntity chargeEntity = buildChargeEntity();
-        ChargeQueryResponse response = provider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
+        ChargeQueryGatewayRequest request = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse response = provider.queryPaymentStatus(request);
         assertThat(response.getMappedStatus(), is(Optional.of(AUTHORISATION_SUCCESS)));
         assertThat(response.foundCharge(), is(true));
     }
@@ -141,7 +143,8 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
         mockPaymentProviderResponse(200, errorQueryResponse());
         ChargeEntity chargeEntity = buildChargeEntity();
-        ChargeQueryResponse response = provider.queryPaymentStatus(Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
+        ChargeQueryGatewayRequest request = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse response = provider.queryPaymentStatus(request);
         assertThat(response.getMappedStatus(), is(Optional.empty()));
         assertThat(response.foundCharge(), is(false));
     }
