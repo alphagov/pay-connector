@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 
 import java.util.Optional;
 
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
@@ -28,6 +27,12 @@ public interface WorldpayOrderBuilder {
             Optional.ofNullable(request.getCharge().getEmail()).ifPresent(builder::withPayerEmail);
         }
 
+        if (request.getGatewayAccount().isSendReferenceToGateway()) {
+            builder.withDescription(request.getReference());
+        } else {
+            builder.withDescription(request.getDescription());
+        }
+
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
 
@@ -36,7 +41,6 @@ public interface WorldpayOrderBuilder {
                 .with3dsRequired(is3dsRequired)
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails());
     }

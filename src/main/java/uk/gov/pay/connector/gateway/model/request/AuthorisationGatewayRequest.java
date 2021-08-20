@@ -31,6 +31,10 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         return charge.getDescription();
     }
 
+    public String getReference() {
+        return charge.getReference().toString();
+    }
+
     public String getChargeExternalId() {
         return charge.getExternalId();
     }
