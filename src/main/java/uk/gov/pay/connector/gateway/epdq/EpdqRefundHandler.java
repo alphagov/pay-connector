@@ -52,12 +52,12 @@ public class EpdqRefundHandler implements RefundHandler {
 
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         var epdqPayloadDefinitionForRefundOrder = new EpdqPayloadDefinitionForRefundOrder();
-        epdqPayloadDefinitionForRefundOrder.setUserId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinitionForRefundOrder.setPassword(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinitionForRefundOrder.setPspId(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_MERCHANT_ID));
+        epdqPayloadDefinitionForRefundOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME));
+        epdqPayloadDefinitionForRefundOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD));
+        epdqPayloadDefinitionForRefundOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID));
         epdqPayloadDefinitionForRefundOrder.setPayId(request.getTransactionId());
         epdqPayloadDefinitionForRefundOrder.setAmount(request.getAmount());
-        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase(request.getGatewayAccount().getCredentials(EPDQ.getName()).get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinitionForRefundOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForRefundOrder.createGatewayOrder();
     }
 }

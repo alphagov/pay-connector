@@ -13,6 +13,8 @@ import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.IpDomainMatcher;
 
@@ -121,8 +123,7 @@ public class WorldpayNotificationService {
         }
 
         Charge charge = maybeCharge.get();
-        Optional<GatewayAccountEntity> mayBeGatewayAccountEntity =
-                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
+        Optional<GatewayAccountEntity> mayBeGatewayAccountEntity = gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
 
         if (mayBeGatewayAccountEntity.isEmpty()) {
             logger.error("{} notification {} could not be processed (associated gateway account [{}] not found for charge [{}] {}, {})",
