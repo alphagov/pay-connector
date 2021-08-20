@@ -5,7 +5,7 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import java.time.ZonedDateTime;
 
 public class PaymentRefundCreatedByUser extends PaymentEvent {
-    public PaymentRefundCreatedByUser(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public PaymentRefundCreatedByUser(String serviceId, boolean isLive, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(serviceId, isLive, resourceExternalId, eventDetails, timestamp);
     }
 }

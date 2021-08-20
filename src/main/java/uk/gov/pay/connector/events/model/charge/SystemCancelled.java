@@ -17,7 +17,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class SystemCancelled extends PaymentEventWithoutDetails {
-    public SystemCancelled(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public SystemCancelled(String serviceId, boolean isLive, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, isLive, resourceExternalId, timestamp);
     }
 }

@@ -15,10 +15,12 @@ import java.time.ZonedDateTime;
  */
 public class PaymentDetailsEntered extends PaymentEvent {
 
-    public PaymentDetailsEntered(String resourceExternalId,
+    public PaymentDetailsEntered(String serviceId,
+                                 boolean live,
+                                 String resourceExternalId,
                                  PaymentDetailsEnteredEventDetails eventDetails,
                                  ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentDetailsEntered from(ChargeEntity charge) {
@@ -29,6 +31,8 @@ public class PaymentDetailsEntered extends PaymentEvent {
                 .orElseThrow(() -> new ChargeEventNotFoundRuntimeException(charge.getExternalId()));
 
         return new PaymentDetailsEntered(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 lastEventDate);
@@ -38,6 +42,8 @@ public class PaymentDetailsEntered extends PaymentEvent {
         ChargeEntity charge = chargeEvent.getChargeEntity();
 
         return new PaymentDetailsEntered(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 chargeEvent.getUpdated()

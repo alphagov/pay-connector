@@ -8,14 +8,16 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDeta
 import java.time.ZonedDateTime;
 
 public class CaptureSubmitted extends PaymentEvent {
-    public CaptureSubmitted(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public CaptureSubmitted(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
     public static CaptureSubmitted from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
 
         return new CaptureSubmitted(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 CaptureSubmittedEventDetails.from(chargeEvent),
                 chargeEvent.getUpdated()

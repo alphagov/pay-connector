@@ -144,7 +144,10 @@ public class EventFactory {
             } else if (eventClass == BackfillerRecreatedUserEmailCollected.class) {
                 return BackfillerRecreatedUserEmailCollected.from(chargeEvent.getChargeEntity());
             } else {
-                return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class,
+                        boolean.class, String.class, ZonedDateTime.class).newInstance(
+                        chargeEvent.getChargeEntity().getServiceId(),
+                        chargeEvent.getChargeEntity().getGatewayAccount().isLive(),
                         chargeEvent.getChargeEntity().getExternalId(),
                         chargeEvent.getUpdated()
                 );
