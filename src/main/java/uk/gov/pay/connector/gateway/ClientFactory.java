@@ -14,7 +14,6 @@ import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
-import uk.gov.service.payments.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
@@ -67,8 +66,6 @@ public class ClientFactory {
 
         Client client = defaultClientBuilder.build(gateway.getName());
         client.register(RestClientLoggingFilter.class);
-
-        if (conf.isXrayEnabled()) client.register(XRayHttpClientFilter.class);
 
         return client;
     }

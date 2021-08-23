@@ -67,7 +67,6 @@ import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 import uk.gov.service.payments.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
-import uk.gov.service.payments.commons.utils.xray.Xray;
 import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
@@ -167,9 +166,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("database", new DatabaseHealthCheck(configuration.getDataSourceFactory()));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
         environment.healthChecks().register("sqsQueue", injector.getInstance(SQSHealthCheck.class));
-
-        if (configuration.isXrayEnabled())
-            Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");
     }
 
     protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
