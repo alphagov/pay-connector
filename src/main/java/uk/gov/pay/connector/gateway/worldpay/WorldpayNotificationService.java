@@ -139,11 +139,8 @@ public class WorldpayNotificationService {
         
         if (isCaptureNotification(notification)) {
             if(charge.isHistoric()){
-                logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
-                        PAYMENT_GATEWAY_NAME, notification,
-                        charge.getExternalId(),
-                        kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
-                        kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+                chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, 
+                        notification.getTransactionId(), charge, CAPTURED);
                 return true;
             }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());

@@ -93,7 +93,7 @@ class WorldpayNotificationServiceTest {
     }
 
     @Test
-    void givenAChargeCapturedNotification_shouldNotInvokeChargeNotificationProcessor_IfChargeIsHistoric() {
+    void givenAChargeCapturedNotification_shouldInvokeChargeNotificationProcessor_IfChargeIsHistoric() {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
@@ -111,7 +111,7 @@ class WorldpayNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
 
         assertTrue(result);
-        verifyNoInteractions(mockChargeNotificationProcessor);
+        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, transactionId, charge, CAPTURED);
         verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
