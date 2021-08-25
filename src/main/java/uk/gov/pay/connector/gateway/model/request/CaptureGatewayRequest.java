@@ -5,6 +5,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.time.Instant;
 import java.util.Map;
 
 public class CaptureGatewayRequest implements GatewayRequest {
@@ -29,6 +30,10 @@ public class CaptureGatewayRequest implements GatewayRequest {
     
     public String getExternalId() {
         return charge.getExternalId();
+    }
+
+    public Instant getCreatedDate() {
+        return charge.getCreatedDate();
     }
 
     @Override
