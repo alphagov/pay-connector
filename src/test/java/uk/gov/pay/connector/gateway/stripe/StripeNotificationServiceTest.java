@@ -146,7 +146,7 @@ class StripeNotificationServiceTest {
     }
 
     @Test
-    void should_log_the_requirements_and_payoutsDisabled_json_when_an_account_updated_event_is_received() {
+    void shouldLogTheRequirementsAndPayoutsDisabledJson_whenAnAccountUpdatedEventIsReceived() {
         Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -324,7 +324,8 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId,
+                getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED, "2.0.1"));
     }
 
     @Test
@@ -350,7 +351,8 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED));
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId,
+                getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome.DECLINED, "2.0.1"));
     }
 
     @Test
@@ -464,7 +466,7 @@ class StripeNotificationServiceTest {
 
         assertFalse(result);
     }
-
+    
     private static String sampleStripeNotification(String location,
                                                    String eventId,
                                                    StripeNotificationType stripeNotificationType) {
@@ -474,8 +476,13 @@ class StripeNotificationServiceTest {
     }
 
     private Auth3dsResult getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome) {
+        return getAuth3dsResult(auth3dsResultOutcome, null);
+    }
+
+    private Auth3dsResult getAuth3dsResult(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome, String threeDsVersion) {
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
+        auth3dsResult.setThreeDsVersion(threeDsVersion);
         return auth3dsResult;
     }
 }

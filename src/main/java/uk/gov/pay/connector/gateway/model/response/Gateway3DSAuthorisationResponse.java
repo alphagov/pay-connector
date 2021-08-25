@@ -51,6 +51,10 @@ public class Gateway3DSAuthorisationResponse {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", null, null);
     }
 
+    public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, Gateway3dsRequiredParams gateway3dsRequiredParams) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", gateway3dsRequiredParams, null);
+    }
+
     public boolean isSuccessful() {
         return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED
                 || authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY;

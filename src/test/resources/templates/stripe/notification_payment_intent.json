@@ -22,7 +22,12 @@
           {
             "id": "ch_1FF3RuEZsufgnuO0IPT8CY3o",
             "object": "charge",
-            "amount": 1000
+            "amount": 1000,
+            "payment_method_details": {
+              "three_d_secure": {
+                "version": "2.0.1"
+              }
+            }
           }
         ]
       }
