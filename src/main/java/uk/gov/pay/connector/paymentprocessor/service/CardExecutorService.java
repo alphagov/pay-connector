@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
-import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.Map;
@@ -45,7 +44,6 @@ public class CardExecutorService {
 
     private ExecutorServiceConfig config;
     private ExecutorService executor;
-    private XrayUtils xrayUtils;
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -54,7 +52,7 @@ public class CardExecutorService {
     }
 
     @Inject
-    public CardExecutorService(ConnectorConfiguration configuration, Environment environment, XrayUtils xrayUtils) {
+    public CardExecutorService(ConnectorConfiguration configuration, Environment environment) {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("CardExecutorService-%d")
                 .build();
@@ -62,7 +60,6 @@ public class CardExecutorService {
         this.config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
-        this.xrayUtils = xrayUtils;
         addShutdownHook();
     }
 
@@ -98,7 +95,6 @@ public class CardExecutorService {
 
         Future<T> futureObject = executor.submit(() -> {
             MDC.setContextMap(mdcContextMap);
-            xrayUtils.beginSegment();
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
             if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
@@ -108,7 +104,6 @@ public class CardExecutorService {
             try {
                 return task.call();
             } finally {
-                xrayUtils.endSegment();
                 MDC.clear();
             }
         });

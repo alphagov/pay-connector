@@ -24,6 +24,7 @@ import java.util.Set;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -116,6 +117,12 @@ public class SmartpayNotificationService {
 
         if (interpretedStatus instanceof MappedChargeStatus) {
             if(charge.isHistoric()){
+                if (CAPTURED.equals(interpretedStatus.getChargeStatus())) {
+                    chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity, 
+                            notification.getOriginalReference(), charge, interpretedStatus.getChargeStatus());
+                    return;
+                }
+
                 logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
                         PAYMENT_GATEWAY_NAME, notification,
                         charge.getExternalId(),

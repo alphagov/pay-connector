@@ -16,15 +16,15 @@
         <wiremock.version>2.30.1</wiremock.version>
         <eclipselink.version>2.7.7</eclipselink.version>
         <guice.version>5.0.1</guice.version>
-        <jackson.version>2.12.4</jackson.version>
-        <pay-java-commons.version>1.0.20210802125439</pay-java-commons.version>
+        <jackson.version>2.12.5</jackson.version>
+        <pay-java-commons.version>1.0.20210823095154</pay-java-commons.version>
         <surefire.version>3.0.0-M5</surefire.version>
-        <jooq.version>3.15.1</jooq.version>
+        <jooq.version>3.15.2</jooq.version>
         <postgresql.version>42.2.23</postgresql.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <jjwt.version>0.11.2</jjwt.version>
         <pact.version>3.6.15</pact.version>
-        <mockito.version>3.11.2</mockito.version>
+        <mockito.version>3.12.4</mockito.version>
         <PACT_BROKER_URL/>
         <PACT_BROKER_USERNAME/>
         <PACT_BROKER_PASSWORD/>
@@ -301,7 +301,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>20.68.0</version>
+            <version>20.70.0</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -429,7 +429,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.7</version>
+            <version>2.8.8</version>
         </dependency>
         <dependency>
             <groupId>com.carlosbecker</groupId>

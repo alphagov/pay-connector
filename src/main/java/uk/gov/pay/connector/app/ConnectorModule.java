@@ -32,7 +32,6 @@ import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.ReverseDnsLookup;
-import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
 import javax.inject.Singleton;
@@ -108,12 +107,6 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public ObjectMapper provideObjectMapper() {
         return environment.getObjectMapper();
-    }
-
-    @Provides
-    @Singleton
-    public XrayUtils xrayUtils(ConnectorConfiguration connectorConfiguration) {
-        return new XrayUtils(connectorConfiguration.isXrayEnabled());
     }
 
     @Provides

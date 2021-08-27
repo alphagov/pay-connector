@@ -102,7 +102,7 @@ class SmartpayNotificationServiceTest {
     }
 
     @Test
-    void shouldNotUpdateCharge_WhenNotificationIsForCaptureAndChargeIsHistoric() {
+    void shouldUpdateCharge_WhenNotificationIsForCaptureAndChargeIsHistoric() {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
@@ -114,7 +114,7 @@ class SmartpayNotificationServiceTest {
 
         assertTrue(notificationService.handleNotificationFor(payload, FORWARDED_IP_ADDRESSES));
         verifyNoInteractions(mockRefundNotificationProcessor);
-        verifyNoInteractions(mockChargeNotificationProcessor);
+        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccountEntity, originalReference, charge, CAPTURED);
     }
 
     @Test
