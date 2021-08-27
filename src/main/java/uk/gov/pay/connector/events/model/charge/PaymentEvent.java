@@ -8,9 +8,9 @@ import java.time.ZonedDateTime;
 
 public class PaymentEvent extends Event {
     private String serviceId;
-    private boolean live;
+    private Boolean live;
     
-    public PaymentEvent(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public PaymentEvent(String serviceId, Boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
         this.serviceId = serviceId;
         this.live = live;
