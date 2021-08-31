@@ -5,6 +5,7 @@ import io.dropwizard.Configuration;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,6 +26,12 @@ public class StripeGatewayConfig extends Configuration {
     
     @Valid
     private Double feePercentage;
+
+    @Valid
+    private Double feePercentageV2;
+
+    @Valid
+    private long feePercentageV2Date;
 
     @Valid
     private String platformAccountId;
@@ -79,5 +86,13 @@ public class StripeGatewayConfig extends Configuration {
 
     public List<String> getCredentials() {
         return credentials;
+    }
+
+    public Double getFeePercentageV2() {
+        return feePercentageV2;
+    }
+
+    public Instant getFeePercentageV2Date() {
+        return Instant.ofEpochSecond(feePercentageV2Date);
     }
 }
