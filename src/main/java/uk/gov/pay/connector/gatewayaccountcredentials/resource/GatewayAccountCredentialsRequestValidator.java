@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.common.exception.ValidationException;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
-import uk.gov.pay.connector.common.validator.JsonPatchRequestValidator;
-import uk.gov.pay.connector.common.validator.PatchPathOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
+import uk.gov.service.payments.commons.api.validation.JsonPatchRequestValidator;
+import uk.gov.service.payments.commons.api.validation.PatchPathOperation;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,11 +21,11 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
-import static uk.gov.pay.connector.common.validator.JsonPatchRequestValidator.throwIfValueNotString;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
+import static uk.gov.service.payments.commons.api.validation.JsonPatchRequestValidator.throwIfValueNotString;
 
 public class GatewayAccountCredentialsRequestValidator {
 

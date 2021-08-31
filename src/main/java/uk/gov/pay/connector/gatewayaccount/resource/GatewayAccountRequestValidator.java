@@ -2,24 +2,24 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import uk.gov.pay.connector.common.exception.ValidationException;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REMOVE;
-import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REPLACE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
+import static uk.gov.service.payments.commons.model.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
+import static uk.gov.service.payments.commons.model.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
+import static uk.gov.service.payments.commons.model.jsonpatch.JsonPatchKeys.FIELD_VALUE;
+import static uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp.REMOVE;
+import static uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp.REPLACE;
 
 
 public class GatewayAccountRequestValidator {

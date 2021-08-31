@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
-import uk.gov.pay.connector.common.validator.JsonPatchRequestValidator;
-import uk.gov.pay.connector.common.validator.PatchPathOperation;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
+import uk.gov.service.payments.commons.api.validation.JsonPatchRequestValidator;
+import uk.gov.service.payments.commons.api.validation.PatchPathOperation;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import java.util.Arrays;
 import java.util.Collections;

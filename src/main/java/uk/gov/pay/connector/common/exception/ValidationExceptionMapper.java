@@ -2,8 +2,9 @@ package uk.gov.pay.connector.common.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

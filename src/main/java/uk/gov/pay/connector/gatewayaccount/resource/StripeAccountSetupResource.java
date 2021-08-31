@@ -3,12 +3,11 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import io.dropwizard.jersey.PATCH;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
-import uk.gov.pay.connector.gatewayaccount.resource.support.StripeAccountUtils;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
