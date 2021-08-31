@@ -24,6 +24,9 @@ public class StripeCharge {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("payment_method_details")
+    private PaymentMethodDetails paymentMethodDetails;
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class BalanceTransaction {
 
@@ -61,5 +64,9 @@ public class StripeCharge {
 
     public String getStatus() {
         return status;
+    }
+
+    public PaymentMethodDetails getPaymentMethodDetails() {
+        return paymentMethodDetails;
     }
 }

@@ -27,8 +27,8 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -227,6 +227,22 @@ public class StripeNotificationResourceIT {
         notifyConnectorFromUnexpectedIpAddress(payload)
                 .then()
                 .statusCode(403);
+    }
+
+    @Test
+    public void shouldHandleAPaymentIntent3DSVersion() {
+        String transactionId = "pi_123" + nextInt();
+        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                transactionId, PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
+        notifyConnector(payload)
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(externalChargeId);
+
+        assertThat(charge.get("version_3ds").toString(), is("2.0.1"));
     }
 
     private Response notifyConnectorWithHeader(String payload, String header) {

@@ -33,7 +33,7 @@ public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseRespon
 
     @Override
     public Optional<? extends Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
-        return Optional.of(new Stripe3dsRequiredParams(jsonResponse.getRedirectUrl()));
+        return jsonResponse.getRedirectUrl() == null ? Optional.empty() : Optional.of(new Stripe3dsRequiredParams(jsonResponse.getRedirectUrl(), null));
     }
 
     @Override

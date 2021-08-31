@@ -16,6 +16,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
@@ -213,7 +214,7 @@ public class StripeNotificationService {
             }
 
             if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
-                executePost3DSAuthorisation(charge, notification.getType());
+                executePost3DSAuthorisation(charge, notification.getType(), paymentIntent);
             }
 
         } catch (StripeParseException e) {
@@ -240,6 +241,7 @@ public class StripeNotificationService {
     private void processSourceNotification(StripeNotification notification) {
         try {
             StripeSourcesResponse stripeSourcesResponse = toSourceObject(notification.getObject());
+            StripePaymentIntent paymentIntent = toPaymentIntent(notification.getObject());
 
             if (isBlank(stripeSourcesResponse.getTransactionId())) {
                 logger.error("{} source notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
@@ -263,7 +265,7 @@ public class StripeNotificationService {
             ChargeEntity charge = maybeCharge.get();
 
             if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
-                executePost3DSAuthorisation(charge, notification.getType());
+                executePost3DSAuthorisation(charge, notification.getType(), paymentIntent);
             }
 
         } catch (StripeParseException e) {
@@ -271,13 +273,20 @@ public class StripeNotificationService {
         }
     }
 
-    private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType) {
+    private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType, StripePaymentIntent paymentIntent) {
         try {
             final StripeNotificationType type = byType(notificationEventType);
 
             Auth3dsResult auth3DsResult = new Auth3dsResult();
             auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
 
+            Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
+            optionalStripeCharge.ifPresent(stripeCharge -> {
+                if (stripeCharge.getPaymentMethodDetails() != null &&
+                    stripeCharge.getPaymentMethodDetails().getThreeDSecure() != null) {
+                        auth3DsResult.setThreeDsVersion(stripeCharge.getPaymentMethodDetails().getThreeDSecure().getVersion());
+                }
+            });
             delayFor3dsReady(charge);
             card3dsResponseAuthService.process3DSecureAuthorisationWithoutLocking(charge.getExternalId(), auth3DsResult);
         } catch (OperationAlreadyInProgressRuntimeException e) {

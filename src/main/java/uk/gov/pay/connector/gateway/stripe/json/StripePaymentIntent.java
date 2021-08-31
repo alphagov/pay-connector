@@ -30,8 +30,8 @@ public class StripePaymentIntent {
     }
     
     public Optional<StripeCharge> getCharge() {
-        return chargesCollection.getCharges().stream()
-                .findFirst();
+        return chargesCollection != null ? chargesCollection.getCharges().stream().findFirst() :
+            Optional.empty();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

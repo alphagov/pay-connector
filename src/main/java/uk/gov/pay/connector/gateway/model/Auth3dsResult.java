@@ -2,6 +2,8 @@ package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class Auth3dsResult implements AuthorisationDetails {
 
     public enum Auth3dsResultOutcome {
@@ -13,6 +15,8 @@ public class Auth3dsResult implements AuthorisationDetails {
     private Auth3dsResultOutcome auth3dsResultOutcome;
 
     private String md;
+
+    private String threeDsVersion;
 
     @JsonProperty("pa_response")
     public void setPaResponse(String paResponse) {
@@ -41,12 +45,22 @@ public class Auth3dsResult implements AuthorisationDetails {
         return this.md;
     }
 
+    public String getThreeDsVersion() {
+        return threeDsVersion;
+    }
+
+    @JsonProperty("three_ds_version")
+    public void setThreeDsVersion(String threeDsVersion) {
+        this.threeDsVersion = threeDsVersion;
+    }
+
     @Override
     public String toString() {
         return "Auth3dsDetails{" +
                 "paResponse='" + paResponse + '\'' +
                 ", auth3DsResult=" + auth3dsResultOutcome +
                 ", md='" + md + '\'' +
+                ", threeDsVersion='" + threeDsVersion + '\'' +
                 '}';
     }
 
@@ -57,9 +71,10 @@ public class Auth3dsResult implements AuthorisationDetails {
 
         Auth3dsResult that = (Auth3dsResult) o;
 
-        if (paResponse != null ? !paResponse.equals(that.paResponse) : that.paResponse != null) return false;
+        if (!Objects.equals(paResponse, that.paResponse)) return false;
         if (auth3dsResultOutcome != that.auth3dsResultOutcome) return false;
-        return md != null ? md.equals(that.md) : that.md == null;
+        if (!Objects.equals(threeDsVersion, that.threeDsVersion)) return false;
+        return Objects.equals(md, that.md);
     }
 
     @Override
