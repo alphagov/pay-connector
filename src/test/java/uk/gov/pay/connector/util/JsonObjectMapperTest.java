@@ -32,13 +32,6 @@ public class JsonObjectMapperTest {
         String jsonString = "{\"id\":\"abc\"}";
         assertThrows(WebApplicationException.class, () -> jsonObjectMapper.getObject(jsonString, LocalTestObject.class));
     }
-    
-    @Test
-    public void shouldMapToMap() throws JsonProcessingException {
-        JsonNode jsonNode = objectMapper.readTree("{\"foo\":\"bar\"}");
-        Map<String, String> fromJson = jsonObjectMapper.getAsMap(jsonNode);
-        assertThat(fromJson, hasEntry("foo", "bar"));
-    }
 }
 
 class LocalTestObject {

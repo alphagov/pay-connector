@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import org.junit.Test;
-import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

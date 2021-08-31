@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
-import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.Collections;
 

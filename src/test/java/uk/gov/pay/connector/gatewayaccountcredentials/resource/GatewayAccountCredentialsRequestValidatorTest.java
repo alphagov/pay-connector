@@ -11,8 +11,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.Collections;
 import java.util.List;

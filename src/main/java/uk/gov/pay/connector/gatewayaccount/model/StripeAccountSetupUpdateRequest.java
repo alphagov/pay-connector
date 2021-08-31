@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 public class StripeAccountSetupUpdateRequest {
     private final StripeAccountSetupTask task;

@@ -4,8 +4,6 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
@@ -16,6 +14,8 @@ import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExi
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
+import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;

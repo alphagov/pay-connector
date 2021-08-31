@@ -7,7 +7,7 @@ import junitparams.Parameters;
 import junitparams.converters.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.connector.common.exception.ValidationException;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.Arrays;
 import java.util.Collections;
