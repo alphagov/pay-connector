@@ -283,8 +283,9 @@ public class StripeNotificationService {
             Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
             optionalStripeCharge.ifPresent(stripeCharge -> {
                 if (stripeCharge.getPaymentMethodDetails() != null &&
-                    stripeCharge.getPaymentMethodDetails().getThreeDSecure() != null) {
-                        auth3DsResult.setThreeDsVersion(stripeCharge.getPaymentMethodDetails().getThreeDSecure().getVersion());
+                        stripeCharge.getPaymentMethodDetails().getCard() != null &&
+                        stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure() != null) {
+                            auth3DsResult.setThreeDsVersion(stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure().getVersion());
                 }
             });
             delayFor3dsReady(charge);
