@@ -41,6 +41,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String addressCountry;
     private final Source source;
     private final boolean moto;
+    private final String serviceId;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -64,6 +65,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.addressCountry = builder.addressCountry;
         this.source = builder.source;
         this.moto = builder.moto;
+        this.serviceId = builder.serviceId;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -80,7 +82,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
                 .withEmail(charge.getEmail())
                 .withSource(charge.getSource())
-                .withMoto(charge.isMoto());
+                .withMoto(charge.isMoto())
+                .withServiceId(charge.getServiceId());
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -206,6 +209,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
     public Source getSource() {
         return source;
     }
+    
+    public String getServiceId() { return serviceId; }
 
     @Override
     public boolean equals(Object o) {
@@ -231,13 +236,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(addressCity, that.addressCity) &&
                 Objects.equals(addressCounty, that.addressCounty) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
-                Objects.equals(source, that.source);
+                Objects.equals(source, that.source) &&
+                Objects.equals(serviceId, that.serviceId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, credentialExternalId,
-                paymentProvider, language, delayedCapture, live, externalMetadata, source);
+                paymentProvider, language, delayedCapture, live, externalMetadata, source, serviceId);
     }
 
     public static class Builder {
@@ -262,6 +268,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private Source source;
         private boolean moto;
         private String credentialExternalId;
+        private String serviceId;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -364,6 +371,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withMoto(boolean moto) {
             this.moto = moto;
+            return this;
+        }
+
+        public Builder withServiceId(String serviceId) {
+            this.serviceId = serviceId;
             return this;
         }
 
