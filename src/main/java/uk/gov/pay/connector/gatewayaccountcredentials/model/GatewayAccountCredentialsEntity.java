@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.eclipse.persistence.annotations.Customizer;
@@ -32,7 +32,7 @@ import java.util.Map;
 @Table(name = "gateway_account_credentials")
 @SequenceGenerator(name = "gateway_account_credentials_id_seq",
         sequenceName = "gateway_account_credentials_id_seq", allocationSize = 1)
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Customizer(HistoryCustomizer.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 

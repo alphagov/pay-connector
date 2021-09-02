@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.stripe.model.Payout;
 
@@ -11,7 +11,7 @@ import java.util.Objects;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class StripePayout {
     String id;
     Long amount;
