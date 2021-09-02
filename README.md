@@ -242,7 +242,7 @@ The event queue is used to send payment event information to Ledger (such as the
 
 #### Capture Queue & Payout Reconcile Queue
 
-These queues are used to distribute events amongst instances of connector for processing, connector places the events onto the queue and then reads of the end of the queue, processing each event as it reads them. This replaced a legacy implementation where a database table was used and connector would scan the database looking for events to process, using a lock to 'claim' an event for processing. The new implementation removes the needs for locks as each connector instance takes the next event on the queue and the distribution is managed by logic within the queue. As connector scales out more instances of connector poll the queue for new events.
+These queues are used to distribute events amongst instances of connector for processing, connector places the events onto the queue and then reads off the end of the queue, processing each event as it reads them. This replaced a legacy implementation where a database table was used and connector would scan the database looking for events to process, using a lock to 'claim' an event for processing. The new implementation removes the needs for locks as each connector instance takes the next event on the queue and the distribution is managed by logic within the queue. As connector scales out more instances of connector poll the queue for new events.
 
 ## Licence
 
