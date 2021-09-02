@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.wallets.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 import java.util.Optional;
 
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WalletPaymentInfo {
     

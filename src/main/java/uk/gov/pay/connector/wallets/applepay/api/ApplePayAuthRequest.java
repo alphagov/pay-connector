@@ -2,7 +2,7 @@ package uk.gov.pay.connector.wallets.applepay.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
@@ -10,7 +10,7 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     @NotNull @Valid private WalletPaymentInfo paymentInfo;
@@ -33,7 +33,7 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
         this.encryptedPaymentData = encryptedPaymentData;
     }
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EncryptedPaymentData {
         private String data;
@@ -68,7 +68,7 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
             this.signature = signature;
         }
 
-        @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Header {
             private String publicKeyHash;
