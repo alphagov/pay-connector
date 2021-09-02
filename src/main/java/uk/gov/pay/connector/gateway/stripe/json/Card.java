@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PaymentMethodDetails {
+public class Card {
 
-    @JsonProperty("card")
-    private Card card;
+    @JsonProperty("three_d_secure")
+    private ThreeDSecure threeDSecure;
 
-    public Card getCard() {
-        return card;
+    public ThreeDSecure getThreeDSecure() {
+        return threeDSecure;
     }
 }

@@ -24,8 +24,10 @@
             "object": "charge",
             "amount": 1000,
             "payment_method_details": {
-              "three_d_secure": {
-                "version": "2.0.1"
+              "card": {
+                "three_d_secure": {
+                  "version": "2.0.1"
+                }
               }
             }
           }
