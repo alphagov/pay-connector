@@ -363,6 +363,8 @@ public class EventFactoryTest {
         transaction.setTotalAmount(charge.getAmount());
         transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(charge.getGatewayAccount().getId().toString());
+        transaction.setServiceId(charge.getServiceId());
+        transaction.setLive(charge.getGatewayAccount().isLive());
         when(chargeService.findCharge(transaction.getTransactionId())).thenReturn(Optional.of(Charge.from(transaction)));
 
         RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()

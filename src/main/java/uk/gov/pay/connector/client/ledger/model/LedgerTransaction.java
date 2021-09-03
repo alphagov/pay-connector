@@ -49,6 +49,7 @@ public class LedgerTransaction {
     private String refundedBy;
     private String refundedByUserEmail;
     private String parentTransactionId;
+    private String serviceId;
 
     public LedgerTransaction() {
 
@@ -160,6 +161,10 @@ public class LedgerTransaction {
 
     public void setGatewayAccountId(String gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public boolean isDelayedCapture() {
@@ -289,4 +294,6 @@ public class LedgerTransaction {
     public void setParentTransactionId(String parentTransactionId) {
         this.parentTransactionId = parentTransactionId;
     }
+
+    public String getServiceId() { return serviceId; }
 }

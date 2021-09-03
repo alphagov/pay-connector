@@ -190,14 +190,16 @@ public class EventFactory {
                                 .getExternalChargeRefundAvailability(charge, refundList);
 
                         return new RefundAvailabilityUpdated(
-                                        c.getExternalId(),
-                                        RefundAvailabilityUpdatedEventDetails.from(
-                                                charge,
-                                                refundList,
-                                                refundAvailability
-                                        ),
-                                        eventTimestamp
-                                );
+                                c.getServiceId(),
+                                true,
+                                c.getExternalId(),
+                                RefundAvailabilityUpdatedEventDetails.from(
+                                        charge,
+                                        refundList,
+                                        refundAvailability
+                                ),
+                                eventTimestamp
+                        );
                             }
                     )
                     .orElseThrow(() -> new EventCreationException(charge.getExternalId()));

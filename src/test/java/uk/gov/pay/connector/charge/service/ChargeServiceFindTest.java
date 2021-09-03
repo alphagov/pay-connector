@@ -283,6 +283,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         transaction.setAmount(chargeEntity.getAmount());
         transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
+        transaction.setLive(true);
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
 
         when(ledgerService.getTransactionForGatewayAccount(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(transaction));
@@ -324,6 +325,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         transaction.setAmount(chargeEntity.getAmount());
         transaction.setCreatedDate(Instant.now().toString());
         transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
+        transaction.setLive(true);
         when(mockedChargeDao.findByProviderAndTransactionId(
                 "sandbox",
                 chargeEntity.getExternalId()
