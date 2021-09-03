@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class GatewayErrorDuringAuthorisation extends PaymentEventWithoutDetails {
-    public GatewayErrorDuringAuthorisation(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public GatewayErrorDuringAuthorisation(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, timestamp);
     }
 }

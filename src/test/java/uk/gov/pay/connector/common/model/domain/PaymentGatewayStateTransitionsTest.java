@@ -85,8 +85,8 @@ public class PaymentGatewayStateTransitionsTest {
 
     @Test
     public void isValidTransition_deniesTransitionWithInvalidEvent() {
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmitted("a", new EmptyEventDetails(), ZonedDateTime.now())), is(true));
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrored("a", ZonedDateTime.now())), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmitted("id", true, "a", new EmptyEventDetails(), ZonedDateTime.now())), is(true));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrored("id", true, "a", ZonedDateTime.now())), is(false));
     }
 
     @Test

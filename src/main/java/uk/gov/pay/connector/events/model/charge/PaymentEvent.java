@@ -7,13 +7,23 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import java.time.ZonedDateTime;
 
 public class PaymentEvent extends Event {
+    private String serviceId;
+    private boolean live;
     
+    public PaymentEvent(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(resourceExternalId, eventDetails, timestamp);
+        this.serviceId = serviceId;
+        this.live = live;
+    }
+
     public PaymentEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
 
-    public PaymentEvent(String resourceExternalId, ZonedDateTime timestamp) {
+    public PaymentEvent(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
+        this.serviceId = serviceId;
+        this.live = live;
     }
 
     @Override

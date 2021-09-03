@@ -80,6 +80,8 @@ public class QueueMessageContractTest {
                 .build();
 
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 resourceId,
                 PaymentCreatedEventDetails.from(charge),
                 ZonedDateTime.now()
@@ -96,6 +98,8 @@ public class QueueMessageContractTest {
                 .build();
 
         CaptureConfirmed captureConfirmedEvent = new CaptureConfirmed(
+                chargeEventEntity.getChargeEntity().getServiceId(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
                 ZonedDateTime.now()
@@ -113,6 +117,8 @@ public class QueueMessageContractTest {
                 .build();
 
         PaymentDetailsEntered captureConfirmedEvent = new PaymentDetailsEntered(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(), 
                 resourceId,
                 PaymentDetailsEnteredEventDetails.from(charge),
                 ZonedDateTime.now()
@@ -128,6 +134,8 @@ public class QueueMessageContractTest {
                 .build();
 
         UserEmailCollected userEmailCollected = new UserEmailCollected(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 resourceId,
                 UserEmailCollectedEventDetails.from(charge),
                 ZonedDateTime.now()
@@ -144,6 +152,8 @@ public class QueueMessageContractTest {
                 .build();
 
         CaptureSubmitted captureSubmittedEvent = new CaptureSubmitted(
+                chargeEventEntity.getChargeEntity().getServiceId(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
                 resourceId,
                 CaptureSubmittedEventDetails.from(chargeEventEntity),
                 ZonedDateTime.now()
@@ -283,6 +293,8 @@ public class QueueMessageContractTest {
                 .build();
 
         var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtained(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(), 
                 resourceId,
                 Gateway3dsExemptionResultObtainedEventDetails.from(charge),
                 ZonedDateTime.now()

@@ -10,14 +10,16 @@ import java.time.ZonedDateTime;
  *  Confirmed by notification from payment gateway
  **/
 public class CaptureConfirmed extends PaymentEvent {
-    public CaptureConfirmed(String resourceExternalId, CaptureConfirmedEventDetails captureConfirmedEventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, captureConfirmedEventDetails, timestamp);
+    public CaptureConfirmed(String serviceId, boolean live, String resourceExternalId, CaptureConfirmedEventDetails captureConfirmedEventDetails, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, captureConfirmedEventDetails, timestamp);
     }
 
     public static CaptureConfirmed from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
 
         return new CaptureConfirmed(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 CaptureConfirmedEventDetails.from(chargeEvent),
                 chargeEvent.getUpdated()

@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class PaymentStarted extends PaymentEventWithoutDetails {
-    public PaymentStarted(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public PaymentStarted(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, timestamp);
     }
 }

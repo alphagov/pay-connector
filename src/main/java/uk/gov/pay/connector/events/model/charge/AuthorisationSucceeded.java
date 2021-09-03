@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class AuthorisationSucceeded extends PaymentEventWithoutDetails {
-    public AuthorisationSucceeded(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+    public AuthorisationSucceeded(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, timestamp);
     }
 }
