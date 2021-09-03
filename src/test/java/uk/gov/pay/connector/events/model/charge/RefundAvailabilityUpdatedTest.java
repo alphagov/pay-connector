@@ -25,6 +25,8 @@ public class RefundAvailabilityUpdatedTest {
         ChargeEntity charge = chargeEntity.build();
         
         String event = new RefundAvailabilityUpdated(
+                charge.getServiceId(),
+                charge.getLive(),
                 charge.getExternalId(),
                 RefundAvailabilityUpdatedEventDetails.from(Charge.from(charge), List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
                 ZonedDateTime.now()

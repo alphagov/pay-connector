@@ -38,6 +38,7 @@ public class LedgerTransaction {
     private ChargeResponse.RefundSummary refundSummary;
     private SettlementSummary settlementSummary;
     private CardDetails cardDetails;
+    private String serviceId;
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     private SupportedLanguage language;
     private boolean moto;
@@ -49,6 +50,16 @@ public class LedgerTransaction {
     private String refundedBy;
     private String refundedByUserEmail;
     private String parentTransactionId;
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+    }
+
+
 
     public LedgerTransaction() {
 

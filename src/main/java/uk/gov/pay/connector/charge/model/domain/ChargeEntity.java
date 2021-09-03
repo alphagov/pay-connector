@@ -226,6 +226,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.serviceId = serviceId;
     }
 
+    public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference, GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, String paymentProvider, String email, Instant createdDate, SupportedLanguage language, boolean delayedCapture, ExternalMetadata externalMetadata, Source source, String gatewayTransactionId, CardDetailsEntity cardDetails, boolean moto, String serviceId, Boolean live) {
+        super();
+    }
+
     public Long getId() {
         return id;
     }
@@ -288,6 +292,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public String getServiceId() {
         return serviceId;
+    }
+
+    public Boolean getLive() {
+        return this.getGatewayAccount().isLive();
     }
 
     public String getProviderSessionId() {
@@ -617,6 +625,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private ServicePaymentReference reference;
         private ExternalMetadata externalMetadata;
         private String serviceId;
+        private boolean live;
 
         private TelephoneChargeEntityBuilder() {
         }
@@ -700,7 +709,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     gatewayTransactionId,
                     cardDetails,
                     false,
-                    serviceId);
+                    serviceId,
+                    live);
         }
     }
 }

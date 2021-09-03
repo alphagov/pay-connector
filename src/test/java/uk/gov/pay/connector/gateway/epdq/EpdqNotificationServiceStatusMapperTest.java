@@ -244,6 +244,6 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     private Charge getCharge(boolean isHistoric){
         return new Charge("external-id", 10L, null, null, "transaction-id",
                 "credential-external-id", 10L, null, "ref-1", "desc", Instant.now(),
-                "test@example.org", 123L, "epdq", isHistoric);
+                "test@example.org", 123L, "epdq", isHistoric, "service-id", true);
     }
 }
