@@ -75,6 +75,8 @@ public class StateTransitionsIT extends ChargingITestBase {
 
         assertThat(cancelledMessage.get("resource_external_id").getAsString(), is(chargeId));
         assertThat(cancelledMessage.get("event_type").getAsString(), is("CANCELLED_BY_EXTERNAL_SERVICE"));
+        assertThat(cancelledMessage.get("service_id").getAsString(), is("external-service-id"));
+        assertThat(cancelledMessage.get("live").getAsBoolean(), is(false));
 
         Optional<JsonObject> refundMessage = messages.stream()
                 .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())

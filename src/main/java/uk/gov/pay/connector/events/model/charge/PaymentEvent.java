@@ -30,7 +30,15 @@ public class PaymentEvent extends Event {
     public ResourceType getResourceType() {
         return ResourceType.PAYMENT;
     }
-    
+
+    public boolean isLive() {
+        return live;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
     @Override
     public String toString() {
         return "PaymentEvent{" +
