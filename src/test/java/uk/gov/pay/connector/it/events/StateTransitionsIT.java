@@ -125,6 +125,8 @@ public class StateTransitionsIT extends ChargingITestBase {
                 .filter(m -> "REFUND_AVAILABILITY_UPDATED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message2.get("event_type").getAsString(), is("REFUND_AVAILABILITY_UPDATED"));
+        assertThat(message2.get("service_id").getAsString(), is("external-service-id"));
+        assertThat(message2.get("live").getAsBoolean(), is(false));
         assertThat(message2.get("resource_external_id").getAsString(), is(chargeId));
         assertThat(message2.get("event_details").getAsJsonObject().get("refund_amount_available").getAsInt(), is(6184));
         assertThat(message2.get("event_details").getAsJsonObject().get("refund_amount_refunded").getAsInt(), is(50));
