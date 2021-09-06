@@ -39,6 +39,7 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
@@ -590,14 +591,15 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
+        final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
         ChargeEntity chargeSpy = spy(aValidChargeEntity()
                 .withStatus(AUTHORISATION_3DS_READY)
+                .withAuth3dsDetailsEntity(mockedAuth3dsRequiredEntity)
                 .build());
 
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-
-        final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
+        when(mockedAuth3dsRequiredEntity.getThreeDsVersion()).thenReturn("2.1.0");
         
         service.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
                 mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"));
@@ -606,5 +608,6 @@ public class ChargeServiceTest {
         verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
         verify(chargeSpy).setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+        verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
     }
 }
