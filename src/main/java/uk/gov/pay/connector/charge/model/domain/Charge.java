@@ -181,6 +181,10 @@ public class Charge {
         return serviceId;
     }
 
+    public boolean isLive(){
+        return live;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

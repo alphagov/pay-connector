@@ -191,7 +191,7 @@ public class EventFactory {
 
                         return new RefundAvailabilityUpdated(
                                 c.getServiceId(),
-                                true,
+                                c.isLive(),
                                 c.getExternalId(),
                                 RefundAvailabilityUpdatedEventDetails.from(
                                         charge,
