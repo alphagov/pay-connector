@@ -14,6 +14,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmedByGatewayNotific
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
@@ -51,9 +52,14 @@ public class ChargeNotificationProcessor {
             if (!forceTransitionChargeState(gatewayAccount, gatewayTransactionId, chargeEntity, oldStatus, newStatus)) {
                 return;
             }
+        } catch (OptimisticLockException e) {
+            logger.warn("Optimistic lock exception encountered whilst processing notification for charge_external_id={} " +
+                            "with error message: {}",
+                    chargeEntity.getExternalId(), e.getMessage());
+            return;
         }
 
-        logger.info("Notification received. Updating charge - " +
+        logger.info("Notification received. Updated charge - " +
                         "charge_external_id={}, " +
                         "status={}, " +
                         "status_to={}, " +
@@ -68,6 +74,7 @@ public class ChargeNotificationProcessor {
                 gatewayAccount.getId(),
                 chargeEntity.getPaymentProvider(),
                 gatewayAccount.getType());
+
     }
     
     private boolean forceTransitionChargeState(GatewayAccountEntity gatewayAccount, String gatewayTransactionId, ChargeEntity chargeEntity, String oldStatus, ChargeStatus newStatus) {
