@@ -532,7 +532,7 @@ public class ChargeService {
                 walletType, emailAddress);
     }
 
-    ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
                                                            ChargeStatus status,
                                                            AuthCardDetails authCardDetails,
                                                            String transactionId,
