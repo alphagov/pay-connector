@@ -13,6 +13,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEventDetails;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -301,6 +304,23 @@ public class QueueMessageContractTest {
         );
 
         return gateway3dsExemptionResultObtained.toJsonString();
+    }
+
+    @PactVerifyProvider("a gateway 3DS info obtained message")
+    public String verifyGateway3dsInfoObtainedEvent() throws JsonProcessingException {
+        var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
+        var charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .build();
+
+        var gateway3dsInfoObtained = new Gateway3dsInfoObtained(
+                resourceId,
+                Gateway3dsInfoObtainedEventDetails.from(charge),
+                ZonedDateTime.now()
+        );
+
+        return gateway3dsInfoObtained.toJsonString();
     }
 
 }
