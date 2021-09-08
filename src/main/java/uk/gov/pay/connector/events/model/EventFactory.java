@@ -14,6 +14,7 @@ import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayTimeoutDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -141,6 +142,8 @@ public class EventFactory {
                 return PaymentNotificationCreated.from(chargeEvent);
             } else if (eventClass == CancelledByUser.class) {
                 return CancelledByUser.from(chargeEvent);
+            } else if (eventClass == GatewayRequires3dsAuthorisation.class) {
+                return GatewayRequires3dsAuthorisation.from(chargeEvent);
             } else if (eventClass == BackfillerRecreatedUserEmailCollected.class) {
                 return BackfillerRecreatedUserEmailCollected.from(chargeEvent.getChargeEntity());
             } else {
