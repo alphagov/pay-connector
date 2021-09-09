@@ -448,10 +448,17 @@ public class ChargeService {
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;
+        ChargeResponse.AuthorisationSummary authorisationSummary = null;
         if (chargeEntity.get3dsRequiredDetails() != null) {
             auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(chargeEntity.get3dsRequiredDetails().getPaRequest());
             auth3dsData.setIssuerUrl(chargeEntity.get3dsRequiredDetails().getIssuerUrl());
+
+            authorisationSummary = new ChargeResponse.AuthorisationSummary();
+            ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
+            threeDSecure.setRequired(true);
+            threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+            authorisationSummary.setThreeDSecure(threeDSecure);
         }
         ExternalChargeState externalChargeState = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal();
 
@@ -472,6 +479,7 @@ public class ChargeService {
                 .withSettlement(buildSettlementSummary(chargeEntity))
                 .withCardDetails(persistedCard)
                 .withAuth3dsData(auth3dsData)
+                .withAuthorisationSummary(authorisationSummary)
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())

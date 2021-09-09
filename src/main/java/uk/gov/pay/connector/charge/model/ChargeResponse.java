@@ -7,16 +7,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
-import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
+import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.net.URI;
 import java.time.Instant;
@@ -102,6 +102,9 @@ public class ChargeResponse {
     @JsonProperty("card_details")
     protected PersistedCard cardDetails;
 
+    @JsonProperty("authorisation_summary")
+    private AuthorisationSummary authorisationSummary;
+
     @JsonProperty
     @JsonSerialize(using = ToStringSerializer.class)
     private SupportedLanguage language;
@@ -154,6 +157,7 @@ public class ChargeResponse {
         this.settlementSummary = builder.getSettlementSummary();
         this.cardDetails = builder.getCardDetails();
         this.auth3dsData = builder.getAuth3dsData();
+        this.authorisationSummary = builder.getAuthorisationSummary();
         this.language = builder.getLanguage();
         this.delayedCapture = builder.isDelayedCapture();
         this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
@@ -362,6 +366,7 @@ public class ChargeResponse {
                 ", refundSummary=" + refundSummary +
                 ", settlementSummary=" + settlementSummary +
                 ", auth3dsData=" + auth3dsData +
+                ", authorisationSummary=" + authorisationSummary +
                 ", language=" + language +
                 ", delayedCapture=" + delayedCapture +
                 ", corporateCardSurcharge=" + corporateCardSurcharge +
@@ -615,6 +620,86 @@ public class ChargeResponse {
                     ", htmlOut='" + htmlOut + '\'' +
                     ", md='" + md + '\'' +
                     ", worldpayChallengeJwt='" + worldpayChallengeJwt + '\'' +
+                    '}';
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public static class AuthorisationSummary {
+        public static class ThreeDSecure {
+            @JsonProperty("required")
+            private boolean required;
+
+            @JsonProperty("version")
+            private String version;
+
+            public boolean getRequired() {
+                return required;
+            }
+
+            public void setRequired(boolean required) {
+                this.required = required;
+            }
+
+            public String getVersion() {
+                return version;
+            }
+
+            public void setVersion(String version) {
+                this.version = version;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                ThreeDSecure that = (ThreeDSecure) o;
+                return Objects.equals(required, that.required) && Objects.equals(version, that.version);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(required, version);
+            }
+
+            @Override
+            public String toString() {
+                return "ThreeDSecure{" +
+                        "required='" + required + '\'' +
+                        ", version='" + version + '\'' +
+                        '}';
+            }
+        }
+
+        @JsonProperty("three_d_secure")
+        private ThreeDSecure threeDSecure;
+
+        public ThreeDSecure getThreeDSecure() {
+            return threeDSecure;
+        }
+
+        public void setThreeDSecure(ThreeDSecure threeDSecure) {
+            this.threeDSecure = threeDSecure;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AuthorisationSummary that = (AuthorisationSummary) o;
+            return Objects.equals(threeDSecure, that.threeDSecure);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(threeDSecure);
+        }
+
+        @Override
+        public String toString() {
+            return "AuthorisationSummary{" +
+                    "threeDSecure=" + threeDSecure +
                     '}';
         }
     }
