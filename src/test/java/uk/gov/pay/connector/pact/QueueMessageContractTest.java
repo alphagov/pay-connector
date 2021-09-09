@@ -22,6 +22,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDeta
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
@@ -30,6 +31,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
+import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
@@ -324,4 +326,21 @@ public class QueueMessageContractTest {
         return gateway3dsInfoObtained.toJsonString();
     }
 
+    @PactVerifyProvider("a gateway requires 3DS authorisation message")
+    public String verifyGatewayRequires3dsAuthorisationEvent() throws JsonProcessingException {
+        var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
+        var charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .build();
+
+        var gatewayRequires3dsAuthorisation = new GatewayRequires3dsAuthorisation(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
+                resourceId,
+                GatewayRequires3dsAuthorisationEventDetails.from(charge),
+                ZonedDateTime.now());
+
+        return gatewayRequires3dsAuthorisation.toJsonString();
+    }
 }
