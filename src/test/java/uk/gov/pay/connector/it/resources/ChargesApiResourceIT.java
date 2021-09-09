@@ -241,6 +241,31 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3ds() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId, "acsUrl", "transactionId", "payload", "2.1.0");
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("authorisation_summary.three_d_secure.required", is(true))
+                .body("authorisation_summary.three_d_secure.version", is("2.1.0"));
+    }
+
+    @Test
     public void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();

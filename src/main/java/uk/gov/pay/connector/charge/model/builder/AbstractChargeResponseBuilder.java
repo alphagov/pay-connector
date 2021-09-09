@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.charge.model.builder;
 
 import com.google.common.collect.ImmutableMap;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.net.URI;
 import java.time.Instant;
@@ -38,6 +38,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected ChargeResponse.SettlementSummary settlementSummary;
     protected PersistedCard cardDetails;
     protected ChargeResponse.Auth3dsData auth3dsData;
+    protected ChargeResponse.AuthorisationSummary authorisationSummary;
     protected String authCode;
     protected SupportedLanguage language;
     protected boolean delayedCapture;
@@ -166,6 +167,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.auth3dsData = auth3dsData;
         return thisObject();
     }
+
+    public T withAuthorisationSummary(ChargeResponse.AuthorisationSummary authorisationSummary) {
+        this.authorisationSummary = authorisationSummary;
+        return thisObject();
+    }
     
     public T withAuthCode(String authCode) {
         this.authCode = authCode;
@@ -279,6 +285,10 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public ChargeResponse.Auth3dsData getAuth3dsData() {
         return auth3dsData;
+    }
+
+    public ChargeResponse.AuthorisationSummary getAuthorisationSummary() {
+        return authorisationSummary;
     }
 
     public SupportedLanguage getLanguage() {
