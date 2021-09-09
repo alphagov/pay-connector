@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
@@ -46,6 +48,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayTimeoutDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
@@ -77,6 +80,7 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(JUnitParamsRunner.class)
@@ -438,7 +442,7 @@ public class EventFactoryTest {
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
                 Optional.of(chargeEventEntity)
         );
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, 
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId,
                 BackfillerRecreatedUserEmailCollected.class);
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
@@ -452,5 +456,42 @@ public class EventFactoryTest {
 
         UserEmailCollectedEventDetails eventDetails = (UserEmailCollectedEventDetails) event.getEventDetails();
         assertThat(eventDetails.getEmail(), is(charge.getEmail()));
+    }
+
+    @Test
+    public void shouldCreatedCorrectEventForGatewayRequires3dsAuthorisationEvent() throws Exception {
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.USER_CANCELLED)
+                .withEmail("test@example.org")
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                .withId(chargeEventEntityId)
+                .build();
+        charge.getEvents().add(chargeEventEntity);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId,
+                GatewayRequires3dsAuthorisation.class);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(1));
+
+        GatewayRequires3dsAuthorisation event = (GatewayRequires3dsAuthorisation) events.get(0);
+        assertThat(event, is(instanceOf(GatewayRequires3dsAuthorisation.class)));
+
+        assertThat(event.getEventDetails(), instanceOf(GatewayRequires3dsAuthorisationEventDetails.class));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
+
+        GatewayRequires3dsAuthorisationEventDetails eventDetails = (GatewayRequires3dsAuthorisationEventDetails) event.getEventDetails();
+        assertThat(eventDetails.getVersion3DS(), is("2.1.0"));
+        assertThat(eventDetails.isRequires3DS(), is(true));
     }
 }
