@@ -14,9 +14,6 @@ import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
-import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEventDetails;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -24,6 +21,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
@@ -31,6 +29,7 @@ import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
@@ -48,17 +47,17 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static java.time.ZonedDateTime.parse;
-import static uk.gov.service.payments.commons.model.Source.CARD_API;
-import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -315,6 +314,8 @@ public class QueueMessageContractTest {
                 .build();
 
         var gateway3dsInfoObtained = new Gateway3dsInfoObtained(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
                 resourceId,
                 Gateway3dsInfoObtainedEventDetails.from(charge),
                 ZonedDateTime.now()
