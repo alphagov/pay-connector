@@ -61,7 +61,7 @@ public class ChargeEntityFixture {
     private boolean moto;
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
-    private String serviceId = null;
+    private String serviceId;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -155,6 +155,7 @@ public class ChargeEntityFixture {
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
         chargeEntity.setPaymentProvider(paymentProvider);
+        chargeEntity.setServiceId(serviceId);
 
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);

@@ -194,6 +194,7 @@ public class RefundServiceTest {
         transaction.setGatewayAccountId(String.valueOf(accountId));
         transaction.setCreatedDate(Instant.now().toString());
         transaction.setPaymentProvider(WORLDPAY.getName());
+        transaction.setLive(true);
         Charge charge = Charge.from(transaction);
 
         RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(refundAmount).build();

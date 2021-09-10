@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 
 public class RefundAvailabilityUpdated extends PaymentEvent {
 
-    public RefundAvailabilityUpdated(String resourceExternalId, RefundAvailabilityUpdatedEventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public RefundAvailabilityUpdated(String serviceId, boolean live, String resourceExternalId, RefundAvailabilityUpdatedEventDetails eventDetails, ZonedDateTime timestamp) {
+        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 }

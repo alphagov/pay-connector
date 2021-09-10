@@ -25,6 +25,14 @@ public class PayoutEvent extends Event {
         return ResourceType.PAYOUT;
     }
 
+    public boolean isLive() {
+        return live;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
     @Override
     public String toString() {
         return "PayoutEvent{" +

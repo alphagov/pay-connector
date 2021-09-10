@@ -23,10 +23,12 @@ public class Charge {
     private Long gatewayAccountId;
     private String paymentGatewayName;
     private boolean historic;
+    private String serviceId;
+    private boolean live;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   String credentialExternalId, Long corporateSurcharge, String refundAvailabilityStatus, String reference,
-                  String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
+                  String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic, String serviceId, boolean live) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -42,6 +44,8 @@ public class Charge {
         this.gatewayAccountId = gatewayAccountId;
         this.paymentGatewayName = paymentGatewayName;
         this.historic = historic;
+        this.serviceId = serviceId;
+        this.live = live;
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
@@ -67,7 +71,9 @@ public class Charge {
                 chargeEntity.getEmail(),
                 chargeEntity.getGatewayAccount().getId(),
                 chargeEntity.getPaymentGatewayName().getName(),
-                false);
+                false,
+                chargeEntity.getServiceId(),
+                chargeEntity.getGatewayAccount().isLive());
     }
 
     public static Charge from(LedgerTransaction transaction) {
@@ -97,7 +103,9 @@ public class Charge {
                 transaction.getEmail(),
                 Long.valueOf(transaction.getGatewayAccountId()),
                 transaction.getPaymentProvider(),
-                true
+                true,
+                transaction.getServiceId(),
+                transaction.getLive()
         );
     }
 
@@ -167,6 +175,14 @@ public class Charge {
 
     public void setCredentialExternalId(String credentialExternalId) {
         this.credentialExternalId = credentialExternalId;
+    }
+    
+    public String getServiceId(){
+        return serviceId;
+    }
+
+    public boolean isLive(){
+        return live;
     }
 
     @Override

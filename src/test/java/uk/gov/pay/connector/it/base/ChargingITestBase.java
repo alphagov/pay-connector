@@ -70,6 +70,8 @@ public class ChargingITestBase {
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
     protected static final long AMOUNT = 6234L;
 
+    protected static final String SERVICE_ID = "external-service-id";
+
     protected WorldpayMockClient worldpayMockClient;
     protected SmartpayMockClient smartpayMockClient;
     protected EpdqMockClient epdqMockClient;
@@ -125,6 +127,7 @@ public class ChargingITestBase {
                 .withPaymentProvider(getPaymentProvider())
                 .withGatewayAccountCredentials(List.of(credentialParams))
                 .withCredentials(credentials)
+                .withServiceId(SERVICE_ID)
                 .insert();
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
@@ -371,6 +374,7 @@ public class ChargingITestBase {
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
+                .withServiceId(SERVICE_ID)
                 .withAmount(AMOUNT)
                 .withPaymentProvider(paymentProvider)
                 .withStatus(chargeStatus)

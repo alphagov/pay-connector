@@ -80,6 +80,17 @@ public class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.email", equalTo("test@email.gov.uk")));
     }
 
+    @Test
+    void serializesPayloadWithServiceId() throws JsonProcessingException {
+        chargeEntityFixture
+                .withServiceId("test-service-id");
+
+        var paymentCreatedEvent = preparePaymentCreatedEvent();
+
+        assertBasePaymentCreatedDetails(paymentCreatedEvent);
+        assertThat(paymentCreatedEvent, hasJsonPath("$.service_id", equalTo("test-service-id")));
+    }
+
     @ParameterizedTest
     @MethodSource("eventStatusesForNonCreatedAndNonAuthWithCardDetails")
     public void serializesPayloadForNonCreatedWithCardDetails(ChargeStatus status) throws JsonProcessingException {

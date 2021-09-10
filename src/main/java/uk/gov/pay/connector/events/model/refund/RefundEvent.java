@@ -35,4 +35,12 @@ public abstract class RefundEvent extends Event {
     public String getParentResourceExternalId() {
         return parentResourceExternalId;
     }
+
+    public boolean isLive() {
+        return live;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
 }
