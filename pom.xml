@@ -25,7 +25,6 @@
         <jjwt.version>0.11.2</jjwt.version>
         <pact.version>3.6.15</pact.version>
         <mockito.version>3.12.4</mockito.version>
-        <junit5.version>5.8.0</junit5.version>
         <PACT_BROKER_URL/>
         <PACT_BROKER_USERNAME/>
         <PACT_BROKER_PASSWORD/>
@@ -347,8 +346,8 @@
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit5.version}</version>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.7.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
