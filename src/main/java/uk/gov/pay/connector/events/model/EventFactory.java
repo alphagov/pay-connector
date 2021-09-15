@@ -116,7 +116,7 @@ public class EventFactory {
         Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId()).get();
 
         Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass(),
-                charge.getGatewayAccountId());
+                charge);
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
                 charge,
                 refundHistory.getHistoryStartDate(),
@@ -160,14 +160,16 @@ public class EventFactory {
         }
     }
 
-    public static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass, Long gatewayAccountId) {
+    public static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass, Charge charge) {
         try {
             if (eventClass == RefundCreatedByService.class) {
-                return RefundCreatedByService.from(refundHistory, gatewayAccountId);
+                return RefundCreatedByService.from(refundHistory, charge);
             } else if (eventClass == RefundCreatedByUser.class) {
-                return RefundCreatedByUser.from(refundHistory, gatewayAccountId);
+                return RefundCreatedByUser.from(refundHistory, charge);
             } else {
-                return eventClass.getConstructor(String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class, boolean.class, String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
+                        charge.getServiceId(),
+                        charge.isLive(),
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
                         new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),

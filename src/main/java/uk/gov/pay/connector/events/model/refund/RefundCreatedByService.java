@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.model.refund;
 
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByServiceEventDetails;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
@@ -11,15 +12,15 @@ public class RefundCreatedByService extends RefundEvent {
         super(serviceId, live, resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
     }
 
-    public static RefundCreatedByService from(RefundHistory refundHistory, Long gatewayAccountId) {
+    public static RefundCreatedByService from(RefundHistory refundHistory, Charge charge) {
         return new RefundCreatedByService(
-                refundHistory.getServiceId(),
-                refundHistory.isLive(),
+                charge.getServiceId(),
+                charge.isLive(),
                 refundHistory.getExternalId(),
                 refundHistory.getChargeExternalId(),
                 new RefundCreatedByServiceEventDetails(
                         refundHistory.getAmount(),
-                        gatewayAccountId.toString()),
+                        charge.getGatewayAccountId().toString()),
                 refundHistory.getHistoryStartDate()
         );
 

@@ -64,10 +64,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "external_id")
     private String externalId;
-    
-    private String serviceId;
-    
-    private boolean live;
 
     private Long amount;
 
@@ -108,20 +104,10 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.userExternalId = userExternalId;
         this.userEmail = userEmail;
         this.chargeExternalId = chargeExternalId;
-        this.serviceId = serviceId;
-        this.live = live;
     }
 
     public String getExternalId() {
         return externalId;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    public boolean isLive() {
-        return live;
     }
     
     public String getGatewayTransactionId() { 

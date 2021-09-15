@@ -10,6 +10,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
@@ -36,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.events.model.ResourceType.PAYMENT;
@@ -131,7 +135,8 @@ public class StateTransitionServiceTest {
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withExternalId("external-id")
                 .build();
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, 1L);
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, Charge.from(chargeEntity) );
         ZonedDateTime doNotEmitRetryUntil = now(UTC);
 
         stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser, doNotEmitRetryUntil);
