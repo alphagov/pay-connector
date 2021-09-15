@@ -70,7 +70,7 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
                                     gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorMessage()),
                             kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                             kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.getName()));
                     return true;
                 case "4":
                     LOGGER.info(format("Worldpay credentials for gateway account %s failed validation: received error code 4 (%s), " +
@@ -78,14 +78,14 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
                                     gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorMessage()),
                             kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                             kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.getName()));
                     return false;
                 default:
                     LOGGER.error(format("Error validating Worldpay credentials for gateway account %s: unexpected error code %s (%s)",
                                     gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorCode(), worldpayQueryResponse.getErrorMessage()),
                             kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                             kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.getName()));
                     throw new UnexpectedValidateCredentialsResponse();
             }
         } catch (GatewayException.GatewayErrorException e) {
@@ -96,7 +96,7 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
                                     gatewayAccountEntity.getId()),
                             kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                             kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()),
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.getName()),
                             kv(REMOTE_HTTP_STATUS, SC_UNAUTHORIZED));
                     return false;
                 }
