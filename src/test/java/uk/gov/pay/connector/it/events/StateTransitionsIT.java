@@ -117,6 +117,8 @@ public class StateTransitionsIT extends ChargingITestBase {
                 .findFirst().get();
         assertThat(message1.get("event_type").getAsString(), is("REFUND_CREATED_BY_SERVICE"));
         assertThat(message1.get("resource_external_id").getAsString(), is(refundId));
+        assertThat(message1.get("service_id").getAsString(), is("external-service-id"));
+        assertThat(message1.get("live").getAsBoolean(), is(false));
         assertThat(message1.get("parent_resource_external_id").getAsString(), is(chargeId));
         assertThat(message1.get("event_details").getAsJsonObject().get("amount").getAsInt(), is(50));
 
@@ -138,6 +140,8 @@ public class StateTransitionsIT extends ChargingITestBase {
                 .findFirst().get();
         assertThat(message3.get("event_type").getAsString(), is("REFUND_SUBMITTED"));
         assertThat(message3.get("resource_external_id").getAsString(), is(refundId));
+        assertThat(message3.get("service_id").getAsString(), is("external-service-id"));
+        assertThat(message3.get("live").getAsBoolean(), is(false));
 
         JsonObject message4 = messages.stream()
                 .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
@@ -147,6 +151,8 @@ public class StateTransitionsIT extends ChargingITestBase {
         assertThat(message4.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
         assertThat(message4.get("resource_external_id").getAsString(), is(refundId));
         assertThat(message4.get("event_details").getAsJsonObject().get("gateway_transaction_id").getAsString(), is(notNullValue()));
+        assertThat(message4.get("service_id").getAsString(), is("external-service-id"));
+        assertThat(message4.get("live").getAsBoolean(), is(false));
     }
 
     private ZonedDateTime getTimestampFromMessage(Message message) {
