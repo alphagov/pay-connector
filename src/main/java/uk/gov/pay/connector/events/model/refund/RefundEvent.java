@@ -18,11 +18,6 @@ public abstract class RefundEvent extends Event {
         this.live = live;
     }
     
-    public RefundEvent(String resourceExternalId, String parentResourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
-        this.parentResourceExternalId = parentResourceExternalId;
-    }
-
     public RefundEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
