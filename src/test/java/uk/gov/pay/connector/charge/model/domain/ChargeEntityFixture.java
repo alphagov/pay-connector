@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeEntityFixture {
 
@@ -61,7 +62,7 @@ public class ChargeEntityFixture {
     private boolean moto;
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
-    private String serviceId;
+    private String serviceId = randomUuid();
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
