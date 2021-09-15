@@ -131,7 +131,7 @@ public class HistoricalEventEmitter {
         Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(refundHistory.getChargeExternalId()));
         Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass,
-                charge.getGatewayAccountId());
+                charge);
 
         if (shouldForceEmission) {
             emitRefundEvent(refundHistory, refundEventClass, event);

@@ -14,8 +14,8 @@ import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
@@ -55,6 +55,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static java.time.ZonedDateTime.parse;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
@@ -76,7 +77,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a payment created message")
     public String verifyPaymentCreatedEvent() throws Exception {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key", "value")))
                 .withCorporateSurcharge(55L)
                 .withSource(CARD_API)
@@ -114,7 +115,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a payment details entered message")
     public String verifyPaymentDetailsEnteredEvent() throws JsonProcessingException {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId("gateway_transaction_id")
                 .withCorporateSurcharge(55L)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
@@ -133,7 +134,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a user email collected message")
     public String verifyUserEmailCollectedEvent() throws JsonProcessingException {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withEmail("test@example.org")
                 .build();
 
@@ -168,20 +169,24 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a refund created by user message")
     public String verifyRefundCreatedByUserEvent() throws JsonProcessingException {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+        Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withUserExternalId(RandomStringUtils.randomAlphanumeric(10))
                 .withUserEmail("test@example.com")
                 .build();
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, 1L);
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, charge);
 
         return refundCreatedByUser.toJsonString();
     }
 
     @PactVerifyProvider("a refund submitted message")
     public String verifyRefundSubmittedEvent() throws JsonProcessingException {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+        Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .build();
-        RefundSubmitted refundSubmitted = RefundSubmitted.from(refundHistory);
+        RefundSubmitted refundSubmitted = RefundSubmitted.from(charge, refundHistory);
 
         return refundSubmitted.toJsonString();
     }
@@ -189,11 +194,13 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a refund succeeded message")
     public String verifyRefundedEvent() throws JsonProcessingException {
         String gatewayTransactionId = RandomStringUtils.randomAlphanumeric(14);
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+        Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
                 .withGatewayTransactionId(gatewayTransactionId)
                 .build();
-        RefundSucceeded refundSucceeded = RefundSucceeded.from(refundHistory);
+        RefundSucceeded refundSucceeded = RefundSucceeded.from(charge, refundHistory);
 
         return refundSucceeded.toJsonString();
     }
@@ -207,7 +214,7 @@ public class QueueMessageContractTest {
                 "status", "success",
                 "authorised_date", "2018-02-21T16:05:33Z",
                 "created_date", "2018-02-21T15:05:13Z"));
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
                 .withGatewayTransactionId("providerId")
                 .withEmail("j.doe@example.org")
@@ -277,7 +284,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a cancelled by user message")
     public String verifyCancelledByUserEvent() throws JsonProcessingException {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId("gateway_transaction_id")
                 .withGatewayTransactionId("gateway_transaction_id")
                 .build();
@@ -292,7 +299,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a gateway 3DS exemption result obtained message")
     public String verifyGateway3dsExemptionResultObtainedEvent() throws JsonProcessingException {
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = aValidChargeEntity()
                 .withExemption3ds(Exemption3ds.EXEMPTION_HONOURED)
                 .build();
 
@@ -311,7 +318,7 @@ public class QueueMessageContractTest {
     public String verifyGateway3dsInfoObtainedEvent() throws JsonProcessingException {
         var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
         auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
-        var charge = ChargeEntityFixture.aValidChargeEntity()
+        var charge = aValidChargeEntity()
                 .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
                 .build();
 
@@ -330,7 +337,7 @@ public class QueueMessageContractTest {
     public String verifyGatewayRequires3dsAuthorisationEvent() throws JsonProcessingException {
         var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
         auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
-        var charge = ChargeEntityFixture.aValidChargeEntity()
+        var charge = aValidChargeEntity()
                 .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
                 .build();
 

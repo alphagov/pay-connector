@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events.model.refund;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
@@ -16,8 +17,9 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class RefundSucceededTest {
 
-    private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(ChargeEntityFixture.defaultGatewayAccountEntity()).build();
+    private final Charge charge = Charge.from(chargeEntity);
     private ZonedDateTime createdDate = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
     private UTCDateTimeConverter timeConverter = new UTCDateTimeConverter();
 
@@ -25,18 +27,18 @@ public class RefundSucceededTest {
             RefundStatus.REFUNDED.getValue(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
-            "user-external-id", "gateway_transaction_id", charge.getExternalId(),
+            "user-external-id", "gateway_transaction_id", chargeEntity.getExternalId(),
             "test@example.com");
 
     @Test
     public void serializesEventDetailsForAGivenRefundEvent() throws JsonProcessingException {
-        String actual = RefundSucceeded.from(refundHistory).toJsonString();
+        String actual = RefundSucceeded.from(charge, refundHistory).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("REFUND_SUCCEEDED")));
         assertThat(actual, hasJsonPath("$.timestamp", equalTo("2018-03-12T16:25:02.123456Z")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("refund")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(refundHistory.getExternalId())));
-        assertThat(actual, hasJsonPath("$.parent_resource_external_id", equalTo(charge.getExternalId())));
+        assertThat(actual, hasJsonPath("$.parent_resource_external_id", equalTo(chargeEntity.getExternalId())));
 
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo("gateway_transaction_id")));
     }

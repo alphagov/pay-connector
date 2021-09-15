@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.events.model.refund;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
@@ -15,8 +16,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RefundCreatedByUserTest {
 
-    private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(ChargeEntityFixture.defaultGatewayAccountEntity()).build();
+    private final Charge charge = Charge.from(chargeEntity);
     private ZonedDateTime createdDate = ZonedDateTime.now().minusSeconds(5L);
     private UTCDateTimeConverter timeConverter = new UTCDateTimeConverter();
 
@@ -24,21 +26,21 @@ public class RefundCreatedByUserTest {
             timeConverter.convertToDatabaseColumn(createdDate), 1L,
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
-            "user-external-id", "gateway_transaction_id", charge.getExternalId(),
+            "user-external-id", "gateway_transaction_id", chargeEntity.getExternalId(),
             "test@example.com"
             );
 
     @Test
     public void serializesEventDetailsForAGivenRefundEvent() {
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, charge.getGatewayAccount().getId());
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, charge);
 
-        assertThat(refundCreatedByUser.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundCreatedByUser.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(refundCreatedByUser.getResourceExternalId(), is("external_id"));
 
         RefundCreatedByUserEventDetails details = (RefundCreatedByUserEventDetails) refundCreatedByUser.getEventDetails();
 
         assertThat(details.getAmount(), is(50L));
-        assertThat(details.getGatewayAccountId(), is(charge.getGatewayAccount().getId().toString()));
+        assertThat(details.getGatewayAccountId(), is(chargeEntity.getGatewayAccount().getId().toString()));
         assertThat(details.getRefundedBy(), is("user-external-id"));
         assertThat(details.getUserEmail(), is("test@example.com"));
     }
