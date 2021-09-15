@@ -17,10 +17,15 @@ import java.util.Collections;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayCredentialsCheckAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.REMOTE_HTTP_STATUS;
 
 public class WorldpayCredentialsValidationService implements WorldpayGatewayResponseGenerator {
 
@@ -52,24 +57,47 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
                     getWorldpayCredentialsCheckAuthHeader(worldpayCredentials)
             );
 
-            // There is no Worldpay endpoint to explicitly check credentials, so we make a query for an non-existent 
+            // There is no Worldpay endpoint to explicitly check credentials, so we make a query for a non-existent 
             // transaction and expect:
             // - a 401 if username/password are incorrect
             // - a 200 with error code 5 (transaction not found) in the response if all credentials are correct
-            // - a 200 with error code 4 (security violation) if merchant id is incorrect
+            // - a 200 with error code 4 (security violation) if merchant code is incorrect
             WorldpayQueryResponse worldpayQueryResponse = unmarshallResponse(response, WorldpayQueryResponse.class);
             switch (worldpayQueryResponse.getErrorCode()) {
                 case "5":
+                    LOGGER.info(format("Worldpay credentials for gateway account %s passed validation: received error code 5 (%s), " +
+                                            "which means credentials are correct",
+                                    gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorMessage()),
+                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
                     return true;
                 case "4":
+                    LOGGER.info(format("Worldpay credentials for gateway account %s failed validation: received error code 4 (%s), " +
+                                            "which means username and password are likely correct but merchant code may be incorrect",
+                                    gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorMessage()),
+                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
                     return false;
                 default:
-                    LOGGER.error(format("Unexpected error code %s returned by Worldpay when validating credentials", worldpayQueryResponse.getErrorCode()));
+                    LOGGER.error(format("Error validating Worldpay credentials for gateway account %s: unexpected error code %s (%s)",
+                                    gatewayAccountEntity.getId(), worldpayQueryResponse.getErrorCode(), worldpayQueryResponse.getErrorMessage()),
+                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()));
                     throw new UnexpectedValidateCredentialsResponse();
             }
         } catch (GatewayException.GatewayErrorException e) {
             return e.getStatus().map(status -> {
                 if (status == SC_UNAUTHORIZED) {
+                    LOGGER.info(format("Worldpay credentials for gateway account %s failed validation: received HTTP 401, " +
+                                            "which means username and password are likely incorrect",
+                                    gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                            kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                            kv(PROVIDER, PaymentGatewayName.WORLDPAY.toString()),
+                            kv(REMOTE_HTTP_STATUS, SC_UNAUTHORIZED));
                     return false;
                 }
                 throw new UnexpectedValidateCredentialsResponse();
