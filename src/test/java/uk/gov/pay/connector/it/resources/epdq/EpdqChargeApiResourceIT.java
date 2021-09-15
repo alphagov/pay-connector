@@ -22,7 +22,7 @@ public class EpdqChargeApiResourceIT extends ChargingITestBase {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
         String chargeId = externalChargeId.replace("charge-", "");
         String expectedHtml = "someHtml";
-        databaseTestHelper.updateCharge3dsDetails(Long.valueOf(chargeId), null, null, expectedHtml);
+        databaseTestHelper.updateCharge3dsDetails(Long.valueOf(chargeId), null, null, expectedHtml, null);
 
         connectorRestApiClient.withChargeId(externalChargeId).getFrontendCharge()
                 .statusCode(200)

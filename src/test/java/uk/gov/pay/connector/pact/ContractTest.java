@@ -328,6 +328,7 @@ public class ContractTest {
                 .withDelayedCapture(true)
                 .build());
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), params.get("gateway_transaction_id"));
+        dbHelper.updateCharge3dsDetails(chargeId, null, null, null, "2.1.0");
     }
 
     @State("a charge with delayed capture true and awaiting capture request status exists")
