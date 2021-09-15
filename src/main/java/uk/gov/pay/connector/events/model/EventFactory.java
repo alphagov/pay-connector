@@ -167,7 +167,9 @@ public class EventFactory {
             } else if (eventClass == RefundCreatedByUser.class) {
                 return RefundCreatedByUser.from(refundHistory, gatewayAccountId);
             } else {
-                return eventClass.getConstructor(String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class, boolean.class, String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
+                        refundHistory.getServiceId(),
+                        refundHistory.isLive(),
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
                         new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),

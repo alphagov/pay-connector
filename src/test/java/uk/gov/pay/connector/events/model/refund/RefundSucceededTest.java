@@ -21,7 +21,7 @@ public class RefundSucceededTest {
     private ZonedDateTime createdDate = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
     private UTCDateTimeConverter timeConverter = new UTCDateTimeConverter();
 
-    private RefundHistory refundHistory = new RefundHistory(1L, "external_id", 50L,
+    private RefundHistory refundHistory = new RefundHistory(charge.getServiceId(), charge.getGatewayAccount().isLive(), 1L, "external_id", 50L,
             RefundStatus.REFUNDED.getValue(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),

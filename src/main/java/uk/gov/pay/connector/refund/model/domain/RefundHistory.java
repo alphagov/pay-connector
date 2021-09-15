@@ -15,7 +15,7 @@ public class RefundHistory extends RefundEntity {
     private ZonedDateTime historyStartDate;
     private ZonedDateTime historyEndDate;
 
-    public RefundHistory(Long id, String externalId, Long amount, String status, Timestamp createdDate,
+    public RefundHistory(String serviceId, boolean live, Long id, String externalId, Long amount, String status, Timestamp createdDate,
                          Long version, Timestamp historyStartDate, Timestamp historyEndDate, 
                          String userExternalId, String gatewayTransactionId, String chargeExternalId,
                          String userEmail) {

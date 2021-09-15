@@ -20,7 +20,7 @@ public class RefundCreatedByServiceTest {
     private ZonedDateTime createdDate = ZonedDateTime.now().minusSeconds(5L);
     private UTCDateTimeConverter timeConverter = new UTCDateTimeConverter();
 
-    private RefundHistory refundHistory = new RefundHistory(1L, "external_id", 50L, RefundStatus.CREATED.getValue(),
+    private RefundHistory refundHistory = new RefundHistory(charge.getServiceId(), charge.getGatewayAccount().isLive(), 1L, "external_id", 50L, RefundStatus.CREATED.getValue(),
             timeConverter.convertToDatabaseColumn(createdDate), 1L,
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),

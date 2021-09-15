@@ -24,6 +24,8 @@ public class RefundHistoryEntityFixture {
     private String gatewayTransactionId = null;
     private String chargeExternalId = RandomStringUtils.randomAlphanumeric(10);
     private Long gatewayAccountId = 123456L;
+    private String serviceId = "service-id";
+    private boolean live = true;
 
     private RefundHistoryEntityFixture() {}
 
@@ -32,7 +34,7 @@ public class RefundHistoryEntityFixture {
     }
 
     public RefundHistory build() {
-        return new RefundHistory(id, externalId, amount, status, Timestamp.valueOf(createdDate.toLocalDateTime()),
+        return new RefundHistory(serviceId, live, id, externalId, amount, status, Timestamp.valueOf(createdDate.toLocalDateTime()),
                 version,
                 Timestamp.from(historyStartDate.toInstant()),
                 Timestamp.from(historyEndDate.toInstant()),

@@ -213,7 +213,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     private RefundSubmitted aRefundSubmittedEvent(ZonedDateTime eventTimestamp) {
-        return new RefundSubmitted("my-resource-external-id",
+        return new RefundSubmitted("serviceId", true,"my-resource-external-id",
                 "parent-external-id",
                 null, eventTimestamp);
     }
