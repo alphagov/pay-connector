@@ -249,14 +249,19 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
-    public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut) {
+    public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut, String version3ds) {
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds, html_out_3ds=:html_out_3ds WHERE id=:id")
+                        .createUpdate("UPDATE charges SET pa_request_3ds=:pa_request_3ds," +
+                                " issuer_url_3ds=:issuer_url_3ds," +
+                                " html_out_3ds=:html_out_3ds," +
+                                " version_3ds=:version_3ds" +
+                                " WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("pa_request_3ds", paRequest)
                         .bind("issuer_url_3ds", issuerUrl)
                         .bind("html_out_3ds", htmlOut)
+                        .bind("version_3ds", version3ds)
                         .execute()
         );
     }

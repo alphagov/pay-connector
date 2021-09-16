@@ -246,7 +246,7 @@ public class ChargesFrontendResourceIT {
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
                 CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
+        databaseTestHelper.updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null, null);
 
         connectorRestApi
                 .withChargeId(externalChargeId)
