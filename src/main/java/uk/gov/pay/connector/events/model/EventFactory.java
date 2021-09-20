@@ -146,6 +146,8 @@ public class EventFactory {
                 return GatewayRequires3dsAuthorisation.from(chargeEvent);
             } else if (eventClass == BackfillerRecreatedUserEmailCollected.class) {
                 return BackfillerRecreatedUserEmailCollected.from(chargeEvent.getChargeEntity());
+            } else if (eventClass == StatusCorrectedToCapturedToMatchGatewayStatus.class) {
+                return StatusCorrectedToCapturedToMatchGatewayStatus.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class,
                         boolean.class, String.class, ZonedDateTime.class).newInstance(

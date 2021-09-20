@@ -49,7 +49,7 @@ public class ChargeNotificationProcessor {
         try {
             chargeService.transitionChargeState(chargeEntity, newStatus, gatewayEventDate);
         } catch (InvalidStateTransitionException e) {
-            if (!forceTransitionChargeState(gatewayAccount, gatewayTransactionId, chargeEntity, oldStatus, newStatus)) {
+            if (!forceTransitionChargeState(gatewayAccount, gatewayTransactionId, chargeEntity, oldStatus, newStatus, gatewayEventDate)) {
                 return;
             }
         } catch (OptimisticLockException e) {
@@ -77,9 +77,9 @@ public class ChargeNotificationProcessor {
 
     }
     
-    private boolean forceTransitionChargeState(GatewayAccountEntity gatewayAccount, String gatewayTransactionId, ChargeEntity chargeEntity, String oldStatus, ChargeStatus newStatus) {
+    private boolean forceTransitionChargeState(GatewayAccountEntity gatewayAccount, String gatewayTransactionId, ChargeEntity chargeEntity, String oldStatus, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
         try {
-            chargeService.forceTransitionChargeState(chargeEntity, newStatus);
+            chargeService.forceTransitionChargeState(chargeEntity, newStatus, gatewayEventDate);
             return true;
         } catch (InvalidForceStateTransitionException ie) {
             logger.error(format("%s (%s) notification '%s' could not force transition from %s to %s",
