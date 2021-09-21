@@ -259,7 +259,7 @@ public class ChargeServiceTest {
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(gatewayEventDate));
         assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
-        assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));;
+        assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));
         
         verify(mockStateTransitionService).offerPaymentStateTransition(
                 charge.getExternalId(), 

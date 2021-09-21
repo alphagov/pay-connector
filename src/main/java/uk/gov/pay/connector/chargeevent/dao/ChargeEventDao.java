@@ -22,10 +22,6 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
         super(entityManager);
     }
 
-    public ChargeEventEntity persistChargeEventOf(ChargeEntity chargeEntity) {
-        return this.persistChargeEventOf(chargeEntity, null);
-    }
-
     public ChargeEventEntity persistChargeEventOf(ChargeEntity chargeEntity, ZonedDateTime gatewayEventDate) {
         var chargeEventEntity = aChargeEventEntity()
                 .withChargeEntity(chargeEntity)

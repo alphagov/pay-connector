@@ -70,19 +70,19 @@ public class ChargeEventDaoIT extends DaoITestBase {
         ChargeEntity entity = chargeDao.findById(chargeId).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         //move status to AUTHORISED
         entity.setStatus(AUTHORISATION_READY);
         entity.setStatus(AUTHORISATION_SUCCESS);
         entity.setGatewayTransactionId(TRANSACTION_ID_2);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         entity.setStatus(CAPTURE_READY);
         entity.setGatewayTransactionId(TRANSACTION_ID_3);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 
@@ -110,19 +110,19 @@ public class ChargeEventDaoIT extends DaoITestBase {
         ChargeEntity entity = chargeDao.findById(chargeId).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         //move status to AUTHORISED
         entity.setStatus(AUTHORISATION_READY);
         entity.setStatus(AUTHORISATION_SUCCESS);
         entity.setGatewayTransactionId(TRANSACTION_ID_2);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         entity.setStatus(AWAITING_CAPTURE_REQUEST);
         entity.setGatewayTransactionId(TRANSACTION_ID_3);
 
-        chargeEventDao.persistChargeEventOf(entity);
+        chargeEventDao.persistChargeEventOf(entity, null);
 
         List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 
