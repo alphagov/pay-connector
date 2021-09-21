@@ -50,6 +50,7 @@ public class LedgerTransaction {
     private String refundedByUserEmail;
     private String parentTransactionId;
     private String serviceId;
+    private AuthorisationSummary authorisationSummary;
 
     public LedgerTransaction() {
 
@@ -296,4 +297,12 @@ public class LedgerTransaction {
     }
 
     public String getServiceId() { return serviceId; }
+
+    public AuthorisationSummary getAuthorisationSummary() {
+        return authorisationSummary;
+    }
+
+    public void setAuthorisationSummary(AuthorisationSummary authorisationSummary) {
+        this.authorisationSummary = authorisationSummary;
+    }
 }
