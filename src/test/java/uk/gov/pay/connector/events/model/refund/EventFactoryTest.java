@@ -54,6 +54,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -324,6 +325,7 @@ public class EventFactoryTest {
                 new Object[]{CaptureConfirmed.class, CaptureConfirmedEventDetails.class},
                 new Object[]{CaptureErrored.class, EmptyEventDetails.class},
                 new Object[]{PaymentExpired.class, EmptyEventDetails.class},
+                new Object[]{StatusCorrectedToCapturedToMatchGatewayStatus.class, CaptureConfirmedEventDetails.class}
         };
     }
 

@@ -68,7 +68,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -252,14 +251,15 @@ public class ChargeServiceTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(CAPTURED).build();
-        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class))).thenReturn(chargeEventEntity);
         
-        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, CAPTURED);
+        ZonedDateTime gatewayEventDate = ZonedDateTime.parse("2021-01-01T01:30:00.000Z");
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, CAPTURED, gatewayEventDate);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(gatewayEventDate));
         assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
-        assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));
+        assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));;
         
         verify(mockStateTransitionService).offerPaymentStateTransition(
                 charge.getExternalId(), 
@@ -274,12 +274,12 @@ public class ChargeServiceTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_ERROR).build();
-        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), eq(null))).thenReturn(chargeEventEntity);
 
-        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_ERROR);
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_ERROR, null);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(null));
         assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(updatedCharge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
 
@@ -297,12 +297,12 @@ public class ChargeServiceTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_REJECTED).build();
-        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), eq(null))).thenReturn(chargeEventEntity);
 
-        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_REJECTED);
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, AUTHORISATION_REJECTED, null);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(null));
         assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(updatedCharge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
 
@@ -322,7 +322,7 @@ public class ChargeServiceTest {
     })
     public void forcingChargeToInvalidState_shouldThrowException(String status) {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
-        service.forceTransitionChargeState(charge, ChargeStatus.fromString(status));
+        service.forceTransitionChargeState(charge, ChargeStatus.fromString(status), null);
     }
     
     @Test

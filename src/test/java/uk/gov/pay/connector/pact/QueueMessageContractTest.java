@@ -36,6 +36,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
@@ -349,5 +350,23 @@ public class QueueMessageContractTest {
                 ZonedDateTime.now());
 
         return gatewayRequires3dsAuthorisation.toJsonString();
+    }
+
+    @PactVerifyProvider("a status corrected to captured event")
+    public String verifyStatusCorrectedToCapturedToMatchGatewayStatusEvent() throws JsonProcessingException {
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withGatewayEventDate(ZonedDateTime.now())
+                .build();
+
+        StatusCorrectedToCapturedToMatchGatewayStatus event = new StatusCorrectedToCapturedToMatchGatewayStatus(
+                chargeEventEntity.getChargeEntity().getServiceId(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
+                resourceId,
+                CaptureConfirmedEventDetails.from(chargeEventEntity),
+                ZonedDateTime.now()
+        );
+
+        return event.toJsonString();
     }
 }
