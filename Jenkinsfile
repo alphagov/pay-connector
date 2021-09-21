@@ -122,13 +122,12 @@ pipeline {
         }
       }
     }
-    stage('Deploy') {
+    stage('Check Pact Compatibility') {
       when {
         branch 'master'
       }
       steps {
         checkPactCompatibility("connector", gitCommit(), "test")
-        deployEcs("connector")
       }
     }
     stage('Smoke Tests') {
