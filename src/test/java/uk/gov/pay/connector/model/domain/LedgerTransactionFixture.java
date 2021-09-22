@@ -1,8 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
@@ -13,9 +10,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.Address;
+import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.SettlementSummary;
+import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.client.ledger.model.TransactionState;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
@@ -24,19 +23,23 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class LedgerTransactionFixture {
     private String status = "created";
@@ -68,6 +71,7 @@ public class LedgerTransactionFixture {
     private String parentTransactionId;
     private String refundedBy;
     private String refundedByUserEmail;
+    private AuthorisationSummary authorisationSummary;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -76,6 +80,7 @@ public class LedgerTransactionFixture {
     public static LedgerTransactionFixture from(ChargeEntity chargeEntity, List<RefundEntity> refundsList) {
         LedgerTransactionFixture ledgerTransactionFixture =
                 aValidLedgerTransaction()
+                        .withCreatedDate(chargeEntity.getCreatedDate().atZone(UTC))
                         .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getStatusV2())
                         .withExternalId(chargeEntity.getExternalId())
                         .withAmount(chargeEntity.getAmount())
@@ -141,6 +146,15 @@ public class LedgerTransactionFixture {
         refundSummary.setStatus(refundAvailability.getStatus());
         ledgerTransactionFixture.withRefundSummary(refundSummary);
 
+        if (chargeEntity.get3dsRequiredDetails() != null) {
+            AuthorisationSummary authorisationSummary = new AuthorisationSummary();
+            ThreeDSecure threeDSecure = new ThreeDSecure();
+            threeDSecure.setRequired(true);
+            threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+            authorisationSummary.setThreeDSecure(threeDSecure);
+            ledgerTransactionFixture.withAuthorisationSummary(authorisationSummary);
+        }
+
         return ledgerTransactionFixture;
     }
 
@@ -162,9 +176,9 @@ public class LedgerTransactionFixture {
 
     private static ZonedDateTime getEventDate(List<ChargeEventEntity> chargeEventEntities, List<ChargeStatus> status) {
         return ofNullable(chargeEventEntities).flatMap(entities -> entities.stream()
-                .filter(chargeEvent -> status.contains(chargeEvent.getStatus()))
-                .findFirst()
-                .map(ChargeEventEntity::getUpdated))
+                        .filter(chargeEvent -> status.contains(chargeEvent.getStatus()))
+                        .findFirst()
+                        .map(ChargeEventEntity::getUpdated))
                 .orElse(null);
     }
 
@@ -212,6 +226,8 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setParentTransactionId(parentTransactionId);
         ledgerTransaction.setRefundedBy(refundedBy);
         ledgerTransaction.setRefundedByUserEmail(refundedByUserEmail);
+
+        ledgerTransaction.setAuthorisationSummary(authorisationSummary);
 
         return ledgerTransaction;
     }
@@ -358,6 +374,11 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withRefundedByUserEmail(String userEmail) {
         this.refundedByUserEmail = userEmail;
+        return this;
+    }
+
+    public LedgerTransactionFixture withAuthorisationSummary(AuthorisationSummary authorisationSummary) {
+        this.authorisationSummary = authorisationSummary;
         return this;
     }
 }

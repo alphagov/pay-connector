@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -30,6 +31,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,9 @@ import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 public class ChargeParityChecker {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargeParityChecker.class);
+
+    private static final Instant CHECK_AUTHORISATION_SUMMARY_PARITY_AFTER_DATE = Instant.parse("2021-09-01T00:00:00Z");
+
     private final RefundService refundService;
     private final PaymentProviders providers;
 
@@ -86,6 +91,7 @@ public class ChargeParityChecker {
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
@@ -285,6 +291,31 @@ public class ChargeParityChecker {
 
         return isEquals(refundAvailability.getStatus(),
                 ofNullable(transaction.getRefundSummary()).map(ChargeResponse.RefundSummary::getStatus).orElse(null), "refund_summary.status");
+    }
+
+    private boolean matchAuthorisationSummary(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        if (chargeEntity.getCreatedDate().isBefore(CHECK_AUTHORISATION_SUMMARY_PARITY_AFTER_DATE)) {
+            return true;
+        }
+        if (chargeEntity.get3dsRequiredDetails() == null) {
+            if (transaction.getAuthorisationSummary() == null) {
+                return true;
+            }
+            logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary",
+                    kv(FIELD_NAME, "authorisation_summary"));
+            return false;
+        }
+
+        if (transaction.getAuthorisationSummary() == null
+                || transaction.getAuthorisationSummary().getThreeDSecure() == null
+                || !transaction.getAuthorisationSummary().getThreeDSecure().isRequired()) {
+            logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
+                    kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+            return false;
+        }
+
+        return isEquals(chargeEntity.get3dsRequiredDetails().getThreeDsVersion(),
+                transaction.getAuthorisationSummary().getThreeDSecure().getVersion(), "authorisation_summary.three_d_secure.version");
     }
 
     private Optional<ZonedDateTime> getChargeEventDate(ChargeEntity chargeEntity, List<ChargeStatus> chargeEventStatuses) {

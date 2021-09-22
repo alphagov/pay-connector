@@ -1,15 +1,25 @@
 package uk.gov.pay.connector.tasks.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -17,6 +27,7 @@ import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -25,9 +36,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.service.payments.commons.model.Source.CARD_API;
-import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
@@ -39,11 +49,14 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
+import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
 import static uk.gov.pay.connector.wallets.WalletType.GOOGLE_PAY;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeParityCheckerTest {
@@ -54,9 +67,15 @@ public class ChargeParityCheckerTest {
     private PaymentProviders mockProviders;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+    @Captor
+    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    
     private ChargeEntity chargeEntity;
+    private ChargeEntity chargeEntityWith3ds;
     private List<RefundEntity> refundEntities = List.of();
-
+    
     @Before
     public void setUp() {
         ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, "2016-01-25T13:23:55Z");
@@ -64,6 +83,10 @@ public class ChargeParityCheckerTest {
         ChargeEventEntity chargeEventCaptureSubmitted = createChargeEventEntity(CAPTURE_SUBMITTED,
                 "2016-01-26T13:23:55Z");
 
+        Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity()
+                .withThreeDsVersion("2.1.0")
+                .build();
+        
         chargeEntity = aValidChargeEntity()
                 .withStatus(CAPTURED)
                 .withCardDetails(defaultCardDetails())
@@ -76,9 +99,18 @@ public class ChargeParityCheckerTest {
                 .withDelayedCapture(true)
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .build();
+        chargeEntityWith3ds = aValidChargeEntity()
+                .withStatus(CAPTURED)
+                .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .build();
 
         when(mockRefundService.findRefunds(any())).thenReturn(List.of());
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        
+        Logger root = (Logger) LoggerFactory.getLogger(ChargeParityChecker.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
     }
 
     @Test
@@ -260,6 +292,97 @@ public class ChargeParityCheckerTest {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnMatchWhenHas3dsRequiredDetails() {
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities).build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfAuthorisationSummaryNotOnLedgerTransaction() {
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .withAuthorisationSummary(null)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+    
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfAuthorisationSummaryDoesNotContainThreeDSecure() {
+        AuthorisationSummary authorisationSummary = new AuthorisationSummary();
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .withAuthorisationSummary(authorisationSummary)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfThreeDSecureRequiredFalse() {
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .build();
+        transaction.getAuthorisationSummary().getThreeDSecure().setRequired(false);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+
+    @Test
+    public void parityCheck_shouldReturnDataMismatchIfThreeDSecureVersionMismatch() {
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .build();
+        transaction.getAuthorisationSummary().getThreeDSecure().setVersion("mismatch");
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.version]"));
+    }
+
+    @Test
+    public void parityCheck_shouldMatchIfCreatedBeforeDateToCheckForAuthorisationSummaryParity() {
+        String createdDate = "2021-08-31T00:00:00Z";
+        Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity()
+                .withThreeDsVersion("2.1.0")
+                .build();
+        ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, createdDate);
+        ChargeEntity chargeBeforeDate = aValidChargeEntity()
+                .withCreatedDate(Instant.parse(createdDate))
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .withEvents(List.of(chargeEventCreated))
+                .build();
+        LedgerTransaction transaction = from(chargeBeforeDate, List.of())
+                .withAuthorisationSummary(null)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeBeforeDate, transaction);
+        
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
 
     private ChargeEventEntity createChargeEventEntity(ChargeStatus status, String timeStamp) {
