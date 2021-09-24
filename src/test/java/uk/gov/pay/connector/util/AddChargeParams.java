@@ -37,6 +37,7 @@ public class AddChargeParams {
     private final ZonedDateTime parityCheckDate;
     private final Long gatewayCredentialId;
     private final String serviceId;
+    private final String issuerUrl;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -62,6 +63,7 @@ public class AddChargeParams {
         cardType = builder.cardType;
         gatewayCredentialId = builder.gatewayCredentialId;
         serviceId = builder.serviceId;
+        issuerUrl = builder.issuerUrl;
     }
 
     public Long getChargeId() {
@@ -156,6 +158,10 @@ public class AddChargeParams {
         return serviceId;
     }
 
+    public String getIssuerUrl() {
+        return issuerUrl;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -180,6 +186,7 @@ public class AddChargeParams {
         private ZonedDateTime parityCheckDate;
         private Long gatewayCredentialId;
         private String serviceId;
+        private String issuerUrl;
 
         private AddChargeParamsBuilder() {
         }
@@ -301,6 +308,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withGatewayCredentialId(Long gatewayCredentialId) {
             this.gatewayCredentialId = gatewayCredentialId;
+            return this;
+        }
+        
+        public AddChargeParamsBuilder withIssuerUrl(String issuerUrl) {
+            this.issuerUrl = issuerUrl;
             return this;
         }
 

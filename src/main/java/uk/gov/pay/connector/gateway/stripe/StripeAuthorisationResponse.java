@@ -53,7 +53,7 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     @Override
     public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         return redirectUrl == null ? Optional.empty() :
-                Optional.of(new Stripe3dsRequiredParams(redirectUrl, null));
+                Optional.of(new Stripe3dsRequiredParams(redirectUrl));
     }
 
     @Override
