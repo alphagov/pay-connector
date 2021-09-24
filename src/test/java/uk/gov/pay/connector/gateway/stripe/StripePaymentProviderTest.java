@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
@@ -56,6 +58,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
@@ -75,6 +78,9 @@ public class StripePaymentProviderTest {
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
     private GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
     private GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
+    
+    private static final String issuerUrl = "http://stripe.url/3ds";
+    private static final String threeDsVersion = "2.0.1";
 
     @Before
     public void before() {
@@ -219,39 +225,54 @@ public class StripePaymentProviderTest {
     }
 
     @Test
+    public void shouldMark3DSChargeAsSuccess_when3DSAuthDetailsStatusIsAuthorised() {
+        Auth3dsResponseGatewayRequest request
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED, false);
+        
+        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_SUCCESS));
+        assert3dsRequiredEntityForResponse(response);
+    }
+
+    @Test
     public void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED, false);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+        assert3dsRequiredEntityForResponse(response);
     }
 
     @Test
     public void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED, false);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_CANCELLED));
+        assert3dsRequiredEntityForResponse(response);
     }
 
     @Test
     public void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR);
+                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR, false);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_ERROR));
+        assert3dsRequiredEntityForResponse(response);
     }
 
     @Test
     public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws Exception {
-        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED);
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED, true);
 
         when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
@@ -263,7 +284,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldKeep3DSChargeInAuthReadyState_when3DSAuthDetailsAreNotAvailable() {
         Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(null);
+                = build3dsResponseGatewayRequest(null, false);
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -271,12 +292,20 @@ public class StripePaymentProviderTest {
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
     }
 
-    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome) {
+    private void assert3dsRequiredEntityForResponse(Gateway3DSAuthorisationResponse response) {
+        assertThat(response.getGateway3dsRequiredParams().isPresent(), is(true));
+        Auth3dsRequiredEntity auth3dsRequiredEntity = response.getGateway3dsRequiredParams().get().toAuth3dsRequiredEntity();
+        assertThat(auth3dsRequiredEntity.getIssuerUrl(), is(issuerUrl));
+        assertThat(auth3dsRequiredEntity.getThreeDsVersion(), is(threeDsVersion));
+    }
+
+    private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome, boolean uses3dsSource) {
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         if (auth3dsResultOutcome != null) {
             auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
+            auth3dsResult.setThreeDsVersion(threeDsVersion);
         }
-        ChargeEntity chargeEntity = buildTestCharge();
+        ChargeEntity chargeEntity = build3dsRequiredTestCharge(uses3dsSource);
 
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
@@ -333,7 +362,7 @@ public class StripePaymentProviderTest {
     }
 
     private ChargeEntity buildTestCharge() {
-        ChargeEntity mq4ht90j2oir6am585afk58kml = aValidChargeEntity()
+        return aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("transaction-id")
                 .withGatewayAccountEntity(buildTestGatewayAccountEntity())
@@ -343,7 +372,23 @@ public class StripePaymentProviderTest {
                         .withState(ACTIVE)
                         .build())
                 .build();
-        return mq4ht90j2oir6am585afk58kml;
+    }
+
+    private ChargeEntity build3dsRequiredTestCharge(boolean uses3dsSource) {
+        String transactionId = uses3dsSource ? "non-payment-intent-id": "pi_a-payment-intent-id";
+        
+        Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity().withIssuerUrl(issuerUrl).build();
+        return aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withTransactionId(transactionId)
+                .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .build();
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {

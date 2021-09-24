@@ -102,12 +102,14 @@ public class DatabaseTestHelper {
                         "status, gateway_account_id, return_url, gateway_transaction_id, " +
                         "description, created_date, reference, version, email, language, " +
                         "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
-                        "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id) " +
+                        "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
+                        "issuer_url_3ds) " +
                         "VALUES(:id, :external_id, :amount, " +
                         ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                         ":description, :created_date, :reference, :version, :email, :language, " +
                         ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
-                        ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id)")
+                        ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
+                        ":issuer_url_3ds)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -130,6 +132,7 @@ public class DatabaseTestHelper {
                         .bind("payment_provider", addChargeParams.getPaymentProvider())
                         .bind("gateway_account_credential_id", addChargeParams.getGatewayCredentialId())
                         .bind("service_id", addChargeParams.getServiceId())
+                        .bind("issuer_url_3ds", addChargeParams.getIssuerUrl())
                         .execute());
     }
 

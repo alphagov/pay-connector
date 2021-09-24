@@ -15,6 +15,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -57,6 +58,7 @@ public class StripeNotificationResourceIT {
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";
     private static final String STRIPE_IP_ADDRESS = "1.2.3.4";
     private static final String UNEXPECTED_IP_ADDRESS = "1.1.1.1";
+    private static final String ISSUER_URL = "http://stripe.url/3ds";
 
     private RestAssuredClient connectorRestApiClient;
 
@@ -243,6 +245,7 @@ public class StripeNotificationResourceIT {
         Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(externalChargeId);
 
         assertThat(charge.get("version_3ds").toString(), is("2.0.1"));
+        assertThat(charge.get("issuer_url_3ds").toString(), is(ISSUER_URL));
     }
 
     private Response notifyConnectorWithHeader(String payload, String header) {
@@ -287,6 +290,7 @@ public class StripeNotificationResourceIT {
         long chargeId = RandomUtils.nextInt();
 
         String externalChargeId = "charge-" + chargeId;
+
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
@@ -296,6 +300,7 @@ public class StripeNotificationResourceIT {
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
                 .withGatewayCredentialId(accountCredentialsParams.getId())
+                .withIssuerUrl(ISSUER_URL)
                 .build());
         return externalChargeId;
     }
