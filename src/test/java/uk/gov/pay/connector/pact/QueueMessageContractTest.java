@@ -65,7 +65,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
 
 @RunWith(PactRunner.class)
 @Provider("connector")
-@PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker-test.cloudapps.digital}", tags = {"${PACT_CONSUMER_TAG}"},
+@PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker-test.cloudapps.digital}", tags = {"${PACT_CONSUMER_TAG}", "test"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"ledger"})
 @IgnoreNoPactsToVerify
