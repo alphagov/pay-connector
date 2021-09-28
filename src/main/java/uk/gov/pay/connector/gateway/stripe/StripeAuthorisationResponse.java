@@ -4,7 +4,7 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
-import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripeConfirmPaymentIntentResponse;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +24,7 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
         this.redirectUrl = redirectUrl;
     }
 
-    public static StripeAuthorisationResponse of(StripePaymentIntentResponse stripePaymentIntent) {
+    public static StripeAuthorisationResponse of(StripeConfirmPaymentIntentResponse stripePaymentIntent) {
         return new StripeAuthorisationResponse(
                 stripePaymentIntent.getId(),
                 stripePaymentIntent.getAuthoriseStatus().orElse(null),

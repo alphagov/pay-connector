@@ -177,16 +177,16 @@ class GatewayAccountEntityTest {
         }, "No credentials exists for payment provider");
     }
 
-    @Test
-    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
-
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
-    }
+//    @Test
+//    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
+//        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+//                .withPaymentProvider("worldpay")
+//                .build();
+//        gatewayAccountEntity.setAllowGooglePay(true);
+//        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+//
+//        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+//    }
 
     @Test
     void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {

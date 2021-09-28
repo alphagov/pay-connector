@@ -20,12 +20,15 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -75,6 +78,10 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private RefundService mockedRefundService;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    @Mock
+    private PaymentProviders mockPaymentProviders;
+    @Mock
+    private StripePaymentProvider mockStripePaymentProvider;
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
@@ -96,12 +103,13 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+//        when(mockPaymentProviders.byName(PaymentGatewayName.STRIPE)).thenReturn(mockStripePaymentProvider);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getAuthorisation3dsConfig()).thenReturn(mockAuthorisation3dsConfig);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
-                null, mockConfiguration, null, mockStateTransitionService, ledgerService,
+                null, mockConfiguration, mockPaymentProviders, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
 

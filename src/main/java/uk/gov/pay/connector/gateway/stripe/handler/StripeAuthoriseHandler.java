@@ -15,9 +15,9 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
-import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeConfirmPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
-import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripeConfirmPaymentIntentResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -34,6 +34,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final JsonObjectMapper jsonObjectMapper;
     private final String frontendUrl;
+
     @Inject
     public StripeAuthoriseHandler(GatewayClient client,
                                   StripeGatewayConfig stripeGatewayConfig,
@@ -53,7 +54,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .responseBuilder();
         try {
             StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
-            StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+            StripeConfirmPaymentIntentResponse stripePaymentIntentResponse = confirmPaymentIntent(request, stripePaymentMethodResponse.getId());
 
             return GatewayResponse
                     .GatewayResponseBuilder
@@ -73,7 +74,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
                 logger.info("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                         chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
-    
+
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
             }
 
@@ -87,10 +88,10 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
     }
 
-    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
+    private StripeConfirmPaymentIntentResponse confirmPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
-        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+        String jsonResponse = client.postRequestFor(StripeConfirmPaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripeConfirmPaymentIntentResponse.class);
     }
 
     private StripePaymentMethodResponse createPaymentMethod(CardAuthorisationGatewayRequest request)

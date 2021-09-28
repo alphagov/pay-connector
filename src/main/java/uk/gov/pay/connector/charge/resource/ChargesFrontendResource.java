@@ -177,7 +177,8 @@ public class ChargesFrontendResource {
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
                 .withWalletType(charge.getWalletType())
-                .withMoto(charge.isMoto());
+                .withMoto(charge.isMoto())
+                .withClientSecret(charge.getClientSecret());
 
         if (charge.getCardDetails() != null) {
             var persistedCard = charge.getCardDetails().toCard();

@@ -1714,4 +1714,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add client_secret to charges" author="">
+        <addColumn tableName="charges">
+            <column name="client_secret" type="varchar(100)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

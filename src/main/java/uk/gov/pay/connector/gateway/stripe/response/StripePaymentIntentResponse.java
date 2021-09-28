@@ -2,18 +2,12 @@ package uk.gov.pay.connector.gateway.stripe.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Map;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripePaymentIntentResponse {
-    private static Map<String, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
-            "requires_capture", BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
-            "requires_action", BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
-            
-    );
     
     @JsonProperty("id")
     private String id;
@@ -21,10 +15,17 @@ public class StripePaymentIntentResponse {
     @JsonProperty("next_action")
     private NextAction nextAction;
     
+    @JsonProperty("client_secret")
+    private String clientSecret;
+    
     private String status;
 
     public String getId() {
         return id;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
     }
 
     public String getStatus() {
@@ -40,11 +41,6 @@ public class StripePaymentIntentResponse {
 
     public NextAction getNextAction() {
         return nextAction;
-    }
-    
-    public Optional<BaseAuthoriseResponse.AuthoriseStatus> getAuthoriseStatus() {
-        return Optional.ofNullable(statusMap.get(status));
-
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -12,6 +12,7 @@ public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
         private GatewayAccountEntity gatewayAccount;
+        private String clientSecret;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
@@ -22,6 +23,11 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
             this.gatewayAccount = gatewayAccountEntity;
+            return this;
+        }
+        
+        public FrontendChargeResponseBuilder withClientSecret(String clientSecret) {
+            this.clientSecret = clientSecret;
             return this;
         }
 
@@ -45,11 +51,15 @@ public class FrontendChargeResponse extends ChargeResponse {
 
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
+    
+    @JsonProperty(value = "client_secret")
+    private String clientSecret;
 
     private FrontendChargeResponse(FrontendChargeResponseBuilder builder) {
         super(builder);
         this.status = builder.status;
         this.gatewayAccount = builder.gatewayAccount;
+        this.clientSecret = builder.clientSecret;
     }
 
     @Override

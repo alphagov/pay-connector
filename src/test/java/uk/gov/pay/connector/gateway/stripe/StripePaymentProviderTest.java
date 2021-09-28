@@ -26,7 +26,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
-import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeConfirmPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -114,7 +114,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
@@ -128,7 +128,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldAuthorise_ForAddressInUs() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
@@ -144,7 +144,7 @@ public class StripePaymentProviderTest {
         when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
 
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
@@ -163,7 +163,7 @@ public class StripePaymentProviderTest {
     public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
 
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class)))
                 .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
@@ -178,7 +178,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
@@ -194,7 +194,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
@@ -213,7 +213,7 @@ public class StripePaymentProviderTest {
     @Test
     public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+        when(gatewayClient.postRequestFor(any(StripeConfirmPaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 

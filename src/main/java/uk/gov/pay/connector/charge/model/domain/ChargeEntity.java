@@ -179,6 +179,9 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     @Column(name = "service_id")
     private String serviceId;
+    
+    @Column(name = "client_secret")
+    private String clientSecret;
 
     public ChargeEntity() {
         //for jpa
@@ -203,7 +206,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             String gatewayTransactionId,
             CardDetailsEntity cardDetails,
             boolean moto,
-            String serviceId
+            String serviceId,
+            String clientSecret
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -224,6 +228,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.cardDetails = cardDetails;
         this.moto = moto;
         this.serviceId = serviceId;
+        this.clientSecret = clientSecret;
     }
 
     public Long getId() {
@@ -488,6 +493,14 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.serviceId = serviceId;
     }
 
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -601,7 +614,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     null,
                     null,
                     moto,
-                    serviceId);
+                    serviceId,
+                    null);
         }
     }
 
@@ -700,7 +714,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     gatewayTransactionId,
                     cardDetails,
                     false,
-                    serviceId);
+                    serviceId,
+                    null);
         }
     }
 }

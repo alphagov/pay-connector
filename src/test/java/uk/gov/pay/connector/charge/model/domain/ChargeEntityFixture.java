@@ -145,7 +145,8 @@ public class ChargeEntityFixture {
                 gatewayTransactionId,
                 cardDetails,
                 moto,
-                serviceId);
+                serviceId,
+                null);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);

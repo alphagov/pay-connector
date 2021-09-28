@@ -331,7 +331,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonProperty("allow_google_pay")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public boolean isAllowGooglePay() {
-        return allowGooglePay && isNotBlank(getGatewayMerchantId());
+        return allowGooglePay;
     }
 
     @JsonProperty("allow_apple_pay")

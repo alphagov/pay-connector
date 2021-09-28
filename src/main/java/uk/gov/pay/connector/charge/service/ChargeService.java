@@ -51,10 +51,12 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -270,6 +272,11 @@ public class ChargeService {
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
 
+            if (chargeEntity.getPaymentGatewayName().equals(PaymentGatewayName.STRIPE)) {
+                var stripePaymentProvider = (StripePaymentProvider) providers.byName(PaymentGatewayName.STRIPE);
+                stripePaymentProvider.createPaymentIntent(chargeEntity);
+            }
+            
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, CREATED);
             chargeDao.merge(chargeEntity);

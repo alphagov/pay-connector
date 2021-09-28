@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -8,48 +9,37 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StripePaymentIntentRequest extends StripeRequest {
+public class StripePaymentIntentWithoutAuthoriseRequest extends StripeRequest {
 
     private final String amount;
-    private final String paymentMethodId;
     private final String transferGroup;
-    private final String frontendUrl;
-    private final String chargeExternalId;
     private final String description;
     private boolean moto;
 
 
-    private StripePaymentIntentRequest(
+    private StripePaymentIntentWithoutAuthoriseRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
-            String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
+            String amount, String transferGroup,
             String description, boolean moto, Map<String, String> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
-        this.paymentMethodId = paymentMethodId;
         this.transferGroup = transferGroup;
-        this.frontendUrl = frontendUrl;
-        this.chargeExternalId = chargeExternalId;
         this.description = description;
         this.moto = moto;
     }
 
-    public static StripePaymentIntentRequest of(
-            CardAuthorisationGatewayRequest request,
-            String paymentMethodId,
-            StripeGatewayConfig stripeGatewayConfig,
-            String frontendUrl) {
-        return new StripePaymentIntentRequest(
-                request.getGatewayAccount(),
-                request.getChargeExternalId(),
+    public static StripePaymentIntentWithoutAuthoriseRequest of(
+            ChargeEntity chargeEntity,
+            StripeGatewayConfig stripeGatewayConfig) {
+        return new StripePaymentIntentWithoutAuthoriseRequest(
+                chargeEntity.getGatewayAccount(),
+                chargeEntity.getExternalId(),
                 stripeGatewayConfig,
-                request.getAmount(),
-                paymentMethodId,
-                request.getChargeExternalId(),
-                frontendUrl,
-                request.getChargeExternalId(),
-                request.getDescription(),
-                request.getCharge().isMoto(),
-                request.getGatewayCredentials()
+                String.valueOf(chargeEntity.getAmount()),
+                chargeEntity.getExternalId(),
+                chargeEntity.getDescription(),
+                chargeEntity.isMoto(),
+                chargeEntity.getGatewayAccountCredentialsEntity().getCredentials()
         );
     }
 
@@ -66,7 +56,6 @@ public class StripePaymentIntentRequest extends StripeRequest {
     @Override
     protected Map<String, String> params() {
         Map<String, String> params = new HashMap<>(Map.of(
-                "payment_method", paymentMethodId,
                 "amount", amount,
                 "confirmation_method", "automatic",
                 "capture_method", "manual",
@@ -74,8 +63,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 "description", description,
                 "transfer_group", transferGroup,
                 "on_behalf_of", stripeConnectAccountId,
-                "confirm", "true",
-                "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)));
+                "confirm", "false"));
 
         if (moto) {
             params.put("payment_method_options[card[moto]]", "true");
