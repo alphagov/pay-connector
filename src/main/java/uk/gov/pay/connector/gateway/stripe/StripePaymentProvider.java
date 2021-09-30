@@ -200,5 +200,9 @@ public class StripePaymentProvider implements PaymentProvider {
     public StripeAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return new StripeAuthorisationRequestSummary(authCardDetails);
     }
+    
+    public GatewayResponse authoriseWalletPayment(ChargeEntity chargeEntity, String paymentMethodId) {
+        return stripeAuthoriseHandler.authoriseWalletPayment(chargeEntity, paymentMethodId);
+    }
 
 }

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -50,6 +51,26 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 request.getDescription(),
                 request.getCharge().isMoto(),
                 request.getGatewayCredentials()
+        );
+    }
+    
+    public static StripePaymentIntentRequest of(
+            ChargeEntity chargeEntity,
+            String paymentMethodId,
+            StripeGatewayConfig stripeGatewayConfig,
+            String frontendUrl) {
+        return new StripePaymentIntentRequest(
+                chargeEntity.getGatewayAccount(),
+                chargeEntity.getExternalId(),
+                stripeGatewayConfig,
+                String.valueOf(chargeEntity.getAmount()), // TODO: need to account for corporate surcharge
+                paymentMethodId,
+                chargeEntity.getExternalId(),
+                frontendUrl,
+                chargeEntity.getExternalId(),
+                chargeEntity.getDescription(),
+                chargeEntity.isMoto(),
+                chargeEntity.getGatewayAccountCredentialsEntity().getCredentials()
         );
     }
 

@@ -177,40 +177,40 @@ class GatewayAccountEntityTest {
         }, "No credentials exists for payment provider");
     }
 
-    @Test
-    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+//    @Test
+//    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
+//        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+//                .withPaymentProvider("worldpay")
+//                .build();
+//        gatewayAccountEntity.setAllowGooglePay(true);
+//        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+//
+//        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+//    }
 
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
-    }
+//    @Test
+//    void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
+//        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+//                .withPaymentProvider("worldpay")
+//                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+//                .build();
+//        gatewayAccountEntity.setAllowGooglePay(true);
+//        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+//
+//        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
+//    }
 
-    @Test
-    void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
-                .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
-
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
-    }
-
-    @Test
-    void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
-                .build();
-        gatewayAccountEntity.setAllowGooglePay(false);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
-
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
-    }
+//    @Test
+//    void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
+//        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+//                .withPaymentProvider("worldpay")
+//                .withCredentials(Map.of("gateway_merchant_id", "some-id"))
+//                .build();
+//        gatewayAccountEntity.setAllowGooglePay(false);
+//        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
+//
+//        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+//    }
 
     @Test
     void getGatewayMerchantIdShouldReturnIdAvailableOnCredentials() {
