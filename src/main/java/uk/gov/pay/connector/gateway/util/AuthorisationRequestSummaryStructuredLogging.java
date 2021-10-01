@@ -4,6 +4,7 @@ import net.logstash.logback.argument.StructuredArgument;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
@@ -13,6 +14,7 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String DATA_FOR_3DS = "data_for_3ds";
     public static final String DATA_FOR_3DS2 = "data_for_3ds2";
     public static final String WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT = "worldpay_3ds_flex_device_data_collection_result";
+    public static final String IP_ADDRESS = "remote_ip_address";
 
     public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
         var structuredArguments = new ArrayList<StructuredArgument>();
@@ -60,6 +62,9 @@ public class AuthorisationRequestSummaryStructuredLogging {
             default:
                 break;
         }
+
+        Optional.ofNullable(authorisationRequestSummary.ipAddress())
+                .map(ipAddress -> structuredArguments.add(kv(IP_ADDRESS, ipAddress)));
 
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }

@@ -11,10 +11,12 @@ public class SmartpayAuthorisationRequestSummary implements AuthorisationRequest
 
     private final Presence billingAddress;
     private final Presence dataFor3ds;
+    private final String ipAddress;
 
     public SmartpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         dataFor3ds = chargeEntity.getGatewayAccount().isRequires3ds() ? PRESENT : NOT_PRESENT;
+        ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 
     @Override
@@ -25,6 +27,11 @@ public class SmartpayAuthorisationRequestSummary implements AuthorisationRequest
     @Override
     public Presence dataFor3ds() {
         return dataFor3ds;
+    }
+
+    @Override
+    public String ipAddress() {
+        return ipAddress;
     }
 
 }

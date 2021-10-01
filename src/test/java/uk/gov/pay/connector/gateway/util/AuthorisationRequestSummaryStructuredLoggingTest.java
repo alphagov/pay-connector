@@ -19,6 +19,7 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.BILLING_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS2;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +35,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -41,7 +43,8 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(BILLING_ADDRESS, true),
                 kv(DATA_FOR_3DS, true),
                 kv(DATA_FOR_3DS2, true),
-                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true)
+                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true),
+                kv(IP_ADDRESS, "1.1.1.1")
         ));
     }
 
@@ -80,13 +83,15 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
+        given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
         assertThat(result, is(arrayContaining(
                 kv(BILLING_ADDRESS, true),
                 kv(DATA_FOR_3DS, true),
-                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false)
+                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
+                kv(IP_ADDRESS, "1.1.1.1")
         )));
     }
 

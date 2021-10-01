@@ -13,12 +13,15 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private final Presence billingAddress;
     private final Presence dataFor3ds;
     private final Presence deviceDataCollectionResult;
+    private String ipAddress;
+    
 
     public WorldpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         deviceDataCollectionResult = authCardDetails.getWorldpay3dsFlexDdcResult().map(address -> PRESENT).orElse(NOT_PRESENT);
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.isRequires3ds()) ? PRESENT : NOT_PRESENT;
+        ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 
     @Override
@@ -35,4 +38,11 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     public Presence deviceDataCollectionResult() {
         return deviceDataCollectionResult;
     }
+
+    @Override
+    public String ipAddress() { 
+        return ipAddress; 
+    }
+
+
 }
