@@ -12,12 +12,14 @@ public class EpdqAuthorisationRequestSummary implements AuthorisationRequestSumm
     private final Presence billingAddress;
     private final Presence dataFor3ds;
     private final Presence dataFor3ds2;
+    private final String ipAddress;
 
     public EpdqAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         dataFor3ds = chargeEntity.getGatewayAccount().isRequires3ds() ? PRESENT : NOT_PRESENT;
         dataFor3ds2 = (chargeEntity.getGatewayAccount().isRequires3ds()
                 && chargeEntity.getGatewayAccount().getIntegrationVersion3ds() == 2) ? PRESENT : NOT_PRESENT;
+        ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 
     @Override
@@ -35,4 +37,8 @@ public class EpdqAuthorisationRequestSummary implements AuthorisationRequestSumm
         return dataFor3ds2;
     }
 
+    @Override
+    public String ipAddress() { 
+        return ipAddress; 
+    }
 }

@@ -28,4 +28,8 @@ public interface AuthorisationRequestSummary {
         return NOT_APPLICABLE;
     }
 
+    default String ipAddress() { 
+        return null; 
+    };
+
 }

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.util;
 
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 
+import java.util.Optional;
 import java.util.StringJoiner;
 
 public class AuthorisationRequestSummaryStringifier {
@@ -63,6 +64,9 @@ public class AuthorisationRequestSummaryStringifier {
             default:
                 break;
         }
+
+        Optional.ofNullable(authorisationRequestSummary.ipAddress())
+                .map(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
 
         return stringJoiner.toString();
     }

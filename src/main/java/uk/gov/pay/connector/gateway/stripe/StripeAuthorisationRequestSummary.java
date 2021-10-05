@@ -9,14 +9,21 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 public class StripeAuthorisationRequestSummary implements AuthorisationRequestSummary {
 
     private final Presence billingAddress;
+    private final String ipAddress;
 
     public StripeAuthorisationRequestSummary(AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
+        ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 
     @Override
     public Presence billingAddress() {
         return billingAddress;
+    }
+    
+    @Override
+    public String ipAddress() { 
+        return ipAddress; 
     }
 
 }
