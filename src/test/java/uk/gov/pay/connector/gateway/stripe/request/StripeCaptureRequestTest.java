@@ -72,14 +72,14 @@ public class StripeCaptureRequestTest {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
 
-        stripeCaptureRequest = StripeChargeCaptureRequest.of(captureGatewayRequest, stripeGatewayConfig);
+        stripeCaptureRequest = StripePaymentIntentCaptureRequest.of(captureGatewayRequest, stripeGatewayConfig);
     }
 
     @Test
     public void shouldCreateCorrectCaptureUrl() {
         assertThat(
                 stripeCaptureRequest.getUrl(),
-                is(URI.create(stripeBaseUrl + "/v1/charges/" + stripeChargeId + "/capture"))
+                is(URI.create(stripeBaseUrl + "/v1/payment_intents/" + stripeChargeId + "/capture"))
         );
     }
 
@@ -87,7 +87,7 @@ public class StripeCaptureRequestTest {
     public void shouldCreateCorrectCapturePayload() {
         assertThat(
                 stripeCaptureRequest.getGatewayOrder().getPayload(),
-                containsString("expand%5B%5D=balance_transaction")
+                containsString("expand%5B%5D=charges.data.balance_transaction")
         );
     }
 

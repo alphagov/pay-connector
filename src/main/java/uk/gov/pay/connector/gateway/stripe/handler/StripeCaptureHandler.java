@@ -14,7 +14,6 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
-import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
@@ -52,12 +51,9 @@ public class StripeCaptureHandler implements CaptureHandler {
 
         try {
             StripeCharge capturedCharge;
-            if (usePaymentIntent(transactionId)) {
-                capturedCharge = captureWithPaymentIntentAPI(request);
-            } else {
-                capturedCharge = captureWithChargeAPI(request);
-            }
 
+            capturedCharge = captureWithPaymentIntentAPI(request);
+            
             Optional<Long> processingFee = capturedCharge.getFee()
                     .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request.getAmount(), fee));
 
@@ -115,21 +111,6 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
 
         return stripeCharge;
-    }
-
-    private boolean usePaymentIntent(String transactionId) {
-        return transactionId.startsWith("pi_");
-    }
-
-    private StripeCharge captureWithChargeAPI(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String captureResponse = client.postRequestFor(StripeChargeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
-        StripeCharge stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripeCharge.class);
-        LOGGER.info("Captured charge id {} with platform account - stripe capture id {}",
-                request.getExternalId(),
-                stripeCaptureResponse.getId()
-        );
-
-        return stripeCaptureResponse;
     }
 
     private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {

@@ -19,7 +19,6 @@ import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
-import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
@@ -46,9 +45,6 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_PAID;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.REFUND_UPDATED;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
@@ -57,12 +53,6 @@ import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 public class StripeNotificationService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final List<StripeNotificationType> sourceTypes = List.of(
-            SOURCE_CANCELED,
-            SOURCE_CHARGEABLE,
-            SOURCE_FAILED
-    );
 
     private final List<StripeNotificationType> paymentIntentTypes = List.of(
             PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED,
@@ -132,9 +122,7 @@ public class StripeNotificationService {
             return true;
         }
 
-        if (isASourceNotification(notification)) {
-            processSourceNotification(notification);
-        } else if (isAPaymentIntentNotification(notification)) {
+        if (isAPaymentIntentNotification(notification)) {
             processPaymentIntentNotification(notification);
         } else if (isAnAccountUpdatedNotification(notification)) {
             stripeAccountUpdatedHandler.process(notification);
@@ -238,41 +226,6 @@ public class StripeNotificationService {
         }
     }
 
-    private void processSourceNotification(StripeNotification notification) {
-        try {
-            StripeSourcesResponse stripeSourcesResponse = toSourceObject(notification.getObject());
-            StripePaymentIntent paymentIntent = toPaymentIntent(notification.getObject());
-
-            if (isBlank(stripeSourcesResponse.getTransactionId())) {
-                logger.error("{} source notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
-                return;
-            }
-
-            logger.info("Evaluating {} source notification [notification id - {}, source id - {}]",
-                    PAYMENT_GATEWAY_NAME,
-                    notification.getId(),
-                    stripeSourcesResponse.getTransactionId()
-            );
-
-            Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
-
-            if (maybeCharge.isEmpty()) {
-                logger.error("{} notification for source [{}] could not be verified (associated charge entity not found)",
-                        PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
-                return;
-            }
-
-            ChargeEntity charge = maybeCharge.get();
-
-            if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
-                executePost3DSAuthorisation(charge, notification.getType(), paymentIntent);
-            }
-
-        } catch (StripeParseException e) {
-            logger.error("{} notification parsing for source object failed: {}", PAYMENT_GATEWAY_NAME, e);
-        }
-    }
-
     private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType, StripePaymentIntent paymentIntent) {
         try {
             final StripeNotificationType type = byType(notificationEventType);
@@ -316,10 +269,6 @@ public class StripeNotificationService {
                 , kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), totalTimeDelayedInMillis);
     }
 
-    private boolean isASourceNotification(StripeNotification notification) {
-        return sourceTypes.contains(byType(notification.getType()));
-    }
-
     private boolean isAPaymentIntentNotification(StripeNotification notification) {
         return paymentIntentTypes.contains(byType(notification.getType()));
     }
@@ -338,12 +287,8 @@ public class StripeNotificationService {
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {
         switch (type) {
-            case SOURCE_CHARGEABLE:
             case PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED:
                 return Auth3dsResult.Auth3dsResultOutcome.AUTHORISED.toString();
-            case SOURCE_CANCELED:
-                return Auth3dsResult.Auth3dsResultOutcome.CANCELED.toString();
-            case SOURCE_FAILED:
             case PAYMENT_INTENT_PAYMENT_FAILED:
                 return Auth3dsResult.Auth3dsResultOutcome.DECLINED.toString();
             default:
@@ -358,14 +303,6 @@ public class StripeNotificationService {
     private StripeNotification parseNotification(String payload) throws StripeParseException {
         try {
             return objectMapper.readValue(payload, StripeNotification.class);
-        } catch (Exception e) {
-            throw new StripeParseException(e.getMessage());
-        }
-    }
-
-    private StripeSourcesResponse toSourceObject(String payload) throws StripeParseException {
-        try {
-            return objectMapper.readValue(payload, StripeSourcesResponse.class);
         } catch (Exception e) {
             throw new StripeParseException(e.getMessage());
         }

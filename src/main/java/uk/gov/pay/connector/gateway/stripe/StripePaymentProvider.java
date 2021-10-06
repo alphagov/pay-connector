@@ -13,9 +13,6 @@ import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
-import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -34,9 +31,6 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeAuthoriseHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
-import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -49,9 +43,6 @@ import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 
-import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
-import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 @Singleton
@@ -121,54 +112,13 @@ public class StripePaymentProvider implements PaymentProvider {
                 case DECLINED:
                     return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED, params);
                 case AUTHORISED:
-                    if (request.getTransactionId().get().startsWith("pi_")) {
-                        return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED, params);
-                    }
-                    return authorise3DSSource(request);
+                    return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED, params);
             }
         }
 
         // if Auth3DSResult is not available, return response as AUTH_3DS_READY
         // (to keep the transaction in auth waiting until a notification is received from Stripe for 3DS authorisation)
         return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY);
-    }
-
-    private Gateway3DSAuthorisationResponse authorise3DSSource(Auth3dsResponseGatewayRequest request) {
-        try {
-            StripeAuthorisationResponse stripeAuthResponse = createChargeFor3DSSource(request, request.getTransactionId().get());
-            return Gateway3DSAuthorisationResponse.of(stripeAuthResponse.authoriseStatus(), stripeAuthResponse.getTransactionId());
-        } catch (GatewayErrorException e) {
-
-            if (e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) {
-                return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
-            }
-
-            if (e.getFamily() == SERVER_ERROR) {
-                return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
-            }
-
-            if (e.getFamily() == CLIENT_ERROR) {
-                StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                logger.info("3DS Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
-
-                return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
-            }
-
-            logger.info("Unrecognised response status when authorising 3DS source. Charge_id={}, status={}, response={}",
-                    request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
-            throw new RuntimeException("Unrecognised response status when authorising 3DS source.");
-
-        } catch (GatewayConnectionTimeoutException | GenericGatewayException e) {
-            return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
-        }
-    }
-
-    private StripeAuthorisationResponse createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripeAuthoriseRequest.of(sourceId, request, stripeGatewayConfig)).getEntity();
-        final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
-        return StripeAuthorisationResponse.of(createChargeResponse);
     }
 
     @Override

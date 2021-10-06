@@ -13,9 +13,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
@@ -27,13 +26,8 @@ public class StripeMockClient {
 
     private WireMockServer wireMockServer;
 
-    public StripeMockClient(WireMockServer wireMockServer){
+    public StripeMockClient(WireMockServer wireMockServer) {
         this.wireMockServer = wireMockServer;
-    }
-    
-    public void mockCreateToken() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
-        setupResponse(payload, "/v1/tokens", 200);
     }
 
     private void setupResponse(String responseBody, String path, int status) {
@@ -51,19 +45,14 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/refunds", 402);
     }
 
-    public void mockCreateSource() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE);
-        setupResponse(payload, "/v1/sources", 200);
-    }
-
     public void mockAuthorisationFailedWithPaymentIntents() {
         String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 400);
     }
-    
-    public void mockCancelCharge() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
-        setupResponse(payload, "/v1/refunds", 200);
+
+    public void mockCancelPaymentIntent(String paymentIntentId) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE);
+        setupResponse(payload, "/v1/payment_intents/" + paymentIntentId + "/cancel", 200);
     }
 
     public void mockRefund() {
@@ -95,12 +84,12 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 200);
     }
-    
+
     public void mockCreatePaymentIntentRequiring3DS() {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 200);
     }
-    
+
     public void mockCreatePaymentMethod() {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 200);

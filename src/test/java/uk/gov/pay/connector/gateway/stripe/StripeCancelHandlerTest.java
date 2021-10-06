@@ -16,7 +16,6 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
-import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -72,7 +71,7 @@ public class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
         assertThat(response.isSuccessful(), is(true));
-        verify(client).postRequestFor(any(StripeChargeCancelRequest.class));
+        verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
     } 
     
     @Test
@@ -95,7 +94,7 @@ public class StripeCancelHandlerTest {
     @Test
     public void shouldHandle4xxFromStripeGateway() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_BAD_REQUEST);
-        when(client.postRequestFor(any(StripeChargeCancelRequest.class))).thenThrow(exception);
+        when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(exception);
 
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
@@ -109,7 +108,7 @@ public class StripeCancelHandlerTest {
     @Test
     public void shouldHandle5xxFromStripeGateway() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Problem with Stripe servers", "stripe server error", SC_SERVICE_UNAVAILABLE);
-        when(client.postRequestFor(any(StripeChargeCancelRequest.class))).thenThrow(exception);
+        when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(exception);
 
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
@@ -123,7 +122,7 @@ public class StripeCancelHandlerTest {
     @Test
     public void shouldHandleGatewayException() throws Exception {
         GatewayConnectionTimeoutException gatewayException = new GatewayConnectionTimeoutException("couldn't connect to https://stripe.url");
-        when(client.postRequestFor(any(StripeChargeCancelRequest.class))).thenThrow(gatewayException);
+        when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(gatewayException);
 
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
