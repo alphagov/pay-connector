@@ -153,11 +153,9 @@ public class TestTemplateResourceLoader {
 
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
-    public static final String STRIPE_AUTHORISATION_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_success_response.json";
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
     public static final String STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_capture_success_response.json";
     public static final String STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_success_response.json";
-    public static final String STRIPE_PAYMENT_INTENT_WITH_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_with_charge_response.json";
     public static final String STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_requires_3ds_response.json";
     public static final String STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_cancel_response.json";
     public static final String STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_method_success_response.json";

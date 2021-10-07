@@ -159,8 +159,8 @@ public class StripeNotificationResourceIT {
     @Test
     public void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
         String transactionId = "transaction-id" + nextInt();
-        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
-        stripeMockClient.mockCreateCharge();
+        createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+        stripeMockClient.mockCreatePaymentIntent();
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
                 transactionId, PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
