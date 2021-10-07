@@ -15,7 +15,6 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
-import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -31,20 +30,15 @@ import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
-import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -94,61 +88,6 @@ public class StripeNotificationResourceIT {
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
 
         stripeMockClient = new StripeMockClient(wireMockServer);
-    }
-
-    @Test
-    public void shouldHandleASourceChargeableNotification() {
-        String transactionId = "transaction-id" + nextInt();
-        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
-        stripeMockClient.mockCreateCharge();
-
-        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
-                transactionId, SOURCE_CHARGEABLE);
-        String response = notifyConnector(payload)
-                .then()
-                .statusCode(200)
-                .extract().body()
-                .asString();
-
-        assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
-
-        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
-    }
-
-    @Test
-    public void shouldHandleASourceFailedNotification() {
-        String transactionId = "transaction-id" + nextInt();
-        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
-
-        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
-                transactionId, SOURCE_FAILED);
-        String response = notifyConnector(payload)
-                .then()
-                .statusCode(200)
-                .extract().body()
-                .asString();
-
-        assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
-
-        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.getValue());
-    }
-
-    @Test
-    public void shouldHandleASourceCanceledNotification() {
-        String transactionId = "transaction-id" + nextInt();
-        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
-
-        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
-                transactionId, SOURCE_CANCELED);
-        String response = notifyConnector(payload)
-                .then()
-                .statusCode(200)
-                .extract().body()
-                .asString();
-
-        assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
-
-        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_CANCELLED.getValue());
     }
 
     @Test
@@ -206,8 +145,8 @@ public class StripeNotificationResourceIT {
         String transactionId = "transaction-id" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
-        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
-                transactionId, SOURCE_CANCELED);
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                transactionId, PAYMENT_INTENT_PAYMENT_FAILED);
         notifyConnectorWithHeader(payload, "invalid-header")
                 .then()
                 .statusCode(500)
@@ -223,8 +162,8 @@ public class StripeNotificationResourceIT {
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
         stripeMockClient.mockCreateCharge();
 
-        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
-                transactionId, SOURCE_CHARGEABLE);
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                transactionId, PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
 
         notifyConnectorFromUnexpectedIpAddress(payload)
                 .then()

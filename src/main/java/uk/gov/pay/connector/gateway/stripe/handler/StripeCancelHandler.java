@@ -11,7 +11,6 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 
 import static java.util.UUID.randomUUID;
@@ -32,11 +31,8 @@ public class StripeCancelHandler {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
 
         try {
-            if (usePaymentIntents(request)) {
-                client.postRequestFor(StripePaymentIntentCancelRequest.of(request, stripeGatewayConfig));
-            } else {
-                client.postRequestFor(StripeChargeCancelRequest.of(request, stripeGatewayConfig));
-            }
+            client.postRequestFor(StripePaymentIntentCancelRequest.of(request, stripeGatewayConfig));
+
             return responseBuilder.withResponse(new BaseCancelResponse() {
 
                 private final String transactionId = randomUUID().toString();
@@ -68,9 +64,5 @@ public class StripeCancelHandler {
         } catch (GenericGatewayException | GatewayConnectionTimeoutException e) {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
-    }
-
-    private boolean usePaymentIntents(CancelGatewayRequest request) {
-        return request.getTransactionId().startsWith("pi_");
     }
 }

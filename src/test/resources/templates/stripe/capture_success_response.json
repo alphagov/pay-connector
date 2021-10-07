@@ -1,8 +1,0 @@
-{
-  "id": "ch_123456",
-  "object": "charge",
-  "captured": true,
-  "balance_transaction": {
-    "fee": 50
-  }
-}

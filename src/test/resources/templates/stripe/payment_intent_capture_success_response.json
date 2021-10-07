@@ -1,14 +1,14 @@
 {
-  "id": "pi_1FEy5AEZsufgnuO0f99RWRRn",
+  "id": "pi_1233441",
   "object": "payment_intent",
-  "capture_method": "manual",
+  "status": "succeeded",
+  "amount": 2400,
   "charges": {
     "object": "list",
     "data": [
       {
         "id": "ch_123456",
-        "object": "charge",
-        "captured": true,
+        "amount": 2400,
         "balance_transaction": {
           "fee": 50
         }

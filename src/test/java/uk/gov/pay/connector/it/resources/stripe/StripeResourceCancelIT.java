@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
@@ -68,7 +66,7 @@ public class StripeResourceCancelIT {
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
-        stripeMockClient.mockCancelCharge();
+
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(paymentProvider)
                 .withGatewayAccountId(Long.valueOf(accountId))
@@ -83,6 +81,8 @@ public class StripeResourceCancelIT {
         addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
+        stripeMockClient.mockCancelPaymentIntent(transactionId);
+        
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
         given().port(testContext.getPort())
@@ -91,9 +91,8 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
-                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
-                .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         assertEquals(databaseTestHelper.getChargeStatus(chargeId), ChargeStatus.USER_CANCELLED.getValue());
@@ -105,6 +104,8 @@ public class StripeResourceCancelIT {
         addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
+        stripeMockClient.mockCancelPaymentIntent(transactionId);
+
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
         given().port(testContext.getPort())
@@ -113,12 +114,11 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
-                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
-                .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
-        assertEquals(databaseTestHelper.getChargeStatus(chargeId), ChargeStatus.SYSTEM_CANCELLED.getValue());
+        assertEquals(ChargeStatus.SYSTEM_CANCELLED.getValue(), databaseTestHelper.getChargeStatus(chargeId));
     }
 
     private String addChargeWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {

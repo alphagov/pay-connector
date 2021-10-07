@@ -155,21 +155,17 @@ public class TestTemplateResourceLoader {
 
     public static final String STRIPE_AUTHORISATION_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_success_response.json";
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
-    public static final String STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_token_response.json";
-    public static final String STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_sources_response.json";
-    public static final String STRIPE_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/capture_success_response.json";
     public static final String STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_capture_success_response.json";
     public static final String STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_success_response.json";
     public static final String STRIPE_PAYMENT_INTENT_WITH_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_with_charge_response.json";
     public static final String STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_requires_3ds_response.json";
+    public static final String STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_cancel_response.json";
     public static final String STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_method_success_response.json";
-    public static final String STRIPE_CAPTURE_SUCCESS_RESPONSE_DESTINATION_CHARGE = TEMPLATE_BASE_NAME + "/stripe/capture_success_response_destination_charge.json";
     public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";
     public static final String STRIPE_PAYOUT_NOTIFICATION = TEMPLATE_BASE_NAME + "/stripe/payout_notification.json";
 
-    public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
     public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";
     public static final String STRIPE_NOTIFICATION_ACCOUNT_UPDATED = TEMPLATE_BASE_NAME + "/stripe/account_updated.json";
     public static final String STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED = TEMPLATE_BASE_NAME + "/stripe/charge_refund_updated.json";
