@@ -13,7 +13,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,7 +50,7 @@ public class SqsConfigValidatorTest {
 
         boolean isValid = sqsConfigValidator.isValid(sqsConfig, constraintValidatorContext);
 
-        verifyZeroInteractions(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()));
+        verifyNoInteractions(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()));
         assertTrue(isValid);
     }
 
