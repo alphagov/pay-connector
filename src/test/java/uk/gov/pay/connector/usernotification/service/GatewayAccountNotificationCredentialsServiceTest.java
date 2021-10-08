@@ -25,7 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -101,6 +101,6 @@ public class GatewayAccountNotificationCredentialsServiceTest {
 
         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);
 
-        verifyZeroInteractions(hashUtil);
+        verifyNoInteractions(hashUtil);
     }
 }
