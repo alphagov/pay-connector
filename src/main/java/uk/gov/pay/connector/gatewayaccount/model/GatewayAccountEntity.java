@@ -170,6 +170,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "provider_switch_enabled")
     private boolean providerSwitchEnabled;
 
+    @Column(name = "requires_additional_kyc_data")
+    private boolean requiresAdditionalKycData;
+
     public GatewayAccountEntity() {
     }
 
@@ -424,6 +427,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return sendReferenceToGateway;
     }
 
+    @JsonProperty("requires_additional_kyc_data")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isRequiresAdditionalKycData() {
+        return requiresAdditionalKycData;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -573,6 +582,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setSendReferenceToGateway(boolean sendReferenceToGateway) {
         this.sendReferenceToGateway = sendReferenceToGateway;
+    }
+
+    public void setRequiresAdditionalKycData(boolean requiresAdditionalKycData) {
+        this.requiresAdditionalKycData = requiresAdditionalKycData;
     }
 
     public class Views {

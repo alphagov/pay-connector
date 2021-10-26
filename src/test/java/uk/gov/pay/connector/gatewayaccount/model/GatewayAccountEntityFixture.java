@@ -42,6 +42,7 @@ public final class GatewayAccountEntityFixture {
     private boolean sendPayerIpAddressToGateway;
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
     private boolean providerSwitchEnabled = false;
+    private boolean requiresAdditionalKycData = false;
 
     private GatewayAccountEntityFixture() {
     }
@@ -175,6 +176,11 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withRequiresAdditionalKycData(boolean requiresAdditionalKycData) {
+        this.requiresAdditionalKycData = requiresAdditionalKycData;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -199,6 +205,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
         gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
+        gatewayAccountEntity.setRequiresAdditionalKycData(requiresAdditionalKycData);
 
         if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {

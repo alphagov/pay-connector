@@ -104,6 +104,9 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("send_reference_to_gateway")
     private boolean sendReferenceToGateway;
+
+    @JsonProperty("requires_additional_kyc_data")
+    private boolean requiresAdditionalKycData;
     
     public GatewayAccountResourceDTO() {
     }
@@ -138,6 +141,7 @@ public class GatewayAccountResourceDTO {
         this.sendReferenceToGateway = gatewayAccountEntity.isSendReferenceToGateway();
         this.sendPayerIpAddressToGateway = gatewayAccountEntity.isSendPayerIpAddressToGateway();
         this.serviceId = gatewayAccountEntity.getServiceId();
+        this.requiresAdditionalKycData = gatewayAccountEntity.isRequiresAdditionalKycData();
     }
 
     public long getAccountId() {
@@ -262,5 +266,9 @@ public class GatewayAccountResourceDTO {
 
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {
         return Optional.ofNullable(worldpay3dsFlexCredentials);
+    }
+
+    public boolean isRequiresAdditionalKycData() {
+        return requiresAdditionalKycData;
     }
 }
