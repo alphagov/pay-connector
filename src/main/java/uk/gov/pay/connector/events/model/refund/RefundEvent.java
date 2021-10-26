@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 
 public abstract class RefundEvent extends Event {
     private String serviceId;
-    private Boolean live;
+    private boolean live;
     private String parentResourceExternalId;
 
     public RefundEvent(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
@@ -31,7 +31,7 @@ public abstract class RefundEvent extends Event {
         return parentResourceExternalId;
     }
 
-    public Boolean isLive() {
+    public boolean isLive() {
         return live;
     }
 

@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 
 public class PayoutEvent extends Event {
     private String serviceId;
-    private Boolean live;
+    private boolean live;
 
     public PayoutEvent(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
@@ -25,7 +25,7 @@ public class PayoutEvent extends Event {
         return ResourceType.PAYOUT;
     }
 
-    public Boolean isLive() {
+    public boolean isLive() {
         return live;
     }
 
