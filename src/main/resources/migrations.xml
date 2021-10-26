@@ -1714,4 +1714,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add requires_additional_kyc_data to gateway account" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="requires_additional_kyc_data" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
