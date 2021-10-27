@@ -842,4 +842,25 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
     }
+
+    @Test
+    public void patchGatewayAccount_forRequiresAdditionalKycData() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                "path", "requires_additional_kyc_data",
+                "value", true));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("requires_additional_kyc_data", is(false));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("requires_additional_kyc_data", is(true));
+    }
 }
