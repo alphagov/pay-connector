@@ -38,7 +38,8 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("bank_account", is(false))
                 .body("responsible_person", is(false))
                 .body("vat_number", is(false))
-                .body("company_number", is(false));
+                .body("company_number", is(false))
+                .body("director", is(false));
     }
 
     @Test
@@ -46,6 +47,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -53,7 +55,8 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("vat_number", is(true));
+                .body("vat_number", is(true))
+                .body("director", is(true));
     }
 
     @Test
@@ -117,6 +120,10 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                         ImmutableMap.of(
                                 "op", "replace",
                                 "path", "company_number",
+                                "value", true),
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "director",
                                 "value", true)
                 )))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -130,7 +137,8 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("bank_account", is(true))
                 .body("responsible_person", is(true))
                 .body("vat_number", is(true))
-                .body("company_number", is(true));
+                .body("company_number", is(true))
+                .body("director", is(true));
     }
 
     @Test
@@ -171,6 +179,37 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(200);
+    }
+
+    @Test
+    public void patchStripeSetupDirectorWithFalse() {
+        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
+                .then()
+                .statusCode(200)
+                .body("bank_account", is(false))
+                .body("responsible_person", is(false))
+                .body("vat_number", is(false))
+                .body("company_number", is(false))
+                .body("director", is(true));
+
+        givenSetup()
+                .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        "op", "replace",
+                        "path", "director",
+                        "value", false))))
+                .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
+                .then()
+                .statusCode(200);
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
+                .then()
+                .statusCode(200)
+                .body("director", is(false));
     }
 
     private void addCompletedTask(long gatewayAccountId, StripeAccountSetupTask task) {

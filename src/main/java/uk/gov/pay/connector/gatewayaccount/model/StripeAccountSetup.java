@@ -20,6 +20,9 @@ public class StripeAccountSetup {
     @JsonProperty("company_number")
     private boolean companyNumberCompleted = false;
 
+    @JsonProperty("director")
+    private boolean directorCompleted = false;
+
     public boolean isBankAccountCompleted() {
         return bankAccountCompleted;
     }
@@ -52,4 +55,11 @@ public class StripeAccountSetup {
         return companyNumberCompleted;
     }
 
+    public void setDirectorCompleted(boolean directorCompleted) {
+        this.directorCompleted = directorCompleted;
+    }
+
+    public boolean isDirectorCompleted() {
+        return directorCompleted;
+    }
 }

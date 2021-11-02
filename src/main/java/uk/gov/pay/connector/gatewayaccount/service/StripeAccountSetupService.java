@@ -37,6 +37,8 @@ public class StripeAccountSetupService {
                         case COMPANY_NUMBER:
                             stripeAccountSetup.setCompanyNumberCompleted(true);
                             break;
+                        case DIRECTOR:
+                            stripeAccountSetup.setDirectorCompleted(true);
                         default:
                             // Code doesn’t handle this task
                     }

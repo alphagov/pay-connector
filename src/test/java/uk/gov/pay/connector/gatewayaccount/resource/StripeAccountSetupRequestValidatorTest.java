@@ -50,7 +50,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 Map.of("operation", "add", "path", "bank_account", "value", true,
                         "expectedErrorMessage", "Operation [add] not supported for path [bank_account]"),
                 Map.of("operation", "add", "path", "blood_sample_deposited", "value", true,
-                        "expectedErrorMessage", "Field [path] must be one of [bank_account, company_number, responsible_person, vat_number]"),
+                        "expectedErrorMessage", "Field [path] must be one of [bank_account, company_number, director, responsible_person, vat_number]"),
 
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "value", true),
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "path", "", "value", true),
@@ -66,6 +66,11 @@ public class StripeAccountSetupRequestValidatorTest {
                 Map.of("expectedErrorMessage", "Value for path [bank_account] must be a boolean", "operation", "replace", "path", "bank_account", "value", ""),
                 Map.of("expectedErrorMessage", "Value for path [bank_account] must be a boolean", "operation", "replace", "path", "bank_account", "value", "true"),
                 new HashMap<String, Object>() {{put("expectedErrorMessage", "Field [value] is required"); put("operation", "replace"); put("path", "bank_account"); put("value", null);}},
+
+                Map.of("expectedErrorMessage", "Field [op] is required", "operation", "", "path", "director", "value", true),
+                Map.of("expectedErrorMessage", "Field [op] is required", "path", "director", "value", true),
+                Map.of("expectedErrorMessage", "Field [op] must be a string", "operation", 123, "path", "director", "value", true),
+                new HashMap<String, Object>() {{put("expectedErrorMessage", "Field [op] is required"); put("operation", null); put("path", "director"); put("value", true);}},
         };
     }
     @Parameters(method = "invalidData")
