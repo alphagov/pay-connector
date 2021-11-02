@@ -63,7 +63,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 new HashMap<String, Object>() {{put("expectedErrorMessage", "Field [op] is required"); put("operation", null); put("path", "bank_account"); put("value", true);}},
 
                 Map.of("expectedErrorMessage", "Field [value] is required", "operation", "replace", "path", "bank_account"),
-                Map.of("expectedErrorMessage", "Field [value] is required", "operation", "replace", "path", "bank_account", "value", ""),
+                Map.of("expectedErrorMessage", "Value for path [bank_account] must be a boolean", "operation", "replace", "path", "bank_account", "value", ""),
                 Map.of("expectedErrorMessage", "Value for path [bank_account] must be a boolean", "operation", "replace", "path", "bank_account", "value", "true"),
                 new HashMap<String, Object>() {{put("expectedErrorMessage", "Field [value] is required"); put("operation", "replace"); put("path", "bank_account"); put("value", null);}},
         };
