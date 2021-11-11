@@ -1719,5 +1719,7 @@
             <column name="requires_additional_kyc_data" type="boolean" defaultValue="false"/>
         </addColumn>
     </changeSet>
-
+    <changeSet id="drop corporate_prepaid_credit_card_surcharge_amount from gateway_accounts table" runInTransaction="false" author="">
+        <dropColumn tableName="gateway_accounts" columnName="corporate_prepaid_credit_card_surcharge_amount"/>
+    </changeSet>
 </databaseChangeLog>
