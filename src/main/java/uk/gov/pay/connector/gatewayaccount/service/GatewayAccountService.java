@@ -38,7 +38,6 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_BLOCK_PREPAID_CARDS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_INTEGRATION_VERSION_3DS;
@@ -147,10 +146,6 @@ public class GatewayAccountService {
             entry(
                 FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
                 (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
-            ),
-            entry(
-                FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
             ),
             entry(
                 FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,

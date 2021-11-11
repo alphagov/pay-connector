@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.charge.resource;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -19,28 +17,24 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ChargesFrontendResourceTest {
-    @Mock
-    private static ChargeService chargeService;
-    @Mock
-    private static ChargeDao chargeDao;
-    @Mock
-    private static CardTypeDao cardTypeDao;
-    @Mock
-    private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
-    
-    @ClassRule
-    public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
+@ExtendWith(DropwizardExtensionsSupport.class)
+class ChargesFrontendResourceTest {
+    private static ChargeService chargeService = mock(ChargeService.class);
+    private static ChargeDao chargeDao = mock(ChargeDao.class);
+    private static CardTypeDao cardTypeDao = mock(CardTypeDao.class);
+    private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService = mock(Worldpay3dsFlexJwtService.class);
+
+    private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
+            .getBuilder()
             .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao, worldpay3dsFlexJwtService))
             .build();
 
     @Test
-    public void shouldReturn400_whenPutToChargeStatus_emptyPayload() {
+    void shouldReturn400_whenPutToChargeStatus_emptyPayload() {
         Response response = resources.client()
                 .target("/v1/frontend/charges/irrelevant_charge_id/status")
                 .request()
@@ -54,13 +48,13 @@ public class ChargesFrontendResourceTest {
     }
 
     @Test
-    public void shouldReturn422_whenPutToChargeStatus_emptyNewStatus() {
+    void shouldReturn422_whenPutToChargeStatus_emptyNewStatus() {
         Response response = resources.client()
                 .target("/v1/frontend/charges/irrelevant_charge_id/status")
                 .request()
                 .put(Entity.json(Collections.singletonMap("new_status", "")));
 
-        assertEquals( 422, response.getStatus());
+        assertThat(response.getStatus(), is(422));
         
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(2));
@@ -70,13 +64,13 @@ public class ChargesFrontendResourceTest {
     }
 
     @Test
-    public void shouldReturn422_whenPutToChargeStatus_invalidNewStatus() {
+    void shouldReturn422_whenPutToChargeStatus_invalidNewStatus() {
         Response response = resources.client()
                 .target("/v1/frontend/charges/irrelevant_charge_id/status")
                 .request()
                 .put(Entity.json(Collections.singletonMap("new_status", "invalid_status")));
 
-        assertEquals(422, response.getStatus());
+        assertThat(response.getStatus(), is(422));
 
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(1));

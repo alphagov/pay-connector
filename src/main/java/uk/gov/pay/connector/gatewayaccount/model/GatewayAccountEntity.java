@@ -100,9 +100,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "corporate_debit_card_surcharge_amount")
     private long corporateDebitCardSurchargeAmount;
 
-    @Column(name = "corporate_prepaid_credit_card_surcharge_amount")
-    private long corporatePrepaidCreditCardSurchargeAmount;
-
     @Column(name = "corporate_prepaid_debit_card_surcharge_amount")
     private long corporatePrepaidDebitCardSurchargeAmount;
 
@@ -385,12 +382,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return corporateDebitCardSurchargeAmount;
     }
 
-    @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
-    public long getCorporatePrepaidCreditCardSurchargeAmount() {
-        return corporatePrepaidCreditCardSurchargeAmount;
-    }
-
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
@@ -508,10 +499,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
-    }
-
-    public void setCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
-        this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
     }
 
     public void setCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {

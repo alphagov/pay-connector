@@ -86,7 +86,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.getNotificationCredentials(), is(nullValue()));
         assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.getCorporatePrepaidCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
         assertThat(account.isSendPayerIpAddressToGateway(), is(false));
         assertThat(account.isSendPayerEmailToGateway(), is(false));
@@ -131,7 +130,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
         assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCardTypes(), contains(
                 allOf(
@@ -164,7 +162,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
         assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
 
     }
@@ -586,7 +583,6 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                 .aTestAccount()
                 .withCorporateCreditCardSurchargeAmount(250L)
                 .withCorporateDebitCardSurchargeAmount(50L)
-                .withCorporatePrepaidCreditCardSurchargeAmount(250L)
                 .withCorporatePrepaidDebitCardSurchargeAmount(50L)
                 .insert();
     }

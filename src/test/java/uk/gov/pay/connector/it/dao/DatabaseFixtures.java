@@ -338,7 +338,6 @@ public class DatabaseFixtures {
         private List<TestCardType> cardTypes = new ArrayList<>();
         private long corporateCreditCardSurchargeAmount;
         private long corporateDebitCardSurchargeAmount;
-        private long corporatePrepaidCreditCardSurchargeAmount;
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
@@ -393,10 +392,6 @@ public class DatabaseFixtures {
 
         public EmailCollectionMode getEmailCollectionMode() {
             return emailCollectionMode;
-        }
-
-        public long getCorporatePrepaidCreditCardSurchargeAmount() {
-            return corporatePrepaidCreditCardSurchargeAmount;
         }
 
         public long getCorporatePrepaidDebitCardSurchargeAmount() {
@@ -481,12 +476,6 @@ public class DatabaseFixtures {
             return this;
         }
 
-
-        public TestAccount withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
-            this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
-            return this;
-        }
-
         public TestAccount withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
             this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
             return this;
@@ -549,7 +538,6 @@ public class DatabaseFixtures {
                     .withEmailCollectionMode(emailCollectionMode)
                     .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
                     .withCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount)
-                    .withCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount)
                     .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
                     .withIntegrationVersion3ds(integrationVersion3ds)
                     .withAllowMoto(allowMoto)

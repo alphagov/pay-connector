@@ -21,8 +21,6 @@ class FixedCorporateCardSurchargeCalculator {
                     }
                 case PREPAID:
                     switch (authCardDetails.getPayersCardType()) {
-                        case CREDIT:
-                            return gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount();
                         case DEBIT:
                             return gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount();
                         case CREDIT_OR_DEBIT:

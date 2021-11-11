@@ -45,7 +45,6 @@ public class AddGatewayAccountParams {
     private EmailCollectionMode emailCollectionMode;
     private long corporateCreditCardSurchargeAmount;
     private long corporateDebitCardSurchargeAmount;
-    private long corporatePrepaidCreditCardSurchargeAmount;
     private long corporatePrepaidDebitCardSurchargeAmount;
     private int integrationVersion3ds;
     private boolean allowMoto;
@@ -105,10 +104,6 @@ public class AddGatewayAccountParams {
         return corporateDebitCardSurchargeAmount;
     }
 
-    public long getCorporatePrepaidCreditCardSurchargeAmount() {
-        return corporatePrepaidCreditCardSurchargeAmount;
-    }
-
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
         return corporatePrepaidDebitCardSurchargeAmount;
     }
@@ -158,7 +153,6 @@ public class AddGatewayAccountParams {
         private EmailCollectionMode emailCollectionMode = MANDATORY;
         private long corporateCreditCardSurchargeAmount;
         private long corporateDebitCardSurchargeAmount;
-        private long corporatePrepaidCreditCardSurchargeAmount;
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
@@ -258,11 +252,6 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
-            this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
-            return this;
-        }
-
         public AddGatewayAccountParamsBuilder withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
             this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
             return this;
@@ -322,7 +311,6 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.externalId = this.externalId;
             addGatewayAccountParams.corporatePrepaidDebitCardSurchargeAmount = this.corporatePrepaidDebitCardSurchargeAmount;
             addGatewayAccountParams.analyticsId = this.analyticsId;
-            addGatewayAccountParams.corporatePrepaidCreditCardSurchargeAmount = this.corporatePrepaidCreditCardSurchargeAmount;
             addGatewayAccountParams.type = this.type;
             addGatewayAccountParams.credentials = this.gatewayAccountCredentialsParams;
             addGatewayAccountParams.description = this.description;

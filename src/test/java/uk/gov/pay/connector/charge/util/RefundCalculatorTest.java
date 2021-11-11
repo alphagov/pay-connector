@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.util;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -9,16 +10,17 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
-public class RefundCalculatorTest {
+
+class RefundCalculatorTest {
+
     @Test
-    public void getTotalAmountToBeRefunded_shouldReturnFullAmount_whenNoCorporateSurchargeAndNoRefunds() {
+    void getTotalAmountToBeRefunded_shouldReturnFullAmount_whenNoCorporateSurchargeAndNoRefunds() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
         long actualAmount = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity, List.of());
@@ -28,7 +30,7 @@ public class RefundCalculatorTest {
     }
 
     @Test
-    public void getTotalAmountToBeRefunded_shouldReturnRemainingAmount_whenNoCorporateSurchargeAndHasRefunds() {
+    void getTotalAmountToBeRefunded_shouldReturnRemainingAmount_whenNoCorporateSurchargeAndHasRefunds() {
         RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
         RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
@@ -41,7 +43,7 @@ public class RefundCalculatorTest {
     }
 
     @Test
-    public void getTotalAmountToBeRefunded_shouldReturnFullAmountIncludingSurcharge_whenChargeHasCorporateSurchargeAndNoRefunds() {
+    void getTotalAmountToBeRefunded_shouldReturnFullAmountIncludingSurcharge_whenChargeHasCorporateSurchargeAndNoRefunds() {
         long corporateSurcharge = 250L;
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(corporateSurcharge).build();
 
@@ -52,7 +54,7 @@ public class RefundCalculatorTest {
     }
 
     @Test
-    public void getTotalAmountToBeRefunded_shouldReturnRemainingAmountIncludingSurcharge_whenChargeHasCorporateSurchargeAndHasRefunds() {
+    void getTotalAmountToBeRefunded_shouldReturnRemainingAmountIncludingSurcharge_whenChargeHasCorporateSurchargeAndHasRefunds() {
         long corporateSurcharge = 250L;
         RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
         RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
@@ -68,7 +70,7 @@ public class RefundCalculatorTest {
     }
 
     @Test
-    public void getRefundedAmount_shouldIncludeCreatedSubmittedAndRefundedRefunds() {
+    void getRefundedAmount_shouldIncludeCreatedSubmittedAndRefundedRefunds() {
         RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.CREATED).build();
         RefundEntity submittedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.REFUND_SUBMITTED).build();
         RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(30L).withStatus(RefundStatus.REFUNDED).build();

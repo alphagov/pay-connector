@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
@@ -33,7 +31,9 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -41,7 +41,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GatewayAccountServiceTest {
     private static final String BAD_REQUEST_MESSAGE = "HTTP 400 Bad Request";
 
@@ -71,18 +71,15 @@ public class GatewayAccountServiceTest {
     private static final Long GATEWAY_ACCOUNT_ID = 100L;
     private static ObjectMapper objectMapper = new ObjectMapper();
 
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao,
                 mockGatewayAccountCredentialsService);
-        when(mockGatewayAccountEntity.getType()).thenReturn("test");
-        when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
-        when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");
-        when(getMockGatewayAccountEntity2.getType()).thenReturn("test");
-        when(getMockGatewayAccountEntity2.getServiceName()).thenReturn("service two");
+        lenient().when(mockGatewayAccountEntity.getType()).thenReturn("test");
+        lenient().when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
+        lenient().when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");
+        lenient().when(getMockGatewayAccountEntity2.getType()).thenReturn("test");
+        lenient().when(getMockGatewayAccountEntity2.getServiceName()).thenReturn("service two");
     }
 
     @Test
@@ -200,20 +197,6 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
-    public void shouldUpdateCorporatePrepaidCreditCardSurchargeAmount() {
-        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
-                "op", "replace",
-                "path", "corporate_prepaid_credit_card_surcharge_amount",
-                "value", 100)));
-
-        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
-        assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
-        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
-    }
-
-    @Test(expected = DigitalWalletNotSupportedGatewayException.class)
     public void shouldNotAllowDigitalWalletForUnsupportedGateways() {
         JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "add",
@@ -222,8 +205,8 @@ public class GatewayAccountServiceTest {
 
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn("epdq");
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
-        assertThat(optionalGatewayAccount.isPresent(), is(false));
+        assertThrows(DigitalWalletNotSupportedGatewayException.class,
+                () -> gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request));
     }
 
     @Test
@@ -477,10 +460,12 @@ public class GatewayAccountServiceTest {
 
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        exceptionRule.expect(GatewayAccountWithoutAnActiveCredentialException.class);
-        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
-
-        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        var thrown = assertThrows(
+                GatewayAccountWithoutAnActiveCredentialException.class,
+                () -> gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request)
+        );
+        assertThat(thrown.getMessage(),
+                is(BAD_REQUEST_MESSAGE));
     }
 
     @Test
@@ -580,10 +565,12 @@ public class GatewayAccountServiceTest {
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn(EPDQ.getName());
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        exceptionRule.expect(NotSupportedGatewayAccountException.class);
-        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
+        var thrown = assertThrows(
+                NotSupportedGatewayAccountException.class,
+                () -> gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request)
+        );
 
-        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(thrown.getMessage(), is(BAD_REQUEST_MESSAGE));
     }
 
     @Test
@@ -595,9 +582,11 @@ public class GatewayAccountServiceTest {
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        exceptionRule.expect(MissingWorldpay3dsFlexCredentialsEntityException.class);
-        exceptionRule.expectMessage(BAD_REQUEST_MESSAGE);
+        var thrown = assertThrows(
+                MissingWorldpay3dsFlexCredentialsEntityException.class,
+                () -> gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request)
+        );
 
-        gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(thrown.getMessage(), is(BAD_REQUEST_MESSAGE));
     }
 }

@@ -155,7 +155,6 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
 
         response.body("corporate_credit_card_surcharge_amount", is(nullValue()));
         response.body("corporate_debit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_prepaid_credit_card_surcharge_amount", is(nullValue()));
         response.body("corporate_prepaid_debit_card_surcharge_amount", is(nullValue()));
     }
 
