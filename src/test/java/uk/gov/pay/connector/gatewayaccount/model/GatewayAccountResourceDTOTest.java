@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
@@ -14,10 +14,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 
-public class GatewayAccountResourceDTOTest {
+class GatewayAccountResourceDTOTest {
 
     @Test
-    public void fromEntity() {
+    void fromEntity() {
         GatewayAccountEntity entity = new GatewayAccountEntity();
         entity.setId(100L);
         entity.setExternalId("some-external-id");
@@ -27,7 +27,6 @@ public class GatewayAccountResourceDTOTest {
         entity.setAnalyticsId("123");
         entity.setCorporateDebitCardSurchargeAmount(200L);
         entity.setCorporateCreditCardSurchargeAmount(300L);
-        entity.setCorporatePrepaidCreditCardSurchargeAmount(400L);
         entity.setCorporatePrepaidDebitCardSurchargeAmount(500L);
         entity.setAllowApplePay(false);
         entity.setAllowGooglePay(true);
@@ -68,7 +67,6 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.getAnalyticsId(), is(entity.getAnalyticsId()));
         assertThat(dto.getCorporateCreditCardSurchargeAmount(), is(entity.getCorporateNonPrepaidCreditCardSurchargeAmount()));
         assertThat(dto.getCorporateDebitCardSurchargeAmount(), is(entity.getCorporateNonPrepaidDebitCardSurchargeAmount()));
-        assertThat(dto.getCorporatePrepaidCreditCardSurchargeAmount(), is(entity.getCorporatePrepaidCreditCardSurchargeAmount()));
         assertThat(dto.getCorporatePrepaidDebitCardSurchargeAmount(), is(entity.getCorporatePrepaidDebitCardSurchargeAmount()));
         assertThat(dto.isAllowApplePay(), is(entity.isAllowApplePay()));
         assertThat(dto.isAllowGooglePay(), is(entity.isAllowGooglePay()));

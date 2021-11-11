@@ -47,14 +47,13 @@ public class DatabaseTestHelper {
                 h.createUpdate("INSERT INTO gateway_accounts (id, external_id, " +
                         "service_name, type, description, analytics_id, email_collection_mode, " +
                         "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
-                        "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
+                        "corporate_debit_card_surcharge_amount, " +
                         "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
                         "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
                         "allow_telephone_payment_notifications, provider_switch_enabled, service_id) " +
                         "VALUES (:id, :external_id, :service_name, :type, " +
                         ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                         ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
-                        ":corporate_prepaid_credit_card_surcharge_amount, " +
                         ":corporate_prepaid_debit_card_surcharge_amount, " +
                         ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
                         ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
@@ -69,7 +68,6 @@ public class DatabaseTestHelper {
                         .bind("integration_version_3ds", params.getIntegrationVersion3ds())
                         .bind("corporate_credit_card_surcharge_amount", params.getCorporateCreditCardSurchargeAmount())
                         .bind("corporate_debit_card_surcharge_amount", params.getCorporateDebitCardSurchargeAmount())
-                        .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
                         .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
                         .bind("allow_moto", params.isAllowMoto())
                         .bind("moto_mask_card_number_input", params.isMotoMaskCardNumberInput())

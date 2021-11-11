@@ -3,10 +3,11 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -32,7 +33,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-public class GatewayAccountResourceSwitchPspValidationTest {
+@ExtendWith(DropwizardExtensionsSupport.class)
+class GatewayAccountResourceSwitchPspValidationTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static GatewayAccountDao gatewayAccountDao = mock(GatewayAccountDao.class);
@@ -42,23 +44,22 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     private GatewayAccountEntity gatewayAccountEntity;
     private GatewayAccountSwitchPaymentProviderRequest request;
 
-
-    @ClassRule
-    public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
+    private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
+            .getBuilder()
             .addResource(new GatewayAccountResource(gatewayAccountService, null,
                     null, null,
                     null, null,
                     new GatewayAccountSwitchPaymentProviderService(gatewayAccountDao, gatewayAccountCredentialsDao), null))
             .build();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccountEntity = aGatewayAccountEntity().withProviderSwitchEnabled(true).build();
         request = new GatewayAccountSwitchPaymentProviderRequest(randomUuid(), randomUuid());
     }
 
     @Test
-    public void shouldReturn400WhenNoActiveCredentialFound() throws JsonProcessingException {
+    void shouldReturn400WhenNoActiveCredentialFound() throws JsonProcessingException {
         var switchToExtId = randomUuid();
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withExternalId(randomUuid())
@@ -87,7 +88,7 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldReturn400WhenCredentialIsMissing() throws JsonProcessingException {
+    void shouldReturn400WhenCredentialIsMissing() throws JsonProcessingException {
         var switchToExtId = randomUuid();
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withExternalId(randomUuid())
@@ -112,7 +113,7 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldReturn400WhenCredentialsNonExistent() throws JsonProcessingException {
+    void shouldReturn400WhenCredentialsNonExistent() throws JsonProcessingException {
         var switchToExtId = randomUuid();
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withExternalId(randomUuid())
@@ -141,7 +142,7 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldReturn400WhenCredentialNotCorrectState() throws JsonProcessingException {
+    void shouldReturn400WhenCredentialNotCorrectState() throws JsonProcessingException {
         var switchToExtId = randomUuid();
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withExternalId(randomUuid())
@@ -170,7 +171,7 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldReturn404WhenGatewayAccountIsNonExistent() throws JsonProcessingException {
+    void shouldReturn404WhenGatewayAccountIsNonExistent() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
                 "gateway_account_credential_external_id", randomUuid()));
 
@@ -188,7 +189,7 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldReturn400WhenSwitchPaymentProviderIsNotEnabled() throws JsonProcessingException {
+    void shouldReturn400WhenSwitchPaymentProviderIsNotEnabled() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
                 "gateway_account_credential_external_id", randomUuid()));
 
@@ -207,8 +208,8 @@ public class GatewayAccountResourceSwitchPspValidationTest {
     }
 
     @Test
-    public void shouldNotThrowNullPointerWhenNoPayloadPresent() throws JsonProcessingException {
-        String payload = new String();
+    void shouldNotThrowNullPointerWhenNoPayloadPresent() throws JsonProcessingException {
+        String payload = "";
 
         gatewayAccountEntity.setProviderSwitchEnabled(true);
         when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));

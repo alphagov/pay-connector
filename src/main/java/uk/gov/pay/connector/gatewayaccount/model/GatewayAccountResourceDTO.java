@@ -56,9 +56,6 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("block_prepaid_cards")
     private boolean blockPrepaidCards;
 
-    @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
-    private long corporatePrepaidCreditCardSurchargeAmount;
-
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
     private long corporatePrepaidDebitCardSurchargeAmount;
 
@@ -124,7 +121,6 @@ public class GatewayAccountResourceDTO {
         this.allowApplePay = gatewayAccountEntity.isAllowApplePay();
         this.allowGooglePay = gatewayAccountEntity.isAllowGooglePay();
         this.blockPrepaidCards = gatewayAccountEntity.isBlockPrepaidCards();
-        this.corporatePrepaidCreditCardSurchargeAmount = gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount();
         this.corporatePrepaidDebitCardSurchargeAmount = gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount();
         this.emailNotifications = gatewayAccountEntity.getEmailNotifications();
         this.emailCollectionMode = gatewayAccountEntity.getEmailCollectionMode();
@@ -190,10 +186,6 @@ public class GatewayAccountResourceDTO {
 
     public void addLink(String key, URI uri) {
         links.put(key, ImmutableMap.of("href", uri));
-    }
-
-    public long getCorporatePrepaidCreditCardSurchargeAmount() {
-        return corporatePrepaidCreditCardSurchargeAmount;
     }
 
     public long getCorporatePrepaidDebitCardSurchargeAmount() {

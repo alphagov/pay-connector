@@ -29,7 +29,6 @@ public final class GatewayAccountEntityFixture {
     private boolean allowApplePay;
     private long corporateCreditCardSurchargeAmount;
     private long corporateDebitCardSurchargeAmount;
-    private long corporatePrepaidCreditCardSurchargeAmount;
     private long corporatePrepaidDebitCardSurchargeAmount;
     private boolean allowZeroAmount;
     private int integrationVersion3ds;
@@ -111,11 +110,6 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
-        this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
-        return this;
-    }
-
     public GatewayAccountEntityFixture withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
         return this;
@@ -193,7 +187,6 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setAllowApplePay(allowApplePay);
         gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount);
         gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount);
-        gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount);
         gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount);
         gatewayAccountEntity.setAllowZeroAmount(allowZeroAmount);
         gatewayAccountEntity.setIntegrationVersion3ds(integrationVersion3ds);

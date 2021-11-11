@@ -1,23 +1,24 @@
 package uk.gov.pay.connector.charge.util;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class CorporateCardSurchargeCalculatorTest {
+class CorporateCardSurchargeCalculatorTest {
 
     @Test
-    public void getCorporateCardSurchargeFor_shouldReturnEmptyOptionalWhenSurchargeIsZero() {
+    void getCorporateCardSurchargeFor_shouldReturnEmptyOptionalWhenSurchargeIsZero() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture
                 .anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT_OR_DEBIT)
@@ -34,7 +35,7 @@ public class CorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void getCorporateCardSurchargeFor_shouldReturnLongOptionalWhenSurchargeIsNonZero() {
+    void getCorporateCardSurchargeFor_shouldReturnLongOptionalWhenSurchargeIsNonZero() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture
                 .anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
@@ -55,7 +56,7 @@ public class CorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero() {
+    void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(250L).build();
         Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().get();
@@ -64,7 +65,7 @@ public class CorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldCalculateTotalAmountForCorporateSurchargeIsNull() {
+    void shouldCalculateTotalAmountForCorporateSurchargeIsNull() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         Long expectedAmount = chargeEntity.getAmount();
@@ -73,12 +74,11 @@ public class CorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldCalculateTotalAmountForCorporateSurchargeIsZero() {
+    void shouldCalculateTotalAmountForCorporateSurchargeIsZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(0L).build();
         Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         Long expectedAmount = chargeEntity.getAmount();
 
         assertThat(actualAmount, is(expectedAmount));
     }
-
 }

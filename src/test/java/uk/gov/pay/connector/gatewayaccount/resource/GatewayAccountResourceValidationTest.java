@@ -2,9 +2,11 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
@@ -22,25 +24,27 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GatewayAccountResourceValidationTest {
+@ExtendWith(DropwizardExtensionsSupport.class)
+class GatewayAccountResourceValidationTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static GatewayAccountCredentialsRequestValidator mockGatewayAccountCredentialsRequestValidator = mock(GatewayAccountCredentialsRequestValidator.class);
 
-    static {
-        when(mockGatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(any(), any())).thenReturn(List.of());
-    }
-
-    @ClassRule
-    public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
+    private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
+            .getBuilder()
             .addResource(new GatewayAccountResource(null, null,
                     null, null,
                     new GatewayAccountRequestValidator(new RequestValidator()), null,
                     null, mockGatewayAccountCredentialsRequestValidator))
             .build();
 
+    @BeforeAll
+    static void setUp() {
+        when(mockGatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(any(), any())).thenReturn(List.of());
+    }
+
     @Test
-    public void shouldReturn422_whenEverythingMissing() {
+    void shouldReturn422_whenEverythingMissing() {
         Response response = resources.client()
                 .target("/v1/api/accounts")
                 .request()
@@ -50,7 +54,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn422_whenProviderAccountTypeIsInvalid() {
+    void shouldReturn422_whenProviderAccountTypeIsInvalid() {
 
         Map<String, Object> payload = Map.of("type", "invalid");
 
@@ -66,7 +70,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn422_whenPaymentProviderIsInvalid() {
+    void shouldReturn422_whenPaymentProviderIsInvalid() {
 
         Map<String, Object> payload = Map.of("payment_provider", "blockchain");
 
@@ -82,7 +86,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenCorporateDebitCardSurchargeOperationIsInvalid() {
+    void shouldReturn400_whenCorporateDebitCardSurchargeOperationIsInvalid() {
         JsonNode jsonNode = objectMapper.valueToTree(
                 Map.of("op", "add",
                         "path", "corporate_debit_card_surcharge_amount",
@@ -97,20 +101,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeOperationIsMissing() {
-        JsonNode jsonNode = objectMapper.valueToTree(
-                Map.of("path", "corporate_prepaid_credit_card_surcharge_amount", "value", 250));
-        Response response = resources.client()
-                .target("/v1/api/accounts/12")
-                .request()
-                .method("PATCH", Entity.json(jsonNode));
-        assertThat(response.getStatus(), is(400));
-        JsonNode body = response.readEntity(JsonNode.class);
-        assertErrorBodyMatches(body, "Field [op] is required", ErrorIdentifier.GENERIC);
-    }
-
-    @Test
-    public void shouldReturn400_whenCorporateCreditCardSurchargeAmountIsNegativeValue() {
+    void shouldReturn400_whenCorporateCreditCardSurchargeAmountIsNegativeValue() {
         JsonNode jsonNode = objectMapper.valueToTree(
                 Map.of("op", "replace",
                         "path", "corporate_credit_card_surcharge_amount",
@@ -126,7 +117,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenCorporateDebditCardSurchargeAmountIsInvalidValue() {
+    void shouldReturn400_whenCorporateDebitCardSurchargeAmountIsInvalidValue() {
         JsonNode jsonNode = objectMapper.valueToTree(
                 Map.of("op", "replace",
                         "path", "corporate_debit_card_surcharge_amount",
@@ -142,20 +133,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenCorporatePrepaidCreditCardSurchargeAmountValueIsMissing() {
-        JsonNode jsonNode = objectMapper.valueToTree(
-                Map.of("op", "replace", "path", "corporate_prepaid_credit_card_surcharge_amount"));
-        Response response = resources.client()
-                .target("/v1/api/accounts/12")
-                .request()
-                .method("PATCH", Entity.json(jsonNode));
-        assertThat(response.getStatus(), is(400));
-        JsonNode body = response.readEntity(JsonNode.class);
-        assertErrorBodyMatches(body, "Field [value] is required", ErrorIdentifier.GENERIC);
-    }
-
-    @Test
-    public void shouldReturn400_whenCorporateCreditCardSurchargeAmountValueIsEmpty() {
+    void shouldReturn400_whenCorporateCreditCardSurchargeAmountValueIsEmpty() {
         JsonNode jsonNode = objectMapper.valueToTree(
                 Map.of("op", "replace",
                         "path", "corporate_credit_card_surcharge_amount",
@@ -171,7 +149,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenCorporateDebitCardSurchargeAmountValueIsNull() {
+    void shouldReturn400_whenCorporateDebitCardSurchargeAmountValueIsNull() {
         Map<String, Object> valueMap = new HashMap<>();
         valueMap.put("op", "replace");
         valueMap.put("path", "corporate_prepaid_debit_card_surcharge_amount");
@@ -187,7 +165,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenAllowZeroAmountValueIsNull() {
+    void shouldReturn400_whenAllowZeroAmountValueIsNull() {
         Map<String, Object> valueMap = new HashMap<>();
         valueMap.put("op", "replace");
         valueMap.put("path", "allow_zero_amount");
@@ -203,7 +181,7 @@ public class GatewayAccountResourceValidationTest {
     }
 
     @Test
-    public void shouldReturn400_whenAllowZeroAmountValueIsNotBooleanValue() {
+    void shouldReturn400_whenAllowZeroAmountValueIsNotBooleanValue() {
         Map<String, Object> valueMap = new HashMap<>();
         valueMap.put("op", "replace");
         valueMap.put("path", "allow_zero_amount");

@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.charge.util;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
@@ -13,20 +14,18 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class FixedCorporateCardSurchargeCalculatorTest {
+class FixedCorporateCardSurchargeCalculatorTest {
 
     private static final long CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT = 50L;
-    private static final long CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT = 150L;
     private static final long DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT = 75L;
     private static final long DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT = 175L;
 
     private static ChargeEntity chargeEntity;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
         gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
-        gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT);
         gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
         gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT);
 
@@ -39,29 +38,14 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Corporate Prepaid
 
     @Test
-    public void shouldGetCorporateSurchargeForPrepaidCorporateCreditCard() {
-        AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
-        long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
-        assertThat(surcharge, is(CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT));
-    }
-
-    @Test
-    public void shouldGetCorporateSurchargeForPrepaidCorporateDebitCard() {
+    void shouldGetCorporateSurchargeForPrepaidCorporateDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditCardWhenNoCorporatePrepaidCreditSurcharge() {
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(0L);
-        AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
-        long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
-        assertThat(surcharge, is(0L));
-    }
-
-    @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidCorporateDebitCardWhenNoCorporatePrepaidDebitSurcharge() {
+    void shouldNotGetCorporateSurchargeForPrepaidCorporateDebitCardWhenNoCorporatePrepaidDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(0L);
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
@@ -69,7 +53,7 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditOrDebitCard() {
+    void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditOrDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
@@ -80,21 +64,21 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Corporate Not Prepaid
 
     @Test
-    public void shouldGetCorporateSurchargeForNotPrepaidCorporateCreditCard() {
+    void shouldGetCorporateSurchargeForNotPrepaidCorporateCreditCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT));
     }
 
     @Test
-    public void shouldGetCorporateSurchargeForNotPrepaidCorporateDebitCard() {
+    void shouldGetCorporateSurchargeForNotPrepaidCorporateDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditCardWhenNoCorporateCreditSurcharge() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditCardWhenNoCorporateCreditSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
@@ -102,7 +86,7 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateDebitCardWhenNoCorporateDebitSurcharge() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidCorporateDebitCardWhenNoCorporateDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(0L);
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
@@ -110,7 +94,7 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditOrDebitCard() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditOrDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
@@ -121,35 +105,35 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Corporate Unknown Prepaid
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCorporateCreditCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForCorporateCreditCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCorporateDebitCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForCorporateDebitCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCorporateCreditOrDebitCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForCorporateCreditOrDebitCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCorporateCreditCardWithNullPrepaid() {
+    void shouldNotGetCorporateSurchargeForCorporateCreditCardWithNullPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.TRUE, null);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCorporateDebitCardWithNullPrepaid() {
+    void shouldNotGetCorporateSurchargeForCorporateDebitCardWithNullPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.TRUE, null);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
@@ -160,21 +144,21 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Consumer Prepaid
 
     @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditCard() {
+    void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidConsumerDebitCard() {
+    void shouldNotGetCorporateSurchargeForPrepaidConsumerDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditOrDebitCard() {
+    void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditOrDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
@@ -185,21 +169,21 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Consumer Not Prepaid
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditCard() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerDebitCard() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidConsumerDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditOrDebitCard() {
+    void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditOrDebitCard() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
@@ -210,35 +194,35 @@ public class FixedCorporateCardSurchargeCalculatorTest {
     //region Consumer Unknown Prepaid
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForConsumerCreditCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerDebitCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForConsumerDebitCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardWithUnknownPrepaid() {
+    void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardWithUnknownPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardWithNullPrepaid() {
+    void shouldNotGetCorporateSurchargeForConsumerCreditCardWithNullPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.CREDIT, Boolean.FALSE, null);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerDebitCardWithNullPrepaid() {
+    void shouldNotGetCorporateSurchargeForConsumerDebitCardWithNullPrepaid() {
         AuthCardDetails authCardDetails = getAuthCardDetails(PayersCardType.DEBIT, Boolean.FALSE, null);
         long surcharge = FixedCorporateCardSurchargeCalculator.calculate(authCardDetails, chargeEntity);
         assertThat(surcharge, is(0L));

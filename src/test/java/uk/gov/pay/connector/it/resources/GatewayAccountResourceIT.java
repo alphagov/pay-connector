@@ -130,13 +130,11 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void getAccountShouldReturnCorporatePrepaidCreditCardSurchargeAmountAndCorporatePrepaidDebitCardSurchargeAmount() {
-        int corporatePrepaidCreditCardSurchargeAmount = 250;
+    public void getAccountShouldReturnCorporatePrepaidDebitCardSurchargeAmount() {
         int corporatePrepaidDebitCardSurchargeAmount = 50;
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount)
                 .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
                 .insert();
 
@@ -144,7 +142,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
                 .then()
                 .statusCode(200)
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(corporatePrepaidCreditCardSurchargeAmount))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(corporatePrepaidDebitCardSurchargeAmount));
     }
 
@@ -712,7 +709,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
         givenSetup()
                 .body(payload)
@@ -724,7 +720,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(100))
                 .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
     }
 
@@ -739,7 +734,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
         givenSetup()
                 .body(payload)
@@ -751,34 +745,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(200))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-    }
-
-    @Test
-    public void patchGatewayAccount_forCorporatePrepaidCreditCardSurcharge() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                "path", "corporate_prepaid_credit_card_surcharge_amount",
-                "value", 300));
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("corporate_credit_card_surcharge_amount", is(0))
-                .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-        givenSetup()
-                .body(payload)
-                .patch("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(OK.getStatusCode());
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("corporate_credit_card_surcharge_amount", is(0))
-                .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(300))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
     }
 
@@ -793,7 +759,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
         givenSetup()
                 .body(payload)
@@ -805,7 +770,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
-                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(400));
     }
 
