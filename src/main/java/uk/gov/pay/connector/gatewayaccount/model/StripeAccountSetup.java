@@ -23,6 +23,9 @@ public class StripeAccountSetup {
     @JsonProperty("director")
     private boolean directorCompleted = false;
 
+    @JsonProperty("additional_kyc_data")
+    private boolean additionalKycDataCompleted = false;
+
     public boolean isBankAccountCompleted() {
         return bankAccountCompleted;
     }
@@ -61,5 +64,13 @@ public class StripeAccountSetup {
 
     public boolean isDirectorCompleted() {
         return directorCompleted;
+    }
+
+    public boolean isAdditionalKycDataCompleted() {
+        return additionalKycDataCompleted;
+    }
+
+    public void setAdditionalKycDataCompleted(boolean additionalKycDatacompleted) {
+        this.additionalKycDataCompleted = additionalKycDatacompleted;
     }
 }

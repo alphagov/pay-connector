@@ -50,7 +50,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 Map.of("operation", "add", "path", "bank_account", "value", true,
                         "expectedErrorMessage", "Operation [add] not supported for path [bank_account]"),
                 Map.of("operation", "add", "path", "blood_sample_deposited", "value", true,
-                        "expectedErrorMessage", "Field [path] must be one of [bank_account, company_number, director, responsible_person, vat_number]"),
+                        "expectedErrorMessage", "Field [path] must be one of [additional_kyc_data, bank_account, company_number, director, responsible_person, vat_number]"),
 
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "value", true),
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "path", "", "value", true),
