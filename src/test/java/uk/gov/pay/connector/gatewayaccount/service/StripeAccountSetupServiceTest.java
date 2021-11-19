@@ -23,6 +23,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.ADDITIONAL_KYC_DATA;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.DIRECTOR;
@@ -50,6 +51,8 @@ public class StripeAccountSetupServiceTest {
     private StripeAccountSetupTaskEntity mockCompanyNumberCompletedTaskEntity;
     @Mock
     private StripeAccountSetupTaskEntity mockDirectorCompletedTaskEntity;
+    @Mock
+    private StripeAccountSetupTaskEntity mockAdditionalKycDataCompletedTaskEntity;
 
     private StripeAccountSetupService stripeAccountSetupService;
 
@@ -62,6 +65,7 @@ public class StripeAccountSetupServiceTest {
         given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
         given(mockCompanyNumberCompletedTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
         given(mockDirectorCompletedTaskEntity.getTask()).willReturn(DIRECTOR);
+        given(mockAdditionalKycDataCompletedTaskEntity.getTask()).willReturn(ADDITIONAL_KYC_DATA);
 
         this.stripeAccountSetupService = new StripeAccountSetupService(mockStripeAccountSetupDao);
     }
@@ -78,6 +82,7 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isVatNumberCompleted(), is(false));
         assertThat(tasks.isCompanyNumberCompleted(), is(false));
         assertThat(tasks.isDirectorCompleted(), is(false));
+        assertThat(tasks.isAdditionalKycDataCompleted(), is(false));
     }
 
     @Test
@@ -85,7 +90,8 @@ public class StripeAccountSetupServiceTest {
         given(mockStripeAccountSetupDao.findByGatewayAccountId(GATEWAY_ACCOUNT_ID))
                 .willReturn(Arrays.asList(mockResponsiblePersonCompletedTaskEntity,
                         mockBankDetailsCompletedTaskEntity, mockVatNumberCompletedTaskEntity,
-                        mockCompanyNumberCompletedTaskEntity, mockDirectorCompletedTaskEntity));
+                        mockCompanyNumberCompletedTaskEntity, mockDirectorCompletedTaskEntity,
+                        mockAdditionalKycDataCompletedTaskEntity));
 
         StripeAccountSetup tasks = stripeAccountSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
@@ -94,6 +100,7 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isVatNumberCompleted(), is(true));
         assertThat(tasks.isCompanyNumberCompleted(), is(true));
         assertThat(tasks.isDirectorCompleted(), is(true));
+        assertThat(tasks.isAdditionalKycDataCompleted(), is(true));
     }
 
     @Test
@@ -107,6 +114,7 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
         assertThat(tasks.isVatNumberCompleted(), is(true));
         assertThat(tasks.isDirectorCompleted(), is(false));
+        assertThat(tasks.isAdditionalKycDataCompleted(), is(false));
     }
 
     @Test
@@ -151,21 +159,23 @@ public class StripeAccountSetupServiceTest {
                 new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true),
                 new StripeAccountSetupUpdateRequest(RESPONSIBLE_PERSON, true),
                 new StripeAccountSetupUpdateRequest(VAT_NUMBER, true),
-                new StripeAccountSetupUpdateRequest(DIRECTOR, true));
+                new StripeAccountSetupUpdateRequest(DIRECTOR, true),
+                new StripeAccountSetupUpdateRequest(ADDITIONAL_KYC_DATA, true));
 
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, RESPONSIBLE_PERSON)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, VAT_NUMBER)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, DIRECTOR)).willReturn(false);
+        given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, ADDITIONAL_KYC_DATA)).willReturn(false);
 
         stripeAccountSetupService.update(mockGatewayAccountEntity, patchRequests);
 
         ArgumentCaptor<StripeAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(StripeAccountSetupTaskEntity.class);
-        verify(mockStripeAccountSetupDao, times(4)).persist(entityArgumentCaptor.capture());
+        verify(mockStripeAccountSetupDao, times(5)).persist(entityArgumentCaptor.capture());
 
         List<StripeAccountSetupTaskEntity> entities = entityArgumentCaptor.getAllValues();
 
-        assertThat(entities.size(), is(4));
+        assertThat(entities.size(), is(5));
 
         assertThat(entities.get(0).getGatewayAccount(), is(mockGatewayAccountEntity));
         assertThat(entities.get(0).getTask(), is(BANK_ACCOUNT));
@@ -178,5 +188,8 @@ public class StripeAccountSetupServiceTest {
 
         assertThat(entities.get(3).getGatewayAccount(), is(mockGatewayAccountEntity));
         assertThat(entities.get(3).getTask(), is(DIRECTOR));
+
+        assertThat(entities.get(4).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(4).getTask(), is(ADDITIONAL_KYC_DATA));
     }
 }
