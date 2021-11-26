@@ -40,12 +40,13 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("vat_number", is(false))
                 .body("company_number", is(false))
                 .body("director", is(false))
-                .body("additional_kyc_data", is(false));
+                .body("additional_kyc_data", is(false))
+                .body("government_entity_document", is(false));
     }
 
     @Test
     public void getStripeSetupWithSomeTasksCompletedReturnsAppropriateFlags() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER);
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
@@ -58,7 +59,8 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("responsible_person", is(false))
                 .body("vat_number", is(true))
                 .body("director", is(true))
-                .body("additional_kyc_data", is(false));
+                .body("additional_kyc_data", is(false))
+                .body("government_entity_document", is(false));
     }
 
     @Test
@@ -73,7 +75,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
 
     @Test
     public void getStripeSetupGatewayAccountIsNotAStripeAccount() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("worldpay"));
+        long gatewayAccountId = Long.parseLong(createAGatewayAccountFor("worldpay"));
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
@@ -82,7 +84,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
 
     @Test
     public void patchStripeSetupWithSingleUpdate() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(createAGatewayAccountFor("stripe"));
         givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "replace",
@@ -100,12 +102,13 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("responsible_person", is(false))
                 .body("vat_number", is(false))
                 .body("company_number", is(false))
-                .body("additional_kyc_data", is(false));
+                .body("additional_kyc_data", is(false))
+                .body("government_entity_document", is(false));
     }
 
     @Test
     public void patchStripeSetupWithMultipleUpdates() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(createAGatewayAccountFor("stripe"));
         givenSetup()
                 .body(toJson(Arrays.asList(
                         ImmutableMap.of(
@@ -131,6 +134,10 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                         ImmutableMap.of(
                                 "op", "replace",
                                 "path", "additional_kyc_data",
+                                "value", true),
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "government_entity_document",
                                 "value", true)
                 )))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -146,12 +153,13 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("vat_number", is(true))
                 .body("company_number", is(true))
                 .body("director", is(true))
-                .body("additional_kyc_data", is(true));
+                .body("additional_kyc_data", is(true))
+                .body("government_entity_document", is(true));
     }
 
     @Test
     public void patchStripeSetupValidationError() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(createAGatewayAccountFor("stripe"));
         givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "remove",
