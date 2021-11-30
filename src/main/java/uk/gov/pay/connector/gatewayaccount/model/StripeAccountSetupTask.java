@@ -6,5 +6,6 @@ public enum StripeAccountSetupTask {
     VAT_NUMBER,
     COMPANY_NUMBER,
     DIRECTOR,
+    GOVERNMENT_ENTITY_DOCUMENT,
     ADDITIONAL_KYC_DATA
 }

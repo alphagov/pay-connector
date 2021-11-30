@@ -11,8 +11,6 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest
 
 import java.util.List;
 
-import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.ADDITIONAL_KYC_DATA;
-
 public class StripeAccountSetupService {
 
     private final StripeAccountSetupDao stripeAccountSetupDao;
@@ -44,6 +42,9 @@ public class StripeAccountSetupService {
                             break;
                         case ADDITIONAL_KYC_DATA:
                             stripeAccountSetup.setAdditionalKycDataCompleted(true);
+                            break;
+                        case GOVERNMENT_ENTITY_DOCUMENT:
+                            stripeAccountSetup.setGovernmentEntityDocument(true);
                             break;
                         default:
                             // Code doesn’t handle this task
