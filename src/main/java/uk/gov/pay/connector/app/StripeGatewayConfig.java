@@ -52,6 +52,12 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private List<String> credentials;
 
+    @Valid
+    private int radarFeeInPence;
+
+    @Valid
+    private int threeDsFeeInPence;
+
     public String getUrl() {
         return url;
     }
@@ -94,5 +100,13 @@ public class StripeGatewayConfig extends Configuration {
 
     public Instant getFeePercentageV2Date() {
         return Instant.ofEpochSecond(feePercentageV2Date);
+    }
+
+    public int getRadarFeeInPence() {
+        return radarFeeInPence;
+    }
+
+    public int getThreeDsFeeInPence() {
+        return threeDsFeeInPence;
     }
 }

@@ -116,6 +116,8 @@ stripe:
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-false}
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-3000}
   credentials: ['stripe_account_id']
+  radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE}
+  threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
