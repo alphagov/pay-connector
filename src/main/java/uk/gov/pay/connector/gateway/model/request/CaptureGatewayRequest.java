@@ -2,10 +2,12 @@ package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 public class CaptureGatewayRequest implements GatewayRequest {
@@ -34,6 +36,10 @@ public class CaptureGatewayRequest implements GatewayRequest {
 
     public Instant getCreatedDate() {
         return charge.getCreatedDate();
+    }
+
+    public List<ChargeEventEntity> getEvents() {
+        return charge.getEvents();
     }
 
     @Override

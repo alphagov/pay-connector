@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
@@ -53,9 +54,13 @@ public class StripeCaptureHandler implements CaptureHandler {
             StripeCharge capturedCharge;
 
             capturedCharge = captureWithPaymentIntentAPI(request);
+
+            boolean is3dsUsed = request.getEvents()
+                    .stream()
+                    .anyMatch(chargeEventEntity -> chargeEventEntity.getStatus().equals(AUTHORISATION_3DS_REQUIRED));
             
             Optional<Long> processingFee = capturedCharge.getFee()
-                    .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request.getAmount(), fee));
+                    .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request.getAmount(), fee, is3dsUsed));
 
             Long netTransferAmount = processingFee
                     .map(fee -> request.getAmount() - fee)
@@ -125,7 +130,7 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
     }
 
-    private Optional<? extends Long> calculateProcessingFee(Instant createdDate, Long grossChargeAmount, Long stripeFee) {
+    private Optional<? extends Long> calculateProcessingFee(Instant createdDate, Long grossChargeAmount, Long stripeFee, boolean is3dsUsed) {
         if (stripeGatewayConfig.isCollectFee()) {
 
             Double feePercentage;
@@ -136,6 +141,13 @@ public class StripeCaptureHandler implements CaptureHandler {
             }
 
             Double platformFee = Math.ceil((feePercentage / 100) * grossChargeAmount);
+
+            if (createdDate.isAfter(stripeGatewayConfig.getFeePercentageV2Date())) {
+                platformFee += stripeGatewayConfig.getRadarFeeInPence();
+                if (is3dsUsed) {
+                    platformFee += stripeGatewayConfig.getThreeDsFeeInPence();
+                }
+            }
             return Optional.of(stripeFee + platformFee.longValue());
         }
 
