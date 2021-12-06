@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.app.config.PayoutReconcileProcessConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
+import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
@@ -120,6 +121,11 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("eventQueue")
     private EventQueueConfig eventQueueConfig;
+
+    @Valid
+    @NotNull
+    @JsonProperty("taskQueue")
+    private TaskQueueConfig taskQueueConfig;
 
     @Valid
     @NotNull
@@ -259,5 +265,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public PayoutReconcileProcessConfig getPayoutReconcileProcessConfig() {
         return payoutReconcileProcessConfig;
+    }
+
+    public TaskQueueConfig getTaskQueueConfig() {
+        return taskQueueConfig;
     }
 }

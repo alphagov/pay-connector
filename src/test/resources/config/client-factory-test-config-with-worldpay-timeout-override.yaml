@@ -120,6 +120,7 @@ sqsConfig:
   eventQueueUrl: ${AWS_SQS_PAYMENT_EVENT_QUEUE_URL}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
   payoutReconcileQueueUrl: ${AWS_SQS_PAYOUT_RECONCILE_QUEUE_URL}
+  taskQueueUrl: ${AWS_SQS_CONNECTOR_TASKS_QUEUE_URL}
   messageMaximumWaitTimeInSeconds: ${AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS:-20}
   messageMaximumBatchSize: ${AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE:-10}
 
@@ -132,6 +133,12 @@ payoutReconcileProcessConfig:
   failedPayoutReconcileMessageRetryDelayInSeconds: ${PAYOUT_RECONCILE_PROCESS_RETRY_FAILED_IN_SECONDS:-3600}
   queueSchedulerThreadDelayInSeconds: ${PAYOUT_RECONCILE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${PAYOUT_RECONCILE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
+
+taskQueue:
+  taskQueueEnabled: ${TASK_QUEUE_ENABLED:-false}
+  failedMessageRetryDelayInSeconds: ${TASK_QUEUE_MESSAGE_RETRY_FAILED_IN_SECONDS:-3600}
+  queueSchedulerNumberOfThreads: ${TASKS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
+  queueSchedulerThreadDelayInSeconds: ${TASKS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
 
 database:
   driverClass: org.postgresql.Driver
