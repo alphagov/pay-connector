@@ -1722,4 +1722,11 @@
     <changeSet id="drop corporate_prepaid_credit_card_surcharge_amount from gateway_accounts table" runInTransaction="false" author="">
         <dropColumn tableName="gateway_accounts" columnName="corporate_prepaid_credit_card_surcharge_amount"/>
     </changeSet>
+    <changeSet id="add fee_type column to fees table" author="">
+        <addColumn tableName="fees">
+            <column name="fee_type" type="varchar(30)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
