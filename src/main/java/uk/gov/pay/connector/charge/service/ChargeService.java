@@ -63,6 +63,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -129,6 +130,7 @@ public class ChargeService {
     private final EventService eventService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
+    private TaskQueueService taskQueueService;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -143,7 +145,8 @@ public class ChargeService {
                          RefundService refundService,
                          EventService eventService,
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
-                         NorthAmericanRegionMapper northAmericanRegionMapper) {
+                         NorthAmericanRegionMapper northAmericanRegionMapper,
+                         TaskQueueService taskQueueService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -159,6 +162,7 @@ public class ChargeService {
         this.eventService = eventService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.northAmericanRegionMapper = northAmericanRegionMapper;
+        this.taskQueueService = taskQueueService;
     }
 
     @Transactional
@@ -689,6 +693,8 @@ public class ChargeService {
         if (shouldEmitPaymentStateTransitionEvents) {
             stateTransitionService.offerPaymentStateTransition(charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity);
         }
+        
+        taskQueueService.offerTasksOnStateTransition(charge);
 
         return charge;
     }
@@ -720,6 +726,8 @@ public class ChargeService {
                         charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity,
                         eventClass);
             }
+            
+            taskQueueService.offerTasksOnStateTransition(charge);
 
             return charge;
         }).orElseThrow(() -> new InvalidForceStateTransitionException(fromChargeState, targetChargeState));

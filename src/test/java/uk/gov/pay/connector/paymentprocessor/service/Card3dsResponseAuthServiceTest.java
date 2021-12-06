@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.util.AuthUtils;
 
@@ -75,6 +76,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private RefundService mockedRefundService;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
@@ -102,7 +105,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, mockConfiguration, null, mockStateTransitionService, ledgerService,
-                mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper);
+                mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper,
+                mockTaskQueueService);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);
@@ -331,7 +335,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
     }
-    
+
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() {
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
