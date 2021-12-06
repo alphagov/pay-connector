@@ -26,6 +26,8 @@ public class SqsConfig extends Configuration {
     private int messageMaximumBatchSize;
     private String eventQueueUrl;
 
+    private String taskQueueUrl;
+
     public String getEndpoint() {
         return endpoint;
     }
@@ -64,5 +66,9 @@ public class SqsConfig extends Configuration {
 
     public String getPayoutReconcileQueueUrl() {
         return payoutReconcileQueueUrl;
+    }
+
+    public String getTaskQueueUrl() {
+        return taskQueueUrl;
     }
 }
