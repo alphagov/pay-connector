@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe.handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.util.StripeFeeCalculator;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -60,7 +61,7 @@ public class StripeCaptureHandler implements CaptureHandler {
                     .anyMatch(chargeEventEntity -> chargeEventEntity.getStatus().equals(AUTHORISATION_3DS_REQUIRED));
             
             Optional<Long> processingFee = capturedCharge.getFee()
-                    .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request.getAmount(), fee, is3dsUsed));
+                    .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request, fee));
 
             Long netTransferAmount = processingFee
                     .map(fee -> request.getAmount() - fee)
@@ -130,25 +131,14 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
     }
 
-    private Optional<? extends Long> calculateProcessingFee(Instant createdDate, Long grossChargeAmount, Long stripeFee, boolean is3dsUsed) {
+    private Optional<? extends Long> calculateProcessingFee(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
-
-            Double feePercentage;
             if (createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date())) {
-                feePercentage = stripeGatewayConfig.getFeePercentage();
+                return StripeFeeCalculator.getTotalAmountFor(stripeFee, request, stripeGatewayConfig.getFeePercentage());
             } else {
-                feePercentage = stripeGatewayConfig.getFeePercentageV2();
+                return StripeFeeCalculator.getTotalAmountForV2(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
+                        stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
             }
-
-            Double platformFee = Math.ceil((feePercentage / 100) * grossChargeAmount);
-
-            if (createdDate.isAfter(stripeGatewayConfig.getFeePercentageV2Date())) {
-                platformFee += stripeGatewayConfig.getRadarFeeInPence();
-                if (is3dsUsed) {
-                    platformFee += stripeGatewayConfig.getThreeDsFeeInPence();
-                }
-            }
-            return Optional.of(stripeFee + platformFee.longValue());
         }
 
         return Optional.empty();
