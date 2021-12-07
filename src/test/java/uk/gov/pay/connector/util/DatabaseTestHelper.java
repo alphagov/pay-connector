@@ -8,6 +8,8 @@ import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -428,6 +430,14 @@ public class DatabaseTestHelper {
                         .list());
     }
 
+    public List<Map<String, Object>> getFeesByChargeId(long chargeId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT * FROM fees WHERE charge_id = :chargeId")
+                        .bind("chargeId", chargeId)
+                        .mapToMap()
+                        .list());
+    }
+
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
 
         return jdbi.withHandle(h ->
@@ -836,16 +846,17 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addFee(String externalId, long chargeId, long feeDue, long feeCollected, ZonedDateTime createdDate, String gatewayTransactionId) {
+    public void addFee(String externalId, long chargeId, long feeDue, long feeCollected, ZonedDateTime createdDate, String gatewayTransactionId, FeeType feeType) {
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("INSERT INTO fees(external_id, charge_id, amount_due, amount_collected, created_date, gateway_transaction_id) VALUES (:external_id, :charge_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id)")
+                        .createUpdate("INSERT INTO fees(external_id, charge_id, amount_due, amount_collected, created_date, gateway_transaction_id, fee_type) VALUES (:external_id, :charge_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id, :fee_type)")
                         .bind("external_id", externalId)
                         .bind("charge_id", chargeId)
                         .bind("amount_due", feeDue)
                         .bind("amount_collected", feeCollected)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("gateway_transaction_id", gatewayTransactionId)
+                        .bind("fee_type", feeType.getName())
                         .execute()
         );
     }

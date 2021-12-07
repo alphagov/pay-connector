@@ -5,6 +5,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -164,7 +165,7 @@ public class ChargesFrontendResourceIT {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         final long feeCollected = 100L;
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
         getChargeFromResource(externalChargeId)
                 .statusCode(OK.getStatusCode())
@@ -178,7 +179,7 @@ public class ChargesFrontendResourceIT {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         final long feeCollected = 100L;
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
         getChargeFromResource(externalChargeId)
                 .statusCode(OK.getStatusCode())

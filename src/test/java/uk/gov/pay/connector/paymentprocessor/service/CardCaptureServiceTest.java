@@ -41,7 +41,6 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
