@@ -37,6 +37,15 @@ public class FeeEntity {
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     }
 
+    public FeeEntity(ChargeEntity chargeEntity, Long amount, FeeType feeType) {
+        this.externalId = RandomIdGenerator.newId();
+        this.chargeEntity = chargeEntity;
+        this.amountDue = amount;
+        this.amountCollected = amount;
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.feeType = feeType;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_charge_id_seq")
     @JsonIgnore
