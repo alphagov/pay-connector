@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -283,7 +284,7 @@ public class ContractTest {
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), false);
-        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10));
+        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
 
     @State("a charge with gateway account id 42 and charge id abcdef1234 exists")
@@ -327,7 +328,7 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .withDelayedCapture(true)
                 .build());
-        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), params.get("gateway_transaction_id"));
+        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), params.get("gateway_transaction_id"), FeeType.TRANSACTION);
         dbHelper.updateCharge3dsDetails(chargeId, null, null, null, "2.1.0");
     }
 

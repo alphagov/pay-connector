@@ -26,10 +26,9 @@ import java.time.ZonedDateTime;
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
 public class FeeEntity {
     
-    public FeeEntity() { 
-        
+    public FeeEntity() {
     }
-    
+
     public FeeEntity(ChargeEntity chargeEntity, Long amount) { 
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
@@ -45,6 +44,10 @@ public class FeeEntity {
 
     @Column(name = "external_id")
     private String externalId;
+
+    @Column(name = "fee_type")
+    @Convert(converter = FeeTypeConverter.class)
+    private FeeType feeType;
 
     @JsonIgnore
     @OneToOne
@@ -70,5 +73,9 @@ public class FeeEntity {
     
     public long getAmountCollected() {
         return amountCollected;
+    }
+
+    public void setFeeType(FeeType feeType) {
+        this.feeType = feeType;
     }
 }

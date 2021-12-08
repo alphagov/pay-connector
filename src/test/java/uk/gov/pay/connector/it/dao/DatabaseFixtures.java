@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -704,7 +705,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCharge withCorporateCardSurcarge(Long corporateCardSurcharge) {
+        public TestCharge withCorporateCardSurcharge(Long corporateCardSurcharge) {
             this.corporateCardSurcharge = corporateCardSurcharge;
             return this;
         }
@@ -924,6 +925,7 @@ public class DatabaseFixtures {
         private long feeDue = 100L;
         private long feeCollected = 100L;
         private String gatewayTransactionId = "transaction_id";
+        private FeeType feeType = FeeType.TRANSACTION;
 
         public TestFee withTestCharge(TestCharge charge) {
             this.testCharge = charge;
@@ -945,10 +947,15 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestFee withFeeType(FeeType feeType) {
+            this.feeType = feeType;
+            return this;
+        }
+
         public TestFee insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addFee(externalId, testCharge.getChargeId(), feeDue, feeCollected, createdDate, gatewayTransactionId);
+            databaseTestHelper.addFee(externalId, testCharge.getChargeId(), feeDue, feeCollected, createdDate, gatewayTransactionId, feeType);
             return this;
         }
     }

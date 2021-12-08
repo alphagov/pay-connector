@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -323,7 +324,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
 
         createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -344,7 +345,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         long defaultCorporateSurchargeAmount = 150L;
 
         createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
         connectorRestApiClient
                 .withAccountId(accountId)
