@@ -4,6 +4,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -17,14 +19,21 @@ public class TaskQueueService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public static final String COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME = "collect_fee_for_stripe_failed_payment";
-    private TaskQueue taskQueue;
+    
+    private final TaskQueue taskQueue;
+    private final ConnectorConfiguration connectorConfiguration;
 
     @Inject
-    public TaskQueueService(TaskQueue taskQueue) {
+    public TaskQueueService(TaskQueue taskQueue,
+                            ConnectorConfiguration connectorConfiguration) {
         this.taskQueue = taskQueue;
+        this.connectorConfiguration = connectorConfiguration;
     }
 
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
+        if (!connectorConfiguration.getTaskQueueConfig().getCollectFeeForStripeFailedPayments())
+            return;
+        
         boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
                 chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
 
