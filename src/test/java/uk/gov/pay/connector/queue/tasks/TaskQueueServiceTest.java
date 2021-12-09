@@ -14,9 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.queue.QueueException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.queue.tasks.TaskQueueService.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME;
 
@@ -34,6 +36,12 @@ class TaskQueueServiceTest {
 
     @Mock
     private TaskQueue mockTaskQueue;
+    
+    @Mock
+    private ConnectorConfiguration mockConnectorConfiguration;
+    
+    @Mock
+    private TaskQueueConfig mockTaskQueueConfig;
 
     @InjectMocks
     private TaskQueueService taskQueueService;
@@ -49,6 +57,9 @@ class TaskQueueServiceTest {
         Logger root = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+        
+        when(mockConnectorConfiguration.getTaskQueueConfig()).thenReturn(mockTaskQueueConfig);
+        when(mockTaskQueueConfig.getCollectFeeForStripeFailedPayments()).thenReturn(true);
     }
 
     @Test
@@ -92,7 +103,7 @@ class TaskQueueServiceTest {
     }
 
     @Test
-    void shouldOfferFeeTask_whenChargeIsNotStripe() throws Exception {
+    void shouldNotOfferFeeTask_whenChargeIsNotStripe() throws Exception {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
@@ -105,7 +116,7 @@ class TaskQueueServiceTest {
     }
 
     @Test
-    void shouldOfferFeeTask_whenChargeHasNoGatewayTransationId() throws Exception {
+    void shouldNotOfferFeeTask_whenChargeHasNoGatewayTransationId() throws Exception {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withStatus(ChargeStatus.EXPIRED)
@@ -133,5 +144,20 @@ class TaskQueueServiceTest {
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getLevel(), is(Level.ERROR));
         assertThat(loggingEvent.getMessage(), is("Error adding payment task message to queue"));
+    }
+
+    @Test
+    void shouldNotOfferFeeTask_whenEnvironmentVariableIsNotEnabled() throws Exception {
+        var chargeEntity = aValidChargeEntity()
+                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                .withGatewayTransactionId("a-gateway-transaction-id")
+                .withStatus(ChargeStatus.EXPIRED)
+                .build();
+
+        when(mockTaskQueueConfig.getCollectFeeForStripeFailedPayments()).thenReturn(false);
+
+        taskQueueService.offerTasksOnStateTransition(chargeEntity);
+
+        verify(mockTaskQueue, never()).addTaskToQueue(any());
     }
 }
