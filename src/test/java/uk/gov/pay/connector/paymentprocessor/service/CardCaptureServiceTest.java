@@ -26,6 +26,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
@@ -33,6 +34,7 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.fee.dao.FeeDao;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
@@ -82,6 +84,7 @@ import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 
@@ -145,6 +148,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), WORLDPAY), PENDING));
     }
 
+    private void stripeWillRespondWithSuccess() {
+        when(mockedPaymentProvider.capture(any())).thenReturn(
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L, List.of(Fee.of(FeeType.TRANSACTION, 50L))));
+    }
+
     private void worldpayWillRespondWithError() {
         when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromGatewayError(genericGatewayError("something went wrong")));
     }
@@ -176,6 +184,39 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    @Test
+    public void doCapture_shouldCaptureAChargeForStripeAccount() {
+
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
+
+        ChargeEntity chargeSpy = spy(charge);
+        mockChargeDaoOperations(chargeSpy);
+
+        stripeWillRespondWithSuccess();
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
+
+        assertThat(response.isSuccessful(), is(true));
+        InOrder inOrder = Mockito.inOrder(chargeSpy);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), isNull());
+
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+
+        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
+        verify(mockedPaymentProvider, times(1)).capture(request.capture());
+        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+
+        verify(feeDao, times(1)).persist(any());
 
         verifyNoInteractions(mockUserNotificationService);
     }

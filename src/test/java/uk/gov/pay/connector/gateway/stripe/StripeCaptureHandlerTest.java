@@ -9,6 +9,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -142,6 +144,8 @@ public class StripeCaptureHandlerTest {
 
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFee().get(), is(70L));
+        assertThat(captureResponse.getFeeList().isPresent(), is(true));
+        assertThat(captureResponse.getFeeList().get().size(), is(2));
     }
 
     @Test
@@ -176,6 +180,10 @@ public class StripeCaptureHandlerTest {
 
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFee().get(), is(100L));
+        assertThat(captureResponse.getFeeList().isPresent(), is(true));
+        assertThat(captureResponse.getFeeList().get().size(), is(1));
+        assertThat(captureResponse.getFeeList().get().get(0).getFeeType(), is(nullValue()));
+        assertThat(captureResponse.getFeeList().get().get(0).getAmount(), is(100L));
     }
 
     @Test
@@ -339,7 +347,7 @@ public class StripeCaptureHandlerTest {
         when(stripeGatewayConfig.getFeePercentageV2Date()).thenReturn(Instant.ofEpochSecond(feeV2DateAfterChargeCreatedDate));
         when(stripeGatewayConfig.getFeePercentageV2()).thenReturn(0.50);
         when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(5);
-        when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(5);
+        when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(10);
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -361,10 +369,20 @@ public class StripeCaptureHandlerTest {
         ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
         verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
 
-        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9890"));
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(110L));
+        assertThat(captureResponse.getFee().get(), is(115L));
+        assertThat(captureResponse.getFeeList().isPresent(), is(true));
+
+        List<Fee> feeList = captureResponse.getFeeList().get();
+        assertThat(feeList.size(), is(3));
+        assertThat(feeList.get(0).getFeeType(), is(FeeType.TRANSACTION));
+        assertThat(feeList.get(0).getAmount(), is(100L));
+        assertThat(feeList.get(1).getFeeType(), is(FeeType.RADAR));
+        assertThat(feeList.get(1).getAmount(), is(5L));
+        assertThat(feeList.get(2).getFeeType(), is(FeeType.THREE_D_S));
+        assertThat(feeList.get(2).getAmount(), is(10L));
     }
 
     @Test

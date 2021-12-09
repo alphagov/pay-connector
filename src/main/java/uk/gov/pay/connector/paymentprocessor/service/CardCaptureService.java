@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.fee.dao.FeeDao;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -114,7 +115,10 @@ public class CardCaptureService {
 
 
         ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
-        captureResponse.getFee().ifPresent(fee -> persistFee(charge, fee));
+
+        captureResponse.getFeeList().ifPresent(feeList ->
+            feeList.forEach(fee -> persistFee(charge, fee))
+        );
 
         // Used by Sumo Logic saved search
         LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
@@ -136,6 +140,12 @@ public class CardCaptureService {
     public void persistFee(ChargeEntity charge, Long feeAmount) {
         FeeEntity fee = new FeeEntity(charge, feeAmount);
         feeDao.persist(fee);
+    }
+
+    @Transactional
+    public void persistFee(ChargeEntity charge, Fee fee) {
+        FeeEntity feeEntity = new FeeEntity(charge, fee.getAmount(), fee.getFeeType());
+        feeDao.persist(feeEntity);
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {

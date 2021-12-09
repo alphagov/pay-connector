@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.gateway;
 
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -15,6 +17,7 @@ public class CaptureResponse {
     private final GatewayError gatewayError;
     private final String stringified;
     private Long feeAmount;
+    private List<Fee> feeList;
 
     private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified) {
         this.transactionId = transactionId;
@@ -29,6 +32,20 @@ public class CaptureResponse {
         this.gatewayError = gatewayError;
         this.stringified = stringified;
         this.feeAmount = feeAmount;
+    }
+
+    private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError,
+                            String stringified, Long feeAmount, List<Fee> feeList) {
+        this.transactionId = transactionId;
+        this.chargeState = chargeState;
+        this.gatewayError = gatewayError;
+        this.stringified = stringified;
+        this.feeAmount = feeAmount;
+        this.feeList = feeList;
+    }
+
+    public CaptureResponse(String transactionId, ChargeState chargeState, Long feeAmount, List<Fee> feeList) {
+        this(transactionId, chargeState, null, null, feeAmount, feeList);
     }
 
     public CaptureResponse(String transactionId, ChargeState chargeState, Long feeAmount) {
@@ -48,6 +65,13 @@ public class CaptureResponse {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
         } else
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify());
+    }
+
+    public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, Long feeAmount, List<Fee> feeList) {
+        if (isNotBlank(captureResponse.getErrorCode())) {
+            return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
+        } else
+            return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify(), feeAmount, feeList);
     }
 
     public Optional<GatewayError> getError() {
@@ -75,6 +99,10 @@ public class CaptureResponse {
 
     public Optional<Long> getFee() {
         return Optional.ofNullable(feeAmount);
+    }
+
+    public Optional<List<Fee>> getFeeList() {
+        return Optional.ofNullable(feeList);
     }
 
     public enum ChargeState {
