@@ -60,6 +60,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.northamericaregion.UsState;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -179,6 +180,9 @@ public class ChargeServiceTest {
     @Mock
     protected CaptureProcessConfig mockedCaptureProcessConfig;
     
+    @Mock
+    protected TaskQueueService mockTaskQueueService;
+    
     @Captor
     protected ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
     
@@ -238,7 +242,7 @@ public class ChargeServiceTest {
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
-                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper);
+                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
     }
 
     @After
@@ -267,6 +271,8 @@ public class ChargeServiceTest {
                 CAPTURED, 
                 chargeEventEntity, 
                 StatusCorrectedToCapturedToMatchGatewayStatus.class);
+        
+        verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
 
     @Test
@@ -289,6 +295,8 @@ public class ChargeServiceTest {
                 AUTHORISATION_ERROR,
                 chargeEventEntity,
                 StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class);
+
+        verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
 
 
@@ -312,6 +320,8 @@ public class ChargeServiceTest {
                 AUTHORISATION_REJECTED,
                 chargeEventEntity,
                 StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class);
+
+        verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
     
     @Test(expected = InvalidForceStateTransitionException.class)
@@ -449,6 +459,8 @@ public class ChargeServiceTest {
 
         verify(mockStateTransitionService).offerPaymentStateTransition(chargeSpy.getExternalId(), CREATED,
                 ENTERING_CARD_DETAILS, chargeEvent);
+
+        verify(mockTaskQueueService).offerTasksOnStateTransition(chargeSpy);
     }
 
     @Test

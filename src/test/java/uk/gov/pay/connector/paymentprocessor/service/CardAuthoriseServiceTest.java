@@ -51,6 +51,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -136,6 +137,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private AuthorisationRequestSummaryStructuredLogging mockAuthorisationRequestSummaryStructuredLogging;
+
+    @Mock
+    private TaskQueueService mockTaskQueueService;
     
     private CardAuthoriseService cardAuthorisationService;
 
@@ -151,7 +155,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, 
-                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper);
+                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(

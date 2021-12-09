@@ -35,6 +35,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.util.Optional;
@@ -72,7 +73,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
-    
+
     private CardAuthoriseService cardAuthorisationService;
 
     private ChargeEntity charge;
@@ -84,32 +85,36 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private PaymentProvider mockedWorldpayPaymentProvider;
 
     @Mock
+    private TaskQueueService mockTaskQueueService;
+
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
     @BeforeEach
     void setup() {
         Environment environment = mock(Environment.class);
-        
+
         when(environment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mock(Counter.class));
-        
+
         charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         charge.setPaymentProvider("worldpay");
         charge.getGatewayAccount().setRequires3ds(true);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mock(ConnectorConfiguration.class), null,
-                mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class), 
-                mock(EventService.class), mock(GatewayAccountCredentialsService.class), mock(NorthAmericanRegionMapper.class));
-        
+                mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
+                mock(EventService.class), mock(GatewayAccountCredentialsService.class), mock(NorthAmericanRegionMapper.class),
+                mockTaskQueueService);
+
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
                 new AuthorisationService(mockExecutorService, environment),
                 chargeService,
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 environment);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
@@ -123,7 +128,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
-    
+
     @Test
     void authorise_with_exemption_when_exemption_honoured_but_authorisation_refused_results_in_rejected() throws Exception {
         worldpayRespondsWith(null, load(WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE));
@@ -145,7 +150,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, exemptionResponse result: HONOURED, exemptionResponse reason: HIGH_RISK)"));
     }
-    
+
     @Test
     void authorise_with_exemption_flag_results_in_issuer_honouring_exemption_request() throws Exception {
         worldpayRespondsWith(null, load(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
@@ -154,9 +159,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
                 .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
-        
+
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-        
+
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -166,8 +171,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
         assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, exemptionResponse result: HONOURED, exemptionResponse reason: ISSUER_HONOURED)"));
-    } 
-    
+    }
+
     @Test
     void authorise_with_exemption_when_3ds_challenge_required_results_in_authorisation_3ds_required() throws Exception {
         worldpayRespondsWith(null, load(WORLDPAY_3DS_FLEX_RESPONSE));
@@ -181,7 +186,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
     }
-    
+
     @Test
     void authorise_with_exemption_when_3ds_requested_results_in_authorisation_3ds_required() throws Exception {
         worldpayRespondsWith(null, load(WORLDPAY_3DS_RESPONSE));
@@ -195,7 +200,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
     }
-    
+
     @Test
     void do_authorise_should_respond_with_3ds_response_for_3ds_orders() throws Exception {
         var worldpayOrderStatusResponse = worldpayRespondsWith(null, load(WORLDPAY_3DS_RESPONSE));

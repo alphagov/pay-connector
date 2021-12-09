@@ -48,6 +48,7 @@ import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
@@ -127,6 +128,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -159,7 +163,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockGatewayAccountCredentialsService,
-                mockNorthAmericanRegionMapper));
+                mockNorthAmericanRegionMapper, mockTaskQueueService));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

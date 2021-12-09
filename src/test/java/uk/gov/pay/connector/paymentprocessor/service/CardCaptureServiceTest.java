@@ -41,6 +41,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
@@ -117,6 +118,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
     @Mock
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     @Before
     public void beforeTest() {
@@ -127,7 +130,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, 
-                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper);
+                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);
