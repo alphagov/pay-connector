@@ -1729,4 +1729,10 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="drop unique constraint for charge_id column on fee table to allow for multiple fees per charge" author="">
+        <dropUniqueConstraint
+                tableName="fees"
+                constraintName="fees_charge_id_key"
+                uniqueColumns="charge_id" />
+    </changeSet>
 </databaseChangeLog>
