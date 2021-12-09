@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
@@ -52,7 +53,7 @@ public class ChargeEntityFixture {
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
     private Long corporateSurcharge = null;
-    private Long fee = null;
+    private List<Fee> fees;
     private WalletType walletType = null;
     private ExternalMetadata externalMetadata = null;
     private CardDetailsEntity cardDetails = null;
@@ -158,9 +159,11 @@ public class ChargeEntityFixture {
         chargeEntity.setPaymentProvider(paymentProvider);
         chargeEntity.setServiceId(serviceId);
 
-        if (this.fee != null) {
-            FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
-            chargeEntity.setFee(fee);
+        if (this.fees != null) {
+            fees.stream().forEach(partialFee -> {
+                FeeEntity fee = new FeeEntity(chargeEntity, partialFee.getAmount(), partialFee.getFeeType());
+                chargeEntity.setFee(fee);
+            });
         }
 
         if (parityCheckStatus != null) {
@@ -260,8 +263,11 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withFee(Long amount) {
-        this.fee = amount;
+    public ChargeEntityFixture withFee(Fee fee) {
+        if (this.fees == null) {
+            this.fees = new ArrayList<>();
+        }
+        this.fees.add(fee);
         return this;
     }
 

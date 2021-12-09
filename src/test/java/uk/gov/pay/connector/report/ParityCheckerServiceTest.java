@@ -17,6 +17,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
@@ -109,7 +110,7 @@ public class ParityCheckerServiceTest {
                 .withGatewayAccountEntity(defaultGatewayAccountEntity())
                 .withMoto(true)
                 .withSource(CARD_PAYMENT_LINK)
-                .withFee(10L)
+                .withFee(Fee.of(null, 10L))
                 .withCorporateSurcharge(25L)
                 .withWalletType(APPLE_PAY)
                 .withDelayedCapture(true)

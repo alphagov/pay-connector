@@ -36,14 +36,12 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -117,8 +115,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @JoinColumn(name = "gateway_account_credential_id", updatable = false)
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    @OneToOne(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
-    private FeeEntity fee;
+    @OneToMany(mappedBy = "chargeEntity")
+    private List<FeeEntity> fees = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
     @OrderBy("updated DESC")
@@ -456,11 +454,14 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     }
 
     public void setFee(FeeEntity fee) {
-        this.fee = fee;
+        this.fees.add(fee);
     }
 
     public Optional<Long> getFeeAmount() {
-        return Optional.ofNullable(fee).map(FeeEntity::getAmountCollected);
+        return fees.isEmpty() ? Optional.empty() :
+            Optional.of(fees.stream()
+                .map(feeEntity -> feeEntity.getAmountCollected())
+                .reduce(0L, Long::sum));
     }
 
     public ParityCheckStatus getParityCheckStatus() {

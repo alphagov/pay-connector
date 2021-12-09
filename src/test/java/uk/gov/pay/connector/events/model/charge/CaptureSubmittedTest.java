@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.fee.model.Fee;
 
 import java.time.ZonedDateTime;
 
@@ -23,7 +24,7 @@ public class CaptureSubmittedTest {
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
         Long fee = 5L;
 
-        chargeEntity.withFee(fee);
+        chargeEntity.withFee(Fee.of(null, fee));
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
         when(chargeEvent.getUpdated()).thenReturn(updated);
