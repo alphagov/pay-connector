@@ -464,6 +464,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                 .reduce(0L, Long::sum));
     }
 
+    public List<FeeEntity> getFees() {
+        return fees;
+    }
+
     public ParityCheckStatus getParityCheckStatus() {
         return parityCheckStatus;
     }

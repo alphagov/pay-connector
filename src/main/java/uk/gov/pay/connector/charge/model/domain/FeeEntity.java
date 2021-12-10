@@ -84,6 +84,10 @@ public class FeeEntity {
         return amountCollected;
     }
 
+    public FeeType getFeeType() {
+        return feeType;
+    }
+
     public void setFeeType(FeeType feeType) {
         this.feeType = feeType;
     }
