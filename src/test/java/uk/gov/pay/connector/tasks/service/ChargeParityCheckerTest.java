@@ -22,6 +22,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -93,7 +94,7 @@ public class ChargeParityCheckerTest {
                 .withGatewayAccountEntity(defaultGatewayAccountEntity())
                 .withMoto(true)
                 .withSource(CARD_PAYMENT_LINK)
-                .withFee(10L)
+                .withFee(Fee.of(null,10L))
                 .withCorporateSurcharge(25L)
                 .withWalletType(APPLE_PAY)
                 .withDelayedCapture(true)

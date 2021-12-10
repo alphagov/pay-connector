@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -158,7 +159,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .withStatus(AUTHORISATION_READY)
                 .withAmount(amount)
-                .withFee(fee)
+                .withFee(Fee.of(null, fee))
                 .build();
 
         String externalId = charge.getExternalId();

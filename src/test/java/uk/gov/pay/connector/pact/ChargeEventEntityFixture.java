@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.fee.model.Fee;
 
 import java.time.ZonedDateTime;
 
@@ -16,7 +17,7 @@ public class ChargeEventEntityFixture {
     private ZonedDateTime gatewayEventDate;
     private Long id = RandomUtils.nextLong();
     private ChargeEntity charge = aValidChargeEntity()
-            .withFee(42L)
+            .withFee(Fee.of(null, 42L))
             .build();
 
     public static ChargeEventEntityFixture aValidChargeEventEntity() {

@@ -35,9 +35,9 @@ public class StripeFeeCalculator {
                                        int radarFeeInPence, int threeDsFeeInPence) {
         List<Fee> feeList = new ArrayList<>();
         feeList.add(Fee.of(TRANSACTION, getTotalAmountForConnectFee(stripeFee, request, feePercentage)));
-        feeList.add(Fee.of(RADAR, radarFeeInPence));
+        feeList.add(Fee.of(RADAR, Long.valueOf(radarFeeInPence)));
         if (is3dsUsed(request)) {
-            feeList.add(Fee.of(THREE_D_S, threeDsFeeInPence));
+            feeList.add(Fee.of(THREE_D_S, Long.valueOf(threeDsFeeInPence)));
         }
         return feeList;
     }
