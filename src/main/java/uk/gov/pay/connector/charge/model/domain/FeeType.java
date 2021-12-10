@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
@@ -15,6 +16,7 @@ public enum FeeType {
     
     private String name;
 
+    @JsonValue
     public String getName() {
         return name;
     }
