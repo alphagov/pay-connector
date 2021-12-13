@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
@@ -144,7 +145,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         String refundId = response.extract().path("refund_id");
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
+        wireMockServer.verify(getRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123456"))

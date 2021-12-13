@@ -90,7 +90,7 @@ public class StripeRefundHandler {
     }
     
     private StripePaymentIntent getPaymentIntent(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        final String refundResponse = client.postRequestFor(StripeGetPaymentIntentRequest.of(request, stripeGatewayConfig)).getEntity();
+        final String refundResponse = client.getRequestFor(StripeGetPaymentIntentRequest.of(request, stripeGatewayConfig)).getEntity();
         return jsonObjectMapper.getObject(refundResponse, StripePaymentIntent.class);
     }
 
