@@ -24,6 +24,14 @@ public class CaptureConfirmedEventDetails extends EventDetails {
     }
 
     public static CaptureConfirmedEventDetails from(ChargeEventEntity chargeEvent) {
+        if (chargeEvent.getChargeEntity().getFees().size() > 1) {
+            return new CaptureConfirmedEventDetails(
+                    chargeEvent.getGatewayEventDate().orElse(null),
+                    chargeEvent.getUpdated(),
+                    null,
+                    null
+            );
+        }
         return new CaptureConfirmedEventDetails(
                 chargeEvent.getGatewayEventDate().orElse(null),
                 chargeEvent.getUpdated(),

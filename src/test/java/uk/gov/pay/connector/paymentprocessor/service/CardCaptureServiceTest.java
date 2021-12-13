@@ -101,7 +101,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
     @Mock
-    private FeeDao feeDao;
+    private FeeDao mockFeeDao;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
     @Mock
@@ -139,8 +139,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, 
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
-        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue);
+        cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -154,7 +154,14 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     private void stripeWillRespondWithSuccess() {
         when(mockedPaymentProvider.capture(any())).thenReturn(
-                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L, List.of(Fee.of(FeeType.TRANSACTION, 50L))));
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L,
+                        List.of(Fee.of(FeeType.TRANSACTION, 50L))));
+    }
+
+    private void stripeWillRespondWithSuccessAndAdditionalFees() {
+        when(mockedPaymentProvider.capture(any())).thenReturn(
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L,
+                        List.of(Fee.of(FeeType.TRANSACTION, 50L), Fee.of(FeeType.RADAR, 40L), Fee.of(FeeType.THREE_D_S, 30L))));
     }
 
     private void worldpayWillRespondWithError() {
@@ -193,7 +200,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doCapture_shouldCaptureAChargeForStripeAccount() {
+    public void doCapture_shouldCaptureAChargeForStripeAccountV1() {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
@@ -220,7 +227,42 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
-        verify(feeDao, times(1)).persist(any());
+        verify(mockFeeDao, times(1)).persist(any());
+        verifyNoInteractions(mockEventService);
+
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    @Test
+    public void doCapture_shouldCaptureAChargeForStripeAccountV2() throws QueueException {
+
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWithFees("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
+
+        ChargeEntity chargeSpy = spy(charge);
+        mockChargeDaoOperations(chargeSpy);
+
+        stripeWillRespondWithSuccessAndAdditionalFees();
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
+
+        assertThat(response.isSuccessful(), is(true));
+        InOrder inOrder = Mockito.inOrder(chargeSpy);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), isNull());
+
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+
+        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
+        verify(mockedPaymentProvider, times(1)).capture(request.capture());
+        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+
+        verify(mockFeeDao, times(3)).persist(any());
+        verify(mockEventService, times(1)).emitEvent(any(), eq(false));
 
         verifyNoInteractions(mockUserNotificationService);
     }
@@ -529,9 +571,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void markChargeAsEligibleForCapture_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
-        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue
-        );
+        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         String externalId = "external-id";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
@@ -553,9 +594,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
-        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue
-        );
+        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         try {
             cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
