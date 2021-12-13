@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class FeeDaoIT extends DaoITestBase {
         ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         long chargeId = defaultTestCharge.getChargeId();
         defaultChargeTestEntity.setId(chargeId);
-        FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, 100L);
+        FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, Instant.now(), 100L, null);
         feeDao.persist(feeEntity);
         List<Map<String, Object>> feesForCharge = databaseTestHelper.getFeesByChargeId(chargeId);
 
@@ -62,8 +63,7 @@ public class FeeDaoIT extends DaoITestBase {
         ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         long chargeId = defaultTestCharge.getChargeId();
         defaultChargeTestEntity.setId(chargeId);
-        FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, 100L);
-        feeEntity.setFeeType(FeeType.TRANSACTION);
+        FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, Instant.now(), 100L, FeeType.TRANSACTION);
         feeDao.persist(feeEntity);
         List<Map<String, Object>> feesForCharge = databaseTestHelper.getFeesByChargeId(chargeId);
 

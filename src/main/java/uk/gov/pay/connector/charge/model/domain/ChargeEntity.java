@@ -460,7 +460,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public Optional<Long> getFeeAmount() {
         return fees.isEmpty() ? Optional.empty() :
             Optional.of(fees.stream()
-                .map(feeEntity -> feeEntity.getAmountCollected())
+                .map(FeeEntity::getAmountCollected)
                 .reduce(0L, Long::sum));
     }
 

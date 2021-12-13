@@ -16,13 +16,14 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import javax.ws.rs.WebApplicationException;
+import java.time.Clock;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -42,6 +43,7 @@ public class CardCaptureService {
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
+    protected Clock clock;
     protected CaptureQueue captureQueue;
 
     @Inject
@@ -50,11 +52,13 @@ public class CardCaptureService {
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment,
+                              Clock clock,
                               CaptureQueue captureQueue) {
         this.chargeService = chargeService;
         this.feeDao = feeDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
+        this.clock = clock;
         this.userNotificationService = userNotificationService;
         this.captureQueue = captureQueue;
     }
@@ -137,14 +141,8 @@ public class CardCaptureService {
     }
 
     @Transactional
-    public void persistFee(ChargeEntity charge, Long feeAmount) {
-        FeeEntity fee = new FeeEntity(charge, feeAmount);
-        feeDao.persist(fee);
-    }
-
-    @Transactional
     public void persistFee(ChargeEntity charge, Fee fee) {
-        FeeEntity feeEntity = new FeeEntity(charge, fee.getAmount(), fee.getFeeType());
+        FeeEntity feeEntity = new FeeEntity(charge, clock.instant(), fee.getAmount(), fee.getFeeType());
         feeDao.persist(feeEntity);
     }
 
