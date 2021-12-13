@@ -49,6 +49,9 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
 import javax.ws.rs.WebApplicationException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -123,6 +126,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
     @Mock
     private TaskQueueService mockTaskQueueService;
+    private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
 
     @Before
     public void beforeTest() {
@@ -136,7 +140,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
-                mockCaptureQueue);
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -526,7 +530,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment, mockCaptureQueue
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue
         );
 
         String externalId = "external-id";
@@ -550,7 +554,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment, mockCaptureQueue
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue
         );
 
         try {

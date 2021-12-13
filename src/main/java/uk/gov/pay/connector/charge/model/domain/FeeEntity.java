@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -16,7 +17,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -29,20 +30,12 @@ public class FeeEntity {
     public FeeEntity() {
     }
 
-    public FeeEntity(ChargeEntity chargeEntity, Long amount) { 
+    public FeeEntity(ChargeEntity chargeEntity, Instant createdDate, Long amount, FeeType feeType) {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amountDue = amount;
         this.amountCollected = amount;
-        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
-    }
-
-    public FeeEntity(ChargeEntity chargeEntity, Long amount, FeeType feeType) {
-        this.externalId = RandomIdGenerator.newId();
-        this.chargeEntity = chargeEntity;
-        this.amountDue = amount;
-        this.amountCollected = amount;
-        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.createdDate = createdDate;
         this.feeType = feeType;
     }
 
@@ -70,8 +63,8 @@ public class FeeEntity {
     private long amountCollected;
 
     @Column(name = "created_date")
-    @Convert(converter = UTCDateTimeConverter.class)
-    private ZonedDateTime createdDate;
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
+    private Instant createdDate;
 
     @Column(name = "collected_date")
     @Convert(converter = UTCDateTimeConverter.class)
@@ -82,6 +75,10 @@ public class FeeEntity {
     
     public long getAmountCollected() {
         return amountCollected;
+    }
+
+    public Instant getCreatedDate() {
+        return createdDate;
     }
 
     public FeeType getFeeType() {

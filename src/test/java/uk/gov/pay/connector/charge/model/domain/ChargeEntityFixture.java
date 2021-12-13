@@ -161,7 +161,7 @@ public class ChargeEntityFixture {
 
         if (this.fees != null) {
             fees.stream().forEach(partialFee -> {
-                FeeEntity fee = new FeeEntity(chargeEntity, partialFee.getAmount(), partialFee.getFeeType());
+                FeeEntity fee = new FeeEntity(chargeEntity, Instant.now(), partialFee.getAmount(), partialFee.getFeeType());
                 chargeEntity.setFee(fee);
             });
         }

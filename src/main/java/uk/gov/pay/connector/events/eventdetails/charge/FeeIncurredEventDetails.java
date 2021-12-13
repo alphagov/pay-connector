@@ -46,4 +46,16 @@ public class FeeIncurredEventDetails extends EventDetails {
     public int hashCode() {
         return Objects.hash(fee, netAmount, feeBreakdown);
     }
+
+    public Long getFee() {
+        return fee;
+    }
+
+    public Long getNetAmount() {
+        return netAmount;
+    }
+
+    public List<Fee> getFeeBreakdown() {
+        return feeBreakdown;
+    }
 }
