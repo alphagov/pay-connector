@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -31,6 +32,11 @@ public class StripeMockClient {
 
     private void setupResponse(String responseBody, String path, int status) {
         wireMockServer.stubFor(post(urlPathEqualTo(path)).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(status).withBody(responseBody)));
+    }
+
+    private void setupGetResponse(String responseBody, String path, int status) {
+        wireMockServer.stubFor(get(urlPathEqualTo(path))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(status).withBody(responseBody)));
     }
 
@@ -71,7 +77,7 @@ public class StripeMockClient {
 
     public void mockGetPaymentIntent(String paymentIntentId) {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
-        setupResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
+        setupGetResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
     }
 
     public void mockCreatePaymentIntent() {

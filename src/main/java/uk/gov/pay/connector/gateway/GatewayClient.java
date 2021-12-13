@@ -75,6 +75,11 @@ public class GatewayClient {
         return executeRequest(url, gatewayAccountType, request.getOrderRequestType(), metricsPrefix, requestCallable);
     }
 
+    public GatewayClient.Response getRequestFor(GatewayClientRequest request)
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+        return getRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder().getOrderRequestType(), emptyList(), request.getHeaders());
+    }
+
     public GatewayClient.Response getRequestFor(URI url,
                                                 PaymentGatewayName gatewayName,
                                                 String gatewayAccountType,
