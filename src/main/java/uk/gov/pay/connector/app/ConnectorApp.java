@@ -54,6 +54,7 @@ import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
+import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.queue.managed.CaptureMessageReceiver;
 import uk.gov.pay.connector.queue.managed.PayoutReconcileMessageReceiver;
 import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
@@ -71,7 +72,6 @@ import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFac
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;
@@ -156,6 +156,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
             setupSchedulers(environment, injector);
         }
         environment.lifecycle().manage(injector.getInstance(PayoutReconcileMessageReceiver.class));
+        environment.lifecycle().manage(injector.getInstance(TaskQueueMessageReceiver.class));
 
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
