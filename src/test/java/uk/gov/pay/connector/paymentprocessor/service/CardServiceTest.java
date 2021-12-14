@@ -8,8 +8,10 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -55,6 +57,21 @@ public abstract class CardServiceTest {
         entity.setCardDetails(new CardDetailsEntity());
         return entity;
 
+    }
+
+    protected ChargeEntity createNewChargeWithFees(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
+        GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+        ChargeEntity entity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withId(chargeId)
+                .withStatus(status)
+                .withFee(Fee.of(FeeType.TRANSACTION, 50L))
+                .withFee(Fee.of(FeeType.RADAR, 40L))
+                .withFee(Fee.of(FeeType.THREE_D_S, 30L))
+                .build();
+        entity.setGatewayTransactionId(gatewayTransactionId);
+        return entity;
     }
 
     protected ChargeEntity createNewChargeWith(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {

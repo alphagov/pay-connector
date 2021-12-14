@@ -10,6 +10,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.exception.EventCreationException;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -27,11 +31,14 @@ import java.time.Clock;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
+import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class CardCaptureService {
 
@@ -42,6 +49,7 @@ public class CardCaptureService {
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    private final EventService eventService;
     protected MetricRegistry metricRegistry;
     protected Clock clock;
     protected CaptureQueue captureQueue;
@@ -53,7 +61,8 @@ public class CardCaptureService {
                               UserNotificationService userNotificationService,
                               Environment environment,
                               Clock clock,
-                              CaptureQueue captureQueue) {
+                              CaptureQueue captureQueue,
+                              EventService eventService) {
         this.chargeService = chargeService;
         this.feeDao = feeDao;
         this.providers = providers;
@@ -61,6 +70,7 @@ public class CardCaptureService {
         this.clock = clock;
         this.userNotificationService = userNotificationService;
         this.captureQueue = captureQueue;
+        this.eventService = eventService;
     }
 
     public CaptureResponse doCapture(String externalId) {
@@ -120,8 +130,18 @@ public class CardCaptureService {
 
         ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
 
-        captureResponse.getFeeList().ifPresent(feeList ->
-            feeList.forEach(fee -> persistFee(charge, fee))
+        captureResponse.getFeeList().ifPresent(feeList -> {
+                    feeList.forEach(fee ->
+                            persistFee(charge, fee)
+                    );
+                    if (feeList.size() > 1) {
+                        try {
+                            sendToEventQueue(FeeIncurredEvent.from(charge));
+                        } catch (EventCreationException e) {
+                            LOG.info(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
+                        }
+                    }
+                }
         );
 
         // Used by Sumo Logic saved search
@@ -171,6 +191,19 @@ public class CardCaptureService {
             return CAPTURE_SUBMITTED;
         } else {
             return CAPTURED;
+        }
+    }
+
+    private void sendToEventQueue(Event event) {
+        try {
+            eventService.emitEvent(event, false);
+            logger.info("Fee incurred event sent to event queue",
+                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                    kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
+        } catch(QueueException e) {
+            logger.error(format("Error sending fee incurred event to event queue: exception [%s]", e.getMessage()),
+                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                    kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
         }
     }
 }
