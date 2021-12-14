@@ -262,7 +262,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
         verify(mockFeeDao, times(3)).persist(any());
-        verify(mockEventService, times(1)).emitEvent(any(), eq(false));
+        verify(mockEventService, times(1)).emitAndRecordEvent(any());
 
         verifyNoInteractions(mockUserNotificationService);
     }

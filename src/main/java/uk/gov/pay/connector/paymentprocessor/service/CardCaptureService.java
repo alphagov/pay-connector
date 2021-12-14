@@ -164,6 +164,7 @@ public class CardCaptureService {
     public void persistFee(ChargeEntity charge, Fee fee) {
         FeeEntity feeEntity = new FeeEntity(charge, clock.instant(), fee.getAmount(), fee.getFeeType());
         feeDao.persist(feeEntity);
+        charge.setFee(feeEntity);
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {
@@ -195,15 +196,9 @@ public class CardCaptureService {
     }
 
     private void sendToEventQueue(Event event) {
-        try {
-            eventService.emitEvent(event, false);
-            logger.info("Fee incurred event sent to event queue",
-                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
-                    kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
-        } catch(QueueException e) {
-            logger.error(format("Error sending fee incurred event to event queue: exception [%s]", e.getMessage()),
-                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
-                    kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
-        }
+        eventService.emitAndRecordEvent(event);
+        logger.info("Fee incurred event sent to event queue",
+                kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
     }
 }
