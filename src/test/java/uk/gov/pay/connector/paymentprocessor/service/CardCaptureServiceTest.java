@@ -33,7 +33,6 @@ import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -101,8 +100,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
     @Mock
-    private FeeDao mockFeeDao;
-    @Mock
     private Appender<ILoggingEvent> mockAppender;
     @Mock
     private CaptureQueue mockCaptureQueue;
@@ -139,7 +136,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, 
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
-        cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
+        cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
@@ -227,7 +224,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
-        verify(mockFeeDao, times(1)).persist(any());
         verifyNoInteractions(mockEventService);
 
         verifyNoInteractions(mockUserNotificationService);
@@ -261,7 +257,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
-        verify(mockFeeDao, times(3)).persist(any());
         verify(mockEventService, times(1)).emitAndRecordEvent(any());
 
         verifyNoInteractions(mockUserNotificationService);
@@ -571,7 +566,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void markChargeAsEligibleForCapture_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
-        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService,
+        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
                 mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         String externalId = "external-id";
@@ -594,7 +589,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
-        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockFeeDao, mockedProviders, mockUserNotificationService,
+        CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
                 mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
 
         try {
