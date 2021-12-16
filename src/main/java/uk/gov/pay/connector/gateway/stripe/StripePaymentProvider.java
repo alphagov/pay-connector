@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -30,10 +31,13 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeAuthoriseHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeFailedPaymentFeeCollectionHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -58,6 +62,7 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeCancelHandler stripeCancelHandler;
     private final StripeRefundHandler stripeRefundHandler;
     private final StripeAuthoriseHandler stripeAuthoriseHandler;
+    private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
 
     @Inject
     public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
@@ -72,6 +77,7 @@ public class StripePaymentProvider implements PaymentProvider {
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
         stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
+        stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 
     @Override
@@ -149,6 +155,11 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public StripeAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return new StripeAuthorisationRequestSummary(authCardDetails);
+    }
+    
+    public void transferFeesForFailedPayments(Charge charge, GatewayAccountEntity gatewayAccount, GatewayAccountCredentialsEntity gatewayAccountCredentials) 
+            throws GatewayException {
+        stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge, gatewayAccount, gatewayAccountCredentials);
     }
 
 }

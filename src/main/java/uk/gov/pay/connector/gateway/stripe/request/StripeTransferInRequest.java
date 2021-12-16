@@ -4,9 +4,11 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /***
  * Represents a request to transfer an amount from a Stripe Connect account to 
@@ -42,6 +44,23 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 request.getChargeExternalId()
         );
     }
+    
+    public static StripeTransferInRequest of(String feeAmount,
+                                             GatewayAccountEntity gatewayAccount,
+                                             GatewayAccountCredentialsEntity gatewayAccountCredentials,
+                                             String paymentIntentId,
+                                             String chargeExternalId,
+                                             StripeGatewayConfig stripeGatewayConfig) {
+        return new StripeTransferInRequest(
+                feeAmount,
+                gatewayAccount,
+                paymentIntentId,
+                chargeExternalId,
+                stripeGatewayConfig,
+                chargeExternalId,
+                gatewayAccountCredentials.getCredentials(),
+                chargeExternalId);
+    }
 
     @Override
     public Map<String, String> params() {
@@ -70,5 +89,18 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     @Override
     protected OrderRequestType orderRequestType() {
         return OrderRequestType.REFUND;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StripeTransferInRequest that = (StripeTransferInRequest) o;
+        return Objects.equals(transferGroup, that.transferGroup);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(transferGroup);
     }
 }
