@@ -14,8 +14,6 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
-import uk.gov.pay.connector.fee.dao.FeeDao;
-import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -45,7 +43,6 @@ public class CardCaptureService {
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
 
     private final UserNotificationService userNotificationService;
-    private final FeeDao feeDao;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -56,7 +53,6 @@ public class CardCaptureService {
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
-                              FeeDao feeDao,
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment,
@@ -64,7 +60,6 @@ public class CardCaptureService {
                               CaptureQueue captureQueue,
                               EventService eventService) {
         this.chargeService = chargeService;
-        this.feeDao = feeDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.clock = clock;
@@ -127,13 +122,10 @@ public class CardCaptureService {
         ChargeStatus nextStatus = determineNextStatus(captureResponse);
         checkTransactionId(chargeId, captureResponse);
 
-
-        ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
+        ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
 
         captureResponse.getFeeList().ifPresent(feeList -> {
-                    feeList.forEach(fee ->
-                            persistFee(charge, fee)
-                    );
+            feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee.getAmount(), fee.getFeeType())).forEach(charge::addFee);
                     if (feeList.size() > 1) {
                         try {
                             sendToEventQueue(FeeIncurredEvent.from(charge));
@@ -143,6 +135,8 @@ public class CardCaptureService {
                     }
                 }
         );
+
+        chargeService.updateChargePostCapture(charge, nextStatus);
 
         // Used by Sumo Logic saved search
         LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
@@ -158,13 +152,6 @@ public class CardCaptureService {
         if (captureResponse.isSuccessful() && charge.isDelayedCapture()) {
             userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         }
-    }
-
-    @Transactional
-    public void persistFee(ChargeEntity charge, Fee fee) {
-        FeeEntity feeEntity = new FeeEntity(charge, clock.instant(), fee.getAmount(), fee.getFeeType());
-        feeDao.persist(feeEntity);
-        charge.setFee(feeEntity);
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {

@@ -30,6 +30,7 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embedded;
@@ -115,7 +116,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @JoinColumn(name = "gateway_account_credential_id", updatable = false)
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    @OneToMany(mappedBy = "chargeEntity")
+    @OneToMany(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
     private List<FeeEntity> fees = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
@@ -453,7 +454,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.corporateSurcharge = corporateSurcharge;
     }
 
-    public void setFee(FeeEntity fee) {
+    public void addFee(FeeEntity fee) {
         this.fees.add(fee);
     }
 

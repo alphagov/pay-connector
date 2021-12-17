@@ -617,18 +617,14 @@ public class ChargeService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
 
-    public ChargeEntity updateChargePostCapture(String chargeId, ChargeStatus nextStatus) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> {
-                    if (nextStatus == CAPTURED) {
-                        transitionChargeState(chargeEntity, CAPTURE_SUBMITTED);
-                        transitionChargeState(chargeEntity, CAPTURED);
-                    } else {
-                        transitionChargeState(chargeEntity, nextStatus);
-                    }
-                    return chargeEntity;
-                })
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    public ChargeEntity updateChargePostCapture(ChargeEntity chargeEntity, ChargeStatus nextStatus) {
+        if (nextStatus == CAPTURED) {
+            transitionChargeState(chargeEntity, CAPTURE_SUBMITTED);
+            transitionChargeState(chargeEntity, CAPTURED);
+        } else {
+            transitionChargeState(chargeEntity, nextStatus);
+        }
+        return chargeEntity;
     }
 
     private void setTransactionId(ChargeEntity chargeEntity, String transactionId) {

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -42,9 +41,9 @@ class FeeIncurredEventTest {
         FeeEntity radarFee = new FeeEntity(chargeEntity, radarFeeCreatedDate, 100L, RADAR);
         FeeEntity transactionFee = new FeeEntity(chargeEntity, transactionFeeCreatedDate, 200L, TRANSACTION);
         FeeEntity threeDsFee = new FeeEntity(chargeEntity, threeDsFeeCreatedDate, 300L, THREE_D_S);
-        chargeEntity.setFee(radarFee);
-        chargeEntity.setFee(transactionFee);
-        chargeEntity.setFee(threeDsFee);
+        chargeEntity.addFee(radarFee);
+        chargeEntity.addFee(transactionFee);
+        chargeEntity.addFee(threeDsFee);
         String actual = FeeIncurredEvent.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo("2021-10-01T10:00:00.000000Z")));
