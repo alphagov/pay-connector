@@ -14,6 +14,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
@@ -77,6 +78,11 @@ public class StripeMockClient {
 
     public void mockGetPaymentIntent(String paymentIntentId) {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
+        setupGetResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
+    }
+    
+    public void mockGet3DSAuthenticatedPaymentIntent(String paymentIntentId) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE);
         setupGetResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
     }
 
