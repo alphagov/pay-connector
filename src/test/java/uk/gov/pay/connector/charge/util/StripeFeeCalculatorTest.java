@@ -74,4 +74,17 @@ class StripeFeeCalculatorTest {
         assertThat(feeList.get(2).getFeeType(), Is.is(FeeType.THREE_D_S));
         assertThat(feeList.get(2).getAmount(), Is.is(10L));
     }
+
+    @Test
+    void shouldReturnTotalAmountForListOfFees() {
+        List<Fee> feeList = List.of(
+                Fee.of(FeeType.TRANSACTION, 100L),
+                Fee.of(FeeType.RADAR, 50L),
+                Fee.of(FeeType.THREE_D_S, 25L)
+        );
+
+        Long totalFeeAmount = StripeFeeCalculator.getTotalFeeAmount(feeList);
+        
+        assertThat(totalFeeAmount, is(175L));
+    }
 }

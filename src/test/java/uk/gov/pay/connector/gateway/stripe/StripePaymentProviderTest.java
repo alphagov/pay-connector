@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -32,6 +33,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,6 +78,8 @@ public class StripePaymentProviderTest {
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
     private GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
     private GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
+    private Clock clock = mock(Clock.class);
+    private EventService eventService = mock(EventService.class);
     
     private static final String issuerUrl = "http://stripe.url/3ds";
     private static final String threeDsVersion = "2.0.1";
