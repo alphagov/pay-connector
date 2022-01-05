@@ -41,6 +41,10 @@ public class StripeFeeCalculator {
         }
         return feeList;
     }
+    
+    public static Long getTotalFeeAmount(List<Fee> feeList) {
+        return feeList.stream().map(Fee::getAmount).reduce(0L, Long::sum);
+    }
 
     private static Double getPlatformFee(Double feePercentage, Long grossChargeAmount) {
         return Math.ceil((feePercentage / 100) * grossChargeAmount);

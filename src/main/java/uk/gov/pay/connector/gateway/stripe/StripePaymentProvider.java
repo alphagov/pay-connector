@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -36,8 +37,6 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -157,9 +156,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return new StripeAuthorisationRequestSummary(authCardDetails);
     }
     
-    public void transferFeesForFailedPayments(Charge charge, GatewayAccountEntity gatewayAccount, GatewayAccountCredentialsEntity gatewayAccountCredentials) 
-            throws GatewayException {
-        stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge, gatewayAccount, gatewayAccountCredentials);
+    public List<Fee> calculateAndTransferFeesForFailedPayments(ChargeEntity charge) throws GatewayException {
+        return stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge);
     }
 
 }

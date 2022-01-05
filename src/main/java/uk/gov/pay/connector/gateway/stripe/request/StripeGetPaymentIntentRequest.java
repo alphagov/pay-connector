@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -32,14 +33,12 @@ public class StripeGetPaymentIntentRequest extends StripeRequest {
         );
     }
     
-    public static GatewayClientRequest of(Charge charge, 
-                                          GatewayAccountEntity gatewayAccountEntity,
-                                          GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, 
+    public static GatewayClientRequest of(ChargeEntity charge,
                                           StripeGatewayConfig stripeGatewayConfig) {
         return new StripeGetPaymentIntentRequest(
-                gatewayAccountEntity,
+                charge.getGatewayAccount(),
                 stripeGatewayConfig,
-                gatewayAccountCredentialsEntity.getCredentials(),
+                charge.getGatewayAccountCredentialsEntity().getCredentials(),
                 charge.getGatewayTransactionId()
         );
     }

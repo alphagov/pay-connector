@@ -10,11 +10,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -25,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,6 +34,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.FeeType.RADAR;
+import static uk.gov.pay.connector.charge.model.domain.FeeType.THREE_D_S;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE;
@@ -69,13 +73,13 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
     private final GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
             .withGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity))
             .build();
-    private final ChargeEntity chargeEntity = aValidChargeEntity()
+    private final ChargeEntity charge = aValidChargeEntity()
             .withExternalId(chargeExternalId)
             .withGatewayAccountEntity(gatewayAccountEntity)
             .withStatus(ChargeStatus.EXPIRED)
             .withGatewayTransactionId(paymentIntentId)
+            .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
             .build();
-    private final Charge charge = Charge.from(chargeEntity);
 
     private StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
 
@@ -91,9 +95,14 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
         setupCommonMocksForCollectFeeSuccess();
         when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(threeDsFee);
 
-        stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge, gatewayAccountEntity, gatewayAccountCredentialsEntity);
+        List<Fee> fees = stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge);
 
         verifyTransferRequestPayload(13);
+        assertThat(fees, hasSize(2));
+        assertThat(fees, containsInAnyOrder(
+                Fee.of(RADAR, (long) radarFee),
+                Fee.of(THREE_D_S, (long) threeDsFee)
+        ));
     }
 
     @Test
@@ -101,14 +110,19 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
         mockGetRequestResponse(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
         setupCommonMocksForCollectFeeSuccess();
 
-        stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge, gatewayAccountEntity, gatewayAccountCredentialsEntity);
+        List<Fee> fees = stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge);
         verifyTransferRequestPayload(7);
+
+        assertThat(fees, hasSize(1));
+        assertThat(fees, contains(
+                Fee.of(RADAR, (long) radarFee)
+        ));
     }
 
     @Test
     void shouldThrowExceptionWhenMultipleChargesForPaymentIntent() throws Exception {
         mockGetRequestResponse(STRIPE_GET_PAYMENT_INTENT_WITH_MULTIPLE_CHARGES);
-        assertThrows(RuntimeException.class, () -> stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge, gatewayAccountEntity, gatewayAccountCredentialsEntity));
+        assertThrows(RuntimeException.class, () -> stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge));
         verify(gatewayClient, never()).postRequestFor(any(StripeTransferInRequest.class));
     }
 
@@ -131,7 +145,7 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
         when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(radarFee);
     }
-    
+
     private void mockGetRequestResponse(String stripeGetPaymentIntentWith3dsAuthorisedResponse) throws Exception {
         GatewayClient.Response response = mock(GatewayClient.Response.class);
         when(response.getEntity()).thenReturn(load(stripeGetPaymentIntentWith3dsAuthorisedResponse));

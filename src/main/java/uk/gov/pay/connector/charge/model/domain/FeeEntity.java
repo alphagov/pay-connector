@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
@@ -37,6 +38,10 @@ public class FeeEntity {
         this.amountCollected = amount;
         this.createdDate = createdDate;
         this.feeType = feeType;
+    }
+
+    public FeeEntity(ChargeEntity chargeEntity, Instant createdDate, Fee fee) {
+        this(chargeEntity, createdDate, fee.getAmount(), fee.getFeeType());
     }
 
     @Id
