@@ -151,13 +151,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     private void stripeWillRespondWithSuccess() {
         when(mockedPaymentProvider.capture(any())).thenReturn(
-                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L,
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING,
                         List.of(Fee.of(FeeType.TRANSACTION, 50L))));
     }
 
     private void stripeWillRespondWithSuccessAndAdditionalFees() {
         when(mockedPaymentProvider.capture(any())).thenReturn(
-                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING, 50L,
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING,
                         List.of(Fee.of(FeeType.TRANSACTION, 50L), Fee.of(FeeType.RADAR, 40L), Fee.of(FeeType.THREE_D_S, 30L))));
     }
 

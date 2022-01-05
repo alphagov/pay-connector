@@ -14,6 +14,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -26,6 +27,7 @@ import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
 import javax.ws.rs.WebApplicationException;
 import java.time.Clock;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -118,23 +120,24 @@ public class CardCaptureService {
 
     @Transactional
     public void processGatewayCaptureResponse(String chargeId, String oldStatus, CaptureResponse captureResponse) {
-
         ChargeStatus nextStatus = determineNextStatus(captureResponse);
         checkTransactionId(chargeId, captureResponse);
 
         ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
 
-        captureResponse.getFeeList().ifPresent(feeList -> {
-                    feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee)).forEach(charge::addFee);
-                    if (feeList.size() > 1) {
-                        try {
-                            sendToEventQueue(FeeIncurredEvent.from(charge));
-                        } catch (EventCreationException e) {
-                            LOG.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
-                        }
-                    }
-                }
-        );
+        List<Fee> feeList = captureResponse.getFeeList();
+        feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee)).forEach(charge::addFee);
+        
+        // We only want to emit the FEE_INCURRED event for charges using the new Stripe pricing. The original Stripe 
+        // pricing only has a single fee, whereas the v2 pricing will have at least 2 fees (transaction, radar) 
+        // applied to each charge. This size check can be removed after we have switched to the new pricing.
+        if (feeList.size() > 1) {
+            try {
+                sendToEventQueue(FeeIncurredEvent.from(charge));
+            } catch (EventCreationException e) {
+                LOG.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
+            }
+        }
 
         chargeService.updateChargePostCapture(charge, nextStatus);
 

@@ -14,11 +14,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 
@@ -29,9 +24,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.queue.tasks.TaskQueueService.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,9 +31,6 @@ class TaskQueueMessageHandlerTest {
     
     @Mock
     private TaskQueue taskQueue;
-    
-    @Mock
-    private ChargeService chargeService;
     
     @Mock
     private CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
@@ -56,24 +45,11 @@ class TaskQueueMessageHandlerTest {
     
     
     private final String chargeExternalId = "a-charge-external-id";
-    
-    private final GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-            .withPaymentProvider("stripe")
-            .build();
-    private final GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-            .withGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity))
-            .build();
-    private final ChargeEntity charge = aValidChargeEntity()
-            .withExternalId(chargeExternalId)
-            .withGatewayAccountEntity(gatewayAccountEntity)
-            .withStatus(ChargeStatus.EXPIRED)
-            .build();
 
     @BeforeEach
     public void setup() {
         taskQueueMessageHandler = new TaskQueueMessageHandler(
                 taskQueue,
-                chargeService,
                 collectFeesForFailedPaymentsTaskHandler);
         
         Logger errorLogger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);

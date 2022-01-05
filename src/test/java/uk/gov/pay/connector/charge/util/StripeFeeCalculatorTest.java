@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
@@ -20,17 +19,25 @@ import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.Ch
 
 class StripeFeeCalculatorTest {
 
+    private final Long stripeFee = 10L;
+    private final Double feePercentage = 0.09;
+    
     private CaptureGatewayRequest request;
-    private ChargeEntity charge;
-    private Long stripeFee = 10L;
-    private Double feePercentage = 0.09;
+    private CaptureGatewayRequest requestForChargeWith3ds;
 
     @BeforeEach
     void setUp() {
-        charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity chargeWithNo3ds = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(100000L)
                 .build();
-        request = CaptureGatewayRequest.valueOf(charge);
+        request = CaptureGatewayRequest.valueOf(chargeWithNo3ds);
+
+        ChargeEntity chargeWith3ds = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(100000L)
+                .withEvents(List.of(aChargeEventEntity()
+                        .withStatus(AUTHORISATION_3DS_REQUIRED).build()))
+                .build();
+        requestForChargeWith3ds = CaptureGatewayRequest.valueOf(chargeWith3ds);
     }
 
     @Test
@@ -40,32 +47,18 @@ class StripeFeeCalculatorTest {
     }
 
     @Test
-    void shouldReturnCorrectFeeForV2No3dsCharge() {
-        Long result = StripeFeeCalculator.getTotalAmountForV2(stripeFee, request, feePercentage, 5, 10);
-        assertThat(result, is(105L));
+    void shouldReturnFeeListForChargeWithNo3ds() {
+        List<Fee> feeList = StripeFeeCalculator.getFeeListForV2(stripeFee, request, feePercentage, 5, 10);
+        assertThat(feeList.size(), is(2));
+        assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
+        assertThat(feeList.get(0).getAmount(), Is.is(100L));
+        assertThat(feeList.get(1).getFeeType(), Is.is(FeeType.RADAR));
+        assertThat(feeList.get(1).getAmount(), Is.is(5L));
     }
 
     @Test
-    void shouldReturnCorrectFeeForV2With3dsCharge() {
-        charge = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(100000L)
-                .withEvents(List.of(aChargeEventEntity()
-                        .withStatus(AUTHORISATION_3DS_REQUIRED).build()))
-                .build();
-        request = CaptureGatewayRequest.valueOf(charge);
-        Long result = StripeFeeCalculator.getTotalAmountForV2(stripeFee, request, feePercentage, 5, 10);
-        assertThat(result, is(115L));
-    }
-
-    @Test
-    void shouldReturnFeeList() {
-        charge = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(100000L)
-                .withEvents(List.of(aChargeEventEntity()
-                        .withStatus(AUTHORISATION_3DS_REQUIRED).build()))
-                .build();
-        request = CaptureGatewayRequest.valueOf(charge);
-        List<Fee> feeList = StripeFeeCalculator.getFeeList(stripeFee, request, feePercentage, 5, 10);
+    void shouldReturnFeeListForChargeWith3ds() {
+        List<Fee> feeList = StripeFeeCalculator.getFeeListForV2(stripeFee, requestForChargeWith3ds, feePercentage, 5, 10);
         assertThat(feeList.size(), is(3));
         assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
         assertThat(feeList.get(0).getAmount(), Is.is(100L));
@@ -84,7 +77,7 @@ class StripeFeeCalculatorTest {
         );
 
         Long totalFeeAmount = StripeFeeCalculator.getTotalFeeAmount(feeList);
-        
+
         assertThat(totalFeeAmount, is(175L));
     }
 }

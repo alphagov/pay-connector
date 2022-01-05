@@ -4,6 +4,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,44 +17,23 @@ public class CaptureResponse {
     private final ChargeState chargeState;
     private final GatewayError gatewayError;
     private final String stringified;
-    private Long feeAmount;
-    private List<Fee> feeList;
-
-    private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified) {
-        this.transactionId = transactionId;
-        this.chargeState = chargeState;
-        this.gatewayError = gatewayError;
-        this.stringified = stringified;
-    }
-
-    private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified, Long feeAmount) {
-        this.transactionId = transactionId;
-        this.chargeState = chargeState;
-        this.gatewayError = gatewayError;
-        this.stringified = stringified;
-        this.feeAmount = feeAmount;
-    }
+    private final List<Fee> feeList;
 
     private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError,
-                            String stringified, Long feeAmount, List<Fee> feeList) {
+                            String stringified, List<Fee> feeList) {
         this.transactionId = transactionId;
         this.chargeState = chargeState;
         this.gatewayError = gatewayError;
         this.stringified = stringified;
-        this.feeAmount = feeAmount;
         this.feeList = feeList;
     }
 
-    public CaptureResponse(String transactionId, ChargeState chargeState, Long feeAmount, List<Fee> feeList) {
-        this(transactionId, chargeState, null, null, feeAmount, feeList);
+    private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified) {
+        this(transactionId, chargeState, gatewayError, stringified, Collections.emptyList());
     }
-
-    public CaptureResponse(String transactionId, ChargeState chargeState, Long feeAmount) {
-        this(transactionId, chargeState, null, null, feeAmount);
-    }
-
-    public CaptureResponse(GatewayError gatewayError, String stringified) {
-        this(null, null, gatewayError, stringified, null);
+    
+    public CaptureResponse(String transactionId, ChargeState chargeState, List<Fee> feeList) {
+        this(transactionId, chargeState, null, null, feeList);
     }
 
     public static CaptureResponse fromGatewayError(GatewayError gatewayError) {
@@ -67,11 +47,11 @@ public class CaptureResponse {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify());
     }
 
-    public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, Long feeAmount, List<Fee> feeList) {
+    public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, List<Fee> feeList) {
         if (isNotBlank(captureResponse.getErrorCode())) {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
         } else
-            return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify(), feeAmount, feeList);
+            return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify(), feeList);
     }
 
     public Optional<GatewayError> getError() {
@@ -97,12 +77,8 @@ public class CaptureResponse {
         return gatewayError == null;
     }
 
-    public Optional<Long> getFee() {
-        return Optional.ofNullable(feeAmount);
-    }
-
-    public Optional<List<Fee>> getFeeList() {
-        return Optional.ofNullable(feeList);
+    public List<Fee> getFeeList() {
+        return feeList;
     }
 
     public enum ChargeState {
