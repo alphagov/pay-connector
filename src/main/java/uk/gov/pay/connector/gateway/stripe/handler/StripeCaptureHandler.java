@@ -22,9 +22,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -57,19 +55,16 @@ public class StripeCaptureHandler implements CaptureHandler {
 
             capturedCharge = captureWithPaymentIntentAPI(request);
 
-            Optional<Long> processingFee = capturedCharge.getFee()
-                    .flatMap(fee -> calculateProcessingFee(request.getCreatedDate(), request, fee));
-
             List<Fee> feeList = generateFeeList(request.getCreatedDate(), request,
                     capturedCharge.getFee().orElse(0L));
+            
+            Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
 
-            Long netTransferAmount = processingFee
-                    .map(fee -> request.getAmount() - fee)
-                    .orElse(request.getAmount());
+            Long netTransferAmount = request.getAmount() - processingFee;
 
             transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
 
-            return new CaptureResponse(transactionId, COMPLETE, processingFee.orElse(null), feeList);
+            return new CaptureResponse(transactionId, COMPLETE, feeList);
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
@@ -131,25 +126,12 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
     }
 
-    private Optional<? extends Long> calculateProcessingFee(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
-        if (stripeGatewayConfig.isCollectFee()) {
-            if (createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date())) {
-                return Optional.of(StripeFeeCalculator.getTotalAmountForConnectFee(stripeFee, request, stripeGatewayConfig.getFeePercentage()));
-            } else {
-                return Optional.of(StripeFeeCalculator.getTotalAmountForV2(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
-                        stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence()));
-            }
-        }
-
-        return Optional.empty();
-    }
-
     private List<Fee> generateFeeList(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
             if (createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date())) {
                 return List.of(Fee.of(null, StripeFeeCalculator.getTotalAmountForConnectFee(stripeFee, request, stripeGatewayConfig.getFeePercentage())));
             } else {
-                return StripeFeeCalculator.getFeeList(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
+                return StripeFeeCalculator.getFeeListForV2(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
                         stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
             }
         }

@@ -31,6 +31,8 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -108,8 +110,9 @@ public class StripeCaptureHandlerTest {
         assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(captureResponse.getTransactionId().isPresent(), is(true));
         assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.getTransactionId()));
-        assertThat(captureResponse.getFee().isPresent(), is(true));
-        assertThat(captureResponse.getFee().get(), is(58L));
+        assertThat(captureResponse.getFeeList(), hasSize(1));
+        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(nullValue()));
+        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(58L));
     }
 
     @Test
@@ -143,9 +146,11 @@ public class StripeCaptureHandlerTest {
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9930"));
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(70L));
-        assertThat(captureResponse.getFeeList().isPresent(), is(true));
-        assertThat(captureResponse.getFeeList().get().size(), is(2));
+        assertThat(captureResponse.getFeeList(), hasSize(2));
+        assertThat(captureResponse.getFeeList(), containsInAnyOrder(
+                Fee.of(FeeType.TRANSACTION, 70L),
+                Fee.of(FeeType.RADAR, 0L)
+        ));
     }
 
     @Test
@@ -179,11 +184,9 @@ public class StripeCaptureHandlerTest {
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9900"));
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(100L));
-        assertThat(captureResponse.getFeeList().isPresent(), is(true));
-        assertThat(captureResponse.getFeeList().get().size(), is(1));
-        assertThat(captureResponse.getFeeList().get().get(0).getFeeType(), is(nullValue()));
-        assertThat(captureResponse.getFeeList().get().get(0).getAmount(), is(100L));
+        assertThat(captureResponse.getFeeList(), hasSize(1));
+        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(nullValue()));
+        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(100L));
     }
 
     @Test
@@ -206,7 +209,9 @@ public class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(59L));
+        assertThat(captureResponse.getFeeList(), hasSize(1));
+        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(nullValue()));
+        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(59L));
     }
 
     @Test
@@ -229,7 +234,9 @@ public class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(51L));
+        assertThat(captureResponse.getFeeList(), hasSize(1));
+        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(nullValue()));
+        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(51L));
     }
 
     @Test
@@ -249,7 +256,7 @@ public class StripeCaptureHandlerTest {
         assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is(transactionId));
-        assertThat(response.getFee().isPresent(), is(false));
+        assertThat(response.getFeeList(), hasSize(0));
     }
 
     @Test
@@ -372,17 +379,14 @@ public class StripeCaptureHandlerTest {
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(115L));
-        assertThat(captureResponse.getFeeList().isPresent(), is(true));
 
-        List<Fee> feeList = captureResponse.getFeeList().get();
+        List<Fee> feeList = captureResponse.getFeeList();
         assertThat(feeList.size(), is(3));
-        assertThat(feeList.get(0).getFeeType(), is(FeeType.TRANSACTION));
-        assertThat(feeList.get(0).getAmount(), is(100L));
-        assertThat(feeList.get(1).getFeeType(), is(FeeType.RADAR));
-        assertThat(feeList.get(1).getAmount(), is(5L));
-        assertThat(feeList.get(2).getFeeType(), is(FeeType.THREE_D_S));
-        assertThat(feeList.get(2).getAmount(), is(10L));
+        assertThat(captureResponse.getFeeList(), containsInAnyOrder(
+                Fee.of(FeeType.TRANSACTION, 100L),
+                Fee.of(FeeType.RADAR, 5L),
+                Fee.of(FeeType.THREE_D_S, 10L)
+        ));
     }
 
     @Test
@@ -419,7 +423,13 @@ public class StripeCaptureHandlerTest {
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9895"));
 
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.getFee().get(), is(105L));
+
+        List<Fee> feeList = captureResponse.getFeeList();
+        assertThat(feeList.size(), is(2));
+        assertThat(captureResponse.getFeeList(), containsInAnyOrder(
+                Fee.of(FeeType.TRANSACTION, 100L),
+                Fee.of(FeeType.RADAR, 5L)
+        ));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {

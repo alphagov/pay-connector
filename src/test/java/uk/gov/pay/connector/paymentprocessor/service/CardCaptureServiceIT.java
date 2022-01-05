@@ -52,7 +52,7 @@ public class CardCaptureServiceIT extends ChargingITestBase {
         String oldChargeStatus = ChargeStatus.CAPTURE_READY.getValue();
         String transactionId = "transactionId";
         List<Fee> feeList = List.of(Fee.of(RADAR, 10L), Fee.of(THREE_D_S, 20L), Fee.of(TRANSACTION, 480L));
-        CaptureResponse captureResponse = new CaptureResponse(transactionId, CaptureResponse.ChargeState.COMPLETE, 100L, feeList);
+        CaptureResponse captureResponse = new CaptureResponse(transactionId, CaptureResponse.ChargeState.COMPLETE, feeList);
 
         // Trigger the post gateway capture response programmatically which normally would be invoked by the scheduler.
         testContext.getInstanceFromGuiceContainer(CardCaptureService.class).processGatewayCaptureResponse(externalChargeId, oldChargeStatus, captureResponse);

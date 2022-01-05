@@ -21,23 +21,13 @@ public class StripeFeeCalculator {
         return stripeFee + platformFee.longValue();
     }
 
-    public static Long getTotalAmountForV2(Long stripeFee, CaptureGatewayRequest request, Double feePercentage,
-                                           int radarFeeInPence, int threeDsFeeInPence) {
-        Double platformFee = getPlatformFee(feePercentage, request.getAmount());
-        platformFee += (stripeFee + radarFeeInPence);
-        if (is3dsUsed(request)) {
-            platformFee += threeDsFeeInPence;
-        }
-        return platformFee.longValue();
-    }
-
-    public static List<Fee> getFeeList(Long stripeFee, CaptureGatewayRequest request, Double feePercentage,
-                                       int radarFeeInPence, int threeDsFeeInPence) {
+    public static List<Fee> getFeeListForV2(Long stripeFee, CaptureGatewayRequest request, Double feePercentage,
+                                            int radarFeeInPence, int threeDsFeeInPence) {
         List<Fee> feeList = new ArrayList<>();
         feeList.add(Fee.of(TRANSACTION, getTotalAmountForConnectFee(stripeFee, request, feePercentage)));
-        feeList.add(Fee.of(RADAR, Long.valueOf(radarFeeInPence)));
+        feeList.add(Fee.of(RADAR, (long) radarFeeInPence));
         if (is3dsUsed(request)) {
-            feeList.add(Fee.of(THREE_D_S, Long.valueOf(threeDsFeeInPence)));
+            feeList.add(Fee.of(THREE_D_S, (long) threeDsFeeInPence));
         }
         return feeList;
     }

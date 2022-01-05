@@ -2,7 +2,6 @@ package uk.gov.pay.connector.queue.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
@@ -17,15 +16,12 @@ public class TaskQueueMessageHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueueMessageHandler.class);
     private final TaskQueue taskQueue;
-    private final ChargeService chargeService;
     private final CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
 
     @Inject
     public TaskQueueMessageHandler(TaskQueue taskQueue,
-                                   ChargeService chargeService,
                                    CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler) {
         this.taskQueue = taskQueue;
-        this.chargeService = chargeService;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
     }
 
