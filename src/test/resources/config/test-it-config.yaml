@@ -78,7 +78,7 @@ stripe:
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-1000}
   credentials: ['stripe_account_id']
   radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE:-5}
-  threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE:-5}
+  threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE:-6}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-2}
