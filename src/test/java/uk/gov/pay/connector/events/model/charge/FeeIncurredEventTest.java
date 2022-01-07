@@ -15,6 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.RADAR;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.THREE_D_S;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
@@ -30,6 +31,7 @@ class FeeIncurredEventTest {
         chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(900L)
                 .withExternalId("paymentId")
+                .withStatus(CAPTURED)
                 .build();
         radarFeeCreatedDate = Instant.parse("2021-10-01T10:00:00Z");
         transactionFeeCreatedDate = Instant.parse("2021-11-01T11:00:00Z");
