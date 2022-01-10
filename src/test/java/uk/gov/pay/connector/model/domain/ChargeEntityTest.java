@@ -9,13 +9,12 @@ import uk.gov.pay.connector.fee.model.Fee;
 
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -90,59 +89,5 @@ public class ChargeEntityTest {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
         Optional<Long> totalFee = chargeCreated.getFeeAmount();
         assertFalse(totalFee.isPresent());
-    }
-
-    @Test
-    public void shouldReturnAmountMinusFeeForSuccessfulPayment() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(1000L)
-                .withFee(Fee.of(FeeType.TRANSACTION, 100L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(870L));
-    }
-
-    @Test
-    public void shouldReturnTotalAmountMinusFeeForSuccessfulPaymentWithCorporateSurcharge() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(1000L)
-                .withCorporateSurcharge(250L)
-                .withFee(Fee.of(FeeType.TRANSACTION, 100L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(1120L));
-    }
-
-    @Test
-    public void shouldReturnNegativeNetAmountForFailedPaymentWithFees() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(1000L)
-                .withCorporateSurcharge(250L)
-                .withFee(Fee.of(FeeType.TRANSACTION, 100L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(AUTHORISATION_REJECTED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(-130L));
-    }
-
-    @Test
-    public void shouldReturnEmptyOptionalWhenThereAreNoFees() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(1000L)
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(false));
     }
 }
