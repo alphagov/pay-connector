@@ -20,7 +20,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -89,12 +88,10 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
                         hasProperty("createdDate", is(clock.instant()))
                 )
         ));
-        assertThat(charge.getNetAmount(), is(Optional.of(-13L)));
 
         verify(eventService).emitAndRecordEvent(feeIncurredEventArgumentCaptor.capture());
         FeeIncurredEventDetails eventDetails = (FeeIncurredEventDetails) feeIncurredEventArgumentCaptor.getValue().getEventDetails();
         assertThat(eventDetails.getFee(), is(13L));
-        assertThat(eventDetails.getNetAmount(), is(-13L));
         assertThat(eventDetails.getFeeBreakdown(), is(fees));
     }
 }

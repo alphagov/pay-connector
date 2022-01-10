@@ -157,7 +157,7 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         ChargeEntity charge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
-                .withStatus(CAPTURED)
+                .withStatus(AUTHORISATION_READY)
                 .withAmount(amount)
                 .withFee(Fee.of(null, fee))
                 .build();
@@ -171,7 +171,9 @@ public class ChargeServiceFindTest extends ChargeServiceTest {
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.ofNullable(charge));
 
         Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
-        
+
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
+
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
 
