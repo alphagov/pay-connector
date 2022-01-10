@@ -118,6 +118,9 @@ stripe:
   credentials: ['stripe_account_id']
   radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE}
   threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE}
+  collectFeeForStripeFailedPaymentsFromDate: ${COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENTS_FROM_DATE:-1648767599}
+  enableTransactionFeeV2ForGatewayAccountsList: ${STRIPE_ENABLE_TRANSACTION_FEE_V2_FOR_GATEWAY_ACCOUNTS_LIST:-[]}
+  enableTransactionFeeV2ForTestAccounts: ${STRIPE_ENABLE_TRANSACTION_FEE_V2_FOR_TEST_ACCOUNTS:-false}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
