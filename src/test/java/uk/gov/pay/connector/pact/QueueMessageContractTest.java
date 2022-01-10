@@ -46,6 +46,7 @@ import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
@@ -59,6 +60,7 @@ import static java.time.ZonedDateTime.parse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
@@ -98,8 +100,14 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a capture confirmed message")
     public String verifyCaptureConfirmedEvent() throws JsonProcessingException {
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(ChargeStatus.CAPTURED)
+                .withFee(Fee.of(null, 42L))
+                .build();
+
+        ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.CAPTURED)
                 .withGatewayEventDate(ZonedDateTime.now())
                 .build();
 
@@ -152,8 +160,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a capture submitted message")
     public String verifyCaptureSubmittedEvent() throws JsonProcessingException {
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
+        ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
                 .withGatewayEventDate(ZonedDateTime.now())
                 .build();
 
@@ -223,8 +230,7 @@ public class QueueMessageContractTest {
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
                 .withExternalMetadata(externalMetadata)
                 .build();
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
+        ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
                 .withCharge(charge)
                 .build();
 
@@ -289,8 +295,7 @@ public class QueueMessageContractTest {
                 .withTransactionId("gateway_transaction_id")
                 .withGatewayTransactionId("gateway_transaction_id")
                 .build();
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
+        ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
                 .withCharge(charge)
                 .build();
         CancelledByUser event = CancelledByUser.from(chargeEventEntity);
@@ -354,8 +359,13 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a status corrected to captured event")
     public String verifyStatusCorrectedToCapturedToMatchGatewayStatusEvent() throws JsonProcessingException {
-        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
-                .aValidChargeEventEntity()
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(ChargeStatus.CAPTURED)
+                .withFee(Fee.of(null, 42L))
+                .build();
+        
+        ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
+                .withCharge(chargeEntity)
                 .withGatewayEventDate(ZonedDateTime.now())
                 .build();
 
