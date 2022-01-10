@@ -61,6 +61,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -73,7 +74,7 @@ import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 @Access(AccessType.FIELD)
 @SequenceGenerator(name = "charges_charge_id_seq",
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
-public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
+public class ChargeEntity extends AbstractVersionedEntity {
     private static final Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
 
     @Id
@@ -463,6 +464,15 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             Optional.of(fees.stream()
                 .map(FeeEntity::getAmountCollected)
                 .reduce(0L, Long::sum));
+    }
+
+    public Optional<Long> getNetAmount() {
+        return getFeeAmount().map(fee -> {
+            if (getChargeStatus().toExternal() == EXTERNAL_SUCCESS) {
+                return getAmount() + getCorporateSurcharge().orElse(0L) - fee;
+            }
+            return -fee;
+        });
     }
 
     public List<FeeEntity> getFees() {

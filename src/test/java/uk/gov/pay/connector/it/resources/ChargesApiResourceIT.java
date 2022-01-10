@@ -3,14 +3,11 @@ package uk.gov.pay.connector.it.resources;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -19,6 +16,9 @@ import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.Instant;
@@ -47,6 +47,7 @@ import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
@@ -579,7 +580,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(AMOUNT)
-                .withStatus(AUTHORISATION_SUCCESS)
+                .withStatus(CAPTURED)
                 .withReturnUrl(RETURN_URL)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
