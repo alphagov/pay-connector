@@ -5,12 +5,10 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -19,6 +17,8 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -50,6 +50,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
@@ -176,8 +177,19 @@ public class ChargesFrontendResourceIT {
 
     @Test
     public void getChargeShouldIncludeNetAmountIfFeeExists() {
-        String externalChargeId = postToCreateACharge(expectedAmount);
-        final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        String externalChargeId = RandomIdGenerator.newId();
+        long chargeId = nextLong();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(expectedAmount)
+                .withStatus(CAPTURED)
+                .withReturnUrl(returnUrl)
+                .withDelayedCapture(false)
+                .withEmail(email)
+                .build());
         final long feeCollected = 100L;
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
