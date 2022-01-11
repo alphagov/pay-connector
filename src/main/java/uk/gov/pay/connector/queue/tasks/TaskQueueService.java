@@ -5,6 +5,7 @@ import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public class TaskQueueService {
 
@@ -21,25 +23,35 @@ public class TaskQueueService {
     
     private final TaskQueue taskQueue;
     private final ConnectorConfiguration connectorConfiguration;
+    private final StripeGatewayConfig stripeGatewayConfig;
 
     @Inject
     public TaskQueueService(TaskQueue taskQueue,
-                            ConnectorConfiguration connectorConfiguration) {
+                            ConnectorConfiguration connectorConfiguration,
+                            StripeGatewayConfig stripeGatewayConfig) {
         this.taskQueue = taskQueue;
         this.connectorConfiguration = connectorConfiguration;
+        this.stripeGatewayConfig = stripeGatewayConfig;
     }
 
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
-        if (!connectorConfiguration.getTaskQueueConfig().getCollectFeeForStripeFailedPayments())
-            return;
-        
-        boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
-                chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
+        if (chargeEntity.getCreatedDate()
+                .equals(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
+            chargeEntity.getCreatedDate()
+                    .isAfter(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
+            (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
+                    chargeEntity.getGatewayAccount().getType().equals(TEST.toString())) ||
+            stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
+                    .contains(chargeEntity.getGatewayAccount().getId().toString())) {
 
-        if (isTerminallyFailed &&
-                chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
-                !StringUtils.isEmpty(chargeEntity.getGatewayTransactionId())) {
-            addCollectStripeFeeForFailedPaymentTask(chargeEntity);
+            boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
+                    chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
+
+            if (isTerminallyFailed &&
+                    chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
+                    !StringUtils.isEmpty(chargeEntity.getGatewayTransactionId())) {
+                addCollectStripeFeeForFailedPaymentTask(chargeEntity);
+            }
         }
     }
 
