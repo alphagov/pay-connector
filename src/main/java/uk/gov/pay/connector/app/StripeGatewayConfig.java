@@ -58,6 +58,15 @@ public class StripeGatewayConfig extends Configuration {
     @Valid
     private int threeDsFeeInPence;
 
+    @Valid
+    private long collectFeeForStripeFailedPaymentsFromDate;
+
+    @Valid
+    private List<String> enableTransactionFeeV2ForGatewayAccountsList;
+
+    @Valid
+    private Boolean enableTransactionFeeV2ForTestAccounts;
+
     public String getUrl() {
         return url;
     }
@@ -108,5 +117,17 @@ public class StripeGatewayConfig extends Configuration {
 
     public int getThreeDsFeeInPence() {
         return threeDsFeeInPence;
+    }
+
+    public Instant getCollectFeeForStripeFailedPaymentsFromDate() {
+        return Instant.ofEpochSecond(collectFeeForStripeFailedPaymentsFromDate);
+    }
+
+    public List<String> getEnableTransactionFeeV2ForGatewayAccountsList() {
+        return enableTransactionFeeV2ForGatewayAccountsList;
+    }
+
+    public Boolean isEnableTransactionFeeV2ForTestAccounts() {
+        return enableTransactionFeeV2ForTestAccounts;
     }
 }
