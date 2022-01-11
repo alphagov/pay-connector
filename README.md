@@ -1,8 +1,6 @@
 # pay-connector
 The GOV.UK Pay Connector in Java (Dropwizard).
 
-
-
 ## Environment Variables
 
 | Variable | Default | Purpose |
