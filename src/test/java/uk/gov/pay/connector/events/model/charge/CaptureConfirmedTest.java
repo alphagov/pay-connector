@@ -17,10 +17,11 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 public class CaptureConfirmedTest {
 
-    private final ChargeEntityFixture chargeEntity = aValidChargeEntity();
+    private final ChargeEntityFixture chargeEntity = aValidChargeEntity().withStatus(CAPTURED);
 
     @Test
     public void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
