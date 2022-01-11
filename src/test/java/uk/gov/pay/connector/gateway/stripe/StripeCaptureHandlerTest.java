@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.Ch
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -429,6 +430,101 @@ public class StripeCaptureHandlerTest {
         assertThat(captureResponse.getFeeList(), containsInAnyOrder(
                 Fee.of(FeeType.TRANSACTION, 100L),
                 Fee.of(FeeType.RADAR, 5L)
+        ));
+    }
+
+    @Test
+    public void shouldCaptureWithV2RadarAnd3dsFeesWhenTestAccountsAreEnabled() throws Exception {
+        mockStripeCaptureAndTransfer();
+
+        int chargeCreatedDate = 1629849600; //25Aug2021
+        int feeV2DateAfterChargeCreatedDate = 1629936000; //26Aug2021
+
+        when(stripeGatewayConfig.getFeePercentageV2Date()).thenReturn(Instant.ofEpochSecond(feeV2DateAfterChargeCreatedDate));
+        when(stripeGatewayConfig.getFeePercentageV2()).thenReturn(0.50);
+        when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(5);
+        when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(10);
+        when(stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(true);
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId(transactionId)
+                .withAmount(10000L)
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .build())
+                .withEvents(List.of(aChargeEventEntity().withStatus(AUTHORISATION_3DS_REQUIRED).build(),
+                        aChargeEventEntity().withStatus(CREATED).build()))
+                .build();
+
+        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+
+        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+
+        ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
+        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
+
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
+
+        assertTrue(captureResponse.isSuccessful());
+
+        List<Fee> feeList = captureResponse.getFeeList();
+        assertThat(feeList.size(), is(3));
+        assertThat(captureResponse.getFeeList(), containsInAnyOrder(
+                Fee.of(FeeType.TRANSACTION, 100L),
+                Fee.of(FeeType.RADAR, 5L),
+                Fee.of(FeeType.THREE_D_S, 10L)
+        ));
+    }
+
+    @Test
+    public void shouldCaptureWithV2RadarAnd3dsFeesWhenGatewayIdInTestAccountsEnabledList() throws Exception {
+        mockStripeCaptureAndTransfer();
+
+        int chargeCreatedDate = 1629849600; //25Aug2021
+        int feeV2DateAfterChargeCreatedDate = 1629936000; //26Aug2021
+
+        gatewayAccount.setType(LIVE);
+
+        when(stripeGatewayConfig.getFeePercentageV2Date()).thenReturn(Instant.ofEpochSecond(feeV2DateAfterChargeCreatedDate));
+        when(stripeGatewayConfig.getFeePercentageV2()).thenReturn(0.50);
+        when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(5);
+        when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(10);
+        when(stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(false);
+        when(stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()).thenReturn(List.of(gatewayAccount.getId().toString()));
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId(transactionId)
+                .withAmount(10000L)
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .build())
+                .withEvents(List.of(aChargeEventEntity().withStatus(AUTHORISATION_3DS_REQUIRED).build(),
+                        aChargeEventEntity().withStatus(CREATED).build()))
+                .build();
+
+        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+
+        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+
+        ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
+        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
+
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
+
+        assertTrue(captureResponse.isSuccessful());
+
+        List<Fee> feeList = captureResponse.getFeeList();
+        assertThat(feeList.size(), is(3));
+        assertThat(captureResponse.getFeeList(), containsInAnyOrder(
+                Fee.of(FeeType.TRANSACTION, 100L),
+                Fee.of(FeeType.RADAR, 5L),
+                Fee.of(FeeType.THREE_D_S, 10L)
         ));
     }
 

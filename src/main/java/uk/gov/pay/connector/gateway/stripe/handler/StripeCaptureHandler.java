@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public class StripeCaptureHandler implements CaptureHandler {
 
@@ -128,11 +129,15 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private List<Fee> generateFeeList(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
-            if (createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date())) {
-                return List.of(Fee.of(null, StripeFeeCalculator.getTotalAmountForConnectFee(stripeFee, request, stripeGatewayConfig.getFeePercentage())));
-            } else {
+            if (!createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date()) ||
+                    (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
+                            request.getGatewayAccount().getType().equals(TEST.toString())) ||
+                    stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
+                            .contains(request.getGatewayAccount().getId().toString())) {
                 return StripeFeeCalculator.getFeeListForV2(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
                         stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
+            } else {
+                return List.of(Fee.of(null, StripeFeeCalculator.getTotalAmountForConnectFee(stripeFee, request, stripeGatewayConfig.getFeePercentage())));
             }
         }
         return List.of();
