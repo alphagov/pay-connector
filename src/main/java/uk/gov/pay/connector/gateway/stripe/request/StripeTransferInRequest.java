@@ -25,9 +25,10 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             StripeGatewayConfig stripeGatewayConfig,
             String govukPayTransactionExternalId,
             Map<String, String> credentials,
-            String transferGroup) {
+            String transferGroup,
+            StripeTransferMetadataReason reason) {
         super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig,
-                govukPayTransactionExternalId, credentials);
+                govukPayTransactionExternalId, credentials, reason);
         this.transferGroup = transferGroup;
     }
 
@@ -41,7 +42,8 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 stripeGatewayConfig,
                 request.getRefundExternalId(),
                 request.getGatewayCredentials(),
-                request.getChargeExternalId()
+                request.getChargeExternalId(),
+                StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT
         );
     }
     
@@ -59,7 +61,8 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 stripeGatewayConfig,
                 chargeExternalId,
                 gatewayAccountCredentials.getCredentials(),
-                chargeExternalId);
+                chargeExternalId,
+                StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT);
     }
 
     @Override
@@ -70,7 +73,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 "transfer_group", transferGroup
         );
         Map<String, String> commonParams = super.params();
-        params.putAll(transferOutParams);
+        params.putAll(transferOutParams); 
         params.putAll(commonParams);
 
         return params;

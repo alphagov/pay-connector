@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -31,30 +32,31 @@ public class StripeTransferInRequestTest {
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeChargeId = "stripeChargeId";
     private final long refundAmount = 100L;
+    private final String feeAmount = "5";
     private final String stripeBaseUrl = "stripeUrl";
     private final String stripePlatformAccountId = "stripePlatformAccountId";
-    private final String stripeConnectAccountId = "stripe_account_id"; 
+    private final String stripeConnectAccountId = "stripe_account_id";
 
-    private StripeTransferInRequest stripeTransferInRequest;
-    
     @Mock
     RefundEntity refundEntity;
     @Mock
     Charge charge;
-
-    GatewayAccountEntity gatewayAccount;
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
     @Mock
     StripeAuthTokens stripeAuthTokens;
 
+    private StripeTransferInRequest refundTransferInRequest;
+    StripeTransferInRequest feeTransferInRequest;
+    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @Before
     public void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
-        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+        gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
                 .withGatewayAccountEntity(gatewayAccount)
                 .withPaymentProvider(STRIPE.getName())
@@ -73,17 +75,18 @@ public class StripeTransferInRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount, gatewayAccountCredentialsEntity);
 
-        stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
+        refundTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
+        feeTransferInRequest = StripeTransferInRequest.of(feeAmount, gatewayAccount, gatewayAccountCredentialsEntity, stripeChargeId, chargeExternalId, stripeGatewayConfig);
     }
 
     @Test
     public void shouldCreateCorrectUrl() {
-        assertThat(stripeTransferInRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/transfers")));
+        assertThat(refundTransferInRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/transfers")));
     }
 
     @Test
-    public void shouldCreateCorrectPayload() {
-        String payload = stripeTransferInRequest.getGatewayOrder().getPayload();
+    public void shouldCreateCorrectPayload_forRefundTransfer() {
+        String payload = refundTransferInRequest.getGatewayOrder().getPayload();
         
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, containsString("amount=" + refundAmount));
@@ -93,21 +96,45 @@ public class StripeTransferInRequestTest {
         assertThat(payload, containsString("currency=GBP"));
         assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + stripeChargeId));
         assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + refundExternalId));
+        assertThat(payload, containsString("metadata%5Breason%5D=" + StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT));
     }
-    
+
+    @Test
+    public void shouldCreateCorrectPayload_forFeeTransfer() {
+        String payload = feeTransferInRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("destination=" + stripePlatformAccountId));
+        assertThat(payload, containsString("amount=" + feeAmount));
+        assertThat(payload, containsString("transfer_group=" + chargeExternalId));
+        assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
+        assertThat(payload, containsString("expand%5B%5D=destination_payment"));
+        assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + stripeChargeId));
+        assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + chargeExternalId));
+        assertThat(payload, containsString("metadata%5Breason%5D=" + StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT));
+    }
+
     @Test
     public void shouldHaveStripeAccountHeaderSetToStripeConnectAccountId() {
         assertThat(
-                stripeTransferInRequest.getHeaders().get("Stripe-Account"),
+                refundTransferInRequest.getHeaders().get("Stripe-Account"),
                 is(stripeConnectAccountId)
         );
     }
 
     @Test
-    public void shouldHaveIdempotencyKeySetToRefundExternalId() {
+    public void shouldHaveIdempotencyKeySetToRefundExternalId_forRefundTransfer() {
         assertThat(
-                stripeTransferInRequest.getHeaders().get("Idempotency-Key"),
+                refundTransferInRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_in" + refundExternalId)
+        );
+    }
+
+    @Test
+    public void shouldHaveIdempotencyKeySetToRefundExternalId_forFeeTransfer() {
+        assertThat(
+                feeTransferInRequest.getHeaders().get("Idempotency-Key"),
+                is("transfer_in" + chargeExternalId)
         );
     }
 }

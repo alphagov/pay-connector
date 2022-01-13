@@ -11,6 +11,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
     protected String amount;
     protected String stripeChargeId;
     protected String govukPayTransactionExternalId;
+    protected StripeTransferMetadataReason reason;
 
     protected StripeTransferRequest(
             String amount,
@@ -19,11 +20,13 @@ public abstract class StripeTransferRequest extends StripeRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String govukPayTransactionExternalId,
-            Map<String, String> credentials) {
+            Map<String, String> credentials,
+            StripeTransferMetadataReason reason) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;
         this.govukPayTransactionExternalId = govukPayTransactionExternalId;
+        this.reason = reason;
     }
 
     public String urlPath() {
@@ -32,7 +35,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(this.stripeChargeId, this.govukPayTransactionExternalId);
+        StripeTransferMetadata stripeTransferMetadata = new StripeTransferMetadata(stripeChargeId, govukPayTransactionExternalId, reason);
         Map<String, String> baseParams = new HashMap<>();
         baseParams.put("amount", amount);
         baseParams.put("currency", "GBP");
