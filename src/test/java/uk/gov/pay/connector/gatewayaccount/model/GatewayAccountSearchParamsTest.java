@@ -26,6 +26,7 @@ public class GatewayAccountSearchParamsTest {
         params.setRequires3ds("true");
         params.setType("live");
         params.setPaymentProvider("stripe");
+        params.setPaymentProviderAccountId("acc123");
         params.setProviderSwitchEnabled("true");
 
         List<String> filterTemplates = params.getFilterTemplates();
@@ -48,7 +49,12 @@ public class GatewayAccountSearchParamsTest {
                         "  ) a " +
                         "  where rn = 1 " +
                         "  and a.payment_provider = #gatewayName" +
-                        ")"));
+                        ")",
+                " ga.id in (   select gateway_account_id   from " +
+                        "(     select gateway_account_id     from gateway_account_credentials gac     " +
+                        "where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #paymentProviderAccountId" +
+                        "    or gac.credentials->>'merchant_id' = #paymentProviderAccountId) a)")
+        );
     }
 
     @Test
@@ -79,10 +85,11 @@ public class GatewayAccountSearchParamsTest {
         params.setRequires3ds("true");
         params.setType("live");
         params.setPaymentProvider("stripe");
+        params.setPaymentProviderAccountId("acc123");
         params.setProviderSwitchEnabled("true");
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, aMapWithSize(12));
+        assertThat(queryMap, aMapWithSize(13));
         assertThat(queryMap, hasEntry("accountIds0", 1L));
         assertThat(queryMap, hasEntry("accountIds1", 22L));
         assertThat(queryMap, hasEntry("serviceId0", "serviceidone"));
@@ -95,6 +102,7 @@ public class GatewayAccountSearchParamsTest {
         assertThat(queryMap, hasEntry("type", "LIVE"));
         assertThat(queryMap, hasEntry("gatewayName", "stripe"));
         assertThat(queryMap, hasEntry("providerSwitchEnabled", true));
+        assertThat(queryMap, hasEntry("paymentProviderAccountId", "acc123"));
     }
 
     @Test

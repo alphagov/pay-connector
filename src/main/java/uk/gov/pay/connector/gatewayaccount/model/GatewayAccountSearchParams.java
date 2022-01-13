@@ -22,6 +22,7 @@ public class GatewayAccountSearchParams {
     private static final String REQUIRES_3DS_SQL_FIELD = "requires3ds";
     private static final String TYPE_SQL_FIELD = "type";
     private static final String PAYMENT_PROVIDER_SQL_FIELD = "gatewayName";
+    private static final String PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD = "paymentProviderAccountId";
     private static final String PROVIDER_SWITCH_ENABLED_SQL_FIELD = "providerSwitchEnabled";
 
     @QueryParam("accountIds")
@@ -66,6 +67,9 @@ public class GatewayAccountSearchParams {
             message = "Parameter [payment_provider] must be one of 'sandbox', 'worldpay', 'smartpay', 'epdq' or 'stripe'")
     private String paymentProvider;
 
+    @QueryParam("payment_provider_account_id")
+    private String paymentProviderAccountId;
+
     @QueryParam("provider_switch_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [provider_switch_enabled] must be true or false")
@@ -97,6 +101,10 @@ public class GatewayAccountSearchParams {
 
     public void setPaymentProvider(String paymentProvider) {
         this.paymentProvider = paymentProvider;
+    }    
+    
+    public void setPaymentProviderAccountId(String paymentProviderAccountId) {
+        this.paymentProviderAccountId = paymentProviderAccountId;
     }
 
     public void setProviderSwitchEnabled(String providerSwitchEnabled) {
@@ -166,6 +174,16 @@ public class GatewayAccountSearchParams {
                     "  and a.payment_provider = #" + PAYMENT_PROVIDER_SQL_FIELD +
                     ")");
         }
+            if (StringUtils.isNotEmpty(paymentProviderAccountId)) {
+            filters.add(" ga.id in ( " +
+                    "  select gateway_account_id " +
+                    "  from ( " +
+                    "    select gateway_account_id " +
+                    "    from gateway_account_credentials gac " +
+                    "    where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
+                    "    or gac.credentials->>'merchant_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD+ ") a" +
+                    ")");
+        }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
             filters.add(" ga.provider_switch_enabled = #" + PROVIDER_SWITCH_ENABLED_SQL_FIELD);
         }
@@ -207,6 +225,9 @@ public class GatewayAccountSearchParams {
         }
         if (StringUtils.isNotEmpty(paymentProvider)) {
             queryMap.put(PAYMENT_PROVIDER_SQL_FIELD, paymentProvider);
+        }        
+        if (StringUtils.isNotEmpty(paymentProviderAccountId)) {
+            queryMap.put(PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD, paymentProviderAccountId);
         }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
             queryMap.put(PROVIDER_SWITCH_ENABLED_SQL_FIELD, Boolean.valueOf(providerSwitchEnabled));
@@ -227,6 +248,7 @@ public class GatewayAccountSearchParams {
                 ", type='" + type + '\'' +
                 ", paymentProvider='" + paymentProvider + '\'' +
                 ", providerSwitchEnabled='" + providerSwitchEnabled + '\'' +
+                ", paymentProviderAccountId='" + paymentProviderAccountId + '\'' +
                 '}';
     }
 }

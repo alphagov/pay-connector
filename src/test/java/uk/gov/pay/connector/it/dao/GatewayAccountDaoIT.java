@@ -469,6 +469,40 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(1));
         assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+    }    
+    
+    @Test
+    public void shouldSearchForAccountsByPaymentProviderAccountId() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of("stripe_account_id", "acc123"))
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProviderAccountId("acc123");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+    }    
+    
+    @Test
+    public void shouldSearchForAccountsByPaymentProviderMerchantId() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of("merchant_id", "acc123"))
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProviderAccountId("acc123");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
     }
 
     @Test
