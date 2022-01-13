@@ -33,13 +33,13 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -68,19 +68,17 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripePaymentProviderTest {
 
     private StripePaymentProvider provider;
-    private GatewayClient gatewayClient = mock(GatewayClient.class);
-    private GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
-    private Environment environment = mock(Environment.class);
-    private MetricRegistry metricRegistry = mock(MetricRegistry.class);
-    private ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
-    private StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
-    private LinksConfig linksConfig = mock(LinksConfig.class);
-    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
-    private GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
-    private GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
-    private Clock clock = mock(Clock.class);
-    private EventService eventService = mock(EventService.class);
-    
+    private final GatewayClient gatewayClient = mock(GatewayClient.class);
+    private final GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+    private final Environment environment = mock(Environment.class);
+    private final MetricRegistry metricRegistry = mock(MetricRegistry.class);
+    private final ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+    private final StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
+    private final LinksConfig linksConfig = mock(LinksConfig.class);
+    private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
+    private final GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
+    private final GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
+
     private static final String issuerUrl = "http://stripe.url/3ds";
     private static final String threeDsVersion = "2.0.1";
 
@@ -188,9 +186,10 @@ public class StripePaymentProviderTest {
 
         BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
         assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+        assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
         assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
         assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
     }
 
     @Test
