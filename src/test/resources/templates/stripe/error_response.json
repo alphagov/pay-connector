@@ -1,8 +1,116 @@
 {
   "error": {
-    "charge": "ch_1DX3j5C6H5MjhE5YhPcLhENF",
+    "charge": "ch_aaaaaaaaaaaaaaaaaaaaaaaa",
     "code": "resource_missing",
+    "decline_code": "generic_decline",
+    "doc_url": "https://stripe.com/docs/error-codes/card-declined",
     "message": "No such charge: ch_123456 or something similar",
-    "type": "{{type}}"
+    "type": "{{type}}",
+    "payment_intent": {
+      "id": "pi_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "object": "payment_intent",
+      "amount": 12000,
+      "amount_capturable": 0,
+      "charges": {
+        "object": "list",
+        "data": [
+          {
+            "id": "ch_aaaaaaaaaaaaaaaaaaaaaaaa",
+            "object": "charge",
+            "amount": 12000,
+            "amount_captured": 0,
+            "amount_refunded": 0,
+            "application": null,
+            "application_fee": null,
+            "application_fee_amount": null,
+            "balance_transaction": null,
+            "billing_details": {
+              "address": {
+                "city": "Manchester",
+                "country": "GB",
+                "line1": "Floor 1A City Tower",
+                "line2": "Piccadilly Plaza",
+                "postal_code": "M1 4BT",
+                "state": null
+              },
+              "email": null,
+              "name": "J. Bogs",
+              "phone": null
+            },
+            "calculated_statement_descriptor": "Stripe",
+            "captured": false,
+            "created": 1641912339,
+            "currency": "gbp",
+            "customer": null,
+            "description": "New passport application",
+            "destination": null,
+            "dispute": null,
+            "disputed": false,
+            "failure_code": "card_declined",
+            "failure_message": "Your card was declined.",
+            "fraud_details": {
+            },
+            "invoice": null,
+            "livemode": false,
+            "metadata": {
+            },
+            "on_behalf_of": "acct_aaaaaaaaaaaaaaaa",
+            "order": null,
+            "outcome": {
+              "network_status": "declined_by_network",
+              "reason": "generic_decline",
+              "risk_level": "normal",
+              "risk_score": 24,
+              "seller_message": "The bank did not return any further details with this decline.",
+              "type": "issuer_declined"
+            },
+            "paid": false,
+            "payment_intent": "pi_aaaaaaaaaaaaaaaaaaaaaaaa",
+            "payment_method": "pm_aaaaaaaaaaaaaaaaaaaaaaaa",
+            "payment_method_details": {
+              "card": {
+                "brand": "visa",
+                "checks": {
+                  "address_line1_check": "pass",
+                  "address_postal_code_check": "pass",
+                  "cvc_check": "pass"
+                },
+                "country": "US",
+                "exp_month": 2,
+                "exp_year": 2023,
+                "fingerprint": "0CFI1ogMdJ3zM4Ey",
+                "funding": "credit",
+                "installments": null,
+                "last4": "0002",
+                "network": "visa",
+                "three_d_secure": null,
+                "wallet": null
+              },
+              "type": "card"
+            },
+            "receipt_email": null,
+            "receipt_number": null,
+            "receipt_url": null,
+            "refunded": false,
+            "refunds": {
+              "object": "list",
+              "data": [
+              ],
+              "has_more": false,
+              "total_count": 0,
+              "url": "/v1/charges/ch_aaaaaaaaaaaaaaaaaaaaaaaa/refunds"
+            },
+            "review": null,
+            "shipping": null,
+            "source": null,
+            "source_transfer": null,
+            "statement_descriptor": null,
+            "statement_descriptor_suffix": null,
+            "status": "failed",
+            "transfer_data": null
+          }
+        ]
+      }
+    }
   }
 }

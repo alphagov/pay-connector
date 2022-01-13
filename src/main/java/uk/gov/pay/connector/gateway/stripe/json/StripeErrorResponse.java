@@ -28,7 +28,7 @@ public class StripeErrorResponse {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class Error {
+    public static class Error {
 
         @JsonProperty("charge")
         private String charge;
@@ -38,6 +38,8 @@ public class StripeErrorResponse {
         private String code;
         @JsonProperty("message")
         private String message;
+        @JsonProperty("payment_intent")
+        private StripePaymentIntent stripePaymentIntent;
 
         public String getType() {
             return type;
@@ -53,6 +55,10 @@ public class StripeErrorResponse {
 
         public String getCharge() {
             return charge;
+        }
+        
+        public StripePaymentIntent getStripePaymentIntent() {
+            return stripePaymentIntent;
         }
 
         @Override
@@ -70,7 +76,9 @@ public class StripeErrorResponse {
             if (StringUtils.isNotBlank(message)) {
                 joiner.add("message: " + getMessage());
             }
-
+            if (stripePaymentIntent != null) {
+                joiner.add("payment intent: " + stripePaymentIntent.getId());
+            }
             return joiner.toString();
         }
     }

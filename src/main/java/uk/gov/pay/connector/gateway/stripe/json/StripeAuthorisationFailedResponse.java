@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeAuthoriseHandler;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -11,7 +14,9 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 
 public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse {
 
-    private StripeErrorResponse errorResponse;
+    private static final Logger logger = LoggerFactory.getLogger(StripeAuthorisationFailedResponse.class);
+
+    private final StripeErrorResponse errorResponse;
 
     private StripeAuthorisationFailedResponse(StripeErrorResponse errorResponse) {
         this.errorResponse = errorResponse;
@@ -23,7 +28,13 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
 
     @Override
     public String getTransactionId() {
-        return errorResponse.getError().getCharge();
+        if (errorResponse != null && errorResponse.getError() != null
+                && errorResponse.getError().getStripePaymentIntent() != null) {
+            return errorResponse.getError().getStripePaymentIntent().getId();
+        } else {
+            logger.error("Payment intent not found on Stripe error response");
+            return null;
+        }
     }
 
     @Override
