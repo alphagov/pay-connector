@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -127,7 +128,8 @@ public class StripeGatewayConfig extends Configuration {
     }
 
     public List<String> getEnableTransactionFeeV2ForGatewayAccountsList() {
-        return enableTransactionFeeV2ForGatewayAccountsList;
+        return Optional.ofNullable(enableTransactionFeeV2ForGatewayAccountsList)
+                .orElse(Collections.emptyList());
     }
 
     public Boolean isEnableTransactionFeeV2ForTestAccounts() {
