@@ -18,7 +18,7 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
                                      String govukPayTransactionExternalId,
                                      Map<String, String> credentials) {
         super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig,
-                govukPayTransactionExternalId, credentials);
+                govukPayTransactionExternalId, credentials, StripeTransferMetadataReason.TRANSFER_PAYMENT_AMOUNT);
     }
 
     public static StripeTransferOutRequest of(String amount, String stripeChargeId, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
