@@ -11,13 +11,18 @@ public enum StripeTransferMetadataReason {
     TRANSFER_REFUND_AMOUNT,
     TRANSFER_PAYMENT_AMOUNT;
     
+    @Override
+    public String toString() {
+        return name().toLowerCase((Locale.ENGLISH));
+    }
+    
     public static StripeTransferMetadataReason fromString(String value) {
         if (value == null) {
             return NOT_DEFINED;
         }
         return Arrays.stream(StripeTransferMetadataReason.values())
-                .filter(stripeTransferMetadataReason -> StringUtils.equals(stripeTransferMetadataReason.name(), value.toUpperCase(Locale.ENGLISH)))
+                .filter(stripeTransferMetadataReason -> StringUtils.equalsIgnoreCase(stripeTransferMetadataReason.name(), value))
                 .findFirst()
-                .orElse(StripeTransferMetadataReason.NOT_DEFINED);
+                .orElse(NOT_DEFINED);
     }
 }

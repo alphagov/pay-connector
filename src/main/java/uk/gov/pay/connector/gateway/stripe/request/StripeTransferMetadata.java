@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import java.util.Map;
-import java.util.Optional;
 
 public class StripeTransferMetadata {
     public static final String STRIPE_CHARGE_ID_KEY = "stripe_charge_id";
