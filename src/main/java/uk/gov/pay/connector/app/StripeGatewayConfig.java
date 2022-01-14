@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.app;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.dropwizard.Configuration;
-import uk.gov.pay.connector.app.config.StringToListConverter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -64,7 +62,6 @@ public class StripeGatewayConfig extends Configuration {
     private long collectFeeForStripeFailedPaymentsFromDate;
 
     @Valid
-    @JsonDeserialize(converter = StringToListConverter.class)
     private List<String> enableTransactionFeeV2ForGatewayAccountsList;
 
     @Valid
