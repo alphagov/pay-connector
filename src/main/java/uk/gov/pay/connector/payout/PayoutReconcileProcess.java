@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT;
 import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -40,13 +41,13 @@ import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 public class PayoutReconcileProcess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PayoutReconcileProcess.class);
-    private PayoutReconcileQueue payoutReconcileQueue;
-    private StripeClientWrapper stripeClientWrapper;
-    private StripeGatewayConfig stripeGatewayConfig;
-    private ConnectorConfiguration connectorConfiguration;
-    private GatewayAccountCredentialsService gatewayAccountCredentialsService;
-    private EventService eventService;
-    private PayoutEmitterService payoutEmitterService;
+    private final PayoutReconcileQueue payoutReconcileQueue;
+    private final StripeClientWrapper stripeClientWrapper;
+    private final StripeGatewayConfig stripeGatewayConfig;
+    private final ConnectorConfiguration connectorConfiguration;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
+    private final EventService eventService;
+    private final PayoutEmitterService payoutEmitterService;
 
     @Inject
     public PayoutReconcileProcess(PayoutReconcileQueue payoutReconcileQueue,
@@ -76,21 +77,18 @@ public class PayoutReconcileProcess {
                 String apiKey = getStripeApiKey(payoutReconcileMessage.getConnectAccountId());
 
                 AtomicInteger payments = new AtomicInteger();
-                AtomicInteger refunds = new AtomicInteger();
+                AtomicInteger transfers = new AtomicInteger();
 
                 stripeClientWrapper.getBalanceTransactionsForPayout(payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId(), apiKey)
                         .forEach(balanceTransaction -> {
                             switch (balanceTransaction.getType()) {
                                 case "payment":
-                                    emitPaymentEvent(payoutReconcileMessage, balanceTransaction);
+                                    reconcilePayment(payoutReconcileMessage, balanceTransaction);
                                     payments.getAndIncrement();
                                     break;
-                                // Refunds have a balance transaction of type "transfer" as refunds are made from our 
-                                // Platform Stripe account, and then a transfer is made for the amount from the connect
-                                // account.
                                 case "transfer":
-                                    emitRefundEvent(payoutReconcileMessage, balanceTransaction);
-                                    refunds.getAndIncrement();
+                                    reconcileTransfer(payoutReconcileMessage, balanceTransaction);
+                                    transfers.getAndIncrement();
                                     break;
                                 case "payout":
                                     emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
@@ -104,16 +102,16 @@ public class PayoutReconcileProcess {
                             }
                         });
 
-                if (payments.intValue() == 0 && refunds.intValue() == 0) {
+                if (payments.intValue() == 0 && transfers.intValue() == 0) {
                     LOGGER.error(format("No payments or refunds retrieved for payout [%s]. Requires investigation.",
                             payoutReconcileMessage.getGatewayPayoutId()),
                             kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
                             kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
                 } else {
-                    LOGGER.info(format("Finished processing payout [%s]. Emitted events for %s payments and %s refunds.",
+                    LOGGER.info(format("Finished processing payout [%s]. Emitted events for %s payments and %s transfers.",
                             payoutReconcileMessage.getGatewayPayoutId(),
                             payments.intValue(),
-                            refunds.intValue()),
+                            transfers.intValue()),
                             kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
                             kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
 
@@ -166,28 +164,45 @@ public class PayoutReconcileProcess {
          return gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
 
-    private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
+    private void reconcilePayment(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
         var paymentSource = (Charge) balanceTransaction.getSourceObject();
         var paymentSourceTransfer = paymentSource.getSourceTransferObject();
-        String paymentExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, paymentSourceTransfer);
+        StripeTransferMetadata stripeTransferMetadata = getStripeTransferMetadata(paymentSourceTransfer);
+        String paymentExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, stripeTransferMetadata);
 
+        emitPaymentEvent(payoutReconcileMessage, paymentExternalId);
+    }
+
+    private void reconcileTransfer(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
+        var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
+        var stripeTransferMetadata = getStripeTransferMetadata(sourceTransfer);
+        String transactionExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, stripeTransferMetadata);
+        if (stripeTransferMetadata.getReason() == TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT) {
+            emitPaymentEvent(payoutReconcileMessage, transactionExternalId);
+        } else {
+            emitRefundEvent(payoutReconcileMessage, transactionExternalId);
+        }
+    }
+
+    private StripeTransferMetadata getStripeTransferMetadata(Transfer sourceTransfer) {
+        return StripeTransferMetadata.from(sourceTransfer.getMetadata());
+    }
+
+    private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, String paymentExternalId) {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
                 payoutReconcileMessage.getCreatedDate());
         emitEvent(paymentEvent, payoutReconcileMessage, paymentExternalId);
 
         LOGGER.info(format("Emitted event for payment [%s] included in payout [%s]",
-                paymentExternalId,
-                payoutReconcileMessage.getGatewayPayoutId()),
+                        paymentExternalId,
+                        payoutReconcileMessage.getGatewayPayoutId()),
                 kv(PAYMENT_EXTERNAL_ID, paymentExternalId),
                 kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
                 kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
     }
 
-    private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
-        var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
-        String refundExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, sourceTransfer);
-
+    private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, String refundExternalId) {
         var refundEvent = new RefundIncludedInPayout(refundExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
                 payoutReconcileMessage.getCreatedDate());
@@ -201,9 +216,8 @@ public class PayoutReconcileProcess {
                 kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
     }
 
-    private String resolveTransactionExternalId(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction, Transfer sourceTransfer) {
-        var metadata = StripeTransferMetadata.from(sourceTransfer.getMetadata());
-        var transactionExternalId = metadata.getGovukPayTransactionExternalId();
+    private String resolveTransactionExternalId(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction, StripeTransferMetadata stripeTransferMetadata) {
+        var transactionExternalId = stripeTransferMetadata.getGovukPayTransactionExternalId();
         if (transactionExternalId == null) {
             throw new RuntimeException(format("Transaction external ID missing in metadata on Stripe transfer for " +
                             "balance transaction [%s] for payout [%s] for gateway account [%s]",
