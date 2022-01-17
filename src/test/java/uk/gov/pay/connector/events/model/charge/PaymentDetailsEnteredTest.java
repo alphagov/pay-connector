@@ -63,7 +63,6 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.title", equalTo("Payment details entered event")));
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
-
         assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(10)));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(110)));
@@ -115,9 +114,8 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.title", equalTo("Payment details entered event")));
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
-
         assertThat(actual, hasNoJsonPath("$.event_details.corporate_surcharge"));
-        assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(100)));
+        assertThat(actual, hasNoJsonPath("$.event_details.total_amount"));
         assertThat(actual, hasNoJsonPath("$.event_details.card_type"));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(validTransactionId)));

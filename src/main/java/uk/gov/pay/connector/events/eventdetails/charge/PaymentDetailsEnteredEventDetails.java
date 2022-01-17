@@ -31,8 +31,8 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final String addressCounty;
     private final String addressStateProvince;
     private final String addressCountry;
-    private final String wallet;
     private final Long totalAmount;
+    private final String wallet;
 
     private PaymentDetailsEnteredEventDetails(Builder builder) {
 
@@ -61,8 +61,6 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         Builder builder = new Builder()
                 .withEmail(charge.getEmail())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCorporateSurcharge(charge.getCorporateSurcharge().orElse(null))
-                .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(charge))
                 .withWallet(Optional.ofNullable(charge.getWalletType()).map(Enum::toString).orElse(null));
         
         Optional.ofNullable(charge.getCardDetails()).ifPresent(
@@ -87,7 +85,11 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                             .withAddressCounty(cardDetails.getBillingAddress().map(AddressEntity::getCounty).orElse(null))
                             .withAddressStateProvince(cardDetails.getBillingAddress().map(AddressEntity::getStateOrProvince).orElse(null))
                             .withAddressPostcode(cardDetails.getBillingAddress().map(AddressEntity::getPostcode).orElse(null)));
-                
+
+        charge.getCorporateSurcharge().ifPresent(corporateSurcharge ->
+                builder.withCorporateSurcharge(corporateSurcharge)
+                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
+        
         return builder.build();
     }
 
