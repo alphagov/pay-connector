@@ -120,7 +120,6 @@ payoutReconcileProcessConfig:
 
 taskQueue:
   taskQueueEnabled: ${TASK_QUEUE_ENABLED:-false}
-  collectFeeForStripeFailedPayments: ${COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENTS:-false}
   failedMessageRetryDelayInSeconds: ${TASK_QUEUE_MESSAGE_RETRY_FAILED_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${TASKS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
   queueSchedulerThreadDelayInSeconds: ${TASKS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
