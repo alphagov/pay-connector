@@ -4,9 +4,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -29,6 +26,8 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,14 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -53,8 +50,8 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
-import static uk.gov.pay.connector.tasks.HistoricalEventEmitter.TERMINAL_AUTHENTICATION_STATES;
 import static uk.gov.pay.connector.tasks.service.ParityCheckService.FIELD_NAME;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeParityChecker {
@@ -229,8 +226,7 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
                 transaction.getNetAmount(), "net_amount");
 
-        if (hasTerminalAuthenticationState(chargeEntity.getEvents())
-                && isNotATelephonePaymentNotification(chargeEntity.getEvents())) {
+        if (chargeEntity.getCorporateSurcharge().isPresent()) {
             fieldsMatch = fieldsMatch && isEquals(getTotalAmountFor(chargeEntity),
                     transaction.getTotalAmount(), "total_amount");
         }
@@ -243,19 +239,6 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && externalMetadataMatches(chargeEntity, transaction);
 
         return fieldsMatch;
-    }
-
-    private boolean isNotATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
-        return !chargeEventEntities.stream()
-                .map(ChargeEventEntity::getStatus)
-                .collect(Collectors.toList()).contains(PAYMENT_NOTIFICATION_CREATED);
-    }
-
-    private boolean hasTerminalAuthenticationState(List<ChargeEventEntity> eventEntities) {
-        Optional<ChargeEventEntity> mayBeChargeEventEntity = eventEntities.stream()
-                .filter(chargeEventEntity -> TERMINAL_AUTHENTICATION_STATES.contains(chargeEventEntity.getStatus()))
-                .findFirst();
-        return mayBeChargeEventEntity.isPresent();
     }
 
     private boolean externalMetadataMatches(ChargeEntity chargeEntity,
