@@ -8,14 +8,18 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
@@ -31,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -104,8 +109,33 @@ public class HistoricalEventEmitter {
         List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
 
         processChargeStateTransitionEvents(charge.getId(), chargeEventEntities, forceEmission);
+        processFeeIncurredEvent(charge, forceEmission);
         processPaymentDetailEnteredEvent(chargeEventEntities, forceEmission);
         processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
+    }
+
+    private void processFeeIncurredEvent(ChargeEntity charge,  boolean forceEmission) {
+        // We only want to emit the FEE_INCURRED event for charges using the new Stripe pricing. The original Stripe
+        // pricing has no FeeType
+        if (!filterFeesForStripeV2(charge.getFees()).isEmpty()) {
+            try {
+                var feeIncurredEvent = FeeIncurredEvent.from(charge);
+                boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(feeIncurredEvent);
+                if (forceEmission || !hasBeenEmittedBefore) {
+                    eventService.emitAndRecordEvent(feeIncurredEvent, getDoNotRetryEmitUntilDate());
+                } else {
+                    logger.info("Charge history event emitted before [chargeExternalId={}]", charge.getExternalId());
+                }
+            } catch (EventCreationException e) {
+                logger.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
+            }
+        }
+    }
+
+    private List<FeeEntity> filterFeesForStripeV2(List<FeeEntity> feesList) {
+        return feesList.stream()
+                .filter(feeEntity -> feeEntity.getFeeType() != null)
+                .collect(Collectors.toList());
     }
 
     public void processRefundEvents(String chargeExternalId, boolean forceEmission) {

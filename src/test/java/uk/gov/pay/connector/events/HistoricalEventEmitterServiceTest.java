@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -23,12 +24,14 @@ import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
@@ -296,6 +299,71 @@ public class HistoricalEventEmitterServiceTest {
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(CaptureSubmitted.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(CaptureConfirmed.class));
+    }
+
+    @Test
+    public void executeShouldEmitFeeIncurredEvent() {
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withFee(Fee.of(FeeType.TRANSACTION, 5L))
+                .withFee(Fee.of(FeeType.RADAR, 2L))
+                .build();
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(emittedEventDao.hasBeenEmittedBefore(any(FeeIncurredEvent.class))).thenReturn(false);
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, times(1)).emitAndRecordEvent(any(FeeIncurredEvent.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldNotEmitFeeIncurredEventWhenFeeTypeIsNull() {
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withFee(Fee.of(null, 5L))
+                .build();
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(FeeIncurredEvent.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldNotEmitFeeIncurredEventWhenEventHasBeenEmittedBefore() {
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withFee(Fee.of(FeeType.TRANSACTION, 5L))
+                .withFee(Fee.of(FeeType.RADAR, 2L))
+                .build();
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(emittedEventDao.hasBeenEmittedBefore(any(FeeIncurredEvent.class))).thenReturn(true);
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(FeeIncurredEvent.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldEmitFeeIncurredEventWhenOnlyRadarFeeIsPresent() {
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withFee(Fee.of(FeeType.RADAR, 2L))
+                .build();
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(emittedEventDao.hasBeenEmittedBefore(any(FeeIncurredEvent.class))).thenReturn(false);
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, times(1)).emitAndRecordEvent(any(FeeIncurredEvent.class), isNotNull());
     }
 
     @Test
