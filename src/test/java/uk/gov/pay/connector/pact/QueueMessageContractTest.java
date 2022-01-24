@@ -17,6 +17,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
@@ -29,6 +30,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDe
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
@@ -378,5 +380,19 @@ public class QueueMessageContractTest {
         );
 
         return event.toJsonString();
+    }
+
+    @PactVerifyProvider("a fee incurred message")
+    public String verifyFeeIncurredEvent() throws Exception {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(ChargeStatus.CAPTURED)
+                .withFee(Fee.of(FeeType.TRANSACTION, 42L))
+                .withFee(Fee.of(FeeType.RADAR, 4L))
+                .withFee(Fee.of(FeeType.THREE_D_S, 5L))
+                .build();
+        
+        var feeIncurredEvent = FeeIncurredEvent.from(chargeEntity);
+
+        return feeIncurredEvent.toJsonString();
     }
 }
