@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -22,10 +23,12 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.logging.log4j.util.Strings.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
@@ -34,6 +37,7 @@ public class ChargeExpungeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ChargeDao chargeDao;
     private final ExpungeConfig expungeConfig;
+    private final StripeGatewayConfig stripeGatewayConfig;
     private final ParityCheckService parityCheckService;
     private final ChargeService chargeService;
 
@@ -43,6 +47,7 @@ public class ChargeExpungeService {
                                 ChargeService chargeService) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();
+        stripeGatewayConfig = connectorConfiguration.getStripeConfig();
         this.parityCheckService = parityCheckService;
         this.chargeService = chargeService;
     }
@@ -98,6 +103,11 @@ public class ChargeExpungeService {
             chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
             logger.info("Charge not expunged because it is not in a terminal state",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+        } else if (chargeEntity.getPaymentGatewayName() == STRIPE && isStripePaymentMissingFees(chargeEntity)) {
+            chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
+            logger.info("Charge not expunged because it is a Stripe payment that requires fees to be collected, but " +
+                            "fees have not yet been processed.",
+                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
             expungeCharge(chargeEntity);
             logger.info("Charge expunged from connector {}", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
@@ -110,6 +120,17 @@ public class ChargeExpungeService {
                         kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             }
         }
+    }
+
+    private boolean isStripePaymentMissingFees(ChargeEntity chargeEntity) {
+        if (chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())) {
+            return false;
+        }
+        // We collect fees asynchronously for failed Stripe payments that we have attempted to authorise with Stripe -
+        // and so have a gateway transaction id. We want to prevent these payments from being expunged if we have not
+        // yet collected the fee.
+        return isNotBlank(chargeEntity.getGatewayTransactionId()) &&
+                chargeEntity.getFees().isEmpty();
     }
 
     @Transactional
