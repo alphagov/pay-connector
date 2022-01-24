@@ -10,12 +10,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.time.Duration;
@@ -28,9 +30,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.FeeType.RADAR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
@@ -48,6 +52,8 @@ public class ChargeExpungeServiceTest {
     @Mock
     private ExpungeConfig mockExpungeConfig;
     @Mock
+    private StripeGatewayConfig mockStripeGatewayConfig;
+    @Mock
     private ChargeDao mockChargeDao;
     @Mock
     private ChargeService mockChargeService;
@@ -60,6 +66,8 @@ public class ChargeExpungeServiceTest {
     public void setUp() {
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(mockExpungeConfig);
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockConnectorConfiguration.getStripeConfig()).thenReturn(mockStripeGatewayConfig);
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()).thenReturn(Instant.parse("2022-01-01T11:07:00.000Z"));
 
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
                 mockChargeService);
@@ -100,6 +108,85 @@ public class ChargeExpungeServiceTest {
 
         verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
         verify(mockChargeDao, never()).expungeCharge(any(), any());
+    }
+
+    @Test
+    public void expunge_shouldNotExpungeCharge_ifIsStripePaymentMissingFees_andUpdateParityCheckStatusToSkipped() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_REJECTED)
+                .withPaymentProvider("stripe")
+                .withGatewayTransactionId("a-gateway-transaction-id")
+                .withCreatedDate(Instant.parse("2022-01-01T11:08:00.000Z"))
+                .build();
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
+        verify(mockChargeDao, never()).expungeCharge(any(), any());
+    }
+
+    @Test
+    public void expunge_shouldExpungeCharge_whenStripePaymentHasFees() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_REJECTED)
+                .withPaymentProvider("stripe")
+                .withGatewayTransactionId("a-gateway-transaction-id")
+                .withCreatedDate(Instant.parse("2022-01-01T11:08:00.000Z"))
+                .withFee(Fee.of(RADAR, 5L))
+                .build();
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+    }
+
+    @Test
+    public void expunge_shouldExpungeCharge_ifStripePaymentWithoutGatewayTransactionIdAndNoFees() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_REJECTED)
+                .withPaymentProvider("stripe")
+                .withCreatedDate(Instant.parse("2022-01-01T11:08:00.000Z"))
+                .build();
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+    }
+
+    @Test
+    public void expunge_shouldExpungeCharge_ifStripePaymentMissingFees_createdBeforeCollectFeeForStripeFailedPaymentsFromDate() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_REJECTED)
+                .withPaymentProvider("stripe")
+                .withGatewayTransactionId("a-gateway-transaction-id")
+                .withCreatedDate(Instant.parse("2022-01-01T11:06:00.000Z"))
+                .build();
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 
     @Test
