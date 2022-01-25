@@ -123,7 +123,8 @@ public class ChargeExpungeService {
     }
 
     private boolean isStripePaymentMissingFees(ChargeEntity chargeEntity) {
-        if (chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())) {
+        if (chargeEntity.getGatewayAccount().isLive() &&
+                chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())) {
             return false;
         }
         // We collect fees asynchronously for failed Stripe payments that we have attempted to authorise with Stripe -
