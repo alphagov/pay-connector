@@ -32,7 +32,7 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
                 && errorResponse.getError().getStripePaymentIntent() != null) {
             return errorResponse.getError().getStripePaymentIntent().getId();
         } else {
-            logger.error("Payment intent not found on Stripe error response");
+            logger.info("Stripe error response does not contain a payment intent. It is likely that the authorisation failed when creating the payment_method.");
             return null;
         }
     }
