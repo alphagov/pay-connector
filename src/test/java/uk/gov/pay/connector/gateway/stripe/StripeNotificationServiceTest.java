@@ -13,6 +13,9 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -23,6 +26,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.QueueException;
@@ -38,6 +42,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -46,6 +51,7 @@ import static org.hamcrest.Matchers.hasItemInArray;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -76,6 +82,7 @@ class StripeNotificationServiceTest {
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     private StripeNotificationService notificationService;
+    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
 
     @Mock
     private Card3dsResponseAuthService mockCard3dsResponseAuthService;
@@ -91,6 +98,8 @@ class StripeNotificationServiceTest {
     private PayoutEmitterService mockPayoutEmitterService;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
+    @Mock
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -98,7 +107,6 @@ class StripeNotificationServiceTest {
     @Captor
     private ArgumentCaptor<Payout> payoutArgumentCaptor;
 
-    private final StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(objectMapper);
     private final StripeRefundUpdatedHandler stripeRefundUpdatedHandler = new StripeRefundUpdatedHandler(objectMapper);
 
     private final String externalId = "external-id";
@@ -108,6 +116,7 @@ class StripeNotificationServiceTest {
 
     @BeforeEach
     void setup() {
+        stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(mockGatewayAccountCredentialsService, objectMapper);
         notificationService = new StripeNotificationService(
                 mockCard3dsResponseAuthService,
                 mockChargeService,
@@ -410,7 +419,25 @@ class StripeNotificationServiceTest {
 
         assertFalse(result);
     }
-    
+
+    @Test
+    void shouldUpdateCredentialsIfNoRequirements() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
+
+        notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+        verify(mockGatewayAccountCredentialsService, times(1)).activateCredentialIfNotYetActive(anyString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("requirements")
+    void shouldNotUpdateCredentials(String target, String replacement) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
+        payload = payload.replace(target, replacement);
+
+        notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+        verify(mockGatewayAccountCredentialsService, never()).activateCredentialIfNotYetActive(anyString());
+    }
+
     private static String sampleStripeNotification(String location,
                                                    String objectId,
                                                    StripeNotificationType stripeNotificationType) {
@@ -428,5 +455,14 @@ class StripeNotificationServiceTest {
         auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
         auth3dsResult.setThreeDsVersion(threeDsVersion);
         return auth3dsResult;
+    }
+
+    static Stream<Arguments> requirements() {
+        return Stream.of(
+                arguments("\"payouts_enabled\": true,", "\"payouts_enabled\": false,"),
+                arguments("\"charges_enabled\": true,", "\"charges_enabled\": false,"),
+                arguments("\"currently_due\": [", "\"currently_due\": [\"individual.dob.day\""),
+                arguments("\"past_due\": [", "\"past_due\": [\"individual.dob.day\"")
+        );
     }
 }

@@ -15,9 +15,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
@@ -35,7 +37,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
@@ -513,5 +518,84 @@ public class GatewayAccountCredentialsServiceTest {
         Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
 
         assertThat(gatewayAccountCredentialsEntity.isPresent(), is(false));
+    }
+
+    @Test
+    void shouldUpdateStateToActiveIfNotActive() {
+        String stripeCredentialId = "credentialId";
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(STRIPE.getName())
+                .withState(CREATED)
+                .withCredentials(Map.of(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+        gatewayAccountCredentialsService.activateCredentialIfNotYetActive(stripeCredentialId);
+
+        verify(mockGatewayAccountCredentialsDao, times(1)).merge(any(GatewayAccountCredentialsEntity.class));
+    }
+
+    @Test
+    void shouldUpdateStateToEnteredIfActiveCredentialAlreadyExists() {
+        String stripeCredentialId = "credentialId";
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity updatableEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(STRIPE.getName())
+                .withState(CREATED)
+                .withCredentials(Map.of(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        GatewayAccountCredentialsEntity existingEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .withCredentials(Map.of(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(updatableEntity, existingEntity));
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .thenReturn(Optional.of(updatableEntity));
+        gatewayAccountCredentialsService.activateCredentialIfNotYetActive(stripeCredentialId);
+
+        assertThat(updatableEntity.getState(), is(ENTERED));
+        verify(mockGatewayAccountCredentialsDao, times(1)).merge(any(GatewayAccountCredentialsEntity.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ACTIVE", "RETIRED", "VERIFIED_WITH_LIVE_PAYMENT", "ENTERED"})
+    void shouldNotUpdateStateToActive(String state) {
+        var credentialState = GatewayAccountCredentialState.valueOf(state);
+        String stripeCredentialId = "credentialId";
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(STRIPE.getName())
+                .withState(credentialState)
+                .withCredentials(Map.of(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .build();
+
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+        gatewayAccountCredentialsService.activateCredentialIfNotYetActive(stripeCredentialId);
+
+        verify(mockGatewayAccountCredentialsDao, never()).merge(any(GatewayAccountCredentialsEntity.class));
+    }
+
+    @Test
+    void shouldNotUpdateNonExistentCredentials() {
+        String stripeCredentialId = "credentialId";
+        when(mockGatewayAccountCredentialsDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeCredentialId))
+                .thenReturn(Optional.empty());
+        gatewayAccountCredentialsService.activateCredentialIfNotYetActive(stripeCredentialId);
+
+        verify(mockGatewayAccountCredentialsDao, never()).merge(any(GatewayAccountCredentialsEntity.class));
     }
 }

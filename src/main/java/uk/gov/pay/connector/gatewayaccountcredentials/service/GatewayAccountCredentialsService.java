@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
@@ -231,5 +232,40 @@ public class GatewayAccountCredentialsService {
                 .or(() -> gatewayAccountCredentialsEntities.stream().findFirst());
 
         return gatewayAccountCredentials.or(() -> gatewayAccountCredentialsEntityByPaymentProvider);
+    }
+
+    @Transactional
+    public void activateCredentialIfNotYetActive(String stripeAccountId) {
+        var credentials = gatewayAccountCredentialsDao
+                .findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
+
+        credentials.ifPresent(updatableCredentialEntity -> {
+            if (updatableCredentialEntity.getState() != CREATED) {
+                return;
+            }
+            Optional<GatewayAccountCredentialsEntity> existingCredentials = updatableCredentialEntity
+                    .getGatewayAccountEntity()
+                    .getGatewayAccountCredentials()
+                    .stream()
+                    .filter(gatewayAccountCredentialsEntity ->
+                            gatewayAccountCredentialsEntity.getState() == ACTIVE)
+                    .findFirst();
+
+            if (existingCredentials.isPresent()) {
+                updatableCredentialEntity.setState(ENTERED);
+                LOGGER.info(String.format("Updated stripe account %s to ENTERED", stripeAccountId),
+                        kv("stripe_account_id", stripeAccountId),
+                        kv("credential_id", updatableCredentialEntity.getExternalId()),
+                        kv("gateway_account_id", updatableCredentialEntity.getGatewayAccountEntity().getId()));
+            } else {
+                updatableCredentialEntity.setActiveStartDate(Instant.now());
+                updatableCredentialEntity.setState(ACTIVE);
+                LOGGER.info(String.format("Updated stripe account %s to ACTIVE", stripeAccountId),
+                        kv("stripe_account_id", stripeAccountId),
+                        kv("credential_id", updatableCredentialEntity.getExternalId()),
+                        kv("gateway_account_id", updatableCredentialEntity.getGatewayAccountEntity().getId()));
+            }
+            gatewayAccountCredentialsDao.merge(updatableCredentialEntity);
+        });
     }
 }

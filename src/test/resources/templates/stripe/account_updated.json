@@ -80,7 +80,7 @@
       },
       "metadata": {
       },
-      "payouts_enabled": false,
+      "payouts_enabled": true,
       "requirements": {
         "current_deadline": null,
         "currently_due": [
