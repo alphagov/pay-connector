@@ -47,6 +47,8 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -103,8 +105,10 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Test
-    void createCredentialsForStripeShouldCreateRecordWithEnteredStateIfAnActiveGatewayAccountCredentialExists() {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+    void createCredentialsForStripeShouldCreateRecordWithCreatedStateIfAnActiveGatewayAccountCredentialExists() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withType(LIVE)
+                .build();
         when(mockGatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId())).thenReturn(true);
 
         ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
@@ -115,13 +119,15 @@ public class GatewayAccountCredentialsServiceTest {
 
         assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
         assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
-        assertThat(gatewayAccountCredentialsEntity.getState(), is(ENTERED));
+        assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
         assertThat(gatewayAccountCredentialsEntity.getCredentials().get("stripe_account_id"), is("abc"));
     }
 
     @Test
     void createCredentialsForStripeAndWithOutCredentialsShouldCreateRecordWithCreatedState() {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withType(LIVE)
+                .build();
 
         ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
         gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity, "stripe", Map.of());
@@ -132,6 +138,42 @@ public class GatewayAccountCredentialsServiceTest {
         assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
         assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
         assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
+        assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+    }
+
+    @Test
+    void createCredentialsForStripeTestWithOutCredentialsShouldCreateRecordWithActiveState() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withType(TEST)
+                .build();
+
+        ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
+        gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity, "stripe", Map.of());
+
+        verify(mockGatewayAccountCredentialsDao).persist(argumentCaptor.capture());
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = argumentCaptor.getValue();
+
+        assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
+        assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
+        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
+        assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+    }
+
+    @Test
+    void createCredentialsForSandboxWithOutCredentialsShouldCreateRecordWithActiveState() {
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withType(TEST)
+                .build();
+
+        ArgumentCaptor<GatewayAccountCredentialsEntity> argumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
+        gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity, "sandbox", Map.of());
+
+        verify(mockGatewayAccountCredentialsDao).persist(argumentCaptor.capture());
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = argumentCaptor.getValue();
+
+        assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("sandbox"));
+        assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
+        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
         assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
     }
 
