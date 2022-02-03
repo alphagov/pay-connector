@@ -46,6 +46,9 @@ public class StripeAccountSetupService {
                         case GOVERNMENT_ENTITY_DOCUMENT:
                             stripeAccountSetup.setGovernmentEntityDocument(true);
                             break;
+                        case ORGANISATION_DETAILS:
+                            stripeAccountSetup.setOrganisationDetailsCompleted(true);
+                            break;
                         default:
                             // Code doesn’t handle this task
                     }

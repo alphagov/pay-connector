@@ -38,6 +38,8 @@ public class StripeAccountSetupRequestValidatorTest {
             "replace, director, false",
             "replace, government_entity_document, true",
             "replace, government_entity_document, false",
+            "replace, organisation_details, true",
+            "replace, organisation_details, false",
     })
     @Test
     public void shouldAllowReplaceOperationForValidPathsAndValues(String operation, String path, boolean value) {
@@ -54,7 +56,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 Map.of("operation", "add", "path", "bank_account", "value", true,
                         "expectedErrorMessage", "Operation [add] not supported for path [bank_account]"),
                 Map.of("operation", "add", "path", "blood_sample_deposited", "value", true,
-                        "expectedErrorMessage", "Field [path] must be one of [additional_kyc_data, bank_account, company_number, director, government_entity_document, responsible_person, vat_number]"),
+                        "expectedErrorMessage", "Field [path] must be one of [additional_kyc_data, bank_account, company_number, director, government_entity_document, organisation_details, responsible_person, vat_number]"),
 
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "value", true),
                 Map.of("expectedErrorMessage", "Field [path] is required", "operation", "replace", "path", "", "value", true),
