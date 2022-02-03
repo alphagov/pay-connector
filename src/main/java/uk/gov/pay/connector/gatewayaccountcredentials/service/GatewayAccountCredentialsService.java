@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
@@ -35,6 +36,8 @@ import static java.lang.String.format;
 import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -84,11 +87,21 @@ public class GatewayAccountCredentialsService {
 
     private GatewayAccountCredentialState calculateStateForNewCredentials(GatewayAccountEntity gatewayAccountEntity,
                                                                           String paymentProvider, Map<String, String> credentials) {
-        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(paymentProvider);
+        var paymentGatewayName = PaymentGatewayName.valueFrom(paymentProvider);
         boolean isFirstCredentials = !gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
         boolean credentialsPrePopulated = !credentials.isEmpty();
+        var gatewayAccountType = GatewayAccountType.fromString(gatewayAccountEntity.getType());
 
-        if ((isFirstCredentials && credentialsPrePopulated) || paymentGatewayName == SANDBOX) {
+        if (paymentGatewayName == SANDBOX ||
+                (paymentGatewayName == STRIPE && gatewayAccountType == TEST)) {
+            return ACTIVE;
+        }
+
+        if (paymentGatewayName == STRIPE) {
+            return CREATED;
+        }
+
+        if ((isFirstCredentials && credentialsPrePopulated)) {
             return ACTIVE;
         }
 
