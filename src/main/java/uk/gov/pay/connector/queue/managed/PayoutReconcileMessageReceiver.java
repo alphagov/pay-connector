@@ -55,32 +55,15 @@ public class PayoutReconcileMessageReceiver implements Managed {
     @Override
     public void stop() {
         LOGGER.info("Shutting down payout reconciliation service");
-        payoutReconcileMessageExecutorService.shutdown();
-        try {
-            // Wait for existing payouts to finish being captured
-            if (payoutReconcileMessageExecutorService.awaitTermination(15, TimeUnit.SECONDS)) {
-                LOGGER.info("payout reconciliation service shut down cleanly");
-            } else {
-                // If the existing payouts being captured didn't terminate within the allowed time then force them to.
-                LOGGER.error("Payouts still being captured after shutdown wait time will now be forcefully stopped");
-                payoutReconcileMessageExecutorService.shutdownNow();
-                if (!payoutReconcileMessageExecutorService.awaitTermination(12, TimeUnit.SECONDS)){
-                    LOGGER.error("Payout reconciliation service could not be forced stopped");
-                }
-            }
-        } catch (InterruptedException ex) {
-            LOGGER.error("Failed to shutdown payout reconciliation service cleanly as the wait was interrupted.");
-            payoutReconcileMessageExecutorService.shutdownNow();
-            // Preserve interrupt status
-            Thread.currentThread().interrupt();
-        }
+        payoutReconcileMessageExecutorService.shutdownNow();
+        LOGGER.info("Payout reconciliation service shut down");
     }
 
     private void processPayouts() {
         try {
             payoutReconcileProcess.processPayouts();
         } catch (Exception e) {
-            LOGGER.error("Queue message payoutReconcileMessageReceiver thread exception [message={}]", e.getMessage());
+            LOGGER.warn("Queue message payoutReconcileMessageReceiver thread exception [class={} message={}]", e.getClass(), e.getMessage());
         }
     }
 }
