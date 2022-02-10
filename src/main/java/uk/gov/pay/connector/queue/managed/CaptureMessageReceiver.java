@@ -4,6 +4,7 @@ import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
@@ -18,6 +19,7 @@ public class CaptureMessageReceiver implements Managed {
     private static final Logger LOGGER = LoggerFactory.getLogger(CaptureMessageReceiver.class);
 
     private final int queueSchedulerThreadDelayInSeconds;
+    private final int queueSchedulerShutdownTimeoutInSeconds;
     private final CardCaptureProcess cardCaptureProcess;
     private ScheduledExecutorService chargeCaptureMessageExecutorService;
 
@@ -26,7 +28,8 @@ public class CaptureMessageReceiver implements Managed {
                                   ConnectorConfiguration connectorConfiguration) {
         this.cardCaptureProcess = cardCaptureProcess;
 
-        int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig()
+        CaptureProcessConfig captureProcessConfig = connectorConfiguration.getCaptureProcessConfig();
+        int queueScheduleNumberOfThreads = captureProcessConfig
                 .getQueueSchedulerNumberOfThreads();
 
         chargeCaptureMessageExecutorService = environment
@@ -35,8 +38,8 @@ public class CaptureMessageReceiver implements Managed {
                 .threads(queueScheduleNumberOfThreads)
                 .build();
 
-        queueSchedulerThreadDelayInSeconds = connectorConfiguration.getCaptureProcessConfig()
-                .getQueueSchedulerThreadDelayInSeconds();
+        queueSchedulerThreadDelayInSeconds = captureProcessConfig.getQueueSchedulerThreadDelayInSeconds();
+        queueSchedulerShutdownTimeoutInSeconds = captureProcessConfig.getQueueSchedulerShutdownTimeoutInSeconds();
     }
 
     @Override
@@ -55,7 +58,7 @@ public class CaptureMessageReceiver implements Managed {
         chargeCaptureMessageExecutorService.shutdown();
         try {
             // Wait for existing charges to finish being captured
-            if (chargeCaptureMessageExecutorService.awaitTermination(15, TimeUnit.SECONDS)) {
+            if (chargeCaptureMessageExecutorService.awaitTermination(queueSchedulerShutdownTimeoutInSeconds, TimeUnit.SECONDS)) {
                 LOGGER.info("card capture service shut down cleanly");
             } else {
                 // If the existing charges being captured didn't terminate within the allowed time then force them to.

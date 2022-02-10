@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.queue.tasks.TaskQueueMessageHandler;
 
 import javax.inject.Inject;
@@ -18,6 +19,7 @@ public class TaskQueueMessageReceiver implements Managed {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueueMessageReceiver.class);
 
     private final int queueSchedulerThreadDelayInSeconds;
+    private final int queueSchedulerShutdownTimeoutInSeconds;
     private final TaskQueueMessageHandler taskQueueMessageHandler;
     private boolean taskQueueEnabled;
     private ScheduledExecutorService tasksQueueScheduledExecutorService;
@@ -35,8 +37,10 @@ public class TaskQueueMessageReceiver implements Managed {
                 .threads(queueScheduleNumberOfThreads)
                 .build();
 
-        queueSchedulerThreadDelayInSeconds = connectorConfiguration.getTaskQueueConfig().getQueueSchedulerThreadDelayInSeconds();
-        taskQueueEnabled = connectorConfiguration.getTaskQueueConfig().getTaskQueueEnabled();
+        TaskQueueConfig taskQueueConfig = connectorConfiguration.getTaskQueueConfig();
+        queueSchedulerThreadDelayInSeconds = taskQueueConfig.getQueueSchedulerThreadDelayInSeconds();
+        queueSchedulerShutdownTimeoutInSeconds = taskQueueConfig.getQueueSchedulerShutdownTimeoutInSeconds();
+        taskQueueEnabled = taskQueueConfig.getTaskQueueEnabled();
     }
 
     @Override
@@ -56,7 +60,7 @@ public class TaskQueueMessageReceiver implements Managed {
         LOGGER.info("Shutting down task queue message receiver");
         tasksQueueScheduledExecutorService.shutdown();
         try {
-            if (tasksQueueScheduledExecutorService.awaitTermination(15, TimeUnit.SECONDS)) {
+            if (tasksQueueScheduledExecutorService.awaitTermination(queueSchedulerShutdownTimeoutInSeconds, TimeUnit.SECONDS)) {
                 LOGGER.info("Task queue message receiver shut down cleanly");
             } else {
                 LOGGER.error("Task queue still processing messages after shutdown wait time will now be forcefully stopped");

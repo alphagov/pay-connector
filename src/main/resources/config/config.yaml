@@ -140,6 +140,7 @@ captureProcessConfig:
 
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
+  queueSchedulerShutdownTimeoutInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_SHUTDOWN_TIMEOUT_IN_SECONDS:-40}
 
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-false}
@@ -169,6 +170,7 @@ taskQueue:
   failedMessageRetryDelayInSeconds: ${TASK_QUEUE_MESSAGE_RETRY_FAILED_IN_SECONDS:-3600}
   queueSchedulerNumberOfThreads: ${TASKS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
   queueSchedulerThreadDelayInSeconds: ${TASKS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
+  queueSchedulerShutdownTimeoutInSeconds: ${TASKS_QUEUE_SCHEDULER_SHUTDOWN_TIMEOUT_IN_SECONDS:-40}
 
 jerseyClient:
   # Defines the socket timeout (SO_TIMEOUT), which is the
