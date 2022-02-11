@@ -8,6 +8,7 @@ public class TaskQueueConfig extends Configuration {
     private int queueSchedulerNumberOfThreads;
     private int queueSchedulerThreadDelayInSeconds;
     private int failedMessageRetryDelayInSeconds;
+    private int queueSchedulerShutdownTimeoutInSeconds;
 
     public Boolean getTaskQueueEnabled() {
         return taskQueueEnabled;
@@ -23,5 +24,9 @@ public class TaskQueueConfig extends Configuration {
 
     public int getFailedMessageRetryDelayInSeconds() {
         return failedMessageRetryDelayInSeconds;
+    }
+
+    public int getQueueSchedulerShutdownTimeoutInSeconds() {
+        return queueSchedulerShutdownTimeoutInSeconds;
     }
 }

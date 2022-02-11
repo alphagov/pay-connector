@@ -17,6 +17,7 @@ public class CaptureProcessConfig extends Configuration {
     private int failedCaptureRetryDelayInSeconds;
     private int queueSchedulerThreadDelayInSeconds;
     private int queueSchedulerNumberOfThreads;
+    private int queueSchedulerShutdownTimeoutInSeconds;
 
     public int getChargesConsideredOverdueForCaptureAfter() {
         return chargesConsideredOverdueForCaptureAfter;
@@ -38,5 +39,9 @@ public class CaptureProcessConfig extends Configuration {
 
     public int getQueueSchedulerNumberOfThreads() {
         return queueSchedulerNumberOfThreads;
+    }
+
+    public int getQueueSchedulerShutdownTimeoutInSeconds() {
+        return queueSchedulerShutdownTimeoutInSeconds;
     }
 }
