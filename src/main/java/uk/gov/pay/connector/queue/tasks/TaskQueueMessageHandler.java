@@ -2,7 +2,7 @@ package uk.gov.pay.connector.queue.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 import java.util.List;

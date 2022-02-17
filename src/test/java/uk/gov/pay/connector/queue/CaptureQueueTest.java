@@ -14,7 +14,9 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
-import uk.gov.pay.connector.queue.sqs.SqsQueueService;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
+import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
 import java.util.Arrays;
 import java.util.List;

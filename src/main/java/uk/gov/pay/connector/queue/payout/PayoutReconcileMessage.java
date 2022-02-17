@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.queue.payout;
 
-import uk.gov.pay.connector.queue.QueueMessage;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
 import java.time.ZonedDateTime;
 

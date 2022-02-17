@@ -22,10 +22,10 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.pay.connector.util.IpAddressMatcher;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.List;

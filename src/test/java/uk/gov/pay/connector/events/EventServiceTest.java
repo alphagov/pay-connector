@@ -9,7 +9,7 @@ import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
-import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.ZonedDateTime;
 

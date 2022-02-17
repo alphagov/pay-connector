@@ -11,9 +11,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
-import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.QueueMessage;
-import uk.gov.pay.connector.queue.sqs.SqsQueueService;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
+import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
 import java.util.Arrays;
 import java.util.List;

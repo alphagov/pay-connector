@@ -33,11 +33,11 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.QueueMessage;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
 import java.time.ZonedDateTime;
 import java.util.List;

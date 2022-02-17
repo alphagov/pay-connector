@@ -20,9 +20,9 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 import java.util.List;
