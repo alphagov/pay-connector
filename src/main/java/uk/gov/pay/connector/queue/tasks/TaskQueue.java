@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.queue.AbstractQueue;
-import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.QueueMessage;
-import uk.gov.pay.connector.queue.sqs.SqsQueueService;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
+import uk.gov.service.payments.commons.queue.sqs.AbstractQueue;
+import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
 import javax.inject.Inject;
 import java.io.IOException;

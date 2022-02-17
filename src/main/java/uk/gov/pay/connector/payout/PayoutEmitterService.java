@@ -14,7 +14,7 @@ import uk.gov.pay.connector.events.model.payout.PayoutUpdated;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

@@ -19,7 +19,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.Instant;
 import java.util.List;

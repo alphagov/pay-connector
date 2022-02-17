@@ -33,6 +33,7 @@ import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
+import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
@@ -294,5 +295,13 @@ public class ConnectorModule extends AbstractModule {
         }
 
         return clientBuilder.build();
+    }
+
+    @Provides
+    public SqsQueueService provideSqsQueueService(AmazonSQS amazonSQS, ConnectorConfiguration connectorConfiguration) {
+        return new SqsQueueService(
+                amazonSQS,
+                connectorConfiguration.getSqsConfig().getMessageMaximumWaitTimeInSeconds(),
+                connectorConfiguration.getSqsConfig().getMessageMaximumBatchSize());
     }
 }

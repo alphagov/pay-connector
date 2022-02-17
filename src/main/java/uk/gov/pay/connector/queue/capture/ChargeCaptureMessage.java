@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.queue.capture;
 
-import uk.gov.pay.connector.queue.QueueMessage;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
 public class ChargeCaptureMessage {
     private CaptureCharge captureCharge;
