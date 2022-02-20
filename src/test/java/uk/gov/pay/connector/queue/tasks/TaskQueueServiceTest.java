@@ -5,21 +5,22 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.pay.connector.queue.tasks.model.Task;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,24 +37,16 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.queue.tasks.TaskQueueService.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueServiceTest {
 
     @Mock
     private TaskQueue mockTaskQueue;
-    
-    @Mock
-    private ConnectorConfiguration mockConnectorConfiguration;
-    
-    @Mock
-    private TaskQueueConfig mockTaskQueueConfig;
 
     @Mock
     private StripeGatewayConfig mockStripeGatewayConfig;
-
-    @InjectMocks
+    
     private TaskQueueService taskQueueService;
 
     @Mock
@@ -61,19 +54,19 @@ class TaskQueueServiceTest {
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private int chargeCreatedBeforeDate = 1629849600; //25Aug2021
-    private int feeCollectingStartsDate = 1629936000; //26 Aug2021
-    private int chargeCreatedAfterDate =  1630105200; //27 Aug2021
+    private final int chargeCreatedBeforeDate = 1629849600; //25Aug2021
+    private final int feeCollectingStartsDate = 1629936000; //26 Aug2021
+    private final int chargeCreatedAfterDate =  1630105200; //27 Aug2021
 
     @BeforeEach
     void setUp() {
-        Logger root = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+        taskQueueService = new TaskQueueService(mockTaskQueue, mockStripeGatewayConfig, objectMapper);
+        Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
+        logger.setLevel(Level.INFO);
+        logger.addAppender(mockAppender);
     }
 
     @Test
@@ -98,8 +91,8 @@ class TaskQueueServiceTest {
                 .thenReturn(List.of(String.valueOf(chargeEntity.getGatewayAccount().getId())));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
-
-        var expectedPaymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
         verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
     }
 
@@ -119,6 +112,8 @@ class TaskQueueServiceTest {
                 .build();
 
         setupStripeGatewayConfigMock("12");
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
@@ -140,6 +135,9 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
@@ -159,6 +157,9 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
@@ -177,6 +178,9 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+        
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
@@ -198,12 +202,15 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
+        assertThat(loggingEvent.getLevel(), is(Level.WARN));
         assertThat(loggingEvent.getMessage(), is("Error adding payment task message to queue"));
     }
 
@@ -226,7 +233,6 @@ class TaskQueueServiceTest {
 
     @Test
     void shouldOfferFeeTask_whenTestGatewayAccountIsEnabled() throws Exception {
-        var failedFeeDateAfterChargeCreatedDate = 1629936000; //26 Aug2021
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
@@ -246,8 +252,9 @@ class TaskQueueServiceTest {
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
-        var expectedPaymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
+        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    
     }
 
     @Test
@@ -266,11 +273,12 @@ class TaskQueueServiceTest {
                 .build();
 
         setupStripeGatewayConfigMock("12");
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
-
-        var expectedPaymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
-    }
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
+        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    }
 
     @Test
     void shouldOfferFeeTask_whenCreatedDateIsAfterCollectEnableDate() throws Exception {
@@ -286,11 +294,13 @@ class TaskQueueServiceTest {
                         .withType(LIVE)
                         .build())
                 .build();
-
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
+        
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
-
-        var expectedPaymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
+        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    
     }
 
     @Test
@@ -308,10 +318,13 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
-        var expectedPaymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
+        taskQueueService.offerTasksOnStateTransition(chargeEntity);
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
+        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    
     }
 
     @Test
@@ -330,11 +343,32 @@ class TaskQueueServiceTest {
                 .build();
 
         setupStripeGatewayConfigMock("1");
+        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
+                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
     }
+    
+    @Test
+    void shouldAddTaskToQueue() throws QueueException, JsonProcessingException {
+        var task = new Task("some data", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
+        taskQueueService.add(task);
+        verify(mockTaskQueue).addTaskToQueue(eq(task));
+    }
+    
+    @Test
+    void shouldLogErrorForFailedTaskAddition() throws QueueException, JsonProcessingException {
+        doThrow(new QueueException("Something went wrong")).when(mockTaskQueue).addTaskToQueue(any());
+        var task = new Task("some data", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
+        taskQueueService.add(task);
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
+        assertThat(loggingEvent.getMessage(), is("Error adding task to queue"));
+    }
+    
 
     private void setupStripeGatewayConfigMock(String gatewayAccountId) {
         when(mockStripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(false);

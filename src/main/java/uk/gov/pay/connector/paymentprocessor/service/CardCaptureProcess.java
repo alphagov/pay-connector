@@ -14,6 +14,8 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import javax.inject.Inject;
 import java.util.List;
 
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+
 public class CardCaptureProcess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureProcess.class);
@@ -37,7 +39,7 @@ public class CardCaptureProcess {
         List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
         for (ChargeCaptureMessage message : captureMessages) {
             try {
-                MDC.put("chargeId", message.getChargeId());
+                MDC.put(PAYMENT_EXTERNAL_ID, message.getChargeId());
                 LOGGER.info("Charge capture message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
                         message.getQueueMessageId(),
                         message.getQueueMessageReceiptHandle()
@@ -50,7 +52,7 @@ public class CardCaptureProcess {
                         e.getMessage()
                 );
             } finally {
-                MDC.remove("chargeId");
+                MDC.remove(PAYMENT_EXTERNAL_ID);
             }
         }
     }

@@ -9,12 +9,15 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
 import uk.gov.service.payments.commons.queue.sqs.AbstractQueue;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
+import uk.gov.pay.connector.queue.tasks.model.Task;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static net.logstash.logback.argument.StructuredArguments.kv;
 
 public class TaskQueue extends AbstractQueue {
 
@@ -29,14 +32,15 @@ public class TaskQueue extends AbstractQueue {
                 connectorConfiguration.getTaskQueueConfig().getFailedMessageRetryDelayInSeconds());
     }
 
-    public void addTaskToQueue(PaymentTask paymentTask) throws QueueException, JsonProcessingException {
-        String message = objectMapper.writeValueAsString(paymentTask);
+    public void addTaskToQueue(Task task) throws QueueException, JsonProcessingException {
+        String message = objectMapper.writeValueAsString(task);
         QueueMessage queueMessage = sendMessageToQueue(message);
-        LOGGER.info("Task [{}] added to queue. Message ID [{}]",
-                paymentTask.getPaymentExternalId(), queueMessage.getMessageId());
+        LOGGER.info("Task added to queue",
+                kv("task_type", task.getTaskType().getName()),
+                kv("message_id", queueMessage.getMessageId()));
     }
 
-    public List<PaymentTaskMessage> retrieveTaskQueueMessages() throws QueueException {
+    public List<TaskMessage> retrieveTaskQueueMessages() throws QueueException {
         List<QueueMessage> queueMessages = retrieveMessages();
 
         return queueMessages
@@ -46,14 +50,14 @@ public class TaskQueue extends AbstractQueue {
                 .collect(Collectors.toList());
     }
 
-    private PaymentTaskMessage deserializeMessage(QueueMessage qm) {
+    private TaskMessage deserializeMessage(QueueMessage qm) {
         try {
-            PaymentTask paymentTask = objectMapper.readValue(qm.getMessageBody(), PaymentTask.class);
-
-            return PaymentTaskMessage.of(paymentTask, qm);
+            Task task = objectMapper.readValue(qm.getMessageBody(), Task.class);
+            return TaskMessage.of(task, qm);
         } catch (IOException e) {
-            LOGGER.error("Error parsing message [message={}] from tasks queue [error={}]",
-                    qm.getMessageBody(), e.getMessage());
+            LOGGER.error("Error parsing message from tasks queue",
+                    kv("message", qm.getMessageBody()),
+                    kv("error",  e.getMessage()));
             return null;
         }
     }

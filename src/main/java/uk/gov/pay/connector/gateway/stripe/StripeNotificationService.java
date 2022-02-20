@@ -8,6 +8,7 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.Webhook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -24,6 +25,9 @@ import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
+import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -38,6 +42,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CREATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
@@ -75,8 +80,10 @@ public class StripeNotificationService {
     private final PayoutEmitterService payoutEmitterService;
     private final IpAddressMatcher ipAddressMatcher;
     private final Set<String> allowedStripeIpAddresses;
+    private final TaskQueueService taskQueueService;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
+    private static final String STRIPE_EVENT_ID = "stripe_event_id";
     private static final long DEFAULT_TOLERANCE = 300L;
 
     @Inject
@@ -89,7 +96,8 @@ public class StripeNotificationService {
                                      PayoutEmitterService payoutEmitterService,
                                      IpAddressMatcher ipAddressMatcher,
                                      @Named("AllowedStripeIpAddresses") Set<String> allowedStripeIpAddresses,
-                                     ObjectMapper objectMapper) {
+                                     ObjectMapper objectMapper,
+                                     TaskQueueService taskQueueService) {
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeService = chargeService;
         this.stripeAccountUpdatedHandler = stripeAccountUpdatedHandler;
@@ -100,6 +108,7 @@ public class StripeNotificationService {
         this.payoutEmitterService = payoutEmitterService;
         this.ipAddressMatcher = ipAddressMatcher;
         this.allowedStripeIpAddresses = allowedStripeIpAddresses;
+        this.taskQueueService = taskQueueService;
     }
 
     public boolean handleNotificationFor(String payload, String signatureHeader, String forwardedIpAddresses) {
@@ -116,6 +125,7 @@ public class StripeNotificationService {
         StripeNotification notification;
         try {
             notification = parseNotification(payload);
+            MDC.put(STRIPE_EVENT_ID, notification.getId());
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
         } catch (StripeParseException e) {
             logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
@@ -130,8 +140,16 @@ public class StripeNotificationService {
             processPayoutNotification(notification);
         } else if (isARefundUpdatedNotification(notification)) {
             stripeRefundUpdatedHandler.process(notification);
+        } else if (isADisputeCreatedNotification(notification)) {
+            processDisputeCreatedNotification(notification, payload);
         }
+        MDC.remove(STRIPE_EVENT_ID);
         return true;
+    }
+
+    private void processDisputeCreatedNotification(StripeNotification notification, String payload) {
+        logger.info("Received a {} event", notification.getType());
+        taskQueueService.add(new Task(payload, TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION));
     }
 
     private void processPayoutNotification(StripeNotification notification) {
@@ -283,6 +301,10 @@ public class StripeNotificationService {
     
     private boolean isARefundUpdatedNotification(StripeNotification notification) {
         return byType(notification.getType()) == REFUND_UPDATED;
+    }
+
+    private boolean isADisputeCreatedNotification(StripeNotification notification) {
+        return byType(notification.getType()) == DISPUTE_CREATED;
     }
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {

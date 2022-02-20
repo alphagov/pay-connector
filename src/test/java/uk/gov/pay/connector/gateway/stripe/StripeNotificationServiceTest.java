@@ -32,6 +32,7 @@ import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -71,6 +72,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE_CREATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
@@ -100,6 +102,8 @@ class StripeNotificationServiceTest {
     private Appender<ILoggingEvent> mockAppender;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -127,7 +131,8 @@ class StripeNotificationServiceTest {
                 mockPayoutEmitterService,
                 new IpAddressMatcher(new InetAddressValidator()),
                 ALLOWED_IP_ADDRESSES,
-                objectMapper);
+                objectMapper,
+                mockTaskQueueService);
 
         lenient().when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
     }
@@ -147,6 +152,23 @@ class StripeNotificationServiceTest {
 
     private String signPayloadWithTestSecret(String payload) {
         return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
+    }
+
+    @Test
+    void shouldLogForDisputeCreatedEvent() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE_CREATED);
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.created event"));
+        assertThat(loggingEvent.getArgumentArray().length, is(1));
     }
 
     @Test

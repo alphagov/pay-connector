@@ -1,48 +1,51 @@
 package uk.gov.pay.connector.queue.tasks;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sentry.Sentry;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class TaskQueueService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static final String COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME = "collect_fee_for_stripe_failed_payment";
-    
     private final TaskQueue taskQueue;
-    private final ConnectorConfiguration connectorConfiguration;
     private final StripeGatewayConfig stripeGatewayConfig;
+    private final ObjectMapper objectMapper;
+
 
     @Inject
     public TaskQueueService(TaskQueue taskQueue,
-                            ConnectorConfiguration connectorConfiguration,
-                            StripeGatewayConfig stripeGatewayConfig) {
+                            StripeGatewayConfig stripeGatewayConfig,
+                            ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
-        this.connectorConfiguration = connectorConfiguration;
         this.stripeGatewayConfig = stripeGatewayConfig;
+        this.objectMapper = objectMapper;
     }
-
+ 
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
-        if (chargeEntity.getCreatedDate()
-                .equals(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
-            chargeEntity.getCreatedDate()
-                    .isAfter(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
-            (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
-                    chargeEntity.getGatewayAccount().getType().equals(TEST.toString())) ||
-            stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
-                    .contains(chargeEntity.getGatewayAccount().getId().toString())) {
+        if (!chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
+                (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
+                        chargeEntity.getGatewayAccount().getType().equals(TEST.toString())) ||
+                stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
+                        .contains(chargeEntity.getGatewayAccount().getId().toString())) {
 
             boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
                     chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
@@ -55,21 +58,35 @@ public class TaskQueueService {
         }
     }
 
-    private void addCollectStripeFeeForFailedPaymentTask(ChargeEntity chargeEntity) {
-        PaymentTask paymentTask = new PaymentTask(chargeEntity.getExternalId(), COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME);
+    public void add(Task task) {
         try {
-            taskQueue.addTaskToQueue(paymentTask);
+            taskQueue.addTaskToQueue(task);
+        } catch (QueueException | JsonProcessingException e) {
+            logger.error("Error adding task to queue",
+                    kv("task_name", task.getTaskType().getName()),
+                    kv("error", e.getMessage()));
+        }
+    }
+
+    private void addCollectStripeFeeForFailedPaymentTask(ChargeEntity chargeEntity) {
+        try {
+            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+            String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+            Task task = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
+            taskQueue.addTaskToQueue(task);
             logger.info("Added payment task message to queue", ArrayUtils.addAll(
                     chargeEntity.getStructuredLoggingArgs(),
-                    kv("task_name", COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME)
+                    kv("task_name", TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT)
             ));
         } catch (Exception e) {
-            logger.error("Error adding payment task message to queue", ArrayUtils.addAll(
+            logger.warn("Error adding payment task message to queue", ArrayUtils.addAll(
                     chargeEntity.getStructuredLoggingArgs(),
-                    kv("task_name", COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT_TASK_NAME),
-                    kv("error", e.getMessage()),
-                    kv("stack_trace", e.getStackTrace())
-            ));
+                    kv("task_name", TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT),
+                    kv("error", e.getMessage()))
+            );
+            Sentry.captureException(e);
+        } finally {
+            MDC.remove(PAYMENT_EXTERNAL_ID);
         }
     }
 }
