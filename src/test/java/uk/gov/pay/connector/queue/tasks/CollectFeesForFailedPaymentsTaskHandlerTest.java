@@ -15,6 +15,8 @@ import uk.gov.pay.connector.events.eventdetails.charge.FeeIncurredEventDetails;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
+import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -68,13 +70,15 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
 
     @Test
     void shouldPersistFeesAndEmitEvent() throws Exception {
+        var paymentTaskData = new PaymentTaskData(chargeExternalId);
+
         List<Fee> fees = List.of(
                 Fee.of(RADAR, 6L),
                 Fee.of(THREE_D_S, 7L)
         );
         when(stripePaymentProvider.calculateAndTransferFeesForFailedPayments(charge)).thenReturn(fees);
         
-        collectFeesForFailedPaymentsTaskHandler.collectAndPersistFees(chargeExternalId);
+        collectFeesForFailedPaymentsTaskHandler.collectAndPersistFees(paymentTaskData);
         
         assertThat(charge.getFees(), hasSize(2));
         assertThat(charge.getFees(), containsInAnyOrder(

@@ -16,6 +16,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
@@ -28,6 +29,7 @@ import java.util.OptionalLong;
 
 import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class HistoricalEventEmitterService {
 
@@ -128,7 +130,7 @@ public class HistoricalEventEmitterService {
         final Optional<ChargeEntity> maybeCharge = chargeDao.findById(currentId);
 
         try {
-            maybeCharge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
+            maybeCharge.ifPresent(c -> MDC.put(PAYMENT_EXTERNAL_ID, c.getExternalId()));
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
@@ -139,7 +141,7 @@ public class HistoricalEventEmitterService {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
         } finally {
-            MDC.remove("chargeId");
+            MDC.remove(PAYMENT_EXTERNAL_ID);
         }
     }
 
@@ -155,7 +157,7 @@ public class HistoricalEventEmitterService {
                         refundHistoryList.size());
                 refundHistoryList
                         .stream()
-                        .map(refundHistory -> refundHistory.getChargeExternalId())
+                        .map(RefundEntity::getChargeExternalId)
                         .distinct()
                         .forEach(this::processRefundsEventsForCharge);
                 page++;
@@ -195,14 +197,14 @@ public class HistoricalEventEmitterService {
     private void processRefundsEventsForCharge(String chargeExternalId) {
         try {
             Optional<Charge> maybeCharge = chargeService.findCharge(chargeExternalId);
-            maybeCharge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
+            maybeCharge.ifPresent(c -> MDC.put(PAYMENT_EXTERNAL_ID, c.getExternalId()));
 
             if (maybeCharge.isPresent()) {
                 final Charge charge = maybeCharge.get();
                 historicalEventEmitter.processRefundEvents(charge.getExternalId(), false);
             }
         } finally {
-            MDC.remove("chargeId");
+            MDC.remove(PAYMENT_EXTERNAL_ID);
         }
     }
 }

@@ -12,6 +12,7 @@ import java.util.Optional;
 public enum StripeNotificationType {
 
     ACCOUNT_UPDATED("account.updated"),
+    DISPUTE_CREATED("charge.dispute.created"),
     PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED("payment_intent.amount_capturable_updated"),
     PAYMENT_INTENT_PAYMENT_FAILED("payment_intent.payment_failed"),
     PAYOUT_CREATED("payout.created", PayoutCreated.class),

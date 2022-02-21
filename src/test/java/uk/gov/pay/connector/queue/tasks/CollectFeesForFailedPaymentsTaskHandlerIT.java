@@ -11,6 +11,8 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -81,7 +83,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
     public void shouldPersistFees() throws Exception {
         long chargeId = nextInt();
         String chargeExternalId = RandomIdGenerator.newId();
-
+        var paymentTaskData = new PaymentTaskData(chargeExternalId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)
@@ -97,7 +99,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
         stripeMockClient.mockTransferSuccess();
 
         CollectFeesForFailedPaymentsTaskHandler taskHandler = testContext.getInstanceFromGuiceContainer(CollectFeesForFailedPaymentsTaskHandler.class);
-        taskHandler.collectAndPersistFees(chargeExternalId);
+        taskHandler.collectAndPersistFees(paymentTaskData);
 
         List<Map<String, Object>> fees = databaseTestHelper.getFeesByChargeId(chargeId);
         assertThat(fees, hasSize(2));

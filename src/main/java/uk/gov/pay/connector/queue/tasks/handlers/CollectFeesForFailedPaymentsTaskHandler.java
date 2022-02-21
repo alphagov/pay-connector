@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue.tasks;
+package uk.gov.pay.connector.queue.tasks.handlers;
 
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
@@ -9,9 +9,11 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
+import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
 import javax.inject.Inject;
 import java.time.Clock;
@@ -44,8 +46,8 @@ public class CollectFeesForFailedPaymentsTaskHandler {
     }
     
     @Transactional
-    public void collectAndPersistFees(String chargeExternalId) throws GatewayException {
-        ChargeEntity charge = chargeService.findChargeByExternalId(chargeExternalId);
+    public void collectAndPersistFees(PaymentTaskData paymentTaskData) throws GatewayException {
+        ChargeEntity charge = chargeService.findChargeByExternalId(paymentTaskData.getPaymentExternalId());
         List<Fee> fees = stripePaymentProvider.calculateAndTransferFeesForFailedPayments(charge);
 
         Instant now = clock.instant();
@@ -58,11 +60,10 @@ public class CollectFeesForFailedPaymentsTaskHandler {
         try {
             FeeIncurredEvent event = FeeIncurredEvent.from(charge);
             eventService.emitAndRecordEvent(event);
-            LOGGER.info("Fee incurred event sent to event queue",
-                    kv(LEDGER_EVENT_TYPE, event.getEventType()),
-                    kv(PAYMENT_EXTERNAL_ID, event.getResourceExternalId()));
+            LOGGER.info("Fee incurred event sent to event queue.",
+                    kv(LEDGER_EVENT_TYPE, event.getEventType()));
         } catch (EventCreationException e) {
-            LOGGER.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
+            LOGGER.warn("Failed to create fee incurred event [{}], exception: [{}]", charge.getExternalId(), e.getMessage());
         }
     }
 }
