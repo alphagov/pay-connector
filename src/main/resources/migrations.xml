@@ -1735,4 +1735,33 @@
                 constraintName="fees_charge_id_key"
                 uniqueColumns="charge_id" />
     </changeSet>
+
+    <changeSet id="create agreements table" author="">
+        <createTable tableName="agreements">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="varchar(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="gateway_account_id" type="bigserial">
+                <constraints foreignKeyName="fk__agreements_gateway_accounts" referencedTableName="gateway_accounts"
+                         referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="service_id" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="live" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
