@@ -6,6 +6,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,17 +16,19 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
-import uk.gov.service.payments.commons.queue.model.QueueMessage;
+import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -105,10 +108,10 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDisputeCreatedTask() throws QueueException {
+    public void shouldProcessDisputeCreatedTask() throws QueueException, JsonProcessingException {
         TaskMessage taskMessage = setupQueueMessage("{ \"key\": \"value\"}", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueMessageHandler.processMessages();
-        verify(stripeWebhookTaskHandler).process(taskMessage.getTask().getData());
+        verify(stripeWebhookTaskHandler).process(any(StripeNotification.class));
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
 
