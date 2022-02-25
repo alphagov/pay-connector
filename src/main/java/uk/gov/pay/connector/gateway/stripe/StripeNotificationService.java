@@ -54,6 +54,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.STRIPE_EVENT_ID;
 
 public class StripeNotificationService {
 
@@ -83,7 +84,6 @@ public class StripeNotificationService {
     private final TaskQueueService taskQueueService;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
-    private static final String STRIPE_EVENT_ID = "stripe_event_id";
     private static final long DEFAULT_TOLERANCE = 300L;
 
     @Inject

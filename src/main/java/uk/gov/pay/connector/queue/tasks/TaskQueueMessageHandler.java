@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.STRIPE_EVENT_ID;
 
 public class TaskQueueMessageHandler {
 
@@ -58,7 +60,10 @@ public class TaskQueueMessageHandler {
                         collectFeesForFailedPaymentsTaskHandler.collectAndPersistFees(paymentTaskData);
                         break;
                     case HANDLE_STRIPE_WEBHOOK_NOTIFICATION:
-                        stripeWebhookTaskHandler.process(taskMessage.getTask().getData());
+                        var stripeNotification = objectMapper.readValue(taskMessage.getTask().getData(), StripeNotification.class);
+                        MDC.put(STRIPE_EVENT_ID, stripeNotification.getId());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        stripeWebhookTaskHandler.process(stripeNotification);
                         break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
@@ -71,6 +76,7 @@ public class TaskQueueMessageHandler {
                 );
             } finally {
                 MDC.remove(PAYMENT_EXTERNAL_ID);
+                MDC.remove(STRIPE_EVENT_ID);
             }
         });
     }

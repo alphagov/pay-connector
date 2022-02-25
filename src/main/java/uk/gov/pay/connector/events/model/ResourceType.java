@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ResourceType {
     PAYMENT,
     REFUND,
-    PAYOUT;
+    PAYOUT,
+    DISPUTE;
 
     @JsonValue
     public String getLowercase() {
