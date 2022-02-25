@@ -423,8 +423,7 @@ public class GatewayAccountCredentialsResourceIT {
 
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
-                .withAccountId(accountId)
-                .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
+                .withAccountId(accountId).withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
                 .insert();
     }
 }
