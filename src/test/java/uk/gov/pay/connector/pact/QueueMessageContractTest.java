@@ -27,6 +27,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthori
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -40,6 +41,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
+import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -64,6 +66,7 @@ import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
@@ -394,5 +397,16 @@ public class QueueMessageContractTest {
         var feeIncurredEvent = FeeIncurredEvent.from(chargeEntity);
 
         return feeIncurredEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a dispute created event")
+    public String verifyDisputeCreatedEvent() throws JsonProcessingException {
+        DisputeCreatedEventDetails eventDetails =
+                new DisputeCreatedEventDetails(1500L, 1644883199L, "a-gateway-account-id",
+                        6500L, 8000L, "duplicate");
+        DisputeCreated disputeCreated =
+                new DisputeCreated("resource-external-id", "external-id", "service-id",
+                        true, eventDetails, toUTCZonedDateTime(1642579160L));
+        return disputeCreated.toJsonString();
     }
 }
