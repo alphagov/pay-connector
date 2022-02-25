@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
@@ -24,11 +24,13 @@ public class StripeWebhookTaskHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
     private final LedgerService ledgerService;
+    private final EventService eventService;
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public StripeWebhookTaskHandler(LedgerService ledgerService) {
+    public StripeWebhookTaskHandler(LedgerService ledgerService, EventService eventService) {
         this.ledgerService = ledgerService;
+        this.eventService = eventService;
     }
 
     public void process(StripeNotification stripeNotification) throws JsonProcessingException {
@@ -41,7 +43,9 @@ public class StripeWebhookTaskHandler {
                     .getTransactionForProviderAndGatewayTransactionId(STRIPE.getName(), stripeDisputeData.getPaymentIntentId());
             ledgerTransaction.map(transaction -> {
                 var disputeCreatedEvent = createDisputeCreatedEvent(stripeDisputeData, transaction);
+
                 emitEvent(disputeCreatedEvent);
+
                 return disputeCreatedEvent;
             }).orElseThrow(() ->
                     new RuntimeException(format("LedgerTransaction with gateway transaction id [%s] not found",
@@ -51,9 +55,9 @@ public class StripeWebhookTaskHandler {
         }
     }
 
-    public void emitEvent(Event event) {
-        logger.info("Received event for Stripe Webhook Task: " + event.getResourceExternalId());
-        // TODO emit dispute created event
+    private void emitEvent(Event event) {
+        eventService.emitEvent(event);
+        logger.info("Emitted event for Stripe Webhook Task: " + event.getResourceExternalId());
     }
 
     private DisputeCreated createDisputeCreatedEvent(StripeDisputeData stripeDisputeData,

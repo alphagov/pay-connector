@@ -5,10 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 import java.util.List;
