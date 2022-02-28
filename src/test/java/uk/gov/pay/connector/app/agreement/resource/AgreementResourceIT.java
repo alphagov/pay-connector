@@ -1,0 +1,188 @@
+package uk.gov.pay.connector.app.agreement.resource;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.google.gson.Gson;
+import io.restassured.specification.RequestSpecification;
+import org.apache.http.HttpStatus;
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.postgresql.util.PGobject;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
+import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+public class AgreementResourceIT {
+    private DatabaseFixtures.TestAccount testAccount;
+
+    private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%d/agreements";
+
+  
+    @DropwizardTestContext
+    protected TestContext testContext;
+
+    private DatabaseTestHelper databaseTestHelper;
+    private WireMockServer wireMockServer;
+    private WorldpayMockClient worldpayMockClient;
+    private DatabaseFixtures databaseFixtures;
+    private Long credentialsId;
+    private String credentialsExternalId;
+    private Long accountId;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Before
+    public void setUp() {
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        wireMockServer = testContext.getWireMockServer();
+       
+        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
+
+        //testAccount = addGatewayAccountAndCredential("worldpay");
+        //accountId = testAccount.getAccountId();
+
+     //   credentialsId = testAccount.getCredentials().get(0).getId();
+       // credentialsExternalId = testAccount.getCredentials().get(0).getExternalId();
+    }
+
+    @Test
+    public void testShouldCreateAgreement() throws JsonProcessingException {
+       // String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "reference", "1234"
+        ));
+        givenSetup()
+                .body(payload)
+                .post(format(CREATE_AGREEMENT_URL ,1234))
+                
+                .then()
+                .statusCode(200)
+              //  .body("analytics_id", Matchers.is("id"))
+                .body("description", Matchers.is(nullValue()));
+    }
+
+
+    protected RequestSpecification givenSetup() {
+        System.out.println("....port :"+ testContext.getPort());
+        return given().port(testContext.getPort()).contentType(JSON);
+    }
+
+
+
+
+
+
+   
+    @Test
+    public void createAgreement() throws JsonProcessingException {
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "reference", "1234"
+        ));
+
+      //  String s = format(CREATE_AGREEMENT_URL, testAccount.getAccountId());
+        String s = format(CREATE_AGREEMENT_URL, 5678);
+        System.out.println("******* " + s);
+        System.out.println("******* " + payload);
+
+        givenSetup()
+                .body(payload)
+               // .post(format(CREATE_AGREEMENT_URL, testAccount.getAccountId()))
+                .post(format(CREATE_AGREEMENT_URL, 12345))
+                .then()
+                .statusCode(201);
+
+
+        //var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
+        ///assertThat(result.get("issuer"), is(VALID_ISSUER));
+        //assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
+        //assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
+    }
+
+ 
+    @Test
+    public void sayHello() throws JsonProcessingException {
+
+
+        givenSetup()
+                //.body(payload)
+                .get("/hello")
+                .then()
+                .statusCode(200);
+
+    }
+
+
+  
+
+   
+    private String getValidAgreement() throws JsonProcessingException {
+        AgreementCreateRequest request = new AgreementCreateRequest("1234");
+        
+        return objectMapper.writeValueAsString(Map.of("reference", "1234"));
+    }
+
+  
+
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
+        long accountId = nextLong(2, 10000);
+        LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
+        LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
+        LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
+
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(paymentProvider)
+                .withCreatedDate(createdDate.toInstant(ZoneOffset.UTC))
+                .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
+                .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withCredentials(Map.of(
+                        "merchant_id", "a-merchant-id",
+                        "username", "a-username",
+                        "password", "a-password"))
+                .build();
+
+        return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
+                .withIntegrationVersion3ds(2)
+                .withAccountId(accountId)
+                .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
+                .insert();
+    }
+}

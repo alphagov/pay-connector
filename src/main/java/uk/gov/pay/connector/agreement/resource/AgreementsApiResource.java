@@ -9,11 +9,7 @@ import uk.gov.pay.connector.agreement.service.AgreementService;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
@@ -45,5 +41,17 @@ public class AgreementsApiResource {
 
         return agreementService.create(agreementCreateRequest, accountId)
                 .orElseThrow(NotFoundException::new);
+    }
+
+
+    @GET
+    @Path("/hello")
+    @Produces(APPLICATION_JSON)
+    public String sayHi(
+          
+            @Context UriInfo uriInfo
+    ) {
+       // LOGGER.info("Creating new agreement for gateway account ID {}", accountId);
+return "kundan ";
     }
 }
