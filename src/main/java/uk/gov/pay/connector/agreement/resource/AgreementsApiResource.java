@@ -31,16 +31,16 @@ public class AgreementsApiResource {
 
     @POST
     @Path("/v1/api/accounts/{accountId}/agreements")
-    //@Produces(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
     @Consumes("application/json")
     public AgreementResponse createNewCharge(
             @PathParam(ACCOUNT_ID) Long accountId,
-            //@Valid AgreementCreateRequest agreementCreateRequest,
+            @Valid AgreementCreateRequest agreementCreateRequest,
             @Context UriInfo uriInfo
     ) {
         LOGGER.info("Creating new agreement for gateway account ID {}", accountId);
 
-        return agreementService.create(null /*agreementCreateRequest*/, accountId)
+        return agreementService.create(agreementCreateRequest, accountId)
                 .orElseThrow(NotFoundException::new);
     }
 

@@ -50,8 +50,6 @@ public class AgreementServiceTest {
 
     protected AgreementService service;
 
-    @Mock
-    protected GatewayAccountEntity gatewayAccount;
 
 
 

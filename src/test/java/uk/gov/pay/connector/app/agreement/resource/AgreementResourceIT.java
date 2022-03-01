@@ -15,6 +15,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -53,7 +54,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class AgreementResourceIT {
+public class AgreementResourceIT  extends ChargingITestBase {
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%s/agreements";
@@ -67,7 +68,7 @@ public class AgreementResourceIT {
     public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
     public static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
 
-    private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%d/agreements";
+    //private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%d/agreements";
 
   
     @DropwizardTestContext
@@ -82,8 +83,15 @@ public class AgreementResourceIT {
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
 
+
+
+    public AgreementResourceIT() {
+        super("stripe");
+    }
+
     @Before
     public void setUp() {
+        //super.setUp();
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
@@ -109,20 +117,20 @@ public class AgreementResourceIT {
         ));
         givenSetup()
                 .body(payload)
-                .post(format(CREATE_AGREEMENT_URL ,1234))
+                .header("Content-Type", "application/json")
+                .post(format(CREATE_AGREEMENT_URL , accountId))
                 
                 .then()
                 .statusCode(200)
-              //  .body("analytics_id", Matchers.is("id"))
-                .body("description", Matchers.is(nullValue()));
+                .body("description", Matchers.not(nullValue()));
     }
 
-
+/*
     protected RequestSpecification givenSetup() {
         System.out.println("....port :"+ testContext.getPort());
         return given().port(testContext.getPort()).contentType(JSON);
     }
-
+*/
 
 
 
@@ -151,7 +159,7 @@ public class AgreementResourceIT {
         //assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
     }
 
-    @Ignore
+    //@Ignore
     @Test
     public void sayHello() throws JsonProcessingException {
 
@@ -200,7 +208,7 @@ public class AgreementResourceIT {
         ));
     }
   
-
+/*
    
     private String getValidAgreement() throws JsonProcessingException {
         AgreementCreateRequest request = new AgreementCreateRequest("1234");
@@ -208,7 +216,7 @@ public class AgreementResourceIT {
         return objectMapper.writeValueAsString(Map.of("reference", "1234"));
     }
 
-  
+  */
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
         long accountId = nextLong(2, 10000);

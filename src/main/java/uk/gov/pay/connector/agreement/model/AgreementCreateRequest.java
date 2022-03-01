@@ -12,7 +12,11 @@ public class AgreementCreateRequest {
     @NotNull(message = "Field [reference] cannot be null")
     @Length(max = 255, message = "Field [reference] can have a size between 0 and 255")
     @JsonProperty("reference")
-    private final String reference;
+    private String reference;
+
+    public AgreementCreateRequest() {
+        // for Jackson
+    }
 
     public AgreementCreateRequest(String reference) {
         this.reference = reference;

@@ -32,12 +32,15 @@ public class AgreementService {
                     .withReference(agreementCreateRequest.getReference())
                     .withServiceId(gatewayAccountEntity.getServiceId())
                     .withLive(gatewayAccountEntity.isLive()).build();
+            agreementEntity.setGatewayAccount(gatewayAccountEntity);
+            
             agreementDao.persist(agreementEntity);
             return agreementEntity;
         }).map(agreementEntity -> {
             var agreementResponseBuilder = new AgreementResponseBuilder();
             agreementResponseBuilder.withAgreementId(agreementEntity.getExternalId());
             agreementResponseBuilder.withCreatedDate(agreementEntity.getCreatedDate());
+            agreementResponseBuilder.withReference(agreementEntity.getReference());
             agreementResponseBuilder.withServiceId(agreementEntity.getServiceId());
             agreementResponseBuilder.withLive(agreementEntity.isLive());
             return agreementResponseBuilder.build();
