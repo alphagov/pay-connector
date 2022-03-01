@@ -58,6 +58,4 @@ public class AgreementsApiResource {
         return "world";
     }
 
-
-
 }
