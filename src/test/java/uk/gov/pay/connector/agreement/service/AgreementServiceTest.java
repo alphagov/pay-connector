@@ -21,7 +21,6 @@ import junitparams.JUnitParamsRunner;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
-import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -34,10 +33,10 @@ public class AgreementServiceTest {
 
     protected static final long GATEWAY_ACCOUNT_ID = 10L;
 
-    protected TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
+    
+    @Mock
     protected GatewayAccountEntity gatewayAccount;
     
 
@@ -59,7 +58,6 @@ public class AgreementServiceTest {
     }
 
     private static String SERVICE_ID = "TestAgreementServiceID";
-    
 
     @Test
     public void shouldCreateAnAgreement() { 
@@ -69,10 +67,9 @@ public class AgreementServiceTest {
 
     	AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest("test");    	
     	Optional<AgreementResponse> response = service.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
-    	
+
     	assertNotNull(response.get());
-    	//assertEquals("test", response.get().getReference());
-    	//assertEquals(SERVICE_ID, response.get().getServiceId());
+    	assertEquals("test", response.get().getReference());
+    	assertEquals(SERVICE_ID, response.get().getServiceId());
     }
-    
 }

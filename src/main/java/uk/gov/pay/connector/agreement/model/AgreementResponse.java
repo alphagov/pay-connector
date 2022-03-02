@@ -14,14 +14,6 @@ import java.util.Objects;
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class AgreementResponse {
 
-    public AgreementResponse(AgreementResponseBuilder agreementResponseBuilder) {
-        this.agreementId = agreementResponseBuilder.getAgreementId();
-        this.createdDate = agreementResponseBuilder.getCreatedDate();
-        this.reference = agreementResponseBuilder.getReference();
-        this.serviceId = agreementResponseBuilder.getServiceId();
-        this.live = agreementResponseBuilder.isLive();
-    }
-
     @JsonProperty("agreement_id")
     private String agreementId;
 
@@ -37,6 +29,14 @@ public class AgreementResponse {
 
     @JsonProperty
     private boolean live;
+
+    public AgreementResponse(AgreementResponseBuilder agreementResponseBuilder) {
+        this.agreementId = agreementResponseBuilder.getAgreementId();
+        this.createdDate = agreementResponseBuilder.getCreatedDate();
+        this.reference = agreementResponseBuilder.getReference();
+        this.serviceId = agreementResponseBuilder.getServiceId();
+        this.live = agreementResponseBuilder.isLive();
+    }
     
     public String getAgreementId() {
         return agreementId;

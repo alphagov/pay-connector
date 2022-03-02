@@ -8,12 +8,11 @@ import uk.gov.pay.connector.agreement.service.AgreementService;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import java.util.Optional;
 
 @Path("/")
 public class AgreementsApiResource {
@@ -28,7 +27,7 @@ public class AgreementsApiResource {
     public AgreementsApiResource(AgreementService agreementService) {
         this.agreementService = agreementService;
     }
-
+/*
     @POST
     @Path("/v1/api/accounts/{accountId}/agreements")
     @Produces(APPLICATION_JSON)
@@ -43,19 +42,24 @@ public class AgreementsApiResource {
         return agreementService.create(agreementCreateRequest, accountId)
                 .orElseThrow(NotFoundException::new);
     }
+*/
 
+//*
+    //@Ignore
+    @POST
+    @Path("/v1/api/accounts/{accountId}/agreements")
+    @Produces("application/json")
+    @Consumes("application/json")
+    public AgreementResponse hello(
+            @PathParam(ACCOUNT_ID) Long accountId,
+            @Valid AgreementCreateRequest agreementCreateRequest,
+            @Context UriInfo uriInfo
 
+            ) {
+        LOGGER.info("Creating new agreement for gateway account ID {}", accountId);
 
-    @GET
-    @Path("hello")
-    @Produces("text/html")
-    //@Consumes("application/json")
-    public String hello(
-            //@Context UriInfo uriInfo
-    ) {
-        LOGGER.info("Creating new agreement for gateway account ID {}");
-
-        return "world";
+        return agreementService.create(agreementCreateRequest, accountId).orElseThrow(NotFoundException::new);
+        
     }
-
+//*/
 }

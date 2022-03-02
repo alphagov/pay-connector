@@ -3,8 +3,8 @@ package uk.gov.pay.connector.agreement.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.Length;
-
 import javax.validation.constraints.NotNull;
+
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AgreementCreateRequest {

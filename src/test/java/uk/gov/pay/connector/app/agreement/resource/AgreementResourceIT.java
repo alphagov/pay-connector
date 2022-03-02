@@ -1,21 +1,15 @@
 package uk.gov.pay.connector.app.agreement.resource;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.google.gson.Gson;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -29,48 +23,24 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static java.lang.String.format;
-import static java.util.Collections.singletonList;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.*;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class AgreementResourceIT  extends ChargingITestBase {
+public class AgreementResourceIT {
+    public static final String REFERENCE_ID = "1234";
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%s/agreements";
-    
-    private static final String UPDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/3ds-flex-credentials";
-    private static final String VALIDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-3ds-flex-config";
-    private static final String VALIDATE_WORLDPAY_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-credentials";
-    private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
 
-    public static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
-    public static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
-    public static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
-
-    //private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%d/agreements";
-
-  
     @DropwizardTestContext
     protected TestContext testContext;
 
@@ -82,16 +52,12 @@ public class AgreementResourceIT  extends ChargingITestBase {
     private String credentialsExternalId;
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
-
-
-
+    
     public AgreementResourceIT() {
-        super("stripe");
     }
-
+    
     @Before
     public void setUp() {
-        //super.setUp();
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
@@ -107,116 +73,24 @@ public class AgreementResourceIT  extends ChargingITestBase {
     protected RequestSpecification givenSetup() {
         return given().port(testContext.getPort()).contentType(JSON);
     }
-
- 
+    
     @Test
     public void testShouldCreateAgreement() throws JsonProcessingException {
-       // String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
         String payload = objectMapper.writeValueAsString(Map.of(
-                "reference", "1234"
+                "reference", REFERENCE_ID
         ));
-        givenSetup()
+
+        ValidatableResponse o = givenSetup()
                 .body(payload)
-                .header("Content-Type", "application/json")
-                .post(format(CREATE_AGREEMENT_URL , accountId))
-                
+                .post(format(CREATE_AGREEMENT_URL, accountId))
+
                 .then()
                 .statusCode(200)
-                .body("description", Matchers.not(nullValue()));
+                .body("reference", equalTo(REFERENCE_ID))
+                .body("service_id", equalTo("valid-external-service-id"))
+                .body("agreement_id", notNullValue())
+                .body("created_date", notNullValue());
     }
-
-/*
-    protected RequestSpecification givenSetup() {
-        System.out.println("....port :"+ testContext.getPort());
-        return given().port(testContext.getPort()).contentType(JSON);
-    }
-*/
-
-
-
-
-    @Ignore
-    @Test
-    public void createAgreement() throws JsonProcessingException {
-        String payload = objectMapper.writeValueAsString(Map.of(
-                "reference", "1234"
-        ));
-        
-        String s = format(CREATE_AGREEMENT_URL, testAccount.getAccountId());
-        System.out.println("******* " + s);
-        System.out.println("******* " + payload);
-        
-        givenSetup()
-                .body(payload)
-                .post(format(CREATE_AGREEMENT_URL, testAccount.getAccountId()))
-                .then()
-                .statusCode(201);
-        
-        
-        //var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
-        ///assertThat(result.get("issuer"), is(VALID_ISSUER));
-        //assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
-        //assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
-    }
-
-    //@Ignore
-    @Test
-    public void sayHello() throws JsonProcessingException {
-
-
-        givenSetup()
-                //.body(payload)
-                .get("/hello")
-                .then()
-                .statusCode(200);
-
-    }
-
-
-    @Test
-    public void patchGatewayAccountCredentialsInvalidRequestBody_shouldReturn400() {
-        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
-        System.out.println("****** " + format(PATCH_CREDENTIALS_URL, accountId, credentialsId));
-        
-        givenSetup()
-                .body(toJson(singletonList(
-                        Map.of("op", "replace",
-                                "path", "credentials"))))
-                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
-                .then()
-                .statusCode(400)
-                .body("message[0]", is("Field [value] is required"));
-    }
-    
-    
-    private String getCheck3dsConfigPayloadForValidCredentials() throws JsonProcessingException {
-        return objectMapper.writeValueAsString(Map.of(
-                "issuer", VALID_ISSUER,
-                "organisational_unit_id", VALID_ORG_UNIT_ID,
-                "jwt_mac_key", VALID_JWT_MAC_KEY));
-    }
-
-    private String getValidAgreement() throws JsonProcessingException {
-        return objectMapper.writeValueAsString(Map.of("reference", "1234"));
-    }
-
-    private String getValidWorldpayCredentials() throws JsonProcessingException {
-        return objectMapper.writeValueAsString(Map.of(
-                "username", "valid-user-name",
-                "password", "valid-password",
-                "merchant_id", "valid-merchant-id"
-        ));
-    }
-  
-/*
-   
-    private String getValidAgreement() throws JsonProcessingException {
-        AgreementCreateRequest request = new AgreementCreateRequest("1234");
-        
-        return objectMapper.writeValueAsString(Map.of("reference", "1234"));
-    }
-
-  */
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
         long accountId = nextLong(2, 10000);
