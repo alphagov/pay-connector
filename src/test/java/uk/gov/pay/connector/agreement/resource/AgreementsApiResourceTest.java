@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
-class AgreementResourceTest {
+class AgreementsApiResourceTest {
 
     private final static String RESOURCE_URL = "/v1/api/accounts/%d/agreements";
 

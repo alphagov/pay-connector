@@ -1,17 +1,20 @@
 package uk.gov.pay.connector.agreement.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 
-import org.junit.Before;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -35,20 +38,19 @@ public class AgreementServiceTest {
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
     
-    @Mock
-    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
 
-    @Mock
-    private AgreementDao mockedAgreementDao;
+    private AgreementDao mockedAgreementDao = mock(AgreementDao.class);
 
-    @Mock
-    private GatewayAccountDao mockedGatewayAccountDao;
+    private GatewayAccountDao mockedGatewayAccountDao = mock(GatewayAccountDao.class);
     
     private AgreementService service;
     
-    @Before
+    @BeforeEach
     public void setUp() {
-        service = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, Clock.systemUTC());
+        String instantExpected = "2022-03-03T10:15:30Z";
+        Clock clock = Clock.fixed(Instant.parse(instantExpected), ZoneId.of("UTC"));
+        service = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, clock);
     }
     
     @Test
@@ -60,8 +62,8 @@ public class AgreementServiceTest {
     	AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID);    	
     	Optional<AgreementResponse> response = service.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
 
-    	assertNotNull(response.get());
-    	assertEquals(REFERENCE_ID, response.get().getReference());
-    	assertEquals(SERVICE_ID, response.get().getServiceId());
+    	assertThat(response.isPresent(), is(true));
+    	assertThat(REFERENCE_ID, is(response.get().getReference()));
+        assertThat(SERVICE_ID, is(response.get().getServiceId()));
     }
 }

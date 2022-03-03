@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.agreement.resource;
 
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,9 +36,11 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class AgreementResourceIT {
+//@RunWith(DropwizardJUnitRunner.class)
+//@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+
+@ExtendWith(DropwizardExtensionsSupport.class)
+public class AgreementsApiResourceIT {
     private static final String REFERENCE_ID = "1234";
     private DatabaseFixtures.TestAccount testAccount;
 
@@ -55,10 +58,10 @@ public class AgreementResourceIT {
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
     
-    public AgreementResourceIT() {
+    public AgreementsApiResourceIT() {
     }
     
-    @Before
+    @BeforeEach
     public void setUp() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();

@@ -10,14 +10,14 @@ import java.time.Instant;
 @Entity
 @Table(name = "agreements")
 @Access(AccessType.FIELD)
-@SequenceGenerator(name = "agreements_agreement_id_seq",
-        sequenceName = "agreements_agreement_id_seq", allocationSize = 1)
+@SequenceGenerator(name = "agreements_id_seq",
+        sequenceName = "agreements_id_seq", allocationSize = 1)
 public class AgreementEntity {
 
     @Id
-    @Column(name = "agreement_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "agreements_agreement_id_seq")
-    private Long agreement_id;
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "agreements_id_seq")
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
@@ -45,7 +45,6 @@ public class AgreementEntity {
     
     private AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
                             boolean live, Instant createdDate) {
-        //AgreementEntity agreementEntity = new AgreementEntity();
         this.externalId = RandomIdGenerator.newId();
         this.gatewayAccount = gatewayAccount;
         this.serviceId = serviceId;
@@ -54,12 +53,12 @@ public class AgreementEntity {
         this.createdDate = createdDate;
     }
 
-    public Long getAgreementId() {
-        return agreement_id;
+    public Long getId() {
+        return id;
     }
 
-    public void setAgreement_id(Long id) {
-        this.agreement_id = id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public GatewayAccountEntity getGatewayAccount() {

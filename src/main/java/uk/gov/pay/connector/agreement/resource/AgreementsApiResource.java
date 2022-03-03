@@ -8,16 +8,19 @@ import uk.gov.pay.connector.agreement.service.AgreementService;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.NotFoundException;
 
 @Path("/")
 public class AgreementsApiResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgreementsApiResource.class);
-
-    private static final String ACCOUNT_ID = "accountId";
 
     private final AgreementService agreementService;
 
@@ -31,7 +34,7 @@ public class AgreementsApiResource {
     @Produces("application/json")
     @Consumes("application/json")
     public AgreementResponse createAgreement(
-            @PathParam(ACCOUNT_ID) Long accountId,
+            @PathParam("accountId") Long accountId,
             @Valid AgreementCreateRequest agreementCreateRequest,
             @Context UriInfo uriInfo
     ) {
