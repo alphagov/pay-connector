@@ -33,30 +33,24 @@ public class AgreementServiceTest {
     private  static final String REFERENCE_ID = "test";
 
     @Rule
-    private MockitoRule rule = MockitoJUnit.rule();
-
-    @Rule
-    private ExpectedException thrown = ExpectedException.none();
+    public MockitoRule rule = MockitoJUnit.rule();
     
     @Mock
     private GatewayAccountEntity gatewayAccount;
-    
 
     @Mock
     private AgreementDao mockedAgreementDao;
 
     @Mock
     private GatewayAccountDao mockedGatewayAccountDao;
-
-
+    
     private AgreementService service;
     
     @Before
     public void setUp() {
         service = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, Clock.systemUTC());
     }
-
-
+    
     @Test
     public void shouldCreateAnAgreement() { 
         when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);

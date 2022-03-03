@@ -3,6 +3,7 @@ package uk.gov.pay.connector.agreement.resource;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static java.lang.String.format;
@@ -85,7 +87,7 @@ public class AgreementResourceIT {
                 .post(format(CREATE_AGREEMENT_URL, accountId))
 
                 .then()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("reference", equalTo(REFERENCE_ID))
                 .body("service_id", equalTo("valid-external-service-id"))
                 .body("agreement_id", notNullValue())
