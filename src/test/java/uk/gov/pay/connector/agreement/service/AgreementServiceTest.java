@@ -1,10 +1,8 @@
 package uk.gov.pay.connector.agreement.service;
 
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
-
 import java.time.Clock;
 import java.util.Optional;
 
@@ -28,36 +26,36 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 @RunWith(JUnitParamsRunner.class)
 public class AgreementServiceTest {
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+    private static final String SERVICE_ID = "TestAgreementServiceID";
 
-    protected static final long GATEWAY_ACCOUNT_ID = 10L;
+    private static final long GATEWAY_ACCOUNT_ID = 10L;
+    
+    private  static final String REFERENCE_ID = "test";
 
     @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    private MockitoRule rule = MockitoJUnit.rule();
+
+    @Rule
+    private ExpectedException thrown = ExpectedException.none();
     
     @Mock
-    protected GatewayAccountEntity gatewayAccount;
+    private GatewayAccountEntity gatewayAccount;
     
 
     @Mock
-    protected AgreementDao mockedAgreementDao;
+    private AgreementDao mockedAgreementDao;
 
     @Mock
-    protected GatewayAccountDao mockedGatewayAccountDao;
+    private GatewayAccountDao mockedGatewayAccountDao;
 
 
-    protected AgreementService service;
-
-
-
-
+    private AgreementService service;
+    
     @Before
     public void setUp() {
         service = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, Clock.systemUTC());
     }
 
-    private static String SERVICE_ID = "TestAgreementServiceID";
 
     @Test
     public void shouldCreateAnAgreement() { 
@@ -65,11 +63,11 @@ public class AgreementServiceTest {
         when(gatewayAccount.isLive()).thenReturn(false);
     	when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-    	AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest("test");    	
+    	AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID);    	
     	Optional<AgreementResponse> response = service.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
 
     	assertNotNull(response.get());
-    	assertEquals("test", response.get().getReference());
+    	assertEquals(REFERENCE_ID, response.get().getReference());
     	assertEquals(SERVICE_ID, response.get().getServiceId());
     }
 }

@@ -12,8 +12,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
-import java.util.Optional;
-
 @Path("/")
 public class AgreementsApiResource {
 
@@ -27,39 +25,17 @@ public class AgreementsApiResource {
     public AgreementsApiResource(AgreementService agreementService) {
         this.agreementService = agreementService;
     }
-/*
+
     @POST
     @Path("/v1/api/accounts/{accountId}/agreements")
-    @Produces(APPLICATION_JSON)
+    @Produces("application/json")
     @Consumes("application/json")
-    public AgreementResponse createNewCharge(
+    public AgreementResponse createAgreement(
             @PathParam(ACCOUNT_ID) Long accountId,
             @Valid AgreementCreateRequest agreementCreateRequest,
             @Context UriInfo uriInfo
     ) {
         LOGGER.info("Creating new agreement for gateway account ID {}", accountId);
-
-        return agreementService.create(agreementCreateRequest, accountId)
-                .orElseThrow(NotFoundException::new);
-    }
-*/
-
-//*
-    //@Ignore
-    @POST
-    @Path("/v1/api/accounts/{accountId}/agreements")
-    @Produces("application/json")
-    @Consumes("application/json")
-    public AgreementResponse hello(
-            @PathParam(ACCOUNT_ID) Long accountId,
-            @Valid AgreementCreateRequest agreementCreateRequest,
-            @Context UriInfo uriInfo
-
-            ) {
-        LOGGER.info("Creating new agreement for gateway account ID {}", accountId);
-
         return agreementService.create(agreementCreateRequest, accountId).orElseThrow(NotFoundException::new);
-        
     }
-//*/
 }

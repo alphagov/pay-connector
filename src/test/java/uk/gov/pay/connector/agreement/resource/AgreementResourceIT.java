@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.app.agreement.resource;
+package uk.gov.pay.connector.agreement.resource;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
@@ -36,13 +36,13 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class AgreementResourceIT {
-    public static final String REFERENCE_ID = "1234";
+    private static final String REFERENCE_ID = "1234";
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%s/agreements";
 
     @DropwizardTestContext
-    protected TestContext testContext;
+    private TestContext testContext;
 
     private DatabaseTestHelper databaseTestHelper;
     private WireMockServer wireMockServer;
