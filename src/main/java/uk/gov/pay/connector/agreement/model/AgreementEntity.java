@@ -4,19 +4,19 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.time.Instant;
 
+@Entity
+@Table(name = "agreements")
+@Access(AccessType.FIELD)
+@SequenceGenerator(name = "agreements_id_seq",
+        sequenceName = "agreements_id_seq", allocationSize = 1)
 public class AgreementEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "agreements_agreement_id_seq")
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "agreements_id_seq")
     private Long id;
 
     @ManyToOne
@@ -45,13 +45,12 @@ public class AgreementEntity {
     
     private AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
                             boolean live, Instant createdDate) {
-        AgreementEntity agreementEntity = new AgreementEntity();
-        agreementEntity.externalId = RandomIdGenerator.newId();
-        agreementEntity.gatewayAccount = gatewayAccount;
-        agreementEntity.serviceId = serviceId;
-        agreementEntity.reference = reference;
-        agreementEntity.live = live;
-        agreementEntity.createdDate = createdDate;
+        this.externalId = RandomIdGenerator.newId();
+        this.gatewayAccount = gatewayAccount;
+        this.serviceId = serviceId;
+        this.reference = reference;
+        this.live = live;
+        this.createdDate = createdDate;
     }
 
     public Long getId() {
