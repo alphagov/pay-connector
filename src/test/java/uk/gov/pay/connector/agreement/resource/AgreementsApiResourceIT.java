@@ -4,6 +4,8 @@ package uk.gov.pay.connector.agreement.resource;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,9 +19,6 @@ import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
