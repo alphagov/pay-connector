@@ -48,6 +48,9 @@
                 <browser>
                     <acceptHeader>${authCardDetails.acceptHeader?xml}</acceptHeader>
                     <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
+                    <#if authCardDetails.worldpay3dsFlexDdcResult.isEmpty() && integrationVersion3ds == 2>
+                    <browserLanguage>${browserLanguage?xml}</browserLanguage>
+                    </#if>
                 </browser>
                 </#if>
             </shopper>
@@ -56,6 +59,13 @@
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
             <additional3DSData
                 dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()?xml}"
+                challengeWindowSize="390x400" challengePreference="noPreference"
+            />
+            </#if>
+            <#if authCardDetails.worldpay3dsFlexDdcResult.isEmpty() && integrationVersion3ds == 2>
+            <additional3DSData
+                dfReferenceId=""
+                javaScriptEnabled="false"
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
             </#if>

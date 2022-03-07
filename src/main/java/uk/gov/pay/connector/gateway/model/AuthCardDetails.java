@@ -31,7 +31,8 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String jsScreenHeight;
     private String jsScreenWidth;
     private String jsTimezoneOffsetMins;
-
+    private String acceptLanguageHeader;
+    
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
     }
@@ -136,6 +137,11 @@ public class AuthCardDetails implements AuthorisationDetails {
     @JsonProperty("ip_address")
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }    
+    
+    @JsonProperty("accept_language_header")
+    public void setAcceptLanguageHeader(String acceptLanguageHeader) {
+        this.acceptLanguageHeader = acceptLanguageHeader;
     }
 
     public String getCardNo() {
@@ -170,6 +176,10 @@ public class AuthCardDetails implements AuthorisationDetails {
         return acceptHeader;
     }
 
+    public String getAcceptLanguageHeader () {
+        return acceptLanguageHeader;
+    }
+    
     public boolean isCorporateCard() {
         return corporateCard == null ? false : corporateCard;
     }

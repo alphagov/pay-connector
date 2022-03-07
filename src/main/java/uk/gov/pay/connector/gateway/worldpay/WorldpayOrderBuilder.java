@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.util.Optional;
 
@@ -11,13 +12,15 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public interface WorldpayOrderBuilder {
     
     static WorldpayOrderRequestBuilder buildAuthoriseOrderWithExemptionEngine(WorldpayOrderRequestBuilder builder,
-                                                                              CardAuthorisationGatewayRequest request) {
+                                                                              CardAuthorisationGatewayRequest request,
+                                                                              AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
         
-        return buildAuthoriseOrderWithoutExemptionEngine(builder, request).withExemptionEngine(true);
+        return buildAuthoriseOrderWithoutExemptionEngine(builder, request, acceptLanguageHeaderParser).withExemptionEngine(true);
     }
 
     static WorldpayOrderRequestBuilder buildAuthoriseOrderWithoutExemptionEngine(WorldpayOrderRequestBuilder builder, 
-                                                                                 CardAuthorisationGatewayRequest request) {
+                                                                                 CardAuthorisationGatewayRequest request,
+                                                                                 AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
         
         if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);
@@ -42,14 +45,16 @@ public interface WorldpayOrderBuilder {
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails());
+                .withAuthorisationDetails(request.getAuthCardDetails())
+                .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
+                .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()));
     }
     
-    static GatewayOrder buildAuthoriseOrderWithExemptionEngine(CardAuthorisationGatewayRequest request, boolean withExemptionEngine) {
+    static GatewayOrder buildAuthoriseOrderWithExemptionEngine(CardAuthorisationGatewayRequest request, boolean withExemptionEngine, AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
         if (withExemptionEngine) {
-            return buildAuthoriseOrderWithExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
+            return buildAuthoriseOrderWithExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request, acceptLanguageHeaderParser).build();
         } else {
-            return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request).build();
+            return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request, acceptLanguageHeaderParser).build();
         }
     }
 }

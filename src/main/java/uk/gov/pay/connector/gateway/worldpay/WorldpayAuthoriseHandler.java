@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -28,10 +29,14 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     
     private final GatewayClient authoriseClient;
     private final Map<String, URI> gatewayUrlMap;
+    private final AcceptLanguageHeaderParser acceptLanguageHeaderParser;
 
     @Inject
     public WorldpayAuthoriseHandler(@Named("WorldpayAuthoriseGatewayClient") GatewayClient authoriseClient,
-                                    @Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap) {
+                                    @Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
+                                    AcceptLanguageHeaderParser acceptLanguageHeaderParser
+    ) {
+        this.acceptLanguageHeaderParser = acceptLanguageHeaderParser;
         this.authoriseClient = authoriseClient;
         this.gatewayUrlMap = gatewayUrlMap;
     }
@@ -54,7 +59,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
-                    WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine),
+                    WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine, acceptLanguageHeaderParser),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
 
             if (response.getEntity().contains("request3DSecure")) {

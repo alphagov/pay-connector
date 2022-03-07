@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import uk.gov.pay.connector.util.XPathUtils;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -74,6 +75,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS;
@@ -99,7 +101,7 @@ class WorldpayAuthoriseHandlerTest {
     
     @BeforeEach
     void setup() {
-        worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP);
+        worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         gatewayAccountEntity = aServiceAccount();
         creds = aGatewayAccountCredentialsEntity()
@@ -520,13 +522,40 @@ class WorldpayAuthoriseHandlerTest {
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITH_REFERENCE_IN_DESCRIPTION)
                 .replace("{{description}}", "This is a description"),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
+    }    
+    
+    @Test
+    void should_include_browser_language_and_javascript_false_in_payload_if_flex_and_no_ddc() throws Exception {
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withAmount(500L)
+                .withDescription("This is a description")
+                .withReference(ServicePaymentReference.of("service-payment-reference"))
+                .withTransactionId("transaction-id")
+                .build();
+
+        gatewayAccountEntity.setIntegrationVersion3ds(2);
+        gatewayAccountEntity.setRequires3ds(true);
+
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(authorisationSuccessResponse);
+
+        worldpayAuthoriseHandler.authoriseWithoutExemption((new CardAuthorisationGatewayRequest(chargeEntity, getValidTestCard())));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
     @Test
     void should_send_successfully_an_order_for_merchant() {
         Client mockClient = mockWorldpaySuccessfulOrderSubmitResponse();
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP);
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         GatewayResponse response = handlerWithRealJerseyClient.authoriseWithoutExemption(getCardAuthorisationRequest(chargeEntityFixture.build()));
         assertTrue(response.isSuccessful());
@@ -537,7 +566,7 @@ class WorldpayAuthoriseHandlerTest {
     void should_error_if_worldpay_returns_401() {
         Client mockClient = mockWorldpayResponse(401, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP);
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         GatewayResponse<WorldpayOrderStatusResponse> response = 
                 handlerWithRealJerseyClient.authoriseWithoutExemption(getCardAuthorisationRequest(chargeEntityFixture.build()));
@@ -550,7 +579,7 @@ class WorldpayAuthoriseHandlerTest {
     void should_error_if_worldpay_returns_500() {
         Client mockClient = mockWorldpayResponse(500, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP);
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
         
         GatewayResponse<WorldpayOrderStatusResponse> response = 
                 handlerWithRealJerseyClient.authoriseWithoutExemption(getCardAuthorisationRequest(chargeEntityFixture.build()));
