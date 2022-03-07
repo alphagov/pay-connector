@@ -84,13 +84,33 @@ public class StripeAccountUpdatedHandler {
 
     }
 
+    // We deserialize the entire object for logging. There is a Splunk alert that relies on this.
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class Requirements {
+        
+        @JsonProperty("alternatives")
+        private JsonNode alternatives;
+        
+        @JsonProperty("current_deadline")
+        private String currentDeadline;
+
         @JsonProperty("currently_due")
         private JsonNode currentlyDue;
+        
+        @JsonProperty("disabled_reason")
+        private String disabledReason;
 
+        @JsonProperty("errors")
+        private JsonNode errors;
+
+        @JsonProperty("eventually_due")
+        private JsonNode eventuallyDue;
+        
         @JsonProperty("past_due")
         private JsonNode pastDue;
+        
+        @JsonProperty("pending_verification")
+        private JsonNode pendingVerification;
 
         public boolean hasCurrentlyDue() {
             return !currentlyDue.isEmpty();
