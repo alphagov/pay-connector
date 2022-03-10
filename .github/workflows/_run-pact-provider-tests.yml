@@ -49,5 +49,5 @@ jobs:
           -Dpact.provider.version="$provider_version" \
           -Dpact.verifier.publishResults=true \
           -DPACT_BROKER_HOST=pay-pact-broker.cloudapps.digital \
-          -DPACT_BROKER_USERNAME="${{ secrets.pact_broker_username }}" \
-          -DPACT_BROKER_PASSWORD="${{ secrets.pact_broker_password }}"
+          -DPACT_BROKER_USERNAME="${{ secrets.PACT_BROKER_USERNAME }}" \
+          -DPACT_BROKER_PASSWORD="${{ secrets.PACT_BROKER_PASSWORD }}"
