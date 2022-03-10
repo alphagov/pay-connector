@@ -34,23 +34,11 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Run pact tests
+      - name: Run provider pact tests
         run: |
-
           consumer_tag="${{ inputs.consumer_tag }}"
           provider_version="${{ github.sha }}"
-
-#          cat <<'EOF' >settings.xml
-#          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-#          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-#          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-#          https://maven.apache.org/xsd/settings-1.0.0.xsd">
-#          <localRepository>${env.MAVEN_REPO}</localRepository>
-#          </settings>
-#          EOF
-
           export MAVEN_REPO="$HOME/.m2"
-
           mvn test \
           -DrunContractTests \
           -DCONSUMER="$consumer" \
