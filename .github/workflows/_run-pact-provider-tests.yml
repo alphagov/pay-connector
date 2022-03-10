@@ -22,18 +22,6 @@ permissions:
 
 
 jobs:
-  test-docker-pull:
-    name: Test docker pull
-    runs-on: ubuntu-18.04
-
-    steps:
-      - name: pull
-        run: |
-          docker ps
-          docker
-          docker pull postgres:11.1
-          docker pull govukpay/postgres:11.1
-
   run-connector-as-provider-tests:
     name: Run Connector as Provider
     runs-on: ubuntu-18.04
@@ -53,6 +41,9 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      - name: Pull docker image dependencies
+        run: |
+          docker pull govukpay/postgres:11.1
       - name: Run provider pact tests
         run: |
           consumer_tag="${{ inputs.consumer_tag }}"
