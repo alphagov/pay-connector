@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: pull
-      - run: |
+        run: |
           docker ps
           docker
           docker pull postgres:11.1
