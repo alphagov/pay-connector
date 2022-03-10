@@ -29,10 +29,10 @@ jobs:
     steps:
       - name: pull
       - run: |
-        docker ps
-        docker
-        docker pull postgres:11.1
-        docker pull govukpay/postgres:11.1
+          docker ps
+          docker
+          docker pull postgres:11.1
+          docker pull govukpay/postgres:11.1
 
   run-connector-as-provider-tests:
     name: Run Connector as Provider
