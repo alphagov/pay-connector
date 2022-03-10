@@ -11,6 +11,11 @@ on:
         description: Consumer tag. This could be branch name ('master'), PR number ('1234') or deploy tag ('test-fargate')
         required: true
         type: string
+    secrets:
+      pact_broker_username:
+        required: true
+      pact_broker_password:
+        required: true
 
 permissions:
   contents: read
@@ -49,5 +54,5 @@ jobs:
           -Dpact.provider.version="$provider_version" \
           -Dpact.verifier.publishResults=true \
           -DPACT_BROKER_HOST=pay-pact-broker.cloudapps.digital \
-          -DPACT_BROKER_USERNAME="${{ secrets.PACT_BROKER_USERNAME }}" \
-          -DPACT_BROKER_PASSWORD="${{ secrets.PACT_BROKER_PASSWORD }}"
+          -DPACT_BROKER_USERNAME="${{ secrets.pact_broker_username }}" \
+          -DPACT_BROKER_PASSWORD="${{ secrets.pact_broker_password }}"
