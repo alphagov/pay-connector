@@ -1764,4 +1764,17 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="save_payment_instrument_to_agreement_agreement_id_charges" author="">
+        <addColumn tableName="charges">
+            <column name="save_payment_instrument_to_agreement" type="boolean"  defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="charges">
+            <column name="agreement_id" type="varchar(26)" />
+        </addColumn>
+
+    </changeSet>
+
+
 </databaseChangeLog>
