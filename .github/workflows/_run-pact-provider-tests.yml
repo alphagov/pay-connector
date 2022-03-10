@@ -42,6 +42,7 @@ jobs:
           provider_version="${{ github.sha }}"
           export MAVEN_REPO="$HOME/.m2"
           mvn test \
+          --quiet \
           -DrunContractTests \
           -DCONSUMER="$consumer" \
           -DPACT_CONSUMER_TAG="$consumer_tag" \
