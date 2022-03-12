@@ -17,9 +17,9 @@ public class SandboxCardNumbers {
     private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
     private static final String EXPIRED_CARD_NUMBER = "4000000000000069";
     private static final String PROCESSING_ERROR_CARD_NUMBER = "4000000000000119";
+    public static final String GOOD_CARD_AUTH_DELAY = "4444333322221111";
 
     private static final Set<String> GOOD_CARDS = Set.of(
-            "4444333322221111",
             "4242424242424242",
             "4917610000000000003",
             "4000056655665556",
@@ -31,7 +31,8 @@ public class SandboxCardNumbers {
             GOOD_MASTERCARD_CREDIT_CARD,
             GOOD_VISA_PREPAID_UNKNOWN_CREDIT_OR_DEBIT_UNKNOWN_CARD,
             GOOD_CARD_PREPAID_NON_CORPORATE,
-            GOOD_NON_CORPORATE_NON_PREPAID);
+            GOOD_NON_CORPORATE_NON_PREPAID,
+            GOOD_CARD_AUTH_DELAY);
 
     private static final Set<String> GOOD_CORPORATE_CARDS = Set.of(
             "4988080000000000",
