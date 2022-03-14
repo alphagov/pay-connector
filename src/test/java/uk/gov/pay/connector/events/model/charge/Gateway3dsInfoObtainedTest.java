@@ -12,6 +12,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer.MICROSECOND_FORMATTER;
 
 class Gateway3dsInfoObtainedTest {
 
@@ -23,7 +24,7 @@ class Gateway3dsInfoObtainedTest {
         var eventDate = ZonedDateTime.now(UTC);
         String actual = Gateway3dsInfoObtained.from(chargeEntity, eventDate).toJsonString();
 
-        assertThat(actual, hasJsonPath("$.timestamp", equalTo(eventDate.toString())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_INFO_OBTAINED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
@@ -36,7 +37,7 @@ class Gateway3dsInfoObtainedTest {
         var eventDate = ZonedDateTime.now(UTC);
         String actual = Gateway3dsInfoObtained.from(chargeEntity, eventDate).toJsonString();
 
-        assertThat(actual, hasJsonPath("$.timestamp", equalTo(eventDate.toString())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_INFO_OBTAINED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
