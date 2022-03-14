@@ -80,16 +80,16 @@ public class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
-    private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntity;
     private Map<String, String> validCredentials;
-    private Map<String, String> validCredentials3ds;
+    private Map<String, String> validCredentialsFor3ds;
+    private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntity;
+    private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntityFor3ds;
     private ChargeEntity chargeEntity;
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
     private Environment mockEnvironment;
     private CardExecutorService mockCardExecutorService = mock(CardExecutorService.class);
-    private EventService mockEventService = mock(EventService.class);
 
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
@@ -99,7 +99,7 @@ public class WorldpayPaymentProviderTest {
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
 
-            validCredentials3ds = Map.of(
+            validCredentialsFor3ds = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
@@ -119,11 +119,19 @@ public class WorldpayPaymentProviderTest {
                 .build();
         validGatewayAccount.setId(1234L);
         validGatewayAccount.setType(TEST);
-        validGatewayAccount.setGatewayAccountCredentials(List.of());
+        validGatewayAccount.setGatewayAccountCredentials(List.of(validGatewayAccountCredentialsEntity));
+
         validGatewayAccountFor3ds = new GatewayAccountEntity();
+        validGatewayAccountCredentialsEntityFor3ds = aGatewayAccountCredentialsEntity()
+                .withCredentials(validCredentialsFor3ds)
+                .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
         validGatewayAccountFor3ds.setId(1234L);
         validGatewayAccountFor3ds.setType(TEST);
-        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(validGatewayAccountCredentialsEntity));
+        validGatewayAccountFor3ds.setRequires3ds(true);
+        validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(validGatewayAccountCredentialsEntityFor3ds));
 
         mockMetricRegistry = mock(MetricRegistry.class);
         mockHistogram = mock(Histogram.class);
@@ -136,6 +144,7 @@ public class WorldpayPaymentProviderTest {
         chargeEntity = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
                 .build();
     }
     
@@ -299,13 +308,13 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
-        validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setSendPayerEmailToGateway(true);
+        validGatewayAccountFor3ds.setSendPayerEmailToGateway(true);
 
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withEmail("payer@email.test")
-                .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntityFor3ds)
                 .build();
 
         AuthCardDetails authCardDetails = anAuthCardDetails()
@@ -392,16 +401,20 @@ public class WorldpayPaymentProviderTest {
         );
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(TEST);
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(aGatewayAccountCredentialsEntity()
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(credentials)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
-                .build()));
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         gatewayAccountEntity.setId(gatewayAccountId);
 
-        ChargeEntity charge = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
+        ChargeEntity charge = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         assertFalse(paymentProvider.authorise(request).getBaseResponse().isPresent());
@@ -411,6 +424,7 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
                 .build();
         return new CardAuthorisationGatewayRequest(charge, authCardDetails);
     }
@@ -419,8 +433,8 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntityFor3ds)
                 .build();
-        charge.getGatewayAccount().setRequires3ds(true);
         return new CardAuthorisationGatewayRequest(charge, authCardDetails);
     }
 
