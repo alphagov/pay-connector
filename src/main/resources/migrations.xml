@@ -1776,5 +1776,80 @@
 
     </changeSet>
 
+    <changeSet id="add_payment_instruments_table" author="">
+
+        <createTable tableName="payment_instruments">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+             <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="varchar(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="last_digits_card_number" type="char(4)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cardholder_name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="expiry_date" type="varchar(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_line1" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_line2" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_postcode" type="varchar(25)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_city" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_county" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_country" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="status" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="card_brand" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="start_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="recurring_auth_token" type="jsonb">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="add payment_instrument_id to charges" author="">
+        <addColumn tableName="charges">
+            <column name="payment_instrument_id" type="bigint">
+                <constraints foreignKeyName="fk__charges_payment_instruments"
+                             referencedTableName="payment_instruments"
+                             referencedColumnNames="id" nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add payment_instrument_id to agreements" author="">
+        <addColumn tableName="agreements">
+            <column name="payment_instrument_id" type="bigint">
+                <constraints foreignKeyName="fk__agreements_payment_instruments"
+                             referencedTableName="payment_instruments"
+                             referencedColumnNames="id" nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
