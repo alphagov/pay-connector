@@ -94,6 +94,8 @@ public class SendRefundEmailIT {
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post("/v1/api/notifications/epdq");
 
+        Thread.sleep(500L); // Email sent using ExecutorService task: give it some time to complete
+
         verify(notificationClient).sendEmail(anyString(), anyString(), anyMap(), isNull());
     }
 
