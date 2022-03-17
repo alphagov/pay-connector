@@ -29,15 +29,8 @@ pipeline {
           def stepBuildTime = System.currentTimeMillis()
           def commit = gitCommit()
           def branchName = gitBranchName()
-
-          withCredentials([
-              string(credentialsId: 'pact_broker_username', variable: 'PACT_BROKER_USERNAME'),
-              string(credentialsId: 'pact_broker_password', variable: 'PACT_BROKER_PASSWORD')]
-          ) {
             sh 'mvn -version'
-            sh "mvn clean verify pact:publish -DPACT_BROKER_URL=https://pact-broker-test.cloudapps.digital -DPACT_CONSUMER_VERSION=${commit}" +
-                " -DPACT_BROKER_USERNAME=${PACT_BROKER_USERNAME} -DPACT_BROKER_PASSWORD=${PACT_BROKER_PASSWORD} -DPACT_CONSUMER_TAG=${branchName}"
-          }
+            sh "mvn clean verify"
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
         }
       }
@@ -58,20 +51,6 @@ pipeline {
       post {
         failure {
           postMetric("connector.docker-build.failure", 1)
-        }
-      }
-    }
-    stage('Contract Tests: Connector as Provider') {
-      steps {
-        script {
-          def stepBuildTime = System.currentTimeMillis()
-          runProviderContractTests()
-          postSuccessfulMetrics("connector.provider-contract-tests", stepBuildTime)
-        }
-      }
-      post {
-        failure {
-          postMetric("connector.provider-contract-tests.failure", 1)
         }
       }
     }
