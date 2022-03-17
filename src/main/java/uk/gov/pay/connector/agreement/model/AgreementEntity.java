@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.agreement.model;
 
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Id;
 import javax.persistence.Column;
@@ -50,6 +52,11 @@ public class AgreementEntity {
     
     @Column(name = "live")
     private boolean live;
+
+    @OneToOne
+    @JoinColumn(name = "payment_instrument_id", nullable = true)
+    private PaymentInstrumentEntity paymentInstrument;
+    
 
     public AgreementEntity() {
         // For JPA
@@ -120,7 +127,15 @@ public class AgreementEntity {
     public void setLive(boolean live) {
         this.live = live;
     }
-    
+
+    public PaymentInstrumentEntity getPaymentInstrument() {
+        return paymentInstrument;
+    }
+
+    public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrumentEntity) {
+        this.paymentInstrument = paymentInstrumentEntity;
+    }
+
     public static class AgreementEntityBuilder {
         private GatewayAccountEntity gatewayAccount;
         private Instant createdDate;
