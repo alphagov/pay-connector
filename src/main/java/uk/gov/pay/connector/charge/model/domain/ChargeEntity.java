@@ -19,6 +19,7 @@ import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -43,6 +44,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -187,6 +189,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
 
+    @OneToOne
+    @JoinColumn(name = "payment_instrument_id", nullable = true)
+    private PaymentInstrumentEntity paymentInstrument;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -245,6 +251,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.id = id;
     }
 
+    public PaymentInstrumentEntity getPaymentInstrument() {
+        return paymentInstrument;
+    }
+
+    public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
+        this.paymentInstrument = paymentInstrument;
+    }
+    
     public Long getAmount() {
         return amount;
     }
