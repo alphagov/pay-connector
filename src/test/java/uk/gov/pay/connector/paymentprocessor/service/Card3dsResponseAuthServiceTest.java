@@ -104,7 +104,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockConfiguration.getAuthorisation3dsConfig()).thenReturn(mockAuthorisation3dsConfig);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
-                null, mockConfiguration, null, mockStateTransitionService, ledgerService,
+                null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper,
                 mockTaskQueueService);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);

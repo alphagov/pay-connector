@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,7 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -104,9 +106,15 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
     private static final String JSON_MOTO_KEY = "moto";
-
+    private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
+    private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
+    
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
+    private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
+    private static final String JSON_TOO_SHORT_AGREEMENT_ID_VALUE = "12345678901234567890";
+    private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
+    private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE = "true";
 
     public ChargesApiResourceCreateIT() {
         super(PROVIDER_NAME);
@@ -1037,4 +1045,159 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("message", contains("Payment provider details are not configured on this account"))
                 .body("error_identifier", is(ErrorIdentifier.ACCOUNT_NOT_LINKED_WITH_PSP.toString()));
     }
+    
+    @Test
+    public void shouldReturn400WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreement() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", contains("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+    
+    @Test
+    public void shouldReturn400WhenSavePaymentInstrumentToAgreementIsProvidedButNotAgreementId() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", contains("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+    
+    @Test
+    public void shouldReturn404WhenNonExistentAgreementIdIsGiven() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn422WhenAgreementIdIdExceed26Characters() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_LONG_AGREEMENT_ID_VALUE, "refs", Instant.now(), false, Long.parseLong(accountId));
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_TOO_LONG_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON);
+    }
+
+    @Test
+    public void shouldReturn422WhenAgreementIdIdLessThan26Characters() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_SHORT_AGREEMENT_ID_VALUE, "refs", Instant.now(), false, Long.parseLong(accountId));
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_TOO_SHORT_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON);
+    }
+
+    @Test
+    public void shouldReturn201WhenAgreementIdLengthIsEqualsTo26Characters() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_VALID_AGREEMENT_ID_VALUE, 
+                "refs", Instant.now(), false, Long.parseLong(accountId));
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(HttpStatus.SC_CREATED)
+                .contentType(JSON);
+    }
+
 }

@@ -71,8 +71,14 @@ public class ChargeCreateRequest {
     @ValidPaymentProvider
     private String paymentProvider;
 
+    @JsonProperty("agreement_id")
+    @Length(min = 26, max = 26, message = "Field [agreementId] length must be 26")
+    private String agreementId;
+
+    @JsonProperty("save_payment_instrument_to_agreement")
+    private boolean savePaymentInstrumentToAgreement;
+
     public ChargeCreateRequest() {
-        // for Jackson
     }
 
     ChargeCreateRequest(long amount,
@@ -86,7 +92,9 @@ public class ChargeCreateRequest {
                         ExternalMetadata externalMetadata,
                         Source source,
                         boolean moto,
-                        String paymentProvider) {
+                        String paymentProvider,
+                        String agreementId,
+                        boolean savePaymentInstrumentToAgreement) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -99,6 +107,8 @@ public class ChargeCreateRequest {
         this.source = source;
         this.moto = moto;
         this.paymentProvider = paymentProvider;
+        this.agreementId = agreementId;
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
     }
 
     public long getAmount() {
@@ -145,6 +155,14 @@ public class ChargeCreateRequest {
         return moto;
     }
 
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public boolean getSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+
     public String getPaymentProvider() {
         return paymentProvider;
     }
@@ -161,6 +179,8 @@ public class ChargeCreateRequest {
                 ", moto=" + moto +
                 (language != null ? ", language=" + language.toString() : "") +
                 (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
+                (agreementId != null ? ", agreementId=" + agreementId.toString() : "") +
+                ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
                 '}';
     }
 }
