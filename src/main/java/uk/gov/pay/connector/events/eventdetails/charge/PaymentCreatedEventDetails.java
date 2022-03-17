@@ -41,6 +41,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String addressCountry;
     private final Source source;
     private final boolean moto;
+    private String agreementId;
+    private boolean savePaymentInstrumentToAgreement;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -64,6 +66,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.addressCountry = builder.addressCountry;
         this.source = builder.source;
         this.moto = builder.moto;
+        this.agreementId = builder.agreementId;
+        this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -80,7 +84,9 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
                 .withEmail(charge.getEmail())
                 .withSource(charge.getSource())
-                .withMoto(charge.isMoto());
+                .withMoto(charge.isMoto())
+                .withAgreementId(charge.getAgreementId())
+                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement());
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -207,6 +213,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return source;
     }
 
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public boolean isSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -231,13 +245,15 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(addressCity, that.addressCity) &&
                 Objects.equals(addressCounty, that.addressCounty) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
+                Objects.equals(agreementId, that.agreementId) &&
+                Objects.equals(savePaymentInstrumentToAgreement, that.savePaymentInstrumentToAgreement) &&
                 Objects.equals(source, that.source);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, credentialExternalId,
-                paymentProvider, language, delayedCapture, live, externalMetadata, source);
+                paymentProvider, language, delayedCapture, live, externalMetadata, agreementId, savePaymentInstrumentToAgreement, source);
     }
 
     public static class Builder {
@@ -262,6 +278,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private Source source;
         private boolean moto;
         private String credentialExternalId;
+        private String agreementId;
+        private boolean savePaymentInstrumentToAgreement;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -367,6 +385,16 @@ public class PaymentCreatedEventDetails extends EventDetails {
             return this;
         }
 
+        public Builder withAgreementId(String agreementId) {
+            this.agreementId = agreementId;
+            return this;
+        }
+
+        public Builder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+            return this;
+        }
+        
         public Builder withCredentialExternalId(String credentialExternalId) {
             this.credentialExternalId = credentialExternalId;
             return this;

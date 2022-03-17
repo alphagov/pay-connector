@@ -28,6 +28,8 @@ public class PaymentCreatedTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
+    
+    private final String AGREEMENT_EXTERNAL_ID = "12345678901234567890123456";
 
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
             .withCreatedDate(Instant.parse(time))
@@ -54,7 +56,22 @@ public class PaymentCreatedTest {
 
         assertBasePaymentCreatedDetails(paymentCreatedEvent);
         assertDoesNotContainCardDetails(paymentCreatedEvent);
+        assertRecurringPaymentCreatedDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasNoJsonPath("$.event_details.email"));
+    }
+
+    @Test
+    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreement() throws JsonProcessingException {
+        chargeEntityFixture
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementId(AGREEMENT_EXTERNAL_ID);
+
+        var paymentCreatedEvent = preparePaymentCreatedEvent();
+
+        assertBasePaymentCreatedDetails(paymentCreatedEvent);
+        assertDoesNotContainCardDetails(paymentCreatedEvent);
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id"));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.save_payment_instrument_to_agreement"));
     }
 
     @Test
@@ -63,7 +80,6 @@ public class PaymentCreatedTest {
                 .withGatewayAccountCredentialsEntity(null)
                 .build();
         var paymentCreatedEvent = PaymentCreated.from(chargeEntity).toJsonString();
-
         assertThat(paymentCreatedEvent, hasNoJsonPath("$.event_details.credential_external_id"));
     }
 
@@ -187,5 +203,11 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
+    }
+
+    private void assertRecurringPaymentCreatedDetails(String actual) {
+        assertBasePaymentCreatedDetails(actual);
+        assertThat(actual, hasJsonPath("$.event_details.agreement_id", equalTo(chargeEntity.getAgreementId())));
+        assertThat(actual, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(chargeEntity.isSavePaymentInstrumentToAgreement())));
     }
 }

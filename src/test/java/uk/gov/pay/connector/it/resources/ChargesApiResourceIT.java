@@ -1,10 +1,15 @@
 package uk.gov.pay.connector.it.resources;
 
+import io.restassured.response.ValidatableResponse;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -36,6 +41,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -588,4 +594,20 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
         databaseTestHelper.addToken(chargeId, "tokenId");
     }
+
+    private void createAgreement(String externalChargeId, long chargeId) {
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(CAPTURED)
+                .withReturnUrl(RETURN_URL)
+                .build());
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+    }
+
 }

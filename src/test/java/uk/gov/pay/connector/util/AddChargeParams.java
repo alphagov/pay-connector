@@ -38,6 +38,8 @@ public class AddChargeParams {
     private final Long gatewayCredentialId;
     private final String serviceId;
     private final String issuerUrl;
+    private final String agreementId;
+    private final boolean savePaymentInstrumentToAgreement;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -64,6 +66,8 @@ public class AddChargeParams {
         gatewayCredentialId = builder.gatewayCredentialId;
         serviceId = builder.serviceId;
         issuerUrl = builder.issuerUrl;
+        agreementId = builder.agreementId;
+        savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
     }
 
     public Long getChargeId() {
@@ -162,6 +166,14 @@ public class AddChargeParams {
         return issuerUrl;
     }
 
+    public boolean getSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+
+    public String getAgreementId() {
+        return agreementId;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -187,6 +199,8 @@ public class AddChargeParams {
         private Long gatewayCredentialId;
         private String serviceId;
         private String issuerUrl;
+        private String agreementId;
+        private boolean savePaymentInstrumentToAgreement;
 
         private AddChargeParamsBuilder() {
         }
@@ -313,6 +327,16 @@ public class AddChargeParams {
         
         public AddChargeParamsBuilder withIssuerUrl(String issuerUrl) {
             this.issuerUrl = issuerUrl;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withAgreementId(String agreementId) {
+            this.agreementId = agreementId;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
 

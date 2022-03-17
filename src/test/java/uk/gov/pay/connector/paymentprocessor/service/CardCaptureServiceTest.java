@@ -132,7 +132,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null,
+                null, null, null, mockConfiguration, null,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, 
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 

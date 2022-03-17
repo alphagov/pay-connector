@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.stubbing.Answer;
+import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -143,10 +144,13 @@ public class ChargeServiceTest {
 
     @Mock
     protected GatewayAccountDao mockedGatewayAccountDao;
-    
+
     @Mock
     protected CardTypeDao mockedCardTypeDao;
-    
+
+    @Mock
+    protected AgreementDao mockedAgreementDao;
+
     @Mock
     protected ConnectorConfiguration mockedConfig;
     
@@ -240,7 +244,7 @@ public class ChargeServiceTest {
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
+                mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
     }

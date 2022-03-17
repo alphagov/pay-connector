@@ -64,6 +64,8 @@ public class ChargeEntityFixture {
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
     private String serviceId = randomUuid();
+    private String agreementId = randomUuid().substring(26);
+    private boolean savePaymentInstrumentToAgreement = false;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -146,18 +148,17 @@ public class ChargeEntityFixture {
                 gatewayTransactionId,
                 cardDetails,
                 moto,
-                serviceId);
+                serviceId,
+                agreementId,
+                savePaymentInstrumentToAgreement);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.setProviderSessionId(providerSessionId);
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
-        chargeEntity.setSource(source);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
-        chargeEntity.setPaymentProvider(paymentProvider);
-        chargeEntity.setServiceId(serviceId);
 
         if (this.fees != null) {
             fees.stream().forEach(partialFee -> {
@@ -331,4 +332,15 @@ public class ChargeEntityFixture {
         this.serviceId = serviceId;
         return this;
     }
+
+    public ChargeEntityFixture withAgreementId(String agreementId) {
+        this.agreementId = agreementId;
+        return this;
+    }
+
+    public ChargeEntityFixture withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        return this;
+    }
+
 }

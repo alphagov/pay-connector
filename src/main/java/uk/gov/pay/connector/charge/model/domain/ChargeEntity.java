@@ -47,6 +47,7 @@ import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -180,6 +181,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "service_id")
     private String serviceId;
 
+    @Column(name = "agreement_id")
+    private String agreementId;
+    
+    @Column(name = "save_payment_instrument_to_agreement")
+    private boolean savePaymentInstrumentToAgreement;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -203,7 +210,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
             String gatewayTransactionId,
             CardDetailsEntity cardDetails,
             boolean moto,
-            String serviceId
+            String serviceId,
+            String agreementId,
+            boolean savePaymentInstrumentToAgreement
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -224,6 +233,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.cardDetails = cardDetails;
         this.moto = moto;
         this.serviceId = serviceId;
+        this.agreementId = agreementId;
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
     }
 
     public Long getId() {
@@ -389,6 +400,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setWalletType(WalletType walletType) {
         this.walletType = walletType;
     }
+    
+    public void setAgreementId(String agreementId) {
+        this.agreementId = agreementId;
+    }
+
+    public void setSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+    }
 
     public boolean hasExternalStatus(ExternalChargeState... state) {
         return Arrays.stream(state).anyMatch(s -> fromString(getStatus()).toExternal().equals(s));
@@ -504,6 +523,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.serviceId = serviceId;
     }
 
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public boolean isSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+    
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -519,6 +546,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private Source source;
         private boolean moto;
         private String serviceId;
+        private String agreementId;
+        private boolean savePaymentInstrumentToAgreement;
+
+
 
         private WebChargeEntityBuilder() {
         }
@@ -598,6 +629,16 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return this;
         }
 
+        public WebChargeEntityBuilder withAgreementId(String agreementId) {
+            this.agreementId = agreementId;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+            return this;
+        }
+
         public ChargeEntity build() {
             return new ChargeEntity(
                     amount,
@@ -617,7 +658,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     null,
                     null,
                     moto,
-                    serviceId);
+                    serviceId,
+                    agreementId,
+                    savePaymentInstrumentToAgreement);
         }
     }
 
@@ -633,6 +676,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private ServicePaymentReference reference;
         private ExternalMetadata externalMetadata;
         private String serviceId;
+        private String agreementId;
+        private boolean savePaymentInstrumentToAgreement;
 
         private TelephoneChargeEntityBuilder() {
         }
@@ -697,6 +742,16 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return this;
         }
 
+        public TelephoneChargeEntityBuilder withAgreementId(String agreementId) {
+            this.agreementId = agreementId;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+            return this;
+        }
+        
         public ChargeEntity build() {
             return new ChargeEntity(
                     amount,
@@ -716,7 +771,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     gatewayTransactionId,
                     cardDetails,
                     false,
-                    serviceId);
+                    serviceId,
+                    agreementId,
+                    savePaymentInstrumentToAgreement);
         }
     }
 }

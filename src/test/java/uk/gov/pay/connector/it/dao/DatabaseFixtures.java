@@ -60,6 +60,10 @@ public class DatabaseFixtures {
         return new TestCharge();
     }
 
+    public TestAgreement aTestAgreement() {
+        return new TestAgreement();
+    }
+
     public TestChargeEvent aTestChargeEvent() {
         return new TestChargeEvent();
     }
@@ -555,6 +559,82 @@ public class DatabaseFixtures {
             return this;
         }
 
+    }
+    
+    public class TestAgreement {
+        Long agreementId = RandomUtils.nextLong();
+        Long gatewayAccountId = RandomUtils.nextLong();
+        String externalId = "externalIDxxxyz";
+        String reference = "AgreementReference";
+        Instant createdDate = Instant.now();
+        boolean live = false;
+        String serviceId = "service-id";
+        
+        public Long getAgreementId() {
+            return agreementId;
+        }
+
+        public String getExternalId() {
+            return externalId;
+        }
+
+        public String getReference() {
+            return reference;
+        }
+
+        public Instant getCreatedDate() {
+            return createdDate;
+        }
+
+        public boolean isLive() {
+            return live;
+        }
+
+        public String getServiceId() {
+            return serviceId;
+        }
+        
+        public DatabaseFixtures.TestAgreement withAgreementId(Long agreementId) {
+            this.agreementId = agreementId;
+            return this;
+        }
+        public DatabaseFixtures.TestAgreement withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withReference(String reference) {
+            this.reference = reference;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withCreatedDate(Instant createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withServiceId(String serviceId) {
+            this.serviceId = serviceId;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withLive(boolean live) {
+            this.live = live;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withGatewayAccountId(long gatewayAccountId) {
+            this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public TestAgreement insert() {
+            if (gatewayAccountId == null)
+                throw new IllegalStateException("Test Account must be provided.");
+
+            databaseTestHelper.addAgreement(this.getAgreementId(), this.getServiceId(), this.getExternalId(), this.getReference(), this.getCreatedDate() , this.isLive(), gatewayAccountId);
+            return this;
+        }
     }
 
     public class TestCharge {

@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -104,7 +105,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         charge.getGatewayAccount().setRequires3ds(true);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mock(ConnectorConfiguration.class), null,
+                null, mock(AgreementDao.class), null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
                 mock(EventService.class), mock(GatewayAccountCredentialsService.class), mock(NorthAmericanRegionMapper.class),
                 mockTaskQueueService);

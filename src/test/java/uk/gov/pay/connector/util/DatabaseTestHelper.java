@@ -8,7 +8,6 @@ import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
-import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -103,13 +102,13 @@ public class DatabaseTestHelper {
                         "description, created_date, reference, version, email, language, " +
                         "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                         "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
-                        "issuer_url_3ds) " +
+                        "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement) " +
                         "VALUES(:id, :external_id, :amount, " +
                         ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                         ":description, :created_date, :reference, :version, :email, :language, " +
                         ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                         ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
-                        ":issuer_url_3ds)")
+                        ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -133,6 +132,27 @@ public class DatabaseTestHelper {
                         .bind("gateway_account_credential_id", addChargeParams.getGatewayCredentialId())
                         .bind("service_id", addChargeParams.getServiceId())
                         .bind("issuer_url_3ds", addChargeParams.getIssuerUrl())
+                        .bind("agreementId", addChargeParams.getAgreementId())
+                        .bind("savePaymentInstrumentToAgreement", addChargeParams.getSavePaymentInstrumentToAgreement())
+                        .execute());
+    }
+    
+    public void addAgreement(Long id, String serviceId, String externalId, String reference, Instant createdDate, boolean live, long gatewayAccountId) {
+        PGobject jsonMetadata = new PGobject();
+        jsonMetadata.setType("json");
+        
+        jdbi.withHandle(h ->
+                h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
+                                "reference, live, gateway_account_id) " +
+                                "VALUES(:id, :external_id, :service_id, :created_date, " +
+                                ":reference, :live, :gateway_account_id)")
+                        .bind("id", Long.valueOf(id))
+                        .bind("external_id", externalId)
+                        .bind("service_id", serviceId)
+                        .bind("created_date", LocalDateTime.ofInstant(createdDate, UTC))
+                        .bind("reference", reference)
+                        .bind("live", live)
+                        .bind("gateway_account_id", gatewayAccountId)
                         .execute());
     }
 

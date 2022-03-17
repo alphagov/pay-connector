@@ -5,6 +5,8 @@ import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -37,7 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
-import static java.util.Collections.emptyMap;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
@@ -297,6 +298,31 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
+
+    @Test(expected = AgreementIdAndSaveInstrumentMandatoryInputException.class)
+    public void shouldThrowExceptionWhenAgreementIdNotProvidedAlongWithSavePaymentInstrumentToAgreement() {
+        final ChargeCreateRequest request = requestBuilder.withAmount(1000).withSavePaymentInstrumentToAgreement(true).build();
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test(expected = AgreementNotFoundException.class)
+    public void shouldThrowExceptionWhenAgreementIdNotPresentInDb() {
+        String UNKNOWN_AGREEMENT_ID = "unknownId";
+        final ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(UNKNOWN_AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockedAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID)).thenReturn(Optional.empty());
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+
+
 
     @Test
     public void shouldCreateMotoChargeIfGatewayAccountAllowsIt() {

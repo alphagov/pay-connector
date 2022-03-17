@@ -4,15 +4,18 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -118,6 +121,7 @@ public class ChargeService {
     private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
     private final TokenDao tokenDao;
+    private final AgreementDao agreementDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final CaptureProcessConfig captureProcessConfig;
@@ -137,6 +141,7 @@ public class ChargeService {
                          ChargeDao chargeDao,
                          ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao,
+                         AgreementDao agreementDao,
                          GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config,
                          PaymentProviders providers,
@@ -152,6 +157,7 @@ public class ChargeService {
         this.chargeEventDao = chargeEventDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountDao = gatewayAccountDao;
+        this.agreementDao = agreementDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
@@ -236,6 +242,10 @@ public class ChargeService {
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
             checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
+            
+            checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
+
+            checkForUnknownAgreementId(chargeRequest.getAgreementId());
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -268,6 +278,8 @@ public class ChargeService {
                     .withSource(chargeRequest.getSource())
                     .withMoto(chargeRequest.isMoto())
                     .withServiceId(gatewayAccount.getServiceId())
+                    .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
+                    .withAgreementId(chargeRequest.getAgreementId())
                     .build();
 
             chargeRequest.getPrefilledCardHolderDetails()
@@ -280,6 +292,7 @@ public class ChargeService {
             return chargeEntity;
         });
     }
+
 
     private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
@@ -937,6 +950,21 @@ public class ChargeService {
     private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
         if (moto && !gatewayAccount.isAllowMoto()) {
             throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());
+        }
+    }
+
+    private void checkAgreementIdAndSaveInstrumentBothPresent(String agreementId, boolean savePaymentInstrumentToAgreement) {
+        if (agreementId != null && !savePaymentInstrumentToAgreement) {
+            throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true");
+        } else if (savePaymentInstrumentToAgreement && agreementId == null) {
+            throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified");
+        }
+    }
+
+    private void checkForUnknownAgreementId(String agreementId) {
+        if (agreementId != null) {
+            agreementDao.findByExternalId(agreementId)
+                    .orElseThrow(() -> new AgreementNotFoundException(format("Agreement with ID [%s] not found.", agreementId)));
         }
     }
 }
