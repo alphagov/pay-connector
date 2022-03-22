@@ -3,9 +3,11 @@ package uk.gov.pay.connector.queue.tasks;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,6 +44,8 @@ public class StripeWebhookTaskHandlerTest {
 
     @Mock
     private Appender<ILoggingEvent> mockLogAppender;
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
     @Mock
     private LedgerService ledgerService;
     @Mock
@@ -90,6 +95,13 @@ public class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(1500L));
         assertThat(eventDetails.getAmount(), is(6500L));
         assertThat(eventDetails.getNetAmount(), is(8000L));
+
+        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
+
+        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
     }
 
     @Test

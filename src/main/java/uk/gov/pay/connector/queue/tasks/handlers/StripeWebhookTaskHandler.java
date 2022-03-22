@@ -17,8 +17,11 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CREATED;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_DISPUTE_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
 
 public class StripeWebhookTaskHandler {
     
@@ -57,7 +60,9 @@ public class StripeWebhookTaskHandler {
 
     private void emitEvent(Event event) {
         eventService.emitEvent(event);
-        logger.info("Emitted event for Stripe Webhook Task: " + event.getResourceExternalId());
+        logger.info("Event sent to payment event queue: {}", event.getResourceExternalId(),
+                kv(LEDGER_EVENT_TYPE, event.getEventType()),
+                kv(GATEWAY_DISPUTE_ID, event.getResourceExternalId()));
     }
 
     private DisputeCreated createDisputeCreatedEvent(StripeDisputeData stripeDisputeData,
