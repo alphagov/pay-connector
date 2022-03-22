@@ -214,6 +214,11 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
         String validCardDetails = buildJsonAuthorisationDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
     }
+    
+    @Test
+    public void shouldAuthoriseCharge_WithSavePaymentInstrument() {
+        
+    }
 
     @Test
     public void shouldRejectRandomCardNumber() {

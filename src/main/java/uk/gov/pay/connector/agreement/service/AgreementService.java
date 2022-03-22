@@ -25,6 +25,10 @@ public class AgreementService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.clock = clock;
     }
+    
+    public Optional<AgreementEntity> find(String externalId) {
+        return agreementDao.findByExternalId(externalId);
+    }
 
     public Optional<AgreementResponse> create(AgreementCreateRequest agreementCreateRequest, long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {

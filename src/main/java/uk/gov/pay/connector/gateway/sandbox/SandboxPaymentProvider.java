@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import com.google.inject.Inject;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
@@ -25,7 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationHandler;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -43,10 +46,17 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
-
-    public SandboxPaymentProvider() {
+    
+    private final ChargeDao chargeDao;
+    
+    private final PaymentInstrumentService paymentInstrumentService;
+    
+    @Inject
+    public SandboxPaymentProvider(PaymentInstrumentService paymentInstrumentService, ChargeDao chargeDao) {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler();
+        this.paymentInstrumentService = paymentInstrumentService;
+        this.chargeDao = chargeDao;
     }
 
     @Override
@@ -57,7 +67,20 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
+
+        if (request.getCharge().isSavePaymentInstrumentToAgreement()) {
+            // TODO(sfount): is this the point the provider comes back with a failed response(?) should these all go to gateway error for now or do they map to decline etc.
+            var token = setupTokenWithProviderStub();
+            var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), token);
+            request.getCharge().setPaymentInstrument(instrument);
+            chargeDao.merge(request.getCharge());
+//            request.getCharge().setPaymentInstrument(instrument);
+        }
         return getSandboxGatewayResponse(cardNumber);
+    }
+    
+    private String setupTokenWithProviderStub() {
+        return randomUUID().toString();
     }
 
     @Override

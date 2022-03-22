@@ -1822,6 +1822,15 @@
             <column name="card_brand" type="text">
                 <constraints nullable="true"/>
             </column>
+            <column name="card_type" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="first_digits_card_number" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address_state_province" type="text">
+                <constraints nullable="true"/>
+            </column>
             <column name="start_date" type="timestamp without timezone">
                 <constraints nullable="true"/>
             </column>
@@ -1857,5 +1866,4 @@
             <column name="allow_authorisation_api" type="boolean" defaultValue="false"/>
         </addColumn>
     </changeSet>
-
 </databaseChangeLog>

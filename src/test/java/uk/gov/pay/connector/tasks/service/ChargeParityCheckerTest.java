@@ -14,10 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 
@@ -72,6 +75,10 @@ public class ChargeParityCheckerTest {
     private Appender<ILoggingEvent> mockAppender;
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    @Mock
+    private PaymentInstrumentService mockPaymentInstrumentService;
+    @Mock
+    private ChargeDao chargeDao;
     
     private ChargeEntity chargeEntity;
     private ChargeEntity chargeEntityWith3ds;
@@ -107,7 +114,7 @@ public class ChargeParityCheckerTest {
                 .build();
 
         when(mockRefundService.findRefunds(any())).thenReturn(List.of());
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockPaymentInstrumentService, chargeDao));
         
         Logger root = (Logger) LoggerFactory.getLogger(ChargeParityChecker.class);
         root.setLevel(Level.INFO);

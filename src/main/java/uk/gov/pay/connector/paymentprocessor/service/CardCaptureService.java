@@ -5,6 +5,7 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
@@ -49,6 +51,7 @@ public class CardCaptureService {
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final EventService eventService;
+    private final AgreementService agreementService;
     protected MetricRegistry metricRegistry;
     protected Clock clock;
     protected CaptureQueue captureQueue;
@@ -60,7 +63,8 @@ public class CardCaptureService {
                               Environment environment,
                               Clock clock,
                               CaptureQueue captureQueue,
-                              EventService eventService) {
+                              EventService eventService,
+                              AgreementService agreementService) {
         this.chargeService = chargeService;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
@@ -68,6 +72,7 @@ public class CardCaptureService {
         this.userNotificationService = userNotificationService;
         this.captureQueue = captureQueue;
         this.eventService = eventService;
+        this.agreementService = agreementService;
     }
 
     public CaptureResponse doCapture(String externalId) {
@@ -88,9 +93,22 @@ public class CardCaptureService {
     public ChargeEntity prepareChargeForCapture(String chargeId) {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
-
+    
+    @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
+        
+        if (charge.isSavePaymentInstrumentToAgreement()) {
+            // @TODO(sfount): consider making charge approved and payment instrument confirmed transactional
+            // TODO(sfount): consider what happens with the event going out with this
+            agreementService.find(charge.getAgreementId())
+                    .ifPresent(agreementEntity -> {
+                        // TODO(sfount): consider what happens with the event going out with this
+                        agreementEntity.setPaymentInstrument(charge.getPaymentInstrument());
+                    });
+            charge.getPaymentInstrument().setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
+        }
+        
 
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);

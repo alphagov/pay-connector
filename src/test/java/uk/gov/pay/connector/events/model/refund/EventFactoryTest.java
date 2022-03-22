@@ -6,6 +6,7 @@ import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -62,6 +63,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
@@ -105,7 +107,7 @@ public class EventFactoryTest {
         chargeEventDao = mock(ChargeEventDao.class);
         paymentProviders = mock(PaymentProviders.class);
 
-        PaymentProvider paymentProvider = new SandboxPaymentProvider();
+        PaymentProvider paymentProvider = new SandboxPaymentProvider(mock(PaymentInstrumentService.class), mock(ChargeDao.class));
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
 
         eventFactory = new EventFactory(chargeService, refundDao, refundService, chargeEventDao, paymentProviders);

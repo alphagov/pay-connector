@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -64,11 +66,15 @@ public class ParityCheckServiceTest {
     @Mock
     private ChargeService mockChargeService;
     @Mock
+    private ChargeDao mockChargeDao;
+    @Mock
     private RefundService mockRefundService;
     @Mock
     private HistoricalEventEmitter mockHistoricalEventEmitter;
     @Mock
     private PaymentProviders mockProviders;
+    @Mock
+    private PaymentInstrumentService mockPaymentInstrumentService;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
     @Mock
@@ -103,7 +109,7 @@ public class ParityCheckServiceTest {
                 .build();
 
         when(mockRefundService.findRefunds(any())).thenReturn(refundEntities.stream().map(Refund::from).collect(Collectors.toList()));
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockPaymentInstrumentService, mockChargeDao));
         parityCheckService = new ParityCheckService(mockLedgerService, mockChargeService, mockHistoricalEventEmitter,
                 chargeParityChecker, refundParityChecker, mockRefundService);
     }

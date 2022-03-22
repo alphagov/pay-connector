@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -123,6 +124,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
     @Mock
     private TaskQueueService mockTaskQueueService;
+    @Mock
+    private AgreementService mockAgreementService;
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
 
     @Before
@@ -137,7 +140,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -567,7 +570,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
 
         String externalId = "external-id";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
@@ -590,7 +593,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
 
         try {
             cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
