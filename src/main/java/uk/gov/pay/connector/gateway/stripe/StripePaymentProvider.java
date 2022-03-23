@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -38,6 +39,7 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -110,6 +112,11 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         return stripeAuthoriseHandler.authorise(request);
+    }
+
+    @Override
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        throw new NotImplementedException();
     }
 
     @Override

@@ -29,6 +29,8 @@ public interface PaymentProvider {
     Optional<String> generateTransactionId();
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws GatewayException;
+    
+    GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException;
 
     ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException;
 

@@ -80,6 +80,11 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
         return getSandboxGatewayResponse(cardNumber);
     }
     
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        return getSandboxGatewayResponse(request.getCharge().getPaymentInstrument());
+    } 
+    
     private String setupTokenWithProviderStub() {
         return randomUUID().toString();
     }

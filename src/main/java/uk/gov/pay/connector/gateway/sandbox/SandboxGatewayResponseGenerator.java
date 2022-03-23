@@ -4,6 +4,7 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 
 import java.util.Optional;
 
@@ -30,6 +31,10 @@ public interface SandboxGatewayResponseGenerator {
         return gatewayResponseBuilder
                 .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
                 .build();
+    }
+    
+    default GatewayResponse getSandboxGatewayResponse(PaymentInstrumentEntity paymentInstrumentEntity) {
+        return getSandboxGatewayResponse(true);
     }
 
     static GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {

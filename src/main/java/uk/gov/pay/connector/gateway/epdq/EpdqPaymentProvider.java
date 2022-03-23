@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -43,6 +44,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -121,6 +123,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 buildAuthoriseOrder(request, frontendUrl), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
+    }
+    
+    @Override
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        throw new NotImplementedException();
     }
 
     private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {

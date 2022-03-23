@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.NotImplementedException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -32,6 +33,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -95,6 +97,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
+    @Override
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        throw new NotImplementedException();
+    }
+    
     private static GatewayResponse getSmartpayGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));

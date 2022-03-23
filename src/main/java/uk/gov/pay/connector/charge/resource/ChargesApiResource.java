@@ -4,13 +4,17 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.stripe.json.Card;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
+import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -52,14 +56,17 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ChargeExpiryService chargeExpiryService;
     private final GatewayAccountService gatewayAccountService;
+    private final CardAuthoriseService cardAuthoriseService;
 
     @Inject
     public ChargesApiResource(ChargeService chargeService,
                               ChargeExpiryService chargeExpiryService,
-                              GatewayAccountService gatewayAccountService) {
+                              GatewayAccountService gatewayAccountService,
+                              CardAuthoriseService cardAuthoriseService) {
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
         this.gatewayAccountService = gatewayAccountService;
+        this.cardAuthoriseService = cardAuthoriseService;
     }
 
     @GET
@@ -82,7 +89,18 @@ public class ChargesApiResource {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
-                .map(response -> created(response.getLink("self")).entity(response).build())
+                .map(response -> {
+                    // TODO(sfount): should throw an error if this isn't all correct (before creating charge)
+                    if (chargeRequest.getAuthMode() == AuthMode.API && chargeRequest.getAgreementId() != null) {
+                        // there's no reason to get and get the charge, it can just be returned
+                        chargeService.findChargeEntity(response.getChargeId())
+                                        .ifPresent(charge -> {
+                                            cardAuthoriseService.doAuthorise(charge.getExternalId(), charge.getPaymentInstrument());
+                                        });
+                    }
+                    
+                    return created(response.getLink("self")).entity(response).build();
+                })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 

@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
@@ -41,6 +42,7 @@ public class CardAuthoriseService {
     private final PaymentProviders providers;
     private final AuthorisationLogger authorisationLogger;
     private final MetricRegistry metricRegistry;
+    private final CardCaptureService cardCaptureService;
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
@@ -48,13 +50,72 @@ public class CardAuthoriseService {
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
                                 AuthorisationLogger authorisationLogger, 
-                                Environment environment) {
+                                Environment environment,
+                                CardCaptureService cardCaptureService) {
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
         this.metricRegistry = environment.metrics();
         this.cardTypeDao = cardTypeDao;
+        this.cardCaptureService = cardCaptureService;
+    }
+    
+    public AuthorisationResponse doAuthorise(String chargeId, PaymentInstrumentEntity paymentInstrumentEntity) {
+        return authorisationService.executeAuthorise(chargeId, () -> {
+            var authCardDetails = AuthCardDetails.from(paymentInstrumentEntity);
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            ChargeStatus newStatus;
+
+            try {
+                operationResponse = authoriseUserNotPresent(charge, authCardDetails);
+
+                if (operationResponse.getBaseResponse().isEmpty()) {
+                    operationResponse.throwGatewayError();
+                }
+
+                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+            } catch (GatewayException e) {
+                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
+
+            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                    charge.getExternalId(),
+                    newStatus,
+                    transactionId.orElse(null),
+                    auth3dsDetailsEntity.orElse(null),
+                    sessionIdentifier.orElse(null),
+                    authCardDetails);
+
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    authorisationRequestSummary,
+                    updatedCharge,
+                    transactionId.orElse("missing transaction ID"),
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    newStatus
+            );
+
+            metricRegistry.counter(String.format(
+                    "gateway-operations.%s.%s.authorise.%s.result.%s",
+                    updatedCharge.getPaymentProvider(),
+                    updatedCharge.getGatewayAccount().getType(),
+                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                    newStatus.toString())).inc();
+            cardCaptureService.markChargeAsEligibleForCapture(charge.getExternalId());
+            return new AuthorisationResponse(operationResponse);
+        }); 
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
@@ -138,6 +199,10 @@ public class CardAuthoriseService {
 
     private boolean cardBrandRequires3ds(String cardBrand) {
         return cardTypeDao.findByBrand(cardBrand).stream().anyMatch(CardTypeEntity::isRequires3ds);
+    }
+    
+    private GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
+        return getPaymentProviderFor(charge).authoriseUserNotPresent(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {

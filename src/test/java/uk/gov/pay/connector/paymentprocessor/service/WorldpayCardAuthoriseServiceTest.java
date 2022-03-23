@@ -116,7 +116,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 new AuthorisationService(mockExecutorService, environment),
                 chargeService,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
-                environment);
+                environment,
+                mock(CardCaptureService.class));
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 

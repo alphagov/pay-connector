@@ -164,7 +164,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 authorisationService,
                 chargeService,
                 new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging), 
-                mockEnvironment);
+                mockEnvironment,
+                mock(CardCaptureService.class));
     }
 
     @Before

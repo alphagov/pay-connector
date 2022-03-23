@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.common.model.domain.Address;
 
@@ -197,5 +198,13 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getJsNavigatorLanguage() {
         return Optional.ofNullable(jsNavigatorLanguage);
+    }
+    
+    public static AuthCardDetails from(PaymentInstrumentEntity paymentInstrumentEntity) {
+        var authCardDetails = anAuthCardDetails();
+        authCardDetails.setCardBrand(paymentInstrumentEntity.getCardDetails().getCardBrand());
+        authCardDetails.setAddress(paymentInstrumentEntity.getCardDetails().toCard().getBillingAddress());
+        authCardDetails.setCardHolder(paymentInstrumentEntity.getCardDetails().getCardHolderName());
+        return authCardDetails;
     }
 }

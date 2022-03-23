@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -312,6 +313,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    }
+    
+    @Override
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        throw new NotImplementedException();
     }
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {

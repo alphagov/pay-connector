@@ -1047,31 +1047,6 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     }
     
     @Test
-    public void shouldReturn400WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreement() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withPaymentGateway("worldpay")
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Status.BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", contains("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-    
-    @Test
     public void shouldReturn400WhenSavePaymentInstrumentToAgreementIsProvidedButNotAgreementId() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
