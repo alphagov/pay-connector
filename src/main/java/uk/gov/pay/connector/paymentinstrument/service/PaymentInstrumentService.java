@@ -33,10 +33,10 @@ public class PaymentInstrumentService {
         this.clock = clock;
     }
     
-    public PaymentInstrumentEntity create(AuthCardDetails authCardDetails, String token) {
+    public PaymentInstrumentEntity create(AuthCardDetails authCardDetails, Map<String, String> token) {
         var entity = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withCardDetails(buildCardDetailsEntity(authCardDetails))
-                .withRecurringAuthToken(Map.of("token", token))
+                .withRecurringAuthToken(token)
                 .withCreatedDate(clock.instant())
                 .withStatus(PaymentInstrumentStatus.CREATED)
                 .build();

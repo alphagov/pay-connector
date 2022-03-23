@@ -16,13 +16,15 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private final String frontendUrl;
     private final String chargeExternalId;
     private final String description;
+    private final String customerId;
     private boolean moto;
+    private boolean setupPaymentInstrument;
 
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto, Map<String, String> credentials) {
+            String description, boolean moto, boolean setupPaymentInstrument, Map<String, String> credentials, String customerId) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
@@ -31,11 +33,14 @@ public class StripePaymentIntentRequest extends StripeRequest {
         this.chargeExternalId = chargeExternalId;
         this.description = description;
         this.moto = moto;
+        this.setupPaymentInstrument = setupPaymentInstrument;
+        this.customerId = customerId;
     }
 
     public static StripePaymentIntentRequest of(
             CardAuthorisationGatewayRequest request,
             String paymentMethodId,
+            String customerId,
             StripeGatewayConfig stripeGatewayConfig,
             String frontendUrl) {
         return new StripePaymentIntentRequest(
@@ -49,7 +54,9 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 request.getChargeExternalId(),
                 request.getDescription(),
                 request.getCharge().isMoto(),
-                request.getGatewayCredentials()
+                request.getCharge().isSavePaymentInstrumentToAgreement(),
+                request.getGatewayCredentials(),
+                customerId
         );
     }
 
@@ -80,6 +87,15 @@ public class StripePaymentIntentRequest extends StripeRequest {
         if (moto) {
             params.put("payment_method_options[card[moto]]", "true");
         }
+        if (setupPaymentInstrument) {
+            params.put("setup_future_usage", "off_session");
+            params.put("customer", customerId);
+        }
+
+        // if (authModeApi) {
+            // params.put("off_session": true)
+            // params.put("customer", customerId)
+        // }
         return params;
     }
 

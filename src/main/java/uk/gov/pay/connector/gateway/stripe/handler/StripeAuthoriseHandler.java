@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.gateway.AuthoriseHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -15,11 +16,16 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
+import uk.gov.pay.connector.gateway.stripe.response.StripeCustomerResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+
+import java.util.Map;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -34,15 +40,22 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final JsonObjectMapper jsonObjectMapper;
     private final String frontendUrl;
+    private final PaymentInstrumentService paymentInstrumentService;
+    private final ChargeDao chargeDao;
+    
     @Inject
     public StripeAuthoriseHandler(GatewayClient client,
                                   StripeGatewayConfig stripeGatewayConfig,
                                   ConnectorConfiguration configuration,
-                                  JsonObjectMapper jsonObjectMapper) {
+                                  JsonObjectMapper jsonObjectMapper,
+                                  PaymentInstrumentService paymentInstrumentService,
+                                  ChargeDao chargeDao) {
         this.client = client;
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.jsonObjectMapper = jsonObjectMapper;
+        this.paymentInstrumentService = paymentInstrumentService;
+        this.chargeDao = chargeDao;
     }
 
     @Override
@@ -52,9 +65,22 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
+            StripeCustomerResponse stripeCustomerResponse;
+            StripePaymentIntentResponse stripePaymentIntentResponse;
+            
             StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
-            StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
-
+            
+            if (request.getCharge().isSavePaymentInstrumentToAgreement()) {
+                stripeCustomerResponse = createCustomer(request);
+                stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId(), stripeCustomerResponse.getId());
+                
+                var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), Map.of("customer_id", stripeCustomerResponse.getId(), "payment_method_id", stripePaymentMethodResponse.getId()));
+                request.getCharge().setPaymentInstrument(instrument);
+                chargeDao.merge(request.getCharge());
+            } else {
+                stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+            }
+            
             return GatewayResponse
                     .GatewayResponseBuilder
                     .responseBuilder()
@@ -86,10 +112,22 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }
+    
+    private StripeCustomerResponse createCustomer(CardAuthorisationGatewayRequest request) 
+        throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+       String jsonResponse = client.postRequestFor(StripeCustomerRequest.of(request, stripeGatewayConfig)).getEntity();
+       return jsonObjectMapper.getObject(jsonResponse, StripeCustomerResponse.class);
+    }
 
     private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, null, stripeGatewayConfig, frontendUrl)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+    }
+
+    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId, String customerId)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
     }
 

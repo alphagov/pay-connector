@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -37,6 +38,7 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -62,20 +64,26 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeRefundHandler stripeRefundHandler;
     private final StripeAuthoriseHandler stripeAuthoriseHandler;
     private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
-
+    private final PaymentInstrumentService paymentInstrumentService;
+    private final ChargeDao chargeDao;
+    
     @Inject
     public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
                                  ConnectorConfiguration configuration,
                                  JsonObjectMapper jsonObjectMapper,
-                                 Environment environment) {
+                                 Environment environment,
+                                 PaymentInstrumentService paymentInstrumentService,
+                                 ChargeDao chargeDao) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = gatewayClientFactory.createGatewayClient(STRIPE, environment.metrics());
         this.jsonObjectMapper = jsonObjectMapper;
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        this.paymentInstrumentService = paymentInstrumentService;
+        this.chargeDao = chargeDao;
         stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
         stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
-        stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
+        stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper, paymentInstrumentService, chargeDao);
         stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 

@@ -9,6 +9,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -30,6 +31,7 @@ import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -95,7 +97,7 @@ public class StripePaymentProviderTest {
 
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment);
+        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment, mock(PaymentInstrumentService.class), mock(ChargeDao.class));
 
         when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
         when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());

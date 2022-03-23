@@ -94,7 +94,10 @@ public class CardCaptureService {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
     
-    @Transactional
+    
+//    This probably should be transactional, for some reason an optimistic lock conflict when actually capturing 
+    // this must be used by both the confirm route and the subsequent capture process, not sure how
+//    @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
         
