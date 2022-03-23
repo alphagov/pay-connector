@@ -16,14 +16,7 @@ import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAcco
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.*;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -281,6 +274,7 @@ public class ChargeService {
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementId(chargeRequest.getAgreementId())
+                    .withAuthmode(chargeRequest.getAuthMode())
                     .build();
 
             chargeRequest.getPrefilledCardHolderDetails()
@@ -532,9 +526,8 @@ public class ChargeService {
 
     private boolean needsNextUrl(ChargeEntity chargeEntity) {
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-        return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
+        return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST) && !(chargeEntity.getAuthMode() == AuthMode.API);
     }
-
     public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
                                                           ChargeStatus status,
                                                           String transactionId,
@@ -961,9 +954,7 @@ public class ChargeService {
     }
 
     private void checkAgreementIdAndSaveInstrumentBothPresent(String agreementId, boolean savePaymentInstrumentToAgreement) {
-        if (agreementId != null && !savePaymentInstrumentToAgreement) {
-            throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true");
-        } else if (savePaymentInstrumentToAgreement && agreementId == null) {
+        if (savePaymentInstrumentToAgreement && agreementId == null) {
             throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified");
         }
     }

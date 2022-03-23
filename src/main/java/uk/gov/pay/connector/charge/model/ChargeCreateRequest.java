@@ -12,9 +12,11 @@ import uk.gov.service.payments.commons.model.SupportedLanguageJsonDeserializer;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.validation.Valid;
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.DefaultValue;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,7 +38,7 @@ public class ChargeCreateRequest {
     @JsonProperty("reference")
     private String reference;
 
-    @NotNull(message = "Field [return_url] cannot be null")
+//    @NotNull(message = "Field [return_url] cannot be null")
     @JsonProperty("return_url")
     private String returnUrl;
 
@@ -77,6 +79,10 @@ public class ChargeCreateRequest {
 
     @JsonProperty("save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
+    
+    @JsonProperty("auth_mode")
+    @JsonDeserialize(using = AuthModeDeserialiser.class)
+    private AuthMode authMode = AuthMode.WEB;
 
     public ChargeCreateRequest() {
     }
@@ -94,7 +100,8 @@ public class ChargeCreateRequest {
                         boolean moto,
                         String paymentProvider,
                         String agreementId,
-                        boolean savePaymentInstrumentToAgreement) {
+                        boolean savePaymentInstrumentToAgreement,
+                        AuthMode authMode) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -109,6 +116,7 @@ public class ChargeCreateRequest {
         this.paymentProvider = paymentProvider;
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.authMode = authMode;
     }
 
     public long getAmount() {
@@ -182,5 +190,26 @@ public class ChargeCreateRequest {
                 (agreementId != null ? ", agreementId=" + agreementId.toString() : "") +
                 ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
                 '}';
+    }
+
+    public AuthMode getAuthMode() {
+        if (authMode == null) {
+            return AuthMode.WEB;
+        } else {
+            return authMode;
+        }
+    }
+
+    public void setAuthMode(AuthMode authMode) {
+        this.authMode = authMode;
+    }
+    
+    @AssertTrue(message = "Field [return_url] cannot be null")
+    public boolean isReturnURLRequired() {
+        if (getAuthMode() == AuthMode.WEB) {
+            return this.returnUrl != null;
+        } else {
+            return true;
+        }
     }
 }

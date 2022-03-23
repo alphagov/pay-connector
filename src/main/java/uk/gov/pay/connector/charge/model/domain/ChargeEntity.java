@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
@@ -193,6 +194,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @JoinColumn(name = "payment_instrument_id", nullable = true)
     private PaymentInstrumentEntity paymentInstrument;
 
+    @Column(name = "auth_mode")
+    @Enumerated(EnumType.STRING)
+    private AuthMode authMode;
+    
     public ChargeEntity() {
         //for jpa
     }
@@ -218,7 +223,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             boolean moto,
             String serviceId,
             String agreementId,
-            boolean savePaymentInstrumentToAgreement
+            boolean savePaymentInstrumentToAgreement,
+            AuthMode authMode
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -241,6 +247,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.serviceId = serviceId;
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.authMode = authMode;
     }
 
     public Long getId() {
@@ -544,7 +551,15 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
     }
-    
+
+    public AuthMode getAuthMode() {
+        return authMode;
+    }
+
+    public void setAuthMode(AuthMode authMode) {
+        this.authMode = authMode;
+    }
+
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -562,7 +577,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private String serviceId;
         private String agreementId;
         private boolean savePaymentInstrumentToAgreement;
-
+        private AuthMode authMode;
 
 
         private WebChargeEntityBuilder() {
@@ -652,6 +667,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
+        
+        public WebChargeEntityBuilder withAuthmode(AuthMode authMode) {
+            this.authMode = authMode;
+            return this;
+        }
 
         public ChargeEntity build() {
             return new ChargeEntity(
@@ -674,7 +694,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     moto,
                     serviceId,
                     agreementId,
-                    savePaymentInstrumentToAgreement);
+                    savePaymentInstrumentToAgreement,
+                    authMode);
         }
     }
 
@@ -787,7 +808,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     false,
                     serviceId,
                     agreementId,
-                    savePaymentInstrumentToAgreement);
+                    savePaymentInstrumentToAgreement,
+                    AuthMode.WEB);
         }
     }
 }

@@ -1866,4 +1866,13 @@
             <column name="allow_authorisation_api" type="boolean" defaultValue="false"/>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="add auth_mode to charges" author="">
+        <addColumn tableName="charges">
+            <column name="auth_mode" type="VARCHAR(50)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
