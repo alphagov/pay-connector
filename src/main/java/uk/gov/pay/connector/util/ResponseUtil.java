@@ -64,6 +64,11 @@ public class ResponseUtil {
         return buildErrorResponse(NOT_FOUND, message);
     }
 
+    public static Response agreementNotFoundResponse(String message) {
+        LOGGER.info(message);
+        return buildAgreementNotFoundErrorResponse(NOT_FOUND, message);
+    }
+
     public static Response acceptedResponse(String message) {
         return buildErrorResponse(ACCEPTED, message);
     }
@@ -84,6 +89,15 @@ public class ResponseUtil {
 
     private static Response buildErrorResponse(Status status, String message) {
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message));
+        return responseWithEntity(status, errorResponse);
+    }
+    private static Response buildAgreementNotFoundErrorResponse(Status status, String message) {
+        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.AGREEMENT_NOT_FOUND, List.of(message));
+        return responseWithEntity(status, errorResponse);
+    }
+
+    public static Response buildErrorResponse(Status status, ErrorIdentifier errorIdentifier, String message) {
+        ErrorResponse errorResponse = new ErrorResponse(errorIdentifier, List.of(message));
         return responseWithEntity(status, errorResponse);
     }
 

@@ -10,6 +10,7 @@ import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1197,7 +1198,40 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
                 .statusCode(HttpStatus.SC_CREATED)
-                .contentType(JSON);
+                .contentType(JSON)
+                .body("agreement_id", is(JSON_VALID_AGREEMENT_ID_VALUE))
+                .body("save_payment_instrument_to_agreement", is(true));
     }
 
+    @Test
+    public void shouldReturn404AndErrorIdAgreementNotFoundWhenAgreementIsNotFound() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(HttpStatus.SC_NOT_FOUND)
+                .contentType(JSON)
+                .body("error_identifier", is(ErrorIdentifier.AGREEMENT_NOT_FOUND.toString()));
+    }
+
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
+    }
 }

@@ -134,6 +134,12 @@ public class ChargeResponse {
     @JsonProperty("moto")
     private boolean moto;
 
+    @JsonProperty("agreement_id")
+    private String agreementId;
+
+    @JsonProperty("save_payment_instrument_to_agreement")
+    private boolean savePaymentInstrumentToAgreement;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -167,6 +173,8 @@ public class ChargeResponse {
         this.walletType = builder.getWalletType();
         this.externalMetadata = builder.getExternalMetadata();
         this.moto = builder.isMoto();
+        this.agreementId = builder.getAgreementId();
+        this.savePaymentInstrumentToAgreement = builder.isSavePaymentInstrumentToAgreement();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -301,6 +309,14 @@ public class ChargeResponse {
         return moto;
     }
 
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public boolean isSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -373,6 +389,8 @@ public class ChargeResponse {
                 ", totalAmount=" + totalAmount +
                 ", walletType=" + walletType +
                 ", moto=" + moto +
+                ", agreementId=" + agreementId +
+                ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
                 '}';
     }
 
