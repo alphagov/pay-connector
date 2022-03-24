@@ -695,6 +695,14 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void allowAuthorisationApi(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE gateway_accounts set allow_authorisation_api=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE CHARGES set wallet=:walletType WHERE id=:chargeId")

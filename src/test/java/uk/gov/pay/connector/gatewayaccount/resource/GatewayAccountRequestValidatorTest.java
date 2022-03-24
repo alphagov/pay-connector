@@ -269,7 +269,8 @@ class GatewayAccountRequestValidatorTest {
                 arguments("replace", "provider_switch_enabled", "unfalse", "Value [unfalse] must be of type boolean for path [provider_switch_enabled]"),
                 arguments("replace", "send_reference_to_gateway", null, "Field [value] is required"),
                 arguments("replace", "send_reference_to_gateway", "unfalse", "Value [unfalse] must be of type boolean for path [send_reference_to_gateway]"),
-                arguments("replace", "requires_additional_kyc_data", "unfalse", "Value [unfalse] must be of type boolean for path [requires_additional_kyc_data]")
+                arguments("replace", "requires_additional_kyc_data", "unfalse", "Value [unfalse] must be of type boolean for path [requires_additional_kyc_data]"),
+                arguments("replace", "allow_authorisation_api", "unfalse", "Value [unfalse] must be of type boolean for path [allow_authorisation_api]")
         );
     }
 }

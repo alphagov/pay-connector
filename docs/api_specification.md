@@ -249,36 +249,38 @@ Content-Type: application/json
         }
     },
     "worldpay_3ds_flex": null,
-    "send_reference_to_gateway": false
+    "send_reference_to_gateway": false,
+    "allow_authorisation_api": false
 }
 ```
 
 #### Response field description
 
-| Field                                            | always present | Description                                                                                                   |
-|--------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------|
-| `gateway_account_id`                             | X              | The account Id                                                                                                |
-| `type`                                           | X              | Account type for this provider (test/live)                                                                    |
-| `payment_provider`                               | X              | The payment provider for which this account is created.                                                       |
-| `description`                                    | X              | An internal description to identify the gateway account. The default value is `null`.                         |
-| `analytics_id`                                   | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                  |
-| `service_name`                                   |                | The service name that is saved for this account, present if not empty.                                        |
-| `corporate_credit_card_surcharge_amount`         | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                  |
-| `corporate_debit_card_surcharge_amount`          | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                   |
-| `corporate_prepaid_credit_card_surcharge_amount` | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.                          |
-| `corporate_prepaid_debit_card_surcharge_amount`  | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.                           |
-| `allow_apple_pay`                                | X              | Whether apple pay is enabled. The default value is `false`.                                                   |
-| `allow_google_pay`                               | X              | Whether google pay is enabled. The default value is `false`.                                                  |
-| `block_prepaid_cards`                            | X              | Whether pre-paid card are allowed as a payment method for this gateway account. The default value is `false`. |
-| `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                        |
-| `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                  |
-| `requires3ds`                                    | X              | Whether 3DS is enabled. The default value is `false`.                                                         |
-| `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.             |
-| `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.           |
-| `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.    |
-| `email_notifications`                            | X              | The settings for the different emails that are sent out                                                       |
-| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                   |
-| `send_reference_to_gateway`                      | X              | If enabled, service payment reference is sent to gateway as description. Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false'  |
+| Field                                            | always present | Description                                                                                                                                                                                    |
+|:-------------------------------------------------|:---------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `gateway_account_id`                             | X              | The account Id                                                                                                                                                                                 |
+| `type`                                           | X              | Account type for this provider (test/live)                                                                                                                                                     |
+| `payment_provider`                               | X              | The payment provider for which this account is created.                                                                                                                                        |
+| `description`                                    | X              | An internal description to identify the gateway account. The default value is `null`.                                                                                                          |
+| `analytics_id`                                   | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                                                                                                   |
+| `service_name`                                   |                | The service name that is saved for this account, present if not empty.                                                                                                                         |
+| `corporate_credit_card_surcharge_amount`         | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                                                                                                   |
+| `corporate_debit_card_surcharge_amount`          | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                                                                                                    |
+| `corporate_prepaid_credit_card_surcharge_amount` | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.                                                                                                           |
+| `corporate_prepaid_debit_card_surcharge_amount`  | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.                                                                                                            |
+| `allow_apple_pay`                                | X              | Whether apple pay is enabled. The default value is `false`.                                                                                                                                    |
+| `allow_google_pay`                               | X              | Whether google pay is enabled. The default value is `false`.                                                                                                                                   |
+| `block_prepaid_cards`                            | X              | Whether pre-paid card are allowed as a payment method for this gateway account. The default value is `false`.                                                                                  |
+| `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                                                                                                         |
+| `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                                                                                                   |
+| `requires3ds`                                    | X              | Whether 3DS is enabled. The default value is `false`.                                                                                                                                          |
+| `allow_moto`                                     | X              | Whether Mail Order and Telephone Order (MOTO) payments are allowed. The default value is `false`.                                                                                              |
+| `moto_mask_card_number_input`                    | X              | Whether the card number is masked when being input for MOTO payments. The default value is `false`.                                                                                            |
+| `moto_mask_card_security_code_input`             | X              | Whether the card security code is masked when being input for MOTO payments. The default value is `false`.                                                                                     |
+| `email_notifications`                            | X              | The settings for the different emails that are sent out                                                                                                                                        |
+| `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                                                                                                    |
+| `send_reference_to_gateway`                      | X              | If enabled, service payment reference is sent to gateway as description. Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false' |
+| `allow_authorisation_api`                        | X              | Whether the account is allowed to initiate MOTO payments that are authorised VIA an API request rather than the web interface                                                                  |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -990,7 +992,7 @@ A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_
 `notify_settings`, `email_collection_mode`, `corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`,
 `corporate_prepaid_credit_card_surcharge_amount`, `corporate_prepaid_debit_card_surcharge_amount`, `allow_zero_amount`, `allow_moto`,
 `moto_mask_card_number_input`, `moto_mask_card_security_code_input`, `allow_telephone_payment_notifications`, 
-`send_payer_ip_address_to_gateway`, `send_payer_email_to_gateway`, `integration_version_3ds`, `send_reference_to_gateway` or
+`send_payer_ip_address_to_gateway`, `send_payer_email_to_gateway`, `integration_version_3ds`, `send_reference_to_gateway`, `allow_authorisation_api` or
 `worldpay_exemption_engine_enabled` using a JSON Patch-esque message body.
 
 ### Request example

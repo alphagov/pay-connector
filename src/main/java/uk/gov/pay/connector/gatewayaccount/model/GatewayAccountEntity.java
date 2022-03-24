@@ -150,6 +150,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "send_reference_to_gateway")
     private boolean sendReferenceToGateway;
 
+    @Column(name = "allow_authorisation_api")
+    private boolean allowAuthorisationApi;
+
     @ManyToMany
     @JoinTable(
             name = "accepted_card_types",
@@ -424,6 +427,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return requiresAdditionalKycData;
     }
 
+    @JsonProperty("allow_authorisation_api")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isAllowAuthorisationApi() {
+        return allowAuthorisationApi;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -555,6 +564,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> gatewayAccountCredentials) {
         this.gatewayAccountCredentials = gatewayAccountCredentials;
+    }
+
+    public void setAllowAuthorisationApi(boolean allowAuthorisationApi) {
+        this.allowAuthorisationApi = allowAuthorisationApi;
     }
 
     @JsonProperty("provider_switch_enabled")
