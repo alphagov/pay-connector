@@ -1852,4 +1852,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add allow_authorisation_api to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_authorisation_api" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
