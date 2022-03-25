@@ -4,6 +4,7 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -34,7 +35,7 @@ public class ChargesApiResourceTest {
     private static final GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
 
     public static ResourceExtension resources = ResourceExtension.builder()
-            .addResource(new ChargesApiResource(chargeService, chargeExpiryService, gatewayAccountService, mock(CardAuthoriseService.class)))
+            .addResource(new ChargesApiResource(chargeService, chargeExpiryService, gatewayAccountService, mock(CardAuthoriseService.class), mock(AgreementService.class)))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(ConstraintViolationExceptionMapper.class)
             .build();

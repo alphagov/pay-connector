@@ -63,57 +63,78 @@ public class CardAuthoriseService {
     
     public AuthorisationResponse doAuthorise(String chargeId, PaymentInstrumentEntity paymentInstrumentEntity) {
         return authorisationService.executeAuthorise(chargeId, () -> {
-            var authCardDetails = AuthCardDetails.from(paymentInstrumentEntity);
-            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            ChargeStatus newStatus;
+            LOGGER.info("Starting to do alt auth");
 
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
             try {
-                operationResponse = authoriseUserNotPresent(charge, authCardDetails);
+                // doesn't get here - is failing on that for some reason
+                LOGGER.info("mapped to auth details to do alt auth");
+                
+                // NEW
+                final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, paymentInstrumentEntity);
+                
+                // NEW
+                var authCardDetails = AuthCardDetails.from(paymentInstrumentEntity);
+                
+//                charge.setPaymentInstrument(paymentInstrumentEntity);
+                ChargeStatus newStatus;
 
-                if (operationResponse.getBaseResponse().isEmpty()) {
-                    operationResponse.throwGatewayError();
+                try {
+                    LOGGER.info("Actuvally got to calling provider interface");
+
+                    operationResponse = authoriseUserNotPresent(charge, authCardDetails);
+                    LOGGER.info(String.format("user not present got through %s", operationResponse));
+
+                    if (operationResponse.getBaseResponse().isEmpty()) {
+                        operationResponse.throwGatewayError();
+                    }
+            
+                    newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+                } catch (GatewayException e) {
+                    newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                    operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
                 }
 
-                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+                LOGGER.info("through to 3ds bits");
+                Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+                Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+                Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                        operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
-            } catch (GatewayException e) {
-                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+                LOGGER.info("through to updating bits");
+                ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                        charge.getExternalId(),
+                        newStatus,
+                        transactionId.orElse(null),
+                        auth3dsDetailsEntity.orElse(null),
+                        sessionIdentifier.orElse(null),
+                        authCardDetails);
+
+                var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+
+                authorisationLogger.logChargeAuthorisation(
+                        LOGGER,
+                        authorisationRequestSummary,
+                        updatedCharge,
+                        transactionId.orElse("missing transaction ID"),
+                        operationResponse,
+                        charge.getChargeStatus(),
+                        newStatus
+                );
+
+                metricRegistry.counter(String.format(
+                        "gateway-operations.%s.%s.authorise.%s.result.%s",
+                        updatedCharge.getPaymentProvider(),
+                        updatedCharge.getGatewayAccount().getType(),
+                        authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                        newStatus.toString())).inc();
+                
+                // NEW
+                cardCaptureService.markChargeAsEligibleForCapture(charge.getExternalId());
+            } catch(Exception e) {
+                LOGGER.error("Failure during auth not present flow", e);
             }
-
-            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
-                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-
-            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
-                    charge.getExternalId(),
-                    newStatus,
-                    transactionId.orElse(null),
-                    auth3dsDetailsEntity.orElse(null),
-                    sessionIdentifier.orElse(null),
-                    authCardDetails);
-
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
-
-            authorisationLogger.logChargeAuthorisation(
-                    LOGGER,
-                    authorisationRequestSummary,
-                    updatedCharge,
-                    transactionId.orElse("missing transaction ID"),
-                    operationResponse,
-                    charge.getChargeStatus(),
-                    newStatus
-            );
-
-            metricRegistry.counter(String.format(
-                    "gateway-operations.%s.%s.authorise.%s.result.%s",
-                    updatedCharge.getPaymentProvider(),
-                    updatedCharge.getGatewayAccount().getType(),
-                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                    newStatus.toString())).inc();
-            cardCaptureService.markChargeAsEligibleForCapture(charge.getExternalId());
             return new AuthorisationResponse(operationResponse);
         }); 
     }
@@ -178,6 +199,19 @@ public class CardAuthoriseService {
     @Transactional
     public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+        ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
+        getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+        return charge;
+    }
+
+    // copying this to be lazy for now, this is a place where the charge is already naturally updated and avoided 
+    // thinking through where would be best for this
+    @Transactional
+    public ChargeEntity prepareChargeForAuthorisation(String chargeId, PaymentInstrumentEntity paymentInstrumentEntity) {
+        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+        var authCardDetails = AuthCardDetails.from(paymentInstrumentEntity);
+        charge.setPaymentInstrument(paymentInstrumentEntity);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
         getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);

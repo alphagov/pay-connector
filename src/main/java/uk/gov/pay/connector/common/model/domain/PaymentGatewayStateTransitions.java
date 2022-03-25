@@ -116,6 +116,10 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(UNDEFINED, CREATED, ModelledEvent.of(PaymentCreated.class));
         graph.putEdgeValue(UNDEFINED, PAYMENT_NOTIFICATION_CREATED, ModelledEvent.of(PaymentNotificationCreated.class));
         graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
+        
+        // questions about if we want to introduce a new state that shows the charge being associated with the payment instrument
+        // A: probably yes
+        graph.putEdgeValue(CREATED, AUTHORISATION_READY, ModelledEvent.none());
         graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_READY, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpired.class));

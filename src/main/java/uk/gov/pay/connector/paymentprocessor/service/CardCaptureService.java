@@ -95,23 +95,18 @@ public class CardCaptureService {
     }
     
     
-//    This probably should be transactional, for some reason an optimistic lock conflict when actually capturing 
+    // This probably should be transactional, for some reason an optimistic lock conflict when actually capturing 
     // this must be used by both the confirm route and the subsequent capture process, not sure how
+    
+    // If this is transactional - it causes the capture process to throw the above error when trying to capture
+    // If this is not transactional, the agreement and payment instrument values aren't updated
 //    @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
         
         if (charge.isSavePaymentInstrumentToAgreement()) {
-            // @TODO(sfount): consider making charge approved and payment instrument confirmed transactional
-            // TODO(sfount): consider what happens with the event going out with this
-            agreementService.find(charge.getAgreementId())
-                    .ifPresent(agreementEntity -> {
-                        // TODO(sfount): consider what happens with the event going out with this
-                        agreementEntity.setPaymentInstrument(charge.getPaymentInstrument());
-                    });
-            charge.getPaymentInstrument().setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
+            setupAgreement(charge);
         }
-        
 
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
@@ -119,6 +114,23 @@ public class CardCaptureService {
         }
 
         return charge;
+    }
+    
+    @Transactional
+    public void setupAgreement(ChargeEntity charge) {
+        if (charge.isSavePaymentInstrumentToAgreement()) {
+            // @TODO(sfount): consider making charge approved and payment instrument confirmed transactional
+            // TODO(sfount): consider what happens with the event going out with this
+            agreementService.find(charge.getAgreementId())
+                    .ifPresent(agreementEntity -> {
+                        LOG.info("Setting agreemnt state");
+                        
+                        // TODO(sfount): completely unnescary, above method should update charge reliably once
+                        // TODO(sfount): consider what happens with the event going out with this
+                        chargeService.updatePaymentInstrument(charge.getExternalId(), PaymentInstrumentStatus.ACTIVE);
+                        agreementEntity.setPaymentInstrument(charge.getPaymentInstrument());
+                    });
+        } 
     }
 
     @Transactional

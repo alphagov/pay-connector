@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
 import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -57,16 +58,19 @@ public class ChargesApiResource {
     private final ChargeExpiryService chargeExpiryService;
     private final GatewayAccountService gatewayAccountService;
     private final CardAuthoriseService cardAuthoriseService;
+    private final AgreementService agreementService;
 
     @Inject
     public ChargesApiResource(ChargeService chargeService,
                               ChargeExpiryService chargeExpiryService,
                               GatewayAccountService gatewayAccountService,
-                              CardAuthoriseService cardAuthoriseService) {
+                              CardAuthoriseService cardAuthoriseService,
+                              AgreementService agreementService) {
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
         this.gatewayAccountService = gatewayAccountService;
         this.cardAuthoriseService = cardAuthoriseService;
+        this.agreementService = agreementService;
     }
 
     @GET
@@ -95,7 +99,10 @@ public class ChargesApiResource {
                         // there's no reason to get and get the charge, it can just be returned
                         chargeService.findChargeEntity(response.getChargeId())
                                         .ifPresent(charge -> {
-                                            cardAuthoriseService.doAuthorise(charge.getExternalId(), charge.getPaymentInstrument());
+                                             agreementService.find(charge.getAgreementId())
+                                                             .ifPresent(agreement -> {
+                                                                 cardAuthoriseService.doAuthorise(charge.getExternalId(), agreement.getPaymentInstrument());
+                                                             });
                                         });
                     }
                     

@@ -201,8 +201,9 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
     
     public static AuthCardDetails from(PaymentInstrumentEntity paymentInstrumentEntity) {
-        var authCardDetails = anAuthCardDetails();
+        var authCardDetails = new AuthCardDetails();
         authCardDetails.setCardBrand(paymentInstrumentEntity.getCardDetails().getCardBrand());
+        authCardDetails.setCardNo(paymentInstrumentEntity.getCardDetails().getFirstDigitsCardNumber().toString().concat(paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString()));
         authCardDetails.setAddress(paymentInstrumentEntity.getCardDetails().toCard().getBillingAddress());
         authCardDetails.setCardHolder(paymentInstrumentEntity.getCardDetails().getCardHolderName());
         return authCardDetails;

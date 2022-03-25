@@ -191,7 +191,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private boolean savePaymentInstrumentToAgreement;
 
     @OneToOne
-    @JoinColumn(name = "payment_instrument_id", nullable = true)
+    @JoinColumn(name = "payment_instrument_id", nullable = true, updatable = true)
     private PaymentInstrumentEntity paymentInstrument;
 
     @Column(name = "auth_mode")

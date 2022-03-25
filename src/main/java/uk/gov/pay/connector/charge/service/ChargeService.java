@@ -58,6 +58,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -365,6 +366,15 @@ public class ChargeService {
                     return Optional.of(chargeEntity);
                 })
                 .orElseGet(Optional::empty);
+    }
+    
+    @Transactional
+    public Optional<ChargeEntity> updatePaymentInstrument(String chargeExternalId, PaymentInstrumentStatus status) {
+        return chargeDao.findByExternalId(chargeExternalId).
+                map(entity -> {
+                    entity.getPaymentInstrument().setPaymentInstrumentStatus(status);
+                    return entity;
+                });
     }
 
     @Transactional
