@@ -172,6 +172,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withMerchantCode(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
+    
+    @Override
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        return authorise(request);
+    }
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
@@ -334,11 +339,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
     }
     
-    @Override
-    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
-        throw new NotImplementedException();
-    }
-
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
