@@ -35,3 +35,9 @@ jobs:
           docker pull govukpay/postgres:11.1
       - name: Run unit and integration tests
         run: mvn clean verify
+
+  provider-contract-tests:
+    uses: alphagov/pay-ci/.github/workflows/_run-provider-contract-tests.yml@TEST-pact-tests-pre-merge
+    secrets:
+      pact_broker_username: ${{ secrets.pact_broker_username }}
+      pact_broker_password: ${{ secrets.pact_broker_password }}
