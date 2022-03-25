@@ -105,6 +105,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("requires_additional_kyc_data")
     private boolean requiresAdditionalKycData;
     
+    @JsonProperty("allow_authorisation_api")
+    private boolean allowAuthorisationApi;
+    
     public GatewayAccountResourceDTO() {
     }
 
@@ -138,6 +141,7 @@ public class GatewayAccountResourceDTO {
         this.sendPayerIpAddressToGateway = gatewayAccountEntity.isSendPayerIpAddressToGateway();
         this.serviceId = gatewayAccountEntity.getServiceId();
         this.requiresAdditionalKycData = gatewayAccountEntity.isRequiresAdditionalKycData();
+        this.allowAuthorisationApi = gatewayAccountEntity.isAllowAuthorisationApi();
     }
 
     public long getAccountId() {
@@ -262,5 +266,9 @@ public class GatewayAccountResourceDTO {
 
     public boolean isRequiresAdditionalKycData() {
         return requiresAdditionalKycData;
+    }
+
+    public boolean isAllowAuthorisationApi() {
+        return allowAuthorisationApi;
     }
 }

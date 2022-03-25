@@ -45,6 +45,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_PROVIDER_SWITCH_ENABLED = "provider_switch_enabled";
     public static final String FIELD_SEND_REFERENCE_TO_GATEWAY = "send_reference_to_gateway";
     public static final String FIELD_REQUIRES_ADDITIONAL_KYC_DATA = "requires_additional_kyc_data";
+    public static final String FIELD_ALLOW_AUTHORISATION_API = "allow_authorisation_api";
 
     private static final List<String> VALID_PATHS = List.of(
             FIELD_NOTIFY_SETTINGS,
@@ -67,7 +68,8 @@ public class GatewayAccountRequestValidator {
             FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
             FIELD_PROVIDER_SWITCH_ENABLED,
             FIELD_SEND_REFERENCE_TO_GATEWAY,
-            FIELD_REQUIRES_ADDITIONAL_KYC_DATA);
+            FIELD_REQUIRES_ADDITIONAL_KYC_DATA,
+            FIELD_ALLOW_AUTHORISATION_API);
 
     private final RequestValidator requestValidator;
 
@@ -106,6 +108,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_PROVIDER_SWITCH_ENABLED:
             case FIELD_SEND_REFERENCE_TO_GATEWAY:
             case FIELD_REQUIRES_ADDITIONAL_KYC_DATA:
+            case FIELD_ALLOW_AUTHORISATION_API:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:

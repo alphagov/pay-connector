@@ -31,6 +31,7 @@ import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_MOTO;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS;
@@ -118,105 +119,107 @@ public class GatewayAccountService {
 
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater = Map.ofEntries(
             entry(
-                FIELD_ALLOW_GOOGLE_PAY,
-                (gatewayAccountRequest, gatewayAccountEntity) -> {
-                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                    gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
-                }
-            ),
-            entry(
-                FIELD_ALLOW_APPLE_PAY,
-                (gatewayAccountRequest, gatewayAccountEntity) -> {
-                    throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                    gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
-                }
-            ),
-            entry(
-                FIELD_NOTIFY_SETTINGS,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject())
-            ),
-            entry(
-                FIELD_EMAIL_COLLECTION_MODE,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString()))
-            ),
-            entry(
-                FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
-            ),
-            entry(
-                FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
-            ),
-            entry(
-                FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
-            ),
-            entry(
-                FIELD_ALLOW_ZERO_AMOUNT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()))
-            ),
-            entry(
-                FIELD_INTEGRATION_VERSION_3DS,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt())
-            ),
-            entry(
-                FIELD_BLOCK_PREPAID_CARDS,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_ALLOW_MOTO,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowMoto(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardNumberInput(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowTelephonePaymentNotifications(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerIpAddressToGateway(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_SEND_REFERENCE_TO_GATEWAY,
-                (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
-            ),
-            entry(
-                FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
-                (gatewayAccountRequest, gatewayAccountEntity) -> {
-                    throwIfGatewayAccountIsNotWorldpay(gatewayAccountEntity, FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED);
-                    var worldpay3dsFlexCredentialsEntity = gatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()
-                        .orElseThrow(() -> new MissingWorldpay3dsFlexCredentialsEntityException(gatewayAccountEntity.getId(), FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED));
-                    worldpay3dsFlexCredentialsEntity.setExemptionEngineEnabled(gatewayAccountRequest.valueAsBoolean());
-                }
-            ),
-            entry(
-                FIELD_PROVIDER_SWITCH_ENABLED,
-                (JsonPatchRequest gatewayAccountRequest, GatewayAccountEntity gatewayAccountEntity) -> {
-                    throwIfNoActiveCredentialExist(gatewayAccountEntity);
-                    gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean());
-
-                    if(gatewayAccountRequest.valueAsBoolean()) {
-                        logger.info("Enabled switching payment provider for gateway account [id={}]",
-                                gatewayAccountEntity.getId(),
-                                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
-                                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                                kv(PROVIDER, gatewayAccountEntity.getGatewayName()));
+                    FIELD_ALLOW_GOOGLE_PAY,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> {
+                        throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                        gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                     }
-                }
+            ),
+            entry(
+                    FIELD_ALLOW_APPLE_PAY,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> {
+                        throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                        gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
+                    }
+            ),
+            entry(
+                    FIELD_NOTIFY_SETTINGS,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject())
+            ),
+            entry(
+                    FIELD_EMAIL_COLLECTION_MODE,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString()))
+            ),
+            entry(
+                    FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                    FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                    FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+            ),
+            entry(
+                    FIELD_ALLOW_ZERO_AMOUNT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()))
+            ),
+            entry(
+                    FIELD_INTEGRATION_VERSION_3DS,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt())
+            ),
+            entry(
+                    FIELD_BLOCK_PREPAID_CARDS,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_ALLOW_MOTO,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowMoto(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardNumberInput(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowTelephonePaymentNotifications(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerIpAddressToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_SEND_REFERENCE_TO_GATEWAY,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> {
+                        throwIfGatewayAccountIsNotWorldpay(gatewayAccountEntity, FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED);
+                        var worldpay3dsFlexCredentialsEntity = gatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()
+                                .orElseThrow(() -> new MissingWorldpay3dsFlexCredentialsEntityException(gatewayAccountEntity.getId(), FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED));
+                        worldpay3dsFlexCredentialsEntity.setExemptionEngineEnabled(gatewayAccountRequest.valueAsBoolean());
+                    }
+            ),
+            entry(
+                    FIELD_PROVIDER_SWITCH_ENABLED,
+                    (JsonPatchRequest gatewayAccountRequest, GatewayAccountEntity gatewayAccountEntity) -> {
+                        throwIfNoActiveCredentialExist(gatewayAccountEntity);
+                        gatewayAccountEntity.setProviderSwitchEnabled(gatewayAccountRequest.valueAsBoolean());
+
+                        if (gatewayAccountRequest.valueAsBoolean()) {
+                            logger.info("Enabled switching payment provider for gateway account [id={}]",
+                                    gatewayAccountEntity.getId(),
+                                    kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                                    kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                                    kv(PROVIDER, gatewayAccountEntity.getGatewayName()));
+                        }
+                    }
             ),
             entry(FIELD_REQUIRES_ADDITIONAL_KYC_DATA, (gatewayAccountRequest, gatewayAccountEntity) ->
-                            gatewayAccountEntity.setRequiresAdditionalKycData(gatewayAccountRequest.valueAsBoolean()))
+                    gatewayAccountEntity.setRequiresAdditionalKycData(gatewayAccountRequest.valueAsBoolean())),
+            entry(FIELD_ALLOW_AUTHORISATION_API, (gatewayAccountRequest, gatewayAccountEntity) ->
+                    gatewayAccountEntity.setAllowAuthorisationApi(gatewayAccountRequest.valueAsBoolean()))
     );
 
     private void throwIfNoActiveCredentialExist(GatewayAccountEntity gatewayAccountEntity) {
