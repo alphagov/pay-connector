@@ -10,10 +10,12 @@ import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.stripe.json.Card;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 
@@ -101,11 +103,18 @@ public class ChargesApiResource {
                                         .ifPresent(charge -> {
                                              agreementService.find(charge.getAgreementId())
                                                              .ifPresent(agreement -> {
-                                                                 cardAuthoriseService.doAuthorise(charge.getExternalId(), agreement.getPaymentInstrument());
+                                                                 try {
+                                                                     var authResponse = cardAuthoriseService.doAuthorise(charge.getExternalId(), agreement.getPaymentInstrument());
+                                                                     logger.info(String.format("Got auth response %s", authResponse));
+                                                                 } catch (OperationAlreadyInProgressRuntimeException e) {
+                                                                     // we'd often expect the auth to take a little while, instead of throwing exception and returning 202 ACCEPTED
+                                                                     // catch this and just report on the created payment
+                                                                     logger.warn("Opertation already in progress exception", e);
+                                                                 }
                                                              });
                                         });
                     }
-                    
+
                     return created(response.getLink("self")).entity(response).build();
                 })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));

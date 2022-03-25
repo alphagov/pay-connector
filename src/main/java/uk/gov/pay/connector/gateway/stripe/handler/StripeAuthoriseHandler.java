@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.gateway.AuthoriseHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -68,17 +69,25 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             StripeCustomerResponse stripeCustomerResponse;
             StripePaymentIntentResponse stripePaymentIntentResponse;
             
-            StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
+            StripePaymentMethodResponse stripePaymentMethodResponse;
             
             if (request.getCharge().isSavePaymentInstrumentToAgreement()) {
                 stripeCustomerResponse = createCustomer(request);
+                stripePaymentMethodResponse = createPaymentMethod(request);
                 stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId(), stripeCustomerResponse.getId());
-                
                 var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), Map.of("customer_id", stripeCustomerResponse.getId(), "payment_method_id", stripePaymentMethodResponse.getId()));
                 request.getCharge().setPaymentInstrument(instrument);
                 chargeDao.merge(request.getCharge());
             } else {
-                stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+                
+                if (request.getCharge().getAuthMode() == AuthMode.WEB) {
+                    stripePaymentMethodResponse = createPaymentMethod(request);
+                    stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+                } else {
+                    var customerId = request.getCharge().getPaymentInstrument().getRecurringAuthToken().get("customer_id");
+                    var paymentMethodId = request.getCharge().getPaymentInstrument().getRecurringAuthToken().get("payment_method_id");
+                    stripePaymentIntentResponse = createPaymentIntent(request, paymentMethodId, customerId);
+                }
             }
             
             return GatewayResponse

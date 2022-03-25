@@ -6,6 +6,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.service.AgreementService;
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
@@ -110,7 +111,14 @@ public class CardCaptureService {
 
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
-            userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
+            
+            // Reference email ADR for this
+            // potentially ADR to go through Pay's features and say what works off the bat with (corporate card surcharges etc.)
+            // only sent payment receipts if the user 
+            // @TODO(sfount): this should be applied where you are trying to refund a payment that was taking through the recurring api too
+            if (charge.getAuthMode() == AuthMode.WEB) {
+                userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
+            }
         }
 
         return charge;

@@ -115,8 +115,8 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
-        throw new NotImplementedException();
+    public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request) {
+        return authorise(request);
     }
 
     @Override

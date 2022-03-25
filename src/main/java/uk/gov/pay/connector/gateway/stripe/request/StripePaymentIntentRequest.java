@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -19,12 +20,12 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private final String customerId;
     private boolean moto;
     private boolean setupPaymentInstrument;
-
+    private boolean authModeApi;
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto, boolean setupPaymentInstrument, Map<String, String> credentials, String customerId) {
+            String description, boolean moto, boolean setupPaymentInstrument, boolean authModeApi, Map<String, String> credentials, String customerId) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
@@ -35,6 +36,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
         this.moto = moto;
         this.setupPaymentInstrument = setupPaymentInstrument;
         this.customerId = customerId;
+        this.authModeApi = authModeApi;
     }
 
     public static StripePaymentIntentRequest of(
@@ -55,6 +57,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 request.getDescription(),
                 request.getCharge().isMoto(),
                 request.getCharge().isSavePaymentInstrumentToAgreement(),
+                request.getCharge().getAuthMode() == AuthMode.API,
                 request.getGatewayCredentials(),
                 customerId
         );
@@ -92,10 +95,10 @@ public class StripePaymentIntentRequest extends StripeRequest {
             params.put("customer", customerId);
         }
 
-        // if (authModeApi) {
-            // params.put("off_session": true)
-            // params.put("customer", customerId)
-        // }
+         if (authModeApi) {
+             params.put("off_session", "true");
+             params.put("customer", customerId);
+         }
         return params;
     }
 
