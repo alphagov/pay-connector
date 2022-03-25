@@ -33,6 +33,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String payerEmail;
         private String state;
         private boolean exemptionEngineEnabled;
+        private boolean setUpPaymentInstrument;
+        private boolean authModeAPI;
+        private String authToken;
+        private String paymentInstrumentExternalId;
+        private String agreementDescription;
 
         public String getReference() {
             return reference;
@@ -130,6 +135,46 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setExemptionEngineEnabled(boolean exemptionEngineEnabled) {
             this.exemptionEngineEnabled = exemptionEngineEnabled;
+        }
+
+        public boolean isSetUpPaymentInstrument() {
+            return setUpPaymentInstrument;
+        }
+
+        public boolean isAuthModeAPI() {
+            return authModeAPI;
+        }
+
+        public String getAuthToken() {
+            return authToken;
+        }
+
+        public void setSetUpPaymentInstrument(boolean setUpPaymentInstrument) {
+            this.setUpPaymentInstrument = setUpPaymentInstrument;
+        }
+
+        public void setAuthModeAPI(boolean authModeAPI) {
+            this.authModeAPI = authModeAPI;
+        }
+
+        public void setAuthToken(String authToken) {
+            this.authToken = authToken;
+        }
+
+        public String getPaymentInstrumentExternalId() {
+            return paymentInstrumentExternalId;
+        }
+
+        public void setPaymentInstrumentExternalId(String paymentInstrumentExternalId) {
+            this.paymentInstrumentExternalId = paymentInstrumentExternalId;
+        }
+
+        public String getAgreementDescription() {
+            return agreementDescription;
+        }
+
+        public void setAgreementDescription(String agreementDescription) {
+            this.agreementDescription = agreementDescription;
         }
     }
 
@@ -232,6 +277,31 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withPayerEmail(String payerEmail) {
         worldpayTemplateData.setPayerEmail(payerEmail);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withSetUpPaymentInstrument(boolean setUpPaymentInstrument) {
+        worldpayTemplateData.setSetUpPaymentInstrument(setUpPaymentInstrument);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withPaymentInstrumentExternalId(String externalId) {
+        worldpayTemplateData.setPaymentInstrumentExternalId(externalId);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withAgreementDescription(String description) {
+        worldpayTemplateData.setAgreementDescription(description);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withAuthModeAPI(boolean authModeAPI) {
+        worldpayTemplateData.setAuthModeAPI(authModeAPI);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withAuthToken(String authToken) {
+        worldpayTemplateData.setAuthToken(authToken);
         return this;
     }
 

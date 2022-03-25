@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisation
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -459,7 +460,8 @@ public class WorldpayPaymentProviderTest {
                 new AuthorisationService(mockCardExecutorService, mockEnvironment), 
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 mock(ChargeDao.class),
-                mock(EventService.class));
+                mock(EventService.class),
+                mock(PaymentInstrumentService.class));
     }
 
     private Map<String, URI> gatewayUrlMap() {

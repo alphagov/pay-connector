@@ -60,6 +60,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
             }
+            
             return getWorldpayGatewayResponse(response);
         } catch (GatewayException.GatewayErrorException e) {
             

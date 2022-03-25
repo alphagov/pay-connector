@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import uk.gov.pay.connector.charge.model.AuthMode;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 
@@ -25,6 +26,25 @@ public interface WorldpayOrderBuilder {
 
         if (request.getGatewayAccount().isSendPayerEmailToGateway()) {
             Optional.ofNullable(request.getCharge().getEmail()).ifPresent(builder::withPayerEmail);
+        }
+        
+        builder.withSetUpPaymentInstrument(request.getCharge().isSavePaymentInstrumentToAgreement());
+        
+        if (request.getCharge().isSavePaymentInstrumentToAgreement()) {
+            // fetch agreement or pass it down
+//            builder.withAgreementDescription(request.getCharge().getAgreementId())
+            builder.withPaymentInstrumentExternalId(request.getCharge().getPaymentInstrument().getExternalId());
+        }
+        
+        if (request.getCharge().getAuthMode() == AuthMode.API) {
+            var instrument = request.getCharge().getPaymentInstrument();
+            builder.withAuthModeAPI(true);
+            
+            if (instrument != null) {
+                builder.withAuthToken(instrument.getRecurringAuthToken().get("payment_token_id"));
+            }
+        } else {
+            builder.withAuthModeAPI(false);
         }
 
         if (request.getGatewayAccount().isSendReferenceToGateway()) {

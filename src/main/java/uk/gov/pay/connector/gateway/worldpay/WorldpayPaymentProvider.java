@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisation
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -86,6 +87,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final AuthorisationLogger authorisationLogger;
     private final ChargeDao chargeDao;
     private final EventService eventService;
+    private final PaymentInstrumentService paymentInstrumentService;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -99,7 +101,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    AuthorisationService authorisationService,
                                    AuthorisationLogger authorisationLogger,
                                    ChargeDao chargeDao,
-                                   EventService eventService) {
+                                   EventService eventService,
+                                   PaymentInstrumentService paymentInstrumentService) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -113,6 +116,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.authorisationLogger = authorisationLogger;
         this.chargeDao = chargeDao;
         this.eventService = eventService;
+        this.paymentInstrumentService = paymentInstrumentService;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
@@ -171,9 +175,15 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
-
+        var instrumentId = newTransactionId();
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
+       
+        // worldpay needs the instrument set up before making the authorise request, once it comes back the token can be set
+        if (request.getCharge().isSavePaymentInstrumentToAgreement() && request.getCharge().getPaymentInstrument() == null) {
+            var instrument = paymentInstrumentService.create(instrumentId, request.getAuthCardDetails());
+            request.getCharge().setPaymentInstrument(instrument);
+        }
         
         if (!exemptionEngineEnabled) {
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
@@ -200,7 +210,16 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             request.getCharge().setGatewayTransactionId(newTransactionId());
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } 
-
+       
+        response.getBaseResponse()
+                .ifPresent(worldpayResponse -> {
+//                    LOGGER.info(String.format("Payment token ID on auth respnse %s", worldpayResponse));
+                    if (worldpayResponse.getPaymentTokenId() != null && request.getCharge().isSavePaymentInstrumentToAgreement()) {
+//                        LOGGER.info("Saving payment instrument for Worldpay");
+                        request.getCharge().getPaymentInstrument().setRecurringAuthToken(Map.of("payment_token_id", worldpayResponse.getPaymentTokenId()));
+                        chargeDao.merge(request.getCharge());
+                    }
+                });
         return response;
     }
 

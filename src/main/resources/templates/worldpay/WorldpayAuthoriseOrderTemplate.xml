@@ -7,6 +7,11 @@
             <description>${description?xml}</description>
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
+                <#if authModeApi??>
+                <TOKEN-SSL tokenScope="shopper">
+                    <paymentTokenID>${paymentTokenId}</paymentTokenID>
+                </TOKEN-SSL>
+                <#else>
                 <VISA-SSL>
                     <cardNumber>${authCardDetails.cardNo}</cardNumber>
                     <expiryDate>
@@ -31,6 +36,7 @@
                     </cardAddress>
                     </#if>
                 </VISA-SSL>
+                </#if>
                 <#if requires3ds>
                 <#if payerIpAddress??>
                 <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>
@@ -51,6 +57,11 @@
                 </browser>
                 </#if>
             </shopper>
+            </#if>
+            <#if setUpPaymentInstrument>
+            <createToken tokenScope="shopper">
+            <tokenEventReference>${paymentInstrumentExternalId?xml}</tokenEventReference>
+            </createToken>
             </#if>
             <#if requires3ds>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>

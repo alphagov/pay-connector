@@ -24,6 +24,9 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
+    
+    @XmlPath("reply/orderStatus/token/tokenDetails/paymentTokenID/text()")
+    private String paymentTokenId;
 
     @XmlPath("reply/orderStatus/payment/lastEvent/text()")
     private String lastEvent;
@@ -258,4 +261,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return joiner.toString();
     }
 
+    public String getPaymentTokenId() {
+        return paymentTokenId;
+    }
 }

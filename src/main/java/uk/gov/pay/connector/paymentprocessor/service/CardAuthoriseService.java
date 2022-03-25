@@ -141,58 +141,62 @@ public class CardAuthoriseService {
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return authorisationService.executeAuthorise(chargeId, () -> {
-
-            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            ChargeStatus newStatus;
-
             try {
-                operationResponse = authorise(charge, authCardDetails);
+                final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+                GatewayResponse<BaseAuthoriseResponse> operationResponse;
+                ChargeStatus newStatus;
 
-                if (operationResponse.getBaseResponse().isEmpty()) {
-                    operationResponse.throwGatewayError();
+                try {
+                    operationResponse = authorise(charge, authCardDetails);
+
+                    if (operationResponse.getBaseResponse().isEmpty()) {
+                        operationResponse.throwGatewayError();
+                    }
+
+                    newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+                } catch (GatewayException e) {
+                    newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                    operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
                 }
 
-                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+                Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+                Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+                Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                        operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
-            } catch (GatewayException e) {
-                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+                ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                        charge.getExternalId(),
+                        newStatus,
+                        transactionId.orElse(null),
+                        auth3dsDetailsEntity.orElse(null),
+                        sessionIdentifier.orElse(null),
+                        authCardDetails);
+
+                var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+
+                authorisationLogger.logChargeAuthorisation(
+                        LOGGER,
+                        authorisationRequestSummary,
+                        updatedCharge,
+                        transactionId.orElse("missing transaction ID"),
+                        operationResponse,
+                        charge.getChargeStatus(),
+                        newStatus
+                );
+
+                metricRegistry.counter(String.format(
+                        "gateway-operations.%s.%s.authorise.%s.result.%s",
+                        updatedCharge.getPaymentProvider(),
+                        updatedCharge.getGatewayAccount().getType(),
+                        authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                        newStatus.toString())).inc();
+
+                return new AuthorisationResponse(operationResponse);
+            } catch (Exception e) {
+                LOGGER.error("Error during exception", e); 
+                throw e;
             }
-
-            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
-                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-
-            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
-                    charge.getExternalId(),
-                    newStatus,
-                    transactionId.orElse(null),
-                    auth3dsDetailsEntity.orElse(null),
-                    sessionIdentifier.orElse(null),
-                    authCardDetails);
-
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
-            
-            authorisationLogger.logChargeAuthorisation(
-                    LOGGER,
-                    authorisationRequestSummary,
-                    updatedCharge,
-                    transactionId.orElse("missing transaction ID"),
-                    operationResponse,
-                    charge.getChargeStatus(),
-                    newStatus
-            );
-            
-            metricRegistry.counter(String.format(
-                    "gateway-operations.%s.%s.authorise.%s.result.%s",
-                    updatedCharge.getPaymentProvider(),
-                    updatedCharge.getGatewayAccount().getType(),
-                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                    newStatus.toString())).inc();
-
-            return new AuthorisationResponse(operationResponse);
         });
     }
 

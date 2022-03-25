@@ -129,6 +129,7 @@ public class PaymentInstrumentEntity {
         private PaymentInstrumentStatus status;
         private Instant startDate;
         private Map<String, String> recurringAuthToken;
+        private String externalId;
 
         public static PaymentInstrumentEntity.PaymentInstrumentEntityBuilder aPaymentInstrumentEntity(Instant createdDate) {
             var paymentInstrumentEntityBuilder = new PaymentInstrumentEntityBuilder();
@@ -158,6 +159,11 @@ public class PaymentInstrumentEntity {
         
         public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withRecurringAuthToken(Map<String, String> recurringAuthToken) {
             this.recurringAuthToken = recurringAuthToken;
+            return this;
+        }
+        
+        public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withExternalId(String externalId) {
+            this.externalId = externalId;
             return this;
         }
         

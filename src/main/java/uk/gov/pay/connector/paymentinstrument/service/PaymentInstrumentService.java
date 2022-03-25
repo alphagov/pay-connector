@@ -45,6 +45,19 @@ public class PaymentInstrumentService {
         paymentInstrumentDao.persist(entity);
         return entity;
     }
+
+    public PaymentInstrumentEntity create(String externalId, AuthCardDetails authCardDetails) {
+        var entity = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                .withExternalId(externalId)
+                .withCardDetails(buildCardDetailsEntity(authCardDetails))
+                .withCreatedDate(clock.instant())
+                .withStatus(PaymentInstrumentStatus.CREATED)
+                .build();
+
+        // @TODO(sfount): transactional, should also emit event
+        paymentInstrumentDao.persist(entity);
+        return entity;
+    }
     
     // @TODO(sfount): separate out so it can be shared with `ChargeService`
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
