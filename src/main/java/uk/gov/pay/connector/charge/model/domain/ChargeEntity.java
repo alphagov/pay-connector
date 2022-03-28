@@ -50,7 +50,10 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.Clock;
+import java.time.ZoneOffset;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -664,7 +667,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     gatewayAccountCredentialsEntity,
                     paymentProvider,
                     email,
-                    Instant.now(),
+                    Instant.now(Clock.system(ZoneOffset.UTC)),
                     language,
                     delayedCapture,
                     externalMetadata,

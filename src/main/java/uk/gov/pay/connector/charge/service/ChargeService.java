@@ -500,7 +500,9 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
-                .withMoto(chargeEntity.isMoto());
+                .withMoto(chargeEntity.isMoto())
+                .withAgreementId(chargeEntity.getAgreementId())
+                .withSavePaymentInstrumentToAgreement(chargeEntity.isSavePaymentInstrumentToAgreement());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
