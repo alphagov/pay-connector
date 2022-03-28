@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model.builder;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -49,7 +50,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected WalletType walletType;
     protected ExternalMetadata externalMetadata;
     protected boolean moto;
-
+    private String agreementId;
+    private boolean savePaymentInstrumentToAgreement;
+    
     protected abstract T thisObject();
 
     public T withChargeId(String chargeId) {
@@ -222,6 +225,16 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.moto = moto;
         return thisObject();
     }
+    
+    public T withAgreementId(String agreementId) {
+        this.agreementId = agreementId;
+        return thisObject();
+    }
+    
+    public T withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        return thisObject();
+    }
 
     public String getChargeId() {
         return chargeId;
@@ -351,5 +364,13 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public boolean isMoto() {
         return moto;
+    }
+
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public boolean isSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
     }
 }
