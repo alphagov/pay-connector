@@ -194,6 +194,7 @@ public class CardAuthoriseService {
 
                 return new AuthorisationResponse(operationResponse);
             } catch (Exception e) {
+                // @TODO(sfount): remove
                 LOGGER.error("Error during exception", e); 
                 throw e;
             }

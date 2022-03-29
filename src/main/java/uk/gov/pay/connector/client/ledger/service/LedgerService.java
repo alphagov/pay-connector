@@ -7,10 +7,13 @@ import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentExceptio
 import uk.gov.pay.connector.client.ledger.exception.LedgerException;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
+import uk.gov.pay.connector.events.model.Event;
 
 import javax.inject.Inject;
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -96,6 +99,18 @@ public class LedgerService {
         }
 
         return Optional.empty();
+    }
+    
+    public Response setEvent(Event event) {
+        var uri = UriBuilder
+                .fromPath(ledgerUrl)
+                .path("/v1/event");
+        
+        return client
+                .target(uri)
+                .request()
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.json(event));
     }
 
     private Response getResponse(UriBuilder uri) {
