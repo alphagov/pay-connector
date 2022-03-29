@@ -501,8 +501,7 @@ public class ChargeService {
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
                 .withMoto(chargeEntity.isMoto())
-                .withAgreementId(chargeEntity.getAgreementId())
-                .withSavePaymentInstrumentToAgreement(chargeEntity.isSavePaymentInstrumentToAgreement());
+                .withAgreementId(chargeEntity.getAgreementId());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
