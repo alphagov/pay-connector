@@ -72,7 +72,7 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
         if (request.getCharge().isSavePaymentInstrumentToAgreement()) {
             // TODO(sfount): is this the point the provider comes back with a failed response(?) should these all go to gateway error for now or do they map to decline etc.
             var token = setupTokenWithProviderStub();
-            var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), Map.of("token", token));
+            var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), request.getCharge().getGatewayAccount(), Map.of("token", token));
             request.getCharge().setPaymentInstrument(instrument);
             chargeDao.merge(request.getCharge());
 //            request.getCharge().setPaymentInstrument(instrument);

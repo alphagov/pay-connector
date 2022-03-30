@@ -75,7 +75,10 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 stripeCustomerResponse = createCustomer(request);
                 stripePaymentMethodResponse = createPaymentMethod(request);
                 stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId(), stripeCustomerResponse.getId());
-                var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), Map.of("customer_id", stripeCustomerResponse.getId(), "payment_method_id", stripePaymentMethodResponse.getId()));
+                var instrument = paymentInstrumentService.create(request.getAuthCardDetails(), request.getCharge().getGatewayAccount(), Map.of("customer_id", stripeCustomerResponse.getId(), "payment_method_id", stripePaymentMethodResponse.getId()));
+                
+                // // @TODO(sfount): move to transactional service helper -- entire operation should be transactional to some extent
+                // @TODO(sfount): update PaSTEE to send recurring properties through to ledger
                 request.getCharge().setPaymentInstrument(instrument);
                 chargeDao.merge(request.getCharge());
             } else {

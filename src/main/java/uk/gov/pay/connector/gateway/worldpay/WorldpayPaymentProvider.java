@@ -186,7 +186,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
        
         // worldpay needs the instrument set up before making the authorise request, once it comes back the token can be set
         if (request.getCharge().isSavePaymentInstrumentToAgreement() && request.getCharge().getPaymentInstrument() == null) {
-            var instrument = paymentInstrumentService.create(instrumentId, request.getAuthCardDetails());
+            var instrument = paymentInstrumentService.create(instrumentId, request.getGatewayAccount(), request.getAuthCardDetails());
             request.getCharge().setPaymentInstrument(instrument);
         }
         

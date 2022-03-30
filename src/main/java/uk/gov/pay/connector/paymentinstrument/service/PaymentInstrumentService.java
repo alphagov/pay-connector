@@ -1,13 +1,17 @@
 package uk.gov.pay.connector.paymentinstrument.service;
 
+import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Instant;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.model.charge.PaymentInstrumentCreated;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
@@ -25,15 +29,18 @@ public class PaymentInstrumentService {
     private final PaymentInstrumentDao paymentInstrumentDao;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
     private final Clock clock;
+    private final LedgerService ledgerService;
     
     @Inject
-    public PaymentInstrumentService(PaymentInstrumentDao paymentInstrumentDao, NorthAmericanRegionMapper northAmericanRegionMapper, Clock clock) {
+    public PaymentInstrumentService(PaymentInstrumentDao paymentInstrumentDao, NorthAmericanRegionMapper northAmericanRegionMapper, Clock clock, LedgerService ledgerService) {
         this.paymentInstrumentDao = paymentInstrumentDao;
         this.northAmericanRegionMapper = northAmericanRegionMapper;
         this.clock = clock;
+        this.ledgerService = ledgerService;
     }
     
-    public PaymentInstrumentEntity create(AuthCardDetails authCardDetails, Map<String, String> token) {
+    @Transactional
+    public PaymentInstrumentEntity create(AuthCardDetails authCardDetails, GatewayAccountEntity gatewayAccountEntity, Map<String, String> token) {
         var entity = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withCardDetails(buildCardDetailsEntity(authCardDetails))
                 .withRecurringAuthToken(token)
@@ -41,12 +48,12 @@ public class PaymentInstrumentService {
                 .withStatus(PaymentInstrumentStatus.CREATED)
                 .build();
         
-        // @TODO(sfount): transactional, should also emit event
         paymentInstrumentDao.persist(entity);
+        ledgerService.setEvent(PaymentInstrumentCreated.from(entity, gatewayAccountEntity));
         return entity;
     }
 
-    public PaymentInstrumentEntity create(String externalId, AuthCardDetails authCardDetails) {
+    public PaymentInstrumentEntity create(String externalId, GatewayAccountEntity gatewayAccountEntity, AuthCardDetails authCardDetails) {
         var entity = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withExternalId(externalId)
                 .withCardDetails(buildCardDetailsEntity(authCardDetails))
@@ -56,6 +63,7 @@ public class PaymentInstrumentService {
 
         // @TODO(sfount): transactional, should also emit event
         paymentInstrumentDao.persist(entity);
+        ledgerService.setEvent(PaymentInstrumentCreated.from(entity, gatewayAccountEntity));
         return entity;
     }
     

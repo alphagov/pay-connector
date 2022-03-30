@@ -16,7 +16,7 @@ public class AgreementCreated extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementCreatedEventDetails(String.valueOf(agreement.getGatewayAccount().getId()), agreement.getReference()),
+                new AgreementCreatedEventDetails(String.valueOf(agreement.getGatewayAccount().getId()), agreement.getReference(), "CREATED"),
                 ZonedDateTime.ofInstant(agreement.getCreatedDate(), ZoneOffset.UTC)
         );
     }
@@ -25,10 +25,16 @@ public class AgreementCreated extends AgreementEvent {
     static class AgreementCreatedEventDetails extends EventDetails {
         private String gatewayAccountId;
         private String reference;
+        private String status;
 
-        public AgreementCreatedEventDetails(String gatewayAccountId, String reference) {
+        public AgreementCreatedEventDetails(String gatewayAccountId, String reference, String status) {
             this.gatewayAccountId = gatewayAccountId;
             this.reference = reference;
+            this.status = status;
+        }
+
+        public String getStatus() {
+            return status;
         }
 
         public String getGatewayAccountId() {

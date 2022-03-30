@@ -126,6 +126,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
     @Mock
     private AgreementService mockAgreementService;
+    @Mock
+    private LedgerService mockLedgerService;
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
 
     @Before
@@ -140,7 +142,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService, mockLedgerService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -570,7 +572,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService, mockLedgerService);
 
         String externalId = "external-id";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
@@ -593,7 +595,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, mockAgreementService, mockLedgerService);
 
         try {
             cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());

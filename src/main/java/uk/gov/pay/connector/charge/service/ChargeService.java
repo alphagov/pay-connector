@@ -369,11 +369,11 @@ public class ChargeService {
     }
     
     @Transactional
-    public Optional<ChargeEntity> updatePaymentInstrument(String chargeExternalId, PaymentInstrumentStatus status) {
+    public Optional<PaymentInstrumentEntity> updatePaymentInstrument(String chargeExternalId, PaymentInstrumentStatus status) {
         return chargeDao.findByExternalId(chargeExternalId).
                 map(entity -> {
                     entity.getPaymentInstrument().setPaymentInstrumentStatus(status);
-                    return entity;
+                    return entity.getPaymentInstrument();
                 });
     }
 

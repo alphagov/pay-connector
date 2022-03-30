@@ -11,11 +11,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.AgreementSetup;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -56,6 +59,7 @@ public class CardCaptureService {
     protected MetricRegistry metricRegistry;
     protected Clock clock;
     protected CaptureQueue captureQueue;
+    private LedgerService ledgerService;
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
@@ -65,7 +69,8 @@ public class CardCaptureService {
                               Clock clock,
                               CaptureQueue captureQueue,
                               EventService eventService,
-                              AgreementService agreementService) {
+                              AgreementService agreementService,
+                              LedgerService ledgerService) {
         this.chargeService = chargeService;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
@@ -74,6 +79,7 @@ public class CardCaptureService {
         this.captureQueue = captureQueue;
         this.eventService = eventService;
         this.agreementService = agreementService;
+        this.ledgerService = ledgerService;
     }
 
     public CaptureResponse doCapture(String externalId) {
@@ -137,6 +143,8 @@ public class CardCaptureService {
                         // TODO(sfount): consider what happens with the event going out with this
                         chargeService.updatePaymentInstrument(charge.getExternalId(), PaymentInstrumentStatus.ACTIVE);
                         agreementEntity.setPaymentInstrument(charge.getPaymentInstrument());
+                        ledgerService.setEvent(PaymentInstrumentConfirmed.from(agreementEntity));
+                        ledgerService.setEvent(AgreementSetup.from(agreementEntity));
                     });
         } 
     }
