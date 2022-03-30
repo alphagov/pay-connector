@@ -859,7 +859,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     the time stored in the database (UTC) is in local time (BST) and incorrectly tries to "correct" it to UTC
     by moving it back an hour which results in the assertion failing as it is now 1 hour apart.
      */
-    @Ignore("Test failed in British Summer Time")
+    @Ignore("British Summer Time cause this test to fail")
     @Test
     public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() throws Exception {
         String postBody = toJson(Map.of(
