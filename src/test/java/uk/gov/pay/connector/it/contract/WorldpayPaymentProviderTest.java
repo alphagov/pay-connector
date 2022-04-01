@@ -39,6 +39,7 @@ import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
@@ -53,6 +54,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -166,13 +168,13 @@ public class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
         assertEquals(response.getBaseResponse().get().getLastEvent().get(), "AUTHORISED");
     }
-    
+
     @Test
     public void submitAuthRequestWithExemptionEngineFlag() {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
-        
+
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         // card holder of "EE.HONOURED_ISSUER_HONOURED.AUTHORISED" elicits an authorised response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
         var authCardDetails = anAuthCardDetails()
@@ -334,6 +336,41 @@ public class WorldpayPaymentProviderTest {
         });
     }
 
+    @Test
+    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs() {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+
+        validGatewayAccount.setRequires3ds(true);
+        validGatewayAccount.setSendPayerEmailToGateway(true);
+        validGatewayAccount.setIntegrationVersion3ds(2);
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withTransactionId(randomUUID().toString())
+                .withEmail("payer@email.test")
+                .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
+                .build();
+
+        AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardHolder(MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE)
+                .withWorldpay3dsFlexDdcResult(null)
+                .build();
+
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+
+        assertTrue(response.getSessionIdentifier().isPresent());
+        response.getBaseResponse().ifPresent(res -> {
+            assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengeAcsUrl(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengeTransactionId(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengePayload(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getThreeDsVersion(), startsWith("2."));
+                
+        });
+    }
+
     /**
      * Worldpay does not care about a successful authorization reference to make a capture request.
      * It simply accepts anything as long as the request is well formed. (And ignores it silently)
@@ -453,7 +490,7 @@ public class WorldpayPaymentProviderTest {
                 gatewayClient,
                 gatewayClient, 
                 new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap()), 
-                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap()), 
+                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()), 
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
                 new AuthorisationService(mockCardExecutorService, mockEnvironment), 

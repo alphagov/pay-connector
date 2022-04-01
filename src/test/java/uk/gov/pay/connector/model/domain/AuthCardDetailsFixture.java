@@ -21,6 +21,7 @@ public final class AuthCardDetailsFixture {
     private String cardBrand = "visa";
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";
+    private String acceptLanguageHeader = "en-GB,en-US;q=0.9,en;q=0.8";
     private PayersCardType payersCardType = PayersCardType.DEBIT;
     private PayersCardPrepaidStatus payersCardPrepaidStatus = PayersCardPrepaidStatus.UNKNOWN;
     private Boolean corporateCard = Boolean.FALSE;
@@ -127,6 +128,11 @@ public final class AuthCardDetailsFixture {
     public AuthCardDetailsFixture withJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
         this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
         return this;
+    }    
+    
+    public AuthCardDetailsFixture withAcceptLanguageHeader(String acceptLanguageHeader) {
+        this.acceptLanguageHeader = acceptLanguageHeader;
+        return this;
     }
     
     public CardDetailsEntity getCardDetailsEntity() {
@@ -164,6 +170,7 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setCardBrand(cardBrand);
         authCardDetails.setUserAgentHeader(userAgentHeader);
         authCardDetails.setAcceptHeader(acceptHeader);
+        authCardDetails.setAcceptLanguageHeader(acceptLanguageHeader);
         authCardDetails.setPayersCardType(payersCardType);
         authCardDetails.setPayersCardPrepaidStatus(payersCardPrepaidStatus);
         authCardDetails.setCorporateCard(corporateCard);

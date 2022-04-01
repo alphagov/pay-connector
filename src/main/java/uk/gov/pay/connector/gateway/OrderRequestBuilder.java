@@ -18,6 +18,17 @@ public abstract class OrderRequestBuilder {
         private WalletAuthorisationData walletAuthorisationData;
         private String amount;
         private String paymentPlatformReference;
+        private int integrationVersion3ds;
+        private String browserLanguage;
+
+        public String getBrowserLanguage() {
+            return browserLanguage;
+        }
+
+        public void setBrowserLanguage(String browserLanguage) {
+            this.browserLanguage = browserLanguage;
+        }
+
 
         public String getTransactionId() {
             return transactionId;
@@ -74,6 +85,14 @@ public abstract class OrderRequestBuilder {
         public void setWalletAuthorisationData(WalletAuthorisationData walletAuthorisationData) {
             this.walletAuthorisationData = walletAuthorisationData;
         }
+
+        public int getIntegrationVersion3ds() {
+            return integrationVersion3ds;
+        }
+
+        public void setIntegrationVersion3ds(int integrationVersion3ds) {
+            this.integrationVersion3ds = integrationVersion3ds;
+        }
     }
 
     private final TemplateData templateData;
@@ -117,6 +136,16 @@ public abstract class OrderRequestBuilder {
 
     public OrderRequestBuilder withAmount(String amount) {
         templateData.setAmount(amount);
+        return this;
+    }   
+    
+    public OrderRequestBuilder withIntegrationVersion3ds(int integrationVersion3ds) {
+        templateData.setIntegrationVersion3ds(integrationVersion3ds);
+        return this;
+    }    
+    
+    public OrderRequestBuilder withBrowserLanguage(String browserLanguage) {
+        templateData.setBrowserLanguage(browserLanguage);
         return this;
     }
 

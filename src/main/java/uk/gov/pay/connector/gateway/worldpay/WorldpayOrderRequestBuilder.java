@@ -33,6 +33,16 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String payerEmail;
         private String state;
         private boolean exemptionEngineEnabled;
+        private int integrationVersion3ds;
+
+        public int getIntegrationVersion3ds() {
+            return integrationVersion3ds;
+        }
+
+        public void setIntegrationVersion3ds(int integrationVersion3ds) {
+            this.integrationVersion3ds = integrationVersion3ds;
+        }
+
 
         public String getReference() {
             return reference;
@@ -232,6 +242,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withPayerEmail(String payerEmail) {
         worldpayTemplateData.setPayerEmail(payerEmail);
+        return this;
+    }    
+    
+    public WorldpayOrderRequestBuilder withIntegrationVersion3ds(int integrationVersion3ds) {
+        worldpayTemplateData.setIntegrationVersion3ds(integrationVersion3ds);
         return this;
     }
 
