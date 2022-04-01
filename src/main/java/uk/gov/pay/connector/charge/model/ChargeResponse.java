@@ -134,6 +134,9 @@ public class ChargeResponse {
     @JsonProperty("moto")
     private boolean moto;
 
+    @JsonProperty("agreement_id")
+    private String agreementId;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -167,6 +170,7 @@ public class ChargeResponse {
         this.walletType = builder.getWalletType();
         this.externalMetadata = builder.getExternalMetadata();
         this.moto = builder.isMoto();
+        this.agreementId = builder.getAgreementId();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -301,6 +305,10 @@ public class ChargeResponse {
         return moto;
     }
 
+    public String getAgreementId() {
+        return agreementId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -373,6 +381,7 @@ public class ChargeResponse {
                 ", totalAmount=" + totalAmount +
                 ", walletType=" + walletType +
                 ", moto=" + moto +
+                ", agreementId=" + agreementId +
                 '}';
     }
 

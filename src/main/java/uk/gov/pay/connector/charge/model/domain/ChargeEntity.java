@@ -49,7 +49,6 @@ import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.Valid;
-import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
