@@ -17,7 +17,7 @@ public class AgreementNotFoundExceptionMapper implements ExceptionMapper<Agreeme
     public Response toResponse(AgreementNotFoundException exception) {
         LOGGER.info(exception.getMessage());
         
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, exception.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.AGREEMENT_NOT_FOUND, exception.getMessage());
 
         return Response.status(Response.Status.NOT_FOUND)
                 .entity(errorResponse)

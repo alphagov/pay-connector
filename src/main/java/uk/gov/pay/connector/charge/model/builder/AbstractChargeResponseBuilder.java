@@ -49,7 +49,8 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected WalletType walletType;
     protected ExternalMetadata externalMetadata;
     protected boolean moto;
-
+    private String agreementId;
+    
     protected abstract T thisObject();
 
     public T withChargeId(String chargeId) {
@@ -222,7 +223,12 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.moto = moto;
         return thisObject();
     }
-
+    
+    public T withAgreementId(String agreementId) {
+        this.agreementId = agreementId;
+        return thisObject();
+    }
+    
     public String getChargeId() {
         return chargeId;
     }
@@ -351,5 +357,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public boolean isMoto() {
         return moto;
+    }
+
+    public String getAgreementId() {
+        return agreementId;
     }
 }
