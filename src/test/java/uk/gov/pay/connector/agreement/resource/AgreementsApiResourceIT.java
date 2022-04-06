@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.agreement.resource;
 
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -23,7 +22,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
@@ -86,7 +85,7 @@ public class AgreementsApiResourceIT {
                 .post(format(CREATE_AGREEMENT_URL, accountId))
 
                 .then()
-                .statusCode(SC_OK)
+                .statusCode(SC_CREATED)
                 .body("reference", equalTo(REFERENCE_ID))
                 .body("service_id", equalTo("valid-external-service-id"))
                 .body("agreement_id", notNullValue())
