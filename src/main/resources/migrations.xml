@@ -1858,4 +1858,22 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add card type, address_state_province, first_digits_card_number columns to payment_instruments table" author="">
+        <addColumn tableName="payment_instruments">
+            <column name="card_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="payment_instruments">
+            <column name="first_digits_card_number" type="varchar(6)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="payment_instruments">
+            <column name="address_state_province" type="varchar(2)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
