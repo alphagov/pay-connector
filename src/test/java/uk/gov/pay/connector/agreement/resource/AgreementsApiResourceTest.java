@@ -4,13 +4,11 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.time.Instant;
@@ -18,14 +16,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static org.eclipse.jetty.http.HttpStatus.CREATED_201;
 import static org.eclipse.jetty.http.HttpStatus.NOT_FOUND_404;
-import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.ArgumentMatchers.eq;
-
 import static org.mockito.Mockito.when;
 
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
@@ -61,7 +56,7 @@ class AgreementsApiResourceTest {
                 .request()
                 .post(Entity.json(payloadMap));
 
-        assertThat(response.getStatus(), is(OK_200));
+        assertThat(response.getStatus(), is(CREATED_201));
     }
 
     @Test
