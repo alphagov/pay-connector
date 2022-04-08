@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +20,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
-
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -54,6 +55,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBodyWithAgreement;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -65,6 +67,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
 public class ChargesFrontendResourceIT {
 
+    public static final String AGREEMENT_ID = "12345678901234567890123456";
     @DropwizardTestContext
     private TestContext testContext;
 
@@ -102,10 +105,14 @@ public class ChargesFrontendResourceIT {
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
         connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
     }
+    
+    @After
+    public void tearDown(){
+        databaseTestHelper.truncateAllData();
+    }
 
     @Test
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
-
         String chargeId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeId;
 
@@ -118,7 +125,6 @@ public class ChargesFrontendResourceIT {
 
     @Test
     public void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
-
         String chargeExternalId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
@@ -147,6 +153,54 @@ public class ChargesFrontendResourceIT {
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
     }
+
+    @Test
+    public void getChargeShouldIncludeAgreementInResponseToFrontEndForRecurringCardPayment() {
+        databaseTestHelper.addAgreement(11l, "service-id", AGREEMENT_ID,
+                "refs", Instant.now(), false, Long.parseLong(accountId));
+        String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
+        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
+        final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
+        databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
+
+        getChargeFromResource(chargeExternalId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeExternalId))
+                .body("containsKey('reference')", is(false))
+                .body("description", is(description))
+                .body("amount", isNumber(expectedAmount))
+                .body("status", is(CREATED.getValue()))
+                .body("return_url", is(returnUrl))
+                .body("email", is(email))
+                .body("created_date", is(notNullValue()))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{1,3}.\\d{0,3}Z"))
+                .body("created_date", isWithin(10, SECONDS))
+                .body("language", is("en"))
+                .body("delayed_capture", is(true))
+                .body("corporate_card_surcharge", is(213))
+                .body("total_amount", is(6447))
+                .body("moto", is(false))
+                .body("agreement_id", is(AGREEMENT_ID))
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", GET, expectedLocation))
+                .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
+                .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
+    }
+
+    @Test
+    public void getChargeShouldNotIncludeAgreementInResponseToFrontEndForANonRecurringCardPayment() {
+        String chargeExternalId = postToCreateACharge(expectedAmount);
+        final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
+        databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
+
+        getChargeFromResource(chargeExternalId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeExternalId))
+                .body("containsKey('agreement_id')", is(false));
+    }
+
 
     @Test
     public void getChargeShouldIncludeWalletType() {
@@ -295,7 +349,6 @@ public class ChargesFrontendResourceIT {
 
     @Test
     public void shouldUpdateChargeStatusToEnteringCardDetails() {
-
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 
@@ -405,6 +458,31 @@ public class ChargesFrontendResourceIT {
 
         return response.extract().path("charge_id");
     }
+
+    private String postToCreateAChargeWithAgreement(long expectedAmount) {
+        String reference = "Test reference";
+        String postBody = createChargePostBodyWithAgreement(description, expectedAmount, accountId, returnUrl, email);
+        ValidatableResponse response = connectorRestApi
+                .withAccountId(accountId)
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body("charge_id", is(notNullValue()))
+                .body("reference", is(reference))
+                .body("description", is(description))
+                .body("amount", isNumber(expectedAmount))
+                .body("return_url", is(returnUrl))
+                .body("email", is(email))
+                .body("created_date", is(notNullValue()))
+                .body("agreement_id",is(AGREEMENT_ID))
+                .body("language", is("en"))
+                .body("delayed_capture", is(true))
+                .body("corporate_card_surcharge", is(nullValue()))
+                .body("total_amount", is(nullValue()))
+                .contentType(JSON);
+
+        return response.extract().path("charge_id");
+    }
+
 
     private ValidatableResponse getChargeFromResource(String chargeId) {
         return connectorRestApi

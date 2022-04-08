@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.it.util;
 
+import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import static uk.gov.pay.connector.it.resources.ChargesFrontendResourceIT.AGREEMENT_ID;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -23,6 +25,19 @@ public class ChargeUtils {
                 .put("return_url", returnUrl)
                 .put("email", email)
                 .put("delayed_capture", true).build());
+    }
+
+    public static String createChargePostBodyWithAgreement(String description, long expectedAmount, String accountId, String returnUrl, String email) {
+        return toJson(Map.of(
+                "reference", "Test reference",
+                "description", description,
+                "amount", expectedAmount,
+                "gateway_account_id", accountId,
+                "return_url", returnUrl,
+                "email", email,
+                "save_payment_instrument_to_agreement", true,
+                "agreement_id", AGREEMENT_ID,
+                "delayed_capture", true));
     }
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
