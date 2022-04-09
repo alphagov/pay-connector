@@ -173,6 +173,7 @@ public class ChargesFrontendResource {
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLanguage(charge.getLanguage())
                 .withDelayedCapture(charge.isDelayedCapture())
+                .withAgreementId(charge.getAgreementId())
                 .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
