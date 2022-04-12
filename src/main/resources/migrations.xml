@@ -1876,4 +1876,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add authorisation_mode to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="authorisation_mode" type="varchar(30)" defaultValue="web">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
