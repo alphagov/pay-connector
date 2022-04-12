@@ -12,6 +12,7 @@ public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
         private GatewayAccountEntity gatewayAccount;
+        private boolean savePaymentInstrumentToAgreement;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
@@ -22,6 +23,11 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
             this.gatewayAccount = gatewayAccountEntity;
+            return this;
+        }
+
+        public FrontendChargeResponseBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
 
@@ -46,10 +52,14 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
+    @JsonProperty("save_payment_instrument_to_agreement")
+    private boolean savePaymentInstrumentToAgreement;
+
     private FrontendChargeResponse(FrontendChargeResponseBuilder builder) {
         super(builder);
         this.status = builder.status;
         this.gatewayAccount = builder.gatewayAccount;
+        this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
     }
 
     @Override

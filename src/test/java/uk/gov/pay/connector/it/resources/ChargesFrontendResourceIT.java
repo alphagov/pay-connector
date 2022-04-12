@@ -182,6 +182,7 @@ public class ChargesFrontendResourceIT {
                 .body("total_amount", is(6447))
                 .body("moto", is(false))
                 .body("agreement_id", is(AGREEMENT_ID))
+                .body("save_payment_instrument_to_agreement", is(true))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
