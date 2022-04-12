@@ -23,6 +23,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -34,6 +35,7 @@ import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
@@ -43,7 +45,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLo
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
@@ -116,21 +118,30 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private EventQueue eventQueue;
-    
+
     @Mock
-    private EmittedEventDao emittedEventDao;
-    
+    private EmittedEventDao mockEmmittedEventDao;
+
     @Mock
-    protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
-    
+    protected WalletAuthorisationDataToAuthCardDetailsConverter mockWalletAuthorisationDataToAuthCardDetailsConverter;
+
+    @Mock
+    protected AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
+
     @Mock
     private RefundService mockRefundService;
-    
+
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
-    
+
     @Mock
     private TaskQueueService mockTaskQueueService;
+
+    @Mock
+    private AuthCardDetails mockAuthCardDetails;
+
+    @Mock
+    private CardDetailsEntity mockCardDetailsEntity;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -144,7 +155,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     private Appender<ILoggingEvent> mockAppender;
     
     @InjectMocks
-    private EventService mockEventService;
+    private EventService mockEventService;    
+    
+    @InjectMocks
+    private PaymentInstrumentService mockPaymentInstrumentService;
 
     @Before
     public void setUp() {
@@ -153,6 +167,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationData.class))).thenReturn(mockAuthCardDetails);
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(mockAuthCardDetails)).thenReturn(mockCardDetailsEntity);
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
@@ -162,12 +178,13 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
-                ledgerService, mockRefundService, mockEventService, mockGatewayAccountCredentialsService,
-                mockNorthAmericanRegionMapper, mockTaskQueueService));
+                ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
                 authorisationService,
+                mockWalletAuthorisationDataToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 mockEnvironment);
 
@@ -210,7 +227,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
@@ -243,45 +260,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
-
-        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
-
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
-    }
-
-    @Test
-    public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess_whenCardNumberIsEmptyString() throws Exception {
-        providerWillAuthorise();
-        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        var validApplePayDetailsWithEmptyStringCardNumber = anApplePayDecryptedPaymentData()
-                .withApplePaymentInfo(anApplePayPaymentInfo().withLastDigitsCardNumber("").build())
-                .build();
-
-        GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetailsWithEmptyStringCardNumber);
-
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
-
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
-        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
-        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(nullValue()));
-        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(nullValue()));
-        assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
-        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(charge.getEmail(), is(validApplePayDetailsWithEmptyStringCardNumber.getPaymentInfo().getEmail()));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
@@ -364,29 +346,13 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreExpectedCardDetails_whenAuthorisationSuccess() throws Exception {
-        providerWillAuthorise();
-
-        walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
-
-        CardDetailsEntity cardDetails = charge.getCardDetails();
-
-        assertThat(cardDetails.getCardHolderName(), is("Mr. Payment"));
-        assertThat(cardDetails.getCardBrand(), is("visa"));
-        assertThat(cardDetails.getExpiryDate().toString(), is("12/23"));
-        assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
-        assertThat(cardDetails.getFirstDigitsCardNumber(), is(nullValue()));
-        assertThat(cardDetails.getBillingAddress().isPresent(), is(false));
-    }
-
-    @Test
     public void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() throws Exception {
         providerWillReject();
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
-        assertThat(cardDetails, is(notNullValue()));
+        assertThat(cardDetails, is(mockCardDetailsEntity));
     }
 
     @Test
@@ -396,7 +362,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
-        assertThat(cardDetails, is(notNullValue()));
+        assertThat(cardDetails, is(mockCardDetailsEntity));
     }
 
     @Test

@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
-import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -19,12 +18,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
-import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -46,14 +44,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
-import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -118,10 +114,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private LedgerService ledgerService;
 
     @Mock
-    private EventQueue eventQueue;
-
+    private EventService mockEventService;    
+    
     @Mock
-    private EventService mockEventService;
+    private PaymentInstrumentService mockPaymentInstrumentService;
 
     @Mock
     private RefundService mockRefundService;
@@ -130,7 +126,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     @Mock
-    private NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
+    private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
 
     @Mock
     private AuthorisationRequestSummaryStringifier mockAuthorisationRequestSummaryStringifier;
@@ -140,6 +136,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
+    
+    @Mock
+    private CardDetailsEntity mockCardDetailsEntity;
     
     private CardAuthoriseService cardAuthorisationService;
 
@@ -154,8 +153,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
-                stateTransitionService, ledgerService, mockRefundService, mockEventService, 
-                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
+                stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, 
+                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
 
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
@@ -217,46 +216,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-
-        assertTrue(response.getAuthoriseStatus().isPresent());
-        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
-
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
-        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
-        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
-    }
-
-    @Test
-    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess_2() throws Exception {
-
-        providerWillAuthorise();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-
-        assertTrue(response.getAuthoriseStatus().isPresent());
-        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
-
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
-        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
-        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
-    }
-
-    @Test
-    public void doAuthoriseWithoutBillingAddress_shouldRespondAuthorisationSuccess() throws Exception {
-
-        providerWillAuthorise();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withAddress(null)
-                .build();
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -268,8 +228,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCardDetails().getBillingAddress().isPresent(), is(false));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
@@ -281,6 +240,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withCorporateCard(Boolean.TRUE)
                 .withCardType(PayersCardType.CREDIT)
                 .build();
+
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
 
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
 
@@ -294,7 +255,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
@@ -308,6 +269,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
                 .build();
 
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
+
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -319,7 +282,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(250L));
     }
 
@@ -333,6 +296,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
                 .build();
 
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
+
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -344,7 +309,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(50L));
         assertThat(charge.getWalletType(), is(nullValue()));
     }
@@ -495,65 +460,13 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreExpectedCardDetails_whenAuthorisationSuccess() throws Exception {
-
-        String cardholderName = "Mr Bright";
-        String cardNumber = "4242424242424242";
-        String cvc = "123";
-        CardExpiryDate expiryDate = CardExpiryDate.valueOf("12/23");
-        String cardBrand = "visa";
-        String addressLine1 = "Line 1";
-        String addressLine2 = "Line 1";
-        String county = "Whatever";
-        String city = "London";
-        String postcode = "W2 6YG";
-        String country = "UK";
-
-        Address address = AddressFixture.anAddress()
-                .withLine1(addressLine1)
-                .withLine2(addressLine2)
-                .withCity(city)
-                .withPostcode(postcode)
-                .withCounty(county)
-                .withCountry(country)
-                .build();
-
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardHolder(cardholderName)
-                .withCardNo(cardNumber)
-                .withCvc(cvc)
-                .withCardType(PayersCardType.CREDIT)
-                .withEndDate(expiryDate)
-                .withCardBrand(cardBrand)
-                .withAddress(address)
-                .build();
-
-        providerWillAuthorise();
-
-        cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-
-        CardDetailsEntity cardDetails = charge.getCardDetails();
-        assertThat(cardDetails.getCardHolderName(), is(cardholderName));
-        assertThat(cardDetails.getCardBrand(), is(cardBrand));
-        assertThat(cardDetails.getExpiryDate(), is(expiryDate));
-        assertThat(cardDetails.getCardType(), is(CardType.CREDIT));
-        assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
-        assertThat(cardDetails.getFirstDigitsCardNumber().toString(), is("424242"));
-        assertThat(cardDetails.getBillingAddress().isPresent(), is(true));
-        assertThat(cardDetails.getBillingAddress().get().getLine1(), is(addressLine1));
-        assertThat(cardDetails.getBillingAddress().get().getLine2(), is(addressLine2));
-        assertThat(cardDetails.getBillingAddress().get().getPostcode(), is(postcode));
-        assertThat(cardDetails.getBillingAddress().get().getCity(), is(city));
-        assertThat(cardDetails.getBillingAddress().get().getCountry(), is(country));
-        assertThat(cardDetails.getBillingAddress().get().getCounty(), is(county));
-    }
-
-    @Test
     public void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() throws Exception {
 
         providerWillReject();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
+
         cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
@@ -566,6 +479,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillError();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
+
         cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();

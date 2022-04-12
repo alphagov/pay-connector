@@ -12,6 +12,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -66,6 +67,7 @@ public class ChargeEntityFixture {
     private String serviceId = randomUuid();
     private String agreementId = randomUuid().substring(26);
     private boolean savePaymentInstrumentToAgreement = false;
+    private PaymentInstrumentEntity paymentInstrument = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -340,6 +342,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        return this;
+    }
+
+    public ChargeEntityFixture withPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
+        this.paymentInstrument = paymentInstrument;
         return this;
     }
 

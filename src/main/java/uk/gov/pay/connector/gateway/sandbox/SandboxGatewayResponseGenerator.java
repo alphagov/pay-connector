@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
@@ -61,6 +62,11 @@ public interface SandboxGatewayResponseGenerator {
             @Override
             public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
                 return Optional.empty();
+            }
+
+            @Override
+            public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
+                return Optional.of(Map.of("token", randomUUID().toString()));
             }
 
             @Override

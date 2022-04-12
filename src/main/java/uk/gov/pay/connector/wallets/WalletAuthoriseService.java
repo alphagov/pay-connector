@@ -6,7 +6,6 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -24,19 +23,18 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import static java.lang.String.format;
 
 public class WalletAuthoriseService {
     
-    private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
     
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
+    private final WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
     private MetricRegistry metricRegistry;
 
@@ -44,10 +42,12 @@ public class WalletAuthoriseService {
     public WalletAuthoriseService(PaymentProviders paymentProviders,
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
+                                  WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter,
                                   AuthorisationLogger authorisationLogger, 
                                   Environment environment) {
         this.paymentProviders = paymentProviders;
         this.authorisationService = authorisationService;
+        this.walletAuthorisationDataToAuthCardDetailsConverter = walletAuthorisationDataToAuthCardDetailsConverter;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
         this.metricRegistry = environment.metrics();
@@ -142,7 +142,7 @@ public class WalletAuthoriseService {
             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
 
         LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
-        AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
+        AuthCardDetails authCardDetailsToBePersisted = walletAuthorisationDataToAuthCardDetailsConverter.convert(walletAuthorisationData);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
@@ -167,17 +167,6 @@ public class WalletAuthoriseService {
         LOGGER.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
         return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
-    }
-
-    private AuthCardDetails authCardDetailsFor(WalletAuthorisationData walletAuthorisationData) {
-        AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardHolder(walletAuthorisationData.getPaymentInfo().getCardholderName());
-        authCardDetails.setCardNo(walletAuthorisationData.getPaymentInfo().getLastDigitsCardNumber());
-        authCardDetails.setPayersCardType(walletAuthorisationData.getPaymentInfo().getCardType());
-        authCardDetails.setCardBrand(walletAuthorisationData.getPaymentInfo().getBrand());
-        walletAuthorisationData.getCardExpiryDate().map(EXPIRY_DATE_FORMAT::format).map(CardExpiryDate::valueOf).ifPresent(authCardDetails::setEndDate);
-        authCardDetails.setCorporateCard(false);
-        return authCardDetails;
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

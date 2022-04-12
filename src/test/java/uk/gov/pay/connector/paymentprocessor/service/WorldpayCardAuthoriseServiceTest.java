@@ -19,6 +19,7 @@ import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -33,7 +34,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -107,8 +108,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, mock(AgreementDao.class), null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
-                mock(EventService.class), mock(GatewayAccountCredentialsService.class), mock(NorthAmericanRegionMapper.class),
-                mockTaskQueueService);
+                mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
+                mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService);
 
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,

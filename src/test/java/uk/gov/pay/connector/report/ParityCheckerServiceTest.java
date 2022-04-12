@@ -21,6 +21,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -66,7 +67,9 @@ public class ParityCheckerServiceTest {
     @Mock
     private ChargeDao chargeDao;
     @Mock
-    private ChargeService chargeService;
+    private ChargeService chargeService;    
+    @Mock
+    private PaymentInstrumentService paymentInstrumentService;
     @Mock
     private RefundService refundService;
     @Mock

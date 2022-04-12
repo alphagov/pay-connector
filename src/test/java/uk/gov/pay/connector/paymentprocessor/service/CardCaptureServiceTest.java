@@ -28,6 +28,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -38,13 +39,13 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.persistence.OptimisticLockException;
 import javax.ws.rs.WebApplicationException;
@@ -114,13 +115,15 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private LedgerService ledgerService;
     @Mock
-    private EventService mockEventService;
+    private EventService mockEventService;    
+    @Mock
+    private PaymentInstrumentService mockPaymentInstrumentService;
     @Mock 
     private RefundService mockedRefundService;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
     @Mock
-    protected NorthAmericanRegionMapper mockNorthAmericanRegionMapper;
+    protected AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
     @Mock
     private TaskQueueService mockTaskQueueService;
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
@@ -133,8 +136,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, 
-                mockGatewayAccountCredentialsService, mockNorthAmericanRegionMapper, mockTaskQueueService);
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
+                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
