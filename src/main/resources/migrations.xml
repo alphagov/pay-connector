@@ -1884,4 +1884,14 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add description, user_identifier to agreements table" author="">
+        <addColumn tableName="agreements">
+            <column name="description" type="varchar(255)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+            <column name="user_identifier" type="varchar(255)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
