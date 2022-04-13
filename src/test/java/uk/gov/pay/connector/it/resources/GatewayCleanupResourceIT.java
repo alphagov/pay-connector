@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testcontainers.shaded.org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
