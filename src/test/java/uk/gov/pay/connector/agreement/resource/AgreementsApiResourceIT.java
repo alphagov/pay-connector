@@ -35,6 +35,8 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class AgreementsApiResourceIT {
     private static final String REFERENCE_ID = "1234";
+    private static final String DESCRIPTION = "a valid description";
+    private static final String USER_IDENTIFIER = "a-valid-user-identifier";
     private static final String REFERENCE_ID_TOO_LONG = new String(new char[260]).replace('\0', '1');
     private static final String REFERENCE_ID_EMPTY = "";
     private DatabaseFixtures.TestAccount testAccount;
@@ -77,7 +79,9 @@ public class AgreementsApiResourceIT {
     @Test
     public void shouldCreateAgreement() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
-                "reference", REFERENCE_ID
+                "reference", REFERENCE_ID,
+                "description", DESCRIPTION,
+                "user_identifier", USER_IDENTIFIER
         ));
 
         ValidatableResponse o = givenSetup()
@@ -89,6 +93,8 @@ public class AgreementsApiResourceIT {
                 .body("reference", equalTo(REFERENCE_ID))
                 .body("service_id", equalTo("valid-external-service-id"))
                 .body("agreement_id", notNullValue())
+                .body("description", equalTo(DESCRIPTION))
+                .body("user_identifier", equalTo(USER_IDENTIFIER))
                 .body("created_date", notNullValue())
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("created_date", isWithin(10, SECONDS));
@@ -97,7 +103,8 @@ public class AgreementsApiResourceIT {
     @Test
     public void shouldReturn422WhenReferenceIdTooLong() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
-                "reference", REFERENCE_ID_TOO_LONG
+                "reference", REFERENCE_ID_TOO_LONG,
+                "description", DESCRIPTION
         ));
 
         givenSetup()
@@ -110,7 +117,8 @@ public class AgreementsApiResourceIT {
     @Test
     public void shouldReturn422WhenReferenceIdEmpty() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(Map.of(
-                "reference", REFERENCE_ID_EMPTY
+                "reference", REFERENCE_ID_EMPTY,
+                "description", DESCRIPTION
         ));
 
         givenSetup()
@@ -120,7 +128,20 @@ public class AgreementsApiResourceIT {
                 .then()
                 .statusCode(SC_UNPROCESSABLE_ENTITY);
     }
-    
+
+    @Test
+    public void shouldReturn422WhenDescriptionEmpty() throws JsonProcessingException {
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "reference", REFERENCE_ID
+        ));
+
+        givenSetup()
+                .body(payload)
+                .post(format(CREATE_AGREEMENT_URL, accountId))
+                .then()
+                .statusCode(SC_UNPROCESSABLE_ENTITY);
+    }
+
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider) {
         long accountId = nextLong(2, 10000);
 

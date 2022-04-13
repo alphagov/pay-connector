@@ -34,6 +34,8 @@ public class AgreementService {
                         .withReference(agreementEntity.getReference())
                         .withLive(agreementEntity.isLive())
                         .withCreatedDate(agreementEntity.getCreatedDate())
+                        .withDescription(agreementEntity.getDescription())
+                        .withUserIdentifier(agreementEntity.getUserIdentifier())
                         .build());
     }
 
@@ -41,8 +43,11 @@ public class AgreementService {
         return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {
             AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
                     .withReference(agreementCreateRequest.getReference())
+                    .withDescription(agreementCreateRequest.getDescription())
+                    .withUserIdentifier(agreementCreateRequest.getUserIdentifier())
                     .withServiceId(gatewayAccountEntity.getServiceId())
-                    .withLive(gatewayAccountEntity.isLive()).build();
+                    .withLive(gatewayAccountEntity.isLive())
+                    .build();
             agreementEntity.setGatewayAccount(gatewayAccountEntity);
             
             agreementDao.persist(agreementEntity);
@@ -54,6 +59,8 @@ public class AgreementService {
             agreementResponseBuilder.withReference(agreementEntity.getReference());
             agreementResponseBuilder.withServiceId(agreementEntity.getServiceId());
             agreementResponseBuilder.withLive(agreementEntity.isLive());
+            agreementResponseBuilder.withDescription(agreementEntity.getDescription());
+            agreementResponseBuilder.withUserIdentifier(agreementEntity.getUserIdentifier());
             return agreementResponseBuilder.build();
         });
     }

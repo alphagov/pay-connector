@@ -35,7 +35,8 @@ class AgreementsApiResourceTest {
     private final static long NOT_VALID_ACCOUNT_ID = 9876l;
 
     private static final String REFERENCE_ID = "1234";
-    
+    private static final String VALID_DESCRIPTION = "a valid description";
+
     private AgreementService agreementService = mock(AgreementService.class);
     
     private final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
@@ -45,11 +46,11 @@ class AgreementsApiResourceTest {
 
     @Test
     void shouldReturn200_whenPostToAgreement() {
-        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest("1234");
-        AgreementResponse agreementResponse = new AgreementResponseBuilder().withAgreementId("aid").withReference(REFERENCE_ID).withServiceId("serviceid").withCreatedDate(Instant.parse("2022-03-03T12:00:00Z")).build();
+        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest("1234", VALID_DESCRIPTION, null);
+        AgreementResponse agreementResponse = new AgreementResponseBuilder().withAgreementId("aid").withReference(REFERENCE_ID).withServiceId("serviceid").withCreatedDate(Instant.parse("2022-03-03T12:00:00Z")).withDescription(VALID_DESCRIPTION).build();
         when(agreementService.create(agreementCreateRequest, VALID_ACCOUNT_ID)).thenReturn(Optional.ofNullable(agreementResponse));
 
-        Map payloadMap = Map.of("reference", REFERENCE_ID);
+        Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
 
         Response response = resources.client()
                 .target(format(RESOURCE_URL, VALID_ACCOUNT_ID))
@@ -61,7 +62,7 @@ class AgreementsApiResourceTest {
 
     @Test
     void shouldReturn404_whenPostWithUnknownAccountId() {
-        Map payloadMap = Map.of("reference", REFERENCE_ID);
+        Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
 
         Response response = resources.client()
                 .target(format(RESOURCE_URL, NOT_VALID_ACCOUNT_ID))

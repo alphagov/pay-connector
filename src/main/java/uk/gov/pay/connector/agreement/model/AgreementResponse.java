@@ -24,6 +24,12 @@ public class AgreementResponse {
     @JsonProperty
     private String reference;
 
+    @JsonProperty
+    private String description;
+
+    @JsonProperty("user_identifier")
+    private String userIdentifier;
+
     @JsonProperty("service_id")
     private String serviceId;
 
@@ -34,6 +40,8 @@ public class AgreementResponse {
         this.agreementId = agreementResponseBuilder.getAgreementId();
         this.createdDate = agreementResponseBuilder.getCreatedDate();
         this.reference = agreementResponseBuilder.getReference();
+        this.description = agreementResponseBuilder.getDescription();
+        this.userIdentifier = agreementResponseBuilder.getUserIdentifier();
         this.serviceId = agreementResponseBuilder.getServiceId();
         this.live = agreementResponseBuilder.isLive();
     }
@@ -58,17 +66,25 @@ public class AgreementResponse {
         return live;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public String getUserIdentifier() {
+        return userIdentifier;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AgreementResponse that = (AgreementResponse) o;
-        return live == that.live && agreementId.equals(that.agreementId) && createdDate.equals(that.createdDate) && reference.equals(that.reference) && serviceId.equals(that.serviceId);
+        return live == that.live && agreementId.equals(that.agreementId) && createdDate.equals(that.createdDate) && reference.equals(that.reference) && serviceId.equals(that.serviceId) && Objects.equals(description, that.description) && Objects.equals(userIdentifier, that.userIdentifier);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(agreementId, createdDate, reference, serviceId, live);
+        return Objects.hash(agreementId, createdDate, reference, serviceId, live, description, userIdentifier);
     }
 
     @Override
