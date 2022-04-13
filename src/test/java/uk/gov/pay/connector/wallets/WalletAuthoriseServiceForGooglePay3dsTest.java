@@ -39,6 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -63,6 +64,9 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
     private ChargeService chargeService;
 
     @Mock
+    private WalletAuthorisationDataToAuthCardDetailsConverter mockWalletAuthorisationDataToAuthCardDetailsConverter;
+
+    @Mock
     private Environment mockEnvironment;
 
     @Mock
@@ -73,6 +77,9 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
 
     @Mock
     private Counter mockCounter;
+
+    @Mock
+    private AuthCardDetails mockAuthCardDetails;
 
     @Captor
     private ArgumentCaptor<Optional<Auth3dsRequiredEntity>> auth3dsRequiredEntityArgumentCaptor;
@@ -93,12 +100,15 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
                 mockedProviders,
                 chargeService,
                 authorisationService,
+                mockWalletAuthorisationDataToAuthCardDetailsConverter,
                 mock(AuthorisationLogger.class), 
                 mockEnvironment);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);
+        when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationData.class)))
+                .thenReturn(mockAuthCardDetails);
         when(chargeService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
-                isNull(), any(AuthCardDetails.class), any(WalletType.class), any(), 
+                isNull(), eq(mockAuthCardDetails), any(WalletType.class), any(), 
                 any(Optional.class))
         ).thenReturn(chargeEntity);
     }
@@ -119,7 +129,7 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
                 any(ChargeStatus.class),
                 anyString(),
                 isNull(),
-                any(AuthCardDetails.class),
+                eq(mockAuthCardDetails),
                 any(WalletType.class),
                 anyString(),
                 auth3dsRequiredEntityArgumentCaptor.capture());

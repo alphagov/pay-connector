@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.persist.Transactional;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -12,10 +11,10 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
-import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
-import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -35,6 +34,7 @@ import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -56,14 +56,12 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -110,7 +108,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
@@ -133,8 +130,9 @@ public class ChargeService {
     private final RefundService refundService;
     private final EventService eventService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
-    private final NorthAmericanRegionMapper northAmericanRegionMapper;
-    private TaskQueueService taskQueueService;
+    private final AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter;
+    private final PaymentInstrumentService paymentInstrumentService;
+    private final TaskQueueService taskQueueService;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -149,9 +147,11 @@ public class ChargeService {
                          LedgerService ledgerService,
                          RefundService refundService,
                          EventService eventService,
+                         PaymentInstrumentService paymentInstrumentService,
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
-                         NorthAmericanRegionMapper northAmericanRegionMapper,
-                         TaskQueueService taskQueueService) {
+                         AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
+                         TaskQueueService taskQueueService
+    ) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -166,8 +166,9 @@ public class ChargeService {
         this.ledgerService = ledgerService;
         this.refundService = refundService;
         this.eventService = eventService;
+        this.paymentInstrumentService = paymentInstrumentService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
-        this.northAmericanRegionMapper = northAmericanRegionMapper;
+        this.authCardDetailsToCardDetailsEntityConverter = authCardDetailsToCardDetailsEntityConverter;
         this.taskQueueService = taskQueueService;
     }
 
@@ -536,13 +537,14 @@ public class ChargeService {
     }
 
     public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
-                                                          ChargeStatus status,
+                                                          ChargeStatus newStatus,
                                                           String transactionId,
                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                           ProviderSessionIdentifier sessionIdentifier,
-                                                          AuthCardDetails authCardDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null);
+                                                          AuthCardDetails authCardDetails,
+                                                          Map<String, String> recurringAuthToken) {
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
+                null, null, recurringAuthToken);
 
     }
 
@@ -555,21 +557,21 @@ public class ChargeService {
                                                             String emailAddress,
                                                             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
-                walletType, emailAddress);
+                walletType, emailAddress, null);
     }
 
-    ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                           ChargeStatus status,
+    private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+                                                           ChargeStatus newStatus,
                                                            AuthCardDetails authCardDetails,
                                                            String transactionId,
                                                            Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                            ProviderSessionIdentifier sessionIdentifier,
                                                            WalletType walletType,
-                                                           String emailAddress) {
-        updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress);
+                                                           String emailAddress,
+                                                           Map<String, String> recurringAuthToken) {
+        updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
-
         eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
 
         return chargeEntity;
@@ -578,13 +580,14 @@ public class ChargeService {
     // cannot be private: Guice requires @Transactional methods to be public
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
-                                                      ChargeStatus status,
+                                                      ChargeStatus newStatus,
                                                       AuthCardDetails authCardDetails,
                                                       String transactionId,
                                                       Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                       ProviderSessionIdentifier sessionIdentifier,
                                                       WalletType walletType,
-                                                      String emailAddress) {
+                                                      String emailAddress,
+                                                      Map<String, String> recurringAuthToken) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
@@ -592,10 +595,14 @@ public class ChargeService {
             Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
 
-            CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
+            CardDetailsEntity detailsEntity = authCardDetailsToCardDetailsEntityConverter.convert(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
-            transitionChargeState(charge, status);
+            if (charge.isSavePaymentInstrumentToAgreement()) {
+                Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
+            }
+
+            transitionChargeState(charge, newStatus);
 
             LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
@@ -645,6 +652,11 @@ public class ChargeService {
         if (transactionId != null && !transactionId.isBlank()) {
             chargeEntity.setGatewayTransactionId(transactionId);
         }
+    }
+    
+    private void setPaymentInstrument(Map<String, String> recurringAuthToken, ChargeEntity charge) {
+        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(charge.getCardDetails(), recurringAuthToken);
+        charge.setPaymentInstrument(paymentInstrument);
     }
 
     @Transactional
@@ -805,34 +817,6 @@ public class ChargeService {
 
     public int count3dsRequiredEvents(String externalId) {
         return chargeDao.count3dsRequiredEventsForChargeExternalId(externalId);
-    }
-
-    private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
-        CardDetailsEntity detailsEntity = new CardDetailsEntity();
-        detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
-        detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
-        detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        if (hasFullCardNumber(authCardDetails)) { // Apple Pay etc. don’t give us a full card number, just the last four digits here
-            detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
-        }
-
-        if (hasLastFourCharactersCardNumber(authCardDetails)) {
-            detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
-        }
-
-        authCardDetails.getAddress().ifPresent(address -> {
-            var addressEntity = new AddressEntity(address);
-            northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
-                    .map(NorthAmericaRegion::getAbbreviation)
-                    .ifPresent(stateOrProvinceAbbreviation -> {
-                        addressEntity.setStateOrProvince(stateOrProvinceAbbreviation);
-                    });
-            detailsEntity.setBillingAddress(addressEntity);
-        });
-
-        detailsEntity.setCardType(PayersCardType.toCardType(authCardDetails.getPayersCardType()));
-
-        return detailsEntity;
     }
 
     private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {

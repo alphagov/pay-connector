@@ -15,6 +15,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -29,7 +30,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -65,13 +66,15 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Mock
     private CardExecutorService mockExecutorService;
     @Mock
-    private EventService mockEventService;
+    private EventService mockEventService;    
+    @Mock
+    private PaymentInstrumentService mockPaymentInstrumentService;
     @Mock
     private StateTransitionService mockStateTransitionService;
     @Mock
     private Authorisation3dsConfig mockAuthorisation3dsConfig;
     @Mock
-    private NorthAmericanRegionMapper northAmericanRegionMapper;
+    private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
     @Mock
     private RefundService mockedRefundService;
     @Mock
@@ -105,8 +108,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
-                mockedRefundService, mockEventService, mockGatewayAccountCredentialsService, northAmericanRegionMapper,
-                mockTaskQueueService);
+                mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);

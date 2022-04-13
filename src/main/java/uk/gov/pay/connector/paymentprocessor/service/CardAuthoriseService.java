@@ -26,6 +26,7 @@ import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -83,13 +84,16 @@ public class CardAuthoriseService {
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
+            Optional<Map<String, String>> maybeToken = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRecurringAuthToken);
+
             ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     charge.getExternalId(),
                     newStatus,
                     transactionId.orElse(null),
                     auth3dsDetailsEntity.orElse(null),
                     sessionIdentifier.orElse(null),
-                    authCardDetails);
+                    authCardDetails,
+                    maybeToken.orElse(null));
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
             

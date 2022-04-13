@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface BaseAuthoriseResponse extends BaseResponse {
@@ -16,6 +17,10 @@ public interface BaseAuthoriseResponse extends BaseResponse {
 
     default Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails() {
         return getGatewayParamsFor3ds().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
+    }
+    
+    default Optional<Map<String, String>> getGatewayRecurringAuthToken() {
+        return Optional.empty();
     }
 
     enum AuthoriseStatus {

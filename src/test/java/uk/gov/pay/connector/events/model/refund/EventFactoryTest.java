@@ -62,6 +62,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
@@ -94,6 +95,7 @@ public class EventFactoryTest {
     private RefundService refundService;
     private ChargeEventDao chargeEventDao;
     private PaymentProviders paymentProviders;
+    private PaymentInstrumentService paymentInstrumentService;
 
     private EventFactory eventFactory;
 
@@ -104,6 +106,7 @@ public class EventFactoryTest {
         refundService = mock(RefundService.class);
         chargeEventDao = mock(ChargeEventDao.class);
         paymentProviders = mock(PaymentProviders.class);
+        paymentInstrumentService = mock(PaymentInstrumentService.class);
 
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);

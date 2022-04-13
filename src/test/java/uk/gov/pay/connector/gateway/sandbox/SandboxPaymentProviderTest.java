@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -42,9 +45,13 @@ public class SandboxPaymentProviderTest {
     private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
     private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
     private static final String AUTH_ERROR_CARD_NUMBER = "4000000000000119";
+    private PaymentInstrumentService paymentInstrumentService;
+    private ChargeService chargeService;
 
     @BeforeEach
     void setup() {
+        chargeService = mock(ChargeService.class);
+        paymentInstrumentService = mock(PaymentInstrumentService.class);
         provider = new SandboxPaymentProvider();
         credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of())
@@ -80,6 +87,31 @@ public class SandboxPaymentProviderTest {
 
         BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
         assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
+        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
+        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
+        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+        assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
+    }    
+    
+    @Test
+    void authorise_shouldSetRecurringAuthToken() {
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo(AUTH_SUCCESS_CARD_NUMBER);
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity()
+                .withPaymentProvider(SANDBOX.getName())
+                .withCardDetails(ChargeEntityFixture.defaultCardDetails())
+                .build(), 
+                authCardDetails));
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
+
+        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
+        assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
         assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
