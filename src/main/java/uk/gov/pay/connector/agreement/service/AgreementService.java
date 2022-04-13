@@ -26,6 +26,17 @@ public class AgreementService {
         this.clock = clock;
     }
 
+    public Optional<AgreementResponse> findByExternalId(String externalId) {
+        return agreementDao.findByExternalId(externalId)
+                .map(agreementEntity -> new AgreementResponseBuilder()
+                        .withAgreementId(agreementEntity.getExternalId())
+                        .withServiceId(agreementEntity.getServiceId())
+                        .withReference(agreementEntity.getReference())
+                        .withLive(agreementEntity.isLive())
+                        .withCreatedDate(agreementEntity.getCreatedDate())
+                        .build());
+    }
+
     public Optional<AgreementResponse> create(AgreementCreateRequest agreementCreateRequest, long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {
             AgreementEntity agreementEntity = anAgreementEntity(clock.instant())

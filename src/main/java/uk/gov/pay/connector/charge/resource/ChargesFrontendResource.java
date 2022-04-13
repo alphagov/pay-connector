@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.model.AgreementResponse;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -56,13 +58,15 @@ public class ChargesFrontendResource {
     private final ChargeService chargeService;
     private final CardTypeDao cardTypeDao;
     private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
+    private final AgreementService agreementService;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, Worldpay3dsFlexJwtService worldpay3dsFlexJwtService) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, Worldpay3dsFlexJwtService worldpay3dsFlexJwtService, AgreementService agreementService) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
         this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
+        this.agreementService = agreementService;
     }
 
     @GET
@@ -155,6 +159,10 @@ public class ChargesFrontendResource {
                 .map(CardTypeEntity::getLabel);
     }
 
+    private Optional<AgreementResponse> findAgreement(String agreementExternalId) {
+        return agreementService.findByExternalId(agreementExternalId);
+    }
+
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
 
@@ -184,6 +192,11 @@ public class ChargesFrontendResource {
             var persistedCard = charge.getCardDetails().toCard();
             persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
             responseBuilder.withCardDetails(persistedCard);
+        }
+
+        if (charge.getAgreementId() != null) {
+            findAgreement(charge.getAgreementId())
+                    .map(responseBuilder::withAgreement);
         }
         
         if (charge.get3dsRequiredDetails() != null) {
