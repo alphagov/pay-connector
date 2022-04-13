@@ -24,6 +24,7 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJpaConverter;
@@ -191,6 +192,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @OneToOne
     @JoinColumn(name = "payment_instrument_id", nullable = true)
     private PaymentInstrumentEntity paymentInstrument;
+    
+    @Column(name = "authorisation_mode")
+    @Enumerated(EnumType.STRING)
+    private AuthorisationMode authorisationMode;
 
     public ChargeEntity() {
         //for jpa
@@ -217,7 +222,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             boolean moto,
             String serviceId,
             String agreementId,
-            boolean savePaymentInstrumentToAgreement
+            boolean savePaymentInstrumentToAgreement,
+            AuthorisationMode authorisationMode
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -240,6 +246,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.serviceId = serviceId;
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.authorisationMode = authorisationMode;
     }
 
     public Long getId() {
@@ -543,7 +550,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
     }
-    
+
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -561,8 +572,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private String serviceId;
         private String agreementId;
         private boolean savePaymentInstrumentToAgreement;
-
-
+        private AuthorisationMode authorisationMode;
 
         private WebChargeEntityBuilder() {
         }
@@ -651,6 +661,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
+        
+        public WebChargeEntityBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
+            this.authorisationMode = authorisationMode;
+            return this;
+        }
 
         public ChargeEntity build() {
             return new ChargeEntity(
@@ -673,7 +688,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     moto,
                     serviceId,
                     agreementId,
-                    savePaymentInstrumentToAgreement);
+                    savePaymentInstrumentToAgreement,
+                    authorisationMode);
         }
     }
 
@@ -786,7 +802,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     false,
                     serviceId,
                     agreementId,
-                    savePaymentInstrumentToAgreement);
+                    savePaymentInstrumentToAgreement,
+                    AuthorisationMode.EXTERNAL);
         }
     }
 }

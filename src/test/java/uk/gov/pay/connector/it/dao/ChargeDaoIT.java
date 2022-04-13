@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -134,6 +135,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
                 .build();
 
         assertThat(chargeEntity.getId(), is(nullValue()));
@@ -141,6 +143,9 @@ public class ChargeDaoIT extends DaoITestBase {
         chargeDao.persist(chargeEntity);
 
         assertThat(chargeEntity.getId(), is(notNullValue()));
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+        assertThat(charge.get().getAuthorisationMode(), is(AuthorisationMode.MOTO_API));
     }
 
     @Test

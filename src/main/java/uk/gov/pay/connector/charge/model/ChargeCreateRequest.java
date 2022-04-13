@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJsonDeserializer;
@@ -77,6 +78,10 @@ public class ChargeCreateRequest {
 
     @JsonProperty("save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
+    
+    @JsonProperty("authorisation_mode")
+    @Valid
+    private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
 
     public ChargeCreateRequest() {
     }
@@ -167,6 +172,10 @@ public class ChargeCreateRequest {
         return paymentProvider;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     public String toStringWithoutPersonalIdentifiableInformation() {
         // Don't include:
         // description - some services include PII
@@ -181,6 +190,7 @@ public class ChargeCreateRequest {
                 (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
                 (agreementId != null ? ", agreementId=" + agreementId.toString() : "") +
                 ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
+                ", authorisationMode=" + authorisationMode + 
                 '}';
     }
 }

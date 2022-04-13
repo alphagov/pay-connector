@@ -15,6 +15,7 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -136,6 +137,9 @@ public class ChargeResponse {
 
     @JsonProperty("agreement_id")
     private String agreementId;
+    
+    @JsonProperty("authorisation_mode")
+    private AuthorisationMode authorisationMode;
 
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
@@ -171,6 +175,7 @@ public class ChargeResponse {
         this.externalMetadata = builder.getExternalMetadata();
         this.moto = builder.isMoto();
         this.agreementId = builder.getAgreementId();
+        this.authorisationMode = builder.getAuthorisationMode();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -309,6 +314,10 @@ public class ChargeResponse {
         return agreementId;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -344,7 +353,8 @@ public class ChargeResponse {
                 Objects.equals(totalAmount, that.totalAmount) &&
                 Objects.equals(netAmount, that.netAmount) &&
                 walletType == that.walletType &&
-                Objects.equals(externalMetadata, that.externalMetadata);
+                Objects.equals(externalMetadata, that.externalMetadata) &&
+                authorisationMode == that.authorisationMode;
     }
 
     @Override
@@ -353,7 +363,7 @@ public class ChargeResponse {
                 telephoneNumber, description, reference, providerName, processorId, providerId, createdDate,
                 authorisedDate, paymentOutcome, refundSummary, settlementSummary, authCode, auth3dsData, cardDetails,
                 language, delayedCapture, corporateCardSurcharge, fee, totalAmount, netAmount, walletType,
-                externalMetadata, moto);
+                externalMetadata, moto, authorisationMode);
     }
 
     @Override
@@ -382,6 +392,7 @@ public class ChargeResponse {
                 ", walletType=" + walletType +
                 ", moto=" + moto +
                 ", agreementId=" + agreementId +
+                ", authorisationMode=" + authorisationMode +
                 '}';
     }
 

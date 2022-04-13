@@ -18,6 +18,7 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntit
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -68,6 +69,7 @@ public class ChargeEntityFixture {
     private String agreementId = randomUuid().substring(26);
     private boolean savePaymentInstrumentToAgreement = false;
     private PaymentInstrumentEntity paymentInstrument = null;
+    private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -152,7 +154,8 @@ public class ChargeEntityFixture {
                 moto,
                 serviceId,
                 agreementId,
-                savePaymentInstrumentToAgreement);
+                savePaymentInstrumentToAgreement,
+                authorisationMode);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
@@ -347,6 +350,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
         this.paymentInstrument = paymentInstrument;
+        return this;
+    }
+
+    public ChargeEntityFixture withAuthorisationMode(AuthorisationMode authorisationMode) {
+        this.authorisationMode = authorisationMode;
         return this;
     }
 

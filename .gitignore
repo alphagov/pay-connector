@@ -14,6 +14,7 @@ hs_err_pid*
 *.iml
 *.ipr
 *.iws
+dependency-reduced-pom.xml
 
 #Eclipse
 .project

@@ -90,7 +90,8 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true))
-                .body("charge_id", is(notNullValue()));
+                .body("charge_id", is(notNullValue()))
+                .body("authorisation_mode", is("external"));
 
         String chargeExternalId = response.extract().path("charge_id").toString();
         String actualGatewayAccountCredentialId = databaseTestHelper.getChargeByExternalId(chargeExternalId).get("gateway_account_credential_id").toString();

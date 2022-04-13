@@ -1,15 +1,10 @@
 package uk.gov.pay.connector.it.resources;
 
-import io.restassured.response.ValidatableResponse;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
-import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -20,6 +15,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -41,7 +37,6 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
-import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -578,6 +573,27 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("card_details.card_type", is(nullValue()));
+    }
+
+    @Test
+    public void shouldReturnChargeWhenAuthorisationModeIsMotoApi() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("authorisation_mode", is("moto_api"));
     }
 
     private void createCharge(String externalChargeId, long chargeId) {
