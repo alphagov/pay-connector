@@ -187,6 +187,7 @@ public class ChargesFrontendResourceIT {
                 .body("agreement.agreement_id", is(AGREEMENT_ID))
                 .body("agreement.reference", is(agreementReference))
                 .body("agreement.service_id", is(agreementServiceId))
+                .body("save_payment_instrument_to_agreement", is(true))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))

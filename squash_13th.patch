@@ -1,0 +1,74 @@
+diff --git a/src/main/java/uk/gov/pay/connector/charge/model/FrontendChargeResponse.java b/src/main/java/uk/gov/pay/connector/charge/model/FrontendChargeResponse.java
+index a6ae73c07..ddc97d656 100644
+--- a/src/main/java/uk/gov/pay/connector/charge/model/FrontendChargeResponse.java
++++ b/src/main/java/uk/gov/pay/connector/charge/model/FrontendChargeResponse.java
+@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.model;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import org.apache.commons.lang3.builder.ToStringBuilder;
+-import uk.gov.pay.connector.agreement.model.AgreementEntity;
+ import uk.gov.pay.connector.agreement.model.AgreementResponse;
+ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
+ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+@@ -15,6 +14,7 @@ public class FrontendChargeResponse extends ChargeResponse {
+         private String status;
+         private GatewayAccountEntity gatewayAccount;
+         private AgreementResponse agreement;
++        private boolean savePaymentInstrumentToAgreement;
+ 
+         public FrontendChargeResponseBuilder withStatus(String status) {
+             this.status = status;
+@@ -33,6 +33,11 @@ public class FrontendChargeResponse extends ChargeResponse {
+             return this;
+         }
+ 
++        public FrontendChargeResponseBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
++            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
++            return this;
++        }
++
+         @Override
+         protected FrontendChargeResponseBuilder thisObject() {
+             return this;
+@@ -54,6 +59,9 @@ public class FrontendChargeResponse extends ChargeResponse {
+     @JsonProperty(value = "gateway_account")
+     private GatewayAccountEntity gatewayAccount;
+ 
++    @JsonProperty("save_payment_instrument_to_agreement")
++    private boolean savePaymentInstrumentToAgreement;
++
+     @JsonProperty
+     private AgreementResponse agreement;
+ 
+@@ -61,6 +69,7 @@ public class FrontendChargeResponse extends ChargeResponse {
+         super(builder);
+         this.status = builder.status;
+         this.gatewayAccount = builder.gatewayAccount;
++        this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
+         this.agreement = builder.agreement;
+     }
+ 
+diff --git a/src/main/java/uk/gov/pay/connector/charge/resource/ChargesFrontendResource.java b/src/main/java/uk/gov/pay/connector/charge/resource/ChargesFrontendResource.java
+index 80c0cc025..2884df86c 100644
+--- a/src/main/java/uk/gov/pay/connector/charge/resource/ChargesFrontendResource.java
++++ b/src/main/java/uk/gov/pay/connector/charge/resource/ChargesFrontendResource.java
+@@ -182,6 +182,7 @@ public class ChargesFrontendResource {
+                 .withLanguage(charge.getLanguage())
+                 .withDelayedCapture(charge.isDelayedCapture())
+                 .withAgreementId(charge.getAgreementId())
++                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
+                 .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
+                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
+                 .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
+diff --git a/src/test/java/uk/gov/pay/connector/it/resources/ChargesFrontendResourceIT.java b/src/test/java/uk/gov/pay/connector/it/resources/ChargesFrontendResourceIT.java
+index b7777af46..be11431a4 100644
+--- a/src/test/java/uk/gov/pay/connector/it/resources/ChargesFrontendResourceIT.java
++++ b/src/test/java/uk/gov/pay/connector/it/resources/ChargesFrontendResourceIT.java
+@@ -187,6 +187,7 @@ public class ChargesFrontendResourceIT {
+                 .body("agreement.agreement_id", is(AGREEMENT_ID))
+                 .body("agreement.reference", is(agreementReference))
+                 .body("agreement.service_id", is(agreementServiceId))
++                .body("save_payment_instrument_to_agreement", is(true))
+                 .body("links", hasSize(3))
+                 .body("links", containsLink("self", GET, expectedLocation))
+                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
