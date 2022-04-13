@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -15,6 +14,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         private String status;
         private GatewayAccountEntity gatewayAccount;
         private AgreementResponse agreement;
+        private boolean savePaymentInstrumentToAgreement;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
@@ -30,6 +30,11 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withAgreement(AgreementResponse agreement) {
             this.agreement = agreement;
+            return this;
+        }
+
+        public FrontendChargeResponseBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
 
@@ -54,6 +59,9 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
+    @JsonProperty("save_payment_instrument_to_agreement")
+    private boolean savePaymentInstrumentToAgreement;
+
     @JsonProperty
     private AgreementResponse agreement;
 
@@ -61,6 +69,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         super(builder);
         this.status = builder.status;
         this.gatewayAccount = builder.gatewayAccount;
+        this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         this.agreement = builder.agreement;
     }
 
