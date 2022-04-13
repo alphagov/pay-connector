@@ -1132,7 +1132,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .withAccountId(accountId)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_LONG_AGREEMENT_ID_VALUE, "refs", Instant.now(), false, Long.parseLong(accountId));
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_LONG_AGREEMENT_ID_VALUE, "refs", "description", null, Instant.now(), false, Long.parseLong(accountId));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -1158,7 +1158,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .withAccountId(accountId)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_SHORT_AGREEMENT_ID_VALUE, "refs", Instant.now(), false, Long.parseLong(accountId));
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_TOO_SHORT_AGREEMENT_ID_VALUE, "refs", "description", null, Instant.now(), false, Long.parseLong(accountId));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -1185,7 +1185,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         databaseTestHelper.addAgreement(11l, "service-id", JSON_VALID_AGREEMENT_ID_VALUE, 
-                "refs", Instant.now(), false, Long.parseLong(accountId));
+                "refs", "description", null, Instant.now(), false, Long.parseLong(accountId));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,

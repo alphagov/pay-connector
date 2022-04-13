@@ -158,8 +158,10 @@ public class ChargesFrontendResourceIT {
     public void getChargeShouldIncludeAgreementInResponseToFrontEndForRecurringCardPayment() {
         var agreementReference = "refs";
         var agreementServiceId = "service-id";
+        var agreementDescription = "a valid description";
+        var agreementUserIdentifier = "a-valid-user-identifier";
         databaseTestHelper.addAgreement(11l, agreementServiceId, AGREEMENT_ID,
-                agreementReference, Instant.now(), false, Long.parseLong(accountId));
+                agreementReference, agreementDescription, agreementUserIdentifier, Instant.now(), false, Long.parseLong(accountId));
         String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
         String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
@@ -186,6 +188,8 @@ public class ChargesFrontendResourceIT {
                 .body("agreement_id", is(AGREEMENT_ID))
                 .body("agreement.agreement_id", is(AGREEMENT_ID))
                 .body("agreement.reference", is(agreementReference))
+                .body("agreement.description", is(agreementDescription))
+                .body("agreement.user_identifier", is(agreementUserIdentifier))
                 .body("agreement.service_id", is(agreementServiceId))
                 .body("save_payment_instrument_to_agreement", is(true))
                 .body("links", hasSize(3))
