@@ -2,6 +2,8 @@ package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
@@ -12,6 +14,7 @@ public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
         private GatewayAccountEntity gatewayAccount;
+        private AgreementResponse agreement;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
@@ -22,6 +25,11 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
             this.gatewayAccount = gatewayAccountEntity;
+            return this;
+        }
+
+        public FrontendChargeResponseBuilder withAgreement(AgreementResponse agreement) {
+            this.agreement = agreement;
             return this;
         }
 
@@ -46,10 +54,14 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
+    @JsonProperty
+    private AgreementResponse agreement;
+
     private FrontendChargeResponse(FrontendChargeResponseBuilder builder) {
         super(builder);
         this.status = builder.status;
         this.gatewayAccount = builder.gatewayAccount;
+        this.agreement = builder.agreement;
     }
 
     @Override
@@ -62,6 +74,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         if (status != null ? !status.equals(that.status) : that.status != null) return false;
         if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null) return false;
+        if (agreement != null ? !agreement.equals(that.agreement) : that.agreement == null) return false;
         return gatewayAccount != null ? gatewayAccount.equals(that.gatewayAccount) : that.gatewayAccount == null;
 
     }
@@ -72,6 +85,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
         result = 31 * result + (gatewayAccount != null ? gatewayAccount.hashCode() : 0);
+        result = 31 * result + (agreement != null ? agreement.hashCode() : 0);
         return result;
     }
 

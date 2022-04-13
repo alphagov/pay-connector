@@ -156,8 +156,10 @@ public class ChargesFrontendResourceIT {
 
     @Test
     public void getChargeShouldIncludeAgreementInResponseToFrontEndForRecurringCardPayment() {
-        databaseTestHelper.addAgreement(11l, "service-id", AGREEMENT_ID,
-                "refs", Instant.now(), false, Long.parseLong(accountId));
+        var agreementReference = "refs";
+        var agreementServiceId = "service-id";
+        databaseTestHelper.addAgreement(11l, agreementServiceId, AGREEMENT_ID,
+                agreementReference, Instant.now(), false, Long.parseLong(accountId));
         String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
         String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
@@ -182,6 +184,9 @@ public class ChargesFrontendResourceIT {
                 .body("total_amount", is(6447))
                 .body("moto", is(false))
                 .body("agreement_id", is(AGREEMENT_ID))
+                .body("agreement.agreement_id", is(AGREEMENT_ID))
+                .body("agreement.reference", is(agreementReference))
+                .body("agreement.service_id", is(agreementServiceId))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))

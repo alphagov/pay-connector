@@ -4,6 +4,7 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -27,10 +28,11 @@ class ChargesFrontendResourceTest {
     private static ChargeDao chargeDao = mock(ChargeDao.class);
     private static CardTypeDao cardTypeDao = mock(CardTypeDao.class);
     private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService = mock(Worldpay3dsFlexJwtService.class);
+    private static AgreementService agreementService = mock(AgreementService.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
-            .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao, worldpay3dsFlexJwtService))
+            .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao, worldpay3dsFlexJwtService, agreementService))
             .build();
 
     @Test
