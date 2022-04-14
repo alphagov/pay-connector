@@ -26,7 +26,11 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.YearMonth;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.ofPattern;
+import static java.time.temporal.ChronoUnit.MONTHS;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -65,24 +69,25 @@ class CardResourceTest {
         return new Object[]{
                 // one-time-token 
                 new Object[]{null, "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token"},
-                new Object[]{"", "4242424242424242", "123", "11/99", "Joe Bogs", "Invalid attribute value: one_time_token. Must be a valid one time token"},
+                new Object[]{"", "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token"},
                 // card number
                 new Object[]{"one-time-token-123", null, "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number"},
-                new Object[]{"one-time-token-123", "", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long"},
-                new Object[]{"one-time-token-123", "card-number-123", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must contain numbers only"},
-                new Object[]{"one-time-token-123", "12345678901234567890", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must contain numbers only"},
+                new Object[]{"one-time-token-123", "", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number"},
+                new Object[]{"one-time-token-123", "card-number-123", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long"},
+                new Object[]{"one-time-token-123", "12345678901234567890", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long"},
                 // cvc
                 new Object[]{"one-time-token-123", "4242424242424242", null, "11/99", "Joe Bogs", "Missing mandatory attribute: cvc"},
-                new Object[]{"one-time-token-123", "4242424242424242", "", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 3 and 4 characters long"},
-                new Object[]{"one-time-token-123", "4242424242424242", "12345", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must contain numbers only"},
-                new Object[]{"one-time-token-123", "4242424242424242", "12", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must contain numbers only"},
-                new Object[]{"one-time-token-123", "4242424242424242", "xyz", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must contain numbers only"},
+                new Object[]{"one-time-token-123", "4242424242424242", "", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
+                new Object[]{"one-time-token-123", "4242424242424242", "12345", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
+                new Object[]{"one-time-token-123", "4242424242424242", "12", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
+                new Object[]{"one-time-token-123", "4242424242424242", "xyz", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
                 // expiry date
                 new Object[]{"one-time-token-123", "4242424242424242", "123", null, "Joe Bogs", "Missing mandatory attribute: expiry_date"},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "1109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "asdf", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/21", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date in the future"},
                 // cardholder_name
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", null, "Missing mandatory attribute: cardholder_name"},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", "", "Invalid attribute value: cardholder_name. Must be less than or equal to 255 characters length"},
@@ -113,7 +118,72 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseMotoApiPaymentShouldReturn204ForInvalidPayload() {
+    void authoriseMotoApiPaymentShouldReturn204ForExpiryDateInTheFuture() {
+        AuthoriseRequest request =
+                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
+
+        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+
+        Response response = resources.target("/v1/api/charges/authorise")
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus(), is(204));
+    }
+
+    @Test
+    void authoriseMotoApiPaymentShouldReturn204IfExpiryDateIsBeforeCurrentMonthAndYear() {
+        YearMonth yearMonth = YearMonth.now(UTC).plus(1, MONTHS);
+
+        AuthoriseRequest request =
+                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
+                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
+
+        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+
+        Response response = resources.target("/v1/api/charges/authorise")
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus(), is(204));
+    }
+
+    @Test
+    void authoriseMotoApiPaymentShouldReturn204IfExpiryDateIsAfterCurrentMonthAndYear() {
+        YearMonth yearMonth = YearMonth.now(UTC).plus(1, MONTHS);
+
+        AuthoriseRequest request =
+                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
+                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
+
+        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+
+        Response response = resources.target("/v1/api/charges/authorise")
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus(), is(204));
+    }
+
+    @Test
+    void authoriseMotoApiPaymentShouldReturn422IfExpiryMonthIsBeforeCurrentMonth() {
+        YearMonth yearMonth = YearMonth.now(UTC).minus(1, MONTHS);
+
+        AuthoriseRequest request =
+                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
+                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
+
+        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+
+        Response response = resources.target("/v1/api/charges/authorise")
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus(), is(422));
+
+        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+        assertThat(errorResponse.getMessages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
+        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+    }
+
+    @Test
+    void authoriseMotoApiPaymentShouldReturn204ForValidPayload() {
         AuthoriseRequest request =
                 new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
