@@ -281,6 +281,7 @@ public class ChargeService {
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementId(chargeRequest.getAgreementId())
+                    .withAuthorisationMode(chargeRequest.getAuthorisationMode())
                     .build();
 
             chargeRequest.getPrefilledCardHolderDetails()
@@ -398,7 +399,8 @@ public class ChargeService {
                 .withProviderId(chargeEntity.getGatewayTransactionId())
                 .withCardDetails(persistedCard)
                 .withEmail(chargeEntity.getEmail())
-                .withChargeId(chargeEntity.getExternalId());
+                .withChargeId(chargeEntity.getExternalId())
+                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
 
         chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
 
@@ -502,7 +504,8 @@ public class ChargeService {
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
                 .withMoto(chargeEntity.isMoto())
-                .withAgreementId(chargeEntity.getAgreementId());
+                .withAgreementId(chargeEntity.getAgreementId())
+                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);

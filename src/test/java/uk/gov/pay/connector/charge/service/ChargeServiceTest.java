@@ -411,7 +411,8 @@ public class ChargeServiceTest {
                 .withSettlement(settlement)
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withLanguage(chargeEntity.getLanguage())
-                .withMoto(chargeEntity.isMoto());
+                .withMoto(chargeEntity.isMoto())
+                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
     }
 
     @Test

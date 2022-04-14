@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.util;
 
-import uk.gov.service.payments.commons.model.SupportedLanguage;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -40,6 +41,7 @@ public class AddChargeParams {
     private final String issuerUrl;
     private final String agreementId;
     private final boolean savePaymentInstrumentToAgreement;
+    private final AuthorisationMode authorisationMode;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -68,6 +70,7 @@ public class AddChargeParams {
         issuerUrl = builder.issuerUrl;
         agreementId = builder.agreementId;
         savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
+        authorisationMode = builder.authorisationMode;
     }
 
     public Long getChargeId() {
@@ -174,6 +177,10 @@ public class AddChargeParams {
         return agreementId;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -201,6 +208,7 @@ public class AddChargeParams {
         private String issuerUrl;
         private String agreementId;
         private boolean savePaymentInstrumentToAgreement;
+        private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
 
         private AddChargeParamsBuilder() {
         }
@@ -337,6 +345,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+            return this;
+        }
+        
+        public AddChargeParamsBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
+            this.authorisationMode = authorisationMode;
             return this;
         }
 

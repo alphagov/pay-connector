@@ -162,6 +162,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("settlement_summary.captured_time", nullValue())
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("created_date", isWithin(10, SECONDS))
+                .body("authorisation_mode", is("web"))
                 .contentType(JSON);
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
@@ -252,6 +253,34 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_LANGUAGE_KEY, is("en"));
+    }
+
+    @Test
+    public void makeChargeWithAuthorisationModeMotoApi() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                "authorisation_mode", "moto_api"
+        ));
+
+        ValidatableResponse response = connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body(JSON_LANGUAGE_KEY, is("en"))
+                .contentType(JSON);
+
+        String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("authorisation_mode", is("moto_api"));
     }
 
     @Test
