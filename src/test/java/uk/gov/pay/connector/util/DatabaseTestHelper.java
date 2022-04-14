@@ -137,20 +137,22 @@ public class DatabaseTestHelper {
                         .execute());
     }
     
-    public void addAgreement(Long id, String serviceId, String externalId, String reference, Instant createdDate, boolean live, long gatewayAccountId) {
+    public void addAgreement(Long id, String serviceId, String externalId, String reference, String description, String userIdentifier, Instant createdDate, boolean live, long gatewayAccountId) {
         PGobject jsonMetadata = new PGobject();
         jsonMetadata.setType("json");
         
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
-                                "reference, live, gateway_account_id) " +
+                                "reference, description, user_identifier, live, gateway_account_id) " +
                                 "VALUES(:id, :external_id, :service_id, :created_date, " +
-                                ":reference, :live, :gateway_account_id)")
+                                ":reference, :description, :user_identifier, :live, :gateway_account_id)")
                         .bind("id", Long.valueOf(id))
                         .bind("external_id", externalId)
                         .bind("service_id", serviceId)
                         .bind("created_date", LocalDateTime.ofInstant(createdDate, UTC))
                         .bind("reference", reference)
+                        .bind("description", description)
+                        .bind("user_identifier", userIdentifier)
                         .bind("live", live)
                         .bind("gateway_account_id", gatewayAccountId)
                         .execute());

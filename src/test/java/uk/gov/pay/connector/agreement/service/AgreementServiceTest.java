@@ -47,15 +47,19 @@ public class AgreementServiceTest {
 
     @Test
     public void shouldCreateAnAgreement() {
+        var description = "a valid description";
+        var userIdentifier = "a-valid-user-reference";
         when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
         when(gatewayAccount.isLive()).thenReturn(false);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID);
+        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
         Optional<AgreementResponse> response = service.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
 
         assertThat(response.isPresent(), is(true));
-        assertThat(REFERENCE_ID, is(response.get().getReference()));
-        assertThat(SERVICE_ID, is(response.get().getServiceId()));
+        assertThat(response.get().getReference(), is(REFERENCE_ID));
+        assertThat(response.get().getServiceId(), is(SERVICE_ID));
+        assertThat(response.get().getDescription(), is(description));
+        assertThat(response.get().getUserIdentifier(), is(userIdentifier));
     }
 }

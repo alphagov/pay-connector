@@ -46,6 +46,12 @@ public class AgreementEntity {
 
     @Column(name = "reference")
     private String reference;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "user_identifier")
+    private String userIdentifier;
     
     @Column(name = "service_id")
     private String serviceId;
@@ -63,13 +69,15 @@ public class AgreementEntity {
     }
     
     private AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
-                            boolean live, Instant createdDate) {
+                            String description, String userIdentifier, boolean live, Instant createdDate) {
         this.externalId = RandomIdGenerator.newId();
         this.gatewayAccount = gatewayAccount;
         this.serviceId = serviceId;
         this.reference = reference;
         this.live = live;
         this.createdDate = createdDate;
+        this.description = description;
+        this.userIdentifier = userIdentifier;
     }
 
     public Long getId() {
@@ -128,6 +136,22 @@ public class AgreementEntity {
         this.live = live;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getUserIdentifier() {
+        return userIdentifier;
+    }
+
+    public void setUserIdentifier(String userIdentifier) {
+        this.userIdentifier = userIdentifier;
+    }
+
     public PaymentInstrumentEntity getPaymentInstrument() {
         return paymentInstrument;
     }
@@ -140,6 +164,8 @@ public class AgreementEntity {
         private GatewayAccountEntity gatewayAccount;
         private Instant createdDate;
         private String reference;
+        private String description;
+        private String userIdentifier;
         private String serviceId;
         private boolean live;
 
@@ -164,6 +190,16 @@ public class AgreementEntity {
             return this;
         }
 
+        public AgreementEntityBuilder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public AgreementEntityBuilder withUserIdentifier(String userIdentifier) {
+            this.userIdentifier = userIdentifier;
+            return this;
+        }
+
         public AgreementEntityBuilder withServiceId(String serviceId) {
             this.serviceId = serviceId;
             return this;
@@ -175,7 +211,7 @@ public class AgreementEntity {
         }
 
         public AgreementEntity build() {
-            return new AgreementEntity(gatewayAccount, serviceId, reference, live, createdDate);
+            return new AgreementEntity(gatewayAccount, serviceId, reference, description, userIdentifier, live, createdDate);
         }
         
     }

@@ -566,6 +566,8 @@ public class DatabaseFixtures {
         Long gatewayAccountId = RandomUtils.nextLong();
         String externalId = "externalIDxxxyz";
         String reference = "AgreementReference";
+        String description = "A valid description";
+        String userIdentifier = "a-valid-user-identifier";
         Instant createdDate = Instant.now();
         boolean live = false;
         String serviceId = "service-id";
@@ -593,7 +595,15 @@ public class DatabaseFixtures {
         public String getServiceId() {
             return serviceId;
         }
-        
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getUserIdentifier() {
+            return userIdentifier;
+        }
+
         public DatabaseFixtures.TestAgreement withAgreementId(Long agreementId) {
             this.agreementId = agreementId;
             return this;
@@ -605,6 +615,16 @@ public class DatabaseFixtures {
 
         public DatabaseFixtures.TestAgreement withReference(String reference) {
             this.reference = reference;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public DatabaseFixtures.TestAgreement withUserIdentifier(String userIdentifier) {
+            this.userIdentifier = userIdentifier;
             return this;
         }
 
@@ -632,7 +652,7 @@ public class DatabaseFixtures {
             if (gatewayAccountId == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addAgreement(this.getAgreementId(), this.getServiceId(), this.getExternalId(), this.getReference(), this.getCreatedDate() , this.isLive(), gatewayAccountId);
+            databaseTestHelper.addAgreement(this.getAgreementId(), this.getServiceId(), this.getExternalId(), this.getReference(), this.getDescription(), this.getUserIdentifier(), this.getCreatedDate() , this.isLive(), gatewayAccountId);
             return this;
         }
     }

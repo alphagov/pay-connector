@@ -9,6 +9,8 @@ public class AgreementResponseBuilder {
     private String agreementId;
     private Instant createdDate;
     private String reference;
+    private String description;
+    private String userIdentifier;
     private String serviceId;
     private boolean live;
     
@@ -32,6 +34,14 @@ public class AgreementResponseBuilder {
         return live;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public String getUserIdentifier() {
+        return userIdentifier;
+    }
+
     public AgreementResponseBuilder withAgreementId(String agreementId) {
         this.agreementId = agreementId;
         return this;
@@ -44,6 +54,16 @@ public class AgreementResponseBuilder {
 
     public AgreementResponseBuilder withReference(String reference) {
         this.reference = reference;
+        return this;
+    }
+
+    public AgreementResponseBuilder withDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public AgreementResponseBuilder withUserIdentifier(String userIdentifier) {
+        this.userIdentifier = userIdentifier;
         return this;
     }
 
