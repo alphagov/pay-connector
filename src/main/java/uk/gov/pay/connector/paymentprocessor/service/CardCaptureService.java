@@ -5,6 +5,8 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
@@ -18,6 +20,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
@@ -46,6 +49,7 @@ public class CardCaptureService {
 
     private final UserNotificationService userNotificationService;
     private final ChargeService chargeService;
+    private final AgreementDao agreementDao;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final EventService eventService;
@@ -60,8 +64,9 @@ public class CardCaptureService {
                               Environment environment,
                               Clock clock,
                               CaptureQueue captureQueue,
-                              EventService eventService) {
+                              EventService eventService, AgreementDao agreementDao) {
         this.chargeService = chargeService;
+        this.agreementDao = agreementDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.clock = clock;
@@ -95,6 +100,15 @@ public class CardCaptureService {
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
             userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
+        }
+        
+        if (charge.isSavePaymentInstrumentToAgreement() 
+                && charge.getStatus() == ChargeStatus.CAPTURE_APPROVED.toString()) {
+            String agreementId = charge.getAgreementId();
+            Optional<AgreementEntity> agreementEntityOptional = agreementDao.findByExternalId(agreementId);
+            PaymentInstrumentEntity paymentInstrumentEntity = charge.getPaymentInstrument();
+            agreementEntityOptional.get().setPaymentInstrument(paymentInstrumentEntity);
+            agreementDao.persist(agreementEntityOptional.get());
         }
 
         return charge;

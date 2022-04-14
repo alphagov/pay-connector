@@ -140,7 +140,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, null);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -570,7 +570,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, null);
 
         String externalId = "external-id";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
@@ -593,7 +593,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
-                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                mockEnvironment,  GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService, null);
 
         try {
             cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
