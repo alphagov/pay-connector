@@ -67,11 +67,11 @@ public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCa
         return isNoneBlank(cardBrand);
     }
 
-    private static boolean isValidCardNumberLength(String number) {
+    public static boolean isValidCardNumberLength(String number) {
         return notNullAndMatches(TWELVE_TO_NINETEEN_DIGITS, number);
     }
 
-    private static boolean isBetween3To4Digits(String number) {
+    public static boolean isBetween3To4Digits(String number) {
         return notNullAndMatches(THREE_TO_FOUR_DIGITS, number);
     }
 

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
+import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -156,6 +158,13 @@ public class CardResource {
         return chargeCancelService.doSystemCancel(chargeId, accountId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
+    }
+
+    @POST
+    @Path("/v1/api/charges/authorise")
+    @Produces(APPLICATION_JSON)
+    public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
+        return Response.noContent().build();
     }
 
     @POST
