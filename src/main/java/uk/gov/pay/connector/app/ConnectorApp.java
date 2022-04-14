@@ -27,6 +27,8 @@ import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
+import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedExceptionMapper;
+import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidExceptionMapper;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
@@ -130,6 +132,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new NoCredentialsExistForProviderExceptionMapper());
         environment.jersey().register(new NoCredentialsInUsableStateExceptionMapper());
         environment.jersey().register(new AgreementNotFoundExceptionMapper());
+        environment.jersey().register(new OneTimeTokenInvalidExceptionMapper());
+        environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

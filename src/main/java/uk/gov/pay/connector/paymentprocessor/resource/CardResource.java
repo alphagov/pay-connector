@@ -14,6 +14,7 @@ import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
+import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.applepay.ApplePayService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
@@ -22,7 +23,6 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -48,17 +48,19 @@ public class CardResource {
     private final ChargeCancelService chargeCancelService;
     private final ApplePayService applePayService;
     private final GooglePayService googlePayService;
+    private final TokenService tokenService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService,
-                        GooglePayService googlePayService) {
+                        GooglePayService googlePayService, TokenService tokenService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
         this.applePayService = applePayService;
         this.googlePayService = googlePayService;
+        this.tokenService = tokenService;
     }
 
     @POST
@@ -164,6 +166,8 @@ public class CardResource {
     @Path("/v1/api/charges/authorise")
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
+        tokenService.validateToken(authoriseRequest.getOneTimeToken());
+
         return Response.noContent().build();
     }
 
