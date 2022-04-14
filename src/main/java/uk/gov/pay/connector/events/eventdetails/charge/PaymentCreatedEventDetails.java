@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -43,6 +44,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final boolean moto;
     private String agreementId;
     private boolean savePaymentInstrumentToAgreement;
+    private final AuthorisationMode authorisationMode;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -68,6 +70,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.moto = builder.moto;
         this.agreementId = builder.agreementId;
         this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
+        this.authorisationMode = builder.authorisationMode;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -86,7 +89,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withSource(charge.getSource())
                 .withMoto(charge.isMoto())
                 .withAgreementId(charge.getAgreementId())
-                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement());
+                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
+                .withAuthorisationMode(charge.getAuthorisationMode());
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -221,6 +225,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return savePaymentInstrumentToAgreement;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -280,6 +288,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private String credentialExternalId;
         private String agreementId;
         private boolean savePaymentInstrumentToAgreement;
+        private AuthorisationMode authorisationMode;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -397,6 +406,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
         
         public Builder withCredentialExternalId(String credentialExternalId) {
             this.credentialExternalId = credentialExternalId;
+            return this;
+        }
+        
+        public Builder withAuthorisationMode(AuthorisationMode authorisationMode) {
+            this.authorisationMode = authorisationMode;
             return this;
         }
     }

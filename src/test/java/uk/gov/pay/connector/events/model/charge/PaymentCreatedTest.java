@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -41,7 +42,8 @@ public class PaymentCreatedTest {
             .withCorporateSurcharge(77L)
             .withEmail(null)
             .withSource(Source.CARD_API)
-            .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key1", "value1", "key2", "value2")));
+            .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key1", "value1", "key2", "value2")))
+            .withAuthorisationMode(AuthorisationMode.WEB);
     private ChargeEntity chargeEntity;
 
     private String preparePaymentCreatedEvent() throws JsonProcessingException {
@@ -200,6 +202,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.key1", equalTo("value1")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.key2", equalTo("value2")));
         assertThat(actual, hasJsonPath("$.event_details.source", equalTo("CARD_API")));
+        assertThat(actual, hasJsonPath("$.event_details.authorisation_mode", equalTo("web")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
