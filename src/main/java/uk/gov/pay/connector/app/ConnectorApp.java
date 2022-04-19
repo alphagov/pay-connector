@@ -29,6 +29,7 @@ import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapp
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidExceptionMapper;
+import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
@@ -58,10 +59,10 @@ import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
-import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.queue.managed.CaptureMessageReceiver;
 import uk.gov.pay.connector.queue.managed.PayoutReconcileMessageReceiver;
 import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
+import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.RefundsResource;
 import uk.gov.pay.connector.report.resource.ParityCheckerResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
@@ -134,6 +135,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new AgreementNotFoundExceptionMapper());
         environment.jersey().register(new OneTimeTokenInvalidExceptionMapper());
         environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
+        environment.jersey().register(new OneTimeTokenUsageInvalidForMotoApiExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

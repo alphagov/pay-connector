@@ -11,6 +11,8 @@ import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedException;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidException;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidExceptionMapper;
+import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiException;
+import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
@@ -37,6 +39,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_ALREADY_USED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
 
@@ -63,6 +66,7 @@ class CardResourceTest {
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(OneTimeTokenInvalidExceptionMapper.class)
             .addProvider(OneTimeTokenAlreadyUsedExceptionMapper.class)
+            .addProvider(OneTimeTokenUsageInvalidForMotoApiExceptionMapper.class)
             .build();
 
     private static Object[] authoriseMotoApiPaymentInvalidInput() {
@@ -131,7 +135,7 @@ class CardResourceTest {
     void authoriseMotoApiPaymentShouldReturnCorrectResponsesForExpiryDate(int monthsToAddOrSubstractFromCurrentMonthAndYear,
                                                                           int expectedResponseCode,
                                                                           String description) {
-        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+        doNothing().when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
         YearMonth expiryMonthAndDate = YearMonth.now(UTC).plus(monthsToAddOrSubstractFromCurrentMonthAndYear, MONTHS);
 
         AuthoriseRequest request = new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
@@ -154,7 +158,7 @@ class CardResourceTest {
         AuthoriseRequest request =
                 new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
-        doNothing().when(mockTokenService).validateToken("one-time-token-123");
+        doNothing().when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
@@ -167,7 +171,7 @@ class CardResourceTest {
         AuthoriseRequest request =
                 new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
-        doThrow(new OneTimeTokenInvalidException()).when(mockTokenService).validateToken("one-time-token-123");
+        doThrow(new OneTimeTokenInvalidException()).when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
@@ -184,7 +188,7 @@ class CardResourceTest {
         AuthoriseRequest request =
                 new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
-        doThrow(new OneTimeTokenAlreadyUsedException()).when(mockTokenService).validateToken("one-time-token-123");
+        doThrow(new OneTimeTokenAlreadyUsedException()).when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
@@ -194,6 +198,23 @@ class CardResourceTest {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(errorResponse.getMessages(), hasItem("The one_time_token has already been used"));
         assertThat(errorResponse.getIdentifier(), is(ONE_TIME_TOKEN_ALREADY_USED));
+    }
+
+    @Test
+    void authoriseMotoApiPaymentShouldReturn400IfOneTimeTakenUsageIsInvalidForMotoApi() {
+        AuthoriseRequest request =
+                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
+
+        doThrow(new OneTimeTokenUsageInvalidForMotoApiException()).when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
+
+        Response response = resources.target("/v1/api/charges/authorise")
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus(), is(400));
+
+        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+        assertThat(errorResponse.getMessages(), hasItem("The one_time_token is not a valid moto api token"));
+        assertThat(errorResponse.getIdentifier(), is(GENERIC));
     }
 
 }
