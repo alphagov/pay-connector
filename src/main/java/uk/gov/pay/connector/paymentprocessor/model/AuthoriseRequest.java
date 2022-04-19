@@ -6,11 +6,17 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.Length;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.validation.constraints.NotNull;
-
+import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.Objects;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isBetween3To4Digits;
 import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isValidCardNumberLength;
 import static uk.gov.service.payments.commons.model.CardExpiryDate.CARD_EXPIRY_DATE_PATTERN;
@@ -19,23 +25,19 @@ import static uk.gov.service.payments.commons.model.CardExpiryDate.CARD_EXPIRY_D
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AuthoriseRequest {
 
-    @NotNull(message = "Missing mandatory attribute: one_time_token")
-    @Length(min = 1, message = "Invalid attribute value: one_time_token. Must be a valid one time token")
+    @NotBlank(message = "Missing mandatory attribute: one_time_token")
     private String oneTimeToken;
 
-    @NotNull(message = "Missing mandatory attribute: card_number")
-    @Length(min = 12, max = 19, message = "Invalid attribute value: card_number. Must be between {min} and {max} characters long")
+    @NotBlank(message = "Missing mandatory attribute: card_number")
     private String cardNumber;
 
-    @NotNull(message = "Missing mandatory attribute: cvc")
-    @Length(min = 3, max = 4, message = "Invalid attribute value: card_number. Must be between {min} and {max} characters long")
+    @NotBlank(message = "Missing mandatory attribute: cvc")
     private String cvc;
 
-    @NotNull(message = "Missing mandatory attribute: expiry_date")
-    @Length(min = 1, message = "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY")
+    @NotBlank(message = "Missing mandatory attribute: expiry_date")
     private String expiryDate;
 
-    @NotNull(message = "Missing mandatory attribute: cardholder_name")
+    @NotBlank(message = "Missing mandatory attribute: cardholder_name")
     @Length(min = 1, max = 255, message = "Invalid attribute value: cardholder_name. Must be less than or equal to {max} characters length")
     private String cardholderName;
 
@@ -51,13 +53,13 @@ public class AuthoriseRequest {
         this.cardholderName = cardholderName;
     }
 
-    @ValidationMethod(message = "Invalid attribute value: cvc. Must contain numbers only")
+    @ValidationMethod(message = "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only")
     @JsonIgnore
     public boolean isValidCVC() {
         return isBetween3To4Digits(cvc);
     }
 
-    @ValidationMethod(message = "Invalid attribute value: card_number. Must contain numbers only")
+    @ValidationMethod(message = "Invalid attribute value: card_number. Must be between 12 and 19 characters long")
     @JsonIgnore
     public boolean isValidCardNumber() {
         return isValidCardNumberLength(cardNumber);
@@ -66,7 +68,25 @@ public class AuthoriseRequest {
     @ValidationMethod(message = "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY")
     @JsonIgnore
     public boolean isValidExpiryDate() {
-        return expiryDate != null && CARD_EXPIRY_DATE_PATTERN.matcher(expiryDate).matches();
+        return isNotEmpty(expiryDate) && CARD_EXPIRY_DATE_PATTERN.matcher(expiryDate).matches();
+    }
+
+    @ValidationMethod(message = "Invalid attribute value: expiry_date. Must be a valid date in the future")
+    @JsonIgnore
+    public boolean isExpiryDateInFuture() {
+        return isValidExpiryDate() && isMonthAndYearInTheFuture(expiryDate);
+    }
+
+    private boolean isMonthAndYearInTheFuture(String expiryDate) {
+        final int MAX_TIMEZONE_OFFSET_BEHIND_UTC = 12;
+
+        // Validation is not bound to UTC and allows cards valid far behind UTC.
+        // For example cards with an expiry date of 12/22 are still considered valid if entered on 1-Jan-23 4:00AM UTC.
+        // And it will be down to card issuers to decline if the expiry date is invalid.
+        LocalDateTime dateTimeWithMaxOffsetBehindUTC = LocalDateTime.now(UTC).minus(MAX_TIMEZONE_OFFSET_BEHIND_UTC, HOURS);
+        YearMonth yearMonth = YearMonth.of(dateTimeWithMaxOffsetBehindUTC.getYear(), dateTimeWithMaxOffsetBehindUTC.getMonth());
+
+        return !CardExpiryDate.valueOf(expiryDate).toYearMonth().isBefore(yearMonth);
     }
 
     public String getOneTimeToken() {

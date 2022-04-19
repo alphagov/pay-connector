@@ -36,3 +36,4 @@ bin
 
 # state transition output
 states.dot
+dependency-reduced-pom.xml
