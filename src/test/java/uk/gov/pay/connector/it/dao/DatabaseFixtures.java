@@ -18,6 +18,7 @@ import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
@@ -39,6 +40,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class DatabaseFixtures {
 
@@ -678,6 +680,7 @@ public class DatabaseFixtures {
         private String description = "Test description";
         private ZonedDateTime parityCheckDate;
         Long gatewayCredentialId;
+        private AuthorisationMode authorisationMode = WEB;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -797,6 +800,7 @@ public class DatabaseFixtures {
                     .withParityCheckStatus(parityCheckStatus)
                     .withParityCheckDate(parityCheckDate)
                     .withGatewayCredentialId(gatewayCredentialId)
+                    .withAuthorisationMode(authorisationMode)
                     .build());
 
             if (cardDetails != null) {
@@ -807,6 +811,11 @@ public class DatabaseFixtures {
 
         public TestCharge withCorporateCardSurcharge(Long corporateCardSurcharge) {
             this.corporateCardSurcharge = corporateCardSurcharge;
+            return this;
+        }
+
+        public TestCharge withAuthorisationMode(AuthorisationMode authorisationMode) {
+            this.authorisationMode = authorisationMode;
             return this;
         }
 

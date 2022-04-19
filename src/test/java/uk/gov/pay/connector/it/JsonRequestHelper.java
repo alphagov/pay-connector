@@ -168,6 +168,22 @@ public class JsonRequestHelper {
         payload.add("encrypted_payment_data", encryptedPaymentData);
         return toJson(payload);
     }
+
+    public static String buildJsonForMotoApiPaymentAuthorisation(String cardHolderName,
+                                                                 String cardNumber,
+                                                                 String expiryDate,
+                                                                 String cvc,
+                                                                 String oneTimeToken) {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("cardholder_name", cardHolderName);
+        payload.addProperty("card_number", cardNumber);
+        payload.addProperty("expiry_date", expiryDate);
+        payload.addProperty("cvc", cvc);
+        payload.addProperty("one_time_token", oneTimeToken);
+
+        return toJson(payload);
+    }
+
     private static JsonObject buildJsonAuthorisationDetailsWithoutAddress(String cardHolderName,
                                                                           String cardNumber,
                                                                           String cvc,
