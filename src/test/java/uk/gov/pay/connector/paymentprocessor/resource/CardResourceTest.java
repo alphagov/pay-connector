@@ -117,69 +117,36 @@ class CardResourceTest {
         assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
     }
 
-    @Test
-    void authoriseMotoApiPaymentShouldReturn204ForExpiryDateInTheFuture() {
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
-
-        doNothing().when(mockTokenService).validateToken("one-time-token-123");
-
-        Response response = resources.target("/v1/api/charges/authorise")
-                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
-
-        assertThat(response.getStatus(), is(204));
+    private static Object[] expiryDateMonthOffsetAndExpectedResponseStatus() {
+        return new Object[]{
+                new Object[]{0, 204, "Expiry date is same as current month and year"},
+                new Object[]{1, 204, "Expiry date is in the future"},
+                new Object[]{10000, 204, "Expiry date is in the future"},
+                new Object[]{-1, 422, "Expiry date is in the past (one month before current month and year)"}
+        };
     }
 
-    @Test
-    void authoriseMotoApiPaymentShouldReturn204IfExpiryDateIsBeforeCurrentMonthAndYear() {
-        YearMonth yearMonth = YearMonth.now(UTC).plus(1, MONTHS);
-
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
-                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
-
+    @ParameterizedTest
+    @MethodSource("expiryDateMonthOffsetAndExpectedResponseStatus")
+    void authoriseMotoApiPaymentShouldReturnCorrectResponsesForExpiryDate(int monthsToAddOrSubstractFromCurrentMonthAndYear,
+                                                                          int expectedResponseCode,
+                                                                          String description) {
         doNothing().when(mockTokenService).validateToken("one-time-token-123");
+        YearMonth expiryMonthAndDate = YearMonth.now(UTC).plus(monthsToAddOrSubstractFromCurrentMonthAndYear, MONTHS);
+
+        AuthoriseRequest request = new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
+                expiryMonthAndDate.format(ofPattern("MM/yy")), "Job Bogs");
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
 
-        assertThat(response.getStatus(), is(204));
-    }
+        assertThat(response.getStatus(), is(expectedResponseCode));
 
-    @Test
-    void authoriseMotoApiPaymentShouldReturn204IfExpiryDateIsAfterCurrentMonthAndYear() {
-        YearMonth yearMonth = YearMonth.now(UTC).plus(1, MONTHS);
-
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
-                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
-
-        doNothing().when(mockTokenService).validateToken("one-time-token-123");
-
-        Response response = resources.target("/v1/api/charges/authorise")
-                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
-
-        assertThat(response.getStatus(), is(204));
-    }
-
-    @Test
-    void authoriseMotoApiPaymentShouldReturn422IfExpiryMonthIsBeforeCurrentMonth() {
-        YearMonth yearMonth = YearMonth.now(UTC).minus(1, MONTHS);
-
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123",
-                        yearMonth.format(ofPattern("MM/yy")), "Job Bogs");
-
-        doNothing().when(mockTokenService).validateToken("one-time-token-123");
-
-        Response response = resources.target("/v1/api/charges/authorise")
-                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
-
-        assertThat(response.getStatus(), is(422));
-
-        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+        if (expectedResponseCode == 422) {
+            ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+            assertThat(errorResponse.getMessages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
+            assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+        }
     }
 
     @Test
