@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedException;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidException;
@@ -40,6 +41,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTRIBUTE_VALUE;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_ALREADY_USED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
 
@@ -67,36 +69,38 @@ class CardResourceTest {
             .addProvider(OneTimeTokenInvalidExceptionMapper.class)
             .addProvider(OneTimeTokenAlreadyUsedExceptionMapper.class)
             .addProvider(OneTimeTokenUsageInvalidForMotoApiExceptionMapper.class)
+            .addProvider(InvalidAttributeValueExceptionMapper.class)
             .build();
 
     private static Object[] authoriseMotoApiPaymentInvalidInput() {
         return new Object[]{
                 // one-time-token 
-                new Object[]{null, "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token"},
-                new Object[]{"", "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token"},
+                new Object[]{null, "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token", GENERIC},
+                new Object[]{"", "4242424242424242", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: one_time_token", GENERIC},
                 // card number
-                new Object[]{"one-time-token-123", null, "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number"},
-                new Object[]{"one-time-token-123", "", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number"},
-                new Object[]{"one-time-token-123", "card-number-123", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long"},
-                new Object[]{"one-time-token-123", "12345678901234567890", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long"},
+                new Object[]{"one-time-token-123", null, "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number", GENERIC},
+                new Object[]{"one-time-token-123", "", "123", "11/99", "Joe Bogs", "Missing mandatory attribute: card_number", GENERIC},
+                new Object[]{"one-time-token-123", "1234567890", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long", GENERIC},
+                new Object[]{"one-time-token-123", "12345678901234567890", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be between 12 and 19 characters long", GENERIC},
+                new Object[]{"one-time-token-123", "card-number-123", "123", "11/99", "Joe Bogs", "Invalid attribute value: card_number. Must be a valid card number", INVALID_ATTRIBUTE_VALUE},
                 // cvc
-                new Object[]{"one-time-token-123", "4242424242424242", null, "11/99", "Joe Bogs", "Missing mandatory attribute: cvc"},
-                new Object[]{"one-time-token-123", "4242424242424242", "", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
-                new Object[]{"one-time-token-123", "4242424242424242", "12345", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
-                new Object[]{"one-time-token-123", "4242424242424242", "12", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
-                new Object[]{"one-time-token-123", "4242424242424242", "xyz", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long and contain numbers only"},
+                new Object[]{"one-time-token-123", "4242424242424242", null, "11/99", "Joe Bogs", "Missing mandatory attribute: cvc", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "", "11/99", "Joe Bogs", "Missing mandatory attribute: cvc", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "12345", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "12", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must be between 3 and 4 characters long", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "xyz", "11/99", "Joe Bogs", "Invalid attribute value: cvc. Must contain numbers only", INVALID_ATTRIBUTE_VALUE},
                 // expiry date
-                new Object[]{"one-time-token-123", "4242424242424242", "123", null, "Joe Bogs", "Missing mandatory attribute: expiry_date"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "1109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "asdf", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/21", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date in the future"},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", null, "Joe Bogs", "Missing mandatory attribute: expiry_date", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "", "Joe Bogs", "Missing mandatory attribute: expiry_date", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "1109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY", INVALID_ATTRIBUTE_VALUE},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "109", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY", INVALID_ATTRIBUTE_VALUE},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "asdf", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date with the format MM/YY", INVALID_ATTRIBUTE_VALUE},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/21", "Joe Bogs", "Invalid attribute value: expiry_date. Must be a valid date in the future", INVALID_ATTRIBUTE_VALUE},
                 // cardholder_name
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", null, "Missing mandatory attribute: cardholder_name"},
-                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", "", "Invalid attribute value: cardholder_name. Must be less than or equal to 255 characters length"},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", null, "Missing mandatory attribute: cardholder_name", GENERIC},
+                new Object[]{"one-time-token-123", "4242424242424242", "123", "11/99", "", "Invalid attribute value: cardholder_name. Must be less than or equal to 255 characters length", GENERIC},
                 new Object[]{"one-time-token-123", "4242424242424242", "123", "", StringUtils.repeat("*", 256),
-                        "Invalid attribute value: cardholder_name. Must be less than or equal to 255 characters length"}
+                        "Invalid attribute value: cardholder_name. Must be less than or equal to 255 characters length", GENERIC}
         };
     }
 
@@ -107,7 +111,9 @@ class CardResourceTest {
                                                                  String cvc,
                                                                  String expiryDate,
                                                                  String cardHolderName,
-                                                                 String expectedMessage) {
+                                                                 String expectedMessage,
+                                                                 ErrorIdentifier expectedErrorIdentifier) {
+        doNothing().when(mockTokenService).validateTokenForMotoApi("one-time-token-123");
         AuthoriseRequest request =
                 new AuthoriseRequest(oneTimeToken, cardNumber, cvc, expiryDate, cardHolderName);
 
@@ -118,7 +124,8 @@ class CardResourceTest {
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(errorResponse.getMessages(), hasItem(expectedMessage));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+
+        assertThat(errorResponse.getIdentifier(), is(expectedErrorIdentifier));
     }
 
     private static Object[] expiryDateMonthOffsetAndExpectedResponseStatus() {
@@ -149,7 +156,7 @@ class CardResourceTest {
         if (expectedResponseCode == 422) {
             ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
             assertThat(errorResponse.getMessages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
-            assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+            assertThat(errorResponse.getIdentifier(), is(INVALID_ATTRIBUTE_VALUE));
         }
     }
 

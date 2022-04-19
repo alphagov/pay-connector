@@ -13,9 +13,12 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTRIBUTE_VALUE;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -81,7 +84,25 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
                         "Missing mandatory attribute: card_number",
                         "Missing mandatory attribute: expiry_date",
                         "Missing mandatory attribute: cvc"
-                ));
+                ))
+                .body("error_identifier", is(GENERIC.toString()));
+        ;
+    }
+
+    @Test
+    public void shouldReturnError_ForInvalidCardNumber() {
+        String invalidPayload = buildJsonForMotoApiPaymentAuthorisation("Joe", "invalid-card-no", "11/99", "123",
+                token.getSecureRedirectToken());
+
+        givenSetup()
+                .body(invalidPayload)
+                .post(authoriseMotoApiChargeUrlFor())
+                .then()
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", hasItems(
+                        "Invalid attribute value: card_number. Must be a valid card number"))
+                .body("error_identifier", is(INVALID_ATTRIBUTE_VALUE.toString()));
     }
 
     private void shouldAuthoriseChargeFor(String payload) {
