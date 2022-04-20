@@ -14,11 +14,12 @@ import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidExceptionMapper;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiException;
 import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
+import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.wallets.applepay.ApplePayService;
@@ -48,7 +49,8 @@ class CardResourceTest {
 
     private static final CardAuthoriseService mockCardAuthoriseService = mock(CardAuthoriseService.class);
     private static final Card3dsResponseAuthService mockCard3dsResponseAuthService = mock(Card3dsResponseAuthService.class);
-    private static final CardCaptureService mockCardCaptureService = mock(CardCaptureService.class);
+    private static final ChargeEligibleForCaptureService mockChargeEligibleForCaptureService = mock(ChargeEligibleForCaptureService.class);
+    private static final DelayedCaptureService mockDelayedCaptureService = mock(DelayedCaptureService.class);
     private static final ChargeCancelService mockChargeCancelService = mock(ChargeCancelService.class);
     private static final ApplePayService mockApplePayService = mock(ApplePayService.class);
     private static final GooglePayService mockGooglePayService = mock(GooglePayService.class);
@@ -58,7 +60,8 @@ class CardResourceTest {
             .getBuilder()
             .addResource(new CardResource(mockCardAuthoriseService,
                     mockCard3dsResponseAuthService,
-                    mockCardCaptureService,
+                    mockChargeEligibleForCaptureService,
+                    mockDelayedCaptureService,
                     mockChargeCancelService,
                     mockApplePayService,
                     mockGooglePayService,

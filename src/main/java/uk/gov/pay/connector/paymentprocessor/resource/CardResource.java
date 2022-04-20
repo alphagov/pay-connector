@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
+import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -13,7 +15,6 @@ import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.applepay.ApplePayService;
@@ -44,7 +45,8 @@ public class CardResource {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CardAuthoriseService cardAuthoriseService;
     private final Card3dsResponseAuthService card3dsResponseAuthService;
-    private final CardCaptureService cardCaptureService;
+    private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
+    private final DelayedCaptureService delayedCaptureService;
     private final ChargeCancelService chargeCancelService;
     private final ApplePayService applePayService;
     private final GooglePayService googlePayService;
@@ -52,11 +54,13 @@ public class CardResource {
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
-                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService,
-                        GooglePayService googlePayService, TokenService tokenService) {
+                        ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
+                        ChargeCancelService chargeCancelService, ApplePayService applePayService, GooglePayService googlePayService,
+                        TokenService tokenService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
-        this.cardCaptureService = cardCaptureService;
+        this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
+        this.delayedCaptureService = delayedCaptureService;
         this.chargeCancelService = chargeCancelService;
         this.applePayService = applePayService;
         this.googlePayService = googlePayService;
@@ -138,7 +142,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        cardCaptureService.markChargeAsEligibleForCapture(chargeId);
+        chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeId);
         return ResponseUtil.noContentResponse();
     }
 
@@ -149,7 +153,7 @@ public class CardResource {
                                                 @PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
+        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
         return ResponseUtil.noContentResponse();
     }
 
