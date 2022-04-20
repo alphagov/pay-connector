@@ -289,6 +289,10 @@ public class ChargingITestBase {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
+    public static String authoriseMotoApiChargeUrlFor() {
+        return "/v1/api/charges/authorise";
+    }
+
     protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
         return new TypeSafeMatcher<>() {
             @Override

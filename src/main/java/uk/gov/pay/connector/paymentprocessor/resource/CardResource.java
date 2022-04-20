@@ -166,7 +166,7 @@ public class CardResource {
     @Path("/v1/api/charges/authorise")
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
-        tokenService.validateToken(authoriseRequest.getOneTimeToken());
+        tokenService.validateTokenForMotoApi(authoriseRequest.getOneTimeToken());
 
         return Response.noContent().build();
     }
