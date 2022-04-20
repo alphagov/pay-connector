@@ -35,6 +35,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isValidCardNumberLength;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -167,6 +168,7 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
         tokenService.validateTokenForMotoApi(authoriseRequest.getOneTimeToken());
+        authoriseRequest.validate();
 
         return Response.noContent().build();
     }
