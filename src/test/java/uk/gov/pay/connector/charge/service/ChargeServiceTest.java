@@ -33,7 +33,6 @@ import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConver
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
@@ -462,20 +461,6 @@ public class ChargeServiceTest {
                 ENTERING_CARD_DETAILS, chargeEvent);
 
         verify(mockTaskQueueService).offerTasksOnStateTransition(chargeSpy);
-    }
-    
-    @Test
-    public void shouldNotTransitionChargeStateForNonSkippableNonConfirmedCharge() {
-        ChargeEntity createdChargeEntity = aValidChargeEntity()
-                .withStatus(AUTHORISATION_SUCCESS)
-                .build();
-
-        final String chargeEntityExternalId = createdChargeEntity.getExternalId();
-        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(createdChargeEntity));
-
-        thrown.expect(ConflictRuntimeException.class);
-        thrown.expectMessage("HTTP 409 Conflict");
-        service.markDelayedCaptureChargeAsCaptureApproved(chargeEntityExternalId);
     }
 
     @Test

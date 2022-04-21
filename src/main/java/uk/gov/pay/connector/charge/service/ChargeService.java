@@ -40,7 +40,6 @@ import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
@@ -102,7 +101,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -760,51 +758,6 @@ public class ChargeService {
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
-    }
-
-    @Transactional
-    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        return chargeDao.findByExternalId(externalId).map(charge -> {
-            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
-
-            try {
-                transitionChargeState(charge, targetStatus);
-            } catch (InvalidStateTransitionException e) {
-                throw new IllegalStateRuntimeException(charge.getExternalId());
-            }
-
-            return charge;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
-    }
-
-    @Transactional
-    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
-        return chargeDao.findByExternalId(externalId).map(charge -> {
-            switch (fromString(charge.getStatus())) {
-                case AWAITING_CAPTURE_REQUEST:
-                    try {
-                        transitionChargeState(charge, CAPTURE_APPROVED);
-                    } catch (InvalidStateTransitionException e) {
-                        throw new ConflictRuntimeException(charge.getExternalId(),
-                                "attempt to perform delayed capture on invalid charge state " + e.getMessage());
-                    }
-
-                    return charge;
-
-                case CAPTURE_APPROVED:
-                case CAPTURE_APPROVED_RETRY:
-                case CAPTURE_READY:
-                case CAPTURE_SUBMITTED:
-                case CAPTURED:
-                    return charge;
-
-                default:
-                    throw new ConflictRuntimeException(charge.getExternalId(),
-                            format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST)
-                    );
-            }
-
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     public boolean isChargeRetriable(String externalId) {

@@ -21,11 +21,9 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
-import javax.ws.rs.WebApplicationException;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
@@ -89,28 +87,11 @@ public class CardCaptureService {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
 
-    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
-
-        if (!charge.isDelayedCapture()) {
-            addChargeToCaptureQueue(charge);
-            userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
-        }
-
-        return charge;
-    }
-
     @Transactional
     void markChargeAsCaptureError(String chargeId) {
         LOG.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
                 chargeId); // log line used by Splunk for alerting
         chargeService.transitionChargeState(chargeId, CAPTURE_ERROR);
-    }
-
-    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
-        ChargeEntity charge = chargeService.markDelayedCaptureChargeAsCaptureApproved(externalId);
-        addChargeToCaptureQueue(charge);
-        return charge;
     }
 
     private CaptureResponse capture(ChargeEntity chargeEntity) {
@@ -154,17 +135,6 @@ public class CardCaptureService {
 
         if (captureResponse.isSuccessful() && charge.isDelayedCapture()) {
             userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
-        }
-    }
-
-    private void addChargeToCaptureQueue(ChargeEntity charge) {
-        try {
-            captureQueue.sendForCapture(charge);
-        } catch (QueueException e) {
-            logger.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
-            throw new WebApplicationException(format(
-                    "Unable to schedule charge [%s] for capture - %s",
-                    charge.getExternalId(), e.getMessage()));
         }
     }
 
