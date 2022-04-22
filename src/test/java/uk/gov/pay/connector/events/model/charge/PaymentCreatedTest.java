@@ -210,7 +210,7 @@ public class PaymentCreatedTest {
 
     private void assertRecurringPaymentCreatedDetails(String actual) {
         assertBasePaymentCreatedDetails(actual);
-        assertThat(actual, hasJsonPath("$.event_details.agreement_id", equalTo(chargeEntity.getAgreementId())));
+        assertThat(actual, hasJsonPath("$.event_details.agreement_id", equalTo(chargeEntity.getAgreementId().orElseThrow(IllegalStateException::new))));
         assertThat(actual, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(chargeEntity.isSavePaymentInstrumentToAgreement())));
     }
 }

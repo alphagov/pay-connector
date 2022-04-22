@@ -142,7 +142,8 @@ class ChargeServicePostAuthorisationTest {
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
                 PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);
 
-        assertThat(chargeEntity.getPaymentInstrument(), is(mockPaymentInstrumentEntity));
+        assertThat(chargeEntity.getPaymentInstrument().isPresent(), is(true));
+        assertThat(chargeEntity.getPaymentInstrument().get(), is(mockPaymentInstrumentEntity));
     }
 
 }

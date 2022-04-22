@@ -502,10 +502,10 @@ public class ChargeService {
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
                 .withMoto(chargeEntity.isMoto())
-                .withAgreementId(chargeEntity.getAgreementId())
                 .withAuthorisationMode(chargeEntity.getAuthorisationMode());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
+        chargeEntity.getAgreementId().ifPresent(builderOfResponse::withAgreementId);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
 
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(chargeEntity.getStatus())) {
