@@ -92,6 +92,11 @@ public class ResponseUtil {
         return responseWithEntity(status, errorResponse);
     }
 
+    public static Response buildErrorResponse(Status status, ErrorIdentifier errorIdentifier, List<String> messages) {
+        ErrorResponse errorResponse = new ErrorResponse(errorIdentifier, messages);
+        return responseWithEntity(status, errorResponse);
+    }
+
     public static Response noContentResponse() {
         return noContent().build();
     }

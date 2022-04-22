@@ -24,6 +24,7 @@ import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -57,6 +58,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargingITestBase {
 
@@ -76,7 +78,7 @@ public class ChargingITestBase {
     protected SmartpayMockClient smartpayMockClient;
     protected EpdqMockClient epdqMockClient;
     protected LedgerStub ledgerStub;
-    
+
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
@@ -104,7 +106,7 @@ public class ChargingITestBase {
         smartpayMockClient = new SmartpayMockClient(wireMockServer);
         epdqMockClient = new EpdqMockClient(wireMockServer);
         ledgerStub = new LedgerStub(wireMockServer);
-        
+
         credentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",
@@ -289,10 +291,6 @@ public class ChargingITestBase {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
-    public static String authoriseMotoApiChargeUrlFor() {
-        return "/v1/api/charges/authorise";
-    }
-
     protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
         return new TypeSafeMatcher<>() {
             @Override
@@ -357,13 +355,17 @@ public class ChargingITestBase {
     protected String addCharge(ChargeStatus status) {
         return addCharge(status, "ref", Instant.now(), RandomIdGenerator.newId());
     }
-    
-    protected String addCharge(ChargeStatus status, String reference, Instant fromDate, String transactionId) {
+
+    protected String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId) {
+        return addCharge(status, reference, createdDate, transactionId, "tokenId", WEB);
+    }
+
+    protected String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId, String tokenId, AuthorisationMode authorisationMode) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), fromDate, transactionId, paymentProvider);
-        databaseTestHelper.addToken(chargeId, "tokenId");
+        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), createdDate, transactionId, paymentProvider, authorisationMode);
+        databaseTestHelper.addToken(chargeId, tokenId);
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         databaseTestHelper.updateChargeCardDetails(
                 chargeId,
@@ -373,7 +375,7 @@ public class ChargingITestBase {
 
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                            ServicePaymentReference reference, Instant createdDate, String transactionId,
-                           String paymentProvider) {
+                           String paymentProvider, AuthorisationMode authorisationMode) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
@@ -390,13 +392,14 @@ public class ChargingITestBase {
                 .withDelayedCapture(false)
                 .withEmail(EMAIL)
                 .withGatewayCredentialId(credentialParams.getId())
+                .withAuthorisationMode(authorisationMode)
                 .build());
     }
 
     protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider);
+        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider, WEB);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",

@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.token;
 
-import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedException;
-import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidException;
-import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiException;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedException;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidException;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiException;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
@@ -19,8 +20,8 @@ public class TokenService {
         this.tokenDao = tokenDao;
     }
 
-    public void validateTokenForMotoApi(String oneTimeToken) {
-        tokenDao.findByTokenId(oneTimeToken)
+    public ChargeEntity validateTokenAndGetChargeForMotoApi(String oneTimeToken) {
+        return tokenDao.findByTokenId(oneTimeToken)
                 .map((TokenEntity tokenEntity) -> {
                     if (tokenEntity.isUsed()) {
                         throw new OneTimeTokenAlreadyUsedException();
@@ -28,7 +29,7 @@ public class TokenService {
 
                     if (tokenEntity.getChargeEntity() != null &&
                             tokenEntity.getChargeEntity().getAuthorisationMode() == MOTO_API) {
-                        return tokenEntity;
+                        return tokenEntity.getChargeEntity();
                     }
                     throw new OneTimeTokenUsageInvalidForMotoApiException();
                 })
