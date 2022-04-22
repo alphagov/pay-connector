@@ -181,7 +181,6 @@ public class ChargesFrontendResource {
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLanguage(charge.getLanguage())
                 .withDelayedCapture(charge.isDelayedCapture())
-                .withAgreementId(charge.getAgreementId())
                 .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
                 .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
@@ -196,11 +195,9 @@ public class ChargesFrontendResource {
             responseBuilder.withCardDetails(persistedCard);
         }
 
-        if (charge.getAgreementId() != null) {
-            findAgreement(charge.getAgreementId())
-                    .map(responseBuilder::withAgreement);
-        }
-        
+        charge.getAgreementId().ifPresent(responseBuilder::withAgreementId);
+        charge.getAgreementId().flatMap(this::findAgreement).ifPresent(responseBuilder::withAgreement);
+
         if (charge.get3dsRequiredDetails() != null) {
             var auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(charge.get3dsRequiredDetails().getPaRequest());

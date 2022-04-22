@@ -257,8 +257,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.id = id;
     }
 
-    public PaymentInstrumentEntity getPaymentInstrument() {
-        return paymentInstrument;
+    public Optional<PaymentInstrumentEntity> getPaymentInstrument() {
+        return Optional.ofNullable(paymentInstrument);
     }
 
     public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
@@ -543,8 +543,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.serviceId = serviceId;
     }
 
-    public String getAgreementId() {
-        return agreementId;
+    public Optional<String> getAgreementId() {
+        return Optional.ofNullable(agreementId);
     }
 
     public boolean isSavePaymentInstrumentToAgreement() {

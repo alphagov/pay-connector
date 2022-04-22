@@ -88,9 +88,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withEmail(charge.getEmail())
                 .withSource(charge.getSource())
                 .withMoto(charge.isMoto())
-                .withAgreementId(charge.getAgreementId())
                 .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
                 .withAuthorisationMode(charge.getAuthorisationMode());
+
+        charge.getAgreementId().ifPresent(builder::withAgreementId);
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
