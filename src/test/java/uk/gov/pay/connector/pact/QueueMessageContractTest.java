@@ -55,6 +55,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.ZonedDateTime;
@@ -67,6 +68,7 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
@@ -234,6 +236,7 @@ public class QueueMessageContractTest {
                 .withSource(CARD_EXTERNAL_TELEPHONE)
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
                 .withExternalMetadata(externalMetadata)
+                .withAuthorisationMode(EXTERNAL)
                 .build();
         ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
                 .withCharge(charge)

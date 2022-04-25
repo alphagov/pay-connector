@@ -20,6 +20,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class PaymentNotificationCreatedTest {
@@ -39,6 +40,7 @@ public class PaymentNotificationCreatedTest {
                 .withTransactionId(providerId)
                 .withSource(CARD_EXTERNAL_TELEPHONE)
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
+                .withAuthorisationMode(EXTERNAL)
                 .withAmount(100L);
     }
 
@@ -80,6 +82,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.telephone_number", equalTo("+447700900796")));
         assertThat(actual, hasJsonPath("$.event_details.credential_external_id", equalTo(chargeEntity.getGatewayAccountCredentialsEntity().getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
+        assertThat(actual, hasJsonPath("$.event_details.authorisation_mode", equalTo(chargeEntity.getAuthorisationMode().getName())));
     }
 
     @Test
