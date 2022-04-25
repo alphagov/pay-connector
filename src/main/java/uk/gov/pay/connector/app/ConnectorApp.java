@@ -28,9 +28,10 @@ import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
-import uk.gov.pay.connector.charge.exception.OneTimeTokenAlreadyUsedExceptionMapper;
-import uk.gov.pay.connector.charge.exception.OneTimeTokenInvalidExceptionMapper;
-import uk.gov.pay.connector.charge.exception.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
@@ -138,6 +139,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
         environment.jersey().register(new OneTimeTokenUsageInvalidForMotoApiExceptionMapper());
         environment.jersey().register(new InvalidAttributeValueExceptionMapper());
+        environment.jersey().register(new CardNumberRejectedExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

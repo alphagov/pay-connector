@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.paymentprocessor.resource;
+package uk.gov.pay.connector.it.resources;
 
 import org.junit.After;
 import org.junit.Before;
@@ -10,10 +10,12 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -24,11 +26,14 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
 
+    private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
+    
     public CardResourceAuthoriseMotoApiPaymentIT() {
         super("sandbox");
     }
 
     private DatabaseFixtures.TestToken token;
+    private DatabaseFixtures.TestCharge charge;
     private DatabaseTestHelper databaseTestHelper;
 
     @Before
@@ -40,7 +45,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
                 .aTestAccount()
                 .insert();
 
-        DatabaseFixtures.TestCharge charge = DatabaseFixtures
+        charge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(CREATED)
@@ -75,7 +80,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
 
         givenSetup()
                 .body(invalidPayload)
-                .post(authoriseMotoApiChargeUrlFor())
+                .post(AUTHORISE_MOTO_API_URL)
                 .then()
                 .statusCode(422)
                 .contentType(JSON)
@@ -90,13 +95,13 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnError_ForInvalidCardNumber() {
+    public void shouldReturnError_ForInvalidCardNumberFormat() {
         String invalidPayload = buildJsonForMotoApiPaymentAuthorisation("Joe", "invalid-card-no", "11/99", "123",
                 token.getSecureRedirectToken());
 
         givenSetup()
                 .body(invalidPayload)
-                .post(authoriseMotoApiChargeUrlFor())
+                .post(AUTHORISE_MOTO_API_URL)
                 .then()
                 .statusCode(422)
                 .contentType(JSON)
@@ -105,10 +110,28 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
                 .body("error_identifier", is(INVALID_ATTRIBUTE_VALUE.toString()));
     }
 
+    @Test
+    public void shouldTransitionChargeToAuthorisationRejectedWhenCardNumberRejected() {
+        String payload = buildJsonForMotoApiPaymentAuthorisation("Joe", "1111111111111111", "11/99", "123",
+                token.getSecureRedirectToken());
+
+        givenSetup()
+                .body(payload)
+                .post(AUTHORISE_MOTO_API_URL)
+                .then()
+                .statusCode(402)
+                .contentType(JSON)
+                .body("message", hasItems(
+                        "The card_number is not a valid card number"))
+                .body("error_identifier", is(ErrorIdentifier.CARD_NUMBER_REJECTED.toString()));
+
+        assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_REJECTED.getValue());
+    }
+
     private void shouldAuthoriseChargeFor(String payload) {
         givenSetup()
                 .body(payload)
-                .post(authoriseMotoApiChargeUrlFor())
+                .post(AUTHORISE_MOTO_API_URL)
                 .then()
                 .statusCode(204);
     }

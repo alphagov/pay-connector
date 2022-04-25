@@ -3,9 +3,11 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
+import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -36,7 +38,6 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isValidCardNumberLength;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -52,12 +53,13 @@ public class CardResource {
     private final ApplePayService applePayService;
     private final GooglePayService googlePayService;
     private final TokenService tokenService;
+    private final MotoApiCardNumberValidationService motoApiCardNumberValidationService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
                         ChargeCancelService chargeCancelService, ApplePayService applePayService, GooglePayService googlePayService,
-                        TokenService tokenService) {
+                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
@@ -66,6 +68,7 @@ public class CardResource {
         this.applePayService = applePayService;
         this.googlePayService = googlePayService;
         this.tokenService = tokenService;
+        this.motoApiCardNumberValidationService = motoApiCardNumberValidationService;
     }
 
     @POST
@@ -171,9 +174,9 @@ public class CardResource {
     @Path("/v1/api/charges/authorise")
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
-        tokenService.validateTokenForMotoApi(authoriseRequest.getOneTimeToken());
         authoriseRequest.validate();
-
+        ChargeEntity charge = tokenService.validateTokenAndGetChargeForMotoApi(authoriseRequest.getOneTimeToken());
+        motoApiCardNumberValidationService.validateCardNumber(charge, authoriseRequest.getCardNumber());
         return Response.noContent().build();
     }
 

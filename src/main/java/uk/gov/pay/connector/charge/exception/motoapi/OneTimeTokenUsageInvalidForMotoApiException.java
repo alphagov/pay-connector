@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.exception;
+package uk.gov.pay.connector.charge.exception.motoapi;
 
 import javax.ws.rs.BadRequestException;
 
