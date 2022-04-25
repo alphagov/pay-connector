@@ -269,6 +269,7 @@ restClientConfig:
   disabledSecureConnection: ${DISABLE_INTERNAL_HTTPS:-false}
 
 ledgerBaseURL: ${LEDGER_URL}
+cardidBaseURL: ${CARDID_URL}
 
 expungeConfig:
   excludeChargesOrRefundsParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_OR_REFUNDS_PARITY_CHECKED_WITHIN_DAYS:-7}

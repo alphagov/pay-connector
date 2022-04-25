@@ -8,9 +8,10 @@ import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedException
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
+import uk.gov.pay.connector.client.cardid.service.CardidService;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
 public class MotoApiCardNumberValidationService {
 
@@ -18,32 +19,33 @@ public class MotoApiCardNumberValidationService {
 
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
+    private final CardidService cardidService;
 
     @Inject
-    public MotoApiCardNumberValidationService(ChargeService chargeService, ChargeDao chargeDao) {
+    public MotoApiCardNumberValidationService(
+            ChargeService chargeService,
+            ChargeDao chargeDao,
+            CardidService cardidService) {
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
+        this.cardidService = cardidService;
     }
 
-    public void validateCardNumber(ChargeEntity charge, String cardNumber) {
-        checkValidAllowedCardNumber(charge, cardNumber).ifPresent(errorMessage -> {
+    public CardInformation validateCardNumber(ChargeEntity charge, String cardNumber) {
+        if (!hasValidLuhnCheckDigit(cardNumber)) {
+            logger.info("Card number rejected: Invalid Luhn check digit");
             transitionChargeToRejected(charge);
-            throw new CardNumberRejectedException(errorMessage);
+            throw new CardNumberRejectedException("The card_number is not a valid card number");
+        }
+        return cardidService.getCardInformation(cardNumber).orElseGet(() -> {
+            logger.info("Card number rejected: BIN range for card number not found in card id");
+            transitionChargeToRejected(charge);
+            throw new CardNumberRejectedException("The card_number is not a valid card number");
         });
     }
 
-    private Optional<String> checkValidAllowedCardNumber(ChargeEntity charge, String cardNumber) {
-        return checkHasValidLuhnCheckDigit(cardNumber);
-        // TODO other checks on card number
-    }
-
-    private Optional<String> checkHasValidLuhnCheckDigit(String cardNumber) {
-        boolean valid = new LuhnCheckDigit().isValid(cardNumber);
-        if (!valid) {
-            logger.info("Card number rejected due to invalid Luhn check digit");
-            return Optional.of("The card_number is not a valid card number");
-        }
-        return Optional.empty();
+    private boolean hasValidLuhnCheckDigit(String cardNumber) {
+        return new LuhnCheckDigit().isValid(cardNumber);
     }
 
     private void transitionChargeToRejected(ChargeEntity charge) {

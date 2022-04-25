@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.expunge.service;
+package uk.gov.pay.connector.rules;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -206,6 +206,7 @@ restClientConfig:
   disabledSecureConnection: true
 
 ledgerBaseURL: ${LEDGER_URL:-http://localhost:10700}
+cardidBaseURL: ${CARDID_URL:-http://localhost:9900}
 
 expungeConfig:
   excludeChargesOrRefundsParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_OR_REFUNDS_PARITY_CHECKED_WITHIN_DAYS:-7}

@@ -135,8 +135,16 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("ledgerBaseURL")
     private String ledgerBaseUrl;
 
+    @NotNull
+    @JsonProperty("cardidBaseURL")
+    private String cardidBaseUrl;
+
     public String getLedgerBaseUrl() {
         return ledgerBaseUrl;
+    }
+
+    public String getCardidBaseUrl() {
+        return cardidBaseUrl;
     }
 
     @JsonProperty("database")
