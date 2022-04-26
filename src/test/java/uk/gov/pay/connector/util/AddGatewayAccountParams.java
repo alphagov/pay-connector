@@ -48,6 +48,7 @@ public class AddGatewayAccountParams {
     private long corporatePrepaidDebitCardSurchargeAmount;
     private int integrationVersion3ds;
     private boolean allowMoto;
+    private boolean allowAuthApi;
     private boolean motoMaskCardNumberInput;
     private boolean motoMaskCardSecurityCodeInput;
     private boolean allowApplePay;
@@ -111,6 +112,10 @@ public class AddGatewayAccountParams {
     public boolean isAllowMoto() {
         return allowMoto;
     }
+    
+    public boolean isAllowAuthApi() {
+        return allowAuthApi;
+    }
 
     public boolean isMotoMaskCardNumberInput() {
         return motoMaskCardNumberInput;
@@ -156,6 +161,7 @@ public class AddGatewayAccountParams {
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
+        private boolean allowAuthApi;
         private boolean motoMaskCardNumberInput;
         private boolean motoMaskCardSecurityCodeInput;
         private boolean allowApplePay;
@@ -262,6 +268,11 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withAllowAuthApi(boolean allowAuthApi) {
+            this.allowAuthApi = allowAuthApi;
+            return this;
+        }
+
         public AddGatewayAccountParamsBuilder withMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
             this.motoMaskCardNumberInput = motoMaskCardNumberInput;
             return this;
@@ -320,6 +331,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.corporateDebitCardSurchargeAmount = this.corporateDebitCardSurchargeAmount;
             addGatewayAccountParams.integrationVersion3ds = this.integrationVersion3ds;
             addGatewayAccountParams.allowMoto = this.allowMoto;
+            addGatewayAccountParams.allowAuthApi = this.allowAuthApi;
             addGatewayAccountParams.motoMaskCardNumberInput = this.motoMaskCardNumberInput;
             addGatewayAccountParams.motoMaskCardSecurityCodeInput = this.motoMaskCardSecurityCodeInput;
             addGatewayAccountParams.allowApplePay = this.allowApplePay;

@@ -7,6 +7,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
@@ -33,12 +34,15 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -50,13 +54,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
@@ -110,6 +108,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_MOTO_KEY = "moto";
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
+    private static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
     
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
@@ -117,6 +116,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_TOO_SHORT_AGREEMENT_ID_VALUE = "12345678901234567890";
     private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE = "true";
+    private static final String JSON_AUTH_MODE_MOTO_API = "moto_api";
 
     public ChargesApiResourceCreateIT() {
         super(PROVIDER_NAME);
@@ -263,24 +263,31 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
-                "authorisation_mode", "moto_api"
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
         ));
 
-        ValidatableResponse response = connectorRestApiClient
+        ValidatableResponse createResponse = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_LANGUAGE_KEY, is("en"))
                 .contentType(JSON);
 
-        String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
+        String externalChargeId = createResponse.extract().path(JSON_CHARGE_KEY);
 
-        connectorRestApiClient
+        ValidatableResponse findResponse = connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("authorisation_mode", is("moto_api"));
+        
+        ArrayList<Map<String, Object>> links = findResponse.extract().body().jsonPath().get("links");
+        var authLink = links.stream().filter(link -> link.get("rel").toString().equals("auth_url_post")).findFirst().get();
+        assertThat(authLink.get("method").toString(), is("POST"));
+        assertThat(authLink.get("type"), is("application/json"));
+        var authLinkParams = (Map<String, String>) authLink.get("params");
+        assertThat(authLinkParams.get("one_time_token"), is(not(blankOrNullString())));
     }
 
     @Test
