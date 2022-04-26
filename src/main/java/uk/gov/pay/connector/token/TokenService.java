@@ -4,7 +4,6 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedException;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidException;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiException;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
@@ -21,7 +20,8 @@ public class TokenService {
         this.tokenDao = tokenDao;
     }
 
-    public ChargeEntity validateTokenAndGetChargeForMotoApi(String oneTimeToken) {
+    @Transactional
+    public TokenEntity validateAndMarkTokenAsUsedForMotoApi(String oneTimeToken) {
         return tokenDao.findByTokenId(oneTimeToken)
                 .map((TokenEntity tokenEntity) -> {
                     if (tokenEntity.isUsed()) {
@@ -30,19 +30,11 @@ public class TokenService {
 
                     if (tokenEntity.getChargeEntity() != null &&
                             tokenEntity.getChargeEntity().getAuthorisationMode() == MOTO_API) {
-                        return tokenEntity.getChargeEntity();
+                        tokenEntity.setUsed(true);
+                        return tokenEntity;
                     }
-                    throw new OneTimeTokenUsageInvalidForMotoApiException();
-                })
-                .orElseThrow(OneTimeTokenInvalidException::new);
-    }
 
-    @Transactional
-    public TokenEntity markTokenAsUsed(String oneTimeToken) {
-        return tokenDao.findByTokenId(oneTimeToken)
-                .map(tokenEntity -> {
-                    tokenEntity.setUsed(true);
-                    return tokenEntity;
+                    throw new OneTimeTokenUsageInvalidForMotoApiException();
                 })
                 .orElseThrow(OneTimeTokenInvalidException::new);
     }

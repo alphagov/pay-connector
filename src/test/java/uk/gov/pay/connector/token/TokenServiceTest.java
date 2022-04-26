@@ -14,10 +14,13 @@ import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @ExtendWith(MockitoExtension.class)
 class TokenServiceTest {
@@ -29,10 +32,27 @@ class TokenServiceTest {
     TokenDao tokenDao;
 
     @Test
+    void validateTokenForMotoApiShouldSetTokenAsUsedForValidOneTimeToken() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withAuthorisationMode(MOTO_API)
+                .build();
+
+        TokenEntity tokenEntity = new TokenEntity();
+        tokenEntity.setUsed(false);
+        tokenEntity.setChargeEntity(chargeEntity);
+
+        when(tokenDao.findByTokenId(any())).thenReturn(Optional.of(tokenEntity));
+
+        tokenService.validateAndMarkTokenAsUsedForMotoApi("one-time-token-123");
+
+        assertThat(tokenEntity.isUsed(), is(true));
+    }
+
+    @Test
     void validateTokenForMotoApiShouldThrowOneTimeTokenInvalidExceptionIfTokenDoesNotExist() {
         when(tokenDao.findByTokenId(any())).thenReturn(Optional.empty());
 
-        assertThrows(OneTimeTokenInvalidException.class, () -> tokenService.validateTokenAndGetChargeForMotoApi("one-time-token-123"),
+        assertThrows(OneTimeTokenInvalidException.class, () -> tokenService.validateAndMarkTokenAsUsedForMotoApi("one-time-token-123"),
                 "Should throw OneTimeTokenInvalidException if token is not found");
     }
 
@@ -42,7 +62,7 @@ class TokenServiceTest {
         tokenEntity.setUsed(true);
         when(tokenDao.findByTokenId(any())).thenReturn(Optional.of(tokenEntity));
 
-        assertThrows(OneTimeTokenAlreadyUsedException.class, () -> tokenService.validateTokenAndGetChargeForMotoApi("one-time-token-123"),
+        assertThrows(OneTimeTokenAlreadyUsedException.class, () -> tokenService.validateAndMarkTokenAsUsedForMotoApi("one-time-token-123"),
                 "Should throw OneTimeTokenAlreadyUsedException if token is already user");
     }
 
@@ -58,7 +78,7 @@ class TokenServiceTest {
 
         when(tokenDao.findByTokenId(any())).thenReturn(Optional.of(tokenEntity));
 
-        assertThrows(OneTimeTokenUsageInvalidForMotoApiException.class, () -> tokenService.validateTokenAndGetChargeForMotoApi("one-time-token-123"),
+        assertThrows(OneTimeTokenUsageInvalidForMotoApiException.class, () -> tokenService.validateAndMarkTokenAsUsedForMotoApi("one-time-token-123"),
                 "Should throw exception if token is not for charge with authorisation_mode=MOTO_API");
     }
 }
