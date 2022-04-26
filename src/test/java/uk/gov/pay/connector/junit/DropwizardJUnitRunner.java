@@ -89,6 +89,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
         configOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
         configOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
+        configOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
 
         try {
             Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));

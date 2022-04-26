@@ -17,6 +17,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
@@ -27,7 +28,8 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
 
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
-    
+    public static final String VALID_CARD_NUMBER = "4242424242424242";
+
     public CardResourceAuthoriseMotoApiPaymentIT() {
         super("sandbox");
     }
@@ -67,9 +69,12 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     }
 
     @Test
-    public void authoriseMotoApiPayment_shouldReturn204ResponseForValidPayload() {
-        String validPayload = buildJsonForMotoApiPaymentAuthorisation("Joe Bogs ", "4242424242424242", "11/99", "123",
+    public void authoriseMotoApiPayment_shouldReturn204ResponseForValidPayload() throws Exception {
+        String validPayload = buildJsonForMotoApiPaymentAuthorisation("Joe Bogs ", VALID_CARD_NUMBER, "11/99", "123",
                 token.getSecureRedirectToken());
+        var cardInformation = aCardInformation().build();
+        cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
+        
         shouldAuthoriseChargeFor(validPayload);
     }
 
@@ -111,10 +116,12 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldTransitionChargeToAuthorisationRejectedWhenCardNumberRejected() {
-        String payload = buildJsonForMotoApiPaymentAuthorisation("Joe", "1111111111111111", "11/99", "123",
+    public void shouldTransitionChargeToAuthorisationRejectedWhenCardNumberRejected() throws Exception {
+        String payload = buildJsonForMotoApiPaymentAuthorisation("Joe", VALID_CARD_NUMBER, "11/99", "123",
                 token.getSecureRedirectToken());
 
+        cardidStub.returnNotFound(VALID_CARD_NUMBER);
+        
         givenSetup()
                 .body(payload)
                 .post(AUTHORISE_MOTO_API_URL)

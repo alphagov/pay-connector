@@ -12,7 +12,8 @@ import org.junit.After;
 import org.junit.Before;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.expunge.service.LedgerStub;
+import uk.gov.pay.connector.rules.CardidStub;
+import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
@@ -78,6 +79,7 @@ public class ChargingITestBase {
     protected SmartpayMockClient smartpayMockClient;
     protected EpdqMockClient epdqMockClient;
     protected LedgerStub ledgerStub;
+    protected CardidStub cardidStub;
 
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
@@ -106,6 +108,7 @@ public class ChargingITestBase {
         smartpayMockClient = new SmartpayMockClient(wireMockServer);
         epdqMockClient = new EpdqMockClient(wireMockServer);
         ledgerStub = new LedgerStub(wireMockServer);
+        cardidStub = new CardidStub(wireMockServer);
 
         credentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
