@@ -87,6 +87,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
@@ -418,7 +419,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test(expected = IllegalStateRuntimeException.class)
     public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
-        ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
+        ChargeEntity charge = createNewChargeWith(1L, UNDEFINED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 

@@ -80,7 +80,7 @@ public class PaymentGatewayStateTransitionsTest {
     @Test
     public void isValidTransition_indicatesValidAndInvalidTransition() {
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new UnspecifiedEvent()), is(true));
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CREATED, AUTHORISATION_READY, new UnspecifiedEvent()), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CREATED, AUTHORISATION_SUCCESS, new UnspecifiedEvent()), is(false));
     }
 
     @Test
