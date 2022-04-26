@@ -5,6 +5,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -12,9 +15,12 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.util.List;
+
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder.aCardTypeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
@@ -28,7 +34,8 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
 
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
-    public static final String VALID_CARD_NUMBER = "4242424242424242";
+    private static final String VALID_CARD_NUMBER = "4242424242424242";
+    private static final String VISA = "visa";
 
     public CardResourceAuthoriseMotoApiPaymentIT() {
         super("sandbox");
@@ -41,10 +48,12 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     @Before
     public void setup() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
-
+        
+        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
         DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
+                .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
 
         charge = DatabaseFixtures
@@ -72,7 +81,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     public void authoriseMotoApiPayment_shouldReturn204ResponseForValidPayload() throws Exception {
         String validPayload = buildJsonForMotoApiPaymentAuthorisation("Joe Bogs ", VALID_CARD_NUMBER, "11/99", "123",
                 token.getSecureRedirectToken());
-        var cardInformation = aCardInformation().build();
+        var cardInformation = aCardInformation().withBrand(VISA).withType(CardidCardType.CREDIT).build();
         cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
         
         shouldAuthoriseChargeFor(validPayload);
