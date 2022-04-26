@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -25,6 +26,7 @@ import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -113,9 +115,9 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedChargeDao.findByGatewayTransactionIdAndAccount(gatewayAccount.getId(), "1PROV"))
                 .thenReturn(Optional.of(returnedChargeEntity));
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
-        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(gatewayAccount.getId(), telephoneChargeCreateRequest);
+        Optional<ChargeResponse> telephoneChargeResponse = chargeService.findCharge(gatewayAccount.getId(), telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> gatewayTransactionIdArgumentCaptor = forClass(String.class);
         verify(mockedChargeDao).findByGatewayTransactionIdAndAccount(anyLong(), gatewayTransactionIdArgumentCaptor.capture());
@@ -154,7 +156,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -189,7 +191,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withEmail("").build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -207,7 +209,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
     }
@@ -222,7 +224,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(false).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
     }
@@ -243,7 +245,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 "key4", 1.23);
         final ChargeCreateRequest request = requestBuilder.withExternalMetadata(new ExternalMetadata(metadata)).build();
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getExternalMetadata().get().getMetadata(), equalTo(metadata));
@@ -260,7 +262,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         final ChargeCreateRequest request = requestBuilder.withLanguage(SupportedLanguage.WELSH).build();
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -281,7 +283,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -294,7 +296,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -304,7 +306,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         final ChargeCreateRequest request = requestBuilder.withAmount(1000).withSavePaymentInstrumentToAgreement(true).build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -316,7 +318,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockedAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID)).thenReturn(Optional.empty());
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -335,7 +337,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         gatewayAccount.setAllowMoto(true);
         ChargeCreateRequest request = requestBuilder.withMoto(true).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -349,7 +351,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -369,7 +371,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         var address = new PrefilledAddress("Line1", "Line2", "AB1 CD2", "London", null, "GB");
         cardHolderDetails.setAddress(address);
         final ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -401,7 +403,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -433,7 +435,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -463,7 +465,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         cardHolderDetails.setCardHolderName("Joe Bogs");
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -487,7 +489,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -514,7 +516,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         ChargeCreateRequest request = requestBuilder.build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -532,7 +534,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
@@ -549,7 +551,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
-        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -578,7 +580,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
@@ -635,7 +637,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -690,7 +692,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -750,7 +752,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -809,7 +811,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -847,7 +849,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .build();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -865,7 +867,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withPaymentOutcome(paymentOutcome)
                 .build();
         
-        ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        ChargeResponse chargeResponse = chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockGatewayAccountCredentialsService).getCurrentOrActiveCredential(gatewayAccount);
@@ -904,7 +906,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
                 .withCardExpiry(null)
                 .build();
         
-        ChargeResponse chargeResponse = service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        ChargeResponse chargeResponse = chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -947,7 +949,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
 
         populateChargeEntity();
 
-        service.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
+        chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -965,7 +967,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        ChargeResponse response = service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse response = chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
@@ -987,6 +989,48 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
     }
 
     @Test
+    public void shouldCreateACharge_whenAuthorisationApiEnabled_andMotoDisabled() throws Exception {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        gatewayAccount.setAllowAuthorisationApi(true);
+        gatewayAccount.setAllowMoto(false);
+        populateChargeEntity();
+
+        ChargeResponse response = chargeService.create(requestBuilder.withAuthorisationMode(AuthorisationMode.MOTO_API).build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
+
+        ChargeResponse.ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
+
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0]));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0] + "/refunds"));
+        expectedChargeResponse.withLink("auth_url_post", POST, new URI(SERVICE_HOST + "/v1/api/charges/authorise"), "application/json", new HashMap<>() {{
+            put("one_time_token", tokenEntity.getToken());
+        }});
+
+        assertThat(response, is(expectedChargeResponse.build()));
+    }
+
+    @Test(expected = AuthorisationApiNotAllowedForGatewayAccountException.class)
+    public void shouldThrowException_whenAuthorisationApiDisabled_andChargeCreationAttempted_withApiAuthorisation() {
+        gatewayAccount.setAllowAuthorisationApi(false);
+        ChargeCreateRequest request = requestBuilder.withAuthorisationMode(AuthorisationMode.MOTO_API).build();
+
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
     public void shouldCreateAToken() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
@@ -996,7 +1040,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 

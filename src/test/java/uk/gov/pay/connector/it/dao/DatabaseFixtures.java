@@ -348,6 +348,7 @@ public class DatabaseFixtures {
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
+        private boolean allowAuthApi;
         private boolean motoMaskCardNumberInput;
         private boolean motoMaskCardSecurityCodeInput;
         private boolean allowTelephonePaymentNotifications;
@@ -497,6 +498,11 @@ public class DatabaseFixtures {
             this.allowMoto = allowMoto;
             return this;
         }
+        
+        public TestAccount withAllowAuthApi(boolean allowAuthApi) {
+            this.allowAuthApi = allowAuthApi;
+            return this;
+        }
 
         public TestAccount withMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
             this.motoMaskCardNumberInput = motoMaskCardNumberInput;
@@ -548,6 +554,7 @@ public class DatabaseFixtures {
                     .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
                     .withIntegrationVersion3ds(integrationVersion3ds)
                     .withAllowMoto(allowMoto)
+                    .withAllowAuthApi(allowAuthApi)
                     .withMotoMaskCardNumberInput(motoMaskCardNumberInput)
                     .withMotoMaskCardSecurityCodeInput(motoMaskCardSecurityCodeInput)
                     .withAllowTelephonePaymentNotifications(allowTelephonePaymentNotifications)

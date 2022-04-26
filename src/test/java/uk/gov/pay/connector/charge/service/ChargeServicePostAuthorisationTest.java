@@ -77,7 +77,6 @@ class ChargeServicePostAuthorisationTest {
 
     private final Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity();
-    private final AuthCardDetailsFixture authCardDetailsFixture = AuthCardDetailsFixture.anAuthCardDetails();
     private AuthCardDetails authCardDetails;
 
     private ChargeService chargeService;

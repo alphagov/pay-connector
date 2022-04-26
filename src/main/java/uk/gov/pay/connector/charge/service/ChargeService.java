@@ -12,6 +12,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -69,6 +70,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -92,6 +94,7 @@ import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
@@ -106,6 +109,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
@@ -239,12 +243,15 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
-            checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
-            
-            checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
+            var authorisationMode = chargeRequest.getAuthorisationMode();
 
+            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
+            if (!checkIfMotoApiAuthorisationModeIsAllowed(authorisationMode, gatewayAccount)) {
+                checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
+            }
+            checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
             checkForUnknownAgreementId(chargeRequest.getAgreementId());
+            
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -275,7 +282,7 @@ public class ChargeService {
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
                     .withSource(chargeRequest.getSource())
-                    .withMoto(chargeRequest.isMoto())
+                    .withMoto(authorisationMode == MOTO_API || chargeRequest.isMoto())
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementId(chargeRequest.getAgreementId())
@@ -522,11 +529,16 @@ public class ChargeService {
         if (needsNextUrl(chargeEntity)) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);
             Map<String, Object> params = new HashMap<>();
-            params.put("chargeTokenId", token.getToken());
-
-            return builderOfResponse
-                    .withLink("next_url", GET, nextUrl(token.getToken()))
-                    .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
+            if (chargeEntity.getAuthorisationMode() == MOTO_API) {
+                params.put("one_time_token", token.getToken());
+                return builderOfResponse
+                        .withLink("auth_url_post", POST, nextAuthUrl(uriInfo), APPLICATION_JSON, params);
+            } else {
+                params.put("chargeTokenId", token.getToken());
+                return builderOfResponse
+                        .withLink("next_url", GET, nextUrl(token.getToken()))
+                        .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
+            }
         } else {
             return builderOfResponse;
         }
@@ -849,6 +861,12 @@ public class ChargeService {
                 .path("secure")
                 .build();
     }
+    
+    private URI nextAuthUrl(UriInfo uriInfo) {
+        return uriInfo.getBaseUriBuilder()
+                .path("/v1/api/charges/authorise")
+                .build();
+    }
 
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
@@ -880,6 +898,12 @@ public class ChargeService {
             return value.substring(0, 50);
         }
         return value;
+    }
+    
+    private boolean checkIfMotoApiAuthorisationModeIsAllowed(AuthorisationMode mode, GatewayAccountEntity gatewayAccount) {
+        if (mode == MOTO_API && !gatewayAccount.isAllowAuthorisationApi()) {
+            throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
+        } else return mode == MOTO_API;
     }
 
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {

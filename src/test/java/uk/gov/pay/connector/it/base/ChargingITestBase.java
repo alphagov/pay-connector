@@ -133,6 +133,7 @@ public class ChargingITestBase {
                 .withGatewayAccountCredentials(List.of(credentialParams))
                 .withCredentials(credentials)
                 .withServiceId(SERVICE_ID)
+                .withAllowAuthApi(true)
                 .insert();
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }

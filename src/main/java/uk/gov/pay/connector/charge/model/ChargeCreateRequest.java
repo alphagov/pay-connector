@@ -84,6 +84,7 @@ public class ChargeCreateRequest {
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
 
     public ChargeCreateRequest() {
+        // empty constructor
     }
 
     ChargeCreateRequest(long amount,
@@ -99,7 +100,8 @@ public class ChargeCreateRequest {
                         boolean moto,
                         String paymentProvider,
                         String agreementId,
-                        boolean savePaymentInstrumentToAgreement) {
+                        boolean savePaymentInstrumentToAgreement,
+                        AuthorisationMode authorisationMode) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -114,6 +116,7 @@ public class ChargeCreateRequest {
         this.paymentProvider = paymentProvider;
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.authorisationMode = authorisationMode;
     }
 
     public long getAmount() {
@@ -186,9 +189,9 @@ public class ChargeCreateRequest {
                 ", delayed_capture=" + delayedCapture +
                 ", source=" + source +
                 ", moto=" + moto +
-                (language != null ? ", language=" + language.toString() : "") +
+                (language != null ? ", language=" + language : "") +
                 (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
-                (agreementId != null ? ", agreementId=" + agreementId.toString() : "") +
+                (agreementId != null ? ", agreementId=" + agreementId : "") +
                 ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
                 ", authorisationMode=" + authorisationMode + 
                 '}';
