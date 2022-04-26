@@ -13,6 +13,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -76,6 +77,8 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
         cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
         
         shouldAuthoriseChargeFor(validPayload);
+
+        assertThat(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()), is(true));
     }
 
     @Test

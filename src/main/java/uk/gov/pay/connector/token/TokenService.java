@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.token;
 
+import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedException;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidException;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiException;
@@ -32,6 +33,16 @@ public class TokenService {
                         return tokenEntity.getChargeEntity();
                     }
                     throw new OneTimeTokenUsageInvalidForMotoApiException();
+                })
+                .orElseThrow(OneTimeTokenInvalidException::new);
+    }
+
+    @Transactional
+    public TokenEntity markTokenAsUsed(String oneTimeToken) {
+        return tokenDao.findByTokenId(oneTimeToken)
+                .map(tokenEntity -> {
+                    tokenEntity.setUsed(true);
+                    return tokenEntity;
                 })
                 .orElseThrow(OneTimeTokenInvalidException::new);
     }

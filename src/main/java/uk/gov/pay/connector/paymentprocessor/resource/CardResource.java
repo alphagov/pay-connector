@@ -177,6 +177,9 @@ public class CardResource {
         authoriseRequest.validate();
         ChargeEntity charge = tokenService.validateTokenAndGetChargeForMotoApi(authoriseRequest.getOneTimeToken());
         motoApiCardNumberValidationService.validateCardNumber(charge, authoriseRequest.getCardNumber());
+
+        tokenService.markTokenAsUsed(authoriseRequest.getOneTimeToken());
+
         return Response.noContent().build();
     }
 
