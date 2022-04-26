@@ -164,6 +164,8 @@ public class ChargeEntityFixture {
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
+        chargeEntity.setAgreementId(agreementId);
+        chargeEntity.setPaymentInstrument(paymentInstrument);
 
         if (this.fees != null) {
             fees.stream().forEach(partialFee -> {

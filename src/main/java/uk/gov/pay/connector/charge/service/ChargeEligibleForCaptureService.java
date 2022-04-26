@@ -27,19 +27,22 @@ public class ChargeEligibleForCaptureService {
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
     private final CaptureQueue captureQueue;
+    private final LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
     private final UserNotificationService userNotificationService;
 
     @Inject
-    public ChargeEligibleForCaptureService(ChargeService chargeService, ChargeDao chargeDao, CaptureQueue captureQueue,
-                                           UserNotificationService userNotificationService) {
+    public ChargeEligibleForCaptureService(ChargeService chargeService, ChargeDao chargeDao,
+                                           LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService,
+                                           CaptureQueue captureQueue, UserNotificationService userNotificationService) {
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
         this.captureQueue = captureQueue;
+        this.linkPaymentInstrumentToAgreementService = linkPaymentInstrumentToAgreementService;
         this.userNotificationService = userNotificationService;
     }
 
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        ChargeEntity charge = updateToNewStatus(externalId);
+        ChargeEntity charge = update(externalId);
 
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
@@ -50,7 +53,7 @@ public class ChargeEligibleForCaptureService {
     }
 
     @Transactional
-    public ChargeEntity updateToNewStatus(String externalId) {
+    public ChargeEntity update(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
             ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
 
@@ -58,6 +61,10 @@ public class ChargeEligibleForCaptureService {
                 chargeService.transitionChargeState(charge, targetStatus);
             } catch (InvalidStateTransitionException e) {
                 throw new IllegalStateRuntimeException(charge.getExternalId());
+            }
+
+            if (charge.isSavePaymentInstrumentToAgreement()) {
+                linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(charge);
             }
 
             return charge;
