@@ -42,6 +42,7 @@ public final class GatewayAccountEntityFixture {
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
     private boolean providerSwitchEnabled = false;
     private boolean requiresAdditionalKycData = false;
+    private boolean blockPrepaidCards;
 
     private GatewayAccountEntityFixture() {
     }
@@ -174,6 +175,11 @@ public final class GatewayAccountEntityFixture {
         this.requiresAdditionalKycData = requiresAdditionalKycData;
         return this;
     }
+    
+    public GatewayAccountEntityFixture withBlockPrepaidCards(boolean blockPrepaidCards) {
+        this.blockPrepaidCards = blockPrepaidCards;
+        return this;
+    }
 
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
@@ -199,6 +205,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
         gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
         gatewayAccountEntity.setRequiresAdditionalKycData(requiresAdditionalKycData);
+        gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
 
         if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {

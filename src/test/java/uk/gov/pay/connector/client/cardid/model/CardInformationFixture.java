@@ -4,7 +4,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 
 public final class CardInformationFixture {
     private String brand = "visa";
-    private String type = "C";
+    private CardidCardType type = CardidCardType.CREDIT;
     private String label = "VISA DEBIT";
     private boolean corporate;
     private PayersCardPrepaidStatus prepaidStatus = PayersCardPrepaidStatus.NOT_PREPAID;
@@ -21,7 +21,7 @@ public final class CardInformationFixture {
         return this;
     }
 
-    public CardInformationFixture withType(String type) {
+    public CardInformationFixture withType(CardidCardType type) {
         this.type = type;
         return this;
     }

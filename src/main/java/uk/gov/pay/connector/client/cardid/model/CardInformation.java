@@ -15,7 +15,7 @@ public class CardInformation {
     private String brand;
 
     @JsonProperty("type")
-    private String type;
+    private CardidCardType type;
 
     @JsonProperty("label")
     private String label;
@@ -30,7 +30,7 @@ public class CardInformation {
         // for Jackson deserialisation
     }
 
-    public CardInformation(String brand, String type, String label, boolean corporate, PayersCardPrepaidStatus prepaidStatus) {
+    public CardInformation(String brand, CardidCardType type, String label, boolean corporate, PayersCardPrepaidStatus prepaidStatus) {
         this.brand = brand;
         this.type = type;
         this.label = label;
@@ -42,7 +42,7 @@ public class CardInformation {
         return brand;
     }
 
-    public String getType() {
+    public CardidCardType getType() {
         return type;
     }
 
