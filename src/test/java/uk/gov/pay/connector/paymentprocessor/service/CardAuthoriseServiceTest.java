@@ -554,7 +554,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test(expected = IllegalStateRuntimeException.class)
     public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
 
-        ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
+        ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.UNDEFINED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 

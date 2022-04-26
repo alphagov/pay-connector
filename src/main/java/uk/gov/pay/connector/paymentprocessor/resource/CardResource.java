@@ -3,7 +3,6 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
@@ -18,6 +17,7 @@ import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.token.TokenService;
+import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.applepay.ApplePayService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
@@ -175,8 +175,10 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
         authoriseRequest.validate();
-        ChargeEntity charge = tokenService.validateTokenAndGetChargeForMotoApi(authoriseRequest.getOneTimeToken());
-        motoApiCardNumberValidationService.validateCardNumber(charge, authoriseRequest.getCardNumber());
+        TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
+
+        motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
+
         return Response.noContent().build();
     }
 
