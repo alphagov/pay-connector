@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -102,6 +103,12 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         return stripeAuthoriseHandler.authorise(request);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException {
+        // TODO Implemented only in SandboxPaymentProvider
+        throw new NotImplementedException("Implemented only in SandboxPaymentProvider");
     }
 
     @Override

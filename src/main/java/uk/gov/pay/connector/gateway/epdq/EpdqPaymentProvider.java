@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -123,6 +124,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException {
+        // TODO Implemented only in SandboxPaymentProvider
+        throw new NotImplementedException("Implemented only in SandboxPaymentProvider");
+    }
+    
     private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));

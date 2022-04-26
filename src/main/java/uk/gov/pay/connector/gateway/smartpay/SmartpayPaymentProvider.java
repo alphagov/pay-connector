@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import io.dropwizard.setup.Environment;
+import jdk.jshell.spi.ExecutionControl;
+import org.apache.commons.lang3.NotImplementedException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -93,6 +95,12 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                 buildAuthoriseOrderFor(request), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException {
+        // TODO Implemented only in SandboxPaymentProvider
+        throw new NotImplementedException("Implemented only in SandboxPaymentProvider");
     }
 
     private static GatewayResponse getSmartpayGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {

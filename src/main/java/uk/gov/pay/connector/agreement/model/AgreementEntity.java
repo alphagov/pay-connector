@@ -57,7 +57,7 @@ public class AgreementEntity {
     private String serviceId;
     
     @Column(name = "live")
-    private boolean live;
+    private boolean live; // TODO ask
 
     @OneToOne
     @JoinColumn(name = "payment_instrument_id", nullable = true)

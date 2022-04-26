@@ -24,16 +24,11 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
-import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
-import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
-import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
+import uk.gov.pay.connector.charge.exception.*;
 import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
-import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
-import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
 import uk.gov.pay.connector.charge.resource.GatewayCleanupResource;
@@ -140,6 +135,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new OneTimeTokenUsageInvalidForMotoApiExceptionMapper());
         environment.jersey().register(new InvalidAttributeValueExceptionMapper());
         environment.jersey().register(new CardNumberRejectedExceptionMapper());
+        environment.jersey().register(new AgreementNotActiveExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

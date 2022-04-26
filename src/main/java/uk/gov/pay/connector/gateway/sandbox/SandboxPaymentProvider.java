@@ -1,13 +1,10 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import org.apache.commons.lang3.NotImplementedException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
-import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.*;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -59,6 +56,12 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
         var gatewayResponse = getSandboxGatewayResponse(cardNumber);
 
         return gatewayResponse;
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException {
+        // TODO Implement
+        throw new NotImplementedException("Implemented only in SandboxPaymentProvider");
     }
 
     @Override

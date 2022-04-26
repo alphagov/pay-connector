@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -202,6 +203,13 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         return response;
     }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(CardAuthorisationGatewayRequest request) throws GatewayException {
+        // TODO Implemented only in SandboxPaymentProvider
+        throw new NotImplementedException("Implemented only in SandboxPaymentProvider");
+    }
+
 
     private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
         if (!exemptionEngineEnabled) {

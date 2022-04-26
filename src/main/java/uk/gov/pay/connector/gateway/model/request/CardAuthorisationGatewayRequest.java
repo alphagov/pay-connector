@@ -7,8 +7,13 @@ import java.util.Map;
 
 public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
     private AuthCardDetails authCardDetails;
-    
+
     public CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
+        super(charge);
+        this.authCardDetails = authCardDetails;
+    }
+
+    public CardAuthorisationGatewayRequest(ChargeEntity charge) {
         super(charge);
         this.authCardDetails = authCardDetails;
     }
@@ -19,6 +24,10 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
 
     public static CardAuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {
         return new CardAuthorisationGatewayRequest(charge, authCardDetails);
+    }
+
+    public static CardAuthorisationGatewayRequest valueOf(ChargeEntity charge) {
+        return new CardAuthorisationGatewayRequest(charge);
     }
 
     @Override

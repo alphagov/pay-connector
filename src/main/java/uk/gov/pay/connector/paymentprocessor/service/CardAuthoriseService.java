@@ -117,6 +117,66 @@ public class CardAuthoriseService {
             return new AuthorisationResponse(operationResponse);
         });
     }
+    
+    public AuthorisationResponse doAuthoriseUserNotPresent(String chargeId) {
+        return authorisationService.executeAuthorise(chargeId, () -> {
+
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            ChargeStatus newStatus;
+
+            try {
+                operationResponse = authoriseUserNotPresent(charge);
+
+                if (operationResponse.getBaseResponse().isEmpty()) {
+                    operationResponse.throwGatewayError();
+                }
+
+                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+            } catch (GatewayException e) {
+                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
+
+            Optional<Map<String, String>> maybeToken = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRecurringAuthToken);
+
+            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                    charge.getExternalId(),
+                    newStatus,
+                    transactionId.orElse(null),
+                    auth3dsDetailsEntity.orElse(null),
+                    sessionIdentifier.orElse(null),
+                    authCardDetails,
+                    maybeToken.orElse(null));
+
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    authorisationRequestSummary,
+                    updatedCharge,
+                    transactionId.orElse("missing transaction ID"),
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    newStatus
+            );
+
+            metricRegistry.counter(String.format(
+                    "gateway-operations.%s.%s.authorise.%s.result.%s",
+                    updatedCharge.getPaymentProvider(),
+                    updatedCharge.getGatewayAccount().getType(),
+                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                    newStatus.toString())).inc();
+
+            return new AuthorisationResponse(operationResponse);
+        });        
+    }
 
     @Transactional
     public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
@@ -126,6 +186,17 @@ public class CardAuthoriseService {
         getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         return charge;
     }
+
+
+    @Transactional
+    public ChargeEntity prepareChargeForAuthorisationUserNotPresent(String chargeId) {
+        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+        ensureCardBrandGateway3DSCompatibility(charge, charge.getPaymentInstrument().);
+        getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+        return charge;
+    }
+
 
     private void ensureCardBrandGateway3DSCompatibility(ChargeEntity chargeEntity, String cardBrand) {
         if (gatewayCardBrand3DSMismatch(chargeEntity, cardBrand)) {
@@ -146,6 +217,10 @@ public class CardAuthoriseService {
 
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
+    }
+
+    private GatewayResponse<BaseAuthoriseResponse> authoriseUserNotPresent(ChargeEntity charge) throws GatewayException {
+        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge));
     }
     
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
