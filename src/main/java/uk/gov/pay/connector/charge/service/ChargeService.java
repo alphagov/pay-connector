@@ -53,6 +53,7 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -585,7 +586,12 @@ public class ChargeService {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
                 auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
-        eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
+
+        if (chargeEntity.getAuthorisationMode() == MOTO_API) {
+            eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
+        } else {
+            eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
+        }
 
         return chargeEntity;
     }
@@ -785,14 +791,6 @@ public class ChargeService {
 
     public int count3dsRequiredEvents(String externalId) {
         return chargeDao.count3dsRequiredEventsForChargeExternalId(externalId);
-    }
-
-    private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
-        return authCardDetails.getCardNo().length() > 6;
-    }
-
-    private boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
-        return authCardDetails.getCardNo().length() >= 4;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
