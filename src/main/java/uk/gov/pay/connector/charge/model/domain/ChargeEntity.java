@@ -555,6 +555,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return authorisationMode;
     }
 
+    public void setAuthorisationMode(AuthorisationMode authorisationMode) {
+        this.authorisationMode = authorisationMode;
+    }
+
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
