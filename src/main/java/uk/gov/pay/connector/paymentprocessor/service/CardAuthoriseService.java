@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -23,6 +24,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
+import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
@@ -61,6 +63,16 @@ public class CardAuthoriseService {
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return authorisationService.executeAuthorise(chargeId, () -> authoriseAndUpdateCharge(chargeId, authCardDetails));
+    }
+
+    public AuthorisationResponse doAuthoriseSync(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
+        AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, chargeEntity, cardInformation);
+
+        AuthorisationResponse authorisationResponse = authoriseAndUpdateCharge(chargeEntity.getExternalId(), authCardDetails);
+
+        //todo: pp-9145 add charge to capture queue;
+
+        return authorisationResponse;
     }
 
     private AuthorisationResponse authoriseAndUpdateCharge(String chargeId, AuthCardDetails authCardDetails) {
