@@ -3,8 +3,14 @@ package uk.gov.pay.connector.gateway.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
+import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 
@@ -32,9 +38,38 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String jsScreenWidth;
     private String jsTimezoneOffsetMins;
     private String acceptLanguageHeader;
-    
+
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
+    }
+
+    public static AuthCardDetails of(AuthoriseRequest authoriseRequest, ChargeEntity chargeEntity, CardInformation cardInformation) {
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo(authoriseRequest.getCardNumber());
+        authCardDetails.setCardHolder(authoriseRequest.getCardholderName());
+        authCardDetails.setEndDate(CardExpiryDate.valueOf(authoriseRequest.getExpiryDate()));
+        authCardDetails.setCvc(authoriseRequest.getCvc());
+
+        authCardDetails.setCardBrand(cardInformation.getBrand());
+        authCardDetails.setCorporateCard(cardInformation.isCorporate());
+        authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.getType()));
+        authCardDetails.setPayersCardPrepaidStatus(PayersCardPrepaidStatus.valueOf(cardInformation.getPrepaidStatus().name()));
+
+        CardDetailsEntity cardDetailsEntity = chargeEntity.getCardDetails();
+        if (cardDetailsEntity != null) {
+            Optional<Address> mayBeAddress = cardDetailsEntity.getBillingAddress()
+                    .map((AddressEntity addressEntity) -> new Address(
+                            addressEntity.getLine1(),
+                            addressEntity.getLine2(),
+                            addressEntity.getPostcode(),
+                            addressEntity.getCity(),
+                            addressEntity.getCounty(),
+                            addressEntity.getCountry()
+                    ));
+            mayBeAddress.ifPresent(authCardDetails::setAddress);
+        }
+
+        return authCardDetails;
     }
 
     public Optional<String> getJsTimezoneOffsetMins() {
