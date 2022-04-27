@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -90,6 +91,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
 
     @Mock
+    ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
+
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -117,7 +121,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 new AuthorisationService(mockExecutorService, environment),
                 chargeService,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
-                environment);
+                mockChargeEligibleForCaptureService, environment);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 

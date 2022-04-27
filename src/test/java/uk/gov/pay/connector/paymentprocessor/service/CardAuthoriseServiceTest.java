@@ -14,17 +14,16 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
-import uk.gov.pay.connector.client.cardid.model.CardInformation;
-import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -54,9 +53,11 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -89,6 +90,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -150,6 +152,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private CardDetailsEntity mockCardDetailsEntity;
 
+    @Mock
+    ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
+
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
@@ -163,8 +168,17 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
-                stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, 
+                stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+
+        LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
+        CaptureQueue captureQueue = mock(CaptureQueue.class);
+        UserNotificationService userNotificationService = mock(UserNotificationService.class);
+        ChargeEligibleForCaptureService chargeEligibleForCaptureService =
+                new ChargeEligibleForCaptureService(chargeService, mockedChargeDao, linkPaymentInstrumentToAgreementService,
+                        captureQueue,
+                        userNotificationService
+                );
 
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
@@ -172,7 +186,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 authorisationService,
                 chargeService,
-                new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging), 
+                new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging),
+                chargeEligibleForCaptureService,
                 mockEnvironment);
     }
 
@@ -662,15 +677,15 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getStatus(), is(CAPTURE_QUEUED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        verify(mockedChargeEventDao, times(2)).persistChargeEventOf(eq(charge), isNull());
 
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
     @Test
-    public void doAuthoriseSync_shouldRespondAuthorisationSuccess_overridingGeneratedTransactionId() throws Exception {
+    public void doAuthoriseSync_shouldRespondCaptureQueued_overridingGeneratedTransactionId() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
         AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
@@ -687,11 +702,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
-        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getStatus(), is(CAPTURE_QUEUED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getWalletType(), is(nullValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        verify(mockedChargeEventDao, times(2)).persistChargeEventOf(eq(charge), isNull());
     }
 
     @Test

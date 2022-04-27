@@ -29,6 +29,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeEligibleForCaptureServiceTest {
@@ -92,6 +94,26 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
+    void shouldChangeStateToCaptureQueuedAddToCaptureQueueAndSendPaymentConfirmedEmail_forChargesWithAutorisationModeMotoApi() throws QueueException {
+        ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
+                .withDelayedCapture(false)
+                .withAuthorisationMode(MOTO_API)
+                .build();
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+
+        ChargeEntity result = chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+
+        assertThat(result, sameInstance(chargeEntity));
+
+        var inOrder = inOrder(mockChargeService, mockCaptureQueue, mockUserNotificationService);
+        inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_QUEUED);
+        inOrder.verify(mockCaptureQueue).sendForCapture(result);
+        inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
+
+        verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
+    }
+
+    @Test
     void shouldChangeStateToAwaitingCaptureRequestButNotAddToCaptureQueueOrSendPaymentConfirmedEmailIfDelayedCapture() {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
                 .withDelayedCapture(true).withSavePaymentInstrumentToAgreement(false).build();
@@ -126,6 +148,24 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
+    void shouldChangeStateToAwaitingCaptureRequestButNotAddToCaptureQueueOrSendPaymentConfirmedEmail_ForDelayedCaptureAndChargeWithAuthorisationModeMotoApi() {
+        ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
+                .withDelayedCapture(true)
+                .withAuthorisationMode(MOTO_API)
+                .build();
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+
+        ChargeEntity result = chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+
+        assertThat(result, sameInstance(chargeEntity));
+
+        verify(mockChargeService).transitionChargeState(chargeEntity, AWAITING_CAPTURE_REQUEST);
+        verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
+        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    @Test
     void shouldThrowExceptionIfChargeCannotBeTransitioned() {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
@@ -153,7 +193,7 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfChargeNotFound() throws QueueException {
+    void shouldThrowExceptionIfChargeNotFound() {
         var externalId = "external-id";
         when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.empty());
 
