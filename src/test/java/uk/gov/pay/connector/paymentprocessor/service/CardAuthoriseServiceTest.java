@@ -89,6 +89,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
@@ -312,6 +313,33 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(50L));
         assertThat(charge.getWalletType(), is(nullValue()));
+    }
+
+    @Test
+    public void doAuthoriseShouldIgnoreCorporateCardSurchargeForChargeWithMotoApiAuthorisationMode() throws Exception {
+
+        providerWillAuthorise();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCorporateCard(Boolean.TRUE)
+                .withCardType(PayersCardType.DEBIT)
+                .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
+                .build();
+
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
+
+        charge.setAuthorisationMode(MOTO_API);
+        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
+
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
     @Test

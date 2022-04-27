@@ -53,7 +53,7 @@ public class AuthCardDetails implements AuthorisationDetails {
         authCardDetails.setCardBrand(cardInformation.getBrand());
         authCardDetails.setCorporateCard(cardInformation.isCorporate());
         authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.getType()));
-        authCardDetails.setPayersCardPrepaidStatus(PayersCardPrepaidStatus.valueOf(cardInformation.getPrepaidStatus().name()));
+        authCardDetails.setPayersCardPrepaidStatus(cardInformation.getPrepaidStatus());
 
         CardDetailsEntity cardDetailsEntity = chargeEntity.getCardDetails();
         if (cardDetailsEntity != null) {

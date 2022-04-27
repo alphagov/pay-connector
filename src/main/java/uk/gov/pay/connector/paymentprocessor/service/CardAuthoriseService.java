@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class CardAuthoriseService {
 
@@ -48,7 +49,7 @@ public class CardAuthoriseService {
                                 PaymentProviders providers,
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
-                                AuthorisationLogger authorisationLogger, 
+                                AuthorisationLogger authorisationLogger,
                                 Environment environment) {
         this.providers = providers;
         this.authorisationService = authorisationService;
@@ -59,70 +60,75 @@ public class CardAuthoriseService {
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return authorisationService.executeAuthorise(chargeId, () -> {
+        return authorisationService.executeAuthorise(chargeId, () -> authoriseAndUpdateCharge(chargeId, authCardDetails));
+    }
 
-            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            ChargeStatus newStatus;
+    private AuthorisationResponse authoriseAndUpdateCharge(String chargeId, AuthCardDetails authCardDetails) {
+        final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> operationResponse;
+        ChargeStatus newStatus;
 
-            try {
-                operationResponse = authorise(charge, authCardDetails);
+        try {
+            operationResponse = authorise(charge, authCardDetails);
 
-                if (operationResponse.getBaseResponse().isEmpty()) {
-                    operationResponse.throwGatewayError();
-                }
-
-                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-
-            } catch (GatewayException e) {
-                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            if (operationResponse.getBaseResponse().isEmpty()) {
+                operationResponse.throwGatewayError();
             }
 
-            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
-            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = 
-                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
+            newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
 
-            Optional<Map<String, String>> maybeToken = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRecurringAuthToken);
+        } catch (GatewayException e) {
+            newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+            operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+        }
 
-            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
-                    charge.getExternalId(),
-                    newStatus,
-                    transactionId.orElse(null),
-                    auth3dsDetailsEntity.orElse(null),
-                    sessionIdentifier.orElse(null),
-                    authCardDetails,
-                    maybeToken.orElse(null));
+        Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
+        Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+        Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
-            
-            authorisationLogger.logChargeAuthorisation(
-                    LOGGER,
-                    authorisationRequestSummary,
-                    updatedCharge,
-                    transactionId.orElse("missing transaction ID"),
-                    operationResponse,
-                    charge.getChargeStatus(),
-                    newStatus
-            );
-            
-            metricRegistry.counter(String.format(
-                    "gateway-operations.%s.%s.authorise.%s.result.%s",
-                    updatedCharge.getPaymentProvider(),
-                    updatedCharge.getGatewayAccount().getType(),
-                    authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                    newStatus.toString())).inc();
+        Optional<Map<String, String>> maybeToken = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRecurringAuthToken);
 
-            return new AuthorisationResponse(operationResponse);
-        });
+        ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                charge.getExternalId(),
+                newStatus,
+                transactionId.orElse(null),
+                auth3dsDetailsEntity.orElse(null),
+                sessionIdentifier.orElse(null),
+                authCardDetails,
+                maybeToken.orElse(null));
+
+        var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+
+        authorisationLogger.logChargeAuthorisation(
+                LOGGER,
+                authorisationRequestSummary,
+                updatedCharge,
+                transactionId.orElse("missing transaction ID"),
+                operationResponse,
+                charge.getChargeStatus(),
+                newStatus
+        );
+
+        metricRegistry.counter(String.format(
+                "gateway-operations.%s.%s.authorise.%s.result.%s",
+                updatedCharge.getPaymentProvider(),
+                updatedCharge.getGatewayAccount().getType(),
+                authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                newStatus.toString())).inc();
+
+        return new AuthorisationResponse(operationResponse);
     }
 
     @Transactional
     public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
-        getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+
+        if (charge.getAuthorisationMode() != MOTO_API) {
+            getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+        }
+
         getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         return charge;
     }
@@ -147,7 +153,7 @@ public class CardAuthoriseService {
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
-    
+
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
