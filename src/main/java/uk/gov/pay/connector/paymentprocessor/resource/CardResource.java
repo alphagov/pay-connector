@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.applepay.ApplePayService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
@@ -40,6 +42,7 @@ import java.util.Map;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
+import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
 
 @Path("/")
 public class CardResource {
@@ -174,8 +177,12 @@ public class CardResource {
     @Path("/v1/api/charges/authorise")
     @Produces(APPLICATION_JSON)
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
+        // Fields are removed from the MDC when the API responds in LoggingMDCResponseFilter 
+        MDC.put(SECURE_TOKEN, authoriseRequest.getOneTimeToken());
         authoriseRequest.validate();
+        
         TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
+        MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
 
         motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
 
