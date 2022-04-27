@@ -22,7 +22,7 @@
         <jooq.version>3.16.6</jooq.version>
         <postgresql.version>42.3.4</postgresql.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
-        <jjwt.version>0.11.3</jjwt.version>
+        <jjwt.version>0.11.4</jjwt.version>
         <pact.version>3.6.15</pact.version>
         <mockito.version>4.5.1</mockito.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
