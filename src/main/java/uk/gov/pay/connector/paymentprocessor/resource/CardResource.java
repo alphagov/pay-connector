@@ -4,10 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorException;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedException;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -183,10 +186,10 @@ public class CardResource {
         
         TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
         MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
+        CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
 
-        motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
-
-        return Response.noContent().build();
+        AuthorisationResponse response = cardAuthoriseService.doAuthoriseSync(tokenEntity.getChargeEntity(), cardInformation, authoriseRequest);
+        return handleAuthResponseForMotoApi(response);
     }
 
     @POST
@@ -198,7 +201,6 @@ public class CardResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
-
     private Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
@@ -206,6 +208,27 @@ public class CardResource {
                 return serviceErrorResponse(error.getMessage());
             default:
                 return badRequestResponse(error.getMessage());
+        }
+    }
+
+    private Response handleAuthResponseForMotoApi(AuthorisationResponse response) {
+        if (response.getGatewayError().isPresent()) {
+            throw new AuthorisationErrorException();
+        } else if (response.getAuthoriseStatus().isPresent()) {
+            switch (response.getAuthoriseStatus().get().getMappedChargeStatus()) {
+                case AUTHORISATION_SUCCESS:
+                    return Response.noContent().build();
+                case AUTHORISATION_REJECTED:
+                case AUTHORISATION_CANCELLED:
+                    throw new AuthorisationRejectedException();
+                case AUTHORISATION_ERROR:
+                case AUTHORISATION_SUBMITTED:
+                    throw new AuthorisationErrorException();
+                default:
+                    return ResponseUtil.serviceErrorResponse("Authorisation status unexpected");
+            }
+        } else {
+            return ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response");
         }
     }
 
