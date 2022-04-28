@@ -19,6 +19,8 @@ import javax.ws.rs.WebApplicationException;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeEligibleForCaptureService {
 
@@ -55,7 +57,8 @@ public class ChargeEligibleForCaptureService {
     @Transactional
     public ChargeEntity update(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
-            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
+            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST :
+                    deriveCaptureStatusForChargeAuthorisationMode(charge);
 
             try {
                 chargeService.transitionChargeState(charge, targetStatus);
@@ -69,6 +72,10 @@ public class ChargeEligibleForCaptureService {
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+    }
+
+    private ChargeStatus deriveCaptureStatusForChargeAuthorisationMode(ChargeEntity charge) {
+        return charge.getAuthorisationMode() == MOTO_API ? CAPTURE_QUEUED : CAPTURE_APPROVED;
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {

@@ -29,6 +29,8 @@ import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewa
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidExceptionMapper;
@@ -142,6 +144,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new InvalidAttributeValueExceptionMapper());
         environment.jersey().register(new CardNumberRejectedExceptionMapper());
         environment.jersey().register(new AuthorisationApiNotAllowedForGatewayAccountExceptionMapper());
+        environment.jersey().register(new AuthorisationErrorExceptionMapper());
+        environment.jersey().register(new AuthorisationRejectedExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

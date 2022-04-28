@@ -10,6 +10,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -31,6 +32,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -44,6 +46,7 @@ public class CardAuthoriseService {
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     private final AuthorisationLogger authorisationLogger;
+    private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -52,11 +55,13 @@ public class CardAuthoriseService {
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
                                 AuthorisationLogger authorisationLogger,
+                                ChargeEligibleForCaptureService chargeEligibleForCaptureService,
                                 Environment environment) {
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
+        this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.metricRegistry = environment.metrics();
         this.cardTypeDao = cardTypeDao;
     }
@@ -70,7 +75,11 @@ public class CardAuthoriseService {
 
         AuthorisationResponse authorisationResponse = authoriseAndUpdateCharge(chargeEntity.getExternalId(), authCardDetails);
 
-        //todo: pp-9145 add charge to capture queue;
+        authorisationResponse.getAuthoriseStatus().ifPresent(authoriseStatus -> {
+            if (authoriseStatus.getMappedChargeStatus() == AUTHORISATION_SUCCESS) {
+                chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+            }
+        });
 
         return authorisationResponse;
     }
