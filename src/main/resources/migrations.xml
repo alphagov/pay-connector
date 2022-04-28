@@ -1910,4 +1910,11 @@
     <changeSet id="update description on agreeements to not nullable" author="">
         <addNotNullConstraint tableName="agreements" columnName="description" />
     </changeSet>
+
+    <changeSet id="add recurring_enabled to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="recurring_enabled" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
