@@ -153,6 +153,7 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a payment details submitted by api message")
     public String verifyPaymentDetailsSubmittedByAPIEvent() throws JsonProcessingException {
         ChargeEntity charge = aValidChargeEntity()
+                .withTransactionId("gateway_transaction_id")
                 .withAuthorisationMode(MOTO_API)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .build();
