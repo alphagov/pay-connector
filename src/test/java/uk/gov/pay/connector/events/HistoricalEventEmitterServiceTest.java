@@ -9,6 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
@@ -41,6 +43,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -62,6 +65,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HistoricalEventEmitterServiceTest {
@@ -198,6 +202,29 @@ public class HistoricalEventEmitterServiceTest {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(eventService, times(1)).emitAndRecordEvent(any(PaymentDetailsEntered.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldEmitPaymentSubmittedByApiEventForMotoApiCharges() {
+        chargeEntity.setAuthorisationMode(MOTO_API);
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
+                "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
+        chargeEntity.setCardDetails(cardDetailsEntity);
+
+        ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().add(authSuccessEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService).emitAndRecordEvent(any(PaymentDetailsSubmittedByAPI.class), isNotNull());
     }
 
     @Test

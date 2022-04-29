@@ -49,8 +49,24 @@ class PaymentDetailsSubmittedByAPITest {
     @Test
     public void shouldIncludeAllFieldsForTheEvent() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        String actual = PaymentDetailsSubmittedByAPI.from(chargeEntity).toJsonString();
+        String json = PaymentDetailsSubmittedByAPI.from(chargeEntity).toJsonString();
 
+        assertDetails(json, chargeEntity);
+    }
+
+    @Test
+    public void shouldIncludeAllFieldsForEventEmittedUsingChargeEvent() throws JsonProcessingException {
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity()
+                .withUpdated(ZonedDateTime.parse(time))
+                .withChargeEntity(chargeEntity)
+                .build();
+        String json = PaymentDetailsSubmittedByAPI.from(chargeEventEntity).toJsonString();
+
+        assertDetails(json, chargeEntity);
+    }
+
+    private void assertDetails(String actual, ChargeEntity chargeEntity) {
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_SUBMITTED_BY_API")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
@@ -66,5 +82,4 @@ class PaymentDetailsSubmittedByAPITest {
         assertThat(actual, hasJsonPath("$.event_details.cardholder_name", equalTo("Mr Test")));
         assertThat(actual, hasJsonPath("$.event_details.expiry_date", equalTo("12/99")));
     }
-
 }

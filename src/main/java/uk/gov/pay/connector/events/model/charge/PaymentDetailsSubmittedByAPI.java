@@ -33,6 +33,18 @@ public class PaymentDetailsSubmittedByAPI extends PaymentEvent {
                 lastEventDate);
     }
 
+    public static PaymentDetailsSubmittedByAPI from(ChargeEventEntity chargeEventEntity) {
+        ChargeEntity charge = chargeEventEntity.getChargeEntity();
+
+        return new PaymentDetailsSubmittedByAPI(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
+                charge.getExternalId(),
+                PaymentDetailsSubmittedByAPIEventDetails.from(charge),
+                chargeEventEntity.getUpdated()
+        );
+    }
+
     public String getTitle() {
         return "Payment details submitted by API";
     }
