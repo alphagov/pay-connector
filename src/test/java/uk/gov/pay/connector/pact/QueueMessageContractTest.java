@@ -26,6 +26,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEve
 import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsSubmittedByAPIEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
@@ -37,6 +38,7 @@ import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
@@ -55,7 +57,6 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.ZonedDateTime;
@@ -69,6 +70,7 @@ import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEve
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
@@ -139,13 +141,31 @@ public class QueueMessageContractTest {
 
         PaymentDetailsEntered captureConfirmedEvent = new PaymentDetailsEntered(
                 charge.getServiceId(),
-                charge.getGatewayAccount().isLive(), 
+                charge.getGatewayAccount().isLive(),
                 resourceId,
                 PaymentDetailsEnteredEventDetails.from(charge),
                 ZonedDateTime.now()
         );
 
         return captureConfirmedEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a payment details submitted by api message")
+    public String verifyPaymentDetailsSubmittedByAPIEvent() throws JsonProcessingException {
+        ChargeEntity charge = aValidChargeEntity()
+                .withAuthorisationMode(MOTO_API)
+                .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
+                .build();
+
+        PaymentDetailsSubmittedByAPI paymentDetailsSubmittedByAPIEvent = new PaymentDetailsSubmittedByAPI(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
+                resourceId,
+                PaymentDetailsSubmittedByAPIEventDetails.from(charge),
+                ZonedDateTime.now()
+        );
+
+        return paymentDetailsSubmittedByAPIEvent.toJsonString();
     }
 
     @PactVerifyProvider("a user email collected message")
