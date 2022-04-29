@@ -173,6 +173,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "requires_additional_kyc_data")
     private boolean requiresAdditionalKycData;
 
+    @Column(name = "recurring_enabled")
+    private boolean recurringEnabled;
+
     public GatewayAccountEntity() {
     }
 
@@ -433,6 +436,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return allowAuthorisationApi;
     }
 
+    @JsonProperty("recurring_enabled")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isRecurringEnabled() {
+        return recurringEnabled;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -588,6 +597,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.requiresAdditionalKycData = requiresAdditionalKycData;
     }
 
+    public void setRecurringEnabled(boolean recurringEnabled) {
+        this.recurringEnabled = recurringEnabled;
+    }
+    
     public class Views {
         public class ApiView {
         }

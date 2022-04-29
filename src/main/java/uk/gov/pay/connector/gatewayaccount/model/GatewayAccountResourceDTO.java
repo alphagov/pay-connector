@@ -107,7 +107,10 @@ public class GatewayAccountResourceDTO {
     
     @JsonProperty("allow_authorisation_api")
     private boolean allowAuthorisationApi;
-    
+
+    @JsonProperty("recurring_enabled")
+    private boolean recurringEnabled;
+
     public GatewayAccountResourceDTO() {
     }
 
@@ -142,6 +145,7 @@ public class GatewayAccountResourceDTO {
         this.serviceId = gatewayAccountEntity.getServiceId();
         this.requiresAdditionalKycData = gatewayAccountEntity.isRequiresAdditionalKycData();
         this.allowAuthorisationApi = gatewayAccountEntity.isAllowAuthorisationApi();
+        this.recurringEnabled = gatewayAccountEntity.isRecurringEnabled();
     }
 
     public long getAccountId() {
@@ -271,4 +275,9 @@ public class GatewayAccountResourceDTO {
     public boolean isAllowAuthorisationApi() {
         return allowAuthorisationApi;
     }
+
+    public boolean isRecurringEnabled() {
+        return recurringEnabled;
+    }
+
 }

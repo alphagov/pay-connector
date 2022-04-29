@@ -43,6 +43,8 @@ class GatewayAccountResourceDTOTest {
         entity.setSendPayerEmailToGateway(true);
         entity.setSendPayerIpAddressToGateway(true);
         entity.setSendReferenceToGateway(true);
+        entity.setAllowAuthorisationApi(true);
+        entity.setRecurringEnabled(true);
         entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         entity.setGatewayAccountCredentials(List.of(
                 GatewayAccountCredentialsEntityFixture.
@@ -51,7 +53,6 @@ class GatewayAccountResourceDTOTest {
                         .withState(GatewayAccountCredentialState.ACTIVE)
                         .build()
         ));
-        entity.setAllowAuthorisationApi(true);
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -89,5 +90,6 @@ class GatewayAccountResourceDTOTest {
         assertThat(dto.isSendReferenceToGateway(), is(true));
         assertThat(dto.isRequiresAdditionalKycData(), is(true));
         assertThat(dto.isAllowAuthorisationApi(), is(entity.isAllowAuthorisationApi()));
+        assertThat(dto.isRecurringEnabled(), is(entity.isRecurringEnabled()));
     }
 }
