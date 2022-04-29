@@ -14,7 +14,7 @@ public class AuthorisationErrorExceptionMapper implements ExceptionMapper<Author
     public Response toResponse(AuthorisationErrorException exception) {
         ErrorResponse errorResponse = new ErrorResponse(AUTHORISATION_ERROR, exception.getMessage());
 
-        return Response.status(402)
+        return Response.status(500)
                 .entity(errorResponse)
                 .type(APPLICATION_JSON)
                 .build();
