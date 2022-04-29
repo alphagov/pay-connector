@@ -10,6 +10,7 @@ import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
@@ -46,8 +47,9 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_SEND_REFERENCE_TO_GATEWAY = "send_reference_to_gateway";
     public static final String FIELD_REQUIRES_ADDITIONAL_KYC_DATA = "requires_additional_kyc_data";
     public static final String FIELD_ALLOW_AUTHORISATION_API = "allow_authorisation_api";
+    public static final String FIELD_RECURRING_ENABLED = "recurring_enabled";
 
-    private static final List<String> VALID_PATHS = List.of(
+    private static final Set<String> VALID_PATHS = Set.of(
             FIELD_NOTIFY_SETTINGS,
             FIELD_EMAIL_COLLECTION_MODE,
             FIELD_ALLOW_APPLE_PAY,
@@ -69,7 +71,8 @@ public class GatewayAccountRequestValidator {
             FIELD_PROVIDER_SWITCH_ENABLED,
             FIELD_SEND_REFERENCE_TO_GATEWAY,
             FIELD_REQUIRES_ADDITIONAL_KYC_DATA,
-            FIELD_ALLOW_AUTHORISATION_API);
+            FIELD_ALLOW_AUTHORISATION_API,
+            FIELD_RECURRING_ENABLED);
 
     private final RequestValidator requestValidator;
 
@@ -109,6 +112,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_SEND_REFERENCE_TO_GATEWAY:
             case FIELD_REQUIRES_ADDITIONAL_KYC_DATA:
             case FIELD_ALLOW_AUTHORISATION_API:
+            case FIELD_RECURRING_ENABLED:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:

@@ -51,14 +51,16 @@ public class DatabaseTestHelper {
                         "corporate_debit_card_surcharge_amount, " +
                         "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
                         "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
-                        "allow_telephone_payment_notifications, allow_authorisation_api, provider_switch_enabled, service_id) " +
+                        "allow_telephone_payment_notifications, allow_authorisation_api, recurring_enabled, provider_switch_enabled, " + 
+                        "service_id) " +
                         "VALUES (:id, :external_id, :service_name, :type, " +
                         ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                         ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                         ":corporate_prepaid_debit_card_surcharge_amount, " +
                         ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
                         ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
-                        ":allow_telephone_payment_notifications, :allow_authorisation_api, :provider_switch_enabled, :service_id)")
+                        ":allow_telephone_payment_notifications, :allow_authorisation_api, :recurring_enabled, :provider_switch_enabled," +
+                         ":service_id)")
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("service_name", params.getServiceName())
@@ -78,6 +80,7 @@ public class DatabaseTestHelper {
                         .bind("allow_google_pay", params.isAllowGooglePay())
                         .bind("requires_3ds", params.isRequires3ds())
                         .bind("allow_telephone_payment_notifications", params.isAllowTelephonePaymentNotifications())
+                        .bind("recurring_enabled", params.isRecurringEnabled())
                         .bind("provider_switch_enabled", params.isProviderSwitchEnabled())
                         .bind("service_id", params.getServiceId())
                         .execute());
@@ -686,6 +689,14 @@ public class DatabaseTestHelper {
     public void allowTelephonePaymentNotifications(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE gateway_accounts set allow_telephone_payment_notifications=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
+    public void enableRecurring(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE gateway_accounts set recurring_enabled=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );

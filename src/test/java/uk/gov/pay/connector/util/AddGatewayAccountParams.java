@@ -55,6 +55,7 @@ public class AddGatewayAccountParams {
     private boolean allowGooglePay;
     private boolean requires3ds;
     private boolean allowTelephonePaymentNotifications;
+    private boolean recurringEnabled;
     private boolean providerSwitchEnabled;
 
     public int getIntegrationVersion3ds() {
@@ -141,6 +142,10 @@ public class AddGatewayAccountParams {
         return allowTelephonePaymentNotifications;
     }
 
+    public boolean isRecurringEnabled() {
+        return recurringEnabled;
+    }
+
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
     }
@@ -169,6 +174,7 @@ public class AddGatewayAccountParams {
         private boolean requires3ds;
         private String externalId = randomUuid();
         private boolean allowTelephonePaymentNotifications;
+        private boolean recurringEnabled;
         private boolean providerSwitchEnabled = false;
 
         private AddGatewayAccountParamsBuilder() {
@@ -303,6 +309,11 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withRecurringEnabled(boolean recurringEnabled) {
+            this.recurringEnabled = recurringEnabled;
+            return this;
+        }
+
         public AddGatewayAccountParamsBuilder withProviderSwitchEnabled(boolean providerSwitchEnabled) {
             this.providerSwitchEnabled = providerSwitchEnabled;
             return this;
@@ -338,6 +349,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.allowGooglePay = this.allowGooglePay;
             addGatewayAccountParams.requires3ds = this.requires3ds;
             addGatewayAccountParams.allowTelephonePaymentNotifications = this.allowTelephonePaymentNotifications;
+            addGatewayAccountParams.recurringEnabled = this.recurringEnabled;
             addGatewayAccountParams.providerSwitchEnabled = this.providerSwitchEnabled;
             addGatewayAccountParams.serviceId = this.serviceId;
             return addGatewayAccountParams;

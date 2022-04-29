@@ -46,6 +46,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_REQUIRES_ADDITIONAL_KYC_DATA;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
@@ -219,7 +220,9 @@ public class GatewayAccountService {
             entry(FIELD_REQUIRES_ADDITIONAL_KYC_DATA, (gatewayAccountRequest, gatewayAccountEntity) ->
                     gatewayAccountEntity.setRequiresAdditionalKycData(gatewayAccountRequest.valueAsBoolean())),
             entry(FIELD_ALLOW_AUTHORISATION_API, (gatewayAccountRequest, gatewayAccountEntity) ->
-                    gatewayAccountEntity.setAllowAuthorisationApi(gatewayAccountRequest.valueAsBoolean()))
+                    gatewayAccountEntity.setAllowAuthorisationApi(gatewayAccountRequest.valueAsBoolean())),
+            entry(FIELD_RECURRING_ENABLED, (gatewayAccountRequest, gatewayAccountEntity) ->
+                    gatewayAccountEntity.setRecurringEnabled(gatewayAccountRequest.valueAsBoolean()))
     );
 
     private void throwIfNoActiveCredentialExist(GatewayAccountEntity gatewayAccountEntity) {

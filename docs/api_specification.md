@@ -250,7 +250,8 @@ Content-Type: application/json
     },
     "worldpay_3ds_flex": null,
     "send_reference_to_gateway": false,
-    "allow_authorisation_api": false
+    "allow_authorisation_api": false,
+    "recurring_enabled": true
 }
 ```
 
@@ -281,6 +282,8 @@ Content-Type: application/json
 | `allow_telephone_payment_notifications`          | X              | Indicates if the account is used for telephone payments reporting. Default value is 'false'                                                                                                    |
 | `send_reference_to_gateway`                      | X              | If enabled, service payment reference is sent to gateway as description. Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false' |
 | `allow_authorisation_api`                        | X              | Whether the account is allowed to initiate MOTO payments that are authorised VIA an API request rather than the web interface                                                                  |
+| `recurring_enabled`                              | X              | Whether the account is allowed to take recurring card payments                                                                                                                                 |
+
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts

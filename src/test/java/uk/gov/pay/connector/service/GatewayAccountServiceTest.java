@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -617,4 +618,39 @@ public class GatewayAccountServiceTest {
         verify(mockGatewayAccountEntity).setAllowAuthorisationApi(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
+
+    @Test
+    public void shouldUpdateRecurringEnabledToTrue() {
+        var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_RECURRING_ENABLED,
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockGatewayAccountEntity).setRecurringEnabled(true);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateRecurringEnabledToFalse() {
+        var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_RECURRING_ENABLED,
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockGatewayAccountEntity).setRecurringEnabled(false);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
 }

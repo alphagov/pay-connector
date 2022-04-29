@@ -46,7 +46,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
 
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @Test
     public void shouldGetGatewayAccountForExistingAccount() {
@@ -63,6 +63,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         databaseTestHelper.allowTelephonePaymentNotifications(Long.parseLong(accountId));
         databaseTestHelper.enableProviderSwitch(Long.parseLong(accountId));
         databaseTestHelper.allowAuthorisationApi(Long.parseLong(accountId));
+        databaseTestHelper.enableRecurring(Long.parseLong(accountId));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -95,7 +96,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("allow_moto", is(true))
                 .body("allow_telephone_payment_notifications", is(true))
                 .body("provider_switch_enabled", is(true))
-                .body("allow_authorisation_api", is(true));
+                .body("allow_authorisation_api", is(true))
+                .body("recurring_enabled", is(true));
     }
 
     @Test
@@ -115,8 +117,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     public void shouldGetNotificationCredentialsWhenTheyExistForGatewayAccount() {
         String accountId = createAGatewayAccountFor("smartpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
-        databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.addNotificationCredentialsFor(Long.valueOf(accountId), "bob", "bobssecret");
+        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        databaseTestHelper.addNotificationCredentialsFor(Long.parseLong(accountId), "bob", "bobssecret");
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -168,14 +170,14 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .withCorporateDebitCardSurchargeAmount(50L)
                 .withIntegrationVersion3ds(1)
                 .insert();
-        Long accountId = gatewayAccount.getAccountId();
+        long accountId = gatewayAccount.getAccountId();
 
         givenSetup().accept(JSON)
                 .get(ACCOUNT_FRONTEND_EXTERNAL_ID_URL + gatewayAccount.getExternalId())
                 .then()
                 .statusCode(200)
                 .body("payment_provider", is("worldpay"))
-                .body("gateway_account_id", is(accountId.intValue()))
+                .body("gateway_account_id", is((int) accountId))
                 .body("gateway_account_id", is(notNullValue()))
                 .body("email_collection_mode", is("OPTIONAL"))
                 .body("email_notifications.PAYMENT_CONFIRMED.template_body", not(nullValue()))
@@ -222,10 +224,10 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     public void shouldFilterGetGatewayAccountForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
-        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.valueOf(accountId), 250);
-        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.valueOf(accountId), 50);
+        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
+        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.parseLong(accountId), 250);
+        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.parseLong(accountId), 50);
 
         givenSetup().accept(JSON)
                 .get("/v1/frontend/accounts?accountIds=" + accountId)
@@ -288,8 +290,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         String accountId = createAGatewayAccountFor("worldpay");
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
+        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
+        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
         ValidatableResponse response = givenSetup().accept(JSON)
                 .get(frontendCardTypeUrl)
                 .then()
