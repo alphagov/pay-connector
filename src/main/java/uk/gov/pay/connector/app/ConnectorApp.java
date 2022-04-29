@@ -25,6 +25,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
+import uk.gov.pay.connector.charge.exception.AgreementNotActiveExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
@@ -138,6 +139,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new NoCredentialsExistForProviderExceptionMapper());
         environment.jersey().register(new NoCredentialsInUsableStateExceptionMapper());
         environment.jersey().register(new AgreementNotFoundExceptionMapper());
+        environment.jersey().register(new AgreementNotActiveExceptionMapper());
         environment.jersey().register(new OneTimeTokenInvalidExceptionMapper());
         environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
         environment.jersey().register(new OneTimeTokenUsageInvalidForMotoApiExceptionMapper());

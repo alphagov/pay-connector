@@ -18,12 +18,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -42,11 +44,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -109,7 +111,6 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
     private static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
-    
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
@@ -1158,6 +1159,38 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
                 .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn400WhenAuthorisationModeIsAgreementAndAgreementIsNotActive() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        long paymentInstrumentId = 11L;
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentId, Instant.now(), Instant.now(),
+                "external_id", PaymentInstrumentStatus.CREATED.name(), "4242",
+                "Alex","11/24", "Sutton", "SM14FE", "London","UK","VISA", CardType.CREDIT.name());
+        databaseTestHelper.addAgreementWithPaymentInstrumentId(2l, "service-id", JSON_VALID_AGREEMENT_ID_VALUE,
+                "refs", "description", "user_id", Instant.now(), false,
+                Long.parseLong(accountId), paymentInstrumentId);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_VALUE,
+                "authorisation_mode", "agreement"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(BAD_REQUEST.getStatusCode());
     }
 
     @Test

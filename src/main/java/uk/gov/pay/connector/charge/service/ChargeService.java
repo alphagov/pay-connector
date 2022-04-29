@@ -4,6 +4,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.AgreementNotActiveException;
 import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
@@ -56,6 +58,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -65,6 +68,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -252,7 +256,7 @@ public class ChargeService {
             }
             checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
             checkForUnknownAgreementId(chargeRequest.getAgreementId());
-            
+            checkInstrumentActiveWhenAuthorisationReference(chargeRequest.getAgreementId(), chargeRequest.getAuthorisationMode());
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -546,6 +550,7 @@ public class ChargeService {
     }
 
     private boolean needsNextUrl(ChargeEntity chargeEntity) {
+        if (chargeEntity.getAuthorisationMode() == AuthorisationMode.AGREEMENT) return false;
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
@@ -586,7 +591,6 @@ public class ChargeService {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
                 auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
-
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
         } else {
@@ -792,7 +796,7 @@ public class ChargeService {
     public int count3dsRequiredEvents(String externalId) {
         return chargeDao.count3dsRequiredEventsForChargeExternalId(externalId);
     }
-
+    
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
         TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);
@@ -930,4 +934,16 @@ public class ChargeService {
                     .orElseThrow(() -> new AgreementNotFoundException(format("Agreement with ID [%s] not found.", agreementId)));
         }
     }
+
+    private void checkInstrumentActiveWhenAuthorisationReference(String agreementId, AuthorisationMode authorisation) {
+        if (agreementId != null && authorisation == AuthorisationMode.AGREEMENT) {
+            Optional<AgreementEntity> agreementEntityOptional = agreementDao.findByExternalId(agreementId);
+            AgreementEntity agreementEntity = agreementEntityOptional.get();
+            PaymentInstrumentStatus instrumentStatus = agreementEntity.getPaymentInstrument().getPaymentInstrumentStatus();
+            if (instrumentStatus != PaymentInstrumentStatus.ACTIVE) {
+                throw new AgreementNotActiveException(format("Agreement with ID [%s] not active.", agreementId));
+            }
+        }
+    }
 }
+

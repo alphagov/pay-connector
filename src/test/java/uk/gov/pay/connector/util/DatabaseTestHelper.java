@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -160,6 +161,61 @@ public class DatabaseTestHelper {
                         .bind("user_identifier", userIdentifier)
                         .bind("live", live)
                         .bind("gateway_account_id", gatewayAccountId)
+                        .execute());
+    }
+
+    public void addAgreementWithPaymentInstrumentId(Long id, String serviceId, String externalId, String reference,
+                                                    String description, String userIdentifier, Instant createdDate,
+                                                    boolean live, long gatewayAccountId, long paymentInstrumentId
+    ) {
+        PGobject jsonMetadata = new PGobject();
+        jsonMetadata.setType("json");
+
+        jdbi.withHandle(h ->
+                h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
+                                "reference, description, user_identifier, live, gateway_account_id,payment_instrument_id) " +
+                                "VALUES(:id, :external_id, :service_id, :created_date, " +
+                                ":reference, :description, :user_identifier, :live, :gateway_account_id, :payment_instrument_id)")
+                        .bind("id", Long.valueOf(id))
+                        .bind("external_id", externalId)
+                        .bind("service_id", serviceId)
+                        .bind("created_date", LocalDateTime.ofInstant(createdDate, UTC))
+                        .bind("reference", reference)
+                        .bind("description", description)
+                        .bind("user_identifier", userIdentifier)
+                        .bind("live", live)
+                        .bind("gateway_account_id", gatewayAccountId)
+                        .bind("payment_instrument_id", paymentInstrumentId)
+
+                        .execute());
+    }
+
+    public void addPaymentInstrument(Long id, Instant createdDate, Instant startDate, String externalId,
+                                     String paymentInstrumentStatus, String lastDigitsCardNumber, String cardHolderName,
+                                     String expiryDate, String addressLine1,String postCode,String city, String country,
+                                     String cardBrand, String cardType) {
+        PGobject jsonMetadata = new PGobject();
+        jsonMetadata.setType("json");
+        jdbi.withHandle(h ->
+                h.createUpdate("INSERT INTO payment_instruments(id,created_date, start_date,external_id, status,expiry_date," +
+                                "card_brand,card_type,address_country, address_city, address_postcode,address_line1,cardholder_name," +
+                                "last_digits_card_number) " +
+                                "VALUES(:id,:created_date, :start_date,:external_id, :status,:expiry_date,:card_brand,:card_type," +
+                                ":address_country, :address_city, :address_postcode,:address_line1,:cardholder_name,:last_digits_card_number) ") 
+                        .bind("id", Long.valueOf(id))
+                        .bind("created_date",  Timestamp.from(createdDate))
+                        .bind("start_date", LocalDateTime.ofInstant(startDate, UTC))
+                        .bind("external_id", externalId)
+                        .bind("status", paymentInstrumentStatus)
+                        .bind("last_digits_card_number", lastDigitsCardNumber)
+                        .bind("cardholder_name", cardHolderName)
+                        .bind("expiry_date", expiryDate)
+                        .bind("address_line1", addressLine1)
+                        .bind("address_postcode", postCode)
+                        .bind("address_city", city)
+                        .bind("address_country", country)
+                        .bind("card_brand",cardBrand )
+                        .bind("card_type", cardType)
                         .execute());
     }
 
@@ -336,9 +392,9 @@ public class DatabaseTestHelper {
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, gateway_transaction_id, amount, status, created_date, user_external_id, user_email, charge_external_id," +
-                        " parity_check_status, parity_check_date " +
-                        "FROM refunds " +
-                        "WHERE id = :refund_id")
+                                " parity_check_status, parity_check_date " +
+                                "FROM refunds " +
+                                "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
                         .mapToMap()
                         .list());
