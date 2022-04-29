@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
-import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
@@ -21,6 +20,7 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
@@ -55,6 +55,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class HistoricalEventEmitter {
     public static final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
@@ -287,7 +288,9 @@ public class HistoricalEventEmitter {
                 .stream()
                 .filter(event -> isNotATelephonePaymentNotification(chargeEventEntities))
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
-                .map(PaymentDetailsEntered::from)
+                .map(chargeEventEntity -> (chargeEventEntity.getChargeEntity().getAuthorisationMode() == MOTO_API)
+                        ? PaymentDetailsSubmittedByAPI.from(chargeEventEntity)
+                        : PaymentDetailsEntered.from(chargeEventEntity))
                 .filter(event -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
     }
