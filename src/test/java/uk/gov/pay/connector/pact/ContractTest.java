@@ -327,6 +327,18 @@ public class ContractTest {
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.MOTO_API);
     }
 
+    @State("a charge with authorisation mode moto_api and one_time_token exists")
+    public void createChargeWithAuthorisationModeMotoApiAndOneTimeToken(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        String oneTimeToken = params.get("one_time_token");
+        String oneTimeTokenUsed = params.get("one_time_token_used");
+        String chargeExternalId = params.get("charge_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.MOTO_API);
+        dbHelper.addToken(chargeId, oneTimeToken, Boolean.valueOf(oneTimeTokenUsed));
+    }
+
     @State("a charge exists")
     public void aChargeExists(Map<String, String> params) throws Exception {
         String gatewayAccountId = params.get("gateway_account_id");
