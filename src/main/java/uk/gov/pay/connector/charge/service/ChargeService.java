@@ -246,19 +246,21 @@ public class ChargeService {
             var authorisationMode = chargeRequest.getAuthorisationMode();
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
-            
+
             if (authorisationMode == MOTO_API) {
                 checkMotoApiAuthorisationModeAllowed(gatewayAccount);
             } else {
                 checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
             }
-            
+
             checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
             checkForUnknownAgreementId(chargeRequest.getAgreementId());
 
-            if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
-                LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
-            }
+            chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
+                if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
+                    LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                }
+            });
 
             SupportedLanguage language = chargeRequest.getLanguage() != null
                     ? chargeRequest.getLanguage()
@@ -272,9 +274,8 @@ public class ChargeService {
                 gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
             }
 
-            ChargeEntity chargeEntity = aWebChargeEntity()
+            ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
-                    .withReturnUrl(chargeRequest.getReturnUrl())
                     .withDescription(chargeRequest.getDescription())
                     .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
                     .withGatewayAccount(gatewayAccount)
@@ -289,8 +290,10 @@ public class ChargeService {
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementId(chargeRequest.getAgreementId())
-                    .withAuthorisationMode(chargeRequest.getAuthorisationMode())
-                    .build();
+                    .withAuthorisationMode(chargeRequest.getAuthorisationMode());
+
+            chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
+            ChargeEntity chargeEntity = chargeEntityBuilder.build();
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
