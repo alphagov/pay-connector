@@ -7,18 +7,20 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.MISSING_MANDATORY_ATTRIBUTE;
 
-public class AuthorisationApiNotAllowedForGatewayAccountExceptionMapper implements ExceptionMapper<AuthorisationApiNotAllowedForGatewayAccountException> {
+public class MissingMandatoryAttributeExceptionMapper implements ExceptionMapper<MissingMandatoryAttributeException> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationApiNotAllowedForGatewayAccountExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MissingMandatoryAttributeExceptionMapper.class);
 
     @Override
-    public Response toResponse(AuthorisationApiNotAllowedForGatewayAccountException exception) {
+    public Response toResponse(MissingMandatoryAttributeException exception) {
         LOGGER.info(exception.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.AUTHORISATION_API_NOT_ALLOWED, exception.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(MISSING_MANDATORY_ATTRIBUTE, List.of(exception.getMessage()));
 
         return Response.status(422)
                 .entity(errorResponse)

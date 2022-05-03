@@ -1,10 +1,9 @@
-package uk.gov.pay.connector.it.resources;
+package uk.gov.pay.connector.charge.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
@@ -15,14 +14,9 @@ import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static io.netty.util.internal.SystemPropertyUtil.contains;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;

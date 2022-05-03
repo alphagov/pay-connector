@@ -11,6 +11,7 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.HttpStatus;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -19,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
@@ -29,6 +31,8 @@ import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -53,6 +57,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
@@ -261,7 +266,6 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
         ));
@@ -280,7 +284,8 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("authorisation_mode", is("moto_api"));
+                .body(JSON_AUTH_MODE_KEY, is(JSON_AUTH_MODE_MOTO_API))
+                .body(JSON_RETURN_URL_KEY, is(nullValue()));
         
         ArrayList<Map<String, Object>> links = findResponse.extract().body().jsonPath().get("links");
         var authLink = links.stream().filter(link -> link.get("rel").toString().equals("auth_url_post")).findFirst().get();
@@ -334,6 +339,43 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("code", is(404))
                 .body("message", is("HTTP 404 Not Found"));
+    }
+    
+    @Test
+    public void shouldReturn422WhenReturnUrlIsMissing() {
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_EMAIL_KEY, EMAIL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("Missing mandatory attribute: return_url"))
+                .body("error_identifier", is(ErrorIdentifier.MISSING_MANDATORY_ATTRIBUTE.toString()));
+
+    }
+
+    @Test
+    public void shouldReturn422WhenReturnUrlIsNotValid() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, "not.a.valid.url",
+                JSON_EMAIL_KEY, EMAIL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("Invalid attribute value: return_url. Must be a valid URL format"))
+                .body("error_identifier", is(ErrorIdentifier.INVALID_ATTRIBUTE_VALUE.toString()));
     }
 
     @Test
@@ -480,7 +522,6 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(nullValue()))
                 .body(JSON_MESSAGE_KEY, containsInAnyOrder(
                         "Field [reference] cannot be null",
-                        "Field [return_url] cannot be null",
                         "Field [description] cannot be null",
                         "Field [amount] cannot be null"
                 ));

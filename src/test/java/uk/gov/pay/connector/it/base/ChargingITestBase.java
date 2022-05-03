@@ -69,7 +69,7 @@ public class ChargingITestBase {
     protected static final String ADDRESS_COUNTRY_GB = "GB";
     protected static final String CVC = "123";
 
-    protected static final String RETURN_URL = "http://service.url/success-page/";
+    protected static final String RETURN_URL = "http://service.local/success-page/";
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
     protected static final long AMOUNT = 6234L;
 

@@ -254,7 +254,6 @@ public class ContractTest {
                 .withPaymentGateway("sandbox")
                 .withCredentials(Map.of())
                 .withServiceName("a cool service")
-                .withAllowAuthApi(true)
                 .build());
     }
 
