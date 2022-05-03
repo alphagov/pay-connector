@@ -32,10 +32,9 @@ final class SqsTestDocker {
 
     private static void createContainer() {
         if (sqsContainer == null) {
-            sqsContainer = new GenericContainer("roribio16/alpine-sqs")
+            sqsContainer = new GenericContainer("softwaremill/elasticmq-native")
                     .withExposedPorts(9324)
-                    .waitingFor(Wait.forHttp("/?Action=GetQueueUrl&QueueName=default"));
-
+                    .waitingFor(Wait.forLogMessage(".*ElasticMQ server.*.*started.*", 1));
             sqsContainer.start();
         }
     }

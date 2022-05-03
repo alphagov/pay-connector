@@ -37,7 +37,6 @@ public class ChargeCreateRequest {
     @JsonProperty("reference")
     private String reference;
 
-    @NotNull(message = "Field [return_url] cannot be null")
     @JsonProperty("return_url")
     private String returnUrl;
 

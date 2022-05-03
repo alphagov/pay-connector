@@ -7,7 +7,7 @@ import org.mockito.ArgumentCaptor;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
-import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -999,7 +999,7 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         gatewayAccount.setAllowMoto(false);
         populateChargeEntity();
 
-        ChargeResponse response = chargeService.create(requestBuilder.withAuthorisationMode(AuthorisationMode.MOTO_API).build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse response = chargeService.create(requestBuilder.withReturnUrl("").withAuthorisationMode(AuthorisationMode.MOTO_API).build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());

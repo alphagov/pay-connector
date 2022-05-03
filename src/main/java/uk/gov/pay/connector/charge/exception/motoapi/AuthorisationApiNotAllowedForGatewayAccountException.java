@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.exception;
+package uk.gov.pay.connector.charge.exception.motoapi;
 
 import static java.lang.String.format;
 

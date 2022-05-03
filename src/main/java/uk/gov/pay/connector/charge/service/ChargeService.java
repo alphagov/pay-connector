@@ -12,7 +12,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
-import uk.gov.pay.connector.charge.exception.AuthorisationApiNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -71,7 +71,6 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -247,12 +246,15 @@ public class ChargeService {
             var authorisationMode = chargeRequest.getAuthorisationMode();
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
-            if (!checkIfMotoApiAuthorisationModeIsAllowed(authorisationMode, gatewayAccount)) {
+            
+            if (authorisationMode == MOTO_API) {
+                checkMotoApiAuthorisationModeAllowed(gatewayAccount);
+            } else {
                 checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
             }
+            
             checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
             checkForUnknownAgreementId(chargeRequest.getAgreementId());
-            
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -575,14 +577,14 @@ public class ChargeService {
     }
 
     private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                           ChargeStatus newStatus,
-                                                           AuthCardDetails authCardDetails,
-                                                           String transactionId,
-                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                           ProviderSessionIdentifier sessionIdentifier,
-                                                           WalletType walletType,
-                                                           String emailAddress,
-                                                           Map<String, String> recurringAuthToken) {
+                                                                   ChargeStatus newStatus,
+                                                                   AuthCardDetails authCardDetails,
+                                                                   String transactionId,
+                                                                   Auth3dsRequiredEntity auth3dsRequiredDetails,
+                                                                   ProviderSessionIdentifier sessionIdentifier,
+                                                                   WalletType walletType,
+                                                                   String emailAddress,
+                                                                   Map<String, String> recurringAuthToken) {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
                 auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
@@ -672,7 +674,7 @@ public class ChargeService {
             chargeEntity.setGatewayTransactionId(transactionId);
         }
     }
-    
+
     private void setPaymentInstrument(Map<String, String> recurringAuthToken, ChargeEntity charge) {
         var paymentInstrument = paymentInstrumentService.createPaymentInstrument(charge.getCardDetails(), recurringAuthToken);
         charge.setPaymentInstrument(paymentInstrument);
@@ -734,7 +736,7 @@ public class ChargeService {
         if (shouldEmitPaymentStateTransitionEvents) {
             stateTransitionService.offerPaymentStateTransition(charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity);
         }
-        
+
         taskQueueService.offerTasksOnStateTransition(charge);
 
         return charge;
@@ -750,7 +752,7 @@ public class ChargeService {
     @Transactional
     public ChargeEntity forceTransitionChargeState(String chargeExternalId, ChargeStatus targetChargeState) {
         return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity ->
-                forceTransitionChargeState(chargeEntity, targetChargeState, null))
+                        forceTransitionChargeState(chargeEntity, targetChargeState, null))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
 
@@ -767,7 +769,7 @@ public class ChargeService {
                         charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity,
                         eventClass);
             }
-            
+
             taskQueueService.offerTasksOnStateTransition(charge);
 
             return charge;
@@ -859,7 +861,7 @@ public class ChargeService {
                 .path("secure")
                 .build();
     }
-    
+
     private URI nextAuthUrl(UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder()
                 .path("/v1/api/charges/authorise")
@@ -897,12 +899,13 @@ public class ChargeService {
         }
         return value;
     }
-    
-    private boolean checkIfMotoApiAuthorisationModeIsAllowed(AuthorisationMode mode, GatewayAccountEntity gatewayAccount) {
-        if (mode == MOTO_API && !gatewayAccount.isAllowAuthorisationApi()) {
+
+    private void checkMotoApiAuthorisationModeAllowed(GatewayAccountEntity gatewayAccount) {
+        if (!gatewayAccount.isAllowAuthorisationApi()) {
             throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
-        } else return mode == MOTO_API;
+        }
     }
+
 
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {

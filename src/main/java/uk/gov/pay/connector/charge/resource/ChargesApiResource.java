@@ -3,14 +3,18 @@ package uk.gov.pay.connector.charge.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
+import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.validation.ReturnUrlValidator;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -25,8 +29,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransactionNotFound;
@@ -46,6 +52,7 @@ public class ChargesApiResource {
             EMAIL_KEY, 254
     );
     private static final String ACCOUNT_ID = "accountId";
+    private static final String RETURN_URL = "return_url";
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     public static final int MIN_AMOUNT = 1;
     public static final int MAX_AMOUNT = 10_000_000;
@@ -80,6 +87,18 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
+        
+        String returnUrl = chargeRequest.getReturnUrl();
+        AuthorisationMode authorisationMode = chargeRequest.getAuthorisationMode();
+        
+        if (authorisationMode == AuthorisationMode.WEB) {
+            if (isBlank(returnUrl)) {
+                throw new MissingMandatoryAttributeException(RETURN_URL);
+            }
+            if (!ReturnUrlValidator.isValid(returnUrl)) {
+                throw new InvalidAttributeValueException(RETURN_URL, "Must be a valid URL format");
+            }
+        }
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
                 .map(response -> created(response.getLink("self")).entity(response).build())
