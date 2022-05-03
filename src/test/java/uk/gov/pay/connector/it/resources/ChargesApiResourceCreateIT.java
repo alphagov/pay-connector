@@ -361,6 +361,27 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturn422WhenReturnUrlIsPresentAndAuthorisationModeMotoApi() {
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_RETURN_URL_KEY, "https://i.should.not.be.here.co.uk",
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: return_url"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+
+    }
+
+    @Test
     public void shouldReturn422WhenReturnUrlIsNotValid() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,

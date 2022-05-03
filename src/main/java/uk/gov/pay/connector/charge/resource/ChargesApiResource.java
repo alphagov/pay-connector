@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
+import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
@@ -98,6 +99,8 @@ public class ChargesApiResource {
             if (!ReturnUrlValidator.isValid(returnUrl)) {
                 throw new InvalidAttributeValueException(RETURN_URL, "Must be a valid URL format");
             }
+        } else if (authorisationMode == AuthorisationMode.MOTO_API && !isBlank(returnUrl)) {
+            throw new UnexpectedAttributeException(RETURN_URL);
         }
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
