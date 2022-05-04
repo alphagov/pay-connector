@@ -30,10 +30,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransactionNotFound;
@@ -88,18 +86,19 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
-        
-        String returnUrl = chargeRequest.getReturnUrl();
+
         AuthorisationMode authorisationMode = chargeRequest.getAuthorisationMode();
-        
         if (authorisationMode == AuthorisationMode.WEB) {
-            if (isBlank(returnUrl)) {
-                throw new MissingMandatoryAttributeException(RETURN_URL);
-            }
-            if (!ReturnUrlValidator.isValid(returnUrl)) {
-                throw new InvalidAttributeValueException(RETURN_URL, "Must be a valid URL format");
-            }
-        } else if (authorisationMode == AuthorisationMode.MOTO_API && !isBlank(returnUrl)) {
+            chargeRequest.getReturnUrl().ifPresentOrElse(returnUrl -> {
+                        if (!ReturnUrlValidator.isValid(returnUrl)) {
+                            throw new InvalidAttributeValueException(RETURN_URL, "Must be a valid URL format");
+                        }
+                    },
+                    () -> {
+                        throw new MissingMandatoryAttributeException(RETURN_URL);
+                    });
+
+        } else if (authorisationMode == AuthorisationMode.MOTO_API && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
 
@@ -122,7 +121,7 @@ public class ChargesApiResource {
         if (!gatewayAccount.isAllowTelephonePaymentNotifications()) {
             throw new TelephonePaymentNotificationsNotAllowedException(gatewayAccount.getId());
         }
-        
+
         return chargeService.findCharge(accountId, telephoneChargeCreateRequest)
                 .map(response -> Response.status(200).entity(response).build())
                 .orElseGet(() -> Response.status(201).entity(chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount)).build());

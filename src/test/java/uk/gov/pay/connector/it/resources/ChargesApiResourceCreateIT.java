@@ -77,7 +77,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_API;
 @DropwizardConfig(
         app = ConnectorApp.class,
         config = "config/test-it-config.yaml",
-        withDockerSQS = true, 
+        withDockerSQS = true,
         configOverrides = {
                 @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true"),
                 @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
@@ -114,7 +114,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
     private static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
-    
+
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
@@ -126,7 +126,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     public ChargesApiResourceCreateIT() {
         super(PROVIDER_NAME);
     }
-    
+
     @Before
     @Override
     public void setUp() {
@@ -286,7 +286,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_AUTH_MODE_KEY, is(JSON_AUTH_MODE_MOTO_API))
                 .body(JSON_RETURN_URL_KEY, is(nullValue()));
-        
+
         ArrayList<Map<String, Object>> links = findResponse.extract().body().jsonPath().get("links");
         var authLink = links.stream().filter(link -> link.get("rel").toString().equals("auth_url_post")).findFirst().get();
         assertThat(authLink.get("method").toString(), is("POST"));
@@ -340,7 +340,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("code", is(404))
                 .body("message", is("HTTP 404 Not Found"));
     }
-    
+
     @Test
     public void shouldReturn422WhenReturnUrlIsMissing() {
 
@@ -378,6 +378,26 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: return_url"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+
+    }
+    
+    @Test
+    public void shouldReturn422WhenReturnUrlIsEmptyString() {
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, "",
+                JSON_EMAIL_KEY, EMAIL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("Missing mandatory attribute: return_url"))
+                .body("error_identifier", is(ErrorIdentifier.MISSING_MANDATORY_ATTRIBUTE.toString()));
 
     }
 
@@ -445,7 +465,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_MOTO_KEY, true
         ));
-        
+
         connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(422)
@@ -457,7 +477,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     @Test
     public void shouldCreateMotoChargeIfAccountAllowsIt() {
         databaseTestHelper.allowMoto(Long.valueOf(accountId));
-        
+
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -732,7 +752,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                         JSON_CARDHOLDER_NAME_KEY, cardholderName
                 )
         ));
-        
+
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -745,7 +765,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
                 .body("containsKey('billing_address')", is(false));
     }
-    
+
     @Test
     public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
         String postBody = toJson(Map.of(
@@ -768,7 +788,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .withChargeId(chargeExternalId)
                 .getCharge()
                 .body("$", not(hasKey("metadata")));
-        
+
         assertNull(databaseTestHelper.getChargeByExternalId(chargeExternalId).get("metadata"));
     }
 
@@ -977,7 +997,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
         Thread.sleep(100);
         List<Message> messages = readMessagesFromEventQueue();
-        
+
         final Message message = messages.get(0);
         ZonedDateTime eventTimestamp = ZonedDateTime.parse(
                 new JsonParser()
@@ -1008,7 +1028,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
         return receiveMessageResult.getMessages();
     }
-    
+
     private void purgeEventQueue() {
         AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
         sqsClient.purgeQueue(new PurgeQueueRequest(testContext.getEventQueueUrl()));
@@ -1146,7 +1166,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("message", contains("Payment provider details are not configured on this account"))
                 .body("error_identifier", is(ErrorIdentifier.ACCOUNT_NOT_LINKED_WITH_PSP.toString()));
     }
-    
+
     @Test
     public void shouldReturn400WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreement() {
         String accountId = String.valueOf(RandomUtils.nextInt());
@@ -1171,7 +1191,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("message", contains("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     public void shouldReturn400WhenSavePaymentInstrumentToAgreementIsProvidedButNotAgreementId() {
         String accountId = String.valueOf(RandomUtils.nextInt());
@@ -1197,7 +1217,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body("message", contains("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     public void shouldReturn404WhenNonExistentAgreementIdIsGiven() {
         String accountId = String.valueOf(RandomUtils.nextInt());
@@ -1282,7 +1302,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .withAccountId(accountId)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-        databaseTestHelper.addAgreement(11l, "service-id", JSON_VALID_AGREEMENT_ID_VALUE, 
+        databaseTestHelper.addAgreement(11l, "service-id", JSON_VALID_AGREEMENT_ID_VALUE,
                 "refs", "description", null, Instant.now(), false, Long.parseLong(accountId));
 
         String postBody = toJson(Map.of(

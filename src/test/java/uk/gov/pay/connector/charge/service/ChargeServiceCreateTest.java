@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccou
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -999,7 +1000,15 @@ public class ChargeServiceCreateTest extends ChargeServiceTest {
         gatewayAccount.setAllowMoto(false);
         populateChargeEntity();
 
-        ChargeResponse response = chargeService.create(requestBuilder.withReturnUrl("").withAuthorisationMode(AuthorisationMode.MOTO_API).build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeCreateRequest chargeCreateRequest = ChargeCreateRequestBuilder
+                .aChargeCreateRequest()
+                .withAmount(100L)
+                .withDescription("This is a description")
+                .withReference("Pay reference")
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
+                .build();
+
+        ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());

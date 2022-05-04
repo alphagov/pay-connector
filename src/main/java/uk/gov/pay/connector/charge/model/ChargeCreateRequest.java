@@ -17,6 +17,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChargeCreateRequest {
@@ -130,8 +131,8 @@ public class ChargeCreateRequest {
         return reference;
     }
 
-    public String getReturnUrl() {
-        return returnUrl;
+    public Optional<String> getReturnUrl() {
+        return Optional.ofNullable(returnUrl).filter(Predicate.not(String::isEmpty));
     }
 
     public String getEmail() {
