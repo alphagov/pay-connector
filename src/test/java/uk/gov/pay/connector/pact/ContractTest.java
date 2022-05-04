@@ -4,6 +4,7 @@ import au.com.dius.pact.provider.junit.State;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.dropwizard.testing.ConfigOverride;
@@ -14,11 +15,15 @@ import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
+import uk.gov.pay.connector.client.cardid.model.CardidCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -44,6 +49,7 @@ import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
+import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -73,6 +79,7 @@ public class ContractTest {
     public static Target target;
     private static DatabaseTestHelper dbHelper;
     private static WorldpayMockClient worldpayMockClient;
+    private static CardidStub mockCardidService;
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeClass
@@ -80,6 +87,7 @@ public class ContractTest {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
         worldpayMockClient = new WorldpayMockClient(wireMockRule);
+        mockCardidService = new CardidStub(wireMockRule);
     }
 
     @Before
@@ -327,7 +335,14 @@ public class ContractTest {
     }
 
     @State("a charge with authorisation mode moto_api and one_time_token exists")
-    public void createChargeWithAuthorisationModeMotoApiAndOneTimeToken(Map<String, String> params) {
+    public void createChargeWithAuthorisationModeMotoApiAndOneTimeToken(Map<String, String> params) throws JsonProcessingException {
+        CardInformation cardInformation = aCardInformation()
+                .withPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
+                .withType(CardidCardType.DEBIT)
+                .withBrand("visa")
+                .build();
+        mockCardidService.returnCardInformation("4242424242424242", cardInformation);
+
         String gatewayAccountId = params.get("gateway_account_id");
         String oneTimeToken = params.get("one_time_token");
         String oneTimeTokenUsed = params.get("one_time_token_used");
