@@ -56,4 +56,12 @@ public class CardidServiceConsumerTest {
         assertThat(cardInformation.getPrepaidStatus(), is(PayersCardPrepaidStatus.NOT_PREPAID));
         assertThat(cardInformation.isCorporate(), is(false));
     }
+
+    @Test
+    @PactVerification("cardid")
+    @Pacts(pacts = {"connector-cardid-get-card-information-not-found"})
+    public void getCardInformation_shouldReturnEmpryOptionalWhenCardidReturns404() {
+        String cardNumber = "1000000000000000";
+        assertThat(cardidService.getCardInformation(cardNumber), is(Optional.empty()));
+    }
 }
