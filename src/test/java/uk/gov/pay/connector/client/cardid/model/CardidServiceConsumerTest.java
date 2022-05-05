@@ -1,0 +1,59 @@
+package uk.gov.pay.connector.client.cardid.model;
+
+import au.com.dius.pact.consumer.PactVerification;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.RestClientFactory;
+import uk.gov.pay.connector.app.config.RestClientConfig;
+import uk.gov.pay.connector.client.cardid.service.CardidService;
+import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
+import uk.gov.service.payments.commons.testing.pact.consumers.PactProviderRule;
+import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
+
+import javax.ws.rs.client.Client;
+
+import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class CardidServiceConsumerTest {
+    
+    @Rule
+    public PactProviderRule cardidRule = new PactProviderRule("cardid", this);
+    
+    @Mock
+    ConnectorConfiguration configuration;
+    
+    private CardidService cardidService;
+
+    @Before
+    public void setUp() throws Exception {
+        when(configuration.getCardidBaseUrl()).thenReturn(cardidRule.getUrl());
+        Client client = RestClientFactory.buildClient(new RestClientConfig());
+        cardidService = new CardidService(client, configuration);
+    }
+
+    @Test
+    @PactVerification("cardid")
+    @Pacts(pacts = {"connector-cardid-get-card-information-found"})
+    public void getCardInformation_shouldDeserialiseCardFoundResponse() {
+        String cardNumber = "2221000000000000";
+        Optional<CardInformation> maybeCardInformation = cardidService.getCardInformation(cardNumber);
+        
+        assertThat(maybeCardInformation.isPresent(), is(true));
+        CardInformation cardInformation = maybeCardInformation.get();
+        assertThat(cardInformation.getType(), is(CardidCardType.CREDIT));
+        assertThat(cardInformation.getBrand(), is("master-card"));
+        assertThat(cardInformation.getLabel(), is ("MC"));
+        assertThat(cardInformation.getPrepaidStatus(), is(PayersCardPrepaidStatus.NOT_PREPAID));
+        assertThat(cardInformation.isCorporate(), is(false));
+    }
+}

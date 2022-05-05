@@ -1,0 +1,41 @@
+{
+  "consumer": {
+    "name": "connector"
+  },
+  "provider": {
+    "name": "cardid"
+  },
+  "interactions": [
+    {
+      "description": "a get card information request when the card number is found in the BIN ranges",
+      "request": {
+        "method": "POST",
+        "path": "/v1/api/card",
+        "body": {
+          "cardNumber": "2221000000000000"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "brand": "master-card",
+          "type": "C",
+          "label": "MC",
+          "corporate": false,
+          "prepaid": "NOT_PREPAID"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pact-specification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "3.5.16"
+    }
+  }
+}
