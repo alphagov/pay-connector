@@ -19,11 +19,13 @@ import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
@@ -92,9 +94,9 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
         shouldAuthoriseChargeFor(validPayload);
 
         assertThat(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()), is(true));
-
-        Thread.sleep(100L); // wait for charge to be captured
-        assertFrontendChargeStatusIs(charge.getExternalChargeId(), CAPTURED.getValue());
+        // Charge will be captured by the capture queue, which is not immediate. Check the charge state is the expected
+        // state before or after the capture has been processed.
+        assertThat(databaseTestHelper.getChargeStatus(charge.getChargeId()), anyOf(is(CAPTURE_QUEUED.getValue()), is(CAPTURED.getValue())));
     }
 
     @Test
