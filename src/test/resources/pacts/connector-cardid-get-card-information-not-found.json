@@ -1,0 +1,31 @@
+{
+  "consumer": {
+    "name": "connector"
+  },
+  "provider": {
+    "name": "cardid"
+  },
+  "interactions": [
+    {
+      "description": "a get card information request when the card number is not found in the BIN ranges",
+      "request": {
+        "method": "POST",
+        "path": "/v1/api/card",
+        "body": {
+          "cardNumber": "1000000000000000"
+        }
+      },
+      "response": {
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-specification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "3.5.16"
+    }
+  }
+}
