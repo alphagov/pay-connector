@@ -6,8 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
@@ -25,31 +26,32 @@ import java.util.Map;
 class PaymentInstrumentServiceTest {
     @Mock
     private PaymentInstrumentDao mockPaymentInstrumentDao;        
-    
-    @Mock
-    private CardDetailsEntity mockCardDetailsEntity;    
-    
+
+    private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+
     private static final Instant NOW = Instant.parse("2022-03-31T15:15:00Z");  
-    
+
     @Mock
-    private ChargeService mockChargeService; 
     private PaymentInstrumentService paymentInstrumentService;
-    
+
+    @Mock
+    private LedgerService ledgerService;
+
     @BeforeEach
     void setUp() {
-        paymentInstrumentService = new PaymentInstrumentService(mockPaymentInstrumentDao, Clock.fixed(NOW, ZoneOffset.UTC));
+        paymentInstrumentService = new PaymentInstrumentService(mockPaymentInstrumentDao, ledgerService, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
     void createPaymentInstrument() {
         ArgumentCaptor<PaymentInstrumentEntity> paymentInstrumentEntityCaptor = ArgumentCaptor.forClass(PaymentInstrumentEntity.class);
         var token = Map.of("token", "myToken");
-        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(mockCardDetailsEntity, token);
+        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(chargeEntity, token);
         verify(mockPaymentInstrumentDao).persist(paymentInstrumentEntityCaptor.capture());
         var actualPaymentInstrumentEntity = paymentInstrumentEntityCaptor.getValue();
         assertThat(actualPaymentInstrumentEntity.getCreatedDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getRecurringAuthToken(), is(token));
-        assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getCardDetails()));
         assertThat(actualPaymentInstrumentEntity.getStartDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CREATED));
         assertThat(actualPaymentInstrumentEntity, is(paymentInstrument));

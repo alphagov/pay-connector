@@ -136,7 +136,7 @@ class ChargeServicePostAuthorisationTest {
         var chargeEntity = chargeEntityFixture.withSavePaymentInstrumentToAgreement(true).build();
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
         when(mockChargeDao.findByExternalId(EXTERNAL_ID)).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentInstrumentService.createPaymentInstrument(mockCardDetailsEntity, TOKEN)).thenReturn(mockPaymentInstrumentEntity);
+        when(mockPaymentInstrumentService.createPaymentInstrument(chargeEntity, TOKEN)).thenReturn(mockPaymentInstrumentEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
                 PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);

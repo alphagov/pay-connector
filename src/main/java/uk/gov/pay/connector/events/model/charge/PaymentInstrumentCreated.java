@@ -40,8 +40,8 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
             Optional.ofNullable(paymentInstrument.getCardDetails())
                     .ifPresent(cardDetails -> {
                         this.cardholderName = cardDetails.getCardHolderName();
-                        this.lastDigitsCardNumber = cardDetails.getLastDigitsCardNumber().toString();
-                        this.expiryDate = cardDetails.getExpiryDate().toString();
+                        this.lastDigitsCardNumber = Optional.ofNullable(cardDetails.getLastDigitsCardNumber()).map(String::valueOf).orElse(null);
+                        this.expiryDate = Optional.ofNullable(cardDetails.getExpiryDate()).map(String::valueOf).orElse(null);
                         this.cardBrand = cardDetails.getCardBrand();
                         
                         cardDetails.getBillingAddress().ifPresent(billingAddress -> {
