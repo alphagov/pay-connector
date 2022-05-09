@@ -7,17 +7,21 @@ import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentExceptio
 import uk.gov.pay.connector.client.ledger.exception.LedgerException;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
+import uk.gov.pay.connector.events.model.Event;
 
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.apache.http.HttpStatus.SC_OK;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -85,6 +89,28 @@ public class LedgerService {
                     kv(GATEWAY_ACCOUNT_ID, gatewayAccountId),
                     kv(PAYMENT_EXTERNAL_ID, paymentExternalId));
             throw new GetRefundsForPaymentException(response);
+        }
+    }
+
+    public Response postEvent(Event event) {
+        return postEventList(List.of(event)); 
+    }
+    
+    public Response postEvent(List<Event> events) {
+        return postEventList(events);
+    }
+    
+    private Response postEventList(List<Event> events) {
+        var uri = UriBuilder.fromPath(ledgerUrl).path("/v1/event");
+        var response = client.target(uri)
+                .request()
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.json(events));
+
+        if (response.getStatus() == SC_ACCEPTED) {
+            return response;
+        } else {
+            throw new LedgerException(response);
         }
     }
 
