@@ -6,7 +6,9 @@ public enum ResourceType {
     PAYMENT,
     REFUND,
     PAYOUT,
-    DISPUTE;
+    DISPUTE,
+    AGREEMENT,
+    PAYMENT_INSTRUMENT;
 
     @JsonValue
     public String getLowercase() {
