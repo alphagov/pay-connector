@@ -188,7 +188,7 @@ public class CardResource {
         MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
         CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
 
-        AuthorisationResponse response = cardAuthoriseService.doAuthoriseSync(tokenEntity.getChargeEntity(), cardInformation, authoriseRequest);
+        AuthorisationResponse response = cardAuthoriseService.doAuthoriseMotoApi(tokenEntity.getChargeEntity(), cardInformation, authoriseRequest);
         return handleAuthResponseForMotoApi(response);
     }
 

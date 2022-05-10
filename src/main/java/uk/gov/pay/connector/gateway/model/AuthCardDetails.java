@@ -12,6 +12,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
@@ -242,5 +243,18 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getJsNavigatorLanguage() {
         return Optional.ofNullable(jsNavigatorLanguage);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AuthCardDetails that = (AuthCardDetails) o;
+        return Objects.equals(cardNo, that.cardNo) && Objects.equals(cardHolder, that.cardHolder) && Objects.equals(cvc, that.cvc) && Objects.equals(endDate, that.endDate) && Objects.equals(address, that.address) && Objects.equals(cardBrand, that.cardBrand) && Objects.equals(userAgentHeader, that.userAgentHeader) && Objects.equals(acceptHeader, that.acceptHeader) && payersCardType == that.payersCardType && payersCardPrepaidStatus == that.payersCardPrepaidStatus && Objects.equals(corporateCard, that.corporateCard) && Objects.equals(worldpay3dsFlexDdcResult, that.worldpay3dsFlexDdcResult) && Objects.equals(ipAddress, that.ipAddress) && Objects.equals(jsScreenColorDepth, that.jsScreenColorDepth) && Objects.equals(jsNavigatorLanguage, that.jsNavigatorLanguage) && Objects.equals(jsScreenHeight, that.jsScreenHeight) && Objects.equals(jsScreenWidth, that.jsScreenWidth) && Objects.equals(jsTimezoneOffsetMins, that.jsTimezoneOffsetMins) && Objects.equals(acceptLanguageHeader, that.acceptLanguageHeader);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cardNo, cardHolder, cvc, endDate, address, cardBrand, userAgentHeader, acceptHeader, payersCardType, payersCardPrepaidStatus, corporateCard, worldpay3dsFlexDdcResult, ipAddress, jsScreenColorDepth, jsNavigatorLanguage, jsScreenHeight, jsScreenWidth, jsTimezoneOffsetMins, acceptLanguageHeader);
     }
 }

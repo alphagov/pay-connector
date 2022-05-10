@@ -31,7 +31,6 @@ public abstract class CardServiceTest {
     protected MetricRegistry mockMetricRegistry;
     @Mock
     protected ChargeDao mockedChargeDao;
-    protected ChargeService chargeService;
     @Mock
     protected ChargeEventDao mockedChargeEventDao;
     @Mock

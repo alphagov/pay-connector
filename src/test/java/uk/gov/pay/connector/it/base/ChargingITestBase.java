@@ -10,6 +10,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -20,6 +21,7 @@ import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
+import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -47,10 +49,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
@@ -94,12 +98,14 @@ public class ChargingITestBase {
     protected WorldpayMockClient worldpayMockClient;
     protected SmartpayMockClient smartpayMockClient;
     protected EpdqMockClient epdqMockClient;
+    protected StripeMockClient stripeMockClient;
     protected LedgerStub ledgerStub;
     protected CardidStub cardidStub;
 
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
+    protected final int gatewayAccountCredentialsId; 
     protected Map<String, String> credentials;
     private DatabaseFixtures.TestAccount testAccount;
 
@@ -115,6 +121,7 @@ public class ChargingITestBase {
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
+        this.gatewayAccountCredentialsId = RandomUtils.nextInt();
     }
 
     @Before
@@ -123,25 +130,32 @@ public class ChargingITestBase {
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         smartpayMockClient = new SmartpayMockClient(wireMockServer);
         epdqMockClient = new EpdqMockClient(wireMockServer);
+        stripeMockClient = new StripeMockClient(wireMockServer);
         ledgerStub = new LedgerStub(wireMockServer);
         cardidStub = new CardidStub(wireMockServer);
 
-        credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, "merchant-id",
-                CREDENTIALS_USERNAME, "test-user",
-                CREDENTIALS_PASSWORD, "test-password",
-                CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
-                CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
-        );
+        if (paymentProvider.equals(STRIPE.getName())) {
+            credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
+        } else {
+            credentials = Map.of(
+                    CREDENTIALS_MERCHANT_ID, "merchant-id",
+                    CREDENTIALS_USERNAME, "test-user",
+                    CREDENTIALS_PASSWORD, "test-password",
+                    CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
+                    CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
+            );
+        }
         databaseTestHelper = testContext.getDatabaseTestHelper();
 
         credentialParams = anAddGatewayAccountCredentialsParams()
+                .withId(gatewayAccountCredentialsId)
                 .withPaymentProvider(paymentProvider)
                 .withGatewayAccountId(Long.parseLong(accountId))
                 .withState(ACTIVE)
                 .withCredentials(credentials)
                 .build();
 
+        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
         testAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(Long.parseLong(accountId))
@@ -150,6 +164,7 @@ public class ChargingITestBase {
                 .withCredentials(credentials)
                 .withServiceId(SERVICE_ID)
                 .withAllowAuthApi(true)
+                .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
