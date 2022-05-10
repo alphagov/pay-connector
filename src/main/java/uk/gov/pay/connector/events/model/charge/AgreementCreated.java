@@ -21,6 +21,8 @@ public class AgreementCreated extends AgreementEvent {
                 new AgreementCreatedEventDetails(
                         agreement.getGatewayAccount().getId(),
                         agreement.getReference(),
+                        agreement.getDescription(),
+                        agreement.getUserIdentifier(),
                         PaymentInstrumentStatus.CREATED
                 ),
                 ZonedDateTime.ofInstant(agreement.getCreatedDate(), ZoneOffset.UTC)
@@ -30,11 +32,15 @@ public class AgreementCreated extends AgreementEvent {
     static class AgreementCreatedEventDetails extends EventDetails {
         private final String gatewayAccountId;
         private final String reference;
+        private final String description;
+        private final String userIdentifier;
         private final String status;
 
-        public AgreementCreatedEventDetails(Long gatewayAccountId, String reference, PaymentInstrumentStatus status) {
+        public AgreementCreatedEventDetails(Long gatewayAccountId, String reference, String description, String userIdentifier, PaymentInstrumentStatus status) {
             this.gatewayAccountId = String.valueOf(gatewayAccountId);
             this.reference = reference;
+            this.description = description;
+            this.userIdentifier = userIdentifier;
             this.status = String.valueOf(status);
         }
 
@@ -48,6 +54,14 @@ public class AgreementCreated extends AgreementEvent {
 
         public String getReference() {
             return reference;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getUserIdentifier() {
+            return userIdentifier;
         }
     }
 }
