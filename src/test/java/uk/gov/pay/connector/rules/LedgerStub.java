@@ -20,6 +20,7 @@ import java.util.Optional;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
@@ -37,6 +38,15 @@ public class LedgerStub {
         this.wireMockServer = wireMockServer;
     }
     
+    public void acceptPostEvent() {
+        wireMockServer.stubFor(
+                post(urlPathEqualTo("/v1/event"))
+                        .willReturn(aResponse()
+                                .withStatus(202)
+                        )
+        );
+    }
+
     public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         stubResponse(externalId, ledgerTransactionFields);

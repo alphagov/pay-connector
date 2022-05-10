@@ -14,6 +14,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -54,7 +55,8 @@ public class AgreementsApiResourceIT {
     private String credentialsExternalId;
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
-    
+    private LedgerStub ledgerStub;
+
     public AgreementsApiResourceIT() {
     }
     
@@ -63,6 +65,7 @@ public class AgreementsApiResourceIT {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
+        ledgerStub = new LedgerStub(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
         testAccount = createTestAccount("worldpay");
@@ -70,6 +73,7 @@ public class AgreementsApiResourceIT {
 
         credentialsId = testAccount.getCredentials().get(0).getId();
         credentialsExternalId = testAccount.getCredentials().get(0).getExternalId();
+        ledgerStub.acceptPostEvent();
     }
 
     protected RequestSpecification givenSetup() {
