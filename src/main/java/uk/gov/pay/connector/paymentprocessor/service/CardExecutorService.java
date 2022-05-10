@@ -39,7 +39,7 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 public class CardExecutorService {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
-    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
+    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 1000;
     private final MetricRegistry metricRegistry;
 
     private ExecutorServiceConfig config;
@@ -88,7 +88,7 @@ public class CardExecutorService {
 
     // accepts a supplier function and executed that in a separate Thread of its own.
     // returns a Pair of the execution status and the return type
-    public <T> Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
+    public <T> Pair<ExecutionStatus, T> execute(Supplier<T> callable, int timeoutInMilliseconds) {
         Callable<T> task = callable::get;
         Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElse(Map.of());
         final long startTime = System.currentTimeMillis();
@@ -109,11 +109,11 @@ public class CardExecutorService {
         });
 
         try {
-            return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
+            return Pair.of(COMPLETED, futureObject.get(timeoutInMilliseconds, TimeUnit.MILLISECONDS));
         } catch (ExecutionException | InterruptedException exception) {
             if (exception.getCause() instanceof WebApplicationException) {
                 throw (WebApplicationException) exception.getCause();
-            } else if (exception.getCause() instanceof UnsupportedOperationException) { //ooof
+            } else if (exception.getCause() instanceof UnsupportedOperationException) {
                 throw (UnsupportedOperationException) exception.getCause();
             }
             return Pair.of(FAILED, null);

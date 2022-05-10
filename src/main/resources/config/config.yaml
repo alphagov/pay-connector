@@ -123,7 +123,6 @@ stripe:
   enableTransactionFeeV2ForTestAccounts: ${STRIPE_ENABLE_TRANSACTION_FEE_V2_FOR_TEST_ACCOUNTS:-false}
 
 executorServiceConfig:
-  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 captureProcessConfig:
@@ -284,3 +283,7 @@ expungeConfig:
 
 authorisation3dsConfig:
   maximumNumberOfTimesToAllowUserToAttempt3ds: ${MAXIMUM_NO_USER_3DS_ATTEMPTS:-1}
+
+authorisationConfig:
+  asynchronousAuthTimeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
+  synchronousAuthTimeoutInMilliseconds: ${SYNCHRONOUS_AUTH_TIMEOUT_IN_MILLISECONDS::-10000}

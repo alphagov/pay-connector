@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
@@ -42,8 +43,8 @@ public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
     
     @Test
     public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
-        ExecutorServiceConfig conf = testContext.getExecutorServiceConfig();
-        Field timeoutInSeconds = conf.getClass().getDeclaredField("timeoutInSeconds");
+        AuthorisationConfig conf = testContext.getAuthorisationConfig();
+        Field timeoutInSeconds = conf.getClass().getDeclaredField("asynchronousAuthTimeoutInSeconds");
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);
 

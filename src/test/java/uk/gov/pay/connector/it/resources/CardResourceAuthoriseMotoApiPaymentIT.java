@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
@@ -15,11 +16,15 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -27,6 +32,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -91,7 +97,11 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
         var cardInformation = aCardInformation().withBrand(VISA).withType(CardidCardType.CREDIT).build();
         cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
 
-        shouldAuthoriseChargeFor(validPayload);
+        givenSetup()
+                .body(validPayload)
+                .post(AUTHORISE_MOTO_API_URL)
+                .then()
+                .statusCode(204);
 
         assertThat(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()), is(true));
         // Charge will be captured by the capture queue, which is not immediate. Check the charge state is the expected
@@ -177,7 +187,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn500ForAuhorisationError() throws Exception {
+    public void shouldReturn500ForAuthorisationError() throws Exception {
         String payload = buildJsonForMotoApiPaymentAuthorisation("Joe", "4000000000000119", "11/99", "123",
                 token.getSecureRedirectToken());
 
@@ -196,12 +206,25 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
         assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_ERROR.getValue());
     }
 
-    private void shouldAuthoriseChargeFor(String payload) {
+    @Test
+    public void shouldReturn500ForAuthorisationTimeout() throws Exception {
+        AuthorisationConfig conf = testContext.getAuthorisationConfig();
+        Field timeoutInSeconds = conf.getClass().getDeclaredField("synchronousAuthTimeoutInMilliseconds");
+        timeoutInSeconds.setAccessible(true);
+        timeoutInSeconds.setInt(conf, 0);
+
+        String validPayload = buildJsonForMotoApiPaymentAuthorisation("Joe Bogs ", VALID_CARD_NUMBER, "11/99", "123",
+                token.getSecureRedirectToken());
+        var cardInformation = aCardInformation().withBrand(VISA).withType(CardidCardType.CREDIT).build();
+        cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
+
         givenSetup()
-                .body(payload)
+                .body(validPayload)
                 .post(AUTHORISE_MOTO_API_URL)
                 .then()
-                .statusCode(204);
+                .statusCode(500)
+                .body("message", hasItems("Authorising the payment timed out"))
+                .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_TIMEOUT.toString()));
     }
 
 }

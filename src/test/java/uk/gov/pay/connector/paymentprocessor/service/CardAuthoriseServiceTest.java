@@ -10,10 +10,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationTimedOutException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -73,6 +76,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
@@ -91,6 +95,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -153,8 +158,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private CardDetailsEntity mockCardDetailsEntity;
 
     @Mock
-    ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
-
+    private ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
+    
+    @Mock 
+    private ConnectorConfiguration mockConfiguration;
+    
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
+    
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
@@ -164,8 +175,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(ChargeEntity.class), any(AuthCardDetails.class)))
                 .thenReturn(new SandboxAuthorisationRequestSummary());
         when(mockAuthorisationRequestSummaryStringifier.stringify(any(AuthorisationRequestSummary.class))).thenReturn("");
-
-        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
@@ -180,9 +192,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                         userNotificationService
                 );
 
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
+                mockedChargeDao,
                 mockedProviders,
                 authorisationService,
                 chargeService,
@@ -198,7 +211,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
 
     private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
@@ -566,7 +579,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
 
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
+        when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         try {
@@ -846,6 +859,27 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getGatewayError().isPresent());
         assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
+    }
+
+    @Test(expected = AuthorisationTimedOutException.class)
+    public void doAuthoriseSync_shouldTransitionToAuthorisationTimeout_andThrowException_whenAuthorisationTimesOut() {
+        ChargeEntity charge = createNewChargeWith(1L, CREATED);
+        charge.setAuthorisationMode(MOTO_API);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+
+        String generatedTransactionId = "this-will-be-override-to-TRANSACTION-ID-from-provider";
+
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
+        
+        when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
+
+        cardAuthorisationService.doAuthoriseSync(charge, aCardInformation().build(), authoriseRequest);
+        
+        verify(chargeService).transitionChargeState(charge, AUTHORISATION_TIMEOUT);
+
+        verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     private void providerWillRespondToAuthoriseWith(GatewayResponse value) throws Exception {

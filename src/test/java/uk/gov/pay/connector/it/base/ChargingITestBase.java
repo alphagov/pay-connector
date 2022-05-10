@@ -20,6 +20,7 @@ import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
+import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -94,6 +95,7 @@ public class ChargingITestBase {
     protected WorldpayMockClient worldpayMockClient;
     protected SmartpayMockClient smartpayMockClient;
     protected EpdqMockClient epdqMockClient;
+    protected StripeMockClient stripeMockClient;
     protected LedgerStub ledgerStub;
     protected CardidStub cardidStub;
 
@@ -123,6 +125,7 @@ public class ChargingITestBase {
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         smartpayMockClient = new SmartpayMockClient(wireMockServer);
         epdqMockClient = new EpdqMockClient(wireMockServer);
+        stripeMockClient = new StripeMockClient(wireMockServer);
         ledgerStub = new LedgerStub(wireMockServer);
         cardidStub = new CardidStub(wireMockServer);
 
