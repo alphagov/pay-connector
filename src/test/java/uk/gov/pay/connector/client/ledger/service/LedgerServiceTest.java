@@ -5,10 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentException;
 import uk.gov.pay.connector.client.ledger.exception.LedgerException;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
-import uk.gov.pay.connector.events.EmittedEventFixture;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AgreementCreated;
 import uk.gov.pay.connector.events.model.charge.AgreementSetup;
@@ -27,7 +27,6 @@ import java.util.List;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,7 +56,7 @@ public class LedgerServiceTest {
         when(mockBuilder.get()).thenReturn(mockResponse);
 
         when(mockResponse.getStatus()).thenReturn(SC_OK);
-        ledgerService = new LedgerService(mockClient, mockConnectorConfiguration);
+        ledgerService = new LedgerService(mockClient, mockClient, mockConnectorConfiguration);
     }
 
     @Test(expected = GetRefundsForPaymentException.class)

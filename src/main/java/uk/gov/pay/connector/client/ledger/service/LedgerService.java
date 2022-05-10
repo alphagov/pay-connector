@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.client.ledger.service;
 
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -31,12 +32,14 @@ public class LedgerService {
     private final Logger logger = LoggerFactory.getLogger(LedgerService.class);
 
     private final Client client;
+    private final Client postEventClient;
     private final String ledgerUrl;
 
     @Inject
-    public LedgerService(Client client, ConnectorConfiguration configuration) {
-        this.client = client;
+    public LedgerService(Client client, @Named("ledgerClient") Client ledgerClient, ConnectorConfiguration configuration) {
         this.ledgerUrl = configuration.getLedgerBaseUrl();
+        this.client = client;
+        this.postEventClient = ledgerClient;
     }
 
     public Optional<LedgerTransaction> getTransaction(String id) {
@@ -102,7 +105,7 @@ public class LedgerService {
     
     private Response postEventList(List<Event> events) {
         var uri = UriBuilder.fromPath(ledgerUrl).path("/v1/event");
-        var response = client.target(uri)
+        var response = postEventClient.target(uri)
                 .request()
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.json(events));

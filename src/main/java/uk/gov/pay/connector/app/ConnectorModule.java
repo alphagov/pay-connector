@@ -241,7 +241,14 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     @Singleton
     public Client provideClient() {
-        return RestClientFactory.buildClient(configuration.getRestClientConfig());
+        return RestClientFactory.buildClient(configuration.getRestClientConfig(), null);
+    }
+
+    @Provides
+    @Named("ledgerClient")
+    @Singleton
+    public Client provideLedgerClient() {
+        return RestClientFactory.buildClient(configuration.getRestClientConfig(), configuration.getLedgerPostEventTimeoutInMillis());
     }
 
     @Provides

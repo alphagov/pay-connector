@@ -264,6 +264,7 @@ restClientConfig:
   disabledSecureConnection: ${DISABLE_INTERNAL_HTTPS:-false}
 
 ledgerBaseURL: ${LEDGER_URL}
+ledgerPostEventTimeoutInMillis: ${LEDGER_POST_EVENT_TIMEOUT_IN_MILLIS:-1000}
 cardidBaseURL: ${CARDID_URL}
 
 expungeConfig:

@@ -144,12 +144,19 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("cardidBaseURL")
     private String cardidBaseUrl;
 
+    @NotNull
+    private Long ledgerPostEventTimeoutInMillis;
+
     public String getLedgerBaseUrl() {
         return ledgerBaseUrl;
     }
 
     public String getCardidBaseUrl() {
         return cardidBaseUrl;
+    }
+
+    public Long getLedgerPostEventTimeoutInMillis() {
+        return ledgerPostEventTimeoutInMillis;
     }
 
     @JsonProperty("database")

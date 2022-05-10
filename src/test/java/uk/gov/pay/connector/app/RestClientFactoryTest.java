@@ -21,7 +21,7 @@ public class RestClientFactoryTest {
         when(clientConfiguration.isDisabledSecureConnection()).thenReturn(false);
 
         //when
-        Client client = RestClientFactory.buildClient(clientConfiguration);
+        Client client = RestClientFactory.buildClient(clientConfiguration, null);
 
         //then
         SSLContext sslContext = client.getSslContext();
@@ -36,7 +36,7 @@ public class RestClientFactoryTest {
         when(clientConfiguration.isDisabledSecureConnection()).thenReturn(true);
 
         //when
-        Client client = RestClientFactory.buildClient(clientConfiguration);
+        Client client = RestClientFactory.buildClient(clientConfiguration, null);
 
         //then
         assertThat(client.getSslContext().getProtocol(), is(not("TLSv1.2")));
