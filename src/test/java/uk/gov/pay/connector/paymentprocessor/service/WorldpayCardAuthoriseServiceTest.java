@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -48,6 +49,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -95,6 +97,12 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
+    
+    @Mock
+    private ConnectorConfiguration mockConfiguration;
+    
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
 
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
@@ -115,10 +123,13 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
                 mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService);
 
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
-                new AuthorisationService(mockExecutorService, environment),
+                new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mockChargeEligibleForCaptureService, environment);
@@ -267,6 +278,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     private void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
 }

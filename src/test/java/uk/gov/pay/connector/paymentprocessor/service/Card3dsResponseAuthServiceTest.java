@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -46,6 +47,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -73,6 +75,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private StateTransitionService mockStateTransitionService;
     @Mock
     private Authorisation3dsConfig mockAuthorisation3dsConfig;
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
     @Mock
     private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
     @Mock
@@ -105,19 +109,21 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getAuthorisation3dsConfig()).thenReturn(mockAuthorisation3dsConfig);
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);
     }
 
     public void setupMockExecutorServiceMock() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
 
     private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, Gateway3dsRequiredParams gateway3dsRequiredParams,
@@ -341,7 +347,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() {
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
+        when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
             card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsResult());
