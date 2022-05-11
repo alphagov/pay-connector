@@ -124,7 +124,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService);
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
         
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,

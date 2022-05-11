@@ -222,5 +222,5 @@ authorisation3dsConfig:
   maximumNumberOfTimesToAllowUserToAttempt3ds: ${MAXIMUM_NO_USER_3DS_ATTEMPTS:-1}
 
 authorisationConfig:
-  asynchronousAuthTimeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
+  asynchronousAuthTimeoutInMilliseconds: ${AUTH_READ_TIMEOUT_MILLISECONDS:-1000}
   synchronousAuthTimeoutInMilliseconds: ${SYNCHRONOUS_AUTH_READ_TIMEOUT_IN_MILLISECONDS::-10000}

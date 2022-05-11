@@ -43,7 +43,7 @@ public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
     @Test
     public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
         AuthorisationConfig conf = testContext.getAuthorisationConfig();
-        Field timeoutInSeconds = conf.getClass().getDeclaredField("asynchronousAuthTimeoutInSeconds");
+        Field timeoutInSeconds = conf.getClass().getDeclaredField("asynchronousAuthTimeoutInMilliseconds");
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);
 

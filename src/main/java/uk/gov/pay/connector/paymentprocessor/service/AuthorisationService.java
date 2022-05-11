@@ -43,7 +43,7 @@ public class AuthorisationService {
     }
 
     public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
-        int timeoutInMilliseconds = authorisationConfig.getAsynchronousAuthTimeoutInSeconds() * 1000;
+        int timeoutInMilliseconds = authorisationConfig.getAsynchronousAuthTimeoutInMilliseconds();
         try {
             return executeAuthorise(authorisationSupplier, timeoutInMilliseconds);
         } catch (AuthorisationExecutorTimedOutException e) {

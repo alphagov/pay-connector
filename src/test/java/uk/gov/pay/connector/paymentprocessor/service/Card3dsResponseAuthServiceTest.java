@@ -110,7 +110,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getAuthorisation3dsConfig()).thenReturn(mockAuthorisation3dsConfig);
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,

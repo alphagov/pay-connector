@@ -179,7 +179,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);

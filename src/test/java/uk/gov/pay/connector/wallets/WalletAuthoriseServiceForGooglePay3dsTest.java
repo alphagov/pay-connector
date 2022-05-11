@@ -101,7 +101,7 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class), anyInt());

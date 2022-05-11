@@ -147,7 +147,7 @@ public class WorldpayPaymentProviderTest {
         mockEnvironment = mock(Environment.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockConnectorConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         chargeEntity = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())

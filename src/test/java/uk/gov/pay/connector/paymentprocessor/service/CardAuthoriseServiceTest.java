@@ -173,7 +173,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .thenReturn(new SandboxAuthorisationRequestSummary());
         when(mockAuthorisationRequestSummaryStringifier.stringify(any(AuthorisationRequestSummary.class))).thenReturn("");
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInSeconds()).thenReturn(1);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
         
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
