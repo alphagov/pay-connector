@@ -12,6 +12,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -38,6 +40,7 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -80,6 +83,12 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
 
     @Mock
     private AuthCardDetails mockAuthCardDetails;
+    
+    @Mock
+    private ConnectorConfiguration mockConfiguration;
+    
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
 
     @Captor
     private ArgumentCaptor<Optional<Auth3dsRequiredEntity>> auth3dsRequiredEntityArgumentCaptor;
@@ -91,11 +100,13 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
         when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
         
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

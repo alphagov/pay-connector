@@ -7,7 +7,8 @@ The GOV.UK Pay Connector in Java (Dropwizard).
 
 | Variable | Default | Purpose |
 |---------|---------|---------|
-| `AUTH_READ_TIMEOUT_SECONDS` | `10 seconds` | the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response. Supports any duration parsable by dropwizard [Duration](https://github.com/dropwizard/dropwizard/blob/master/dropwizard-util/src/main/java/io/dropwizard/util/Duration.java)|
+| `AUTH_READ_TIMEOUT_MILLISECONDS` | `1000` | the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response. Supports any duration parsable by dropwizard [Duration](https://github.com/dropwizard/dropwizard/blob/master/dropwizard-util/src/main/java/io/dropwizard/util/Duration.java)|
+| `SYNCHRONOUS_AUTH_TIMEOUT_IN_MILLISECONDS` | `10000` | the timeout before requests made to the synchronous authorisation API for MOTO payments timeout and the payment is failed |
 | `SECURE_WORLDPAY_NOTIFICATION_ENABLED` | false | whether to filter incoming notifications by domain; they will be rejected with a 403 unless they match the required domain |
 | `SECURE_WORLDPAY_NOTIFICATION_DOMAIN` | `worldpay.com` | incoming requests will have a reverse DNS lookup done on their domain. They must resolve to a domain with this suffix (see `DnsUtils.ipMatchesDomain()`) |
 | `NOTIFY_EMAIL_ENABLED` | false | Whether confirmation emails will be sent using GOV.UK Notify |

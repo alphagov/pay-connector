@@ -5,6 +5,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
 import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
@@ -96,6 +97,10 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("authorisation3dsConfig")
     private Authorisation3dsConfig authorisation3dsConfig;
+
+    @NotNull
+    @JsonProperty("authorisationConfig")
+    private AuthorisationConfig authorisationConfig;
 
     @NotNull
     private String graphiteHost;
@@ -269,6 +274,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public Authorisation3dsConfig getAuthorisation3dsConfig() {
         return authorisation3dsConfig;
+    }
+
+    public AuthorisationConfig getAuthorisationConfig() {
+        return authorisationConfig;
     }
 
     public PayoutReconcileProcessConfig getPayoutReconcileProcessConfig() {

@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -73,6 +74,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
@@ -153,8 +155,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private CardDetailsEntity mockCardDetailsEntity;
 
     @Mock
-    ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
-
+    private ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
+    
+    @Mock 
+    private ConnectorConfiguration mockConfiguration;
+    
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
+    
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
@@ -164,8 +172,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(ChargeEntity.class), any(AuthCardDetails.class)))
                 .thenReturn(new SandboxAuthorisationRequestSummary());
         when(mockAuthorisationRequestSummaryStringifier.stringify(any(AuthorisationRequestSummary.class))).thenReturn("");
-
-        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
+        
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
@@ -180,7 +189,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                         userNotificationService
                 );
 
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
@@ -198,7 +207,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
 
     private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
@@ -566,7 +575,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
 
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
+        when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         try {

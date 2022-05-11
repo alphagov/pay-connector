@@ -8,6 +8,8 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -92,6 +94,8 @@ public class WorldpayPaymentProviderTest {
     private Counter mockCounter;
     private Environment mockEnvironment;
     private CardExecutorService mockCardExecutorService = mock(CardExecutorService.class);
+    private ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
+    private AuthorisationConfig mockAuthorisationConfig = mock(AuthorisationConfig.class);
 
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
@@ -142,6 +146,8 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         mockEnvironment = mock(Environment.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockConnectorConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         chargeEntity = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
@@ -493,7 +499,7 @@ public class WorldpayPaymentProviderTest {
                 new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()), 
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
-                new AuthorisationService(mockCardExecutorService, mockEnvironment), 
+                new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration), 
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 mock(ChargeDao.class),
                 mock(EventService.class));

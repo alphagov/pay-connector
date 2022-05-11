@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -69,6 +70,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
@@ -143,6 +145,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private CardDetailsEntity mockCardDetailsEntity;
+    
+    @Mock
+    private AuthorisationConfig mockAuthorisationConfig;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -173,10 +178,12 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
+        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
@@ -386,7 +393,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
+        when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
             walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -461,7 +468,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+                .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
     
     private GatewayResponse providerWillAuthorise() throws Exception {
