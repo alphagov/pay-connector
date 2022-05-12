@@ -2,19 +2,15 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -22,20 +18,16 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
-import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
@@ -58,8 +50,6 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
-import uk.gov.pay.connector.token.model.domain.TokenEntity;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.ws.rs.core.UriInfo;
 import java.time.ZonedDateTime;
@@ -73,7 +63,9 @@ import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
@@ -83,8 +75,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -99,123 +89,92 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
 
-@RunWith(JUnitParamsRunner.class)
-public class ChargeServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ChargeServiceTest {
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+    private static final String SERVICE_HOST = "http://my-service";
+    private static final long GATEWAY_ACCOUNT_ID = 10L;
+    private static final String[] EXTERNAL_CHARGE_ID = new String[1];
+    private static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
+    private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
-    protected static final String SERVICE_HOST = "http://my-service";
-    protected static final long GATEWAY_ACCOUNT_ID = 10L;
-    protected static final long CHARGE_ENTITY_ID = 12345L;
-    protected static final String[] EXTERNAL_CHARGE_ID = new String[1];
-    protected static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
-    protected static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
-    protected static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
-
-    protected ChargeCreateRequestBuilder requestBuilder;
-    protected TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    private ChargeCreateRequestBuilder requestBuilder;
 
     @Mock
-    protected TokenDao mockedTokenDao;
+    private TokenDao mockedTokenDao;
     
     @Mock
-    protected ChargeDao mockedChargeDao;
+    private ChargeDao mockedChargeDao;
     
     @Mock
-    protected ChargeEventDao mockedChargeEventDao;
-    
-    @Mock
-    protected ChargeEventEntity mockChargeEvent;
+    private ChargeEventDao mockedChargeEventDao;
 
     @Mock
-    protected LedgerService ledgerService;
+    private LedgerService ledgerService;
 
     @Mock
-    protected GatewayAccountDao mockedGatewayAccountDao;
+    private GatewayAccountDao mockedGatewayAccountDao;
 
     @Mock
-    protected CardTypeDao mockedCardTypeDao;
+    private CardTypeDao mockedCardTypeDao;
 
     @Mock
-    protected AgreementDao mockedAgreementDao;
+    private AgreementDao mockedAgreementDao;
 
     @Mock
-    protected ConnectorConfiguration mockedConfig;
+    private ConnectorConfiguration mockedConfig;
     
     @Mock
-    protected UriInfo mockedUriInfo;
+    private UriInfo mockedUriInfo;
     
     @Mock
-    protected LinksConfig mockedLinksConfig;
+    private LinksConfig mockedLinksConfig;
     
     @Mock
-    protected PaymentProviders mockedProviders;
+    private PaymentProviders mockedProviders;
     
     @Mock
-    protected PaymentProvider mockedPaymentProvider;
+    private PaymentProvider mockedPaymentProvider;
     
     @Mock
-    protected EventService mockEventService;
+    private EventService mockEventService;
 
     @Mock
-    protected PaymentInstrumentService mockPaymentInstrumentService;
+    private PaymentInstrumentService mockPaymentInstrumentService;
     
     @Mock
-    protected StateTransitionService mockStateTransitionService;
+    private StateTransitionService mockStateTransitionService;
 
     @Mock
-    protected RefundService mockedRefundService;
+    private RefundService mockedRefundService;
     
     @Mock
-    protected GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     @Mock
-    protected AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
+    private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
 
     @Mock
-    protected CaptureProcessConfig mockedCaptureProcessConfig;
+    private CaptureProcessConfig mockedCaptureProcessConfig;
     
     @Mock
-    protected TaskQueueService mockTaskQueueService;
+    private TaskQueueService mockTaskQueueService;
     
     @Captor
-    protected ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
-    
-    @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
+    private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
-    protected ChargeService chargeService;
-    protected GatewayAccountEntity gatewayAccount;
-    protected GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+    private ChargeService chargeService;
+    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         requestBuilder = ChargeCreateRequestBuilder
                 .aChargeCreateRequest()
                 .withAmount(100L)
                 .withReturnUrl("http://return-service.com")
                 .withDescription("This is a description")
                 .withReference("Pay reference");
-
-        telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
-                .withAmount(100L)
-                .withReference("Some reference")
-                .withDescription("Some description")
-                .withCreatedDate("2018-02-21T16:04:25Z")
-                .withAuthorisedDate("2018-02-21T16:05:33Z")
-                .withProcessorId("1PROC")
-                .withProviderId("1PROV")
-                .withAuthCode("666")
-                .withNameOnCard("Jane Doe")
-                .withEmailAddress("jane.doe@example.com")
-                .withTelephoneNumber("+447700900796")
-                .withCardType("visa")
-                .withCardExpiry(CardExpiryDate.valueOf("01/19"))
-                .withLastFourDigits("1234")
-                .withFirstSixDigits("123456");
 
         gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
@@ -244,13 +203,8 @@ public class ChargeServiceTest {
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
     }
 
-    @After
-    public void tearDown() {
-        telephoneRequestBuilder = null;
-    }
-
     @Test
-    public void forcingChargeToCapturedState_shouldSucceedAndEmitEvent() {
+    void forcingChargeToCapturedState_shouldSucceedAndEmitEvent() {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(CAPTURED).build();
@@ -275,7 +229,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void forcingChargeToAuthorisationError_shouldSucceedAndEmitEvent() {
+    void forcingChargeToAuthorisationError_shouldSucceedAndEmitEvent() {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_ERROR).build();
@@ -298,9 +252,8 @@ public class ChargeServiceTest {
         verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
 
-
     @Test
-    public void forcingChargeToAuthorisationRejected_shouldSucceedAndEmitEvent() {
+    void forcingChargeToAuthorisationRejected_shouldSucceedAndEmitEvent() {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(AUTHORISATION_REJECTED).build();
@@ -322,20 +275,20 @@ public class ChargeServiceTest {
 
         verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
-    
-    @Test(expected = InvalidForceStateTransitionException.class)
-    @Parameters({
-            "USER CANCELLED",
-            "USER CANCEL SUBMITTED",
-            "CAPTURE APPROVED RETRY"
+
+    @ParameterizedTest
+    @EnumSource(names = {
+            "USER_CANCELLED",
+            "USER_CANCEL_SUBMITTED",
+            "CAPTURE_APPROVED_RETRY"
     })
-    public void forcingChargeToInvalidState_shouldThrowException(String status) {
+    void forcingChargeToInvalidState_shouldThrowException(ChargeStatus status) {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
-        chargeService.forceTransitionChargeState(charge, ChargeStatus.fromString(status), null);
+        assertThrows(InvalidForceStateTransitionException.class, () -> chargeService.forceTransitionChargeState(charge, status, null));
     }
-    
+
     @Test
-    public void shouldUpdateEmailToCharge() {
+    void shouldUpdateEmailToCharge() {
         ChargeEntity createdChargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(createdChargeEntity)
                 .withUpdated(ZonedDateTime.now(UTC))
@@ -362,11 +315,11 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() {
+    void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
@@ -384,37 +337,8 @@ public class ChargeServiceTest {
 
     }
 
-    protected ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) {
-        ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
-        refunds.setAmountAvailable(chargeEntity.getAmount());
-        refunds.setAmountSubmitted(0L);
-        refunds.setStatus(EXTERNAL_AVAILABLE.getStatus());
-
-        ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
-        settlement.setCapturedTime(null);
-        settlement.setCaptureSubmitTime(null);
-
-        ExternalChargeState externalChargeState = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal();
-        return aChargeResponseBuilder()
-                .withChargeId(chargeEntity.getExternalId())
-                .withAmount(chargeEntity.getAmount())
-                .withReference(chargeEntity.getReference())
-                .withDescription(chargeEntity.getDescription())
-                .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
-                .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
-                .withProviderName(chargeEntity.getPaymentProvider())
-                .withCreatedDate(chargeEntity.getCreatedDate())
-                .withEmail(chargeEntity.getEmail())
-                .withRefunds(refunds)
-                .withSettlement(settlement)
-                .withReturnUrl(chargeEntity.getReturnUrl())
-                .withLanguage(chargeEntity.getLanguage())
-                .withMoto(chargeEntity.isMoto())
-                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
-    }
-
     @Test
-    public void shouldBeRetriableGivenChargeHasNotExceededMaxNumberOfCaptureAttempts() {
+    void shouldBeRetriableGivenChargeHasNotExceededMaxNumberOfCaptureAttempts() {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS);
         when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
 
@@ -422,14 +346,14 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldNotBeRetriableGivenChargeExceededMaxNumberOfCaptureAttempts() {
+    void shouldNotBeRetriableGivenChargeExceededMaxNumberOfCaptureAttempts() {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS + 1);
 
         assertThat(chargeService.isChargeRetriable(anyString()), is(false));
     }
 
     @Test
-    public void shouldReturnNumberOf3dsRequiredEvents() {
+    void shouldReturnNumberOf3dsRequiredEvents() {
         when(mockedChargeDao.count3dsRequiredEventsForChargeExternalId(EXTERNAL_CHARGE_ID[0])).thenReturn(42);
 
         int authorisation3dsRequiredEvents = chargeService.count3dsRequiredEvents(EXTERNAL_CHARGE_ID[0]);
@@ -438,7 +362,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargeEntityAndPersistChargeEventForAValidStateTransition() {
+    void shouldUpdateChargeEntityAndPersistChargeEventForAValidStateTransition() {
         ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
 
         chargeService.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
@@ -448,7 +372,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldOfferPaymentStateTransition() {
+    void shouldOfferPaymentStateTransition() {
         ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
 
@@ -463,7 +387,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargePost3dsAuthorisationWithoutTransactionId() {
+    void shouldUpdateChargePost3dsAuthorisationWithoutTransactionId() {
         ChargeEntity chargeSpy = spy(aValidChargeEntity()
                 .withStatus(AUTHORISATION_3DS_READY)
                 .build());
@@ -480,7 +404,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargePost3dsAuthorisationWithTransactionId() {
+    void shouldUpdateChargePost3dsAuthorisationWithTransactionId() {
         ChargeEntity chargeSpy = spy(aValidChargeEntity()
                 .withStatus(AUTHORISATION_3DS_READY)
                 .build());
@@ -497,7 +421,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
+    void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
         final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
         ChargeEntity chargeSpy = spy(aValidChargeEntity()
                 .withStatus(AUTHORISATION_3DS_READY)
@@ -517,4 +441,5 @@ public class ChargeServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
         verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
     }
+
 }
