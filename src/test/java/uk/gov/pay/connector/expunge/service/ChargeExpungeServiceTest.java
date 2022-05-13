@@ -76,7 +76,6 @@ public class ChargeExpungeServiceTest {
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(mockExpungeConfig);
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
         when(mockConnectorConfiguration.getStripeConfig()).thenReturn(mockStripeGatewayConfig);
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()).thenReturn(Instant.parse("2022-01-01T11:07:00.000Z"));
 
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
                 mockChargeService);
@@ -168,27 +167,6 @@ public class ChargeExpungeServiceTest {
                 .withStatus(AUTHORISATION_REJECTED)
                 .withPaymentProvider("stripe")
                 .withCreatedDate(Instant.parse("2022-01-01T11:08:00.000Z"))
-                .build();
-        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
-        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
-        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
-        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
-                .thenReturn(Optional.of(chargeEntity));
-        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
-
-        chargeExpungeService.expunge(1);
-
-        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
-    }
-
-    @Test
-    public void expunge_shouldExpungeCharge_ifStripePaymentMissingFees_createdBeforeCollectFeeForStripeFailedPaymentsFromDate() {
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withGatewayAccountEntity(liveGatewayAccount)
-                .withStatus(AUTHORISATION_REJECTED)
-                .withPaymentProvider("stripe")
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withCreatedDate(Instant.parse("2022-01-01T11:06:00.000Z"))
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);

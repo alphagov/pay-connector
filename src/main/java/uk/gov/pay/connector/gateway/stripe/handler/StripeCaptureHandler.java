@@ -26,14 +26,9 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
-import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeCaptureHandler implements CaptureHandler {
 
@@ -133,23 +128,8 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private List<Fee> generateFeeList(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
-            if (!createdDate.isBefore(stripeGatewayConfig.getFeePercentageV2Date()) ||
-                    (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
-                            request.getGatewayAccount().getType().equals(TEST.toString())) ||
-                    stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
-                            .contains(request.getGatewayAccount().getId().toString())) {
-
-                LOGGER.info("Applying new stripe pricing for charge",
-                        kv(PAYMENT_EXTERNAL_ID, request.getExternalId()),
-                        kv(GATEWAY_ACCOUNT_ID, request.getGatewayAccount().getId()),
-                        kv(GATEWAY_ACCOUNT_TYPE, request.getGatewayAccount().getType())
-                );
-
-                return StripeFeeCalculator.getFeeListForV2(stripeFee, request, stripeGatewayConfig.getFeePercentageV2(),
+                return StripeFeeCalculator.getFeeList(stripeFee, request, stripeGatewayConfig.getFeePercentage(),
                         stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
-            } else {
-                return List.of(Fee.of(null, StripeFeeCalculator.getTotalAmountForConnectFee(stripeFee, request, stripeGatewayConfig.getFeePercentage())));
-            }
         }
         return List.of();
     }

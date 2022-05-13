@@ -18,12 +18,11 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.Instant;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -32,7 +31,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
@@ -57,9 +55,7 @@ class TaskQueueServiceTest {
     
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final int chargeCreatedBeforeDate = 1629849600; //25Aug2021
-    private final int feeCollectingStartsDate = 1629936000; //26 Aug2021
-    private final int chargeCreatedAfterDate =  1630105200; //27 Aug2021
+    private final int chargeCreatedDate =  1630105200;
 
     @BeforeEach
     void setUp() {
@@ -70,39 +66,12 @@ class TaskQueueServiceTest {
     }
 
     @Test
-    void shouldOfferFeeTask_whenChargeIsTerminallyFailed_andStripe_andGatewayIdPresent() throws Exception {
-        var chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
-                .withGatewayAccountEntity(aGatewayAccountEntity()
-                        .withId(12L)
-                        .withGatewayName("stripe")
-                        .withRequires3ds(false)
-                        .withType(LIVE)
-                        .build())
-                .build();
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-        when(mockStripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(false);
-        when(mockStripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList())
-                .thenReturn(List.of(String.valueOf(chargeEntity.getGatewayAccount().getId())));
-
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
-        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
-        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
-    }
-
-    @Test
     void shouldNotOfferFeeTask_whenChargeIsFailedButNotTerminal() throws Exception {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
                 .withStatus(ChargeStatus.EXPIRE_CANCEL_READY)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
                 .withGatewayAccountEntity(aGatewayAccountEntity()
                         .withId(12L)
                         .withGatewayName("stripe")
@@ -110,10 +79,6 @@ class TaskQueueServiceTest {
                         .withType(LIVE)
                         .build())
                 .build();
-
-        setupStripeGatewayConfigMock("12");
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
@@ -126,7 +91,7 @@ class TaskQueueServiceTest {
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
                 .withStatus(ChargeStatus.CAPTURED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedAfterDate))
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
                 .withGatewayAccountEntity(aGatewayAccountEntity()
                         .withId(12L)
                         .withGatewayName("stripe")
@@ -134,9 +99,6 @@ class TaskQueueServiceTest {
                         .withType(LIVE)
                         .build())
                 .build();
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
@@ -157,16 +119,13 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
     }
 
     @Test
-    void shouldNotOfferFeeTask_whenChargeHasNoGatewayTransationId() throws Exception {
+    void shouldNotOfferFeeTask_whenChargeHasNoGatewayTransactionId() throws Exception {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withStatus(ChargeStatus.EXPIRED)
@@ -178,9 +137,6 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-        
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockTaskQueue, never()).addTaskToQueue(any());
@@ -202,9 +158,6 @@ class TaskQueueServiceTest {
                         .build())
                 .build();
 
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -215,55 +168,12 @@ class TaskQueueServiceTest {
     }
 
     @Test
-    void shouldNotOfferFeeTask_whenCollectFeeDateIsInTheFuture() throws Exception {
+    void shouldOfferFeeTask_whenPaymentFailedAndIsStripe() throws Exception {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
                 .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
-                .build();
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
-
-        verify(mockTaskQueue, never()).addTaskToQueue(any());
-    }
-
-    @Test
-    void shouldOfferFeeTask_whenTestGatewayAccountIsEnabled() throws Exception {
-        var chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
-                .withGatewayAccountEntity(aGatewayAccountEntity()
-                        .withGatewayName("stripe")
-                        .withRequires3ds(false)
-                        .withType(TEST)
-                        .withId(12L)
-                        .build())
-                .build();
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-        when(mockStripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(true);
-
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
-
-        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
-        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    
-    }
-
-    @Test
-    void shouldOfferFeeTask_whenTestGatewayAccountIsInEnabledList() throws Exception {
-        var chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
                 .withGatewayAccountEntity(aGatewayAccountEntity()
                         .withId(12L)
                         .withGatewayName("stripe")
@@ -271,55 +181,6 @@ class TaskQueueServiceTest {
                         .withType(LIVE)
                         .build())
                 .build();
-
-        setupStripeGatewayConfigMock("12");
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
-        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
-        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    }
-
-    @Test
-    void shouldOfferFeeTask_whenCreatedDateIsAfterCollectEnableDate() throws Exception {
-        var chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedAfterDate))
-                .withGatewayAccountEntity(aGatewayAccountEntity()
-                        .withId(12L)
-                        .withGatewayName("stripe")
-                        .withRequires3ds(false)
-                        .withType(LIVE)
-                        .build())
-                .build();
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
-        
-        taskQueueService.offerTasksOnStateTransition(chargeEntity);
-        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
-        var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));    
-    }
-
-    @Test
-    void shouldOfferFeeTask_whenCreatedDateIsOnCollectEnableDate() throws Exception {
-        var chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(1629936000))
-                .withGatewayAccountEntity(aGatewayAccountEntity()
-                        .withId(12L)
-                        .withGatewayName("stripe")
-                        .withRequires3ds(false)
-                        .withType(LIVE)
-                        .build())
-                .build();
-
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
         String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
@@ -332,8 +193,8 @@ class TaskQueueServiceTest {
         var chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId("a-gateway-transaction-id")
-                .withStatus(ChargeStatus.EXPIRED)
-                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedBeforeDate))
+                .withStatus(ChargeStatus.CAPTURED)
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
                 .withGatewayAccountEntity(aGatewayAccountEntity()
                         .withId(12L)
                         .withGatewayName("stripe")
@@ -341,10 +202,6 @@ class TaskQueueServiceTest {
                         .withType(TEST)
                         .build())
                 .build();
-
-        setupStripeGatewayConfigMock("1");
-        when(mockStripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())
-                .thenReturn(Instant.ofEpochSecond(feeCollectingStartsDate));
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
@@ -367,12 +224,5 @@ class TaskQueueServiceTest {
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getLevel(), is(Level.ERROR));
         assertThat(loggingEvent.getMessage(), is("Error adding task to queue"));
-    }
-    
-
-    private void setupStripeGatewayConfigMock(String gatewayAccountId) {
-        when(mockStripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts()).thenReturn(false);
-        when(mockStripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList())
-                .thenReturn(List.of(gatewayAccountId));
     }
 }

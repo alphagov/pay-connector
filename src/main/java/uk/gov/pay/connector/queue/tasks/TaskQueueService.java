@@ -19,7 +19,6 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class TaskQueueService {
@@ -41,20 +40,12 @@ public class TaskQueueService {
     }
  
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
-        if (!chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate()) ||
-                (stripeGatewayConfig.isEnableTransactionFeeV2ForTestAccounts() &&
-                        chargeEntity.getGatewayAccount().getType().equals(TEST.toString())) ||
-                stripeGatewayConfig.getEnableTransactionFeeV2ForGatewayAccountsList()
-                        .contains(chargeEntity.getGatewayAccount().getId().toString())) {
+        boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
+                chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
 
-            boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
-                    chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
-
-            if (isTerminallyFailed &&
-                    chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
-                    !StringUtils.isEmpty(chargeEntity.getGatewayTransactionId())) {
-                addCollectStripeFeeForFailedPaymentTask(chargeEntity);
-            }
+        if (isTerminallyFailed && chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
+                !StringUtils.isEmpty(chargeEntity.getGatewayTransactionId())) {
+            addCollectStripeFeeForFailedPaymentTask(chargeEntity);
         }
     }
 

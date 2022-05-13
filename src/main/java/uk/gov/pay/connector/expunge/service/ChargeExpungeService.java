@@ -123,10 +123,6 @@ public class ChargeExpungeService {
     }
 
     private boolean isStripePaymentMissingFees(ChargeEntity chargeEntity) {
-        if (chargeEntity.getGatewayAccount().isLive() &&
-                chargeEntity.getCreatedDate().isBefore(stripeGatewayConfig.getCollectFeeForStripeFailedPaymentsFromDate())) {
-            return false;
-        }
         // We collect fees asynchronously for failed Stripe payments that we have attempted to authorise with Stripe -
         // and so have a gateway transaction id. We want to prevent these payments from being expunged if we have not
         // yet collected the fee.

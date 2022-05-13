@@ -1,16 +1,11 @@
 package uk.gov.pay.connector.app;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.dropwizard.Configuration;
-import uk.gov.pay.connector.app.config.StringToListConverter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class StripeGatewayConfig extends Configuration {
@@ -29,12 +24,6 @@ public class StripeGatewayConfig extends Configuration {
     
     @Valid
     private Double feePercentage;
-
-    @Valid
-    private Double feePercentageV2;
-
-    @Valid
-    private long feePercentageV2Date;
 
     @Valid
     private String platformAccountId;
@@ -61,16 +50,6 @@ public class StripeGatewayConfig extends Configuration {
     @Valid
     private int threeDsFeeInPence;
 
-    @Valid
-    private long collectFeeForStripeFailedPaymentsFromDate;
-
-    @Valid
-    @JsonDeserialize(converter = StringToListConverter.class)
-    private List<String> enableTransactionFeeV2ForGatewayAccountsList;
-
-    @Valid
-    private Boolean enableTransactionFeeV2ForTestAccounts;
-
     public String getUrl() {
         return url;
     }
@@ -81,10 +60,6 @@ public class StripeGatewayConfig extends Configuration {
 
     public List<String> getWebhookSigningSecrets() {
         return webhookSigningSecrets.stream().filter(s -> !s.isBlank()).collect(Collectors.toList());
-    }
-    
-    public Double getFeePercentage() {
-        return Optional.ofNullable(feePercentage).orElse(0.0);
     }
 
     public Boolean isCollectFee() {
@@ -107,12 +82,8 @@ public class StripeGatewayConfig extends Configuration {
         return credentials;
     }
 
-    public Double getFeePercentageV2() {
-        return feePercentageV2;
-    }
-
-    public Instant getFeePercentageV2Date() {
-        return Instant.ofEpochSecond(feePercentageV2Date);
+    public Double getFeePercentage() {
+        return feePercentage;
     }
 
     public int getRadarFeeInPence() {
@@ -121,18 +92,5 @@ public class StripeGatewayConfig extends Configuration {
 
     public int getThreeDsFeeInPence() {
         return threeDsFeeInPence;
-    }
-
-    public Instant getCollectFeeForStripeFailedPaymentsFromDate() {
-        return Instant.ofEpochSecond(collectFeeForStripeFailedPaymentsFromDate);
-    }
-
-    public List<String> getEnableTransactionFeeV2ForGatewayAccountsList() {
-        return Optional.ofNullable(enableTransactionFeeV2ForGatewayAccountsList)
-                .orElse(Collections.emptyList());
-    }
-
-    public Boolean isEnableTransactionFeeV2ForTestAccounts() {
-        return enableTransactionFeeV2ForTestAccounts;
     }
 }
