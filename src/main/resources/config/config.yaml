@@ -188,6 +188,9 @@ jerseyClient:
   userAgent: connector
   gzipEnabledForRequests: false
 
+  # Validates the connection is still alive if it has been unused for this long
+  validateAfterInactivityPeriod: 500ms
+
 customJerseyClient:
   # Sets the read timeout to a specified timeout, in
   # milliseconds. A non-zero value specifies the timeout when
