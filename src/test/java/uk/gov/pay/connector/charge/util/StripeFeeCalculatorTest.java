@@ -48,7 +48,7 @@ class StripeFeeCalculatorTest {
 
     @Test
     void shouldReturnFeeListForChargeWithNo3ds() {
-        List<Fee> feeList = StripeFeeCalculator.getFeeListForV2(stripeFee, request, feePercentage, 5, 10);
+        List<Fee> feeList = StripeFeeCalculator.getFeeList(stripeFee, request, feePercentage, 5, 10);
         assertThat(feeList.size(), is(2));
         assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
         assertThat(feeList.get(0).getAmount(), Is.is(100L));
@@ -58,7 +58,7 @@ class StripeFeeCalculatorTest {
 
     @Test
     void shouldReturnFeeListForChargeWith3ds() {
-        List<Fee> feeList = StripeFeeCalculator.getFeeListForV2(stripeFee, requestForChargeWith3ds, feePercentage, 5, 10);
+        List<Fee> feeList = StripeFeeCalculator.getFeeList(stripeFee, requestForChargeWith3ds, feePercentage, 5, 10);
         assertThat(feeList.size(), is(3));
         assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
         assertThat(feeList.get(0).getAmount(), Is.is(100L));

@@ -109,15 +109,10 @@ public class CardCaptureService {
         List<Fee> feeList = captureResponse.getFeeList();
         feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee)).forEach(charge::addFee);
         
-        // We only want to emit the FEE_INCURRED event for charges using the new Stripe pricing. The original Stripe 
-        // pricing only has a single fee, whereas the v2 pricing will have at least 2 fees (transaction, radar) 
-        // applied to each charge. This size check can be removed after we have switched to the new pricing.
-        if (feeList.size() > 1) {
-            try {
-                sendToEventQueue(FeeIncurredEvent.from(charge));
-            } catch (EventCreationException e) {
-                LOG.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
-            }
+        try {
+            sendToEventQueue(FeeIncurredEvent.from(charge));
+        } catch (EventCreationException e) {
+            LOG.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
         }
 
         chargeService.updateChargePostCapture(charge, nextStatus);

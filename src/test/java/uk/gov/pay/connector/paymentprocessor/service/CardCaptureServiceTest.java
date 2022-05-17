@@ -150,12 +150,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private void stripeWillRespondWithSuccess() {
         when(mockedPaymentProvider.capture(any())).thenReturn(
                 fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING,
-                        List.of(Fee.of(FeeType.TRANSACTION, 50L))));
-    }
-
-    private void stripeWillRespondWithSuccessAndAdditionalFees() {
-        when(mockedPaymentProvider.capture(any())).thenReturn(
-                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), STRIPE), PENDING,
                         List.of(Fee.of(FeeType.TRANSACTION, 50L), Fee.of(FeeType.RADAR, 40L), Fee.of(FeeType.THREE_D_S, 30L))));
     }
 
@@ -195,40 +189,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doCapture_shouldCaptureAChargeForStripeAccountV1() {
-
-        String gatewayTxId = "theTxId";
-        ChargeEntity charge = createNewChargeWith("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-
-        ChargeEntity chargeSpy = spy(charge);
-        mockChargeDaoOperations(chargeSpy);
-
-        stripeWillRespondWithSuccess();
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
-
-        assertThat(response.isSuccessful(), is(true));
-        InOrder inOrder = Mockito.inOrder(chargeSpy);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
-        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
-
-        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-
-        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), isNull());
-
-        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
-
-        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
-        verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
-
-        verifyNoInteractions(mockEventService);
-
-        verifyNoInteractions(mockUserNotificationService);
-    }
-
-    @Test
-    public void doCapture_shouldCaptureAChargeForStripeAccountV2() throws QueueException {
+    public void doCapture_shouldCaptureAChargeForStripeAccount() throws QueueException {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
@@ -236,7 +197,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
 
-        stripeWillRespondWithSuccessAndAdditionalFees();
+        stripeWillRespondWithSuccess();
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
