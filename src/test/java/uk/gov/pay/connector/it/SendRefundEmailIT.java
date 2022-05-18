@@ -96,7 +96,7 @@ public class SendRefundEmailIT {
 
         Thread.sleep(500L); // Email sent using ExecutorService task: give it some time to complete
 
-        verify(notificationClient).sendEmail(anyString(), anyString(), anyMap(), isNull());
+        verify(notificationClient).sendEmail(anyString(), anyString(), anyMap(), isNull(), isNull());
     }
 
     private void addGatewayAccount() {
