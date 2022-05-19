@@ -195,9 +195,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     response,
                     request.getCharge().getChargeStatus(),
                     request.getCharge().getChargeStatus());
-            
-            request.getCharge().setGatewayTransactionId(newTransactionId());
-            response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+
+            CardAuthorisationGatewayRequest newRequest = CardAuthorisationGatewayRequest.valueOf(request, newTransactionId());
+            response = worldpayAuthoriseHandler.authoriseWithoutExemption(newRequest);
         } 
 
         return response;

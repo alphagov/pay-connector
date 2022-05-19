@@ -9,10 +9,17 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AuthorisationGatewayRequest implements GatewayRequest {
-    protected ChargeEntity charge;
+    private final ChargeEntity charge;
+    private final String gatewayTransactionId;
     
-    public AuthorisationGatewayRequest(ChargeEntity charge) {
+    protected AuthorisationGatewayRequest(ChargeEntity charge) {
         this.charge = charge;
+        this.gatewayTransactionId = charge.getGatewayTransactionId();
+    }
+    
+    protected AuthorisationGatewayRequest(ChargeEntity charge, String gatewayTransactionId) {
+        this.charge = charge;
+        this.gatewayTransactionId = gatewayTransactionId;
     }
 
     public ChargeEntity getCharge() {
@@ -20,7 +27,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     }
 
     public Optional<String> getTransactionId() {
-        return Optional.ofNullable(charge.getGatewayTransactionId());
+        return Optional.ofNullable(gatewayTransactionId);
     }
 
     public String getAmount() {
