@@ -26,6 +26,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonForMotoApiPaymentAuthorisation;
@@ -35,7 +36,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")},
+        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
         withDockerSQS = true
 )
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
@@ -94,9 +95,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
         shouldAuthoriseChargeFor(validPayload);
 
         assertThat(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()), is(true));
-        // Charge will be captured by the capture queue, which is not immediate. Check the charge state is the expected
-        // state before or after the capture has been processed.
-        assertThat(databaseTestHelper.getChargeStatus(charge.getChargeId()), anyOf(is(CAPTURE_QUEUED.getValue()), is(CAPTURED.getValue())));
+        assertThat(databaseTestHelper.getChargeStatus(charge.getChargeId()), is(CAPTURE_QUEUED.getValue()));
     }
 
     @Test
