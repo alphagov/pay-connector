@@ -95,7 +95,7 @@ public class UserNotificationServiceEmailCollectionModeTest {
 
         if ("OPTIONAL".equals(emailCollectionMode) && "email@example.com".equals(emailAddress) && shouldEmailBeSent) {
             when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
-            when(notificationClient.sendEmail(anyString(), anyString(), anyMap(), isNull())).thenReturn(mockNotificationCreatedResponse);
+            when(notificationClient.sendEmail(anyString(), anyString(), anyMap(), isNull(), isNull())).thenReturn(mockNotificationCreatedResponse);
             when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
             when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
             when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(UUID.randomUUID());
@@ -107,6 +107,6 @@ public class UserNotificationServiceEmailCollectionModeTest {
         var chargeEntity = aValidChargeEntity().withEmail(emailAddress).withGatewayAccountEntity(gatewayAccount).build();
         userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount()).get(1000, TimeUnit.SECONDS);
 
-        verify(notificationClient, times(shouldEmailBeSent? 1 : 0)).sendEmail(anyString(), anyString(), anyMap(), isNull());
+        verify(notificationClient, times(shouldEmailBeSent? 1 : 0)).sendEmail(anyString(), anyString(), anyMap(), isNull(), isNull());
     }
 }

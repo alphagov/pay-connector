@@ -101,7 +101,7 @@ public class UserNotificationService {
                 NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, gatewayAccountEntity);
                 logger.info(format("Sending %s email.", emailNotificationType));
                 SendEmailResponse response = notifyClientSettings.getClient()
-                        .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null);
+                        .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null, notifyClientSettings.getEmailReplyToId());
                 return Optional.of(response.getNotificationId().toString());
             } catch (NotificationClientException e) {
                 logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + charge.getExternalId(), e);
@@ -131,10 +131,12 @@ public class UserNotificationService {
     private static class NotifyClientSettings {
         private NotificationClient client;
         private String templateId;
+        private String emailReplyToId;
 
-        private NotifyClientSettings(NotificationClient client, String templateId) {
+        private NotifyClientSettings(NotificationClient client, String templateId, String emailReplyToId) {
             this.client = client;
             this.templateId = templateId;
+            this.emailReplyToId = emailReplyToId;
         }
 
         public NotificationClient getClient() {
@@ -145,11 +147,16 @@ public class UserNotificationService {
             return templateId;
         }
 
+        public String getEmailReplyToId() {
+            return emailReplyToId;
+        }
+
         public static NotifyClientSettings of(Map<String, String> notifySettings, NotifyClientFactory notifyClientFactory, String customTemplateId, String payTemplateId) {
             if (hasCustomTemplateAndApiKey(notifySettings, customTemplateId)) {
-                return new NotifyClientSettings(notifyClientFactory.getInstance(notifySettings.get("api_token")), notifySettings.get(customTemplateId));
+                String emailReplyToId = notifySettings.get("email_reply_to_id");
+                return new NotifyClientSettings(notifyClientFactory.getInstance(notifySettings.get("api_token")), notifySettings.get(customTemplateId), emailReplyToId);
             }
-            return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId);
+            return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId, null);
         }
     }
     
