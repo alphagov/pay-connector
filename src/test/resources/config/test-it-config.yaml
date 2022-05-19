@@ -70,7 +70,7 @@ stripe:
   webhookSigningSecrets:
     - ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
     - ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
-  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE_V2:-0.20}
+  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.20}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID:-stripe_platform_account_id}
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-1000}

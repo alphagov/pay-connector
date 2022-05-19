@@ -65,7 +65,7 @@ stripe:
     - ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
     - ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
-  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE_V2:-0.20}
+  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.20}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-100}
   credentials: ['stripe_account_id']
