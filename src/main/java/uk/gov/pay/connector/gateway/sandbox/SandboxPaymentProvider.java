@@ -54,7 +54,7 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     }
     
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         var gatewayResponse = getSandboxGatewayResponse(cardNumber);
 

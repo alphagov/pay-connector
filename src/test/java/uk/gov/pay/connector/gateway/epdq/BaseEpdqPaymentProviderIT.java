@@ -16,7 +16,6 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -264,20 +263,12 @@ public abstract class BaseEpdqPaymentProviderIT {
         return gatewayAccount;
     }
 
-    CardAuthorisationGatewayRequest buildTestAuthorisation3dsRequest() {
-        return buildTestAuthorisation3dsRequest(buildTestGatewayAccountWith3dsEntity());
+    ChargeEntity buildTestChargeFor3ds1GatewayAccount() {
+        return buildTestCharge(buildTestGatewayAccountWith3dsEntity());
     }
 
-    CardAuthorisationGatewayRequest buildTestAuthorisation3ds2Request() {
-        return buildTestAuthorisation3ds2Request(buildTestGatewayAccountWith3ds2Entity());
-    }
-
-    CardAuthorisationGatewayRequest buildTestAuthorisation3ds2RequestWithProvidedParameters() {
-        return buildTestAuthorisation3ds2RequestWithProvidedParameters(buildTestGatewayAccountWith3ds2Entity());
-    }
-
-    CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
-        return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
+    ChargeEntity buildTestChargeFor3ds2GatewayAccount() {
+        return buildTestCharge(buildTestGatewayAccountWith3ds2Entity());
     }
 
     Auth3dsResponseGatewayRequest buildTestAuthorisation3dsVerifyRequest(String auth3dsFrontendResult) {
@@ -305,38 +296,21 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .build());
     }
 
-    private CardAuthorisationGatewayRequest buildTestAuthorisation3dsRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
+    protected ChargeEntity buildTestCharge() {
+        return buildTestCharge(buildTestGatewayAccountEntity());
+    }
+    
+    protected ChargeEntity buildTestCharge(GatewayAccountEntity accountEntity) {
+        return aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withCredentials(credentials)
                         .build())
                 .build();
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
-    private CardAuthorisationGatewayRequest buildTestAuthorisation3ds2Request(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId("mq4ht90j2oir6am585afk58kml")
-                .withGatewayAccountEntity(accountEntity)
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withCredentials(credentials)
-                        .build())
-                .build();
-
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
-    }
-
-    private CardAuthorisationGatewayRequest buildTestAuthorisation3ds2RequestWithProvidedParameters(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId("mq4ht90j2oir6am585afk58kml")
-                .withGatewayAccountEntity(accountEntity)
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withCredentials(credentials)
-                        .build())
-                .build();
-
+    protected CardAuthorisationGatewayRequest buildTestAuthorisation3ds2RequestWithProvidedParameters(ChargeEntity charge) {
         Address address = new Address();
         address.setLine1("The Money Pool");
         address.setLine2("1 Gold Way");
@@ -355,36 +329,25 @@ public abstract class BaseEpdqPaymentProviderIT {
         authCardDetails.setIpAddress("8.8.8.8");
         authCardDetails.setAddress(address);
 
-        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-    }
-
-    private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId("mq4ht90j2oir6am585afk58kml")
-                .withGatewayAccountEntity(accountEntity)
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withCredentials(credentials)
-                        .build())
-                .build();
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+        return new CardAuthorisationGatewayRequest(charge, authCardDetails);
     }
 
     private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = buildChargeEntity(accountEntity);
+        ChargeEntity chargeEntity = buildChargeEntityThatHasTransactionId(accountEntity);
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
     private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity credentialsEntity) {
-        ChargeEntity chargeEntity = buildChargeEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = buildChargeEntityThatHasTransactionId(gatewayAccountEntity);
         return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity, credentialsEntity);
     }
 
-    protected ChargeEntity buildChargeEntity() {
+    protected ChargeEntity buildChargeEntityThatHasTransactionId() {
         GatewayAccountEntity gatewayAccountEntity = buildTestGatewayAccountWith3dsEntity();
-        return buildChargeEntity(gatewayAccountEntity);
+        return buildChargeEntityThatHasTransactionId(gatewayAccountEntity);
     }
 
-    private ChargeEntity buildChargeEntity(GatewayAccountEntity gatewayAccountEntity) {
+    private ChargeEntity buildChargeEntityThatHasTransactionId(GatewayAccountEntity gatewayAccountEntity) {
         return aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(EPDQ.getName())
@@ -395,6 +358,10 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .build();
     }
 
+    protected CardAuthorisationGatewayRequest buildCardAuthorisationGatewayRequest(ChargeEntity charge) {
+        return CardAuthorisationGatewayRequest.valueOf(charge, buildTestAuthCardDetails());
+    }
+    
     private AuthCardDetails buildTestAuthCardDetails() {
         Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
         return AuthCardDetailsFixture.anAuthCardDetails()

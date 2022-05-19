@@ -38,7 +38,8 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     @Test
     public void shouldAuthorise() throws Exception {
         mockPaymentProviderResponse(200, successAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildCardAuthorisationGatewayRequest(charge), charge);
         verifyPaymentProviderRequest(successAuthRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
@@ -52,7 +53,8 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         mockPaymentProviderResponse(200, errorAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildCardAuthorisationGatewayRequest(charge), charge);
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
     }
@@ -61,7 +63,8 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         try {
             mockPaymentProviderResponse(500, errorAuthResponse());
-            provider.authorise(buildTestAuthorisationRequest());
+            ChargeEntity charge = buildTestCharge();
+            provider.authorise(buildCardAuthorisationGatewayRequest(charge), charge);
         } catch (GatewayException.GatewayErrorException e) {
             assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
         }
@@ -132,7 +135,7 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     @Test
     public void shouldSuccessfullyQueryChargeStatus() throws Exception {
         mockPaymentProviderResponse(200, successQueryAuthorisedResponse());
-        ChargeEntity chargeEntity = buildChargeEntity();
+        ChargeEntity chargeEntity = buildChargeEntityThatHasTransactionId();
         ChargeQueryGatewayRequest request = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
         ChargeQueryResponse response = provider.queryPaymentStatus(request);
         assertThat(response.getMappedStatus(), is(Optional.of(AUTHORISATION_SUCCESS)));
@@ -142,7 +145,7 @@ public class EpdqPaymentProviderIT extends BaseEpdqPaymentProviderIT {
     @Test
     public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
         mockPaymentProviderResponse(200, errorQueryResponse());
-        ChargeEntity chargeEntity = buildChargeEntity();
+        ChargeEntity chargeEntity = buildChargeEntityThatHasTransactionId();
         ChargeQueryGatewayRequest request = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
         ChargeQueryResponse response = provider.queryPaymentStatus(request);
         assertThat(response.getMappedStatus(), is(Optional.empty()));

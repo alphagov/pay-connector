@@ -272,7 +272,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse<WorldpayOrderStatusResponse> responseBuilder = responseBuilder()
                 .withResponse(worldpayOrderStatusResponse)
                 .withSessionIdentifier(sessionIdentifier).build();
-        when(mockedWorldpayPaymentProvider.authorise(any())).thenReturn(responseBuilder);
+        when(mockedWorldpayPaymentProvider.authorise(any(), any())).thenReturn(responseBuilder);
         return worldpayOrderStatusResponse;
     }
 

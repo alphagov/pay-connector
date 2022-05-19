@@ -172,7 +172,7 @@ public class CardAuthoriseService {
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
-        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
+        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

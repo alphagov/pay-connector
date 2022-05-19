@@ -178,7 +178,7 @@ public class WorldpayPaymentProviderTest {
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verify(chargeDao, never()).merge(any(ChargeEntity.class));
     }
@@ -191,12 +191,13 @@ public class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(null);
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
@@ -217,12 +218,13 @@ public class WorldpayPaymentProviderTest {
                 aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(false).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
@@ -236,12 +238,13 @@ public class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), anAuthCardDetails().build());
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
@@ -262,7 +265,7 @@ public class WorldpayPaymentProviderTest {
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_REJECTED);
@@ -282,7 +285,7 @@ public class WorldpayPaymentProviderTest {
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_OUT_OF_SCOPE);
@@ -319,7 +322,7 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(getGatewayResponse(worldpayXmlResponse));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verify(worldpayAuthoriseHandler, never()).authoriseWithoutExemption(cardAuthRequest);
     }
@@ -339,7 +342,7 @@ public class WorldpayPaymentProviderTest {
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
 
-        worldpayPaymentProvider.authorise(cardAuthRequest);
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_HONOURED);
         verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_HONOURED);
@@ -365,7 +368,7 @@ public class WorldpayPaymentProviderTest {
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
 
-        GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest);
+        GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
