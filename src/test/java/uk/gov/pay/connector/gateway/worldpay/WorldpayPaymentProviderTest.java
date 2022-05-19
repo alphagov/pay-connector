@@ -200,7 +200,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
@@ -227,7 +227,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -247,7 +247,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -268,7 +268,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_REJECTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED);
     }
 
     @Test
@@ -288,7 +288,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_OUT_OF_SCOPE);
+        verifyEventEmitted(chargeEntity, EXEMPTION_OUT_OF_SCOPE);
     }
 
     @Test
@@ -345,7 +345,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_HONOURED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_HONOURED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_HONOURED);
     }
 
     @Test

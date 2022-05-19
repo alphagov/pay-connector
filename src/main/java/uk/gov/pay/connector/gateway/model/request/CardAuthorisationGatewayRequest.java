@@ -11,8 +11,21 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
         this.authCardDetails = authCardDetails;
     }
 
-    private CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails, String gatewayTransactionId) {
-        super(charge, gatewayTransactionId);
+    public CardAuthorisationGatewayRequest withNewTransactionId(String gatewayTransactionId) {
+        return new CardAuthorisationGatewayRequest(this, this.authCardDetails, gatewayTransactionId);
+    }
+    
+    private CardAuthorisationGatewayRequest(CardAuthorisationGatewayRequest other, AuthCardDetails authCardDetails, String gatewayTransactionId) {
+        super(gatewayTransactionId,
+                other.getEmail(),
+                other.getLanguage(),
+                other.isMoto(),
+                other.getAmount(),
+                other.getDescription(),
+                other.getReference(),
+                other.getChargeExternalId(),
+                other.getGatewayCredentials(),
+                other.getGatewayAccount());
         this.authCardDetails = authCardDetails;
     }
 
@@ -22,12 +35,5 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
 
     public static CardAuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {
         return new CardAuthorisationGatewayRequest(charge, authCardDetails);
-    }
-
-    public static CardAuthorisationGatewayRequest valueOf(CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest, String gatewayTransactionId) {
-        return new CardAuthorisationGatewayRequest(
-                cardAuthorisationGatewayRequest.getCharge(),
-                cardAuthorisationGatewayRequest.getAuthCardDetails(),
-                gatewayTransactionId);
     }
 }

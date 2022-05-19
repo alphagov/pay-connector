@@ -27,7 +27,7 @@ public interface WorldpayOrderBuilder {
         }
 
         if (request.getGatewayAccount().isSendPayerEmailToGateway()) {
-            Optional.ofNullable(request.getCharge().getEmail()).ifPresent(builder::withPayerEmail);
+            Optional.ofNullable(request.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
         if (request.getGatewayAccount().isSendReferenceToGateway()) {

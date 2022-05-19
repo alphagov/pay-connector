@@ -184,7 +184,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, request.getAuthCardDetails());
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails());
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -196,7 +196,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     charge.getChargeStatus(),
                     charge.getChargeStatus());
 
-            CardAuthorisationGatewayRequest newRequest = CardAuthorisationGatewayRequest.valueOf(request, newTransactionId());
+            CardAuthorisationGatewayRequest newRequest = request.withNewTransactionId(newTransactionId());
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(newRequest);
         } 
 
@@ -310,8 +310,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
+        return new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails);
     }
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {

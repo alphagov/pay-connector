@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.epdq;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_PRESENT;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
@@ -14,11 +15,11 @@ public class EpdqAuthorisationRequestSummary implements AuthorisationRequestSumm
     private final Presence dataFor3ds2;
     private final String ipAddress;
 
-    public EpdqAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+    public EpdqAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
-        dataFor3ds = chargeEntity.getGatewayAccount().isRequires3ds() ? PRESENT : NOT_PRESENT;
-        dataFor3ds2 = (chargeEntity.getGatewayAccount().isRequires3ds()
-                && chargeEntity.getGatewayAccount().getIntegrationVersion3ds() == 2) ? PRESENT : NOT_PRESENT;
+        dataFor3ds = gatewayAccount.isRequires3ds() ? PRESENT : NOT_PRESENT;
+        dataFor3ds2 = (gatewayAccount.isRequires3ds()
+                && gatewayAccount.getIntegrationVersion3ds() == 2) ? PRESENT : NOT_PRESENT;
         ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 

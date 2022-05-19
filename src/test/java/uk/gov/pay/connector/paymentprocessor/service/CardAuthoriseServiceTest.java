@@ -169,7 +169,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void setUpCardAuthorisationService() {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
-        when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(ChargeEntity.class), any(AuthCardDetails.class)))
+        when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(GatewayAccountEntity.class), any(AuthCardDetails.class)))
                 .thenReturn(new SandboxAuthorisationRequestSummary());
         when(mockAuthorisationRequestSummaryStringifier.stringify(any(AuthorisationRequestSummary.class))).thenReturn("");
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);

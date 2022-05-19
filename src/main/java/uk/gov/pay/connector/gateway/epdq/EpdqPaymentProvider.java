@@ -43,6 +43,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -247,8 +248,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public EpdqAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return new EpdqAuthorisationRequestSummary(chargeEntity, authCardDetails);
+    public EpdqAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
+        return new EpdqAuthorisationRequestSummary(gatewayAccount, authCardDetails);
     }
 
     /**
@@ -307,7 +308,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
         if (request.getGatewayAccount().isRequires3ds()) {
             if (request.getGatewayAccount().getIntegrationVersion3ds() == 2) {
-                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3ds2Order(frontendUrl, request.getGatewayAccount().isSendPayerIpAddressToGateway(), request.getCharge().getLanguage(), clock);
+                epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3ds2Order(frontendUrl, request.getGatewayAccount().isSendPayerIpAddressToGateway(), request.getLanguage(), clock);
             } else {
                 epdqPayloadDefinition = new EpdqPayloadDefinitionForNew3dsOrder(frontendUrl);
             }
