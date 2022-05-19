@@ -369,7 +369,8 @@ public class WorldpayPaymentProviderTest {
 
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
-        assertNotEquals(cardAuthRequest.getCharge().getGatewayTransactionId(), gatewayTransactionId);
+        assertThat(cardAuthRequest.getTransactionId().isPresent(), is(true));
+        assertNotEquals(cardAuthRequest.getTransactionId().get(), gatewayTransactionId);
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
