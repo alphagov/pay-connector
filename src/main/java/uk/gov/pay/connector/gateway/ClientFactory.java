@@ -106,7 +106,7 @@ public class ClientFactory {
                 new ManagedHttpClientConnectionFactory(),
                 null,
                 SystemDefaultDnsResolver.INSTANCE,
-                -1,
+                60000,
                 TimeUnit.MILLISECONDS,
                 format("%s.%s", gatewayName, operation)
         );
