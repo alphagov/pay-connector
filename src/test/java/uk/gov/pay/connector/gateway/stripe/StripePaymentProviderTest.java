@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -118,7 +119,8 @@ public class StripePaymentProviderTest {
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(gatewayAccount));
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertTrue(response.isSuccessful());
@@ -132,7 +134,8 @@ public class StripePaymentProviderTest {
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(gatewayAccount));
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(charge), charge);
 
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertTrue(response.isSuccessful());
@@ -148,7 +151,8 @@ public class StripePaymentProviderTest {
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         gatewayAccount.setIntegrationVersion3ds(2);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(gatewayAccount));
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertTrue(response.isSuccessful());
@@ -165,8 +169,9 @@ public class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
-
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(authoriseResponse.isFailed(), is(true));
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
@@ -180,8 +185,9 @@ public class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
-
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
         assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
 
         BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
@@ -197,8 +203,9 @@ public class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
-
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
         assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
 
         BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
@@ -216,7 +223,9 @@ public class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        
+        ChargeEntity charge = buildTestCharge();
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(authoriseResponse.isFailed(), is(true));
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
@@ -320,13 +329,12 @@ public class StripePaymentProviderTest {
         return load(STRIPE_ERROR_RESPONSE).replace("{{type}}", type);
     }
 
-    private CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
-        return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
+    private ChargeEntity buildTestCharge() {
+        return buildTestCharge(buildTestGatewayAccountEntity());
     }
-
-
-    private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
+    
+    private ChargeEntity buildTestCharge(GatewayAccountEntity accountEntity) {
+        return aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
@@ -335,22 +343,8 @@ public class StripePaymentProviderTest {
                         .withState(ACTIVE)
                         .build())
                 .build();
-        return buildTestAuthorisationRequest(chargeEntity);
     }
-
-    private CardAuthorisationGatewayRequest buildTestUsAuthorisationRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId("mq4ht90j2oir6am585afk58kml")
-                .withGatewayAccountEntity(accountEntity)
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
-                        .withPaymentProvider(STRIPE.getName())
-                        .withState(ACTIVE)
-                        .build())
-                .build();
-        return buildTestUsAuthorisationRequest(chargeEntity);
-    }
-
+    
     private ChargeEntity build3dsRequiredTestCharge() {
         String transactionId = "pi_a-payment-intent-id";
         

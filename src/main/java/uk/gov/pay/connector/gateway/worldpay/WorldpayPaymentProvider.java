@@ -169,7 +169,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
@@ -180,21 +180,21 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
         
-        calculateAndStoreExemption(exemptionEngineEnabled, request.getCharge(), response);
+        calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
         
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
             
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getCharge(), request.getAuthCardDetails());
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, request.getAuthCardDetails());
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
                     authorisationRequestSummary,
-                    request.getCharge(),
-                    authorisationService.extractTransactionId(request.getCharge().getExternalId(), response)
+                    charge,
+                    authorisationService.extractTransactionId(charge.getExternalId(), response)
                             .orElse("missing transaction ID"),
                     response,
-                    request.getCharge().getChargeStatus(),
-                    request.getCharge().getChargeStatus());
+                    charge.getChargeStatus(),
+                    charge.getChargeStatus());
 
             CardAuthorisationGatewayRequest newRequest = CardAuthorisationGatewayRequest.valueOf(request, newTransactionId());
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(newRequest);

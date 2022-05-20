@@ -85,7 +85,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException {
         GatewayClient.Response response = client.postRequestFor(
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 SMARTPAY,

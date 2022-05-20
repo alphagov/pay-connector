@@ -69,7 +69,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest, chargeEntity);
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -102,7 +102,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .build();
 
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(cardAuthorisationGatewayRequest, chargeEntity);
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -130,7 +130,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails), chargeEntity);
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));

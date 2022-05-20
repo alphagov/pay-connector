@@ -100,7 +100,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         return stripeAuthoriseHandler.authorise(request);
     }
 

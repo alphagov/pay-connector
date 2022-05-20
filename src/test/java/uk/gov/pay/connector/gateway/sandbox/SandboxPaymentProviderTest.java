@@ -77,7 +77,8 @@ public class SandboxPaymentProviderTest {
     void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_SUCCESS_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -97,11 +98,11 @@ public class SandboxPaymentProviderTest {
     void authorise_shouldSetRecurringAuthToken() {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_SUCCESS_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withPaymentProvider(SANDBOX.getName())
                 .withCardDetails(ChargeEntityFixture.defaultCardDetails())
-                .build(), 
-                authCardDetails));
+                .build();
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -122,7 +123,8 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_REJECTED_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -142,7 +144,8 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_ERROR_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
@@ -159,7 +162,8 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("3456789987654567");
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
