@@ -19,7 +19,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final String amount;
     private final String description;
     private final ServicePaymentReference reference;
-    private final String chargeExternalId;
+    private final String govUkPayPaymentId;
     private final Map<String, String> credentials;
     private final GatewayAccountEntity gatewayAccount;
 
@@ -33,7 +33,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.amount = String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
         this.description = charge.getDescription();
         this.reference = charge.getReference();
-        this.chargeExternalId = charge.getExternalId();
+        this.govUkPayPaymentId = charge.getExternalId();
         this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null);
         this.gatewayAccount = charge.getGatewayAccount();
     }
@@ -45,7 +45,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        String amount,
                                        String description,
                                        ServicePaymentReference reference,
-                                       String chargeExternalId,
+                                       String govUkPayPaymentId,
                                        Map<String, String> credentials,
                                        GatewayAccountEntity gatewayAccount) {
         this.gatewayTransactionId = gatewayTransactionId;
@@ -55,7 +55,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
-        this.chargeExternalId = chargeExternalId;
+        this.govUkPayPaymentId = govUkPayPaymentId;
         this.credentials = credentials;
         this.gatewayAccount = gatewayAccount;
     }
@@ -88,8 +88,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         return reference;
     }
 
-    public String getChargeExternalId() {
-        return chargeExternalId;
+    public String getGovUkPayPaymentId() {
+        return govUkPayPaymentId;
     }
 
     @Override

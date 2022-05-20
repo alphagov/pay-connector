@@ -40,13 +40,13 @@ public class StripePaymentIntentRequest extends StripeRequest {
             String frontendUrl) {
         return new StripePaymentIntentRequest(
                 request.getGatewayAccount(),
-                request.getChargeExternalId(),
+                request.getGovUkPayPaymentId(),
                 stripeGatewayConfig,
                 request.getAmount(),
                 paymentMethodId,
-                request.getChargeExternalId(),
+                request.getGovUkPayPaymentId(),
                 frontendUrl,
-                request.getChargeExternalId(),
+                request.getGovUkPayPaymentId(),
                 request.getDescription(),
                 request.isMoto(),
                 request.getGatewayCredentials()

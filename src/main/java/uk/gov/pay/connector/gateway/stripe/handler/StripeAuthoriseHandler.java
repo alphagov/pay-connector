@@ -47,7 +47,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
-        logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
+        logger.info("Calling Stripe for authorisation of charge");
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
@@ -60,29 +60,27 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                     .responseBuilder()
                     .withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
         } catch (GatewayException.GatewayErrorException e) {
-            String chargeExternalId = request.getChargeExternalId();
-
             if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
-                logger.error("Authorisation failed for charge {} due to an internal error. Reason: {}. Status code from Stripe: {}.",
-                        chargeExternalId, e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
-                GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge_external_id: " + chargeExternalId);
+                logger.error("Authorisation failed due to an internal error. Reason: {}. Status code from Stripe: {}.",
+                        e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
+                GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge");
                 return responseBuilder.withGatewayError(gatewayError).build();
             }
 
             if (e.getFamily() == CLIENT_ERROR) {
                 StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                logger.info("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+                logger.info("Authorisation failed. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                        stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
     
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
             }
 
-            logger.info("Unrecognised response status when authorising. Charge_id={}, status={}, response={}",
-                    chargeExternalId, e.getStatus(), e.getResponseFromGateway());
+            logger.info("Unrecognised response status when authorising - status={}, response={}",
+                    e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when authorising.");
 
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
-            logger.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
+            logger.error("GatewayException occurred, error:\n {}", e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }

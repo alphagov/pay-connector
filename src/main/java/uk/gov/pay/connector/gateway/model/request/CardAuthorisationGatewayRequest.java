@@ -23,7 +23,7 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
                 other.getAmount(),
                 other.getDescription(),
                 other.getReference(),
-                other.getChargeExternalId(),
+                other.getGovUkPayPaymentId(),
                 other.getGatewayCredentials(),
                 other.getGatewayAccount());
         this.authCardDetails = authCardDetails;

@@ -316,7 +316,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             epdqPayloadDefinition = new EpdqPayloadDefinitionForNewOrder();
         }
 
-        epdqPayloadDefinition.setOrderId(request.getChargeExternalId());
+        epdqPayloadDefinition.setOrderId(request.getGovUkPayPaymentId());
         epdqPayloadDefinition.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD));
         epdqPayloadDefinition.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME));
         epdqPayloadDefinition.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID));

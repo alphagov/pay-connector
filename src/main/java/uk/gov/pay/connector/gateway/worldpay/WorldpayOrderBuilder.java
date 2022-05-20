@@ -40,7 +40,7 @@ public interface WorldpayOrderBuilder {
                 request.getGatewayAccount().isRequires3ds();
 
         return (WorldpayOrderRequestBuilder) builder
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))

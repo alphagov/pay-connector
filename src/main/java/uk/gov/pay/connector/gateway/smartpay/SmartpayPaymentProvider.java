@@ -185,7 +185,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
         return smartpayOrderRequestBuilder
                 .withMerchantCode(getMerchantCode(request))
-                .withPaymentPlatformReference(request.getChargeExternalId())
+                .withPaymentPlatformReference(request.getGovUkPayPaymentId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())

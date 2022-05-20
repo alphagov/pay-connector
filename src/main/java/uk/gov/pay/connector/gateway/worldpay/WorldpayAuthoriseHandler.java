@@ -63,28 +63,28 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
 
             if (response.getEntity().contains("request3DSecure")) {
-                LOGGER.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
+                LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
             }
             return getWorldpayGatewayResponse(response);
         } catch (GatewayException.GatewayErrorException e) {
             
             if (e.getStatus().isPresent() && (e.getFamily() == CLIENT_ERROR || e.getFamily() == SERVER_ERROR)) {
                 
-                LOGGER.error("Authorisation failed for charge {} due to an internal error. Reason: {}. Status code from Worldpay: {}.",
-                        request.getChargeExternalId(), e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
+                LOGGER.error("Authorisation failed due to an internal error. Reason: {}. Status code from Worldpay: {}.",
+                        e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
                 
                 GatewayError gatewayError = gatewayConnectionError(format("Non-success HTTP status code %s from gateway", e.getStatus().get()));
 
                 return responseBuilder().withGatewayError(gatewayError).build();
             }
             
-            LOGGER.info("Unrecognised response status when authorising. Charge_id={}, status={}, response={}",
-                    request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
+            LOGGER.info("Unrecognised response status when authorising - status={}, response={}",
+                    e.getStatus(), e.getResponseFromGateway());
             return responseBuilder().withGatewayError(e.toGatewayError()).build();
             
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
             
-            LOGGER.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
+            LOGGER.error("GatewayException occurred, error:\n {}", e);
 
             return responseBuilder().withGatewayError(e.toGatewayError()).build();
         }
