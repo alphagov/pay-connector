@@ -98,9 +98,7 @@ public class RefundNotificationProcessorTest {
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("%s refund notification could not be used to update charge [%s] (missing reference)",
-                paymentGatewayName,
-                charge.getExternalId());
+        String expectedLogMessage = "Refund notification could not be used to update charge (missing reference)";
 
         assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
