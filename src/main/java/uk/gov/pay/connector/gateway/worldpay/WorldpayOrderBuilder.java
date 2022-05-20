@@ -31,7 +31,7 @@ public interface WorldpayOrderBuilder {
         }
 
         if (request.getGatewayAccount().isSendReferenceToGateway()) {
-            builder.withDescription(request.getReference());
+            builder.withDescription(request.getReference().toString());
         } else {
             builder.withDescription(request.getDescription());
         }

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.model.request;
 
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -17,7 +18,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final boolean moto;
     private final String amount;
     private final String description;
-    private final String reference;
+    private final ServicePaymentReference reference;
     private final String chargeExternalId;
     private final Map<String, String> credentials;
     private final GatewayAccountEntity gatewayAccount;
@@ -31,7 +32,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.moto = charge.isMoto();
         this.amount = String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
         this.description = charge.getDescription();
-        this.reference = charge.getReference().toString();
+        this.reference = charge.getReference();
         this.chargeExternalId = charge.getExternalId();
         this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null);
         this.gatewayAccount = charge.getGatewayAccount();
@@ -43,7 +44,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        boolean moto,
                                        String amount,
                                        String description,
-                                       String reference,
+                                       ServicePaymentReference reference,
                                        String chargeExternalId,
                                        Map<String, String> credentials,
                                        GatewayAccountEntity gatewayAccount) {
@@ -83,7 +84,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         return description;
     }
 
-    public String getReference() {
+    public ServicePaymentReference getReference() {
         return reference;
     }
 
