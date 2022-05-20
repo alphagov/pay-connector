@@ -56,7 +56,8 @@ public class ClientFactory {
                 .using(new ApacheConnectorProvider())
                 .using(conf.getClientConfiguration())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
-                .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), metricName, metricRegistry));
+                .withProperty(CONNECTION_MANAGER, 
+                        createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClient().getConnectionTTL()));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
             defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
@@ -83,7 +84,9 @@ public class ClientFactory {
                 .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation));
     }
 
-    private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation, MetricRegistry metricRegistry) {
+    private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation,
+                                                                MetricRegistry metricRegistry,
+                                                                Duration connectionTimeToLive) {
 
         SSLConnectionSocketFactory sslConnectionSocketFactory;
         try {
@@ -106,7 +109,7 @@ public class ClientFactory {
                 new ManagedHttpClientConnectionFactory(),
                 null,
                 SystemDefaultDnsResolver.INSTANCE,
-                60000,
+                connectionTimeToLive.toMilliseconds(),
                 TimeUnit.MILLISECONDS,
                 format("%s.%s", gatewayName, operation)
         );

@@ -86,6 +86,7 @@ jerseyClient:
 
 customJerseyClient:
   readTimeout: 500ms
+  connectionTTL: 60s
 
 executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
