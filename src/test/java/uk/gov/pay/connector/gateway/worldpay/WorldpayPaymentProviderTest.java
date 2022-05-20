@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,8 @@ import static java.util.UUID.randomUUID;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -127,6 +130,8 @@ public class WorldpayPaymentProviderTest {
     private ChargeDao chargeDao;
     @Mock
     private EventService eventService;
+    @Captor
+    private ArgumentCaptor<CardAuthorisationGatewayRequest> cardAuthorisationGatewayRequestArgumentCaptor;
 
     private WorldpayPaymentProvider worldpayPaymentProvider;
     private ChargeEntityFixture chargeEntityFixture;
@@ -200,7 +205,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
@@ -227,7 +232,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -247,7 +252,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
     @Test
@@ -262,13 +267,17 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(any(CardAuthorisationGatewayRequest.class)))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
+        verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
+        CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
+        assertThat(secondRequest.getTransactionId(), not(nullValue()));
+        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_REJECTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED);
     }
 
     @Test
@@ -282,13 +291,17 @@ public class WorldpayPaymentProviderTest {
 
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE));
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(any(CardAuthorisationGatewayRequest.class)))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
+        verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
+        CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
+        assertThat(secondRequest.getTransactionId(), not(nullValue()));
+        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_OUT_OF_SCOPE);
+        verifyEventEmitted(chargeEntity, EXEMPTION_OUT_OF_SCOPE);
     }
 
     @Test
@@ -345,7 +358,7 @@ public class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
         verifyChargeUpdatedWith(EXEMPTION_HONOURED);
-        verifyEventEmitted(cardAuthRequest.getCharge(), EXEMPTION_HONOURED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_HONOURED);
     }
 
     @Test
@@ -366,14 +379,17 @@ public class WorldpayPaymentProviderTest {
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
 
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest)).thenReturn(secondResponse);
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(any())).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
+        verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
+        CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
+        assertThat(secondRequest.getTransactionId(), not(nullValue()));
+        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
+        
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
-        assertThat(cardAuthRequest.getTransactionId().isPresent(), is(true));
-        assertNotEquals(cardAuthRequest.getTransactionId().get(), gatewayTransactionId);
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());

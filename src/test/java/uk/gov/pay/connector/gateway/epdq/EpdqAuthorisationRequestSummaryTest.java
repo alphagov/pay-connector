@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -22,48 +20,42 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 
 @ExtendWith(MockitoExtension.class)
 class EpdqAuthorisationRequestSummaryTest {
-
-    @Mock private ChargeEntity mockChargeEntity;
+    
     @Mock private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock private AuthCardDetails mockAuthCardDetails;
-
-    @BeforeEach
-    void setUp() {
-        given(mockChargeEntity.getGatewayAccount()).willReturn(mockGatewayAccountEntity);
-    }
 
     @Test
     void billingAddressPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.of(mock(Address.class)));
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.billingAddress(), is(PRESENT));
     }
 
     @Test
     void billingAddressNotPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.empty());
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.billingAddress(), is(NOT_PRESENT));
     }
 
     @Test
     void requires3dsTrueMeansDataFor3dsPresent() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds(), is(PRESENT));
     }
 
     @Test
     void requires3dsFalseMeansDataFor3dsNotPresent() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds(), is(NOT_PRESENT));
     }
 
     @Test
     void requires3dsFalseMeansDataFor3ds2NotPresent() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(NOT_PRESENT));
     }
     
@@ -71,7 +63,7 @@ class EpdqAuthorisationRequestSummaryTest {
     void requires3dsTrueAnd3dsVersion1MeansDataFor3ds2NotPresent() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
         given(mockGatewayAccountEntity.getIntegrationVersion3ds()).willReturn(1);
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(NOT_PRESENT));
     }
 
@@ -79,13 +71,13 @@ class EpdqAuthorisationRequestSummaryTest {
     void requires3dsTrueAnd3dsVersion2MeansDataFor3ds2Present() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
         given(mockGatewayAccountEntity.getIntegrationVersion3ds()).willReturn(2);
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(PRESENT));
     }
 
     @Test
     void deviceDataCollectionResultAlwaysNotApplicable() {
-        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails);
+        var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.deviceDataCollectionResult(), is(NOT_APPLICABLE));
     }
 

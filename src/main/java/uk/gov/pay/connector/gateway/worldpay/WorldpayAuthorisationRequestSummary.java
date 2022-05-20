@@ -16,10 +16,9 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private String ipAddress;
     
 
-    public WorldpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+    public WorldpayAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         deviceDataCollectionResult = authCardDetails.getWorldpay3dsFlexDdcResult().map(address -> PRESENT).orElse(NOT_PRESENT);
-        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.isRequires3ds()) ? PRESENT : NOT_PRESENT;
         ipAddress = authCardDetails.getIpAddress().orElse(null);
     }

@@ -48,7 +48,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 frontendUrl,
                 request.getChargeExternalId(),
                 request.getDescription(),
-                request.getCharge().isMoto(),
+                request.isMoto(),
                 request.getGatewayCredentials()
         );
     }

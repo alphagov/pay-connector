@@ -180,7 +180,7 @@ public class CardAuthoriseService {
     }
 
     private AuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(chargeEntity).generateAuthorisationRequestSummary(chargeEntity, authCardDetails);
+        return getPaymentProviderFor(chargeEntity).generateAuthorisationRequestSummary(chargeEntity.getGatewayAccount(), authCardDetails);
     }
 
 }

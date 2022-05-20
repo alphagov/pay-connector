@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -79,10 +80,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
 
-    private CardAuthoriseService cardAuthorisationService;
-
-    private ChargeEntity charge;
-
     @Mock
     private CardExecutorService mockExecutorService;
 
@@ -105,6 +102,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private AuthorisationConfig mockAuthorisationConfig;
 
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+    private CardAuthoriseService cardAuthorisationService;
+    private ChargeEntity charge;
+    private GatewayAccountEntity gatewayAccount;
 
     @BeforeEach
     void setup() {
@@ -115,7 +115,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
         charge.setPaymentProvider("worldpay");
-        charge.getGatewayAccount().setRequires3ds(true);
+        gatewayAccount = charge.getGatewayAccount();
+        gatewayAccount.setRequires3ds(true);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, mock(AgreementDao.class), null, mock(ConnectorConfiguration.class), null,
@@ -138,8 +139,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedProviders.byName(WORLDPAY)).thenReturn(mockedWorldpayPaymentProvider);
         when(mockedWorldpayPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
 
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
@@ -151,9 +152,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         worldpayRespondsWith(null, load(WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE));
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
-        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -173,9 +174,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         worldpayRespondsWith(null, load(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
-        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails));
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -195,7 +196,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         worldpayRespondsWith(null, load(WORLDPAY_3DS_FLEX_RESPONSE));
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
-        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
@@ -209,7 +210,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         worldpayRespondsWith(null, load(WORLDPAY_3DS_RESPONSE));
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
-        charge.getGatewayAccount().setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
