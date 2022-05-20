@@ -6,6 +6,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -56,6 +57,20 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+        return authorise(request);
+    }
+
+    @Override
+    public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
+        return authorise(request);
+    }
+
+    /**
+     * IMPORTANT: this method should not attempt to update the Charge in the database. This is because it is executed
+     * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
+     * executed.
+     */
+    private GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         var gatewayResponse = getSandboxGatewayResponse(cardNumber);
 

@@ -104,6 +104,16 @@ public class StripePaymentProvider implements PaymentProvider {
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         return stripeAuthoriseHandler.authorise(request);
     }
+    
+    /**
+     * IMPORTANT: this method should not attempt to update the Charge in the database. This is because it is executed
+     * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
+     * executed.
+     */
+    @Override
+    public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
+        return stripeAuthoriseHandler.authorise(request);
+    }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {

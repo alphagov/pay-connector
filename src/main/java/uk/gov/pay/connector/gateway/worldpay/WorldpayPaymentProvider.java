@@ -203,6 +203,16 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return response;
     }
 
+    /**
+     * IMPORTANT: this method should not attempt to update the Charge in the database. This is because it is executed
+     * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
+     * executed.
+     */
+    @Override
+    public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
+        return worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+    }
+
     private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
         if (!exemptionEngineEnabled) {
             updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);

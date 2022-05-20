@@ -137,6 +137,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
+        throw new UnsupportedOperationException("MOTO API payments are not supported for ePDQ");
+    }
+
+    @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         return epdqRefundHandler.refund(request);
     }
