@@ -134,6 +134,7 @@ jerseyClient:
 
 customJerseyClient:
   readTimeout: 90000ms
+  connectionTTL: 60s
 
 database:
   driverClass: org.postgresql.Driver

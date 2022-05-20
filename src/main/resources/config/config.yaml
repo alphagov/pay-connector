@@ -191,6 +191,7 @@ customJerseyClient:
   # for read, a java.net.SocketTimeoutException is raised. A
   # timeout of zero is interpreted as an infinite timeout.
   readTimeout: 90000ms
+  connectionTTL: ${CONNECTION_TTL:-60s}
 
 database:
   driverClass: org.postgresql.Driver
