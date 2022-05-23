@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.Duration;
 
 public class ConnectorConfiguration extends Configuration {
 
@@ -157,6 +158,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public Long getLedgerPostEventTimeoutInMillis() {
         return ledgerPostEventTimeoutInMillis;
+    }
+
+    public Duration getLedgerPostEventTimeout() {
+        return Duration.ofMillis(ledgerPostEventTimeoutInMillis);
     }
 
     @JsonProperty("database")

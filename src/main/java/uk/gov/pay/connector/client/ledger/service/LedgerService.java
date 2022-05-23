@@ -34,10 +34,12 @@ public class LedgerService {
     private final Client client;
     private final Client postEventClient;
     private final String ledgerUrl;
+    private final UriBuilder eventUri;
 
     @Inject
     public LedgerService(Client client, @Named("ledgerClient") Client ledgerClient, ConnectorConfiguration configuration) {
         this.ledgerUrl = configuration.getLedgerBaseUrl();
+        this.eventUri = UriBuilder.fromPath(this.ledgerUrl).path("/v1/event");
         this.client = client;
         this.postEventClient = ledgerClient;
     }
@@ -96,16 +98,15 @@ public class LedgerService {
     }
 
     public Response postEvent(Event event) {
-        return postEventList(List.of(event)); 
+        return postEvents(List.of(event));
     }
     
     public Response postEvent(List<Event> events) {
-        return postEventList(events);
+        return postEvents(events);
     }
     
-    private Response postEventList(List<Event> events) {
-        var uri = UriBuilder.fromPath(ledgerUrl).path("/v1/event");
-        var response = postEventClient.target(uri)
+    private Response postEvents(List<Event> events) {
+        var response = postEventClient.target(eventUri)
                 .request()
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.json(events));
