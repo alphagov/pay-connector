@@ -30,7 +30,7 @@ public class StripePaymentMethodRequest extends StripeRequest {
     public static StripePaymentMethodRequest of(CardAuthorisationGatewayRequest request, StripeGatewayConfig config) {
         return new StripePaymentMethodRequest(
                 request.getGatewayAccount(),
-                request.getChargeExternalId(),
+                request.getGovUkPayPaymentId(),
                 config,
                 request.getAuthCardDetails(),
                 request.getGatewayCredentials()

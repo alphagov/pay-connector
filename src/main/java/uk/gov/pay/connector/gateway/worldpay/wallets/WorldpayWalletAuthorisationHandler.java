@@ -65,7 +65,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
         return builder
                 .withWalletTemplateData(request.getWalletAuthorisationData())
                 .with3dsRequired(is3dsRequired)
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
