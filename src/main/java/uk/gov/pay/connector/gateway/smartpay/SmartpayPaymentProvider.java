@@ -95,6 +95,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
+    @Override
+    public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
+        throw new UnsupportedOperationException("MOTO API payments are not supported for Smartpay");
+    }
+
     private static GatewayResponse getSmartpayGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
