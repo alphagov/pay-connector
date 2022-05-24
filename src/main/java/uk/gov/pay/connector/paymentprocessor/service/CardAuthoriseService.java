@@ -3,10 +3,12 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationTimedOutException;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
+import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
@@ -33,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -40,7 +44,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
-    
+
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
@@ -57,40 +61,87 @@ public class CardAuthoriseService {
                                 AuthorisationLogger authorisationLogger,
                                 ChargeEligibleForCaptureService chargeEligibleForCaptureService,
                                 Environment environment) {
+        this.cardTypeDao = cardTypeDao;
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.metricRegistry = environment.metrics();
-        this.cardTypeDao = cardTypeDao;
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return authorisationService.executeAuthorise(chargeId, () -> authoriseAndUpdateCharge(chargeId, authCardDetails));
-    }
+        return authorisationService.executeAuthorise(chargeId, () -> {
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
 
-    public AuthorisationResponse doAuthoriseSync(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
-        AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, chargeEntity, cardInformation);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            ChargeStatus newStatus;
 
-        AuthorisationResponse authorisationResponse = authoriseAndUpdateCharge(chargeEntity.getExternalId(), authCardDetails);
+            try {
+                PaymentProvider paymentProvider = getPaymentProviderFor(charge);
+                CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
+                operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
 
-        authorisationResponse.getAuthoriseStatus().ifPresent(authoriseStatus -> {
-            if (authoriseStatus.getMappedChargeStatus() == AUTHORISATION_SUCCESS) {
-                chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+                if (operationResponse.getBaseResponse().isEmpty()) {
+                    operationResponse.throwGatewayError();
+                }
+
+                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+            } catch (GatewayException e) {
+                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
-        });
 
-        return authorisationResponse;
+            return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
+        });
     }
 
-    private AuthorisationResponse authoriseAndUpdateCharge(String chargeId, AuthCardDetails authCardDetails) {
-        final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+    public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
+        AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, chargeEntity, cardInformation);
+        final ChargeEntity charge = prepareChargeForAuthorisation(chargeEntity.getExternalId(), authCardDetails);
+
+        try {
+            Pair<GatewayResponse<BaseAuthoriseResponse>, ChargeStatus> result = authorisationService.executeAuthoriseSync(() -> authoriseMotoApi(charge, authCardDetails));
+
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = result.getLeft();
+            ChargeStatus newStatus = result.getRight();
+
+            AuthorisationResponse authorisationResponse = updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
+
+            authorisationResponse.getAuthoriseStatus().ifPresent(authoriseStatus -> {
+                if (authoriseStatus.getMappedChargeStatus() == AUTHORISATION_SUCCESS) {
+                    chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+                }
+            });
+
+            return authorisationResponse;
+        } catch (AuthorisationExecutorTimedOutException e) {
+            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
+                    charge.getExternalId(),
+                    AUTHORISATION_TIMEOUT,
+                    null,
+                    null,
+                    null,
+                    authCardDetails,
+                    null);
+
+            LOGGER.info("Attempt to authorise charge synchronously timed out.");
+
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+            incrementMetricsPostAuthorisation(AUTHORISATION_TIMEOUT, updatedCharge, authorisationRequestSummary);
+            throw new AuthorisationTimedOutException();
+        }
+    }
+
+    private Pair<GatewayResponse<BaseAuthoriseResponse>, ChargeStatus> authoriseMotoApi(ChargeEntity charge, AuthCardDetails authCardDetails) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
         ChargeStatus newStatus;
 
         try {
-            operationResponse = authorise(charge, authCardDetails);
+            PaymentProvider paymentProviderFor = getPaymentProviderFor(charge);
+            CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
+            operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProviderFor.authoriseMotoApi(request);
 
             if (operationResponse.getBaseResponse().isEmpty()) {
                 operationResponse.throwGatewayError();
@@ -103,6 +154,10 @@ public class CardAuthoriseService {
             operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
         }
 
+        return Pair.of(operationResponse, newStatus);
+    }
+
+    private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, ChargeEntity charge, GatewayResponse<BaseAuthoriseResponse> operationResponse, ChargeStatus newStatus) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse);
         Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
         Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
@@ -131,14 +186,18 @@ public class CardAuthoriseService {
                 newStatus
         );
 
+        incrementMetricsPostAuthorisation(newStatus, updatedCharge, authorisationRequestSummary);
+
+        return new AuthorisationResponse(operationResponse);
+    }
+
+    private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge, AuthorisationRequestSummary authorisationRequestSummary) {
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.authorise.%s.result.%s",
                 updatedCharge.getPaymentProvider(),
                 updatedCharge.getGatewayAccount().getType(),
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
                 newStatus.toString())).inc();
-
-        return new AuthorisationResponse(operationResponse);
     }
 
     @Transactional
@@ -169,10 +228,6 @@ public class CardAuthoriseService {
 
     private boolean cardBrandRequires3ds(String cardBrand) {
         return cardTypeDao.findByBrand(cardBrand).stream().anyMatch(CardTypeEntity::isRequires3ds);
-    }
-
-    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
-        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

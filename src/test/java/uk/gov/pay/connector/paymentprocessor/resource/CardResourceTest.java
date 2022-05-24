@@ -383,7 +383,7 @@ class CardResourceTest {
 
         AuthorisationResponse authorisationResponse = new AuthorisationResponse(operationResponse);
 
-        when(mockCardAuthoriseService.doAuthoriseSync(any(), any(), any())).thenReturn(authorisationResponse);
+        when(mockCardAuthoriseService.doAuthoriseMotoApi(any(), any(), any())).thenReturn(authorisationResponse);
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
@@ -400,7 +400,7 @@ class CardResourceTest {
 
         AuthorisationResponse authorisationResponse = new AuthorisationResponse(operationResponse);
 
-        when(mockCardAuthoriseService.doAuthoriseSync(any(), any(), any())).thenReturn(authorisationResponse);
+        when(mockCardAuthoriseService.doAuthoriseMotoApi(any(), any(), any())).thenReturn(authorisationResponse);
     }
 
     private static void mockAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authoriseStatus) {
@@ -412,6 +412,6 @@ class CardResourceTest {
 
         AuthorisationResponse authorisationResponse = new AuthorisationResponse(operationResponse);
 
-        when(mockCardAuthoriseService.doAuthoriseSync(any(), any(), any())).thenReturn(authorisationResponse);
+        when(mockCardAuthoriseService.doAuthoriseMotoApi(any(), any(), any())).thenReturn(authorisationResponse);
     }
 }

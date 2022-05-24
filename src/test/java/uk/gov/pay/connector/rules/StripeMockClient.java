@@ -105,4 +105,15 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
         setupResponse(payload, "/v1/transfers/" + transferid + "/reversals", 200);
     }
+    
+    public void mockCreatePaymentIntentDelayedResponse() {
+        String responseBody = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
+        String path = "/v1/payment_intents";
+        wireMockServer.stubFor(post(urlPathEqualTo(path))
+                .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(200)
+                        .withFixedDelay(100)
+                        .withBody(responseBody)));
+    }
 }
