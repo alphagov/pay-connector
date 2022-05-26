@@ -5,6 +5,7 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 public class PaymentInstrumentConfirmed extends PaymentInstrumentEvent {
 
@@ -12,13 +13,13 @@ public class PaymentInstrumentConfirmed extends PaymentInstrumentEvent {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static PaymentInstrumentConfirmed from(AgreementEntity agreement) {
+    public static PaymentInstrumentConfirmed from(AgreementEntity agreement, ZonedDateTime timestamp) {
         return new PaymentInstrumentConfirmed(
                 agreement.getServiceId(),
                 agreement.isLive(),
                 agreement.getPaymentInstrument().getExternalId(),
                 new PaymentInstrumentConfirmedDetails(agreement),
-                ZonedDateTime.now(ZoneOffset.UTC)
+                timestamp
         );
     }
 
@@ -31,6 +32,19 @@ public class PaymentInstrumentConfirmed extends PaymentInstrumentEvent {
 
         public String getAgreementExternalId() {
             return agreementExternalId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PaymentInstrumentConfirmedDetails that = (PaymentInstrumentConfirmedDetails) o;
+            return Objects.equals(agreementExternalId, that.agreementExternalId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(agreementExternalId);
         }
     }
 }

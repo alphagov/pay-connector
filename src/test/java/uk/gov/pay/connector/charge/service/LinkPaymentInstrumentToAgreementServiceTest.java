@@ -9,28 +9,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.AgreementSetup;
+import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -57,6 +58,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
+    private Clock clock;
+
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
@@ -68,7 +71,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         logger.setLevel(Level.ERROR);
         logger.addAppender(mockAppender);
 
-        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(mockAgreementDao, ledgerService);
+        clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
+        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(mockAgreementDao, ledgerService, clock);
     }
 
     @Test
@@ -82,7 +86,10 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
         verify(mockPaymentInstrumentEntity).setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
-        verify(ledgerService).postEvent((List<Event>) ArgumentMatchers.any());
+        verify(ledgerService).postEvent(List.of(
+                AgreementSetup.from(mockAgreementEntity, ZonedDateTime.now(clock)),
+                PaymentInstrumentConfirmed.from(mockAgreementEntity, ZonedDateTime.now(clock))
+        ));
     }
 
     @Test
