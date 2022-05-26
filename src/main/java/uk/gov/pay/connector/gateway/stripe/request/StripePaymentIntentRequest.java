@@ -8,7 +8,11 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Map.entry;
+
 public class StripePaymentIntentRequest extends StripeRequest {
+
+    private static final String GOVUK_PAY_TRANSACTION_EXTERNAL_ID = "govuk_pay_transaction_external_id";
 
     private final String amount;
     private final String paymentMethodId;
@@ -17,7 +21,6 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private final String chargeExternalId;
     private final String description;
     private boolean moto;
-
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
@@ -65,21 +68,23 @@ public class StripePaymentIntentRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        Map<String, String> params = new HashMap<>(Map.of(
-                "payment_method", paymentMethodId,
-                "amount", amount,
-                "confirmation_method", "automatic",
-                "capture_method", "manual",
-                "currency", "GBP",
-                "description", description,
-                "transfer_group", transferGroup,
-                "on_behalf_of", stripeConnectAccountId,
-                "confirm", "true",
-                "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)));
+        Map<String, String> params = new HashMap<>(Map.ofEntries(
+                entry("payment_method", paymentMethodId),
+                entry("amount", amount),
+                entry("confirmation_method", "automatic"),
+                entry("capture_method", "manual"),
+                entry("currency", "GBP"),
+                entry("description", description),
+                entry("transfer_group", transferGroup),
+                entry("on_behalf_of", stripeConnectAccountId),
+                entry("confirm", "true"),
+                entry("return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)),
+                entry(String.format("metadata[%s]", GOVUK_PAY_TRANSACTION_EXTERNAL_ID), chargeExternalId)));
 
         if (moto) {
             params.put("payment_method_options[card[moto]]", "true");
         }
+
         return params;
     }
 
