@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.Duration;
 
 public class ConnectorConfiguration extends Configuration {
 
@@ -144,12 +145,23 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("cardidBaseURL")
     private String cardidBaseUrl;
 
+    @NotNull
+    private Long ledgerPostEventTimeoutInMillis;
+
     public String getLedgerBaseUrl() {
         return ledgerBaseUrl;
     }
 
     public String getCardidBaseUrl() {
         return cardidBaseUrl;
+    }
+
+    public Long getLedgerPostEventTimeoutInMillis() {
+        return ledgerPostEventTimeoutInMillis;
+    }
+
+    public Duration getLedgerPostEventTimeout() {
+        return Duration.ofMillis(ledgerPostEventTimeoutInMillis);
     }
 
     @JsonProperty("database")

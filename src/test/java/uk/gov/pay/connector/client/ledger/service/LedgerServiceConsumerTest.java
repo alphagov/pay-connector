@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,8 +38,8 @@ public class LedgerServiceConsumerTest {
     @Before
     public void setUp() {
         when(configuration.getLedgerBaseUrl()).thenReturn(ledgerRule.getUrl());
-        Client client = RestClientFactory.buildClient(new RestClientConfig());
-        ledgerService = new LedgerService(client, configuration);
+        Client client = RestClientFactory.buildClient(new RestClientConfig(), null);
+        ledgerService = new LedgerService(client, client, configuration);
     }
 
     @Test

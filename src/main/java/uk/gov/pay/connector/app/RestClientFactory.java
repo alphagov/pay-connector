@@ -8,13 +8,15 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
 public class RestClientFactory {
     private static final String TLSV1_2 = "TLSv1.2";
 
-    public static Client buildClient(RestClientConfig clientConfig) {
+    public static Client buildClient(RestClientConfig clientConfig, Duration connectTimeout) {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
 
         if (!clientConfig.isDisabledSecureConnection()) {
@@ -27,6 +29,9 @@ public class RestClientFactory {
             }
         }
 
+        if (connectTimeout != null) {
+            clientBuilder.connectTimeout(connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
         Client client = clientBuilder.build();
         client.register(RestClientLoggingFilter.class);
 

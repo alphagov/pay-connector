@@ -201,6 +201,7 @@ restClientConfig:
   disabledSecureConnection: true
 
 ledgerBaseURL: ${LEDGER_URL:-localhost:10700}
+ledgerPostEventTimeoutInMillis: ${LEDGER_POST_EVENT_TIMEOUT_IN_MILLIS:-1000}
 cardidBaseURL: ${CARDID_URL:-http://localhost:9900}
 
 expungeConfig:

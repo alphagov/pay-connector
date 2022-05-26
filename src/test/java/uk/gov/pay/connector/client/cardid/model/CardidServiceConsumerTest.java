@@ -37,7 +37,7 @@ public class CardidServiceConsumerTest {
     @Before
     public void setUp() throws Exception {
         when(configuration.getCardidBaseUrl()).thenReturn(cardidRule.getUrl());
-        Client client = RestClientFactory.buildClient(new RestClientConfig());
+        Client client = RestClientFactory.buildClient(new RestClientConfig(), null);
         cardidService = new CardidService(client, configuration);
     }
 
