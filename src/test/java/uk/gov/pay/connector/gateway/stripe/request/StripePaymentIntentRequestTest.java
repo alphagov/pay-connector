@@ -89,6 +89,7 @@ public class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("confirm=true"));
         assertThat(payload, containsString("description=" + description));
         assertThat(payload, containsString("return_url=" + URLEncoder.encode(frontendUrl + "/card_details/" + chargeExternalId + "/3ds_required_in", UTF_8)));
+        assertThat(payload, containsString(URLEncoder.encode("metadata[govuk_pay_transaction_external_id]", UTF_8) + "=" + chargeExternalId));
     }
 
     @Test
