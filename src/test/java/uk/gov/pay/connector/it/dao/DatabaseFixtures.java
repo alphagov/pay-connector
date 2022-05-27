@@ -36,6 +36,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
@@ -661,7 +662,18 @@ public class DatabaseFixtures {
             if (gatewayAccountId == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addAgreement(this.getAgreementId(), this.getServiceId(), this.getExternalId(), this.getReference(), this.getDescription(), this.getUserIdentifier(), this.getCreatedDate() , this.isLive(), gatewayAccountId);
+            databaseTestHelper.addAgreement(anAddAgreementParams()
+                    .withAgreementId(agreementId)
+                    .withExternalAgreementId(externalId)
+                    .withLive(live)
+                    .withServiceId(serviceId)
+                    .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                    .withCreatedDate(createdDate)
+                    .withReference(reference)
+                    .withDescription(description)
+                    .withUserIdentifier(userIdentifier)
+                    .build());
+
             return this;
         }
     }

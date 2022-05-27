@@ -97,86 +97,86 @@ import static uk.gov.service.payments.commons.model.Source.CARD_API;
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceCreateTest {
 
-    protected static final String SERVICE_HOST = "http://my-service";
-    protected static final long GATEWAY_ACCOUNT_ID = 10L;
-    protected static final long CHARGE_ENTITY_ID = 12345L;
-    protected static final String[] EXTERNAL_CHARGE_ID = new String[1];
-    protected static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
+    private static final String SERVICE_HOST = "http://my-service";
+    private static final long GATEWAY_ACCOUNT_ID = 10L;
+    private static final long CHARGE_ENTITY_ID = 12345L;
+    private static final String[] EXTERNAL_CHARGE_ID = new String[1];
+    private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
 
-    protected ChargeCreateRequestBuilder requestBuilder;
-    protected TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
-
-    @Mock
-    protected TokenDao mockedTokenDao;
+    private ChargeCreateRequestBuilder requestBuilder;
+    private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
 
     @Mock
-    protected ChargeDao mockedChargeDao;
+    private TokenDao mockedTokenDao;
 
     @Mock
-    protected ChargeEventDao mockedChargeEventDao;
+    private ChargeDao mockedChargeDao;
 
     @Mock
-    protected LedgerService ledgerService;
+    private ChargeEventDao mockedChargeEventDao;
 
     @Mock
-    protected GatewayAccountDao mockedGatewayAccountDao;
+    private LedgerService ledgerService;
 
     @Mock
-    protected CardTypeDao mockedCardTypeDao;
+    private GatewayAccountDao mockedGatewayAccountDao;
 
     @Mock
-    protected AgreementDao mockedAgreementDao;
+    private CardTypeDao mockedCardTypeDao;
 
     @Mock
-    protected ConnectorConfiguration mockedConfig;
+    private AgreementDao mockedAgreementDao;
 
     @Mock
-    protected UriInfo mockedUriInfo;
+    private ConnectorConfiguration mockedConfig;
 
     @Mock
-    protected LinksConfig mockedLinksConfig;
+    private UriInfo mockedUriInfo;
 
     @Mock
-    protected PaymentProviders mockedProviders;
+    private LinksConfig mockedLinksConfig;
 
     @Mock
-    protected PaymentProvider mockedPaymentProvider;
+    private PaymentProviders mockedProviders;
 
     @Mock
-    protected EventService mockEventService;
+    private PaymentProvider mockedPaymentProvider;
 
     @Mock
-    protected PaymentInstrumentService mockPaymentInstrumentService;
+    private EventService mockEventService;
 
     @Mock
-    protected StateTransitionService mockStateTransitionService;
+    private PaymentInstrumentService mockPaymentInstrumentService;
 
     @Mock
-    protected RefundService mockedRefundService;
+    private StateTransitionService mockStateTransitionService;
 
     @Mock
-    protected GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    private RefundService mockedRefundService;
 
     @Mock
-    protected AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
     @Mock
-    protected CaptureProcessConfig mockedCaptureProcessConfig;
+    private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
 
     @Mock
-    protected TaskQueueService mockTaskQueueService;
+    private CaptureProcessConfig mockedCaptureProcessConfig;
+
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     @Captor
-    protected ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
+    private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
     @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
 
-    protected ChargeService chargeService;
-    protected GatewayAccountEntity gatewayAccount;
-    protected GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+    private ChargeService chargeService;
+    private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         requestBuilder = ChargeCreateRequestBuilder
                 .aChargeCreateRequest()
                 .withAmount(100L)
@@ -216,8 +216,7 @@ class ChargeServiceCreateTest {
         gatewayAccountCredentialsEntities.add(gatewayAccountCredentialsEntity);
         gatewayAccount.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
 
-        when(mockedConfig.getLinks())
-                .thenReturn(mockedLinksConfig);
+        when(mockedConfig.getLinks()).thenReturn(mockedLinksConfig);
 
         when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
@@ -509,7 +508,7 @@ class ChargeServiceCreateTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
     }
-    
+
     @Test
     void shouldCreateAChargeWhenGatewayAccountCredentialsHasOneEntry() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();

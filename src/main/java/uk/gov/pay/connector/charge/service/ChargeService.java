@@ -10,12 +10,15 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
+import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
-import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
+import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementModeWebException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -71,7 +74,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.inject.Inject;
@@ -242,10 +245,9 @@ public class ChargeService {
     @Transactional
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             var authorisationMode = chargeRequest.getAuthorisationMode();
-
-            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             if (authorisationMode == MOTO_API) {
                 checkMotoApiAuthorisationModeAllowed(gatewayAccount);
@@ -253,7 +255,7 @@ public class ChargeService {
                 checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
             }
 
-            checkAgreementIdAndSaveInstrumentBothPresent(chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
+            checkAgreementOptions(authorisationMode, chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
             checkForUnknownAgreementId(chargeRequest.getAgreementId());
 
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
@@ -261,10 +263,6 @@ public class ChargeService {
                     LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
                 }
             });
-
-            SupportedLanguage language = chargeRequest.getLanguage() != null
-                    ? chargeRequest.getLanguage()
-                    : SupportedLanguage.ENGLISH;
 
             GatewayAccountCredentialsEntity gatewayAccountCredential;
             if (chargeRequest.getPaymentProvider() != null) {
@@ -282,7 +280,7 @@ public class ChargeService {
                     .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
                     .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
                     .withEmail(isBlank(chargeRequest.getEmail()) ? null : chargeRequest.getEmail())
-                    .withLanguage(language)
+                    .withLanguage(chargeRequest.getLanguage())
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
                     .withSource(chargeRequest.getSource())
@@ -922,11 +920,38 @@ public class ChargeService {
         }
     }
 
-    private void checkAgreementIdAndSaveInstrumentBothPresent(String agreementId, boolean savePaymentInstrumentToAgreement) {
-        if (agreementId != null && !savePaymentInstrumentToAgreement) {
-            throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [agreement_id] is present, [save_payment_instrument_to_agreement] must be true");
-        } else if (savePaymentInstrumentToAgreement && agreementId == null) {
-            throw new AgreementIdAndSaveInstrumentMandatoryInputException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified");
+    private void checkAgreementOptions(AuthorisationMode authorisationMode, String agreementId, boolean savePaymentInstrumentToAgreement) {
+        switch (authorisationMode) {
+            case AGREEMENT:
+                if (agreementId == null) {
+                    throw new AuthorisationModeAgreementRequiresAgreementIdException("If [authorisation_mode] is [agreement], " +
+                            "[agreement_id] must be specified");
+                } else if (savePaymentInstrumentToAgreement) {
+                    throw new SavePaymentInstrumentToAgreementRequiresAgreementModeWebException("If [save_payment_instrument_to_agreement] is true, " +
+                            "[authorisation_mode] must be [web]");
+                }
+                break;
+            case WEB:
+                if (agreementId != null) {
+                    if (!savePaymentInstrumentToAgreement) {
+                        throw new AgreementIdWithIncompatibleOtherOptionsException("If [agreement_id] is present, " +
+                                "either [save_payment_instrument_to_agreement] must be true or [authorisation_mode] must be [agreement]");
+                    }
+                } else {
+                    if (savePaymentInstrumentToAgreement) {
+                        throw new SavePaymentInstrumentToAgreementRequiresAgreementIdException("If [save_payment_instrument_to_agreement] is true, " +
+                                "[agreement_id] must be specified");
+                    }
+                }
+                break;
+            default:
+                if (agreementId != null) {
+                    throw new AgreementIdWithIncompatibleOtherOptionsException("If [agreement_id] is present, " +
+                            "[authorisation_mode] must be [agreement] or [web]");
+                } else if (savePaymentInstrumentToAgreement) {
+                    throw new SavePaymentInstrumentToAgreementRequiresAgreementModeWebException("If [save_payment_instrument_to_agreement] is true, " +
+                            "[authorisation_mode] must be [web]");
+                }
         }
     }
 
