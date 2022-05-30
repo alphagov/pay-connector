@@ -3,21 +3,33 @@ package uk.gov.pay.connector.charge.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.AgreementIdAndSaveInstrumentMandatoryInputException;
+import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
+import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
+import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementModeWebException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -30,55 +42,73 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import static javax.ws.rs.core.UriBuilder.fromUri;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceCreateAgreementTest {
     private static final long GATEWAY_ACCOUNT_ID = 10L;
 
+    private static final String SERVICE_HOST = "https://service-host.test/";
+
+    private static final String FRONTEND_URL = "https://frontend.test/";
+
+    private static final String AGREEMENT_ID = "agreement-id";
+
     private ChargeCreateRequestBuilder requestBuilder;
 
     @Mock
-    private TokenDao mockedTokenDao;
+    private TokenDao mockTokenDao;
 
     @Mock
-    private ChargeDao mockedChargeDao;
+    private ChargeDao mockChargeDao;
 
     @Mock
-    private ChargeEventDao mockedChargeEventDao;
+    private ChargeEventDao mockChargeEventDao;
 
     @Mock
-    private LedgerService ledgerService;
+    private LedgerService mockLedgerService;
 
     @Mock
-    private GatewayAccountDao mockedGatewayAccountDao;
+    private GatewayAccountDao mockGatewayAccountDao;
 
     @Mock
-    private CardTypeDao mockedCardTypeDao;
+    private CardTypeDao mockCardTypeDao;
 
     @Mock
-    private AgreementDao mockedAgreementDao;
+    private AgreementDao mockAgreementDao;
 
     @Mock
-    private ConnectorConfiguration mockedConfig;
+    private ConnectorConfiguration mockConfig;
 
     @Mock
     private UriInfo mockedUriInfo;
 
     @Mock
-    private PaymentProviders mockedProviders;
+    private LinksConfig mockLinksConfig;
+
+    @Mock
+    private PaymentProviders mockProviders;
+
+    @Mock
+    protected PaymentProvider mockPaymentProvider;
 
     @Mock
     private EventService mockEventService;
@@ -101,59 +131,216 @@ class ChargeServiceCreateAgreementTest {
     @Mock
     private TaskQueueService mockTaskQueueService;
 
+    @Mock
+    private AgreementEntity mockAgreementEntity;
+
+    @Captor
+    private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
+    private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
     @BeforeEach
     void setUp() {
         requestBuilder = ChargeCreateRequestBuilder
                 .aChargeCreateRequest()
                 .withAmount(100L)
-                .withReturnUrl("http://return-service.com")
+                .withReturnUrl("https://return-url.test/")
                 .withDescription("This is a description")
-                .withReference("Pay reference");
+                .withReference("This is a reference");
 
         gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
 
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+        gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccount)
-                .withPaymentProvider("sandbox")
-                .withCredentials(Map.of())
+                .withPaymentProvider(PaymentGatewayName.SANDBOX.getName())
+                .withCredentials(Collections.emptyMap())
                 .withState(GatewayAccountCredentialState.ACTIVE)
                 .build();
 
-        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
-        gatewayAccountCredentialsEntities.add(gatewayAccountCredentialsEntity);
-        gatewayAccount.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
+        gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
-        chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        when(mockConfig.getLinks()).thenReturn(mockLinksConfig);
+
+        chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao, mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao,
+                mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
+                mockPaymentInstrumentService, mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
     }
 
     @Test
-    void shouldThrowExceptionWhenAgreementIdNotProvidedAlongWithSavePaymentInstrumentToAgreement() {
-        final ChargeCreateRequest request = requestBuilder.withAmount(1000).withSavePaymentInstrumentToAgreement(true).build();
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+    void shouldCreateChargeWithSavePaymentInstrumentToAgreement() {
+        when(mockAgreementDao.findByExternalId(AGREEMENT_ID)).thenReturn(Optional.of(mockAgreementEntity));
+        when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
+        when(mockLinksConfig.getFrontendUrl()).thenReturn(FRONTEND_URL);
+        when(mockProviders.byName(PaymentGatewayName.SANDBOX)).thenReturn(mockPaymentProvider);
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), eq(Collections.emptyList()))).thenReturn(EXTERNAL_AVAILABLE);
 
-        assertThrows(AgreementIdAndSaveInstrumentMandatoryInputException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
 
-        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getAgreementId().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreementId().get(), is(AGREEMENT_ID));
+        assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(true));
     }
 
     @Test
-    void shouldThrowExceptionWhenAgreementIdNotPresentInDb() {
+    void shouldCreateChargeWithAuthorisationModeAgreement() {
+        when(mockAgreementDao.findByExternalId(AGREEMENT_ID)).thenReturn(Optional.of(mockAgreementEntity));
+        when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
+        when(mockLinksConfig.getFrontendUrl()).thenReturn(FRONTEND_URL);
+        when(mockProviders.byName(PaymentGatewayName.SANDBOX)).thenReturn(mockPaymentProvider);
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), eq(Collections.emptyList()))).thenReturn(EXTERNAL_AVAILABLE);
+
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
+
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getAgreementId().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreementId().get(), is(AGREEMENT_ID));
+        assertThat(createdChargeEntity.getAuthorisationMode(), is(AuthorisationMode.AGREEMENT));
+        assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(false));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdNotProvidedAlongWithAuthorisationModeAgreement() {
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
+
+        assertThrows(AuthorisationModeAgreementRequiresAgreementIdException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdAndSavePaymentInstrumentToAgreementTrueAndAuthorisationModeAgreement() {
+        gatewayAccount.setAllowMoto(true);
+        gatewayAccount.setAllowAuthorisationApi(true);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId("agreement ID")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .build();
+
+        assertThrows(SavePaymentInstrumentToAgreementRequiresAgreementModeWebException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdProvidedWithSavePaymentInstrumentToAgreementFalse() {
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(false).build();
+
+        assertThrows(AgreementIdWithIncompatibleOtherOptionsException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdNotProvidedAlongWithSavePaymentInstrumentToAgreementTrue() {
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withSavePaymentInstrumentToAgreement(true).build();
+
+        assertThrows(SavePaymentInstrumentToAgreementRequiresAgreementIdException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(mode = EXCLUDE, names = "AGREEMENT")
+    void shouldThrowExceptionWhenAgreementIdProvidedWithoutSavePaymentInstrumentToAgreementOrAuthorisationModeAgreement(AuthorisationMode authorisationMode) {
+        gatewayAccount.setAllowMoto(true);
+        gatewayAccount.setAllowAuthorisationApi(true);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(authorisationMode)
+                .build();
+
+        assertThrows(AgreementIdWithIncompatibleOtherOptionsException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(mode = EXCLUDE, names = {"WEB", "AGREEMENT"})
+    void shouldThrowExceptionWhenSavePaymentInstrumentToAgreementTrueWithAgreementIdAndAuthorisationModeNotWebOrAgreement(AuthorisationMode authorisationMode) {
+        gatewayAccount.setAllowMoto(true);
+        gatewayAccount.setAllowAuthorisationApi(true);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId("agreement-id")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAuthorisationMode(authorisationMode)
+                .build();
+
+        assertThrows(AgreementIdWithIncompatibleOtherOptionsException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(mode = EXCLUDE, names = {"WEB", "AGREEMENT"})
+    void shouldThrowExceptionWhenSavePaymentInstrumentToAgreementTrueWithNoAgreementIdAndAuthorisationModeNotWebOrAgreement(AuthorisationMode authorisationMode) {
+        gatewayAccount.setAllowMoto(true);
+        gatewayAccount.setAllowAuthorisationApi(true);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAuthorisationMode(authorisationMode)
+                .build();
+
+        assertThrows(SavePaymentInstrumentToAgreementRequiresAgreementModeWebException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdNotPresentInDbForSavePaymentInstrumentToAgreement() {
         String UNKNOWN_AGREEMENT_ID = "unknownId";
-        final ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(UNKNOWN_AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-        when(mockedAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID)).thenReturn(Optional.empty());
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(UNKNOWN_AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
+        when(mockAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID)).thenReturn(Optional.empty());
 
         assertThrows(AgreementNotFoundException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
 
-        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAgreementIdNotPresentInDbForAuthorisationModeAgreement() {
+        String unknownAgreementId = "unknownId";
+        final ChargeCreateRequest request = requestBuilder.withAmount(1000)
+                .withAgreementId(unknownAgreementId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .build();
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        assertThrows(AgreementNotFoundException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
 }

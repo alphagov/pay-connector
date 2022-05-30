@@ -20,6 +20,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -58,6 +59,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBodyWithAgreement;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -160,8 +162,9 @@ public class ChargesFrontendResourceIT {
         var agreementServiceId = "service-id";
         var agreementDescription = "a valid description";
         var agreementUserIdentifier = "a-valid-user-identifier";
-        databaseTestHelper.addAgreement(11l, agreementServiceId, AGREEMENT_ID,
-                agreementReference, agreementDescription, agreementUserIdentifier, Instant.now(), false, Long.parseLong(accountId));
+        databaseTestHelper.addAgreement(anAddAgreementParams().withServiceId(agreementServiceId).withExternalAgreementId(AGREEMENT_ID)
+                .withReference(agreementReference).withDescription(agreementDescription).withUserIdentifier(agreementUserIdentifier)
+                .withCreatedDate(Instant.now()).withLive(false).withGatewayAccountId(accountId).build());
         String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
         String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);

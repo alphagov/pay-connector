@@ -46,11 +46,11 @@ public class ChargeCreateRequest {
     private String email;
 
     @JsonProperty("delayed_capture")
-    private boolean delayedCapture = false;
+    private Boolean delayedCapture;
 
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     @JsonProperty("language")
-    private SupportedLanguage language = SupportedLanguage.ENGLISH;
+    private SupportedLanguage language;
     
     @JsonProperty("prefilled_cardholder_details")
     @Valid
@@ -66,7 +66,7 @@ public class ChargeCreateRequest {
     private Source source;
     
     @JsonProperty("moto")
-    private boolean moto;
+    private Boolean moto;
     
     @JsonProperty("payment_provider")
     @ValidPaymentProvider
@@ -77,14 +77,14 @@ public class ChargeCreateRequest {
     private String agreementId;
 
     @JsonProperty("save_payment_instrument_to_agreement")
-    private boolean savePaymentInstrumentToAgreement;
+    private Boolean savePaymentInstrumentToAgreement;
     
     @JsonProperty("authorisation_mode")
     @Valid
-    private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+    private AuthorisationMode authorisationMode;
 
     public ChargeCreateRequest() {
-        // empty constructor
+        // For Jackson
     }
 
     ChargeCreateRequest(long amount,
@@ -140,11 +140,11 @@ public class ChargeCreateRequest {
     }
 
     public boolean isDelayedCapture() {
-        return delayedCapture;
+        return Optional.ofNullable(delayedCapture).orElse(false);
     }
 
     public SupportedLanguage getLanguage() {
-        return language;
+        return Optional.ofNullable(language).orElse(SupportedLanguage.ENGLISH);
     }
     
     public Optional<PrefilledCardHolderDetails> getPrefilledCardHolderDetails() {
@@ -160,7 +160,7 @@ public class ChargeCreateRequest {
     }
 
     public boolean isMoto() {
-        return moto;
+        return Optional.ofNullable(moto).orElse(false);
     }
 
     public String getAgreementId() {
@@ -168,7 +168,7 @@ public class ChargeCreateRequest {
     }
 
     public boolean getSavePaymentInstrumentToAgreement() {
-        return savePaymentInstrumentToAgreement;
+        return Optional.ofNullable(savePaymentInstrumentToAgreement).orElse(false);
     }
 
     public String getPaymentProvider() {
@@ -176,7 +176,7 @@ public class ChargeCreateRequest {
     }
 
     public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
+        return Optional.ofNullable(authorisationMode).orElse(AuthorisationMode.WEB);
     }
 
     public String toStringWithoutPersonalIdentifiableInformation() {
@@ -185,15 +185,15 @@ public class ChargeCreateRequest {
         // reference - can come from user input for payment links, in the past they have mistakenly entered card numbers
         return "ChargeCreateRequest{" +
                 "amount=" + amount +
-                ", returnUrl='" + returnUrl + '\'' +
-                ", delayed_capture=" + delayedCapture +
-                ", source=" + source +
-                ", moto=" + moto +
+                (returnUrl != null ? ", return_url=" + returnUrl : "") +
+                (delayedCapture != null ? ", delayed_capture=" + delayedCapture : "") +
+                (source != null ? ", source=" + source : "") +
+                (moto != null ? ", moto=" + moto : "") +
                 (language != null ? ", language=" + language : "") +
                 (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
-                (agreementId != null ? ", agreementId=" + agreementId : "") +
-                ", savePaymentInstrumentToAgreement=" + savePaymentInstrumentToAgreement +
-                ", authorisationMode=" + authorisationMode + 
+                (agreementId != null ? ", agreement_id=" + agreementId : "") +
+                (savePaymentInstrumentToAgreement != null ? ", save_payment_instrument_to_agreement=" + savePaymentInstrumentToAgreement : "") +
+                (authorisationMode != null ? ", authorisation_mode=" + authorisationMode : "") +
                 '}';
     }
 }

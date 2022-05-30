@@ -36,8 +36,8 @@ import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
 
-    private Jdbi jdbi;
-    private InstantToUtcTimestampWithoutTimeZoneConverter instantConverter = new InstantToUtcTimestampWithoutTimeZoneConverter();
+    private final Jdbi jdbi;
+    private final InstantToUtcTimestampWithoutTimeZoneConverter instantConverter = new InstantToUtcTimestampWithoutTimeZoneConverter();
 
     public DatabaseTestHelper(Jdbi jdbi) {
         this.jdbi = jdbi;
@@ -142,24 +142,21 @@ public class DatabaseTestHelper {
                         .execute());
     }
     
-    public void addAgreement(Long id, String serviceId, String externalId, String reference, String description, String userIdentifier, Instant createdDate, boolean live, long gatewayAccountId) {
-        PGobject jsonMetadata = new PGobject();
-        jsonMetadata.setType("json");
-        
+    public void addAgreement(AddAgreementParams addAgreementParams) {
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
                                 "reference, description, user_identifier, live, gateway_account_id) " +
                                 "VALUES(:id, :external_id, :service_id, :created_date, " +
                                 ":reference, :description, :user_identifier, :live, :gateway_account_id)")
-                        .bind("id", Long.valueOf(id))
-                        .bind("external_id", externalId)
-                        .bind("service_id", serviceId)
-                        .bind("created_date", LocalDateTime.ofInstant(createdDate, UTC))
-                        .bind("reference", reference)
-                        .bind("description", description)
-                        .bind("user_identifier", userIdentifier)
-                        .bind("live", live)
-                        .bind("gateway_account_id", gatewayAccountId)
+                        .bind("id", addAgreementParams.getAgreementId())
+                        .bind("external_id", addAgreementParams.getExternalAgreementId())
+                        .bind("service_id", addAgreementParams.getServiceId())
+                        .bind("created_date", LocalDateTime.ofInstant(addAgreementParams.getCreatedDate(), UTC))
+                        .bind("reference", addAgreementParams.getReference())
+                        .bind("description", addAgreementParams.getDescription())
+                        .bind("user_identifier", addAgreementParams.getUserIdentifier())
+                        .bind("live", addAgreementParams.isLive())
+                        .bind("gateway_account_id", Long.valueOf(addAgreementParams.getGatewayAccountId()))
                         .execute());
     }
 
