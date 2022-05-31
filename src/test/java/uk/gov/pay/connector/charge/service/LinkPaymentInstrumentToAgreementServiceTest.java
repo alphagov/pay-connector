@@ -79,7 +79,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     void linksPaymentInstrumentFromChargeToAgreementFromChargeAndSetsPaymentInstrumentToActive() {
         given(mockAgreementDao.findByExternalId(AGREEMENT_ID)).willReturn(Optional.of(mockAgreementEntity));
         when(mockAgreementEntity.getGatewayAccount()).thenReturn(mock(GatewayAccountEntity.class));
-        when(mockAgreementEntity.getPaymentInstrument()).thenReturn(mockPaymentInstrumentEntity);
+        when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
+        when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(AGREEMENT_ID).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
