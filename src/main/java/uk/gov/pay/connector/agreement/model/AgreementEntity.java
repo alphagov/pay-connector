@@ -7,19 +7,19 @@ import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneC
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.Id;
 import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.ManyToOne;
-import javax.persistence.GenerationType;
-import javax.persistence.JoinColumn;
 import javax.persistence.Convert;
-
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.time.Instant;
+import java.util.Optional;
 
 @Entity
 @Table(name = "agreements")
@@ -152,8 +152,8 @@ public class AgreementEntity {
         this.userIdentifier = userIdentifier;
     }
 
-    public PaymentInstrumentEntity getPaymentInstrument() {
-        return paymentInstrument;
+    public Optional<PaymentInstrumentEntity> getPaymentInstrument() {
+        return Optional.ofNullable(paymentInstrument);
     }
 
     public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrumentEntity) {

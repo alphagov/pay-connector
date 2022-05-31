@@ -20,7 +20,7 @@ public class AgreementSetup extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementSetupEventDetails(agreement.getPaymentInstrument(), PaymentInstrumentStatus.ACTIVE),
+                new AgreementSetupEventDetails(agreement.getPaymentInstrument().orElse(null), PaymentInstrumentStatus.ACTIVE),
                 timestamp
         );
     }

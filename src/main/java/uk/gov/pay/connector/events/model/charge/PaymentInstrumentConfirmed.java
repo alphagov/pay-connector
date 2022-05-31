@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events.model.charge;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -14,10 +15,14 @@ public class PaymentInstrumentConfirmed extends PaymentInstrumentEvent {
     }
 
     public static PaymentInstrumentConfirmed from(AgreementEntity agreement, ZonedDateTime timestamp) {
+        String paymentInstrumentExternalId = agreement.getPaymentInstrument()
+                .map(PaymentInstrumentEntity::getExternalId)
+                .orElseThrow(() -> new IllegalArgumentException("Agreement " + agreement.getExternalId() + " does not have a payment instrument"));
+
         return new PaymentInstrumentConfirmed(
                 agreement.getServiceId(),
                 agreement.isLive(),
-                agreement.getPaymentInstrument().getExternalId(),
+                paymentInstrumentExternalId,
                 new PaymentInstrumentConfirmedDetails(agreement),
                 timestamp
         );
