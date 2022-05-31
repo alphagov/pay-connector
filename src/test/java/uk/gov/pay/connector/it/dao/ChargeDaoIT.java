@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -866,6 +867,56 @@ public class ChargeDaoIT extends DaoITestBase {
 
         List<ChargeEntity> charges = chargeDao.findWithPaymentProviderAndStatusIn("epdq", List.of(CREATED), 2);
         assertThat(charges, hasSize(2));
+    }
+
+    @Test
+    public void shouldFindChargesWithPaymentProvidersAndStatuses() {
+        DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
+        DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
+        DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
+        DatabaseFixtures.TestAccount smartpayAccount = insertTestAccountWithProvider("smartpay");
+
+        TestCharge epdqCreatedCharge = insertTestChargeWithStatus(epdqAccount, CREATED);
+        TestCharge worldpayCreatedCharge = insertTestChargeWithStatus(worldpayAccount, CREATED);
+        TestCharge stripeCreatedCharge = insertTestChargeWithStatus(stripeAccount, CREATED);
+        TestCharge smartpayCreatedCharge = insertTestChargeWithStatus(smartpayAccount, CREATED);
+        TestCharge epdqEnteringCardDetailsCharge = insertTestChargeWithStatus(epdqAccount, ENTERING_CARD_DETAILS);
+        TestCharge worldpayAuthorisedCharge = insertTestChargeWithStatus(worldpayAccount, AUTHORISATION_SUCCESS);
+        TestCharge stripeEnteringCardDetailsCharge = insertTestChargeWithStatus(stripeAccount, ENTERING_CARD_DETAILS);
+
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersInAndStatusIn(List.of("epdq", "worldpay", "stripe"),
+                List.of(CREATED, ENTERING_CARD_DETAILS), 10);
+
+        assertThat(charges, hasSize(5));
+        assertThat(charges, containsInAnyOrder(
+                hasProperty("externalId", is(epdqCreatedCharge.externalChargeId)),
+                hasProperty("externalId", is(epdqEnteringCardDetailsCharge.externalChargeId)),
+                hasProperty("externalId", is(worldpayCreatedCharge.externalChargeId)),
+                hasProperty("externalId", is(stripeCreatedCharge.externalChargeId)),
+                hasProperty("externalId", is(stripeEnteringCardDetailsCharge.externalChargeId))
+        ));
+        assertThat(charges, not(containsInAnyOrder(
+                hasProperty("externalId", is(smartpayCreatedCharge.externalChargeId)),
+                hasProperty("externalId", is(worldpayAuthorisedCharge.externalChargeId))
+        )));
+    }
+
+    @Test
+    public void shouldFindChargesWithPaymentProvidersAndStatusesWithLimit() {
+        DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
+        DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
+        DatabaseFixtures.TestAccount smartpayAccount = insertTestAccountWithProvider("smartpay");
+        insertTestChargeWithStatus(epdqAccount, CREATED);
+        TestCharge smartpayCreatedCharge = insertTestChargeWithStatus(smartpayAccount, CREATED);
+        insertTestChargeWithStatus(stripeAccount, CREATED);
+        insertTestChargeWithStatus(stripeAccount, CREATED);
+
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersInAndStatusIn(List.of("epdq", "worldpay", "stripe"),
+                List.of(CREATED), 2);
+        assertThat(charges, hasSize(2));
+        assertThat(charges, not(containsInAnyOrder(
+                hasProperty("externalId", is(smartpayCreatedCharge.externalChargeId))
+        )));
     }
 
     private void insertTestAccount() {

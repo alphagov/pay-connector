@@ -275,4 +275,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setMaxResults(limit)
                 .getResultList();
     }
+
+    public List<ChargeEntity> findWithPaymentProvidersInAndStatusIn(List<String> providers, List<ChargeStatus> statuses, int limit) {
+        return entityManager.get()
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.paymentProvider IN :providers AND c.status IN :statuses", ChargeEntity.class)
+                .setParameter("providers", providers)
+                .setParameter("statuses", statuses)
+                .setMaxResults(limit)
+                .getResultList();
+    }
 }
