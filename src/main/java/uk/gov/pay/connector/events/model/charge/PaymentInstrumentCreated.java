@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.events.model.charge;
 
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -40,8 +42,8 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
             Optional.ofNullable(paymentInstrument.getCardDetails())
                     .ifPresent(cardDetails -> {
                         this.cardholderName = cardDetails.getCardHolderName();
-                        this.lastDigitsCardNumber = cardDetails.getLastDigitsCardNumber().toString();
-                        this.expiryDate = cardDetails.getExpiryDate().toString();
+                        this.lastDigitsCardNumber = Optional.ofNullable(cardDetails.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null);
+                        this.expiryDate = Optional.ofNullable(cardDetails.getExpiryDate()).map(CardExpiryDate::toString).orElse(null);
                         this.cardBrand = cardDetails.getCardBrand();
                         
                         cardDetails.getBillingAddress().ifPresent(billingAddress -> {

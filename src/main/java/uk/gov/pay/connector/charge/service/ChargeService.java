@@ -677,7 +677,7 @@ public class ChargeService {
     }
 
     private void setPaymentInstrument(Map<String, String> recurringAuthToken, ChargeEntity charge) {
-        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(charge.getCardDetails(), recurringAuthToken);
+        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(charge, recurringAuthToken);
         charge.setPaymentInstrument(paymentInstrument);
     }
 
