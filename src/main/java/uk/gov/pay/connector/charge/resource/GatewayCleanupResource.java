@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.resource;
 
-import uk.gov.pay.connector.charge.service.EpdqAuthorisationErrorGatewayCleanupService;
+import uk.gov.pay.connector.charge.service.AuthorisationErrorGatewayCleanupService;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -17,10 +17,10 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 @Path("/")
 public class GatewayCleanupResource {
 
-    private EpdqAuthorisationErrorGatewayCleanupService cleanupService;
+    private AuthorisationErrorGatewayCleanupService cleanupService;
 
     @Inject 
-    public GatewayCleanupResource(EpdqAuthorisationErrorGatewayCleanupService cleanupService) {
+    public GatewayCleanupResource(AuthorisationErrorGatewayCleanupService cleanupService) {
         this.cleanupService = cleanupService;
     }
 
