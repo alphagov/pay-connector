@@ -1,0 +1,116 @@
+{
+  "object": "search_result",
+  "url": "/v1/payment_intents/search",
+  "has_more": false,
+  "data": [
+    {
+      "id": "pi_1FJMFKDv3CZEaFO2UhknVpXZ",
+      "object": "payment_intent",
+      "amount": 1000,
+      "amount_capturable": 0,
+      "amount_details": {
+        "tip": {}
+      },
+      "amount_received": 0,
+      "application": null,
+      "application_fee_amount": null,
+      "automatic_payment_methods": null,
+      "canceled_at": null,
+      "cancellation_reason": null,
+      "capture_method": "manual",
+      "charges": {
+        "object": "list",
+        "data": [],
+        "has_more": false,
+        "url": "/v1/charges?payment_intent=pi_1FJMFKDv3CZEaFO2UhknVpXZ"
+      },
+      "confirmation_method": "automatic",
+      "created": 1568648170,
+      "currency": "gbp",
+      "customer": null,
+      "description": null,
+      "invoice": null,
+      "last_payment_error": {
+        "code": "payment_intent_authentication_failure",
+        "doc_url": "https://stripe.com/docs/error-codes/payment-intent-authentication-failure",
+        "message": "The provided PaymentMethod has failed authentication. You can provide payment_method_data or a new PaymentMethod to attempt to fulfill this PaymentIntent again.",
+        "payment_method": {
+          "id": "pm_1FJMFJDv3CZEaFO2DIv09Tul",
+          "object": "payment_method",
+          "billing_details": {
+            "address": {
+              "city": "sgdhfn",
+              "country": "GB",
+              "line1": "ghnf",
+              "line2": null,
+              "postal_code": "E12 6EL",
+              "state": null
+            },
+            "email": null,
+            "name": "fgh",
+            "phone": null
+          },
+          "card": {
+            "brand": "visa",
+            "checks": {
+              "address_line1_check": "unchecked",
+              "address_postal_code_check": "unchecked",
+              "cvc_check": "unchecked"
+            },
+            "country": "IE",
+            "exp_month": 12,
+            "exp_year": 2019,
+            "fingerprint": "c5zxCpI75MgpPNn9",
+            "funding": "credit",
+            "generated_from": null,
+            "last4": "3220",
+            "networks": {
+              "available": [
+                "visa"
+              ],
+              "preferred": null
+            },
+            "three_d_secure_usage": {
+              "supported": true
+            },
+            "wallet": null
+          },
+          "created": 1568648169,
+          "customer": null,
+          "livemode": false,
+          "metadata": {},
+          "type": "card"
+        },
+        "type": "invalid_request_error"
+      },
+      "livemode": false,
+      "metadata": {
+        "order_id": "6735"
+      },
+      "next_action": null,
+      "on_behalf_of": "acct_1Dqi7xDGbsybhdxf",
+      "payment_method": null,
+      "payment_method_options": {
+        "card": {
+          "installments": null,
+          "mandate_options": null,
+          "network": null,
+          "request_three_d_secure": "automatic"
+        }
+      },
+      "payment_method_types": [
+        "card"
+      ],
+      "processing": null,
+      "receipt_email": null,
+      "review": null,
+      "setup_future_usage": null,
+      "shipping": null,
+      "statement_descriptor": null,
+      "statement_descriptor_suffix": null,
+      "status": "succeeded",
+      "transfer_data": null,
+      "transfer_group": "8hh0gbvt6285btreek23isjoe8"
+    }
+  ]
+}

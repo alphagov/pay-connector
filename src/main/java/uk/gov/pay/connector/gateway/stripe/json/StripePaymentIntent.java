@@ -17,6 +17,9 @@ public class StripePaymentIntent {
     @JsonProperty("amount_capturable")
     private Long amountCapturable;
 
+    @JsonProperty("status")
+    private String status;
+
     public ChargesCollection getChargesCollection() {
         return chargesCollection;
     }
@@ -32,6 +35,10 @@ public class StripePaymentIntent {
     public Optional<StripeCharge> getCharge() {
         return chargesCollection != null ? chargesCollection.getCharges().stream().findFirst() :
             Optional.empty();
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
