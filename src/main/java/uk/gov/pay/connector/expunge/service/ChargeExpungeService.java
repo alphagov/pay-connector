@@ -40,6 +40,15 @@ public class ChargeExpungeService {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ParityCheckService parityCheckService;
     private final ChargeService chargeService;
+    private final List<PaymentGatewayName> expungeExemptedGateways = List.of(
+            PaymentGatewayName.EPDQ,
+            PaymentGatewayName.WORLDPAY,
+            PaymentGatewayName.STRIPE);
+
+    private final List<ChargeStatus> expungeExemptChargeStatuses = List.of(
+            AUTHORISATION_ERROR,
+            AUTHORISATION_TIMEOUT,
+            AUTHORISATION_UNEXPECTED_ERROR);
 
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
@@ -59,8 +68,8 @@ public class ChargeExpungeService {
         if (chargeIsHistoric && status.equals(ChargeStatus.CAPTURE_SUBMITTED)) {
             return true;
         }
-        if (chargeEntity.getPaymentGatewayName().equals(PaymentGatewayName.EPDQ) &&
-                List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR).contains(status)) {
+        if (expungeExemptedGateways.contains(chargeEntity.getPaymentGatewayName()) &&
+                expungeExemptChargeStatuses.contains(status)) {
             return false;
         }
         return status.isExpungeable();
