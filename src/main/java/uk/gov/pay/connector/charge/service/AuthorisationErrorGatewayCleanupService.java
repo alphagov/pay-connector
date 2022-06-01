@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
+import uk.gov.pay.connector.util.MDCUtils;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -76,9 +77,7 @@ public class AuthorisationErrorGatewayCleanupService {
         AtomicInteger failures = new AtomicInteger();
 
         chargesToCleanUp.forEach(chargeEntity -> {
-            MDC.put(PROVIDER, chargeEntity.getPaymentProvider());
-            MDC.put(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId().toString());
-            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+            MDCUtils.addChargeAndGatewayAccountDetailsToMDC(chargeEntity);
 
             try {
                 ChargeQueryResponse chargeQueryResponse = queryService.getChargeGatewayStatus(chargeEntity);
@@ -93,9 +92,7 @@ public class AuthorisationErrorGatewayCleanupService {
                         chargeEntity.getStructuredLoggingArgs());
                 failures.getAndIncrement();
             } finally {
-                MDC.remove(PROVIDER);
-                MDC.remove(GATEWAY_ACCOUNT_ID);
-                MDC.remove(PAYMENT_EXTERNAL_ID);
+                MDCUtils.removeChargeAndGatewayAccountDetailsFromMDC();
             }
         });
 
