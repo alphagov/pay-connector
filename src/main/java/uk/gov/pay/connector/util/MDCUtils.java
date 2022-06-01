@@ -20,4 +20,15 @@ public class MDCUtils {
         MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccount.getId().toString());
         MDC.put(GATEWAY_ACCOUNT_TYPE, gatewayAccount.getType());
     }
+
+    public static void removeChargeAndGatewayAccountDetailsFromMDC() {
+        MDC.remove(PAYMENT_EXTERNAL_ID);
+        MDC.remove(PROVIDER);
+        removeGatewayAccountDetailsFromMDC();
+    }
+
+    public static void removeGatewayAccountDetailsFromMDC() {
+        MDC.remove(GATEWAY_ACCOUNT_ID);
+        MDC.remove(GATEWAY_ACCOUNT_TYPE);
+    }
 }
