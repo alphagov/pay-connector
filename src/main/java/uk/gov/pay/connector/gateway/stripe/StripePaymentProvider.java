@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -23,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -33,7 +36,11 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeAuthoriseHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeFailedPaymentFeeCollectionHandler;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeQueryPaymentStatusHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
+import uk.gov.pay.connector.gateway.stripe.request.StripeQueryPaymentStatusRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -63,6 +70,7 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeRefundHandler stripeRefundHandler;
     private final StripeAuthoriseHandler stripeAuthoriseHandler;
     private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
+    private final StripeQueryPaymentStatusHandler stripeQueryPaymentStatusHandler;
 
     @Inject
     public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
@@ -78,11 +86,12 @@ public class StripePaymentProvider implements PaymentProvider {
         stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
         stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeQueryPaymentStatusHandler = new StripeQueryPaymentStatusHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 
     @Override
     public boolean canQueryPaymentStatus() {
-        return false;
+        return true;
     }
 
     @Override
@@ -96,8 +105,8 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) {
-        throw new UnsupportedOperationException("Querying payment status not currently supported by Stripe");
+    public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException {
+        return stripeQueryPaymentStatusHandler.queryPaymentStatus(chargeQueryGatewayRequest);
     }
 
     @Override

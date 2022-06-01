@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -29,8 +30,13 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
-public class EpdqAuthorisationErrorGatewayCleanupService {
+public class AuthorisationErrorGatewayCleanupService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -43,10 +49,10 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
     private final PaymentProviders providers;
 
     @Inject
-    public EpdqAuthorisationErrorGatewayCleanupService(ChargeDao chargeDao,
-                                                       ChargeService chargeService,
-                                                       QueryService queryService,
-                                                       PaymentProviders providers) {
+    public AuthorisationErrorGatewayCleanupService(ChargeDao chargeDao,
+                                                   ChargeService chargeService,
+                                                   QueryService queryService,
+                                                   PaymentProviders providers) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.queryService = queryService;
@@ -54,18 +60,26 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
     }
 
     public Map<String, Integer> sweepAndCleanupAuthorisationErrors(int limit) {
-        List<ChargeEntity> chargesToCleanUp = chargeDao.findWithPaymentProviderAndStatusIn(EPDQ.getName(), List.of(
-                AUTHORISATION_ERROR,
-                AUTHORISATION_TIMEOUT,
-                AUTHORISATION_UNEXPECTED_ERROR
-        ), limit);
+        List<ChargeEntity> chargesToCleanUp = chargeDao.findWithPaymentProvidersInAndStatusIn(
+                List.of(EPDQ.getName(),
+                        WORLDPAY.getName(),
+                        STRIPE.getName()),
+                List.of(AUTHORISATION_ERROR,
+                        AUTHORISATION_TIMEOUT,
+                        AUTHORISATION_UNEXPECTED_ERROR
+                ),
+                limit);
 
-        logger.info("Found {} epdq charges to clean up.", chargesToCleanUp.size());
+        logger.info("Found {} charges to clean up.", chargesToCleanUp.size());
         
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
 
         chargesToCleanUp.forEach(chargeEntity -> {
+            MDC.put(PROVIDER, chargeEntity.getPaymentProvider());
+            MDC.put(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId().toString());
+            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+
             try {
                 ChargeQueryResponse chargeQueryResponse = queryService.getChargeGatewayStatus(chargeEntity);
                 boolean success = cleanUpChargeWithGateway(chargeEntity, chargeQueryResponse);
@@ -78,10 +92,14 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 logger.info("Error when querying charge status with gateway: " + e.getMessage(),
                         chargeEntity.getStructuredLoggingArgs());
                 failures.getAndIncrement();
+            } finally {
+                MDC.remove(PROVIDER);
+                MDC.remove(GATEWAY_ACCOUNT_ID);
+                MDC.remove(PAYMENT_EXTERNAL_ID);
             }
         });
 
-        logger.info("Epdq charges cleaned up successfully: {}; epdq charges cleaned up failed: {}", 
+        logger.info("Charges cleaned up successfully: {}; Charges cleaned up failed: {}",
                 successes.intValue(), failures.intValue());
         
         return ImmutableMap.of(
@@ -123,9 +141,10 @@ public class EpdqAuthorisationErrorGatewayCleanupService {
                 return true;
             }
 
-            logger.error(format("Charge is in a mapped status of [%s] with the gateway, which is " +
+            logger.error(format("Charge is in a mapped status of [%s] with the [%s] gateway, which is " +
                             "unexpected and we do not handle. If the gateway status is CAPTURED, it " +
                             "suggests the service has incorrect gateway settings.",
+                    chargeEntity.getPaymentGatewayName().getName(),
                     mappedStatus.getValue()),
                     chargeEntity.getStructuredLoggingArgs());
             return false;

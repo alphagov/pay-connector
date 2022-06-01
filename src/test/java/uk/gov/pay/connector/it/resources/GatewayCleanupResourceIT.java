@@ -22,6 +22,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
@@ -47,7 +48,7 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         String chargeId4 = addCharge(AUTHORISATION_TIMEOUT);
 
         credentialParams = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
+                .withPaymentProvider("smartpay")
                 .withGatewayAccountId(Long.parseLong(accountId))
                 .withState(RETIRED)
                 .withCredentials(credentials)
@@ -57,13 +58,13 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         var worldpayAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(RandomUtils.nextLong())
-                .withPaymentProvider(WORLDPAY.getName())
+                .withPaymentProvider(SMARTPAY.getName())
                 .withGatewayAccountCredentials(List.of(credentialParams))
                 .insert();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withGatewayAccountId(String.valueOf(worldpayAccount.getAccountId()))
-                .withPaymentProvider("worldpay")
+                .withPaymentProvider("smartpay")
                 .withStatus(AUTHORISATION_ERROR)
                 .withGatewayCredentialId(credentialParams.getId())
                 .build());
