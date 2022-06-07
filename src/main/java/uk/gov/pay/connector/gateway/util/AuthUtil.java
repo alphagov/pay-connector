@@ -16,19 +16,32 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public class AuthUtil {
     private static final String STRIPE_VERSION_HEADER = "Stripe-Version";
     private static final String STRIPE_API_VERSION = "2019-05-16";
+    
+    // We are using a separate version as searching payment intents is only supported in newer API versions.
+    // This is intended as a temporary solution, and we intend to move all requests to use the same API version.
+    public static final String STRIPE_SEARCH_PAYMENT_INTENTS_API_VERSION = "2020-08-27";
 
     private static String encode(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
     }
 
+    public static Map<String, String> getStripeAuthHeaderForPaymentIntentSearch(StripeGatewayConfig stripeGatewayConfig, boolean isLiveAccount) {
+        return getStripeAuthHeaderWithApiVersion(stripeGatewayConfig, isLiveAccount, STRIPE_SEARCH_PAYMENT_INTENTS_API_VERSION);
+    }
+    
     public static Map<String, String> getStripeAuthHeader(StripeGatewayConfig stripeGatewayConfig, boolean isLiveAccount) {
+        return getStripeAuthHeaderWithApiVersion(stripeGatewayConfig, isLiveAccount, STRIPE_API_VERSION);
+    }
+
+    private static Map<String, String> getStripeAuthHeaderWithApiVersion(StripeGatewayConfig stripeGatewayConfig, boolean isLiveAccount, String apiVersion) {
         StripeAuthTokens authTokens = stripeGatewayConfig.getAuthTokens();
         String value = format("Bearer %s", isLiveAccount ? authTokens.getLive() : authTokens.getTest());
         return ImmutableMap.of(
                 AUTHORIZATION, value,
-                STRIPE_VERSION_HEADER, STRIPE_API_VERSION
+                STRIPE_VERSION_HEADER, apiVersion
         );
     }
+
 
     public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, String> gatewayCredentials) {
         String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME), gatewayCredentials.get(CREDENTIALS_PASSWORD));

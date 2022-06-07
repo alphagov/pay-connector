@@ -11,8 +11,8 @@ import java.util.Map;
 
 public abstract class StripeGetRequest implements GatewayClientGetRequest {
     
-    private GatewayAccountEntity gatewayAccount;
-    private StripeGatewayConfig stripeGatewayConfig;
+    protected GatewayAccountEntity gatewayAccount;
+    protected StripeGatewayConfig stripeGatewayConfig;
     
     protected StripeGetRequest(GatewayAccountEntity gatewayAccount, StripeGatewayConfig stripeGatewayConfig) {
         this.gatewayAccount = gatewayAccount;
