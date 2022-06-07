@@ -91,7 +91,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     @Override
     public boolean canQueryPaymentStatus() {
-        return true;
+        return false;
     }
 
     @Override
