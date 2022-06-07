@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 
-public class StripeTransferReversalRequest extends StripeRequest {
+public class StripeTransferReversalRequest extends StripePostRequest {
     private String transferId;
 
     private StripeTransferReversalRequest(

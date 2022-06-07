@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 
-public class StripeAuthoriseRequest extends StripeRequest {
+public class StripeAuthoriseRequest extends StripePostRequest {
 
     private final String amount;
     private final String description;

@@ -4,14 +4,12 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -28,12 +26,15 @@ import javax.ws.rs.core.Response;
 import java.net.HttpCookie;
 import java.net.SocketException;
 import java.net.URI;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -119,7 +120,7 @@ public class GatewayClientTest {
         when(mockMetricRegistry.counter("gateway-operations.get.worldpay.test.query.failures")).thenReturn(mockFailureCounter);
         
         assertThrows(GatewayException.GatewayErrorException.class,
-                () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap()));
+                () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
         verify(mockResponse).close();
         verify(mockFailureCounter).inc();
     }
@@ -131,7 +132,7 @@ public class GatewayClientTest {
         when(mockBuilder.get()).thenThrow(new ProcessingException(new SocketException("socket failed")));
         
         assertThrows(GatewayException.GenericGatewayException.class,
-                () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap()));
+                () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
         verify(mockFailureCounter).inc();
     }
 
@@ -141,12 +142,29 @@ public class GatewayClientTest {
         when(mockResponse.getStatus()).thenReturn(200);
 
         gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY,
-                ImmutableList.of(new HttpCookie("machine", "value")), emptyMap());
+                ImmutableList.of(new HttpCookie("machine", "value")), emptyMap(), emptyMap());
 
         InOrder inOrder = Mockito.inOrder(mockBuilder);
         inOrder.verify(mockBuilder).header("Cookie", "machine=value");
         inOrder.verify(mockBuilder).get();
         verify(mockResponseTimeHistogram).update(anyLong());
+    }
+
+    @Test
+    void getRequestShouldIncludeQueryParamsIfAvailable() throws Exception {
+        setupGetRequestMocks();
+        when(mockWebTarget.queryParam(anyString(), anyString())).thenReturn(mockWebTarget);
+        when(mockResponse.getStatus()).thenReturn(200);
+
+        Map<String, String> queryParams = Map.of(
+                "foo", "bar",
+                "foo1", "bar1"
+        );
+        gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY,
+                ImmutableList.of(new HttpCookie("machine", "value")), emptyMap(), queryParams);
+
+        verify(mockWebTarget, times(1)).queryParam("foo", "bar");
+        verify(mockWebTarget, times(1)).queryParam("foo1", "bar1");
     }
 
     private void setupPostRequestMocks() {

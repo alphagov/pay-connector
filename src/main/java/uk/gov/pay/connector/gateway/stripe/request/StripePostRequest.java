@@ -7,7 +7,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -23,7 +23,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
-public abstract class StripeRequest implements GatewayClientRequest {
+public abstract class StripePostRequest implements GatewayClientPostRequest {
     
     private String idempotencyKey;
     private GatewayAccountEntity gatewayAccount;
@@ -32,8 +32,8 @@ public abstract class StripeRequest implements GatewayClientRequest {
     protected String gatewayAccountType;
     protected Map<String, String> credentials;
 
-    protected StripeRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
-                            StripeGatewayConfig stripeGatewayConfig, Map<String, String>  credentials) {
+    protected StripePostRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
+                                StripeGatewayConfig stripeGatewayConfig, Map<String, String>  credentials) {
         if (gatewayAccount == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a gateway account");
         }

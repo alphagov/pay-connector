@@ -8,25 +8,23 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.GOVUK_PAY_TRANSACTION_EXTERNAL_ID;
 
-public class StripeQueryPaymentStatusRequest extends StripeRequest{
+public class StripeQueryPaymentStatusRequest extends StripeGetRequest {
 
     private String chargeExternalId;
 
-    private StripeQueryPaymentStatusRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
-                                           StripeGatewayConfig stripeGatewayConfig, Map<String, String> credentials,
-                                           String chargeExternalId) {
-        super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
+    private StripeQueryPaymentStatusRequest(GatewayAccountEntity gatewayAccount,
+                                            StripeGatewayConfig stripeGatewayConfig,
+                                            String chargeExternalId) {
+        super(gatewayAccount, stripeGatewayConfig);
         this.chargeExternalId = chargeExternalId;
     }
 
     public static StripeQueryPaymentStatusRequest of(GatewayAccountEntity gatewayAccount,
-                                          StripeGatewayConfig stripeGatewayConfig, Map<String, String> credentials,
-                                          String chargeExternalId) {
+                                                     StripeGatewayConfig stripeGatewayConfig,
+                                                     String chargeExternalId) {
         return new StripeQueryPaymentStatusRequest(
                 gatewayAccount,
-                null,
                 stripeGatewayConfig,
-                credentials,
                 chargeExternalId
         );
     }
@@ -37,12 +35,12 @@ public class StripeQueryPaymentStatusRequest extends StripeRequest{
     }
 
     @Override
-    protected OrderRequestType orderRequestType() {
+    public OrderRequestType getOrderRequestType() {
         return OrderRequestType.QUERY;
     }
 
     @Override
-    protected Map<String, String> params() {
+    public Map<String, String> getQueryParams() {
         return Map.of("query", String.format("metadata['%s']:'%s'", GOVUK_PAY_TRANSACTION_EXTERNAL_ID, chargeExternalId));
     }
 

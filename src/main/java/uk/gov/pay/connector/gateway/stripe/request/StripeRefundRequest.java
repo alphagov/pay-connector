@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 
-public class StripeRefundRequest extends StripeRequest {
+public class StripeRefundRequest extends StripePostRequest {
     private final String stripeChargeId;
     private final String amount;
     

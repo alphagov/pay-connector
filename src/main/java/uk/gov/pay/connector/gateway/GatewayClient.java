@@ -8,14 +8,14 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientGetRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.WebTarget;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -48,7 +48,7 @@ public class GatewayClient {
         return postRequestFor(url, gatewayName, gatewayAccountType, request, emptyList(), headers);
     }
 
-    public GatewayClient.Response postRequestFor(GatewayClientRequest request)
+    public GatewayClient.Response postRequestFor(GatewayClientPostRequest request)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder(), emptyList(), request.getHeaders());
     }
@@ -75,9 +75,10 @@ public class GatewayClient {
         return executeRequest(url, gatewayAccountType, request.getOrderRequestType(), metricsPrefix, requestCallable);
     }
 
-    public GatewayClient.Response getRequestFor(GatewayClientRequest request)
+    public GatewayClient.Response getRequestFor(GatewayClientGetRequest request)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        return getRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder().getOrderRequestType(), emptyList(), request.getHeaders());
+        return getRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(),
+                request.getOrderRequestType(), emptyList(), request.getHeaders(), request.getQueryParams());
     }
 
     public GatewayClient.Response getRequestFor(URI url,
@@ -85,15 +86,20 @@ public class GatewayClient {
                                                 String gatewayAccountType,
                                                 OrderRequestType orderRequestType,
                                                 List<HttpCookie> cookies,
-                                                Map<String, String> headers)
+                                                Map<String, String> headers,
+                                                Map<String, String> queryParams)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-
+        
         String metricsPrefix = format("gateway-operations.get.%s.%s.%s", gatewayName.getName(), gatewayAccountType, orderRequestType);
 
         Supplier<javax.ws.rs.core.Response> requestCallable = () -> {
             LOGGER.info("Making GET request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
-            Builder requestBuilder = client.target(url).request();
+            WebTarget target = client.target(url);
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                target = target.queryParam(entry.getKey(), entry.getValue());
+            }
+            Builder requestBuilder = target.request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
             return requestBuilder.get();
