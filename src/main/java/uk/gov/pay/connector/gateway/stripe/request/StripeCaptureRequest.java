@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public abstract class StripeCaptureRequest extends StripeRequest {
+public abstract class StripeCaptureRequest extends StripePostRequest {
     protected StripeCaptureRequest(
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,

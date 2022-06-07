@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 
-public class StripePaymentIntentCancelRequest extends StripeRequest {
+public class StripePaymentIntentCancelRequest extends StripePostRequest {
     private final String stripePaymentIntentId;
 
     private StripePaymentIntentCancelRequest(GatewayAccountEntity gatewayAccount, String stripePaymentIntentId,

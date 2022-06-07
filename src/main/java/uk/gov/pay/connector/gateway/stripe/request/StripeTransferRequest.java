@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class StripeTransferRequest extends StripeRequest {
+public abstract class StripeTransferRequest extends StripePostRequest {
     protected String amount;
     protected String stripeChargeId;
     protected String govukPayTransactionExternalId;

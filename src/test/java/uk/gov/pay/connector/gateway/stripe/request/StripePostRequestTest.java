@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
-public class StripeRequestTest {
+public class StripePostRequestTest {
     private StripeRefundRequest stripeRefundRequest;
 
     @Mock

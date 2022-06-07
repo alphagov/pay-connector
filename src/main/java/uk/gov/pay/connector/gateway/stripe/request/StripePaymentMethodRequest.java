@@ -12,7 +12,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StripePaymentMethodRequest extends StripeRequest {
+public class StripePaymentMethodRequest extends StripePostRequest {
     private final AuthCardDetails authCardDetails;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
     

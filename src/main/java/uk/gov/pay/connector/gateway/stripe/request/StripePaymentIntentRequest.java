@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static java.util.Map.entry;
 
-public class StripePaymentIntentRequest extends StripeRequest {
+public class StripePaymentIntentRequest extends StripePostRequest {
 
     private static final String GOVUK_PAY_TRANSACTION_EXTERNAL_ID = "govuk_pay_transaction_external_id";
 

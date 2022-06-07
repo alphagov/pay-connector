@@ -11,7 +11,6 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
@@ -88,7 +87,7 @@ public class StripeFailedPaymentFeeCollectionHandler {
 
     private StripePaymentIntent getPaymentIntent(ChargeEntity charge)
             throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
-        GatewayClientRequest request = StripeGetPaymentIntentRequest.of(charge, stripeGatewayConfig);
+        var request = StripeGetPaymentIntentRequest.of(charge, stripeGatewayConfig);
         String rawResponse = client.getRequestFor(request).getEntity();
         return jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
     }
