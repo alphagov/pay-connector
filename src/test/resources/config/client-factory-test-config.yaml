@@ -182,6 +182,7 @@ emitPayoutEvents: ${EMIT_PAYOUT_EVENTS:-false}
 chargesSweepConfig:
   defaultChargeExpiryThreshold: ${CHARGE_EXPIRY_WINDOW_SECONDS:-5400}
   awaitingCaptureExpiryThreshold: ${AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW:-432000}
+  tokenExpiryThresholdInSeconds: ${TOKEN_EXPIRY_WINDOW_SECONDS:-604800}
 
 emittedEventSweepConfig:
   notEmittedEventMaxAgeInSeconds: ${NOT_EMITTED_EVENT_MAX_AGE_IN_SECONDS:-1800}

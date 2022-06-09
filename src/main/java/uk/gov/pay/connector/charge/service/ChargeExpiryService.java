@@ -31,9 +31,10 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -58,18 +59,15 @@ import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 public class ChargeExpiryService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
-    private static final long TOKEN_EXPIRY_DAYS = 7;
-
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
     private final TokenDao tokenDao;
     private final PaymentProviders providers;
     private final QueryService queryService;
-
     private final ChargeSweepConfig chargeSweepConfig;
+    private final Clock clock;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
@@ -77,13 +75,15 @@ public class ChargeExpiryService {
                                TokenDao tokenDao,
                                PaymentProviders providers,
                                QueryService queryService,
-                               ConnectorConfiguration config) {
+                               ConnectorConfiguration config,
+                               Clock clock) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.tokenDao = tokenDao;
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
         this.queryService = queryService;
+        this.clock = clock;
     }
 
     private enum expiryMethod {
@@ -133,17 +133,17 @@ public class ChargeExpiryService {
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
                 .addAll(getChargesToExpireWithDelayedExpiryThreshold())
                 .build();
-
-        deleteTokensOlderThanSpecifiedDate();
-        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
+        Instant tokenExpiryThreshold = getExpiryThresholdForTokens();
+        int numberOfTokensDeleted = deleteTokensOlderThanSpecifiedDate(tokenExpiryThreshold);
+        logger.info("Tokens deleted - number_of_tokens={}, since_date={}", numberOfTokensDeleted, tokenExpiryThreshold);
+        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date={}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
 
         return expire(chargesToExpire);
     }
 
-    private int deleteTokensOlderThanSpecifiedDate() {
-        ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(TOKEN_EXPIRY_DAYS);
-        return tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
+    private int deleteTokensOlderThanSpecifiedDate(Instant tokenExpiryDate) {
+        return tokenDao.deleteTokensOlderThanSpecifiedDate(tokenExpiryDate.atZone(ZoneId.of("UTC")));
     }
 
 
@@ -319,15 +319,21 @@ public class ChargeExpiryService {
     }
 
     private Instant getExpiryDateForRegularCharges() {
-        int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
-        logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds);
-        return Instant.now().minusSeconds(chargeExpiryWindowSeconds);
+        Duration chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
+        logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
+        return clock.instant().minus(chargeExpiryWindowSeconds);
     }
 
     private Instant getExpiryDateForAwaitingCaptureRequest() {
-        int chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
-        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds);
-        return Instant.now().minusSeconds(chargeExpiryWindowSeconds);
+        Duration chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
+        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
+        return clock.instant().minus(chargeExpiryWindowSeconds);
+    }
+    
+    private Instant getExpiryThresholdForTokens() {
+        Duration tokenExpiryWindowSeconds = chargeSweepConfig.getTokenExpiryThresholdInSeconds();
+        logger.debug("Token expiry window size in seconds: [{}]", tokenExpiryWindowSeconds.getSeconds());
+        return clock.instant().minus(tokenExpiryWindowSeconds);
     }
 
     private static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {
