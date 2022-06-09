@@ -56,6 +56,8 @@ public class AddGatewayAccountParams {
     private boolean requires3ds;
     private boolean allowTelephonePaymentNotifications;
     private boolean recurringEnabled;
+    private boolean disabled;
+    private String disabledReason;
     private boolean providerSwitchEnabled;
 
     public int getIntegrationVersion3ds() {
@@ -146,6 +148,14 @@ public class AddGatewayAccountParams {
         return recurringEnabled;
     }
 
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public String getDisabledReason() {
+        return disabledReason;
+    }
+
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
     }
@@ -175,6 +185,8 @@ public class AddGatewayAccountParams {
         private String externalId = randomUuid();
         private boolean allowTelephonePaymentNotifications;
         private boolean recurringEnabled;
+        private boolean disabled;
+        private String disabledReason;
         private boolean providerSwitchEnabled = false;
 
         private AddGatewayAccountParamsBuilder() {
@@ -314,6 +326,16 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withDisabled(boolean disabled) {
+            this.disabled = disabled;
+            return this;
+        }
+
+        public AddGatewayAccountParamsBuilder withDisabledReason(String disabledReason) {
+            this.disabledReason = disabledReason;
+            return this;
+        }
+
         public AddGatewayAccountParamsBuilder withProviderSwitchEnabled(boolean providerSwitchEnabled) {
             this.providerSwitchEnabled = providerSwitchEnabled;
             return this;
@@ -350,6 +372,8 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.requires3ds = this.requires3ds;
             addGatewayAccountParams.allowTelephonePaymentNotifications = this.allowTelephonePaymentNotifications;
             addGatewayAccountParams.recurringEnabled = this.recurringEnabled;
+            addGatewayAccountParams.disabled = this.disabled;
+            addGatewayAccountParams.disabledReason = this.disabledReason;
             addGatewayAccountParams.providerSwitchEnabled = this.providerSwitchEnabled;
             addGatewayAccountParams.serviceId = this.serviceId;
             return addGatewayAccountParams;

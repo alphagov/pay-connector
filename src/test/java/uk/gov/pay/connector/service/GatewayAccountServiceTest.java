@@ -38,6 +38,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
@@ -650,6 +652,57 @@ public class GatewayAccountServiceTest {
         var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         inOrder.verify(mockGatewayAccountEntity).setRecurringEnabled(false);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateDisabledToTrue() {
+        var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_DISABLED,
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockGatewayAccountEntity).setDisabled(true);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateDisabledToFalse() {
+        var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_DISABLED,
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockGatewayAccountEntity).setDisabled(false);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateDisabledReason() {
+        var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_DISABLED_REASON,
+                "value", "Disabled because reasons")));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockGatewayAccountEntity).setDisabledReason("Disabled because reasons");
         inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 

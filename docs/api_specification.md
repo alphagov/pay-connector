@@ -251,7 +251,9 @@ Content-Type: application/json
     "worldpay_3ds_flex": null,
     "send_reference_to_gateway": false,
     "allow_authorisation_api": false,
-    "recurring_enabled": true
+    "recurring_enabled": true,
+    "disabled": false,
+    "disabled_reason": null
 }
 ```
 
@@ -283,6 +285,8 @@ Content-Type: application/json
 | `send_reference_to_gateway`                      | X              | If enabled, service payment reference is sent to gateway as description. Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false' |
 | `allow_authorisation_api`                        | X              | Whether the account is allowed to initiate MOTO payments that are authorised VIA an API request rather than the web interface                                                                  |
 | `recurring_enabled`                              | X              | Whether the account is allowed to take recurring card payments                                                                                                                                 |
+| `disabled`                                       | X              | Whether the account is allowed to take payments and make refunds                                                                                                                               |
+| `disabled_reason`                                | X              | The reason the account is disabled, if applicable                                                                                                                                              |
 
 
 ---------------------------------------------------------------------------------------------------------------
