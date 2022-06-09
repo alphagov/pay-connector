@@ -45,6 +45,8 @@ class GatewayAccountResourceDTOTest {
         entity.setSendReferenceToGateway(true);
         entity.setAllowAuthorisationApi(true);
         entity.setRecurringEnabled(true);
+        entity.setDisabled(true);
+        entity.setDisabledReason("Disabled because of reasons");
         entity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         entity.setGatewayAccountCredentials(List.of(
                 GatewayAccountCredentialsEntityFixture.
@@ -91,5 +93,7 @@ class GatewayAccountResourceDTOTest {
         assertThat(dto.isRequiresAdditionalKycData(), is(true));
         assertThat(dto.isAllowAuthorisationApi(), is(entity.isAllowAuthorisationApi()));
         assertThat(dto.isRecurringEnabled(), is(entity.isRecurringEnabled()));
+        assertThat(dto.isDisabled(), is(entity.isDisabled()));
+        assertThat(dto.getDisabledReason(), is(entity.getDisabledReason()));
     }
 }

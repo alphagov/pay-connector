@@ -110,6 +110,12 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("recurring_enabled")
     private boolean recurringEnabled;
+    
+    @JsonProperty("disabled")
+    private boolean disabled;
+    
+    @JsonProperty("disabled_reason")
+    private String disabledReason;
 
     public GatewayAccountResourceDTO() {
     }
@@ -146,6 +152,8 @@ public class GatewayAccountResourceDTO {
         this.requiresAdditionalKycData = gatewayAccountEntity.isRequiresAdditionalKycData();
         this.allowAuthorisationApi = gatewayAccountEntity.isAllowAuthorisationApi();
         this.recurringEnabled = gatewayAccountEntity.isRecurringEnabled();
+        this.disabled = gatewayAccountEntity.isDisabled();
+        this.disabledReason = gatewayAccountEntity.getDisabledReason();
     }
 
     public long getAccountId() {
@@ -278,6 +286,14 @@ public class GatewayAccountResourceDTO {
 
     public boolean isRecurringEnabled() {
         return recurringEnabled;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public String getDisabledReason() {
+        return disabledReason;
     }
 
 }

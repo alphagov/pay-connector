@@ -181,7 +181,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("service_id", is("valid-external-service-id"))
                 .body("send_reference_to_gateway", is(false))
                 .body("allow_authorisation_api", is(false))
-                .body("recurring_enabled", is(false));
+                .body("recurring_enabled", is(false))
+                .body("disabled", is(false))
+                .body("disabled_reason", is(nullValue()));
     }
 
     @Test

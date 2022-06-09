@@ -48,6 +48,8 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_REQUIRES_ADDITIONAL_KYC_DATA = "requires_additional_kyc_data";
     public static final String FIELD_ALLOW_AUTHORISATION_API = "allow_authorisation_api";
     public static final String FIELD_RECURRING_ENABLED = "recurring_enabled";
+    public static final String FIELD_DISABLED = "disabled";
+    public static final String FIELD_DISABLED_REASON = "disabled_reason";
 
     private static final Set<String> VALID_PATHS = Set.of(
             FIELD_NOTIFY_SETTINGS,
@@ -72,7 +74,9 @@ public class GatewayAccountRequestValidator {
             FIELD_SEND_REFERENCE_TO_GATEWAY,
             FIELD_REQUIRES_ADDITIONAL_KYC_DATA,
             FIELD_ALLOW_AUTHORISATION_API,
-            FIELD_RECURRING_ENABLED);
+            FIELD_RECURRING_ENABLED,
+            FIELD_DISABLED,
+            FIELD_DISABLED_REASON);
 
     private final RequestValidator requestValidator;
 
@@ -113,6 +117,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_REQUIRES_ADDITIONAL_KYC_DATA:
             case FIELD_ALLOW_AUTHORISATION_API:
             case FIELD_RECURRING_ENABLED:
+            case FIELD_DISABLED:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
@@ -123,6 +128,9 @@ public class GatewayAccountRequestValidator {
                 break;
             case FIELD_INTEGRATION_VERSION_3DS:
                 validateIntegrationVersion3ds(payload);
+                break;
+            case FIELD_DISABLED_REASON:
+                validateReplaceString(payload);
                 break;
         }
     }
@@ -155,6 +163,11 @@ public class GatewayAccountRequestValidator {
         throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         throwIfNotBoolean(payload);
+    }
+    
+    private void validateReplaceString(JsonNode payload) {
+        throwIfInvalidFieldOperation(payload, REPLACE);
+        throwIfNotString(payload);
     }
 
     private void validateCorporateCardSurchargePayload(JsonNode payload) {
@@ -192,6 +205,12 @@ public class GatewayAccountRequestValidator {
     private void throwIfNotBoolean(JsonNode payload) {
         if (payload.get(FIELD_VALUE) != null && !payload.get(FIELD_VALUE).isBoolean()) {
             throw new ValidationException(Collections.singletonList(format("Value [%s] must be of type boolean for path [%s]", payload.get(FIELD_VALUE).asText(), payload.get(FIELD_OPERATION_PATH).asText())));
+        }
+    }
+    
+    private void throwIfNotString(JsonNode payload) {
+        if (payload.get(FIELD_VALUE) != null && !payload.get(FIELD_VALUE).isTextual()) {
+            throw new ValidationException(Collections.singletonList(format("Value [%s] must be a string for path [%s]", payload.get(FIELD_VALUE).asText(), payload.get(FIELD_OPERATION_PATH).asText())));
         }
     }
 

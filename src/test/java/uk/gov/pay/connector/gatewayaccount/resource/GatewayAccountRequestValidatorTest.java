@@ -39,8 +39,8 @@ class GatewayAccountRequestValidatorTest {
 
     @ParameterizedTest
     @MethodSource("provider")
-    void shouldThrowWhenRequestsAreInvalid(String op, String path, String value, String expectedErrorMessage) {
-        Map<String, String> patch = new HashMap<>() {{
+    void shouldThrowWhenRequestsAreInvalid(String op, String path, Object value, String expectedErrorMessage) {
+        Map<String, Object> patch = new HashMap<>() {{
             put(FIELD_OPERATION, op);
             put(FIELD_OPERATION_PATH, path);
         }};
@@ -271,7 +271,9 @@ class GatewayAccountRequestValidatorTest {
                 arguments("replace", "send_reference_to_gateway", "unfalse", "Value [unfalse] must be of type boolean for path [send_reference_to_gateway]"),
                 arguments("replace", "requires_additional_kyc_data", "unfalse", "Value [unfalse] must be of type boolean for path [requires_additional_kyc_data]"),
                 arguments("replace", "allow_authorisation_api", "unfalse", "Value [unfalse] must be of type boolean for path [allow_authorisation_api]"),
-                arguments("replace", "recurring_enabled", "unfalse", "Value [unfalse] must be of type boolean for path [recurring_enabled]")
+                arguments("replace", "recurring_enabled", "unfalse", "Value [unfalse] must be of type boolean for path [recurring_enabled]"),
+                arguments("replace", "disabled", "unfalse", "Value [unfalse] must be of type boolean for path [disabled]"),
+                arguments("replace", "disabled_reason", 42, "Value [42] must be a string for path [disabled_reason]")
         );
     }
 }

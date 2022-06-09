@@ -40,6 +40,8 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_INTEGRATION_VERSION_3DS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
@@ -222,7 +224,11 @@ public class GatewayAccountService {
             entry(FIELD_ALLOW_AUTHORISATION_API, (gatewayAccountRequest, gatewayAccountEntity) ->
                     gatewayAccountEntity.setAllowAuthorisationApi(gatewayAccountRequest.valueAsBoolean())),
             entry(FIELD_RECURRING_ENABLED, (gatewayAccountRequest, gatewayAccountEntity) ->
-                    gatewayAccountEntity.setRecurringEnabled(gatewayAccountRequest.valueAsBoolean()))
+                    gatewayAccountEntity.setRecurringEnabled(gatewayAccountRequest.valueAsBoolean())),
+            entry(FIELD_DISABLED, (gatewayAccountRequest, gatewayAccountEntity) ->
+                    gatewayAccountEntity.setDisabled(gatewayAccountRequest.valueAsBoolean())),
+            entry(FIELD_DISABLED_REASON, (gatewayAccountRequest, gatewayAccountEntity) ->
+                    gatewayAccountEntity.setDisabledReason(gatewayAccountRequest.valueAsString()))
     );
 
     private void throwIfNoActiveCredentialExist(GatewayAccountEntity gatewayAccountEntity) {

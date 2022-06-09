@@ -52,18 +52,21 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     public void shouldGetGatewayAccountForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
-        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.parseLong(accountId), 250);
-        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.parseLong(accountId), 50);
-        databaseTestHelper.allowApplePay(Long.parseLong(accountId));
-        databaseTestHelper.allowZeroAmount(Long.parseLong(accountId));
+        long accountIdAsLong = Long.parseLong(accountId);
+        databaseTestHelper.updateCredentialsFor(accountIdAsLong, gson.toJson(gatewayAccountPayload.getCredentials()));
+        databaseTestHelper.updateServiceNameFor(accountIdAsLong, gatewayAccountPayload.getServiceName());
+        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(accountIdAsLong, 250);
+        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(accountIdAsLong, 50);
+        databaseTestHelper.allowApplePay(accountIdAsLong);
+        databaseTestHelper.allowZeroAmount(accountIdAsLong);
         databaseTestHelper.blockPrepaidCards(Long.valueOf(accountId));
-        databaseTestHelper.allowMoto(Long.parseLong(accountId));
-        databaseTestHelper.allowTelephonePaymentNotifications(Long.parseLong(accountId));
-        databaseTestHelper.enableProviderSwitch(Long.parseLong(accountId));
-        databaseTestHelper.allowAuthorisationApi(Long.parseLong(accountId));
-        databaseTestHelper.enableRecurring(Long.parseLong(accountId));
+        databaseTestHelper.allowMoto(accountIdAsLong);
+        databaseTestHelper.allowTelephonePaymentNotifications(accountIdAsLong);
+        databaseTestHelper.enableProviderSwitch(accountIdAsLong);
+        databaseTestHelper.allowAuthorisationApi(accountIdAsLong);
+        databaseTestHelper.enableRecurring(accountIdAsLong);
+        databaseTestHelper.setDisabled(accountIdAsLong);
+        databaseTestHelper.setDisabledReason(accountIdAsLong, "Disabled because reasons");
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -97,7 +100,9 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("allow_telephone_payment_notifications", is(true))
                 .body("provider_switch_enabled", is(true))
                 .body("allow_authorisation_api", is(true))
-                .body("recurring_enabled", is(true));
+                .body("recurring_enabled", is(true))
+                .body("disabled", is(true))
+                .body("disabled_reason", is("Disabled because reasons"));
     }
 
     @Test

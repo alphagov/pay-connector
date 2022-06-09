@@ -175,6 +175,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "recurring_enabled")
     private boolean recurringEnabled;
+    
+    @Column(name ="disabled")
+    private boolean disabled;
+    
+    @Column(name="disabled_reason")
+    private String disabledReason;
 
     public GatewayAccountEntity() {
     }
@@ -442,6 +448,18 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return recurringEnabled;
     }
 
+    @JsonProperty("disabled")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    @JsonProperty("disabled_reason")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public String getDisabledReason() {
+        return disabledReason;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -599,6 +617,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setRecurringEnabled(boolean recurringEnabled) {
         this.recurringEnabled = recurringEnabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
+    }
+
+    public void setDisabledReason(String disabledReason) {
+        this.disabledReason = disabledReason;
     }
     
     public class Views {
