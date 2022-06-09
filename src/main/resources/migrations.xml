@@ -1917,4 +1917,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add disabled to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="disabled" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add disabled_reason to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="disabled_reason" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
