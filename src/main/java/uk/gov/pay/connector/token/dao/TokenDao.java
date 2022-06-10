@@ -26,10 +26,10 @@ public class TokenDao extends JpaDao<TokenEntity> {
                 .findFirst();
     }
 
-    public int deleteTokensOlderThanSpecifiedDate(ZonedDateTime cutOffDate) {
+    public int deleteTokensOlderThanSpecifiedDate(ZonedDateTime tokenExpiryDate) {
         return entityManager.get()
-                .createQuery("DELETE FROM TokenEntity t WHERE t.createdDate < :cutOffDate", TokenEntity.class)
-                .setParameter("cutOffDate", cutOffDate)
+                .createQuery("DELETE FROM TokenEntity t WHERE t.createdDate < :tokenExpiryDate", TokenEntity.class)
+                .setParameter("tokenExpiryDate", tokenExpiryDate)
                 .executeUpdate();
     }
 }

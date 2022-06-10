@@ -27,6 +27,7 @@ import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     
-    private static final int TOKEN_EXPIRY_DURATION_SECONDS = 5400;
+    private static final Duration TOKEN_EXPIRY_DURATION = Duration.ofSeconds(5400);
     
     private static final Map<String, String> VALID_CREDENTIALS = Map.of(
             "issuer", "me",
@@ -89,7 +90,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Before
     public void setUp() {
         when(mockLinksConfig.getFrontendUrl()).thenReturn(FRONTEND_URL);
-        when(mockChargeSweepConfig.getDefaultChargeExpiryThreshold()).thenReturn(TOKEN_EXPIRY_DURATION_SECONDS);
+        when(mockChargeSweepConfig.getDefaultChargeExpiryThreshold()).thenReturn(TOKEN_EXPIRY_DURATION);
         when(mockConfiguration.getLinks()).thenReturn(mockLinksConfig);
         when(mockConfiguration.getChargeSweepConfig()).thenReturn(mockChargeSweepConfig);
         worldpay3dsFlexJwtService = new Worldpay3dsFlexJwtService(new JwtGenerator(), mockConfiguration);
@@ -99,11 +100,9 @@ public class Worldpay3dsFlexJwtServiceTest {
     public void shouldCreateCorrectTokenForWorldpay3dsFlexDdc() {
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), TEST);
         var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0", false);
-        int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
-        int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + TOKEN_EXPIRY_DURATION_SECONDS;
-        var paymentCreationInstant = Instant.ofEpochSecond(paymentCreationTimeEpochSeconds19August2029);
-
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationInstant, WORLDPAY.getName());
+        var paymentCreationTimeEpochSeconds19August2029 = Instant.ofEpochSecond(1881821916);
+        var expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029.plus(TOKEN_EXPIRY_DURATION);
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationTimeEpochSeconds19August2029, WORLDPAY.getName());
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
@@ -113,7 +112,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         assertThat((Map<String, Object>)jws.getHeader(), hasEntry("typ", "JWT"));
         assertThat(jws.getBody(), hasKey("jti"));
         assertThat(jws.getBody(), hasKey("iat"));
-        assertThat(jws.getBody(), hasEntry("exp", expectedTokenExpirationTimeEpochSeconds));
+        assertThat(jws.getBody(), hasEntry("exp", (int) expectedTokenExpirationTimeEpochSeconds.getEpochSecond()));
         assertThat(jws.getBody(), hasEntry("iss", "me"));
         assertThat(jws.getBody(), hasEntry("OrgUnitId", "myOrg"));
     }

@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +24,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 public class Worldpay3dsFlexJwtService {
 
     private final JwtGenerator jwtGenerator;
-    private final int tokenExpiryDurationSeconds;
+    private final Duration tokenExpiryDurationSeconds;
     private final LinksConfig linksConfig;
 
     @Inject
@@ -84,7 +85,7 @@ public class Worldpay3dsFlexJwtService {
     private Map<String, Object> generateDdcClaims(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, Instant chargeCreatedTime) {
         Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount.getId(), worldpay3dsFlexCredentials);
         Map<String, Object> claims = new HashMap<>(commonClaims);
-        claims.put("exp", chargeCreatedTime.plusSeconds(tokenExpiryDurationSeconds).getEpochSecond());
+        claims.put("exp", chargeCreatedTime.plus(tokenExpiryDurationSeconds).getEpochSecond());
         return claims;
     }
 

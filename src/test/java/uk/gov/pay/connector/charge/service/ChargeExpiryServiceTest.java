@@ -1,5 +1,10 @@
 package uk.gov.pay.connector.charge.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.google.common.collect.ImmutableList;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -8,9 +13,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ChargeSweepConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -33,19 +40,25 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -65,6 +78,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 public class ChargeExpiryServiceTest {
 
     private ChargeExpiryService chargeExpiryService;
+
+    private final Clock fixedClock = Clock.fixed(Instant.ofEpochSecond(1654732800), ZoneId.of("UTC")); // Thu 9 June 2022 00:00:00
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
@@ -96,6 +111,12 @@ public class ChargeExpiryServiceTest {
     @Mock
     private ConnectorConfiguration mockedConfig;
 
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+
     private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
@@ -109,13 +130,17 @@ public class ChargeExpiryServiceTest {
             AWAITING_CAPTURE_REQUEST
     );
 
+    private static final Duration TOKEN_EXPIRY_WINDOW = Duration.ofSeconds(7 * 24 * 60 * 60);
+    private static final Duration CHARGE_EXPIRY_WINDOW = Duration.ofSeconds((long) (1.5 * 60 * 60));
+    private static final Duration AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW = Duration.ofSeconds(5 * 24 * 60 * 60);
+
     private GatewayResponse<BaseCancelResponse> gatewayResponse;
     private GatewayAccountEntity gatewayAccount;
 
     @Before
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeService, mockTokenDao, mockPaymentProviders, mockQueryService, mockedConfig);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeService, mockTokenDao, mockPaymentProviders, mockQueryService, mockedConfig, fixedClock);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
         gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
@@ -125,7 +150,6 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
         when(expiredCharge.getStatus()).thenReturn(EXPIRED.toString());
-        when(expiredCharge.getPaymentProvider()).thenReturn("worldpay");
         return expiredCharge;
     }
 
@@ -336,6 +360,10 @@ public class ChargeExpiryServiceTest {
 
     @Test
     public void shouldSweepAndExpireCharges() throws Exception {
+        Logger root = (Logger) LoggerFactory.getLogger(ChargeExpiryService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
         ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
@@ -360,12 +388,21 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockChargeDao.findBeforeDateWithStatusIn(any(Instant.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(Instant.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
-
+        when(mockedChargeSweepConfig.getTokenExpiryThresholdInSeconds()).thenReturn(TOKEN_EXPIRY_WINDOW);
+        when(mockedChargeSweepConfig.getDefaultChargeExpiryThreshold()).thenReturn(CHARGE_EXPIRY_WINDOW);
+        when(mockedChargeSweepConfig.getAwaitingCaptureExpiryThreshold()).thenReturn(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW);
+        when(mockTokenDao.deleteTokensOlderThanSpecifiedDate(fixedClock.instant().minus(TOKEN_EXPIRY_WINDOW).atZone(ZoneId.of("UTC")))).thenReturn(1);
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
 
         chargeExpiryService.sweepAndExpireChargesAndTokens();
-
+        verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
+                hasItems(
+                        "Tokens deleted - number_of_tokens=1, since_date=2022-06-02T00:00:00Z",
+                        "Charges found for expiry - number_of_charges=2, since_date=2022-06-08T22:30:00Z, awaiting_capture_date=2022-06-04T00:00:00Z"
+                ));
         verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), EXPIRED);
         verify(mockChargeService).transitionChargeState(chargeEntityAuthorisationSuccess.getExternalId(), EXPIRED);
     }
