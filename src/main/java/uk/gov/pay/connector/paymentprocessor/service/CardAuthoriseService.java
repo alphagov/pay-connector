@@ -69,6 +69,13 @@ public class CardAuthoriseService {
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.metricRegistry = environment.metrics();
     }
+    
+    public AuthorisationResponse doAuthorise(String chargeId) {
+        var charge = chargeService.findChargeByExternalId(chargeId);
+        return charge.getPaymentInstrument()
+                .map(paymentInstrument -> doAuthorise(chargeId, AuthCardDetails.from(paymentInstrument)))
+                .orElseThrow();
+    }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return authorisationService.executeAuthorise(chargeId, () -> {
@@ -80,7 +87,11 @@ public class CardAuthoriseService {
             try {
                 PaymentProvider paymentProvider = getPaymentProviderFor(charge);
                 CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-                operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                if (charge.getPaymentInstrument().isPresent()) {
+                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                } else {
+                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                }
 
                 if (operationResponse.getBaseResponse().isEmpty()) {
                     operationResponse.throwGatewayError();

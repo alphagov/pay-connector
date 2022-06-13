@@ -4,6 +4,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -112,6 +113,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeService {
@@ -296,6 +298,12 @@ public class ChargeService {
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
+            
+            if (authorisationMode == AGREEMENT) {
+                agreementDao.findByExternalId(chargeRequest.getAgreementId())
+                        .flatMap(AgreementEntity::getPaymentInstrument)
+                        .ifPresent(chargeEntity::setPaymentInstrument);
+            }
 
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, CREATED);

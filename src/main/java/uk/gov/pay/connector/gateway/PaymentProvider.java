@@ -29,6 +29,8 @@ public interface PaymentProvider {
     Optional<String> generateTransactionId();
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException;
+
+    GatewayResponse authoriseAgreement(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException;
     
     GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) throws GatewayException;
 

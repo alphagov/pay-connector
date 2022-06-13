@@ -10,6 +10,7 @@ import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -29,9 +30,10 @@ public class ChargesApiResourceTest {
     private static final ChargeService chargeService = mock(ChargeService.class);
     private static final ChargeExpiryService chargeExpiryService = mock(ChargeExpiryService.class);
     private static final GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
-
+    private static final CardAuthoriseService cardAuthoriseService = mock(CardAuthoriseService.class);
+    
     public static ResourceExtension resources = ResourceExtension.builder()
-            .addResource(new ChargesApiResource(chargeService, chargeExpiryService, gatewayAccountService))
+            .addResource(new ChargesApiResource(chargeService, chargeExpiryService, gatewayAccountService, cardAuthoriseService))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(ConstraintViolationExceptionMapper.class)
             .addProvider(JsonMappingExceptionMapper.class)

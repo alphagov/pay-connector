@@ -12,9 +12,11 @@ import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.validation.ReturnUrlValidator;
+import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
@@ -58,14 +60,16 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ChargeExpiryService chargeExpiryService;
     private final GatewayAccountService gatewayAccountService;
+    private final CardAuthoriseService cardAuthoriseService;
 
     @Inject
     public ChargesApiResource(ChargeService chargeService,
                               ChargeExpiryService chargeExpiryService,
-                              GatewayAccountService gatewayAccountService) {
+                              GatewayAccountService gatewayAccountService, CardAuthoriseService cardAuthoriseService) {
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
         this.gatewayAccountService = gatewayAccountService;
+        this.cardAuthoriseService = cardAuthoriseService;
     }
 
     @GET
@@ -103,7 +107,16 @@ public class ChargesApiResource {
         }
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
-                .map(response -> created(response.getLink("self")).entity(response).build())
+                .map(response -> {
+                    if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                        try {
+                            cardAuthoriseService.doAuthorise(response.getChargeId());
+                        } catch (OperationAlreadyInProgressRuntimeException e) {
+                            logger.warn("Agreement sync auth timed out");
+                        }
+                    }
+                    return created(response.getLink("self")).entity(response).build();
+                })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 

@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -27,6 +29,7 @@ import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationH
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
@@ -58,6 +61,13 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         return authorise(request);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseAgreement(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+        // this method should be refactored to support the partial card numbers available to the payment instrument
+        var number = charge.getPaymentInstrument().map(PaymentInstrumentEntity::getCardDetails).map(CardDetailsEntity::getLastDigitsCardNumber).map(LastDigitsCardNumber::toString).orElse(null);
+        return getSandboxGatewayResponse(number);
     }
 
     @Override

@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -245,6 +246,16 @@ public class AuthCardDetails implements AuthorisationDetails {
         return Optional.ofNullable(jsNavigatorLanguage);
     }
 
+    // @TODO(sfount): the main thing that would change - add abstraction to not have to fake things like full card number
+    public static AuthCardDetails from(PaymentInstrumentEntity paymentInstrumentEntity) {
+        var authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardBrand(paymentInstrumentEntity.getCardDetails().getCardBrand());
+        authCardDetails.setCardNo(paymentInstrumentEntity.getCardDetails().getFirstDigitsCardNumber().toString().concat(paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString()));
+        authCardDetails.setAddress(paymentInstrumentEntity.getCardDetails().toCard().getBillingAddress());
+        authCardDetails.setCardHolder(paymentInstrumentEntity.getCardDetails().getCardHolderName());
+        return authCardDetails;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
