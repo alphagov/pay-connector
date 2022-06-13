@@ -102,7 +102,7 @@ public class ChargesApiResource {
                         throw new MissingMandatoryAttributeException(RETURN_URL);
                     });
 
-        } else if (authorisationMode == AuthorisationMode.MOTO_API && chargeRequest.getReturnUrl().isPresent()) {
+        } else if ((authorisationMode == AuthorisationMode.MOTO_API || authorisationMode == AuthorisationMode.AGREEMENT) && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
 
