@@ -225,8 +225,13 @@ public class GatewayAccountService {
                     gatewayAccountEntity.setAllowAuthorisationApi(gatewayAccountRequest.valueAsBoolean())),
             entry(FIELD_RECURRING_ENABLED, (gatewayAccountRequest, gatewayAccountEntity) ->
                     gatewayAccountEntity.setRecurringEnabled(gatewayAccountRequest.valueAsBoolean())),
-            entry(FIELD_DISABLED, (gatewayAccountRequest, gatewayAccountEntity) ->
-                    gatewayAccountEntity.setDisabled(gatewayAccountRequest.valueAsBoolean())),
+            entry(FIELD_DISABLED, (gatewayAccountRequest, gatewayAccountEntity) -> {
+                boolean disable = gatewayAccountRequest.valueAsBoolean();
+                gatewayAccountEntity.setDisabled(disable);
+                if (!disable) {
+                    gatewayAccountEntity.setDisabledReason(null);
+                }
+            }),
             entry(FIELD_DISABLED_REASON, (gatewayAccountRequest, gatewayAccountEntity) ->
                     gatewayAccountEntity.setDisabledReason(gatewayAccountRequest.valueAsString()))
     );

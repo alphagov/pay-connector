@@ -32,8 +32,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -670,10 +672,11 @@ public class GatewayAccountServiceTest {
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         inOrder.verify(mockGatewayAccountEntity).setDisabled(true);
         inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+        verify(mockGatewayAccountEntity, never()).setDisabledReason(anyString());
     }
 
     @Test
-    public void shouldUpdateDisabledToFalse() {
+    public void shouldUpdateDisabledToFalseAndClearDisabledReason() {
         var request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", FIELD_DISABLED,
@@ -686,6 +689,7 @@ public class GatewayAccountServiceTest {
         var inOrder = inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         inOrder.verify(mockGatewayAccountEntity).setDisabled(false);
+        inOrder.verify(mockGatewayAccountEntity).setDisabledReason(null);
         inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
