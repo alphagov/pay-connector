@@ -831,4 +831,33 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .body("requires_additional_kyc_data", is(true));
     }
+
+    @Test
+    public void patchGatewayAccount_setDisabledToFalse_shouldClearDisabledReason() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
+        long gatewayAccountIdAsLong = Long.parseLong(gatewayAccountId);
+        databaseTestHelper.setDisabled(gatewayAccountIdAsLong);
+        String disabledReason = "Because reasons";
+        databaseTestHelper.setDisabledReason(gatewayAccountIdAsLong, disabledReason);
+        
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("disabled", is(true))
+                .body("disabled_reason", is(disabledReason));
+
+        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                "path", "disabled",
+                "value", false));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("disabled", is(false))
+                .body("disabled_reason", is(nullValue()));
+    }
 }
