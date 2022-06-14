@@ -265,6 +265,16 @@ public class ContractTest {
                 .build());
     }
 
+    @State("the gateway account is disabled")
+    public void disableGatewayAccount(Map<String, String> params) {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(toJson(Map.of("op", "replace", "path", "disabled", "value", true)))
+                .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
+                .then()
+                .statusCode(OK.getStatusCode());
+    }
+
     @State("a gateway account has authorisation_api enabled")
     public void enableAuthorisationApiForGatewayAccount(Map<String, String> params) {
         given().port(app.getLocalPort())
