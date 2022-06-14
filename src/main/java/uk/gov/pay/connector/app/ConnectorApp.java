@@ -28,6 +28,7 @@ import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOpt
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
+import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledExceptionMapper;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
@@ -160,6 +161,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new AuthorisationErrorExceptionMapper());
         environment.jersey().register(new AuthorisationRejectedExceptionMapper());
         environment.jersey().register(new AuthorisationTimedOutExceptionMapper());
+        environment.jersey().register(new GatewayAccountDisabledExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));
