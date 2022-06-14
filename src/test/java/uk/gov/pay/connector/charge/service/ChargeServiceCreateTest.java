@@ -15,6 +15,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
@@ -627,6 +628,18 @@ class ChargeServiceCreateTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
         assertThat(tokenEntity.isUsed(), is(false));
+    }
+    
+    @Test
+    void shouldThrowException_whenGatewayAccountDisabled() {
+        gatewayAccount.setDisabled(true);
+        ChargeCreateRequest request = requestBuilder.build();
+
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        assertThrows(GatewayAccountDisabledException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
     private ChargeResponse.ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) {

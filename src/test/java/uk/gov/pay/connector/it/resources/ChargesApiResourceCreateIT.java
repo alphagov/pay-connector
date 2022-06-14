@@ -363,6 +363,25 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         assertThat(eventTimestamp, is(within(200, MILLIS, persistedCreatedDate)));
     }
 
+    @Test
+    public void shouldReturn422WhenGatewayAccountIsDisabled() {
+        databaseTestHelper.setDisabled(Long.parseLong(accountId));
+        
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("This gateway account is disabled"))
+                .body("error_identifier", is(ErrorIdentifier.ACCOUNT_DISABLED.toString()));
+    }
+
     private List<Message> readMessagesFromEventQueue() {
         AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
 

@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOpt
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementModeWebException;
@@ -245,6 +246,8 @@ public class ChargeService {
     @Transactional
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+            checkIfGatewayAccountDisabled(gatewayAccount);
+            
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             var authorisationMode = chargeRequest.getAuthorisationMode();
@@ -908,6 +911,12 @@ public class ChargeService {
     }
 
 
+    private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
+        if (gatewayAccount.isDisabled()) {
+            throw new GatewayAccountDisabledException(gatewayAccount.getId());
+        }
+    }
+    
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
