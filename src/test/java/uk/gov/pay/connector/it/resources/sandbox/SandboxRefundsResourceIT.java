@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static org.eclipse.jetty.http.HttpStatus.UNPROCESSABLE_ENTITY_422;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -78,6 +79,18 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .insert();
     }
 
+    @Test
+    public void shouldRespond_422_WhenGatewayAccountDisabled() {
+        Long refundAmount = 50L;
+
+        databaseTestHelper.setDisabled(defaultTestAccount.getAccountId());
+
+        postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
+                .statusCode(UNPROCESSABLE_ENTITY_422)
+                .body("message", contains("This gateway account is disabled"))
+                .body("error_identifier", is(ErrorIdentifier.ACCOUNT_DISABLED.toString()));
+    }
+    
     @Test
     public void shouldBeAbleToRequestARefund_partialAmount() {
         Long refundAmount = 50L;

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -469,6 +470,32 @@ public class RefundServiceTest {
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
     }
 
+    @Test
+    void shouldFailWhenGatewayAccountDisabled() {
+        var disabledAccount = aGatewayAccountEntity()
+                .withId(accountId)
+                .withType(TEST)
+                .withGatewayAccountCredentials(gatewayAccountCredentialsEntityList)
+                .withDisabled(true)
+                .build();
+        
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(disabledAccount)
+                .withExternalId(externalChargeId)
+                .withTransactionId("transactionId")
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        Charge charge = Charge.from(chargeEntity);
+
+        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(disabledAccount));
+
+        var thrown = assertThrows(GatewayAccountDisabledException.class,
+                () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 0, userExternalId)));
+        assertThat(thrown.getMessage(), is("Attempt to create a refund for a disabled gateway account"));
+        verify(mockRefundDao, never()).persist(new RefundEntity(chargeEntity.getAmount(), userExternalId, null, null));
+    }
+    
     @Test
     void shouldFailWhenGatewayAccountCredentialEntityNotFound() {
         chargeEntity = aValidChargeEntity()

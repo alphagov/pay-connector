@@ -913,7 +913,7 @@ public class ChargeService {
 
     private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
         if (gatewayAccount.isDisabled()) {
-            throw new GatewayAccountDisabledException(gatewayAccount.getId());
+            throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
         }
     }
     
