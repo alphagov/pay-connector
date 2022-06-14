@@ -3,6 +3,7 @@ package uk.gov.pay.connector.refund.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -84,6 +85,9 @@ public class RefundService {
     public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
+        if (gatewayAccountEntity.isDisabled()) {
+            throw new GatewayAccountDisabledException("Attempt to create a refund for a disabled gateway account");
+        }
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
                 .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to find gateway account credentials to use to refund charge."));
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
