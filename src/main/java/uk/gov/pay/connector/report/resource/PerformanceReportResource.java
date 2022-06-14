@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.report.dao.PerformanceReportDao;
 import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -14,7 +15,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
 
@@ -55,11 +55,7 @@ public class PerformanceReportResource {
 
             return ok().entity(responsePayload).build();
           })
-          .orElseGet(() -> Response
-            .status(Response.Status.BAD_REQUEST)
-            .entity("Could not parse date: " + rawDate)
-            .type(TEXT_PLAIN)
-            .build());
+          .orElseGet(() -> ResponseUtil.badRequestResponse("Could not parse date"));
     }
 
     @GET
