@@ -36,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.eclipse.jetty.http.HttpStatus.FORBIDDEN_403;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
@@ -364,7 +365,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenGatewayAccountIsDisabled() {
+    public void shouldReturn403WhenGatewayAccountIsDisabled() {
         databaseTestHelper.setDisabled(Long.parseLong(accountId));
         
         String postBody = toJson(Map.of(
@@ -376,7 +377,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .statusCode(422)
+                .statusCode(FORBIDDEN_403)
                 .contentType(JSON)
                 .body("message", contains("This gateway account is disabled"))
                 .body("error_identifier", is(ErrorIdentifier.ACCOUNT_DISABLED.toString()));
