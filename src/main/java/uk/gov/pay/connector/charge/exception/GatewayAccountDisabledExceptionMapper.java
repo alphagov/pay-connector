@@ -10,6 +10,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 public class GatewayAccountDisabledExceptionMapper implements ExceptionMapper<GatewayAccountDisabledException> {
 
@@ -23,7 +24,7 @@ public class GatewayAccountDisabledExceptionMapper implements ExceptionMapper<Ga
 
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.ACCOUNT_DISABLED, List.of(RESPONSE_ERROR_MESSAGE));
 
-        return Response.status(422)
+        return Response.status(FORBIDDEN)
                 .entity(errorResponse)
                 .type(APPLICATION_JSON)
                 .build();
