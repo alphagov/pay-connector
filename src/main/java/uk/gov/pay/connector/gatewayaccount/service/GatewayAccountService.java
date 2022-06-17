@@ -231,6 +231,7 @@ public class GatewayAccountService {
                 if (!disable) {
                     gatewayAccountEntity.setDisabledReason(null);
                 }
+                logger.info("Gateway account {}", disable ? "disabled" : "re-enabled");
             }),
             entry(FIELD_DISABLED_REASON, (gatewayAccountRequest, gatewayAccountEntity) ->
                     gatewayAccountEntity.setDisabledReason(gatewayAccountRequest.valueAsString()))
