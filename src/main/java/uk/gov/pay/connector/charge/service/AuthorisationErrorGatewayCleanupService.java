@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -33,9 +31,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELL
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class AuthorisationErrorGatewayCleanupService {
 
@@ -99,7 +94,7 @@ public class AuthorisationErrorGatewayCleanupService {
         logger.info("Charges cleaned up successfully: {}; Charges cleaned up failed: {}",
                 successes.intValue(), failures.intValue());
         
-        return ImmutableMap.of(
+        return Map.of(
                 CLEANUP_SUCCESS, successes.intValue(),
                 CLEANUP_FAILED, failures.intValue()
         );
@@ -141,8 +136,8 @@ public class AuthorisationErrorGatewayCleanupService {
             logger.error(format("Charge is in a mapped status of [%s] with the [%s] gateway, which is " +
                             "unexpected and we do not handle. If the gateway status is CAPTURED, it " +
                             "suggests the service has incorrect gateway settings.",
-                    chargeEntity.getPaymentGatewayName().getName(),
                     mappedStatus.getValue()),
+                    chargeEntity.getPaymentGatewayName().getName(),
                     chargeEntity.getStructuredLoggingArgs());
             return false;
         }).orElseGet(() -> {
