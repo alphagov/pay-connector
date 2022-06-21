@@ -29,6 +29,9 @@ import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEven
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsSubmittedByAPIEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmittedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
+import uk.gov.pay.connector.events.eventdetails.dispute.DisputeWonEventDetails;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -44,6 +47,9 @@ import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
+import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
+import uk.gov.pay.connector.events.model.dispute.DisputeLost;
+import uk.gov.pay.connector.events.model.dispute.DisputeWon;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -427,10 +433,35 @@ public class QueueMessageContractTest {
     public String verifyDisputeCreatedEvent() throws JsonProcessingException {
         DisputeCreatedEventDetails eventDetails =
                 new DisputeCreatedEventDetails(1500L, 1644883199L, "a-gateway-account-id",
-                        6500L, 8000L, "duplicate");
+                        6500L, -8000L, "duplicate");
         DisputeCreated disputeCreated =
                 new DisputeCreated("resource-external-id", "external-id", "service-id",
                         true, eventDetails, toUTCZonedDateTime(1642579160L));
         return disputeCreated.toJsonString();
+    }
+
+    @PactVerifyProvider("a dispute lost event")
+    public String verifyDisputeLostEvent() throws JsonProcessingException {
+        DisputeLostEventDetails eventDetails = new DisputeLostEventDetails("a-gateway-account-id",
+                -8000L, 6500L, 1500L);
+        DisputeLost disputeLost = new DisputeLost("resource-external-id",
+                "external-id", "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+        return disputeLost.toJsonString();
+    }
+
+    @PactVerifyProvider("a dispute won event")
+    public String verifyDisputeWonEvent() throws JsonProcessingException {
+        DisputeWonEventDetails eventDetails = new DisputeWonEventDetails("a-gateway-account-id");
+        DisputeWon disputeWon = new DisputeWon("resource-external-id", "external-id",
+                "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+        return disputeWon.toJsonString();
+    }
+
+    @PactVerifyProvider("a dispute evidence submitted event")
+    public String verifyDisputeEvidenceSubmittedEvent() throws JsonProcessingException {
+        DisputeEvidenceSubmittedEventDetails eventDetails = new DisputeEvidenceSubmittedEventDetails("a-gateway-account-id");
+        DisputeEvidenceSubmitted disputeEvidenceSubmitted = new DisputeEvidenceSubmitted("resource-external-id",
+                "external-id", "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+        return disputeEvidenceSubmitted.toJsonString();
     }
 }

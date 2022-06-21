@@ -45,6 +45,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,7 +73,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE_CREATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
@@ -160,7 +161,10 @@ class StripeNotificationServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
 
-        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE_CREATED);
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
+        payload = payload
+                .replace("{{type}}", "charge.dispute.created")
+                .replace("{{status}}", "needs_response");
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 

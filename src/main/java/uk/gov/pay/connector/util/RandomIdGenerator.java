@@ -31,4 +31,13 @@ public class RandomIdGenerator {
     public static String randomUuid() {
         return UUID.randomUUID().toString().replace("-", "").toLowerCase(Locale.ENGLISH);
     }
+
+    public static String idFromExternalId(String externalEntityId) {
+        return UUID.nameUUIDFromBytes(externalEntityId.getBytes()).toString()
+                .replace("-", "")
+                .toLowerCase(Locale.ENGLISH)
+                .substring(0, 26);
+    }
+
+
 }
