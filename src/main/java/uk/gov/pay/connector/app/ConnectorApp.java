@@ -25,6 +25,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsExceptionMapper;
+import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
@@ -32,6 +33,7 @@ import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledExceptionMapp
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeExceptionMapper;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
+import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveExceptionMapper;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdExceptionMapper;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAuthorisationModeWebExceptionMapper;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
@@ -150,6 +152,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new AuthorisationModeAgreementRequiresAgreementIdExceptionMapper());
         environment.jersey().register(new AgreementIdWithIncompatibleOtherOptionsExceptionMapper());
         environment.jersey().register(new AgreementNotFoundExceptionMapper());
+        environment.jersey().register(new AgreementMissingPaymentInstrumentExceptionMapper());
+        environment.jersey().register(new PaymentInstrumentNotActiveExceptionMapper());
         environment.jersey().register(new OneTimeTokenInvalidExceptionMapper());
         environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
         environment.jersey().register(new OneTimeTokenUsageInvalidForMotoApiExceptionMapper());

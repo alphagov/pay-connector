@@ -147,9 +147,11 @@ public class DatabaseTestHelper {
     public void addAgreement(AddAgreementParams addAgreementParams) {
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
-                                "reference, description, user_identifier, live, gateway_account_id) " +
+                                "reference, description, user_identifier, live, gateway_account_id, " +
+                                "payment_instrument_id) " +
                                 "VALUES(:id, :external_id, :service_id, :created_date, " +
-                                ":reference, :description, :user_identifier, :live, :gateway_account_id)")
+                                ":reference, :description, :user_identifier, :live, :gateway_account_id, " +
+                                ":payment_instrument_id)")
                         .bind("id", addAgreementParams.getAgreementId())
                         .bind("external_id", addAgreementParams.getExternalAgreementId())
                         .bind("service_id", addAgreementParams.getServiceId())
@@ -159,6 +161,63 @@ public class DatabaseTestHelper {
                         .bind("user_identifier", addAgreementParams.getUserIdentifier())
                         .bind("live", addAgreementParams.isLive())
                         .bind("gateway_account_id", Long.valueOf(addAgreementParams.getGatewayAccountId()))
+                        .bind("payment_instrument_id", addAgreementParams.getPaymentInstrumentId())
+                        .execute());
+    }
+
+    public void addPaymentInstrument(AddPaymentInstrumentParams addPaymentInstrumentParams) {
+        jdbi.withHandle(h ->
+                h.createUpdate("INSERT INTO payment_instruments(" +
+                                    "id," +
+                                    "external_id, " + 
+                                    "created_date, " +
+                                    "start_date, " +
+                                    "status, " +
+                                    "card_type, " +
+                                    "card_brand, " +
+                                    "expiry_date, " +
+                                    "last_digits_card_number, " +
+                                    "cardholder_name, " +
+                                    "address_line1, " +
+                                    "address_line2, " +
+                                    "address_city, " + 
+                                    "address_state_province, " +
+                                    "address_postcode, " + 
+                                    "address_country" +
+                                ") VALUES(" +
+                                    ":id," +
+                                    ":external_id, " +
+                                    ":created_date, " +
+                                    ":start_date, " +
+                                    ":status, " +
+                                    ":card_type, " +
+                                    ":card_brand, " +
+                                    ":expiry_date, " +
+                                    ":last_digits_card_number, " +
+                                    ":cardholder_name, " +
+                                    ":address_line1, " +
+                                    ":address_line2, " +
+                                    ":address_city, " +
+                                    ":address_state_province, " +
+                                    ":address_postcode, " +
+                                    ":address_country" +
+                                ")")
+                        .bind("id", addPaymentInstrumentParams.getPaymentInstrumentId())
+                        .bind("external_id", addPaymentInstrumentParams.getExternalPaymentInstrumentId())
+                        .bind("created_date",  LocalDateTime.ofInstant(addPaymentInstrumentParams.getCreatedDate(), UTC))
+                        .bind("start_date", LocalDateTime.ofInstant(addPaymentInstrumentParams.getStartDate(), UTC))
+                        .bind("status", addPaymentInstrumentParams.getPaymentInstrumentStatus())
+                        .bind("card_type", addPaymentInstrumentParams.getCardType())
+                        .bind("card_brand", addPaymentInstrumentParams.getCardBrand())
+                        .bind("expiry_date", addPaymentInstrumentParams.getExpiryDate().toString())
+                        .bind("last_digits_card_number", addPaymentInstrumentParams.getLastDigitsCardNumber().toString())
+                        .bind("cardholder_name", addPaymentInstrumentParams.getCardholderName())
+                        .bind("address_line1", addPaymentInstrumentParams.getAddressLine1())
+                        .bind("address_line2", addPaymentInstrumentParams.getAddressLine2())
+                        .bind("address_postcode", addPaymentInstrumentParams.getPostcode())
+                        .bind("address_city", addPaymentInstrumentParams.getCity())
+                        .bind("address_state_province", addPaymentInstrumentParams.getStateOrProvince())
+                        .bind("address_country", addPaymentInstrumentParams.getCountryCode())
                         .execute());
     }
 
@@ -335,9 +394,9 @@ public class DatabaseTestHelper {
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, gateway_transaction_id, amount, status, created_date, user_external_id, user_email, charge_external_id," +
-                        " parity_check_status, parity_check_date " +
-                        "FROM refunds " +
-                        "WHERE id = :refund_id")
+                                " parity_check_status, parity_check_date " +
+                                "FROM refunds " +
+                                "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
                         .mapToMap()
                         .list());
@@ -881,6 +940,8 @@ public class DatabaseTestHelper {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE tokens").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds_history").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE agreements CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE payment_instruments CASCADE").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {

@@ -4,6 +4,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -11,11 +12,13 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsException;
+import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
+import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementModeWebException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -66,6 +69,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
@@ -92,7 +96,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
@@ -116,6 +119,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
@@ -259,7 +263,14 @@ public class ChargeService {
             }
 
             checkAgreementOptions(authorisationMode, chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
-            checkForUnknownAgreementId(chargeRequest.getAgreementId());
+
+            if (chargeRequest.getAgreementId() != null) {
+                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId())
+                        .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
+                if (!chargeRequest.getSavePaymentInstrumentToAgreement()) {
+                    checkAgreementHasActivePaymentInstrument(agreementEntity);
+                }
+            }
 
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
                 if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
@@ -552,6 +563,9 @@ public class ChargeService {
     }
 
     private boolean needsNextUrl(ChargeEntity chargeEntity) {
+        if (chargeEntity.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+            return false;
+        }
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
@@ -592,7 +606,6 @@ public class ChargeService {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
                 auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
-
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
         } else {
@@ -964,10 +977,15 @@ public class ChargeService {
         }
     }
 
-    private void checkForUnknownAgreementId(String agreementId) {
-        if (agreementId != null) {
-            agreementDao.findByExternalId(agreementId)
-                    .orElseThrow(() -> new AgreementNotFoundException(format("Agreement with ID [%s] not found.", agreementId)));
+    private void checkAgreementHasActivePaymentInstrument(AgreementEntity agreementEntity) {
+        var paymentInstrumentEntity = agreementEntity.getPaymentInstrument()
+                .orElseThrow(() -> new AgreementMissingPaymentInstrumentException("Agreement with ID [" + agreementEntity.getExternalId() +
+                        "] does not have a payment instrument"));
+
+        if (paymentInstrumentEntity.getPaymentInstrumentStatus() != PaymentInstrumentStatus.ACTIVE) {
+            throw new PaymentInstrumentNotActiveException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getPaymentInstrumentStatus() + "]");
         }
     }
+
 }

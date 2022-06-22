@@ -16,6 +16,7 @@ public class AddAgreementParams {
     private final String reference;
     private final String description;
     private final String userIdentifier;
+    private final Long paymentInstrumentId;
 
     public Long getAgreementId() {
         return agreementId;
@@ -53,6 +54,10 @@ public class AddAgreementParams {
         return userIdentifier;
     }
 
+    public Long getPaymentInstrumentId() {
+        return paymentInstrumentId;
+    }
+
     private AddAgreementParams(AddAgreementParamsBuilder builder) {
         agreementId = builder.agreementId;
         externalAgreementId = builder.externalAgreementId;
@@ -63,6 +68,7 @@ public class AddAgreementParams {
         reference = builder.reference;
         description = builder.description;
         userIdentifier = builder.userIdentifier;
+        paymentInstrumentId = builder.paymentInstrumentId;
     }
 
     public static final class AddAgreementParamsBuilder {
@@ -75,6 +81,7 @@ public class AddAgreementParams {
         private String reference = "Test reference";
         private String description = "Test description";
         private String userIdentifier = "Test user identifier";
+        private Long paymentInstrumentId;
 
         private AddAgreementParamsBuilder() {
         }
@@ -125,6 +132,11 @@ public class AddAgreementParams {
 
         public AddAgreementParamsBuilder withUserIdentifier(String userIdentifier) {
             this.userIdentifier = userIdentifier;
+            return this;
+        }
+
+        public AddAgreementParamsBuilder withPaymentInstrumentId(Long paymentInstrumentId) {
+            this.paymentInstrumentId = paymentInstrumentId;
             return this;
         }
 
