@@ -176,6 +176,46 @@ class StripeNotificationServiceTest {
     }
 
     @Test
+    void shouldLogForDisputeUpdatedEvent() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
+        payload = payload
+                .replace("{{type}}", "charge.dispute.updated")
+                .replace("{{status}}", "under_review");
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.updated event"));
+        assertThat(loggingEvent.getArgumentArray().length, is(1));
+    }
+
+    @Test
+    void shouldLogForDisputeClosedEvent() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
+        payload = payload
+                .replace("{{type}}", "charge.dispute.closed")
+                .replace("{{status}}", "won");
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
+        assertTrue(result);
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.closed event"));
+        assertThat(loggingEvent.getArgumentArray().length, is(1));
+    }
+
+    @Test
     void shouldLogTheRequirementsAndPayoutsDisabledJson_whenAnAccountUpdatedEventIsReceived() {
         Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
         root.setLevel(Level.INFO);
