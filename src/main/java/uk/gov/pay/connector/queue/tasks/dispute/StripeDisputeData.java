@@ -27,6 +27,9 @@ public class StripeDisputeData {
     @JsonProperty("evidence_details")
     private EvidenceDetails evidenceDetails;
 
+    @JsonProperty("status")
+    private String status;
+
     public String getResourceType() {
         return resourceType;
     }
@@ -57,5 +60,9 @@ public class StripeDisputeData {
 
     public EvidenceDetails getEvidenceDetails() {
         return evidenceDetails;
+    }
+
+    public String getStatus() {
+        return status;
     }
 }

@@ -170,7 +170,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";
     public static final String STRIPE_NOTIFICATION_ACCOUNT_UPDATED = TEMPLATE_BASE_NAME + "/stripe/account_updated.json";
     public static final String STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED = TEMPLATE_BASE_NAME + "/stripe/charge_refund_updated.json";
-    public static final String STRIPE_NOTIFICATION_CHARGE_DISPUTE_CREATED = TEMPLATE_BASE_NAME + "/stripe/charge_dispute_created.json";
+    public static final String STRIPE_NOTIFICATION_CHARGE_DISPUTE = TEMPLATE_BASE_NAME + "/stripe/charge_dispute.json";
 
     public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.xml";
     public static final String SQS_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/error-response.xml";

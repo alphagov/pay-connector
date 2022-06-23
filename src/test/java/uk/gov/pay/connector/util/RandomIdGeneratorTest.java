@@ -8,9 +8,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.primitives.Chars.asList;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.RandomIdGenerator.newId;
+import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class RandomIdGeneratorTest {
@@ -48,5 +52,23 @@ public class RandomIdGeneratorTest {
     public void randomUuid_shouldGenerateIdsOf32CharsInLength() {
         String randomUuid = randomUuid();
         assertEquals(32, randomUuid.length());
+    }
+
+    @Test
+    public void idFromExternalEntityId_shouldGenerate26Characters() {
+        for (int i = 0; i < 100; i++) {
+            String randomUuid = randomUuid();
+            String randomId = idFromExternalId(randomUuid);
+            assertEquals(26, randomId.length());
+            assertFalse(randomId.contains("-"));
+        }
+    }
+
+    @Test
+    public void idFromExternalEntityId_shouldGenerateId() {
+        String externalId = "123b456c-789d012e-345f678g";
+        String randomId = idFromExternalId(externalId);
+
+        assertThat(randomId, is("102b63b370fd35418ad66b0100"));
     }
 }

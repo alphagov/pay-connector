@@ -2,7 +2,7 @@
   "created": 1326853478,
   "livemode": false,
   "id": "evt_00000000000000",
-  "type": "charge.dispute.created",
+  "type": "{{type}}",
   "object": "event",
   "request": null,
   "pending_webhooks": 1,
@@ -13,7 +13,7 @@
       "object": "dispute",
       "livemode": true,
       "payment_intent": "pi_1111111111",
-      "status": "needs_response",
+      "status": "{{status}}",
       "amount": 6500,
       "balance_transaction": "txn_1111111111",
       "balance_transactions": [
