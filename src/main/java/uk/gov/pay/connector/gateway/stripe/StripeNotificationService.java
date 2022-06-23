@@ -42,7 +42,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CLOSED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CREATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
@@ -140,14 +142,14 @@ public class StripeNotificationService {
             processPayoutNotification(notification);
         } else if (isARefundUpdatedNotification(notification)) {
             stripeRefundUpdatedHandler.process(notification);
-        } else if (isADisputeCreatedNotification(notification)) {
-            processDisputeCreatedNotification(notification, payload);
+        } else if (isADisputeNotification(notification)) {
+            processDisputeNotification(notification, payload);
         }
         MDC.remove(STRIPE_EVENT_ID);
         return true;
     }
 
-    private void processDisputeCreatedNotification(StripeNotification notification, String payload) {
+    private void processDisputeNotification(StripeNotification notification, String payload) {
         logger.info("Received a {} event", notification.getType());
         taskQueueService.add(new Task(payload, TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION));
     }
@@ -303,8 +305,9 @@ public class StripeNotificationService {
         return byType(notification.getType()) == REFUND_UPDATED;
     }
 
-    private boolean isADisputeCreatedNotification(StripeNotification notification) {
-        return byType(notification.getType()) == DISPUTE_CREATED;
+    private boolean isADisputeNotification(StripeNotification notification) {
+        return List.of(DISPUTE_CREATED, DISPUTE_CLOSED, DISPUTE_UPDATED)
+                .contains(byType(notification.getType()));
     }
 
     private String getMappedAuth3dsResult(StripeNotificationType type) {
