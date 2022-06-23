@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sentry.Sentry;
 import org.apache.commons.lang3.ArrayUtils;
-import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -19,6 +18,7 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class TaskQueueService {
@@ -44,7 +44,7 @@ public class TaskQueueService {
                 chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
 
         if (isTerminallyFailed && chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
-                !StringUtils.isEmpty(chargeEntity.getGatewayTransactionId())) {
+                !isEmpty(chargeEntity.getGatewayTransactionId())) {
             addCollectStripeFeeForFailedPaymentTask(chargeEntity);
         }
     }
