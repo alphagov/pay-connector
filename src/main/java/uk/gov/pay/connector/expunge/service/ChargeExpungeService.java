@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
@@ -45,7 +46,7 @@ public class ChargeExpungeService {
             PaymentGatewayName.WORLDPAY,
             PaymentGatewayName.STRIPE);
 
-    private final List<ChargeStatus> expungeExemptChargeStatuses = List.of(
+    private final List<ChargeStatus> expungeExemptChargeAuthorisationErrorStatuses = List.of(
             AUTHORISATION_ERROR,
             AUTHORISATION_TIMEOUT,
             AUTHORISATION_UNEXPECTED_ERROR);
@@ -69,8 +70,9 @@ public class ChargeExpungeService {
             return true;
         }
         if (expungeExemptedGateways.contains(chargeEntity.getPaymentGatewayName()) &&
-                expungeExemptChargeStatuses.contains(status)) {
-            return false;
+                expungeExemptChargeAuthorisationErrorStatuses.contains(status)) {
+
+            return AuthorisationMode.EXTERNAL == chargeEntity.getAuthorisationMode();
         }
         return status.isExpungeable();
     }
