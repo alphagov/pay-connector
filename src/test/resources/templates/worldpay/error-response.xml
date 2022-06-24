@@ -4,7 +4,7 @@
 <paymentService version="1.4" merchantCode="MERCHANTCODE">
     <reply>
         <error code="5">
-            <![CDATA[Order has already been paid]]>
+            <![CDATA[{{errorDescription}}]]>
         </error>
     </reply>
 </paymentService>

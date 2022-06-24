@@ -71,6 +71,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayPaymentProvider.class);
+    private static final String WORLDPAY_ORDER_INQUIRY_ERROR_CODE_FOR_INVALID_CONTENT = "error code: 5";
+    /**
+     * When a payment is not found for the order inquiry, Worldpay returns an error code ‘5’ with the error
+     * message 'Could not find payment for order'.
+     * See https://developer.worldpay.com/docs/wpg/manage/inquiryrequests for details (Getting an error? heading).
+     * For other errors (ex: service unavailable), Worldpay returns a different error code (8) or a different error message
+     */
+    private static final String WORLDPAY_ORDER_INQUIRY_PAYMENT_NOT_FOUND_ERROR_MESSAGE = "Could not find payment for order";
 
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
@@ -148,6 +156,20 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
                     return new ChargeQueryResponse(mappedStatus, worldpayQueryResponse);
                 })
+                .or(() -> {
+                            return worldpayGatewayResponse.getGatewayError()
+                                    .map(gatewayError -> {
+                                                if (gatewayError.getMessage() != null
+                                                        && gatewayError.getMessage().contains(WORLDPAY_ORDER_INQUIRY_ERROR_CODE_FOR_INVALID_CONTENT)
+                                                        && gatewayError.getMessage().contains(WORLDPAY_ORDER_INQUIRY_PAYMENT_NOT_FOUND_ERROR_MESSAGE)
+                                                ) {
+                                                    return new ChargeQueryResponse(gatewayError);
+                                                }
+                                                return null;
+                                            }
+                                    );
+                        }
+                )
                 .orElseThrow(() ->
                         new WebApplicationException(format(
                                 "Unable to query charge %s - an error occurred: %s",
@@ -173,17 +195,17 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
-        
+
         if (!exemptionEngineEnabled) {
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } else {
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
-        
+
         calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
-        
+
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
-            
+
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails());
 
             authorisationLogger.logChargeAuthorisation(
@@ -198,7 +220,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
             CardAuthorisationGatewayRequest newRequest = request.withNewTransactionId(newTransactionId());
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(newRequest);
-        } 
+        }
 
         return response;
     }
@@ -247,7 +269,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         chargeDao.merge(charge);
         eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, now(UTC)));
     }
-    
+
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
@@ -270,7 +292,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     cookies,
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
-            
+
             calculateAndStoreExemption(request.getCharge(), gatewayResponse);
 
             LOGGER.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));

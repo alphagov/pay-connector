@@ -35,7 +35,7 @@ public final class GatewayStatusComparison {
     private GatewayStatusComparison(Charge charge, ChargeQueryResponse gatewayQueryResponse) {
         this(charge);
         gatewayStatus = gatewayQueryResponse.getMappedStatus().orElse(null);
-        rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponseString();
+        rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponseOrErrorMessage();
     }
 
     private GatewayStatusComparison(Charge charge) {
