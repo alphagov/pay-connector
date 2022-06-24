@@ -123,7 +123,8 @@ public class WorldpayCaptureHandlerTest {
     @Test
     public void shouldErrorIfOrderReferenceNotKnownInCapture() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
-        when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/error-response.xml"));
+        when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/error-response.xml")
+                .replace("{{errorDescription}}", "Order has already been paid"));
         TestResponse testResponse = new TestResponse(this.response);
         when(client.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap())).thenReturn(testResponse);
 

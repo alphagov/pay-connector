@@ -44,6 +44,7 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
+import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
@@ -59,7 +60,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -93,6 +94,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISED_INQUIRY_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE;
@@ -387,7 +389,7 @@ public class WorldpayPaymentProviderTest {
         CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
         assertThat(secondRequest.getTransactionId(), not(nullValue()));
         assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
-        
+
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
 
@@ -431,7 +433,7 @@ public class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
         when(response.getEntity()).thenReturn(load(WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE));
-        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"),  any(GatewayOrder.class), anyList(), anyMap()))
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
                 .thenReturn(response);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
@@ -581,13 +583,52 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    void query_payment_status_should_return_response_with_gateway_error_when_worldpay_returns_could_not_find_payment_for_order_message() throws Exception {
+        when(response.getEntity()).thenReturn(
+                load(WORLDPAY_ERROR_RESPONSE)
+                        .replace("{{errorDescription}}", "Could not find payment for order")
+        );
+
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        when(inquiryClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(response);
+
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
+
+        assertThat(chargeQueryResponse.foundCharge(), is(false));
+        assertThat(chargeQueryResponse.getGatewayError().isPresent(), is(true));
+        assertThat(chargeQueryResponse.getGatewayError().get().getMessage(), is("Worldpay query response (error code: 5, error: Could not find payment for order)"));
+    }
+
+    @Test
+    void query_payment_status_should_throw_error_when_worldpay_returns_error_with_unknown_message() throws Exception {
+        when(response.getEntity()).thenReturn(
+                load(WORLDPAY_ERROR_RESPONSE)
+                        .replace("{{errorDescription}}", "Order inquiries have been disabled for all merchants")
+        );
+
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        when(inquiryClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(response);
+
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+
+        assertThrows(WebApplicationException.class, () -> {
+            worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
+        });
+    }
+
+    @Test
     void should_construct_gateway_3DS_authorisation_response_with_paRequest_issuerUrl_and_machine_cookie_if_worldpay_asks_us_to_do_3ds_again() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture.withProviderSessionId("original-machine-cookie").build();
 
         when(response.getEntity()).thenReturn(load(WORLDPAY_3DS_RESPONSE));
         when(response.getResponseCookies()).thenReturn(Map.of(WORLDPAY_MACHINE_COOKIE_NAME, "new-machine-cookie-value"));
 
-        when(authoriseClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"),  any(GatewayOrder.class),
+        when(authoriseClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class),
                 eq(List.of(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, "original-machine-cookie"))), anyMap()))
                 .thenReturn(response);
 

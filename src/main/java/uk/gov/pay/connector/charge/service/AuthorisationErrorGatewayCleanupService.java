@@ -105,7 +105,7 @@ public class AuthorisationErrorGatewayCleanupService {
             // The charge might not be found with the gateway when the authorisation failed due to an error with ePDQ
             // before they tried to process the payment. One example of this is when the card type is not enabled in ePDQ.
             logger.info("Charge was not found on the gateway. Gateway response was: " +
-                            chargeQueryResponse.getRawGatewayResponseString(),
+                            chargeQueryResponse.getRawGatewayResponseOrErrorMessage(),
                     chargeEntity.getStructuredLoggingArgs());
             chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CHARGE_MISSING);
             return true;
@@ -142,7 +142,7 @@ public class AuthorisationErrorGatewayCleanupService {
             return false;
         }).orElseGet(() -> {
             logger.error("Charge does not map to an internal charge state. Raw query response was: " +
-                            chargeQueryResponse.getRawGatewayResponseString(),
+                            chargeQueryResponse.getRawGatewayResponseOrErrorMessage(),
                     chargeEntity.getStructuredLoggingArgs());
             return false;
         });
