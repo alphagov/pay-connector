@@ -7,7 +7,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -15,12 +14,14 @@ import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.stripe.request.StripeQueryPaymentStatusRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -98,8 +99,8 @@ public class StripeQueryPaymentStatusHandlerTest {
         assertThat(response.getMappedStatus().get(), is(ChargeStatus.AUTHORISATION_CANCELLED));
     }
 
-    @Test(expected = ChargeNotFoundRuntimeException.class)
-    public void shouldThrowException_whenQueryingByMetadataFindsNoCharge() throws GatewayException {
+    @Test
+    public void shouldReturnError_whenQueryingByMetadataFindsNoCharge() throws GatewayException {
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         when(paymentSearchResponse.getEntity()).thenReturn("{\n" +
                 "  \"object\": \"search_result\",\n" +
@@ -107,7 +108,14 @@ public class StripeQueryPaymentStatusHandlerTest {
                 "  \"has_more\": false,\n" +
                 "  \"data\": []\n" +
                 "}");
-        handler.queryPaymentStatus(queryGatewayRequest);
+        ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
+
+        Optional<GatewayError> mayBeError = response.getGatewayError();
+
+        assertThat(mayBeError.isPresent(), is(true));
+        assertThat(mayBeError.get().getMessage(), is("There are no payment intents for charge"));
+
+        assertThat(response.getRawGatewayResponse().isPresent(), is(false));
     }
 
     @Test(expected = GatewayException.GatewayErrorException.class)

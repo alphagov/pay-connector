@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSearchResponse;
@@ -45,14 +46,14 @@ public class StripeQueryPaymentStatusHandler {
             List<StripePaymentIntent> paymentIntentList = queryResponse.getPaymentIntents();
             if (paymentIntentList == null || paymentIntentList.isEmpty()) {
                 LOGGER.info("There are no payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
-                throw new ChargeNotFoundRuntimeException(request.getChargeExternalId());
+                return new ChargeQueryResponse(GatewayError.genericGatewayError("There are no payment intents for charge"));
             }
             if (paymentIntentList.size() > 1) {
                 LOGGER.error("There are more than one payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
                 throw new ChargeNotFoundRuntimeException(request.getChargeExternalId());
             }
             return new ChargeQueryResponse(StripeChargeStatus.mapToChargeStatus(StripeChargeStatus.fromString(paymentIntentList.get(0).getStatus())),
-                            new StripeQueryResponse(request.getChargeExternalId()));
+                    new StripeQueryResponse(request.getChargeExternalId()));
         } catch (GatewayException.GatewayErrorException ex) {
             if ((ex.getStatus().isPresent() && ex.getStatus().get() == SC_UNAUTHORIZED) || ex.getFamily() == SERVER_ERROR) {
                 LOGGER.info("Querying payment status failed due to an internal error. Reason: {}. Status code from Stripe: {}.",

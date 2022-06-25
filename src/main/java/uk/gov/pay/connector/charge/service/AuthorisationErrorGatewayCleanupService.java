@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR_CHARGE_MISSING;
@@ -67,7 +68,7 @@ public class AuthorisationErrorGatewayCleanupService {
                 limit);
 
         logger.info("Found {} charges to clean up.", chargesToCleanUp.size());
-        
+
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
 
@@ -93,13 +94,13 @@ public class AuthorisationErrorGatewayCleanupService {
 
         logger.info("Charges cleaned up successfully: {}; Charges cleaned up failed: {}",
                 successes.intValue(), failures.intValue());
-        
+
         return Map.of(
                 CLEANUP_SUCCESS, successes.intValue(),
                 CLEANUP_FAILED, failures.intValue()
         );
     }
-    
+
     private boolean cleanUpChargeWithGateway(ChargeEntity chargeEntity, ChargeQueryResponse chargeQueryResponse) {
         if (!chargeQueryResponse.foundCharge()) {
             // The charge might not be found with the gateway when the authorisation failed due to an error with ePDQ
@@ -126,18 +127,18 @@ public class AuthorisationErrorGatewayCleanupService {
                 chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_REJECTED);
                 return true;
             }
-            
-            if (mappedStatus == USER_CANCELLED) {
-                // The charge has already been cancelled with the gateway, probably manually
+
+            if (mappedStatus == USER_CANCELLED || mappedStatus == AUTHORISATION_CANCELLED) {
+                // The charge has already been cancelled with the gateway
                 chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CANCELLED);
                 return true;
             }
 
             logger.error(format("Charge is in a mapped status of [%s] with the [%s] gateway, which is " +
-                            "unexpected and we do not handle. If the gateway status is CAPTURED, it " +
-                            "suggests the service has incorrect gateway settings.",
-                    mappedStatus.getValue()),
-                    chargeEntity.getPaymentGatewayName().getName(),
+                                    "unexpected and we do not handle. If the gateway status is CAPTURED, it " +
+                                    "suggests the service has incorrect gateway settings.",
+                            mappedStatus.getValue(),
+                            chargeEntity.getPaymentGatewayName().getName()),
                     chargeEntity.getStructuredLoggingArgs());
             return false;
         }).orElseGet(() -> {
@@ -166,7 +167,7 @@ public class AuthorisationErrorGatewayCleanupService {
             });
         } catch (GatewayException e) {
             logger.info(format("Gateway error when attempting to cancel charge with the gateway: %s",
-                    e.getMessage()),
+                            e.getMessage()),
                     chargeEntity.getStructuredLoggingArgs());
             return false;
         }
