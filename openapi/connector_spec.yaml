@@ -1,0 +1,118 @@
+openapi: 3.0.1
+info:
+  title: Connector API
+  version: 1.0.0
+paths:
+  /v1/api/accounts/{accountId}/agreements:
+    post:
+      operationId: createAgreement
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementCreateRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+          description: OK
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Missing required fields
+      summary: Create an agreement
+components:
+  schemas:
+    AgreementCreateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          example: Description for the paying user describing the purpose of the agreement
+        reference:
+          type: string
+          example: Service agreement reference
+        user_identifier:
+          type: string
+          example: reference for the paying user
+      required:
+      - description
+      - reference
+    AgreementResponse:
+      type: object
+      properties:
+        agreement_id:
+          type: string
+          example: iaouobo39hiv0m2560q45j3p04
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-27T13:07:57.58Z
+        description:
+          type: string
+          example: Description for the paying user describing the purpose of the agreement
+        live:
+          type: boolean
+        reference:
+          type: string
+          example: Service agreement reference
+        service_id:
+          type: string
+          example: Service external ID
+        user_identifier:
+          type: string
+          example: reference for the paying user
+    ErrorResponse:
+      type: object
+      properties:
+        error_identifier:
+          type: string
+          enum:
+          - GENERIC
+          - REFUND_NOT_AVAILABLE
+          - REFUND_AMOUNT_AVAILABLE_MISMATCH
+          - ZERO_AMOUNT_NOT_ALLOWED
+          - MOTO_NOT_ALLOWED
+          - CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED
+          - CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION
+          - AUTH_TOKEN_INVALID
+          - AUTH_TOKEN_REVOKED
+          - ACCOUNT_NOT_LINKED_WITH_PSP
+          - TELEPHONE_PAYMENT_NOTIFICATIONS_NOT_ALLOWED
+          - AGREEMENT_NOT_FOUND
+          - ONE_TIME_TOKEN_INVALID
+          - ONE_TIME_TOKEN_ALREADY_USED
+          - INVALID_ATTRIBUTE_VALUE
+          - CARD_NUMBER_REJECTED
+          - AUTHORISATION_API_NOT_ALLOWED
+          - AUTHORISATION_REJECTED
+          - AUTHORISATION_ERROR
+          - AUTHORISATION_TIMEOUT
+          - AGREEMENT_NOT_ACTIVE
+          - MISSING_MANDATORY_ATTRIBUTE
+          - UNEXPECTED_ATTRIBUTE
+          - ACCOUNT_DISABLED
+          example: GENERIC
+        message:
+          type: array
+          items:
+            type: string
+            example: "Field [description] cannot be null"
+        reason:
+          type: string
+          example: "Optional - ex: amount_not_available"

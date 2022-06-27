@@ -1,3 +1,5 @@
+resourceClasses:
+  - uk.gov.pay.connector.agreement.resource.AgreementsApiResource
 readAllResources: true
 sortOutput: true
 prettyPrint: true

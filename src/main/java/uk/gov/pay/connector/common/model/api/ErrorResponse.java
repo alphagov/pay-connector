@@ -2,6 +2,8 @@ package uk.gov.pay.connector.common.model.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
@@ -12,12 +14,15 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class ErrorResponse {
     
     @JsonProperty("error_identifier")
+    @Schema(example = "GENERIC")
     private ErrorIdentifier identifier;
     
     @JsonProperty("message")
+    @ArraySchema(schema = @Schema(example = "Field [description] cannot be null"))
     private List<String> messages;
     
     @JsonProperty("reason")
+    @Schema(required = false, example = "Optional - ex: amount_not_available")
     private String reason;
     
     public ErrorResponse() {
