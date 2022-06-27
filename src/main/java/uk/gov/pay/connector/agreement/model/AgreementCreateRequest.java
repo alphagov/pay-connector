@@ -2,7 +2,9 @@ package uk.gov.pay.connector.agreement.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
+
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
@@ -15,15 +17,18 @@ public class AgreementCreateRequest {
     @NotNull(message = "Field [reference] cannot be null")
     @Length(min = 1, max = 255, message = "Field [reference] can have a size between 0 and 255")
     @JsonProperty("reference")
+    @Schema(example = "Service agreement reference", required = true)
     private String reference;
 
     @NotNull(message = "Field [" + DESCRIPTION_FIELD + "] cannot be null")
     @Length(min = 1, max = 255, message = "Field [" + DESCRIPTION_FIELD + "] can have a size between 0 and 255")
     @JsonProperty(DESCRIPTION_FIELD)
+    @Schema(example = "Description for the paying user describing the purpose of the agreement", required = true)
     private String description;
 
     @Length(min = 1, max = 255, message = "Field [" + USER_IDENTIFIER_FIELD + "] can have a size between 0 and 255")
     @JsonProperty(USER_IDENTIFIER_FIELD)
+    @Schema(example = "reference for the paying user")
     private String userIdentifier;
 
     public AgreementCreateRequest() {
