@@ -1,0 +1,9 @@
+readAllResources: true
+sortOutput: true
+prettyPrint: true
+
+openAPI:
+  info:
+    title: 'Connector API'
+    version: '1.0.0'
+
