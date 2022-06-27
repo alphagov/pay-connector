@@ -36,6 +36,17 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Missing required fields
       summary: Create an agreement
+  /v1/api/card-types:
+    get:
+      operationId: getCardTypes
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardTypesResponse'
+          description: OK
+      summary: List all card types
 components:
   schemas:
     AgreementCreateRequest:
@@ -77,6 +88,34 @@ components:
         user_identifier:
           type: string
           example: reference for the paying user
+    CardTypeEntity:
+      type: object
+      properties:
+        brand:
+          type: string
+          example: visa
+        id:
+          type: string
+          format: uuid
+          example: ac8a3abd-bcfd-4fa6-8905-321ce913e7f5
+        label:
+          type: string
+          example: Visa
+        requires3ds:
+          type: boolean
+        type:
+          type: string
+          enum:
+          - CREDIT
+          - DEBIT
+          example: DEBIT
+    CardTypesResponse:
+      type: object
+      properties:
+        card_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardTypeEntity'
     ErrorResponse:
       type: object
       properties:

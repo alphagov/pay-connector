@@ -2,6 +2,7 @@ package uk.gov.pay.connector.cardtype.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 
 import javax.persistence.Column;
@@ -17,18 +18,22 @@ public class CardTypeEntity extends UuidAbstractEntity {
 
     @Column
     @JsonProperty
+    @Schema(example = "visa")
     private String brand;
 
     @Column
     @JsonProperty
+    @Schema(example = "Visa")
     private String label;
 
     @Column
     @Enumerated(EnumType.STRING)
+    @Schema(example = "DEBIT")
     private CardType type;
 
     @Column(name = "requires_3ds")
     @JsonProperty
+    @Schema(name= "requires3ds")
     private boolean requires3ds;
 
     @Override

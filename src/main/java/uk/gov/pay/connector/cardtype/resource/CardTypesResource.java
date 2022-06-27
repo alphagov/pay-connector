@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.cardtype.resource;
 
-import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 
 import javax.inject.Inject;
@@ -14,7 +17,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class CardTypesResource {
-    private static final String CARD_TYPES_FIELD_NAME = "card_types";
 
     private final CardTypeDao cardTypeDao;
 
@@ -26,7 +28,14 @@ public class CardTypesResource {
     @GET
     @Path("/v1/api/card-types")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "List all card types",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = CardTypesResponse.class)))
+            }
+    )
     public Response getCardTypes() {
-        return successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, cardTypeDao.findAll()));
+        return successResponseWithEntity(CardTypesResponse.of(cardTypeDao.findAll()));
     }
 }
