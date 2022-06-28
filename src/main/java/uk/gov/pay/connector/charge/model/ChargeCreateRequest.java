@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
@@ -26,23 +27,32 @@ public class ChargeCreateRequest {
     @Min(value = 0, message = "Field [amount] can be between 0 and 10_000_000")
     @Max(value = 10_000_000, message = "Field [amount] can be between 0 and 10_000_000")
     @JsonProperty("amount")
+    @Schema(description = "Amount in pence", example = "100", required = true,
+            minimum = "0", maximum = "10000000")
     private Long amount;
 
     @NotNull(message = "Field [description] cannot be null")
     @Length(max = 255, message = "Field [description] can have a size between 0 and 255")
     @JsonProperty("description")
+    @Schema(example = "payment description", description = "The payment description (shown to the user on the payment pages)", required = true,
+            maximum = "255")
     private String description;
 
     @NotNull(message = "Field [reference] cannot be null")
     @Length(max = 255, message = "Field [reference] can have a size between 0 and 255")
     @JsonProperty("reference")
+    @Schema(example = "payment reference", description = "The reference issued by the government service for this payment", required = true,
+            maximum = "255")
     private String reference;
 
     @JsonProperty("return_url")
+    @Schema(example = "https://service-name.gov.uk/transactions/12345",
+            description = "The url to return the user to after the payment process has completed. Required when authorisation_mode is 'web'")
     private String returnUrl;
 
     @Length(max = 254, message = "Field [email] can have a size between 0 and 254")
     @JsonProperty("email")
+    @Schema(example = "joe.blogs@example.org")
     private String email;
 
     @JsonProperty("delayed_capture")
@@ -50,8 +60,9 @@ public class ChargeCreateRequest {
 
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     @JsonProperty("language")
+    @Schema(example = "en")
     private SupportedLanguage language;
-    
+
     @JsonProperty("prefilled_cardholder_details")
     @Valid
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
@@ -63,24 +74,30 @@ public class ChargeCreateRequest {
 
     @JsonProperty("source")
     @JsonDeserialize(using = SourceDeserialiser.class)
+    @Schema(example = "CARD_API", description = "Source of payment (e.g. CARD_PAYMENT_LINK) - defaults to CARD_API (which cannot be specified explicitly).")
     private Source source;
-    
+
     @JsonProperty("moto")
+    @Schema(description = "Mail Order / Telephone Order (MOTO) payment flag", example = "true")
     private Boolean moto;
-    
+
     @JsonProperty("payment_provider")
     @ValidPaymentProvider
+    @Schema(description = "Payment provider for the charge. Internal use only", example = "sandbox")
     private String paymentProvider;
 
     @JsonProperty("agreement_id")
     @Length(min = 26, max = 26, message = "Field [agreementId] length must be 26")
+    @Schema(description = "Agreement ID to associate charge with", example = "md1mjge8gb6p4qndfs8mf8gto5")
     private String agreementId;
 
     @JsonProperty("save_payment_instrument_to_agreement")
+    @Schema(description = "Applicable for recurring card payments. Indicated whether the payment method should be saved to agreement")
     private Boolean savePaymentInstrumentToAgreement;
-    
+
     @JsonProperty("authorisation_mode")
     @Valid
+    @Schema(description = "Mode of authorisation for the payment. Payments created in `web` mode require the paying user to visit the `next_url` to complete the payment.")
     private AuthorisationMode authorisationMode;
 
     public ChargeCreateRequest() {
@@ -146,7 +163,7 @@ public class ChargeCreateRequest {
     public SupportedLanguage getLanguage() {
         return Optional.ofNullable(language).orElse(SupportedLanguage.ENGLISH);
     }
-    
+
     public Optional<PrefilledCardHolderDetails> getPrefilledCardHolderDetails() {
         return Optional.ofNullable(prefilledCardHolderDetails);
     }

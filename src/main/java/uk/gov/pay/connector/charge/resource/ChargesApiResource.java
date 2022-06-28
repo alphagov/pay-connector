@@ -1,6 +1,11 @@
 package uk.gov.pay.connector.charge.resource;
 
 import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
@@ -8,10 +13,12 @@ import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.validation.ReturnUrlValidator;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -71,7 +78,18 @@ public class ChargesApiResource {
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
-    public Response getCharge(@PathParam(ACCOUNT_ID) Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+    @Operation(
+            summary = "Get charge by account ID and charge external ID",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response getCharge(@Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
+                              @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID") @PathParam("chargeId") String chargeId,
+                              @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
@@ -80,8 +98,19 @@ public class ChargesApiResource {
     @POST
     @Path("/v1/api/accounts/{accountId}/charges")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Create new charge for gateway account",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            }
+    )
     public Response createNewCharge(
-            @PathParam(ACCOUNT_ID) Long accountId,
+            @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid ChargeCreateRequest chargeRequest,
             @Context UriInfo uriInfo
     ) {
@@ -110,8 +139,28 @@ public class ChargesApiResource {
     @POST
     @Path("v1/api/accounts/{accountId}/telephone-charges")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Create a new telephone charge for gateway account.",
+            description = "Create a new telephone charge for gateway account. These are externally taken payments and the outcome is reported to this endpoint." +
+                    "provider_id is used as an idempotency key for API calls. If a payment already exists with the provider_id provided, the API will not store a record about a new payment, or update or change the record about a payment previously stored.",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK - returns existing charge for provider_id",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(schema = @Schema(example = "{" +
+                            "    \"error_identifier\": \"TELEPHONE_PAYMENT_NOTIFICATIONS_NOT_ALLOWED\"," +
+                            "    \"message\": [" +
+                            "        \"Telephone payment notifications are not enabled for this gateway account\"" +
+                            "    ]" +
+                            "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            }
+    )
     public Response createNewTelephoneCharge(
-            @PathParam(ACCOUNT_ID) Long accountId,
+            @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
@@ -130,15 +179,42 @@ public class ChargesApiResource {
     @POST
     @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Expire charges and tokens ",
+            description = "This starts a task to expire the charges with a default window of 90 minutes. " +
+                    "The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. " +
+                    "Response of the call will tell you how many charges were successfully expired and how many of them failed for some reason. " +
+                    "This endpoint also expires charges in AWAITING_CAPTURE_REQUEST status. The default window is 120 hours. " +
+                    "It can be overriden by setting an environment variable AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW in seconds. " +
+                    "Also expires tokens older than the configured TOKEN_EXPIRY_WINDOW_SECONDS.",
+            tags = {"Tasks"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"expiry-success\": 2," +
+                                    "    \"expiry-failed\": 0" +
+                                    "}")))
+            }
+    )
     public Response expireCharges(@Context UriInfo uriInfo) {
         Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireChargesAndTokens();
         return successResponseWithEntity(resultMap);
     }
 
+    @Operation(
+            summary = "Find charge by gateway transaction ID",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
     @GET
     @Path("/v1/api/charges/gateway_transaction/{gatewayTransactionId}")
     @Produces(APPLICATION_JSON)
-    public Response getChargeForGatewayTransactionId(@PathParam("gatewayTransactionId") String gatewayTransactionId, @Context UriInfo uriInfo) {
+    public Response getChargeForGatewayTransactionId(@Parameter(example = "5422624d-12b1-4821-8b26-d0383ecf1602", description = "Gateway transaction ID")
+                                                     @PathParam("gatewayTransactionId") String gatewayTransactionId, @Context UriInfo uriInfo) {
         return chargeService.findChargeByGatewayTransactionId(gatewayTransactionId, uriInfo)
                 .map(chargeResponse -> Response.ok(chargeResponse).build())
                 .orElseGet(() -> responseWithGatewayTransactionNotFound(gatewayTransactionId));

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
 
 import java.util.Optional;
@@ -10,10 +11,12 @@ import java.util.Optional;
 @ValidPaymentOutcome(message = "Field [payment_outcome] must include a valid status and error code")
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class PaymentOutcome {
-    
+
+    @Schema(example = "failed")
     private String status;
     
     @JsonProperty
+    @Schema(description = "Error code", example = "P0010")
     private String code;
 
     @JsonProperty

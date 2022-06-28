@@ -1,6 +1,7 @@
 resourceClasses:
   - uk.gov.pay.connector.agreement.resource.AgreementsApiResource
   - uk.gov.pay.connector.cardtype.resource.CardTypesResource
+  - uk.gov.pay.connector.charge.resource.ChargesApiResource
 readAllResources: true
 sortOutput: true
 prettyPrint: true
