@@ -1,15 +1,23 @@
 package uk.gov.pay.connector.common.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Address {
 
+    @Schema(example = "Address line 1")
     private String line1;
+    @Schema(example = "Address line 2")
     private String line2;
+    @Schema(example = "AB1 2CD")
     private String postcode;
+    @Schema(example = "London")
     private String city;
+
+    @Schema(example = "county")
     private String county;
+    @Schema(example = "GB")
     private String country;
 
     public Address() {

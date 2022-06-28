@@ -3,6 +3,7 @@ package uk.gov.pay.connector.common.model.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.Size;
 import java.util.Objects;
@@ -11,15 +12,21 @@ import java.util.Objects;
 public class PrefilledAddress {
 
     @Size(max = 255, message = "Field [line1] can have a size between 0 and 255")
+    @Schema(example = "address line 1")
     private final String line1;
     @Size(max = 255, message = "Field [line2] can have a size between 0 and 255")
+    @Schema(example = "address line 2")
     private final String line2;
     @Size(max = 25, message = "Field [postcode] can have a size between 0 and 25")
+    @Schema(example = "AB1 2CD")
     private final String postcode;
     @Size(max = 255, message = "Field [city] can have a size between 0 and 255")
+    @Schema(example = "London")
     private final String city;
     @Size(max = 255, message = "Field [county] can have a size between 0 and 255")
+    @Schema(example = "country")
     private final String county;
+    @Schema(example = "GB")
     private final String country;
 
     @JsonCreator

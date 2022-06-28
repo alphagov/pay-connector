@@ -2,6 +2,7 @@ package uk.gov.pay.connector.common.model.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -26,18 +27,22 @@ public class ExternalTransactionState {
         this.message = message;
     }
 
+    @Schema(example = "success")
     public String getStatus() {
         return value;
     }
 
+    @Schema(example = "true")
     public boolean isFinished() {
         return finished;
     }
 
+    @Schema(example = "P0010", description = "Error code for failed payments")
     public String getCode() {
         return code;
     }
 
+    @Schema(example = "Payment method rejected", description = "Message describing erro code if Payment failed")
     public String getMessage() {
         return message;
     }
