@@ -178,9 +178,9 @@ public class StripeWebhookTaskHandlerTest {
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
-        assertThat(eventDetails.getFee(), is(1500L));
-        assertThat(eventDetails.getAmount(), is(6500L));
-        assertThat(eventDetails.getNetAmount(), is(-8000L));
+        assertThat(eventDetails.getFee(), is(stripeDisputeData.getBalanceTransactionList().get(0).getFee()));
+        assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
+        assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().get(0).getNetAmount()));
 
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
