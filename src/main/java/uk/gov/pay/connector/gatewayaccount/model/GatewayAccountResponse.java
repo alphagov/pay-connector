@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.net.URI;
 import java.util.List;
@@ -12,27 +13,41 @@ import java.util.Map;
 public class GatewayAccountResponse {
 
     @JsonProperty("type")
+    @Schema(example = "live")
     private final String providerAccountType;
 
     @JsonProperty("service_name")
+    @Schema(example = "service name")
     private final String serviceName;
 
     @JsonProperty("description")
+    @Schema(example = "account for some gov org")
     private final String description;
 
     @JsonProperty("external_id")
+    @Schema(example = "ab2c296ed98647e9a25f045f5e6e87a2")
     private final String externalId;
 
     @JsonProperty("analytics_id")
+    @Schema(example = "ananytics-id")
     private final String analyticsId;
 
     @JsonProperty("gateway_account_id")
+    @Schema(example = "2")
     private final String gatewayAccountId;
 
     @JsonProperty("requires_3ds")
+    @Schema(example = "true")
     private final boolean requires3ds;
 
     @JsonProperty("links")
+    @Schema(example = "[" +
+            "        {" +
+            "            \"href\": \"https://connector.url/v1/api/accounts/2\"," +
+            "            \"rel\": \"self\"," +
+            "            \"method\": \"GET\"" +
+            "        }" +
+            "    ]")
     private final List<Map<String, Object>> links;
 
     @JsonIgnore

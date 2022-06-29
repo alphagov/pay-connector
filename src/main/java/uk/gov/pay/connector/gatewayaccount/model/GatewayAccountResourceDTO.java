@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -17,76 +18,118 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 public class GatewayAccountResourceDTO {
 
     @JsonProperty("gateway_account_id")
+    @Schema(example = "1", description = "The account ID")
     private long accountId;
 
     @JsonProperty("external_id")
+    @Schema(example = "fbf905a3f7ea416c8c252410eb45ddbd", description = "External ID for the gateway account")
     private String externalId;
 
     @JsonProperty("payment_provider")
+    @Schema(example = "sandbox", description = "The payment provider for which this account is created")
     private String paymentProvider;
 
+    @Schema(example = "test", description = "Account type for the payment provider (test/live)")
     private GatewayAccountType type;
 
+    @Schema(example = "Account for service xxx", description = "An internal description to identify the gateway account. The default value is null.", defaultValue = "null")
     private String description;
 
     @JsonProperty("service_name")
+    @Schema(example = "service name", description = "The service name for the account")
     private String serviceName;
 
     @JsonProperty("service_id")
+    @Schema(example = "cd1b871207a94a7fa157dee678146acd", description = "Service external ID")
     private String serviceId;
 
     @JsonProperty("analytics_id")
+    @Schema(description = "An identifier used to identify the service in Google Analytics. The default value is null")
     private String analyticsId;
 
     @JsonProperty("corporate_credit_card_surcharge_amount")
+    @Schema(example = "250", description = "A corporate credit card surcharge amount in pence", defaultValue = "0")
     private long corporateCreditCardSurchargeAmount;
 
     @JsonProperty("corporate_debit_card_surcharge_amount")
+    @Schema(example = "250", description = "A corporate debit card surcharge amount in pence", defaultValue = "0")
     private long corporateDebitCardSurchargeAmount;
 
     @JsonProperty("_links")
+    @Schema(example = "{" +
+            "        {" +
+            "            \"href\": \"https://connector.url/v1/api/accounts/1\"," +
+            "            \"rel\": \"self\"," +
+            "            \"method\": \"GET\"" +
+            "        }" +
+            "    }")
     private Map<String, Map<String, URI>> links = new HashMap<>();
 
     @JsonProperty("allow_apple_pay")
+    @Schema(example = "true", description = "Set to true to enable Apple Pay", defaultValue = "false")
     private boolean allowApplePay;
 
     @JsonProperty("allow_google_pay")
+    @Schema(example = "true", description = "Set to true to enable Google Pay", defaultValue = "false")
     private boolean allowGooglePay;
 
     @JsonProperty("block_prepaid_cards")
+    @Schema(example = "true", description = "Whether pre-paid cards are allowed as a payment method for this gateway account", defaultValue = "false")
     private boolean blockPrepaidCards;
 
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
+    @Schema(example = "0", description = "A corporate prepaid debit card surcharge amount in pence")
     private long corporatePrepaidDebitCardSurchargeAmount;
 
     @JsonProperty("email_notifications")
+    @Schema(description = "The settings for the different emails (payments/refunds) that are sent out", example = "{" +
+            "        \"REFUND_ISSUED\": {" +
+            "            \"version\": 1," +
+            "            \"enabled\": true," +
+            "            \"template_body\": null" +
+            "        }," +
+            "        \"PAYMENT_CONFIRMED\": {" +
+            "            \"version\": 1," +
+            "            \"enabled\": true," +
+            "            \"template_body\": null" +
+            "        }" +
+            "    }")
     private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
 
     @JsonProperty("email_collection_mode")
+    @Schema(description = "Whether email address is required from paying users. Can be MANDATORY, OPTIONAL or OFF")
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
 
     @JsonProperty("requires3ds")
+    @Schema(example = "true", description = "Flag to indicate whether 3DS is enabled")
     private boolean requires3ds;
 
     @JsonProperty("allow_zero_amount")
+    @Schema(example = "true", description = "Set to true to support charges with a zero amount", defaultValue = "false")
     private boolean allowZeroAmount;
 
     @JsonProperty("integration_version_3ds")
+    @Schema(example = "2", description = "3DS version used for payments for the gateway account")
     private int integrationVersion3ds;
 
     @JsonProperty("allow_moto")
+    @Schema(description = "Indicates whether the Mail Order and Telephone Order (MOTO) payments are allowed", defaultValue = "false")
     private boolean allowMoto;
 
     @JsonProperty("allow_telephone_payment_notifications")
+    @Schema(description = "Indicates if the account is used for telephone payments reporting", defaultValue = "false")
     private boolean allowTelephonePaymentNotifications;
 
     @JsonProperty("moto_mask_card_number_input")
+    @Schema(description = "Indicates whether the card number is masked when being input for MOTO payments. The default value is false.", defaultValue = "false")
     private boolean motoMaskCardNumberInput;
 
     @JsonProperty("moto_mask_card_security_code_input")
+    @Schema(description = "Indicates whether the card security code is masked when being input for MOTO payments.", defaultValue = "false")
     private boolean motoMaskCardSecurityCodeInput;
 
     @JsonProperty("provider_switch_enabled")
+    @Schema(example = "false", description = "Flag to enable payment provider switching", defaultValue = "false")
     private boolean providerSwitchEnabled;
 
     @JsonInclude(NON_NULL)
@@ -94,27 +137,38 @@ public class GatewayAccountResourceDTO {
     private Worldpay3dsFlexCredentials worldpay3dsFlexCredentials;
 
     @JsonProperty("send_payer_ip_address_to_gateway")
+    @Schema(example = "true", description = "If enabled, user IP address is sent to to gateway", defaultValue = "false")
     private boolean sendPayerIpAddressToGateway;
 
     @JsonProperty("send_payer_email_to_gateway")
+    @Schema(example = "true", description = "If enabled, user email address is included in the authorisation request to gateway", defaultValue = "false")
     private boolean sendPayerEmailToGateway;
 
     @JsonProperty("send_reference_to_gateway")
+    @Schema(example = "true", description = "If enabled, service payment reference is sent to gateway as description. " +
+            "Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false'", defaultValue = "false")
     private boolean sendReferenceToGateway;
 
     @JsonProperty("requires_additional_kyc_data")
+    @Schema(example = "true", description = "Flag to indicate whether the account requires additional KYC data. Used to enable additional KYC data collection for stripe accounts",
+            defaultValue = "false")
     private boolean requiresAdditionalKycData;
-    
+
     @JsonProperty("allow_authorisation_api")
+    @Schema(example = "true", description = "Flag to indicate whether the account is allowed to initiate MOTO payments that are authorised via " +
+            "an API request rather than the web interface", defaultValue = "false")
     private boolean allowAuthorisationApi;
 
     @JsonProperty("recurring_enabled")
+    @Schema(example = "true", description = "Flag to indicate whether the account is allowed to take recurring card payments", defaultValue = "false")
     private boolean recurringEnabled;
-    
+
     @JsonProperty("disabled")
+    @Schema(example = "false", description = "Flag to indicate whether the account is allowed to take payments and make refunds", defaultValue = "false")
     private boolean disabled;
-    
+
     @JsonProperty("disabled_reason")
+    @Schema(example = "No longer required", description = "The reason the account is disabled, if applicable")
     private String disabledReason;
 
     public GatewayAccountResourceDTO() {

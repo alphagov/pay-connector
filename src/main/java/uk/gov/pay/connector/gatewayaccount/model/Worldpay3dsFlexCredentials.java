@@ -3,17 +3,21 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class Worldpay3dsFlexCredentials {
 
+    @Schema(example = "issuer")
     private String issuer;
+    @Schema(example = "org_unit_id")
     private String organisationalUnitId;
 
     @JsonIgnore
     private String jwtMacKey;
+    @Schema(example = "true")
     private boolean exemptionEngineEnabled;
 
     public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey, boolean exemptionEngineEnabled) {

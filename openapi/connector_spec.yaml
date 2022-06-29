@@ -108,7 +108,7 @@ paths:
   /v1/api/accounts/{accountId}/telephone-charges:
     post:
       description: "Create a new telephone charge for gateway account. These are externally\
-        \ taken payments and the outcome is reported to this endpoint.provider_id\
+        \ taken payments and the outcome is reported to this endpoint. provider_id\
         \ is used as an idempotency key for API calls. If a payment already exists\
         \ with the provider_id provided, the API will not store a record about a new\
         \ payment, or update or change the record about a payment previously stored."
@@ -648,7 +648,7 @@ components:
           type: array
           items:
             type: string
-            example: "Field [description] cannot be null"
+            example: error message
         reason:
           type: string
           example: "Optional - ex: amount_not_available"

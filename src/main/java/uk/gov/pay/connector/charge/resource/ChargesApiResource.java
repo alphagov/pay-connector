@@ -141,7 +141,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Create a new telephone charge for gateway account.",
-            description = "Create a new telephone charge for gateway account. These are externally taken payments and the outcome is reported to this endpoint." +
+            description = "Create a new telephone charge for gateway account. These are externally taken payments and the outcome is reported to this endpoint. " +
                     "provider_id is used as an idempotency key for API calls. If a payment already exists with the provider_id provided, the API will not store a record about a new payment, or update or change the record about a payment previously stored.",
             tags = {"Charges"},
             responses = {

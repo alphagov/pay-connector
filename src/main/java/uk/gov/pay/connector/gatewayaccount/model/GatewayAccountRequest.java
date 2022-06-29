@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.dropwizard.validation.ValidationMethod;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import java.util.Map;
@@ -25,27 +26,36 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
 
+    @JsonIgnore
     private String providerAccountType;
 
+    @JsonIgnore
     private String serviceName;
 
+    @JsonIgnore
     private final String serviceId;
 
+    @JsonIgnore
     private String description;
 
+    @JsonIgnore
     private String analyticsId;
 
+    @JsonIgnore
     private String paymentProvider;
-    
+
+    @JsonIgnore
     private boolean requires3ds;
-    
-    public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
-                                 @JsonProperty("payment_provider") String paymentProvider,
-                                 @JsonProperty("service_name") String serviceName,
-                                 @JsonProperty("service_id") String serviceId,
-                                 @JsonProperty("description") String description,
-                                 @JsonProperty("analytics_id") String analyticsId,
-                                 @JsonProperty("requires_3ds") boolean requires3ds
+
+    public GatewayAccountRequest(@JsonProperty("type") @Schema(example = "live", description = "Account type for this provider (test/live)", defaultValue = "test") String providerAccountType,
+                                 @JsonProperty("payment_provider") @Schema(example = "stripe", description = "The payment provider for which this account is created", defaultValue = "sandbox")
+                                 String paymentProvider,
+                                 @JsonProperty("service_name") @Schema(example = "service name") String serviceName,
+                                 @JsonProperty("service_id") @Schema(example = "service-external-id") String serviceId,
+                                 @JsonProperty("description") @Schema(description = "Some useful non-ambiguous description about the gateway account", example = "account for some gov org") String description,
+                                 @JsonProperty("analytics_id") @Schema(description = "Google Analytics (GA) unique ID for the GOV.UK Pay platform", example = "analytics-id")
+                                 String analyticsId,
+                                 @JsonProperty("requires_3ds") @Schema(description = "Set to 'true' to enable 3DS for this account") boolean requires3ds
     ) {
         this.serviceName = serviceName;
         this.serviceId = serviceId;
@@ -102,6 +112,7 @@ public class GatewayAccountRequest {
         return analyticsId;
     }
 
+    @JsonIgnore
     public Map<String, String> getCredentialsAsMap() {
         return newHashMap();
     }

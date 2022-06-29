@@ -1,5 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.Pattern;
@@ -12,6 +19,8 @@ import java.util.StringJoiner;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class GatewayAccountSearchParams {
 
     private static final String ACCOUNT_IDS_SQL_FIELD = "accountIds";
@@ -28,11 +37,15 @@ public class GatewayAccountSearchParams {
     @QueryParam("accountIds")
     @Pattern(regexp = "^[\\d,]+$",
             message = "Parameter [accountIds] must be a comma separated list of numbers")
+    @JsonProperty("accountIds")
+    @Schema(example = "1,2", description = "Comma separate list of gateway account IDs")
     private String accountIds;
 
     @QueryParam("serviceIds")
     @Pattern(regexp = "^(?:[A-z0-9]+,?)+$",
             message = "Parameter [serviceIds] must be a comma separated list of alphanumeric strings")
+    @JsonProperty("serviceIds")
+    @Schema(example = "46eb1b601348499196c99de90482ee68,service-external-id-2", description = "Comma separated list of service external IDs")
     private String serviceIds;
 
     // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
@@ -40,39 +53,55 @@ public class GatewayAccountSearchParams {
     @QueryParam("moto_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [moto_enabled] must be true or false")
+    @JsonProperty("moto_enabled")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not MOTO payment are enabled for the account if this parameter is provided. \"true\" or \"false\"")
     private String motoEnabled;
 
     @QueryParam("apple_pay_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [apple_pay_enabled] must be true or false")
+    @JsonProperty("apple_pay_enabled")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not Apple pay is enabled for the account if this parameter is provided. \"true\" or \"false\".")
     private String applePayEnabled;
 
     @QueryParam("google_pay_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [google_pay_enabled] must be true or false")
+    @JsonProperty("google_pay_enabled")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not Google pay is enabled for the account if this parameter is provided. \"true\" or \"false\".")
     private String googlePayEnabled;
 
     @QueryParam("requires_3ds")
     @Pattern(regexp = "true|false",
             message = "Parameter [requires_3ds] must be true or false")
+    @JsonProperty("requires_3ds")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not 3DS is required for the account if this parameter is provided. \"true\" or \"false\".")
     private String requires3ds;
 
     @QueryParam("type")
     @Pattern(regexp = "live|test",
             message = "Parameter [type] must be 'live' or 'test'")
+    @JsonProperty("type")
+    @Schema(example = "live", description = "The accounts will be filtered by type if this parameter is provided. \"test\" or \"live\".")
     private String type;
 
     @QueryParam("payment_provider")
     @Pattern(regexp = "sandbox|worldpay|smartpay|epdq|stripe",
             message = "Parameter [payment_provider] must be one of 'sandbox', 'worldpay', 'smartpay', 'epdq' or 'stripe'")
+    @JsonProperty("payment_provider")
+    @Schema(example = "live", description = "The accounts will be filtered by payment provider if this parameter is provided. One of \"sandbox\" or \"worldpay\", \"smartpay\", \"epdq\" or \"stripe\"")
     private String paymentProvider;
 
     @QueryParam("payment_provider_account_id")
+    @JsonProperty("payment_provider_account_id")
+    @Schema(example = "payment-provider-account-id", description = "Accounts will be filtered by payment provider account ID")
     private String paymentProviderAccountId;
 
     @QueryParam("provider_switch_enabled")
     @Pattern(regexp = "true|false",
             message = "Parameter [provider_switch_enabled] must be true or false")
+    @JsonProperty("provider_switch_enabled")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not payment provider switch is enabled for the account if this parameter is provided. \"true\" or \"false\".")
     private String providerSwitchEnabled;
 
     public void setAccountIds(String accountIds) {
@@ -101,8 +130,8 @@ public class GatewayAccountSearchParams {
 
     public void setPaymentProvider(String paymentProvider) {
         this.paymentProvider = paymentProvider;
-    }    
-    
+    }
+
     public void setPaymentProviderAccountId(String paymentProviderAccountId) {
         this.paymentProviderAccountId = paymentProviderAccountId;
     }
@@ -127,6 +156,7 @@ public class GatewayAccountSearchParams {
                 : List.of(serviceIds.split(","));
     }
 
+    @JsonIgnore
     public List<String> getFilterTemplates() {
         List<String> filters = new ArrayList<>();
 
@@ -174,14 +204,14 @@ public class GatewayAccountSearchParams {
                     "  and a.payment_provider = #" + PAYMENT_PROVIDER_SQL_FIELD +
                     ")");
         }
-            if (StringUtils.isNotEmpty(paymentProviderAccountId)) {
+        if (StringUtils.isNotEmpty(paymentProviderAccountId)) {
             filters.add(" ga.id in ( " +
                     "  select gateway_account_id " +
                     "  from ( " +
                     "    select gateway_account_id " +
                     "    from gateway_account_credentials gac " +
                     "    where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
-                    "    or gac.credentials->>'merchant_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD+ ") a" +
+                    "    or gac.credentials->>'merchant_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD + ") a" +
                     ")");
         }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
@@ -191,6 +221,7 @@ public class GatewayAccountSearchParams {
         return List.copyOf(filters);
     }
 
+    @JsonIgnore
     public Map<String, Object> getQueryMap() {
         HashMap<String, Object> queryMap = new HashMap<>();
 
@@ -225,7 +256,7 @@ public class GatewayAccountSearchParams {
         }
         if (StringUtils.isNotEmpty(paymentProvider)) {
             queryMap.put(PAYMENT_PROVIDER_SQL_FIELD, paymentProvider);
-        }        
+        }
         if (StringUtils.isNotEmpty(paymentProviderAccountId)) {
             queryMap.put(PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD, paymentProviderAccountId);
         }
