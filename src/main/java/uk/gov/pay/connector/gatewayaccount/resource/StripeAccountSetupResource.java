@@ -3,6 +3,13 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import io.dropwizard.jersey.PATCH;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -23,6 +30,7 @@ import java.util.stream.StreamSupport;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/")
+@Tag(name = "Gateway accounts")
 public class StripeAccountSetupResource {
     private final StripeAccountSetupService stripeAccountSetupService;
     private final GatewayAccountService gatewayAccountService;
@@ -40,7 +48,17 @@ public class StripeAccountSetupResource {
     @GET
     @Path("/v1/api/accounts/{accountId}/stripe-setup")
     @Produces(APPLICATION_JSON)
-    public StripeAccountSetup getStripeAccountSetup(@PathParam("accountId") Long accountId) {
+    @Operation(
+            summary = "Retrieve Stripe connect account setup tasks for a given gateway account ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = StripeAccountSetup.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public StripeAccountSetup getStripeAccountSetup(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam("accountId") Long accountId) {
         return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
                 .orElseThrow(NotFoundException::new);
@@ -49,7 +67,31 @@ public class StripeAccountSetupResource {
     @PATCH
     @Path("/v1/api/accounts/{accountId}/stripe-setup")
     @Consumes(APPLICATION_JSON)
-    public Response patchStripeAccountSetup(@PathParam("accountId") Long accountId, JsonNode payload) {
+    @Operation(
+            summary = "Update Stripe Connect account setup tasks have been completed for a given accountId",
+            description = "Support patching following paths: <br>" +
+                    "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, additional_kyc_data, organisation_details",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"bank_account\"," +
+                    "        \"value\": true" +
+                    "    }," +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"responsible_person\"," +
+                    "        \"value\": false" +
+                    "    }" +
+                    "]"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - operation not allowed"),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response patchStripeAccountSetup(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam("accountId") Long accountId, JsonNode payload) {
         return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccountEntity -> {
                     stripeAccountSetupRequestValidator.validatePatchRequest(payload);
