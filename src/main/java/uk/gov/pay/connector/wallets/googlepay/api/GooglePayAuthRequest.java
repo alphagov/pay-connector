@@ -2,6 +2,7 @@ package uk.gov.pay.connector.wallets.googlepay.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -15,8 +16,14 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
 
-    @NotNull @Valid private final WalletPaymentInfo paymentInfo;
-    @NotNull @Valid private final EncryptedPaymentData encryptedPaymentData;
+    @Schema(hidden = true)
+    @NotNull
+    @Valid
+    private final WalletPaymentInfo paymentInfo;
+    @Schema(hidden = true)
+    @NotNull
+    @Valid
+    private final EncryptedPaymentData encryptedPaymentData;
 
     GooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
                          @JsonProperty("encrypted_payment_data") EncryptedPaymentData encryptedPaymentData) {
@@ -29,6 +36,7 @@ public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletA
     }
 
     @Override
+    @Schema(hidden = true)
     public Optional<LocalDate> getCardExpiryDate() {
         return Optional.empty();
     }
@@ -38,11 +46,13 @@ public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletA
     }
 
     @Override
+    @Schema(hidden = true)
     public String getLastDigitsCardNumber() {
         return getPaymentInfo().getLastDigitsCardNumber();
     }
 
     @Override
+    @Schema(hidden = true)
     public WalletType getWalletType() {
         return WalletType.GOOGLE_PAY;
     }

@@ -1,6 +1,12 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
 import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -11,6 +17,7 @@ import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -48,6 +55,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
 
 @Path("/")
+@Tag(name = "Charge operations")
 public class CardResource {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -81,7 +89,21 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/wallets/apple")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, 
+    @Operation(
+            summary = "Authorise ApplePay payment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error"),
+            }
+    )
+    public Response authoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                    @PathParam("chargeId") String chargeId,
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return applePayService.authorise(chargeId, applePayAuthRequest);
@@ -91,7 +113,21 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/wallets/google")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId,
+    @Operation(
+            summary = "Authorise GooglePay payment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error"),
+            }
+    )
+    public Response authoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                    @PathParam("chargeId") String chargeId,
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
@@ -102,11 +138,25 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId,
+    @Operation(
+            summary = "Authorise charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error - For gateway errors or anything else not handled"),
+            }
+    )
+    public Response authoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                    @PathParam("chargeId") String chargeId,
                                     @Valid AuthCardDetails authCardDetails) {
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
-        return response.getGatewayError().map(error -> handleError(chargeId, error))
+        return response.getGatewayError().map(this::handleError)
                 .orElseGet(() -> response.getAuthoriseStatus().map(status -> handleAuthResponse(chargeId, status))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
@@ -128,7 +178,19 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsResult auth3DsResult) {
+    @Operation(
+            summary = "Authorise 3DS charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for 3ds authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error - For gateway errors or anything else not handled"),
+            }
+    )
+    public Response authorise3dsCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                       @PathParam("chargeId") String chargeId, Auth3dsResult auth3DsResult) {
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsResult);
 
         if (response.isSuccessful()) {
@@ -149,9 +211,20 @@ public class CardResource {
 
     @POST
     @Path("/v1/frontend/charges/{chargeId}/capture")
+    @Operation(
+            summary = "Mark charge as eligible for capture",
+            description = "Marks charge as eligible (or ready - for delayed capture) for capture and also adds charge to capture queue (if not delayed capture).",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - if charge is not in correct state"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response captureCharge(@PathParam("chargeId") String chargeId) {
+    public Response captureCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                  @PathParam("chargeId") String chargeId) {
         chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeId);
         return ResponseUtil.noContentResponse();
     }
@@ -159,6 +232,18 @@ public class CardResource {
     @POST
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Mark delayed capture charge as eligible for capture and adds charge to capture queue",
+            description = "This endpoint should be called to capture a delayed capture charge. The charge needs to have been previously marked as AWAITING CAPTURE REQUEST for this call to succeed. " +
+                    "When a charge is in any of the states CAPTURED, CAPTURE APPROVED, CAPTURE APPROVED RETRY, CAPTURE READY, CAPTURE SUBMITTED then nothing happens and the response will be a 204. " +
+                    "When a charge is in a status that cannot transition (eg. none of the above) then 409 response is returned. ",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "409", description = "Conflict - if charge is not in correct state"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
     public Response markChargeAsCaptureApproved(@PathParam("accountId") Long accountId,
                                                 @PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
@@ -170,7 +255,20 @@ public class CardResource {
     @POST
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
-    public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
+    @Operation(
+            summary = "Cancel charge",
+            responses = {
+                    @ApiResponse(responseCode = "202", description = "Accepted - operation already in progress"),
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - charge is not in correct state",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found")
+            }
+    )
+    public Response cancelCharge(@Parameter(example = "1", description = "Gateway account ID")
+                                 @PathParam("accountId") Long accountId,
+                                 @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                 @PathParam("chargeId") String chargeId) {
         return chargeCancelService.doSystemCancel(chargeId, accountId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
@@ -179,11 +277,25 @@ public class CardResource {
     @POST
     @Path("/v1/api/charges/authorise")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Authorise MOTO (api) payment",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid one time token or one_time_token has already been used",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "402", description = "Authorisation declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Authorisation error"),
+            }
+    )
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
         // Fields are removed from the MDC when the API responds in LoggingMDCResponseFilter 
         MDC.put(SECURE_TOKEN, authoriseRequest.getOneTimeToken());
         authoriseRequest.validate();
-        
+
         TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
         MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
         CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
@@ -195,13 +307,24 @@ public class CardResource {
     @POST
     @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
-    public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
+    @Operation(
+            summary = "Cancel charge (action by user)",
+            responses = {
+                    @ApiResponse(responseCode = "202", description = "Accepted - operation already in progress"),
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - charge is not in correct state",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found")
+            }
+    )
+    public Response userCancelCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                     @PathParam("chargeId") String chargeId) {
         return chargeCancelService.doUserCancel(chargeId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
-    private Response handleError(String chargeId, GatewayError error) {
+    private Response handleError(GatewayError error) {
         switch (error.getErrorType()) {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
             case GATEWAY_ERROR:

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -20,24 +21,42 @@ import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 @ValidAuthCardDetails
 public class AuthCardDetails implements AuthorisationDetails {
 
+    @Schema(example = "4242424242424242", description = "Card number. See https://docs.payments.service.gov.uk/testing_govuk_pay/#mock-card-numbers-and-email-addresses for test card numbers")
     private String cardNo;
+    @Schema(example = "Joe B", description = "Cardholder name")
     private String cardHolder;
+    @Schema(example = "123")
     private String cvc;
+    @Schema(example = "01/99")
     private CardExpiryDate endDate;
     private Address address;
+    @Schema(example = "visa")
     private String cardBrand;
+    @Schema(example = "Mozilla/5.0")
     private String userAgentHeader;
+    @Schema(example = "text/html")
     private String acceptHeader;
+    @Schema(example = "DEBIT")
     private PayersCardType payersCardType;
+    @Schema(example = "NOT_PREPAID")
     private PayersCardPrepaidStatus payersCardPrepaidStatus;
+    @Schema(example = "false")
     private Boolean corporateCard;
+    @Schema(example = "1f1154b7-620d-4654-801b-893b5bb22db1")
     private String worldpay3dsFlexDdcResult;
+    @Schema(example = "127.0.0.1")
     private String ipAddress;
+    @Schema(example = "24")
     private String jsScreenColorDepth;
+    @Schema(example = "en-GB")
     private String jsNavigatorLanguage;
+    @Schema(example = "900")
     private String jsScreenHeight;
+    @Schema(example = "1440")
     private String jsScreenWidth;
+    @Schema(example = "-60")
     private String jsTimezoneOffsetMins;
+    @Schema(example = "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5")
     private String acceptLanguageHeader;
 
     public static AuthCardDetails anAuthCardDetails() {
@@ -173,8 +192,8 @@ public class AuthCardDetails implements AuthorisationDetails {
     @JsonProperty("ip_address")
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
-    }    
-    
+    }
+
     @JsonProperty("accept_language_header")
     public void setAcceptLanguageHeader(String acceptLanguageHeader) {
         this.acceptLanguageHeader = acceptLanguageHeader;
@@ -212,10 +231,10 @@ public class AuthCardDetails implements AuthorisationDetails {
         return acceptHeader;
     }
 
-    public String getAcceptLanguageHeader () {
+    public String getAcceptLanguageHeader() {
         return acceptLanguageHeader;
     }
-    
+
     public boolean isCorporateCard() {
         return corporateCard == null ? false : corporateCard;
     }

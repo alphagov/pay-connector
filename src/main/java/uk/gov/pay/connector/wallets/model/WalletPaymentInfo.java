@@ -3,6 +3,7 @@ package uk.gov.pay.connector.wallets.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
@@ -12,15 +13,23 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WalletPaymentInfo {
     
+    @Schema(description = "last digits card number", example = "4242")
     private String lastDigitsCardNumber;
+    @Schema(example = "visa")
     private String brand;
+    @Schema(example = "DEBIT")
     private PayersCardType cardType;
-    @Length(max = 255, message = "Card holder name must be a maximum of 255 chars") 
+    @Length(max = 255, message = "Card holder name must be a maximum of 255 chars")
+    @Schema(example = "Joe B", maxLength = 255)
     private String cardholderName;
     @Length(max = 254, message = "Email must be a maximum of 254 chars")
+    @Schema(example = "mr@payment.test", maxLength = 254)
     private String email;
+    @Schema(example = "text/html;q=1.0, */*;q=0.9")
     private String acceptHeader;
+    @Schema(example = "Mozilla/5.0")
     private String userAgentHeader;
+    @Schema(example = "203.0.113.1")
     private String ipAddress;
 
     public WalletPaymentInfo() {

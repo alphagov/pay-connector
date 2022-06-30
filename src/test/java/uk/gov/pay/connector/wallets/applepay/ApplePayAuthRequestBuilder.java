@@ -11,10 +11,10 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 public class ApplePayAuthRequestBuilder {
     private String data;
     private String ephemeralPublicKey;
-    private ApplePayAuthRequest.EncryptedPaymentData validEncryptedPaymentData;
+    private ApplePayAuthRequest.ApplePayEncryptedPaymentData validEncryptedPaymentData;
     
     private ApplePayAuthRequestBuilder() throws IOException {
-        this.validEncryptedPaymentData = new ObjectMapper().readValue(fixture("applepay/token.json"), ApplePayAuthRequest.EncryptedPaymentData.class);
+        this.validEncryptedPaymentData = new ObjectMapper().readValue(fixture("applepay/token.json"), ApplePayAuthRequest.ApplePayEncryptedPaymentData.class);
         this.data = validEncryptedPaymentData.getData();
         this.ephemeralPublicKey = validEncryptedPaymentData.getHeader().getEphemeralPublicKey();
     }
@@ -35,10 +35,10 @@ public class ApplePayAuthRequestBuilder {
     public ApplePayAuthRequest build() {
         return new ApplePayAuthRequest(
                 new WalletPaymentInfo(),
-                new ApplePayAuthRequest.EncryptedPaymentData(
+                new ApplePayAuthRequest.ApplePayEncryptedPaymentData(
                         validEncryptedPaymentData.getVersion(),
                         this.data,
-                        new ApplePayAuthRequest.EncryptedPaymentData.Header(
+                        new ApplePayAuthRequest.ApplePayEncryptedPaymentData.Header(
                                 validEncryptedPaymentData.getHeader().getPublicKeyHash(),
                                 this.ephemeralPublicKey,
                                 validEncryptedPaymentData.getHeader().getTransactionId(),
