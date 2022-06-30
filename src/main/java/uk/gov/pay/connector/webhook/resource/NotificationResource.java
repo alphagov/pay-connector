@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.webhook.resource;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -18,6 +22,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -31,6 +36,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 @Path("/")
+@Tag(name = "Notifications")
 public class NotificationResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationResource.class);
@@ -58,9 +64,10 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @PermitAll
     @Path("/v1/api/notifications/smartpay")
+    @Operation(hidden = true)
     public Response authoriseSmartpayNotifications(String notification,
                                                    @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
-        LOGGER.info(String.format("Received notification for provider %s IP '%s'", SMARTPAY.getName(),  forwardedIpAddresses),
+        LOGGER.info(String.format("Received notification for provider %s IP '%s'", SMARTPAY.getName(), forwardedIpAddresses),
                 kv(PROVIDER, SMARTPAY.getName()),
                 kv("notification_source", forwardedIpAddresses));
         if (!smartpayNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
@@ -75,8 +82,26 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/sandbox")
-    public Response authoriseSandboxNotifications(@HeaderParam("Authorization") String authToken,
-                                                  @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+    @Operation(
+            summary = "Handle sandbox notifications",
+            description = "This endpoint returns a HTTP status code of 200 for authorized requests. This is used for testing purposes. " +
+                    "Note that the authorization methods for each of the v1/api/notifications/<PSP> endpoints uses different authorization " +
+                    "methods and a successful response from this endpoint does not guarantee that the other notifications endpoints are working as expected. " +
+                    "It does provide assurance that the requests are being correctly proxied to Connector and that Connector is responding. " +
+                    "<br>" +
+                    "Requests are authorised either via the source IP address extracted from the HTTP x-forwarded-for header against the expected CIDRs " +
+                    "from SANDBOX_ALLOWED_CIDRS or by validating the secret provided via the HTTP Authorization header against the secret within SANDBOX_AUTH_TOKEN. " +
+                    "The latter use of the HTTP Authorization header provides a means to test the endpoint without needing to send the request from a fixed IP address." +
+                    "<br>" +
+                    "The request body is not deserialised or processed in any way.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
+            }
+    )
+    public Response authoriseSandboxNotifications(
+            @Parameter(in = HEADER, example = "let-me-in") @HeaderParam("Authorization") String authToken,
+            @Parameter(in = HEADER, example = "1.1.1.1, 3.3.3.3") @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
 
         if (!sandboxNotificationService.handleNotificationFor(forwardedIpAddresses, authToken)) {
             logRejectionMessage(forwardedIpAddresses, SANDBOX);
@@ -89,7 +114,18 @@ public class NotificationResource {
     @Consumes(TEXT_XML)
     @Path("/v1/api/notifications/worldpay")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+    @Operation(
+            summary = "Handle Worldpay notifications",
+            description = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/epdq/capture-notification.txt for example notification",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
+            }
+    )
+    public Response authoriseWorldpayNotifications(@Parameter(example = "see https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.xml for example notification")
+                                                   String notification,
+                                                   @Parameter(in = HEADER, example = "4.3.2.1")
+                                                   @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!worldpayNotificationService.handleNotificationFor(forwardedIpAddresses, notification)) {
             logRejectionMessage(forwardedIpAddresses, WORLDPAY);
             return forbiddenErrorResponse();
@@ -103,8 +139,18 @@ public class NotificationResource {
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Path("/v1/api/notifications/epdq")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseEpdqNotifications(String notification,
-                                               @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+    @Operation(
+            summary = "Handle ePDQ notifications",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
+            }
+    )
+    public Response authoriseEpdqNotifications(
+            @Parameter(example = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/epdq/capture-notification.txt for example notification")
+            String notification,
+            @Parameter(in = HEADER, example = "4.3.2.1")
+            @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!epdqNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
             logRejectionMessage(forwardedIpAddresses, EPDQ);
             return forbiddenErrorResponse();
@@ -118,8 +164,17 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/stripe")
     @Produces({TEXT_XML, APPLICATION_JSON})
+    @Operation(
+            summary = "Handle Stripe notifications",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
+            }
+    )
     public Response authoriseStripeNotifications(String notification,
+                                                 @Parameter(example = "t=1492774577,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd,v0=6ffbb59b2300aae63f272406069a9788598b792a944a07aba816edb039989a39")
                                                  @HeaderParam("Stripe-Signature") String signatureHeader,
+                                                 @Parameter(example = "1.2.3.4")
                                                  @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!stripeNotificationService.handleNotificationFor(notification, signatureHeader, forwardedIpAddresses)) {
             logRejectionMessage(forwardedIpAddresses, STRIPE);
