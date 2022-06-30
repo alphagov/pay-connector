@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
@@ -15,9 +16,11 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class GatewayStatusComparison {
     private final ChargeStatus payStatus;
+    @Schema(example = "EXTERNAL_SUBMITTED")
     private final String payExternalStatus;
     @JsonProperty("gatewayStatus")
     @JsonSerialize(using = ToStringSerializer.class)
+    @Schema(example = "AUTHORISED")
     private ChargeStatus gatewayStatus;
     private final String chargeId;
     private String rawGatewayResponse;
@@ -51,6 +54,7 @@ public final class GatewayStatusComparison {
     }
 
     @JsonSerialize(using = ToStringSerializer.class)
+    @Schema(example = "AUTHORISATION SUCCESS")
     public ChargeStatus getPayStatus() {
         return payStatus;
     }
@@ -61,6 +65,7 @@ public final class GatewayStatusComparison {
     }
 
     @JsonSerialize(using = ToStringSerializer.class)
+    @Schema(example = "EXTERNAL_SUBMITTED")
     public ExternalChargeState getGatewayExternalStatus() {
         return gatewayStatus != null ? gatewayStatus.toExternal() : null;
     }
@@ -69,10 +74,12 @@ public final class GatewayStatusComparison {
         return payExternalStatus;
     }
 
+    @Schema(example = "2c6vtn9pth38ppbmnt20d57t49")
     public String getChargeId() {
         return chargeId;
     }
 
+    @Schema(example = "Worldpay response ()")
     public String getRawGatewayResponse() {
         return rawGatewayResponse;
     }
