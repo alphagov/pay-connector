@@ -1,23 +1,27 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId;
 import uk.gov.pay.connector.gatewayaccount.validation.ValidWorldpay3dsFlexJwtMacKey;
-
-import javax.validation.constraints.NotNull;
 
 public class Worldpay3dsFlexCredentialsRequest {
 
     @JsonProperty("issuer")
     @ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId(message = "Field [issuer] must be 24 lower-case hexadecimal characters")
+    @Schema(description = "Lower-case hexadecimal characters. Should only contain characters [0-9a-f]", minLength = 24, maxLength = 24,
+            example = "53f0917f101a4428b69d5fb0")
     private String issuer;
 
     @JsonProperty("organisational_unit_id")
     @ValidWorldpay3dsFlexIssuerOrOrganisationalUnitId(message = "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters")
+    @Schema(description = "Lower-case hexadecimal characters. Should only contain characters [0-9a-f]", minLength = 24, maxLength = 24,
+            example = "57992a087a0c4849895ab8a2")
     private String organisationalUnitId;
 
     @JsonProperty("jwt_mac_key")
     @ValidWorldpay3dsFlexJwtMacKey
+    @Schema(description = "UUID in lowercase canonical representation", example = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9")
     private String jwtMacKey;
 
     public Worldpay3dsFlexCredentialsRequest() {
