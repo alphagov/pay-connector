@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.Address;
 
 import javax.persistence.Column;
@@ -11,18 +12,25 @@ import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer
 public class AddressEntity {
 
     @Column(name = "address_line1")
+    @Schema(example = "address line 1")
     private String line1;
     @Column(name = "address_line2")
+    @Schema(example = "address line 2")
     private String line2;
     @Column(name = "address_postcode")
+    @Schema(example = "AB1 2CD")
     private String postcode;
     @Column(name = "address_city")
+    @Schema(example = "London")
     private String city;
     @Column(name = "address_county")
+    @Schema(example = "London")
     private String county;
     @Column(name = "address_country")
+    @Schema(example = "GB")
     private String country;
     @Column(name = "address_state_province")
+    @Schema(example = "")
     private String stateOrProvince;
 
     public AddressEntity() {

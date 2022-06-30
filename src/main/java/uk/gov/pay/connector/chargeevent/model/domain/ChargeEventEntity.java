@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.chargeevent.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
@@ -36,14 +37,17 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
     private ChargeEntity chargeEntity;
 
     @Convert(converter = ChargeStatusConverter.class)
+    @Schema(example = "CAPTURED")
     private ChargeStatus status;
 
     @Column(name = "gateway_event_date")
     @Convert(converter = UTCDateTimeConverter.class)
+    @Schema(example = "2022-05-27T09:17:19.162Z")
     private ZonedDateTime gatewayEventDate;
 
     @Column(insertable = false, updatable = false)
     @Convert(converter = LocalDateTimeConverter.class)
+    @Schema(example = "1656606727.366582000")
     private ZonedDateTime updated;
 
     protected ChargeEventEntity() {
@@ -79,7 +83,7 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
-    
+
     public static final class ChargeEventEntityBuilder {
         private ChargeEntity chargeEntity;
         private ChargeStatus status;
