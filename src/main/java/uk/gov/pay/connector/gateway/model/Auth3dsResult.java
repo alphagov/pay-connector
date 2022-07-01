@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -20,13 +21,14 @@ public class Auth3dsResult implements AuthorisationDetails {
 
     @JsonProperty("pa_response")
     public void setPaResponse(String paResponse) {
-            this.paResponse = paResponse;
-        }
+        this.paResponse = paResponse;
+    }
 
     public String getPaResponse() {
-            return paResponse;
-        }
+        return paResponse;
+    }
 
+    @Schema(hidden = true)
     public Auth3dsResultOutcome getAuth3dsResultOutcome() {
         return auth3dsResultOutcome;
     }
@@ -50,6 +52,7 @@ public class Auth3dsResult implements AuthorisationDetails {
     }
 
     @JsonProperty("three_ds_version")
+    @Schema(hidden = true)
     public void setThreeDsVersion(String threeDsVersion) {
         this.threeDsVersion = threeDsVersion;
     }

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,21 +87,27 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private Long id;
 
     @Column(name = "external_id")
+    @Schema(example = "5t2rupktnsk0a3mu800st7irts")
     private String externalId;
 
     @Column(name = "amount")
+    @Schema(example = "100")
     private Long amount;
 
     @Column(name = "status")
+    @Schema(example = "AUTHORISATION SUCCESS")
     private String status;
 
     @Column(name = "gateway_transaction_id")
+    @Schema(example = "bba59957-5155-4f59-8c69-a839f71772d3")
     private String gatewayTransactionId;
 
     @Column(name = "return_url")
+    @Schema(example = "https://service-name.gov.uk/transactions/12345")
     private String returnUrl;
 
     @Column(name = "email")
+    @Schema(example = "joe.blogs@example.org")
     private String email;
 
     @Column(name = "corporate_surcharge")
@@ -128,11 +135,13 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private List<ChargeEventEntity> events = new ArrayList<>();
 
     @Column(name = "description")
+    @Schema(example = "payment description")
     private String description;
 
     @Column(name = "reference")
     @Convert(converter = ServicePaymentReferenceConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
+    @Schema(example = "payment reference")
     private ServicePaymentReference reference;
 
     @Column(name = "provider_session_id")
@@ -140,10 +149,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "created_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
+    @Schema(example = "1656606127.578088000")
     private Instant createdDate;
 
     @Column(name = "language", nullable = false)
     @Convert(converter = SupportedLanguageJpaConverter.class)
+    @Schema(example = "en")
     private SupportedLanguage language;
 
     @Column(name = "delayed_capture")
@@ -156,6 +167,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Valid
     @Column(name = "external_metadata", columnDefinition = "jsonb")
     @Convert(converter = ExternalMetadataConverter.class)
+    @Schema(example = "{}")
     private ExternalMetadata externalMetadata;
 
     @Column(name = "parity_check_status")
@@ -168,6 +180,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "source")
     @Enumerated(EnumType.STRING)
+    @Schema(example = "CARD_API")
     private Source source;
 
     @Column(name = "moto")
@@ -178,9 +191,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private Exemption3ds exemption3ds;
 
     @Column(name = "payment_provider")
+    @Schema(example = "stripe")
     private String paymentProvider;
 
     @Column(name = "service_id")
+    @Schema(example = "46eb1b601348499196c99de90482ee68")
     private String serviceId;
 
     @Column(name = "agreement_id")
@@ -384,6 +399,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.status = targetStatus.getValue();
     }
 
+    @JsonIgnore
     public Object[] getStructuredLoggingArgs() {
         return new StructuredArgument[]{
                 kv(PAYMENT_EXTERNAL_ID, externalId),

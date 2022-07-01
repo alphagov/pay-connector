@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -27,24 +28,28 @@ public class CardDetailsEntity {
 
     @Column(name = "first_digits_card_number")
     @JsonProperty("first_digits_card_number")
+    @Schema(example = "424242")
     @Convert(converter = FirstDigitsCardNumberConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
     private FirstDigitsCardNumber firstDigitsCardNumber;
 
     @Column(name = "last_digits_card_number")
     @JsonProperty("last_digits_card_number")
+    @Schema(example = "4242")
     @Convert(converter = LastDigitsCardNumberConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
     private LastDigitsCardNumber lastDigitsCardNumber;
 
     @Column(name = "cardholder_name")
     @JsonProperty("cardholder_name")
+    @Schema(example = "Joe B")
     private String cardHolderName;
 
     @Column(name = "expiry_date")
     @Convert(converter = CardExpiryDateConverter.class)
     @JsonProperty("expiry_date")
     @JsonSerialize(using = ToStringSerializer.class)
+    @Schema(example = "01/99")
     private CardExpiryDate expiryDate;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -52,12 +57,14 @@ public class CardDetailsEntity {
     private CardBrandLabelEntity cardTypeDetails;
 
     @Column(name = "card_brand")
+    @Schema(example = "visa")
     private String cardBrand;
 
     @Column(name = "card_type")
     @Enumerated(EnumType.STRING)
     @JsonProperty("card_type")
     @JsonSerialize(using = ToLowerCaseStringSerializer.class)
+    @Schema(example = "credit")
     private CardType cardType;
 
     @Embedded
