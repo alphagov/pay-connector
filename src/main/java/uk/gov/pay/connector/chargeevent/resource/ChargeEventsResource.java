@@ -1,9 +1,15 @@
 package uk.gov.pay.connector.chargeevent.resource;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.chargeevent.model.ChargeEventsResponse;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -27,6 +33,7 @@ import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.extractSta
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
+@Tag(name = "Charge events")
 public class ChargeEventsResource {
     private ChargeDao chargeDao;
     private RefundDao refundDao;
@@ -40,7 +47,18 @@ public class ChargeEventsResource {
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/events")
     @Produces(APPLICATION_JSON)
-    public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
+    @Operation(
+            summary = "Get transaction history for a charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ChargeEventsResponse.class)))
+            }
+    )
+    public Response getEvents(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam("accountId") Long accountId,
+            @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
+            @PathParam("chargeId") String chargeId) {
 
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(this::buildEventsResponse)
@@ -56,9 +74,9 @@ public class ChargeEventsResource {
                 .concat(chargeTransactionEvents.stream(), refundTransactionEvents.stream())
                 .collect(Collectors.toList());
 
-        ImmutableMap<String, Object> responsePayload = ImmutableMap.of(
-                "charge_id", chargeEntity.getExternalId(),
-                "events", removeDuplicates(allTransactionEvents));
+        ChargeEventsResponse responsePayload = ChargeEventsResponse.of(
+                chargeEntity.getExternalId(), removeDuplicates(allTransactionEvents));
+
         return ok().entity(responsePayload).build();
     }
 
@@ -71,7 +89,7 @@ public class ChargeEventsResource {
                         event.getChargeEntity().getAmount(),
                         event.getUpdated()
                 ))
-                        .collect(toList());
+                .collect(toList());
     }
 
     private List<TransactionEvent> normaliseRefundEvents(List<RefundHistory> events) {

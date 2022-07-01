@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
@@ -17,9 +18,13 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSnakeCase
     static public class State {
+        @Schema(example = "cancelled")
         private final String status;
+        @Schema(example = "true")
         private final boolean finished;
+        @Schema(example = "P0040")
         private final String code;
+        @Schema(example = "Payment was cancelled by service")
         private final String message;
 
         public State(String status, boolean finished, String code, String message) {
@@ -110,6 +115,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     }
 
     @JsonProperty("type")
+    @Schema(example = "PAYMENT")
     public Type getType() {
         return type;
     }
@@ -139,11 +145,13 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     }
 
     @JsonProperty("amount")
+    @Schema(example = "100")
     public Long getAmount() {
         return amount;
     }
 
     @JsonProperty("updated")
+    @Schema(example = "2022-06-28T10:41:40.460Z")
     public String getUpdated() {
         return ISO_INSTANT_MILLISECOND_PRECISION.format(updated);
     }
@@ -169,10 +177,12 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         TransactionEvent that = (TransactionEvent) o;
 
         if (type != that.type) return false;
-        if (refundGatewayTransactionId != null ? !refundGatewayTransactionId.equals(that.refundGatewayTransactionId) : that.refundGatewayTransactionId != null) return false;
+        if (refundGatewayTransactionId != null ? !refundGatewayTransactionId.equals(that.refundGatewayTransactionId) : that.refundGatewayTransactionId != null)
+            return false;
         if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null) return false;
         if (state != null ? !state.equals(that.state) : that.state != null) return false;
-        if (userExternalId != null ? !userExternalId.equals(that.userExternalId) : that.userExternalId != null) return false;
+        if (userExternalId != null ? !userExternalId.equals(that.userExternalId) : that.userExternalId != null)
+            return false;
         return !(amount != null ? !amount.equals(that.amount) : that.amount != null);
     }
 
