@@ -1,6 +1,14 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
@@ -35,6 +43,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
+@Tag(name = "Gateway account credentials")
 public class GatewayAccountCredentialsResource {
     private final GatewayAccountService gatewayAccountService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
@@ -62,8 +71,19 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/3ds-flex-credentials")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
-    public Response createOrUpdateWorldpay3dsCredentials(@PathParam("accountId") Long gatewayAccountId,
-                                                         @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
+    @Operation(
+            summary = "Create or update 3DS flex credentials (worldpay accounts)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account")
+            }
+    )
+    public Response createOrUpdateWorldpay3dsCredentials(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam("accountId") Long gatewayAccountId,
+            @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .filter(gatewayAccountEntity ->
@@ -81,7 +101,19 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/worldpay/check-3ds-flex-config")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
-    public ValidationResult validateWorldpay3dsCredentials(@PathParam("accountId") Long gatewayAccountId,
+    @Operation(
+            summary = "Validate Worldpay 3DS flex credentials",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ValidationResult.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account"),
+                    @ApiResponse(responseCode = "503", description = "Service unavailable")
+            }
+    )
+    public ValidationResult validateWorldpay3dsCredentials(@Parameter(example = "1", description = "Gateway account ID")
+                                                           @PathParam("accountId") Long gatewayAccountId,
                                                            @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity ->
@@ -94,6 +126,17 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/worldpay/check-credentials")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
+    @Operation(
+            summary = "Validate Worldpay credentials",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ValidationResult.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
     public ValidationResult validateWorldpayCredentials(@PathParam("accountId") Long gatewayAccountId,
                                                         @Valid WorldpayCredentials worldpayCredentials) {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
@@ -106,7 +149,19 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public GatewayAccountCredentials createGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+    @Operation(
+            summary = "Create credentials for a gateway account",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found")
+            }
+    )
+    public GatewayAccountCredentials createGatewayAccountCredentials(@Parameter(example = "1", description = "Gateway account ID")
+                                                                     @PathParam("accountId") Long gatewayAccountId,
+                                                                     @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
@@ -121,8 +176,27 @@ public class GatewayAccountCredentialsResource {
     @Path("/v1/api/accounts/{accountId}/credentials/{credentialsId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Update a gateway account credential",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"state\"," +
+                    "        \"value\": \"ACTIVE\"" +
+                    "    }" +
+                    "]"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account or credential not found")
+            }
+    )
     public GatewayAccountCredentials updateGatewayAccountCredentials(
+            @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long gatewayAccountId,
+            @Parameter(example = "1", description = "Credential external ID")
             @PathParam("credentialsId") Long credentialsId,
             JsonNode payload) {
 
@@ -143,6 +217,7 @@ public class GatewayAccountCredentialsResource {
     }
 
     private final class ValidationResult {
+        @Schema(example = "valid", description = "valid/invalid result for Worldpay flex credentials")
         private final String result;
 
         private ValidationResult(boolean isValid) {
