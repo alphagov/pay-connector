@@ -3,6 +3,12 @@ package uk.gov.pay.connector.usernotification.resource;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
@@ -56,7 +62,25 @@ public class EmailNotificationResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response enableEmailNotification(@PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
+    @Operation(
+            summary = "Enables/disables email notifications for gateway account",
+            description = "Allowed paths <br>" +
+                    " - /payment_confirmed/enabled (values true/false) <br>" +
+                    " - /refund_issued/enabled (values true/false) <br>" +
+                    " - /payment_confirmed/template_body<br>" +
+                    " - /refund_issued/template_body",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"op\":\"replace\", \"path\":\"/payment_confirmed/enabled\", \"value\": false" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid or missing mandatory fields"),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response enableEmailNotification(@Parameter(example = "1", description = "Gateway account ID")
+                                            @PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
         PatchRequestBuilder.PatchRequest emailPatchRequest;
         try {
             emailPatchRequest = aPatchRequestBuilder(emailPatchMap)

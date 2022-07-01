@@ -4,6 +4,10 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.dropwizard.setup.Environment;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +21,6 @@ import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
 @Path("/")
@@ -35,15 +37,44 @@ public class HealthCheckResource {
     @GET
     @Path("healthcheck")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Healthcheck endpoint for connector (checks postgresql, cardExecutorService, ping, sqsQueue, deadlocks)",
+            tags = {"Other"},
+            responses = {@ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(example = "{" +
+                    "    \"database\": {" +
+                    "        \"healthy\": true," +
+                    "        \"message\": \"Healthy\"" +
+                    "    }," +
+                    "    \"cardExecutorService\": {" +
+                    "        \"healthy\": true," +
+                    "        \"message\": \"Healthy\"" +
+                    "    }," +
+                    "    \"ping\": {" +
+                    "        \"healthy\": true," +
+                    "        \"message\": \"Healthy\"" +
+                    "    }," +
+                    "    \"sqsQueue\": {" +
+                    "        \"healthy\": true," +
+                    "        \"message\": \"Healthy\"" +
+                    "    }," +
+                    "    \"deadlocks\": {" +
+                    "        \"healthy\": true," +
+                    "        \"message\": \"Healthy\"" +
+                    "    }" +
+                    "}")
+            )),
+                    @ApiResponse(responseCode = "503", description = "Service Unavailable")
+            }
+    )
     public Response healthCheck() {
         SortedMap<String, HealthCheck.Result> results = environment.healthChecks().runHealthChecks();
 
         Map<String, Map<String, Object>> response = results.entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        healthCheck -> ImmutableMap.of(
-                                "healthy", healthCheck.getValue().isHealthy(),
-                                "message", defaultString(healthCheck.getValue().getMessage(), "Healthy"))
+                                healthCheck -> ImmutableMap.of(
+                                        "healthy", healthCheck.getValue().isHealthy(),
+                                        "message", defaultString(healthCheck.getValue().getMessage(), "Healthy"))
                         )
                 );
 
