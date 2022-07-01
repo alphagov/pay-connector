@@ -176,7 +176,7 @@ class CardResourceTest {
                 new Object[]{0, 204, "Expiry date is same as current month and year"},
                 new Object[]{1, 204, "Expiry date is in the future"},
                 new Object[]{10000, 204, "Expiry date is in the future"},
-                new Object[]{-1, 422, "Expiry date is in the past (one month before current month and year)"}
+                new Object[]{-2, 422, "Expiry date is in the past (two months before current month and year)"}
         };
     }
 
