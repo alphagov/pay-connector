@@ -18,7 +18,7 @@ public class ErrorResponse {
     private ErrorIdentifier identifier;
     
     @JsonProperty("message")
-    @ArraySchema(schema = @Schema(example = "Field [description] cannot be null"))
+    @ArraySchema(schema = @Schema(example = "error message"))
     private List<String> messages;
     
     @JsonProperty("reason")

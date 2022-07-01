@@ -3,6 +3,7 @@ package uk.gov.pay.connector.usernotification.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -32,17 +33,21 @@ public class EmailNotificationEntity extends AbstractVersionedEntity {
 
     @Column(name = "template_body")
     @JsonProperty("template_body")
+    @Schema(example = "", description = "Custom paragraph for the email template")
     private String templateBody;
 
+    @Schema(example = "true", description = "Indicates whether emails are enabled for notifications type")
     private boolean enabled;
 
     @Column(name = "type", insertable = false, updatable = false)
     @Enumerated(EnumType.STRING)
+    @Schema(description = "Email notification type - PAYMENT_CONFIRMED or REFUND_ISSUED ")
     private EmailNotificationType type;
 
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
     @JsonBackReference
+    @Schema(hidden = true)
     private GatewayAccountEntity accountEntity;
 
     public EmailNotificationEntity() {
