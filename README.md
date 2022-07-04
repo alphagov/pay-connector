@@ -147,19 +147,11 @@ The command to run all the tests is:
 
 ## API Specification
 
-The [API Specification](docs/api_specification.md) provides more detail on the paths and operations including examples.
+The [Open API Specification](/openapi/connector_spec.yaml) provides details on the paths and operations including examples.
 
-### Tasks namespace
+API docs can be viewed in browser using https://github.com/alphagov/pay-api-docs-generator
 
-| Path                                                                                                 | Supported Methods | Description                                                                                                                      |
-|:-----------------------------------------------------------------------------------------------------|:------------------|:---------------------------------------------------------------------------------------------------------------------------------|
-| [```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep) | POST              | Spawns a task to expire charges with a default window of 90 minutes                                                              |
-| [```/v1/tasks/emitted-events-sweep```](docs/api_specification.md#post-v1tasksemitted-events-sweep)   | POST              | Spawns a task to verify whether all the events from the state transition in-memory queue have been processed                     |
-| [```/v1/tasks/gateway-cleanup-sweep```](docs/api_specification.md#post-v1tasksgateway-cleanup-sweep) | POST              | Spawns a task to check ePDQ charges in an authorisation error state with the gateway and cancel them on the gateway if necessary |
-| [```/v1/tasks/expunge```](docs/api_specification.md#post-v1tasksexpunge)                             | POST              | Spawns a task to parity check and remove charge & refunds from connector |
-
-
-### Command line tasks
+## Command line tasks
 
 There are a number of
 [commands](https://www.dropwizard.io/en/latest/manual/core.html#commands)
@@ -176,60 +168,6 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 
 * `render-state-transition-graph` - Outputs a representation of the connector state
                                     transitions as a graphviz 'dot' file
-
-### Admin tasks
-Admin [tasks](https://www.dropwizard.io/en/latest/manual/core.html#tasks) provides one-off action to perform certain task. 
-Task can be invoked by sending request on admin port.
- 
-| Path                          | Supported Methods | Description                        |
-| ----------------------------- | ----------------- | ---------------------------------- |
-|[```/tasks/historical-event-emitter```](docs/api_specification.md#post-taskshistorical-event-emitter) | POST   |  Emits events to ledger for charges or refunds |
-|[```/tasks/historical-event-emitter-by-date```](docs/api_specification.md#post-taskshistorical-event-emitter-by-date) | POST   |  Emits events to ledger for charges or refunds for a given date range|
-|[```/tasks/parity-checker```](docs/api_specification.md#post-tasksparity-checker)   | POST    |  Parity checks charges or refunds with ledger transactions |
-
-### API namespace
-
-| Path                          | Supported Methods | Description                        |
-| ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/api/accounts```](docs/api_specification.md#post-v1apiaccounts)              | POST    |  Create a new account to associate charges with            |
-|[```/v1/api/accounts```](docs/api_specification.md#get-v1apiaccounts)              | GET    |  Retrieves a collection of all the accounts |
-|[```/v1/api/accounts/{gatewayAccountId}```](docs/api_specification.md#get-v1apiaccountsaccountsid)     | GET    |  Retrieves an existing account without the provider credentials  |
-|[```/v1/api/accounts/{gatewayAccountId}```](docs/api_specification.md#patch-v1apiaccountsaccountid) | PATCH | Updates an existing account's details |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}```](docs/api_specification.md#get-v1apiaccountsaccountidchargeschargeid)                 | GET    |  Returns the charge with `chargeId`  belongs to account `accountId` |
-|[```/v1/api/accounts/{accountId}/charges```](docs/api_specification.md#post-v1apiaccountsaccountidcharges)                                  | POST    |  Create a new charge for this account `accountId`           |
-|[```/v1/api/notifications/worldpay```](docs/api_specification.md#post-v1apinotificationsworldpay)                                  | POST |  Handle charge update notifications from Worldpay.            |
-|[```/v1/api/notifications/smartpay```](docs/api_specification.md#post-v1apinotificationssmartpay)                                  | POST |  Handle charge update notifications from Smartpay.            |
-|[```/v1/api/notifications/epdq```](docs/api_specification.md#post-v1apinotificationsepdq)                                  | POST |  Handle charge update notifications from ePDQ.                |
-|[```/v1/api/notifications/sandbox```](docs/api_specification.md#post-v1apinotificationssandbox)                                  | POST |  Returns HTTP status 200 for authorised requests                |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/cancel```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidcancel)  | POST    |  Cancels the charge with `chargeId` for account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/events```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | GET     |  Retrieves all the transaction history for the given `chargeId` of account `accountId`           |
-|[```/v1/api/accounts/{accountId}/email-notification```](docs/api_specification.md#post-v1apiaccountsaccountidchargeschargeidevents)  | PATCH   |  Changes settings for email notifications for the given account `accountId`           |
-|[```/v1/api/accounts/{accountId}/description-analytics-id```](docs/api_specification.md#patch-v1apiaccountsdescriptionanalyticsid)  | PATCH   |  Allows editing description and/or analyticsId for the given account `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#post-v1apiaccountschargesrefunds)  | POST   |  Submits a refund for a given charge `chargeId` and a given `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds```](docs/api_specification.md#get-v1apiaccountschargesrefunds)  | GET   |  Retrieves all refunds associated to a charge `chargeId` and a given `accountId`           |
-|[```/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}```](docs/api_specification.md#get-v1apiaccountschargesrefundsrefundid)  | GET   |  Retrieves a refund by `refundId` for a given charge `chargeId` and a given `accountId`           |
-|[```/v1/api/accounts/{accountId}/stripe-setup```](docs/api_specification.md#get-v1apiaccountsaccountidstripe-setup)|GET|Retrieves which Stripe Connect account setup tasks have been completed for a given `accountId`
-|[```/v1/api/accounts/{accountId}/stripe-setup```](docs/api_specification.md#post-v1apiaccountsaccountidstripe-setup)|POST|Updates which Stripe Connect account setup tasks have been completed for a given `accountId`
-|[```/v1/api/reports/performance-report```](docs/api_specification.md#get-v1apireportsperformance-report)|GET|Retrieves performance summary |
-|[```/v1/api/reports/gateway-account-performance-report```](docs/api_specification.md#get-v1apireportsgateway-account-performance-report)|GET|Retrieves performance summary segmented by gateway account |
-|[```/v1/api/reports/daily-performance-report```](docs/api_specification.md#get-v1apireportsdaily-performance-report)|GET|Retrieves performance summary for a given day |
-
-### Frontend namespace
-
-| Path                          | Supported Methods | Description                        |
-| ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/frontend/accounts```](docs/api_specification.md#get-v1frontendaccounts) | GET | Retrieves a collection of all the accounts with the provider credentials.|
-|[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#get-v1frontendaccountsaccountid)              | GET    |  Retrieves an existing account together with the provider credentials             |
-|[```/v1/frontend/accounts/{accountId}```](docs/api_specification.md#put-v1frontendaccountsaccountid)              | PUT    |  Update gateway credentials associated with this account             |
-|[```/v1/frontend/charges/{chargeId}/status```](docs/api_specification.md#put-v1frontendchargeschargeidstatus)         | PUT    |  Update status of the charge     |
-|[```/v1/frontend/charges/{chargeId}```](docs/api_specification.md#get-v1frontendchargeschargeid)                                  | GET |  Find out the status of a charge            |
-|[```/v1/frontend/charges/{chargeId}/cards```](docs/api_specification.md#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
-|[```/v1/frontend/charges/{chargeId}/capture```](docs/api_specification.md#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
-|[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](docs/api_specification.md#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
-|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#get-v1frontendtokenschargetokenid) | GET |  Retrieve the status of and charge associated with a secure redirect token.|
-|[```/v1/frontend/tokens/{chargeTokenId}/charge```](docs/api_specification.md#get-v1frontendtokenschargetokenidcharge) | GET |  Retrieve the charge associated with a secure redirect token.|
-|[```/v1/frontend/tokens/{chargeTokenId}/used```](docs/api_specification.md#post-v1frontendtokenschargetokenidused) | POST |  Mark a secure redirect token as used.|
-|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid) | DELETE |  Delete a secure redirect token.|
 
 ## SQS Queues
 
