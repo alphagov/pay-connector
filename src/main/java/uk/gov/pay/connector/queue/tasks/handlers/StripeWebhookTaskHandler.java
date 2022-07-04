@@ -66,6 +66,9 @@ public class StripeWebhookTaskHandler {
                             stripeDisputeData.getPaymentIntentId())));
         } else if (stripeNotification.getType().equals(DISPUTE_CLOSED.getType())) {
             var stripeDisputeData = mapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
+            if (stripeDisputeData.getBalanceTransactionList().size() > 1) {
+                throw new RuntimeException("Dispute data has too many balance_transactions");
+            }
             Optional<LedgerTransaction> ledgerTransaction = ledgerService
                     .getTransactionForProviderAndGatewayTransactionId(STRIPE.getName(), stripeDisputeData.getPaymentIntentId());
             ledgerTransaction.map(transaction -> {
@@ -138,8 +141,9 @@ public class StripeWebhookTaskHandler {
     private DisputeLost createDisputeLostEvent(StripeNotification stripeNotification,
                                                StripeDisputeData stripeDisputeData,
                                              LedgerTransaction transaction) {
-        var eventDetails = new DisputeLostEventDetails(transaction.getGatewayAccountId(), transaction.getNetAmount(),
-                Math.abs(transaction.getAmount()), Math.abs(transaction.getFee()));
+        var balanceTransaction = stripeDisputeData.getBalanceTransactionList().get(0);
+        var eventDetails = new DisputeLostEventDetails(transaction.getGatewayAccountId(), balanceTransaction.getNetAmount(),
+                Math.abs(stripeDisputeData.getAmount()), Math.abs(balanceTransaction.getFee()));
         return new DisputeLost(idFromExternalId(stripeDisputeData.getResourceExternalId()),
                 transaction.getTransactionId(), transaction.getServiceId(), transaction.getLive(), eventDetails,
                 stripeNotification.getCreated());
