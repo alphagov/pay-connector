@@ -2,6 +2,24 @@ resourceClasses:
   - uk.gov.pay.connector.agreement.resource.AgreementsApiResource
   - uk.gov.pay.connector.cardtype.resource.CardTypesResource
   - uk.gov.pay.connector.charge.resource.ChargesApiResource
+  - uk.gov.pay.connector.charge.resource.ChargesFrontendResource
+  - uk.gov.pay.connector.charge.resource.GatewayCleanupResource
+  - uk.gov.pay.connector.chargeevent.resource.ChargeEventsResource
+  - uk.gov.pay.connector.events.resource.EmittedEventResource
+  - uk.gov.pay.connector.expunge.resource.ExpungeResource
+  - uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource
+  - uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource
+  - uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource
+  - uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsResource
+  - uk.gov.pay.connector.healthcheck.resource.HealthCheckResource
+  - uk.gov.pay.connector.paymentprocessor.resource.CardResource
+  - uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource
+  - uk.gov.pay.connector.refund.resource.RefundsResource
+  - uk.gov.pay.connector.report.resource.ParityCheckerResource
+  - uk.gov.pay.connector.report.resource.PerformanceReportResource
+  - uk.gov.pay.connector.token.resource.SecurityTokensResource
+  - uk.gov.pay.connector.usernotification.resource.EmailNotificationResource
+  - uk.gov.pay.connector.webhook.resource.NotificationResource
 readAllResources: true
 sortOutput: true
 prettyPrint: true
@@ -10,4 +28,3 @@ openAPI:
   info:
     title: 'Connector API'
     version: '1.0.0'
-
