@@ -3,6 +3,13 @@ package uk.gov.pay.connector.charge.resource;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.PATCH;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
@@ -51,6 +58,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")
+@Tag(name = "Charges - Frontend")
 public class ChargesFrontendResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ChargesFrontendResource.class);
@@ -73,7 +81,16 @@ public class ChargesFrontendResource {
     @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
-    public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
+    @Operation(
+            summary = "Find a charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = FrontendChargeResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found")
+            }
+    )
+    public Response getCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                              @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
         return chargeDao.findByExternalId(chargeId)
                 .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
@@ -83,13 +100,26 @@ public class ChargesFrontendResource {
     @GET
     @Path("/v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc")
     @Produces(APPLICATION_JSON)
-    public Response getWorldpay3dsFlexDdcJwt(@PathParam("chargeId") String chargeId) {
+    @Operation(
+            summary = "Get Worldpay 3DS Flex DDC JWT",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"jwt\": \"token\"" +
+                                    "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "409", description = "Conflict - Cannot generate Worldpay 3ds Flex JWT because credentials are unavailable or not a Worldpay account"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public Response getWorldpay3dsFlexDdcJwt(@Schema(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                             @PathParam("chargeId") String chargeId) {
 
         ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
         var worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials()
                 .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId()));
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, 
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials,
                 chargeEntity.getCreatedDate(), chargeEntity.getPaymentProvider());
 
         return Response.ok().entity(Map.of("jwt", token)).build();
@@ -99,7 +129,23 @@ public class ChargesFrontendResource {
     @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
-    public Response patchCharge(@PathParam("chargeId") String chargeId, Map<String, String> chargePatchMap, @Context UriInfo uriInfo) {
+    @Operation(
+            summary = "Update charge (email field only)",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"op\": \"replace\"," +
+                    "    \"path\": \"email\"," +
+                    "    \"value\": \"newemail@example.org\"" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = FrontendChargeResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public Response patchCharge(@Schema(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                @PathParam("chargeId") String chargeId, Map<String, String> chargePatchMap, @Context UriInfo uriInfo) {
         PatchRequestBuilder.PatchRequest chargePatchRequest;
 
         try {
@@ -126,7 +172,21 @@ public class ChargesFrontendResource {
     @Path("/v1/frontend/charges/{chargeId}/status")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
+    @Operation(
+            summary = "Update status of a charge",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"new_status\": \"ENTERING CARD DETAILS\"" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - charge cannot be updated to new status"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - invalid new status"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
     public Response updateChargeStatus(
+            @Parameter(example = "spmh0fb7rbi1lebv1j3f7hc3m9", description = "Charge external ID")
             @PathParam("chargeId") String chargeId,
             @Valid @NotNull NewChargeStatusRequest newChargeStatusRequest) {
         ChargeStatus newChargeStatus;
@@ -209,10 +269,10 @@ public class ChargesFrontendResource {
                 worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
                         auth3dsData::setWorldpayChallengeJwt);
             }
-            
+
             responseBuilder.withAuth3dsData(auth3dsData);
         }
-        
+
         charge.getCorporateSurcharge().ifPresent(surcharge -> {
             if (surcharge > 0) {
                 responseBuilder

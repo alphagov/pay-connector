@@ -1,5 +1,11 @@
 package uk.gov.pay.connector.refund.resource;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -35,6 +41,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithRefundNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
+@Tag(name = "Refunds")
 public class RefundsResource {
 
     private final RefundService refundService;
@@ -52,7 +59,31 @@ public class RefundsResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeExternalId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
+    @Operation(
+            summary = "Refund a charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"amount\":3444," +
+                                    "    \"created_date\":\"2016-10-05T14:15:34.096Z\"," +
+                                    "    \"refund_id\":\"vijjk08adovg10gfqc46joem2l\"," +
+                                    "    \"user_external_id\":\"AA213FD51B3801043FBC\"," +
+                                    "    \"status\":\"success\"," +
+                                    "    \"_links\":{" +
+                                    "        \"self\":{\"href\":\"https://connector.example.com/v1/api/accounts/1/charges/2c6vtn9pth38ppbmnt20d57t49/refunds/vijjk08adovg10gfqc46joem2l\"}," +
+                                    "        \"payment\":{\"href\":\"https://connector.example.com/v1/api/accounts/1/charges/2c6vtn9pth38ppbmnt20d57t49\"}" +
+                                    "    }" +
+                                    "}"))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - Invalid fields or not sufficient amount available for refund"),
+                    @ApiResponse(responseCode = "404", description = "Not found - gateway account or charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public Response submitRefund(@Parameter(example = "1", description = "Gateway account ID")
+                                 @PathParam("accountId") Long accountId,
+                                 @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
+                                 @PathParam("chargeId") String chargeExternalId,
+                                 RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId)
@@ -77,7 +108,35 @@ public class RefundsResource {
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}")
     @Produces(APPLICATION_JSON)
-    public Response getRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId, @Context UriInfo uriInfo) {
+    @Operation(
+            summary = "Get a refund",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"_links\": {" +
+                                    "            \"payment\": {" +
+                                    "                \"href\": \"https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn\"" +
+                                    "            }," +
+                                    "            \"self\": {" +
+                                    "                \"href\": \"https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l\"" +
+                                    "            }" +
+                                    "        }," +
+                                    "    \"amount\": 3444," +
+                                    "    \"created_date\": \"2016-10-05T14:15:34.096Z\"," +
+                                    "    \"refund_id\": \"vijjk08adovg10gfqc46joem2l\"," +
+                                    "    \"user_external_id\": \"AA213FD51B3801043FBC\"," +
+                                    "    \"status\": \"success\"" +
+                                    "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge or refund not found")
+            }
+    )
+    public Response getRefund(@Parameter(example = "1", description = "Gateway account ID")
+                              @PathParam("accountId") Long accountId,
+                              @Parameter(example = "uqu4s24383qkod35rsb06gv3cn", description = "Charge external ID")
+                              @PathParam("chargeId") String chargeId,
+                              @Parameter(example = "vijjk08adovg10gfqc46joem2l", description = "Refund external ID")
+                              @PathParam("refundId") String refundId,
+                              @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> getRefundResponse(chargeEntity, refundId, accountId, uriInfo))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
@@ -89,6 +148,14 @@ public class RefundsResource {
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Produces(APPLICATION_JSON)
+    @Operation(
+            deprecated = true,
+            summary = "Get all refund for a charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge or refund not found")
+            }
+    )
     public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
