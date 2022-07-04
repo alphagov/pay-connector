@@ -1436,18 +1436,6 @@
                 constraintName="fk__refunds_charges"/>
     </changeSet>
 
-    <changeSet author="" id="drop not null constraint on charge_id on refunds table">
-        <dropNotNullConstraint columnDataType="bigserial"
-                               columnName="charge_id"
-                               tableName="refunds"/>
-    </changeSet>
-
-    <changeSet author="" id="drop not null constraint on charge_id refunds_history table">
-        <dropNotNullConstraint columnDataType="bigserial"
-                               columnName="charge_id"
-                               tableName="refunds_history"/>
-    </changeSet>
-
     <changeSet id="drop index on charge_id on refunds table" author="">
         <dropIndex tableName="refunds" indexName="idx_refunds_charge_id"/>
     </changeSet>
