@@ -3,6 +3,251 @@ info:
   title: Connector API
   version: 1.0.0
 paths:
+  /healthcheck:
+    get:
+      operationId: healthCheck
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  database:
+                    healthy: true
+                    message: Healthy
+                  cardExecutorService:
+                    healthy: true
+                    message: Healthy
+                  ping:
+                    healthy: true
+                    message: Healthy
+                  sqsQueue:
+                    healthy: true
+                    message: Healthy
+                  deadlocks:
+                    healthy: true
+                    message: Healthy
+          description: OK
+        "503":
+          description: Service Unavailable
+      summary: "Healthcheck endpoint for connector (checks postgresql, cardExecutorService,\
+        \ ping, sqsQueue, deadlocks)"
+      tags:
+      - Other
+  /v1/api/accounts:
+    get:
+      operationId: getApiGatewayAccounts
+      parameters:
+      - in: query
+        name: accountIds
+        schema:
+          type: string
+          description: Comma separate list of gateway account IDs
+          example: "1,2"
+          pattern: "^[\\d,]+$"
+      - in: query
+        name: serviceIds
+        schema:
+          type: string
+          description: Comma separated list of service external IDs
+          example: "46eb1b601348499196c99de90482ee68,service-external-id-2"
+          pattern: "^(?:[A-z0-9]+,?)+$"
+      - in: query
+        name: moto_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not MOTO payment
+            are enabled for the account if this parameter is provided. "true" or "false"
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: apple_pay_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not Apple pay is
+            enabled for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: google_pay_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not Google pay
+            is enabled for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: requires_3ds
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not 3DS is required
+            for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: type
+        schema:
+          type: string
+          description: The accounts will be filtered by type if this parameter is
+            provided. "test" or "live".
+          example: live
+          pattern: live|test
+      - in: query
+        name: payment_provider
+        schema:
+          type: string
+          description: "The accounts will be filtered by payment provider if this\
+            \ parameter is provided. One of \"sandbox\" or \"worldpay\", \"smartpay\"\
+            , \"epdq\" or \"stripe\""
+          example: live
+          pattern: sandbox|worldpay|smartpay|epdq|stripe
+      - in: query
+        name: payment_provider_account_id
+        schema:
+          type: string
+          description: Accounts will be filtered by payment provider account ID
+          example: payment-provider-account-id
+      - in: query
+        name: provider_switch_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not payment provider
+            switch is enabled for the account if this parameter is provided. "true"
+            or "false".
+          example: "true"
+          pattern: true|false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountsListDTO'
+          description: OK
+      summary: Search gateway accounts
+      tags:
+      - Gateway accounts
+    post:
+      operationId: createNewGatewayAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayAccountRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountResponse'
+          description: Created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Missing required fields or invalid values
+      summary: 'Create a new gateway account '
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}:
+    get:
+      operationId: getGatewayAccount
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountResourceDTO'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by ID
+      tags:
+      - Gateway accounts
+    patch:
+      description: "A generic endpoint that allows the patching of allow_apple_pay,\
+        \ allow_google_pay, block_prepaid_cards, notify_settings, email_collection_mode,\
+        \ corporate_credit_card_surcharge_amount, corporate_debit_card_surcharge_amount,\
+        \ corporate_prepaid_debit_card_surcharge_amount, allow_zero_amount, allow_moto,\
+        \ moto_mask_card_number_input, moto_mask_card_security_code_input, allow_telephone_payment_notifications,\
+        \ send_payer_ip_address_to_gateway, send_payer_email_to_gateway, integration_version_3ds,\
+        \ send_reference_to_gateway, allow_authorisation_api or worldpay_exemption_engine_enabled\
+        \ using a JSON Patch-esque message body."
+      operationId: patchGatewayAccount
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                op: replace
+                path: allow_apple_pay
+                value: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: 'Patch a gateway account '
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/3ds-flex-credentials:
+    post:
+      operationId: createOrUpdateWorldpay3dsCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+      summary: Create or update 3DS flex credentials (worldpay accounts)
+      tags:
+      - Gateway account credentials
   /v1/api/accounts/{accountId}/agreements:
     post:
       operationId: createAgreement
@@ -105,6 +350,539 @@ paths:
       summary: Get charge by account ID and charge external ID
       tags:
       - Charges
+  /v1/api/accounts/{accountId}/charges/{chargeId}/cancel:
+    post:
+      operationId: cancelCharge
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted - operation already in progress
+        "204":
+          description: No content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - charge is not in correct state
+        "404":
+          description: Not found - charge not found
+      summary: Cancel charge
+      tags:
+      - Charge operations
+  /v1/api/accounts/{accountId}/charges/{chargeId}/capture:
+    post:
+      description: "This endpoint should be called to capture a delayed capture charge.\
+        \ The charge needs to have been previously marked as AWAITING CAPTURE REQUEST\
+        \ for this call to succeed. When a charge is in any of the states CAPTURED,\
+        \ CAPTURE APPROVED, CAPTURE APPROVED RETRY, CAPTURE READY, CAPTURE SUBMITTED\
+        \ then nothing happens and the response will be a 204. When a charge is in\
+        \ a status that cannot transition (eg. none of the above) then 409 response\
+        \ is returned. "
+      operationId: markChargeAsCaptureApproved
+      parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No content
+        "404":
+          description: Not found - charge not found
+        "409":
+          description: Conflict - if charge is not in correct state
+        "500":
+          description: Internal server error
+      summary: Mark delayed capture charge as eligible for capture and adds charge
+        to capture queue
+      tags:
+      - Charge operations
+  /v1/api/accounts/{accountId}/charges/{chargeId}/events:
+    get:
+      operationId: getEvents
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Charge external ID
+        example: 2c6vtn9pth38ppbmnt20d57t49
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeEventsResponse'
+          description: OK
+      summary: Get transaction history for a charge
+      tags:
+      - Charge events
+  /v1/api/accounts/{accountId}/charges/{chargeId}/refunds:
+    get:
+      deprecated: true
+      operationId: getRefunds
+      parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found - charge or refund not found
+      summary: Get all refund for a charge
+      tags:
+      - Refunds
+    post:
+      operationId: submitRefund
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Charge external ID
+        example: 2c6vtn9pth38ppbmnt20d57t49
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  amount: 3444
+                  created_date: 2016-10-05T14:15:34.096Z
+                  refund_id: vijjk08adovg10gfqc46joem2l
+                  user_external_id: AA213FD51B3801043FBC
+                  status: success
+                  _links:
+                    self:
+                      href: https://connector.example.com/v1/api/accounts/1/charges/2c6vtn9pth38ppbmnt20d57t49/refunds/vijjk08adovg10gfqc46joem2l
+                    payment:
+                      href: https://connector.example.com/v1/api/accounts/1/charges/2c6vtn9pth38ppbmnt20d57t49
+          description: OK
+        "400":
+          description: Bad request - Invalid fields or not sufficient amount available
+            for refund
+        "404":
+          description: Not found - gateway account or charge not found
+        "500":
+          description: Internal server error
+      summary: Refund a charge
+      tags:
+      - Refunds
+  /v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}:
+    get:
+      operationId: getRefund
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Charge external ID
+        example: uqu4s24383qkod35rsb06gv3cn
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      - description: Refund external ID
+        example: vijjk08adovg10gfqc46joem2l
+        in: path
+        name: refundId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  _links:
+                    payment:
+                      href: https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn
+                    self:
+                      href: https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l
+                  amount: 3444
+                  created_date: 2016-10-05T14:15:34.096Z
+                  refund_id: vijjk08adovg10gfqc46joem2l
+                  user_external_id: AA213FD51B3801043FBC
+                  status: success
+          description: OK
+        "404":
+          description: Not found - charge or refund not found
+      summary: Get a refund
+      tags:
+      - Refunds
+  /v1/api/accounts/{accountId}/credentials:
+    post:
+      operationId: createGatewayAccountCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayAccountCredentialsRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountCredentials'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - Invalid or missing mandatory fields
+        "404":
+          description: Not found - account not found
+      summary: Create credentials for a gateway account
+      tags:
+      - Gateway account credentials
+  /v1/api/accounts/{accountId}/credentials/{credentialsId}:
+    patch:
+      operationId: updateGatewayAccountCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Credential external ID
+        example: 1
+        in: path
+        name: credentialsId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+              - op: replace
+                path: state
+                value: ACTIVE
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountCredentials'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - Invalid or missing mandatory fields
+        "404":
+          description: Not found - account or credential not found
+      summary: Update a gateway account credential
+      tags:
+      - Gateway account credentials
+  /v1/api/accounts/{accountId}/description-analytics-id:
+    patch:
+      operationId: updateDescriptionAndOrAnalyticsID
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                description: some-description
+                analytics_id: some-analytics-id
+              required:
+              - description
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Update description & analytics id of a gateway account
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/email-notification:
+    patch:
+      description: Allowed paths <br> - /payment_confirmed/enabled (values true/false)
+        <br> - /refund_issued/enabled (values true/false) <br> - /payment_confirmed/template_body<br>
+        - /refund_issued/template_body
+      operationId: enableEmailNotification
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                op: replace
+                path: /payment_confirmed/enabled
+                value: false
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request - invalid or missing mandatory fields
+        "404":
+          description: Not found
+      summary: Enables/disables email notifications for gateway account
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/notification-credentials:
+    post:
+      operationId: createOrUpdateGatewayAccountNotificationCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                username: a-user-name
+                password: a-password
+              required:
+              - password
+              - username
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Update notification credentials for a gateway account
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/stripe-account:
+    get:
+      operationId: getStripeAccount
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeAccountResponse'
+          description: OK
+        "404":
+          description: "Not found - Account does not exist or not a stripe gateway\
+            \ account or account does not have Stripe credentials, "
+      summary: Retrieves Stripe Connect account information for a given gateway account
+        ID
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/stripe-setup:
+    get:
+      operationId: getStripeAccountSetup
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeAccountSetup'
+          description: OK
+        "404":
+          description: Not found
+      summary: Retrieve Stripe connect account setup tasks for a given gateway account
+        ID
+      tags:
+      - Gateway accounts
+    patch:
+      description: "Support patching following paths: <br>bank_account, responsible_person,\
+        \ vat_number, company_number, director, government_entity_document, additional_kyc_data,\
+        \ organisation_details"
+      operationId: patchStripeAccountSetup
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+              - op: replace
+                path: bank_account
+                value: true
+              - op: replace
+                path: responsible_person
+                value: false
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request - operation not allowed
+        "404":
+          description: Not found
+      summary: Update Stripe Connect account setup tasks have been completed for a
+        given accountId
+      tags:
+      - Gateway accounts
+  /v1/api/accounts/{accountId}/switch-psp:
+    post:
+      operationId: switchPaymentProvider
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayAccountSwitchPaymentProviderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Switch payment provider of a gateway account
+      tags:
+      - Gateway accounts
   /v1/api/accounts/{accountId}/telephone-charges:
     post:
       description: "Create a new telephone charge for gateway account. These are externally\
@@ -163,6 +941,78 @@ paths:
       summary: Create a new telephone charge for gateway account.
       tags:
       - Charges
+  /v1/api/accounts/{accountId}/worldpay/check-3ds-flex-config:
+    post:
+      operationId: validateWorldpay3dsCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+        "503":
+          description: Service unavailable
+      summary: Validate Worldpay 3DS flex credentials
+      tags:
+      - Gateway account credentials
+  /v1/api/accounts/{accountId}/worldpay/check-credentials:
+    post:
+      operationId: validateWorldpayCredentials
+      parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorldpayCredentials'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+        "500":
+          description: Internal server error
+      summary: Validate Worldpay credentials
+      tags:
+      - Gateway account credentials
   /v1/api/card-types:
     get:
       operationId: getCardTypes
@@ -174,6 +1024,45 @@ paths:
                 $ref: '#/components/schemas/CardTypesResponse'
           description: OK
       summary: List all card types
+  /v1/api/charges/authorise:
+    post:
+      operationId: authorise
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/AuthoriseRequest'
+        required: true
+      responses:
+        "204":
+          description: No content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid one time token or one_time_token has
+            already been used
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Authorisation declined
+        "404":
+          description: Not found - charge not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Authorisation error
+      summary: Authorise MOTO (api) payment
+      tags:
+      - Charge operations
   /v1/api/charges/gateway_transaction/{gatewayTransactionId}:
     get:
       operationId: getChargeForGatewayTransactionId
@@ -197,6 +1086,945 @@ paths:
       summary: Find charge by gateway transaction ID
       tags:
       - Charges
+  /v1/api/discrepancies/report:
+    post:
+      operationId: listDiscrepancies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                example: charge-external-id
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GatewayStatusComparison'
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Compare charge status with gateway
+      tags:
+      - Discrepancies
+  /v1/api/discrepancies/resolve:
+    post:
+      description: "When charge status mismatches with Gateway and is in cancellable\
+        \ state, charge is cancelled. Otherwise no action takes place"
+      operationId: resolveDiscrepancies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                example: charge-external-id
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GatewayStatusComparison'
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Resolve charge status discrepancy
+      tags:
+      - Discrepancies
+  /v1/api/notifications/epdq:
+    post:
+      operationId: authoriseEpdqNotifications
+      parameters:
+      - example: 4.3.2.1
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+      summary: Handle ePDQ notifications
+      tags:
+      - Notifications
+  /v1/api/notifications/sandbox:
+    post:
+      description: This endpoint returns a HTTP status code of 200 for authorized
+        requests. This is used for testing purposes. Note that the authorization methods
+        for each of the v1/api/notifications/<PSP> endpoints uses different authorization
+        methods and a successful response from this endpoint does not guarantee that
+        the other notifications endpoints are working as expected. It does provide
+        assurance that the requests are being correctly proxied to Connector and that
+        Connector is responding. <br>Requests are authorised either via the source
+        IP address extracted from the HTTP x-forwarded-for header against the expected
+        CIDRs from SANDBOX_ALLOWED_CIDRS or by validating the secret provided via
+        the HTTP Authorization header against the secret within SANDBOX_AUTH_TOKEN.
+        The latter use of the HTTP Authorization header provides a means to test the
+        endpoint without needing to send the request from a fixed IP address.<br>The
+        request body is not deserialised or processed in any way.
+      operationId: authoriseSandboxNotifications
+      parameters:
+      - example: let-me-in
+        in: header
+        name: Authorization
+        schema:
+          type: string
+      - example: "1.1.1.1, 3.3.3.3"
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+      summary: Handle sandbox notifications
+      tags:
+      - Notifications
+  /v1/api/notifications/stripe:
+    post:
+      operationId: authoriseStripeNotifications
+      parameters:
+      - example: "t=1492774577,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd,v0=6ffbb59b2300aae63f272406069a9788598b792a944a07aba816edb039989a39"
+        in: header
+        name: Stripe-Signature
+        schema:
+          type: string
+      - example: 1.2.3.4
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+      summary: Handle Stripe notifications
+      tags:
+      - Notifications
+  /v1/api/notifications/worldpay:
+    post:
+      description: See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/epdq/capture-notification.txt
+        for example notification
+      operationId: authoriseWorldpayNotifications
+      parameters:
+      - example: 4.3.2.1
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      requestBody:
+        content:
+          text/xml:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+      summary: Handle Worldpay notifications
+      tags:
+      - Notifications
+  /v1/api/reports/daily-performance-report:
+    get:
+      operationId: getDailyPerformanceReport
+      parameters:
+      - example: 2022-06-21T00:00:00Z
+        in: query
+        name: date
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  total_volume: 12345
+                  total_amount: 12345
+                  average_amount: 1
+          description: OK
+      summary: Retrieves performance summary scoped for a day
+      tags:
+      - Performance reports
+  /v1/api/reports/gateway-account-performance-report:
+    get:
+      operationId: getGatewayAccountPerformanceReport
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  "1":
+                    total_volume: 100
+                    total_amount: 1000
+                    average_amount: 10
+                    min_amount: 1
+                    max_amount: 9
+          description: OK
+      summary: Retrieves performance summary segmented by gateway account
+      tags:
+      - Performance reports
+  /v1/api/reports/performance-report:
+    get:
+      operationId: getPerformanceReport
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  total_volume: 12345
+                  total_amount: 12345
+                  average_amount: 1
+          description: OK
+      summary: Retrieve performance summary
+      tags:
+      - Performance reports
+  /v1/frontend/accounts:
+    get:
+      operationId: getFrontendGatewayAccounts
+      parameters:
+      - in: query
+        name: accountIds
+        schema:
+          type: string
+          description: Comma separate list of gateway account IDs
+          example: "1,2"
+          pattern: "^[\\d,]+$"
+      - in: query
+        name: serviceIds
+        schema:
+          type: string
+          description: Comma separated list of service external IDs
+          example: "46eb1b601348499196c99de90482ee68,service-external-id-2"
+          pattern: "^(?:[A-z0-9]+,?)+$"
+      - in: query
+        name: moto_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not MOTO payment
+            are enabled for the account if this parameter is provided. "true" or "false"
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: apple_pay_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not Apple pay is
+            enabled for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: google_pay_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not Google pay
+            is enabled for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: requires_3ds
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not 3DS is required
+            for the account if this parameter is provided. "true" or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: type
+        schema:
+          type: string
+          description: The accounts will be filtered by type if this parameter is
+            provided. "test" or "live".
+          example: live
+          pattern: live|test
+      - in: query
+        name: payment_provider
+        schema:
+          type: string
+          description: "The accounts will be filtered by payment provider if this\
+            \ parameter is provided. One of \"sandbox\" or \"worldpay\", \"smartpay\"\
+            , \"epdq\" or \"stripe\""
+          example: live
+          pattern: sandbox|worldpay|smartpay|epdq|stripe
+      - in: query
+        name: payment_provider_account_id
+        schema:
+          type: string
+          description: Accounts will be filtered by payment provider account ID
+          example: payment-provider-account-id
+      - in: query
+        name: provider_switch_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not payment provider
+            switch is enabled for the account if this parameter is provided. "true"
+            or "false".
+          example: "true"
+          pattern: true|false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountsListDTO'
+          description: OK
+      summary: Search gateway accounts
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/accounts/external-id/{externalId}:
+    get:
+      description: "Get gateway account by external ID. Also returns notifications\
+        \ credentials, gateway account credentials (without password)"
+      operationId: getFrontendGatewayAccountByExternalId
+      parameters:
+      - in: path
+        name: externalId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountEntity'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by gateway account external ID
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/accounts/{accountId}:
+    get:
+      description: "Get gateway account by external ID. Returns notifications credentials,\
+        \ gateway account credentials (without password). Doesn't include card_types\
+        \ or gateway_merchant_id"
+      operationId: getGatewayAccountWithCredentials
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountEntity_ApiView'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by gateway account ID
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/accounts/{accountId}/3ds-toggle:
+    patch:
+      operationId: updateGatewayAccount3dsToggle
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                toggle_3ds: "true"
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+        "409":
+          description: Conflict - 3ds cannot be disabled for account
+      summary: Set requires3ds flag on a gateway account
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/accounts/{accountId}/card-types:
+    get:
+      operationId: getGatewayAccountAcceptedCardTypes
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  card_types:
+                  - id: ab8a3abd-bcfd-4fa6-8905-321ce913e7f5
+                    brand: visa
+                    label: Visa
+                    type: DEBIT
+                    requires3ds: false
+          description: OK
+        "404":
+          description: Not found
+      summary: Get card types for gateway account
+      tags:
+      - Gateway accounts - frontend
+    post:
+      operationId: updateGatewayAccountAcceptedCardTypes
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                card_types:
+                - ab8a3abd-bcfd-4fa6-8905-321ce913e7f5
+                - 3863fc6a-6425-49cb-b708-af76296bcfc1
+              required:
+              - card_types
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+        "409":
+          description: 'Conflict - requires3DS is false on gateway account but atleast
+            one card type requires 3DS to be enabled. '
+      summary: Update accepted card types for a gateway account
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/accounts/{accountId}/servicename:
+    patch:
+      operationId: updateGatewayAccountServiceName
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                service_name: a new service name
+              required:
+              - service_name
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Update service name of a gateway account
+      tags:
+      - Gateway accounts - frontend
+  /v1/frontend/charges/{chargeId}:
+    get:
+      operationId: getCharge_1
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FrontendChargeResponse_FrontendView'
+          description: OK
+        "404":
+          description: Not found - charge not found
+      summary: Find a charge
+      tags:
+      - Charges - Frontend
+    patch:
+      operationId: patchCharge
+      parameters:
+      - in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+          description: Charge external ID
+          example: b02b63b370fd35418ad66b0101
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example:
+                op: replace
+                path: email
+                value: newemail@example.org
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FrontendChargeResponse_FrontendView'
+          description: OK
+        "400":
+          description: Bad request
+        "404":
+          description: Not found - charge not found
+        "500":
+          description: Internal server error
+      summary: Update charge (email field only)
+      tags:
+      - Charges - Frontend
+  /v1/frontend/charges/{chargeId}/3ds:
+    post:
+      operationId: authorise3dsCharge
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth3dsResult'
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for 3ds authorisation
+            and awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "404":
+          description: Not found - charge not found
+        "500":
+          description: Internal server error - For gateway errors or anything else
+            not handled
+      summary: Authorise 3DS charge
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/cancel:
+    post:
+      operationId: userCancelCharge
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted - operation already in progress
+        "204":
+          description: No content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - charge is not in correct state
+        "404":
+          description: Not found - charge not found
+      summary: Cancel charge (action by user)
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/capture:
+    post:
+      description: Marks charge as eligible (or ready - for delayed capture) for capture
+        and also adds charge to capture queue (if not delayed capture).
+      operationId: captureCharge
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: Bad request - if charge is not in correct state
+        "404":
+          description: Not found - charge not found
+        "500":
+          description: Internal server error
+      summary: Mark charge as eligible for capture
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/cards:
+    post:
+      operationId: authoriseCharge
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCardDetails'
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for authorisation and
+            awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "404":
+          description: Not found - charge not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Internal server error - For gateway errors or anything else
+            not handled
+      summary: Authorise charge
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/status:
+    put:
+      operationId: updateChargeStatus
+      parameters:
+      - description: Charge external ID
+        example: spmh0fb7rbi1lebv1j3f7hc3m9
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example:
+                new_status: ENTERING CARD DETAILS
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: Bad request - charge cannot be updated to new status
+        "404":
+          description: Not found - charge not found
+        "422":
+          description: Unprocessable Entity - invalid new status
+        "500":
+          description: Internal server error
+      summary: Update status of a charge
+      tags:
+      - Charges - Frontend
+  /v1/frontend/charges/{chargeId}/wallets/apple:
+    post:
+      operationId: authoriseCharge_1
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplePayAuthRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for authorisation and
+            awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Internal server error
+      summary: Authorise ApplePay payment
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/wallets/google:
+    post:
+      operationId: authoriseCharge_2
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GooglePayAuthRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for authorisation and
+            awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Internal server error
+      summary: Authorise GooglePay payment
+      tags:
+      - Charge operations
+  /v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc:
+    get:
+      operationId: getWorldpay3dsFlexDdcJwt
+      parameters:
+      - in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+          description: Charge external ID
+          example: b02b63b370fd35418ad66b0101
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  jwt: token
+          description: OK
+        "404":
+          description: Not found - charge not found
+        "409":
+          description: Conflict - Cannot generate Worldpay 3ds Flex JWT because credentials
+            are unavailable or not a Worldpay account
+        "500":
+          description: Internal server error
+      summary: Get Worldpay 3DS Flex DDC JWT
+      tags:
+      - Charges - Frontend
+  /v1/frontend/tokens/{chargeTokenId}:
+    delete:
+      operationId: deleteToken
+      parameters:
+      - example: a69a2cf3-d5d1-408f-b196-4b716767b507
+        in: path
+        name: chargeTokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No content
+        "404":
+          description: Not found
+      summary: Delete secure token
+      tags:
+      - Secure token
+    get:
+      operationId: getToken
+      parameters:
+      - example: a69a2cf3-d5d1-408f-b196-4b716767b507
+        in: path
+        name: chargeTokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse_FrontendView'
+          description: OK
+        "404":
+          description: Not found
+      summary: Retrieve secure token
+      tags:
+      - Secure token
+  /v1/frontend/tokens/{chargeTokenId}/charge:
+    get:
+      operationId: getChargeForToken
+      parameters:
+      - example: a69a2cf3-d5d1-408f-b196-4b716767b507
+        in: path
+        name: chargeTokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeEntity_FrontendView'
+          description: OK
+        "404":
+          description: Not found
+      summary: Retrieve charge for secure token
+      tags:
+      - Secure token
+  /v1/frontend/tokens/{chargeTokenId}/used:
+    post:
+      operationId: markTokenUsed
+      parameters:
+      - example: a69a2cf3-d5d1-408f-b196-4b716767b507
+        in: path
+        name: chargeTokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No content
+        "404":
+          description: Not found
+      summary: Mark secure token as used
+      tags:
+      - Secure token
+  /v1/tasks/emitted-events-sweep:
+    post:
+      description: "During the state transition event connector puts an event in an\
+        \ in-memory queue (and database) which is then picked up by the background\
+        \ process to emit the event to SQS. If the process is interrupted there is\
+        \ a database record which indicates that the event has been put in an in-memory\
+        \ queue, but not yet emitted to the SQS. <br>This task retrieves all the records\
+        \ that haven't been fully processed, for each event it invokes the backfill\
+        \ process and marks the event as processed.<br>The default age of the non-emitted\
+        \ event is at least 30 minutes. This value can be controlled with NOT_EMITTED_EVENT_MAX_AGE_IN_SECONDS\
+        \ environment variable."
+      operationId: expireCharges_1
+      responses:
+        "200":
+          description: OK
+      summary: Sweep emitted events
+      tags:
+      - Tasks
   /v1/tasks/expired-charges-sweep:
     post:
       description: This starts a task to expire the charges with a default window
@@ -221,9 +2049,277 @@ paths:
       summary: 'Expire charges and tokens '
       tags:
       - Tasks
+  /v1/tasks/expunge:
+    post:
+      description: "Task to expunge charges and refunds on terminal or expungeable\
+        \ state from connector.<br>This task checks parity of charge/refund with ledger\
+        \ transaction and expunges only if the fields matches. If parity check fails,\
+        \ new events are emitted for charge/refunds and the record is marked with\
+        \ latest parity check status."
+      operationId: expunge
+      parameters:
+      - description: Number of charges to expunge. Defaults to EXPUNGE_NO_OF_CHARGES_PER_TASK_RUN
+          environment variable or configuration default
+        example: 100
+        in: query
+        name: number_of_charges_to_expunge
+        schema:
+          type: integer
+          format: int32
+      - description: Number of refunds to expunge. Defaults to EXPUNGE_NO_OF_REFUNDS_PER_TASK_RUN
+          environment variable or configuration default
+        example: 100
+        in: query
+        name: number_of_refunds_to_expunge
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Expunge charges and refunds in terminal state
+      tags:
+      - Tasks
+  /v1/tasks/gateway-cleanup-sweep:
+    post:
+      description: "Finds all charges (ePDQ, Worldpay, Stripe) which have a status\
+        \ of AUTHORISATION ERROR, AUTHORISATION UNEXPECTED ERROR, AUTHORISATION TIMEOUT\
+        \ and checks what their status is with the payment gateway. If the charges\
+        \ exist on the gateway and are in a non-terminal state, e.g. AUTHORISATION\
+        \ SUCCESS, a request is sent to cancel the charge on the gateway.<br>The job\
+        \ will move the charge into one of three statuses when it has successfully\
+        \ handled it:<br> - AUTHORISATION ERROR CANCELLED - the charge was authorised\
+        \ on the gateway but has now been cancelled. <br> - AUTHORISATION ERROR REJECTED\
+        \ - the authorisation was rejected on the gateway and no action needed to\
+        \ be taken to clean up.<br> - AUTHORISATION ERROR CHARGE MISSING - the charge\
+        \ was not found on the gateway, most likely because the error was before the\
+        \ gateway processed the authorisation."
+      operationId: cleanupChargesInAuthErrorWithGateway
+      parameters:
+      - description: The maximum number of charges in an error state that will be
+          processed by the task
+        example: 100
+        in: query
+        name: limit
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  cleanup-success: 90
+                  cleanup-failed: 10
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Cleanup charges with Gateway
+      tags:
+      - Tasks
+  /v1/tasks/historical-event-emitter:
+    post:
+      description: "Task to emit payment or refunds events for a given start_id and\
+        \ max_id range.<br>Historical event emitter task doesn't emit event, if event\
+        \ was emitted previously. To re-emit events, relevant emitted events records\
+        \ need to be cleared<br>.<br>Note: This task runs in the background."
+      operationId: emitHistoricEvents
+      parameters:
+      - description: Charge/Refund ID (from database) to start with to emit events.
+          Defaults to 0
+        example: 1
+        in: query
+        name: start_id
+        schema:
+          type: integer
+          format: int64
+      - description: "Charge/Refund ID until which events to be emitted. If not provided,\
+          \ this is set to maximum ID available."
+        example: 100
+        in: query
+        name: max_id
+        schema:
+          type: integer
+          format: int64
+      - description: Type of records (charge/refund) for which events to be emitted.
+          Defaults to 'charge'
+        example: charge
+        in: query
+        name: record_type
+        schema:
+          type: string
+          enum:
+          - charge
+          - refund
+      - description: Duration (in seconds) until which emitted event sweeper should
+          ignore retrying emitting events
+        example: 7200
+        in: query
+        name: do_not_retry_emit_until_duration
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+      summary: Emit events for charges or refunds
+      tags:
+      - Tasks
+  /v1/tasks/historical-event-emitter-by-date:
+    post:
+      description: "Task to emit payment and refunds events for a given start_date\
+        \ and end_date range.<br>Historical event emitter by date task doesn't emit\
+        \ event, if event was emitted previously. To re-emit events, relevant emitted\
+        \ events records need to be cleared<br><br>Note: This task runs in the background."
+      operationId: emitHistoricEventsByDate
+      parameters:
+      - description: Start date of charge events or refund history events for which
+          events to be emitted
+        example: 2016-01-25T13:23:55Z
+        in: query
+        name: start_date
+        required: true
+        schema:
+          type: string
+      - description: Date until which the events to be emitted
+        example: 2016-01-25T13:23:55Z
+        in: query
+        name: end_date
+        required: true
+        schema:
+          type: string
+      - description: Duration (in seconds) until which emitted event sweeper should
+          ignore retrying emitting events
+        example: 1200
+        in: query
+        name: do_not_retry_emit_until_duration
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+      summary: Emit events for charges or refunds by date
+      tags:
+      - Tasks
+  /v1/tasks/parity-checker:
+    post:
+      description: "Task to parity check charges or refunds with ledger for a given\
+        \ start_id and max_id range or by parity_check_status. Parity checker compares\
+        \ fields of ledger transaction to charge/refund record in connector. <br>When\
+        \ parity check fails, new events are emitted even when the events have been\
+        \ emitted previously. <br> Note: Task is executed in the background. "
+      operationId: parityCheck
+      parameters:
+      - description: Charge/Refund ID (from database) to start with for parity checking.
+          Defaults to 0
+        example: 1
+        in: query
+        name: start_id
+        schema:
+          type: integer
+          format: int64
+      - description: "Charge/Refund ID until which the records to be parity checked.\
+          \ If not provided, this is set to maximum ID available."
+        example: 10
+        in: query
+        name: max_id
+        schema:
+          type: integer
+          format: int64
+      - description: Set to true to skip parity checking the records which were previously
+          parity checked and matches with ledger transaction. Defaults to false
+        example: true
+        in: query
+        name: do_not_reprocess_valid_records
+        schema:
+          type: boolean
+      - description: "Parity check the records, which were parity checked and marked\
+          \ with parity_check_status. start_id and max_id are ignored if parity checking\
+          \ by parity check status"
+        example: DATA_MISMATCH
+        in: query
+        name: parity_check_status
+        schema:
+          type: string
+      - description: Duration (in seconds) until which emitted event sweeper should
+          ignore retrying emitting events
+        example: 7200
+        in: query
+        name: do_not_retry_emit_until
+        schema:
+          type: integer
+          format: int64
+      - description: Type of records (charge/refund) to be parity checked. Defaults
+          to 'charge'
+        example: charge
+        in: query
+        name: record_type
+        schema:
+          type: string
+          enum:
+          - charge
+          - refund
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Parity check charges or refunds with ledger
+      tags:
+      - Tasks
 components:
   schemas:
     Address:
+      type: object
+      properties:
+        city:
+          type: string
+          example: London
+        country:
+          type: string
+          example: GB
+        county:
+          type: string
+          example: county
+        line1:
+          type: string
+          example: Address line 1
+        line2:
+          type: string
+          example: Address line 2
+        postcode:
+          type: string
+          example: AB1 2CD
+    AddressEntity_FrontendView:
+      type: object
+      properties:
+        city:
+          type: string
+          example: London
+        country:
+          type: string
+          example: GB
+        county:
+          type: string
+          example: London
+        line1:
+          type: string
+          example: address line 1
+        line2:
+          type: string
+          example: address line 2
+        postcode:
+          type: string
+          example: AB1 2CD
+        stateOrProvince:
+          type: string
+    Address_FrontendView:
       type: object
       properties:
         city:
@@ -283,6 +2379,53 @@ components:
         user_identifier:
           type: string
           example: reference for the paying user
+    AgreementResponse_FrontendView:
+      type: object
+      properties:
+        agreement_id:
+          type: string
+          example: iaouobo39hiv0m2560q45j3p04
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-27T13:07:57.58Z
+        description:
+          type: string
+          example: Description for the paying user describing the purpose of the agreement
+        live:
+          type: boolean
+        reference:
+          type: string
+          example: Service agreement reference
+        service_id:
+          type: string
+          example: Service external ID
+        user_identifier:
+          type: string
+          example: reference for the paying user
+    ApplePayAuthRequest:
+      type: object
+      properties:
+        encrypted_payment_data:
+          $ref: '#/components/schemas/ApplePayEncryptedPaymentData'
+        payment_info:
+          $ref: '#/components/schemas/WalletPaymentInfo'
+      required:
+      - payment_info
+    ApplePayEncryptedPaymentData:
+      type: object
+      properties:
+        data:
+          type: string
+          example: 4OZho15e9Yp5K0EtKergKzeRpPAjnK...JTga8W75IWAA==
+        header:
+          $ref: '#/components/schemas/Header'
+        signature:
+          type: string
+          example: MIAGCSqGSIb3DQEHAqCAMIACAQE..../tJr3SbTdxO25ZdN1bPH0Jiqgw7AAAAAAAA
+        version:
+          type: string
+          example: ECv1
     Auth3dsData:
       type: object
       properties:
@@ -308,15 +2451,229 @@ components:
           description: "When the charge is in status 'AUTHORISATION 3DS REQUIRED'\
             \ state and the 3DS data on the charge contains challenge data, Json Web\
             \ Token is calculated and returned to the frontend."
+    Auth3dsData_FrontendView:
+      type: object
+      properties:
+        htmlOut:
+          type: string
+          description: "Applicable for ePDQ 3DS payments. If the transaction goes\
+            \ via the challenge flow, the response contains the additional field HTML_ANSWER\
+            \ (from ePDQ) which is a BASE-64 encoded code block"
+        issuerUrl:
+          type: string
+          description: 'Issuer 3DS url to direct users to complete 3DS authentication '
+          example: https://3ds-secure-redirect-url.example.org
+        md:
+          type: string
+          description: payment session identifier returned by the card issuer
+          example: NnheOml4nhgrnx...pP6oBb3KQqKXiYGL3X8=
+        paRequest:
+          type: string
+          description: Holds 3D secure request data for the issuer.
+          example: eNpVUttygjAQ/R...jI+ts3+f4Afk4a3Y
+        worldpayChallengeJwt:
+          type: string
+          description: "When the charge is in status 'AUTHORISATION 3DS REQUIRED'\
+            \ state and the 3DS data on the charge contains challenge data, Json Web\
+            \ Token is calculated and returned to the frontend."
+    Auth3dsRequiredEntity_FrontendView:
+      type: object
+      properties:
+        htmlOut:
+          type: string
+        issuerUrl:
+          type: string
+        md:
+          type: string
+        paRequest:
+          type: string
+        threeDsVersion:
+          type: string
+        worldpayChallengeAcsUrl:
+          type: string
+        worldpayChallengePayload:
+          type: string
+        worldpayChallengeTransactionId:
+          type: string
+    Auth3dsResult:
+      type: object
+      properties:
+        auth_3ds_result:
+          type: string
+          writeOnly: true
+        md:
+          type: string
+        pa_response:
+          type: string
+    AuthCardDetails:
+      type: object
+      properties:
+        accept_header:
+          type: string
+          example: text/html
+        accept_language_header:
+          type: string
+          example: "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5"
+        address:
+          $ref: '#/components/schemas/Address'
+        card_brand:
+          type: string
+          example: visa
+        card_number:
+          type: string
+          description: Card number. See https://docs.payments.service.gov.uk/testing_govuk_pay/#mock-card-numbers-and-email-addresses
+            for test card numbers
+          example: "4242424242424242"
+        card_type:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          - CREDIT_OR_DEBIT
+          example: DEBIT
+        cardholder_name:
+          type: string
+          description: Cardholder name
+          example: Joe B
+        corporate_card:
+          type: boolean
+          example: false
+        cvc:
+          type: string
+          example: "123"
+        expiry_date:
+          $ref: '#/components/schemas/CardExpiryDate'
+        ip_address:
+          type: string
+          example: 127.0.0.1
+        js_navigator_language:
+          type: string
+          example: en-GB
+        js_screen_color_depth:
+          type: string
+          example: "24"
+        js_screen_height:
+          type: string
+          example: "900"
+        js_screen_width:
+          type: string
+          example: "1440"
+        js_timezone_offset_min:
+          type: string
+          example: "-60"
+        prepaid:
+          type: string
+          enum:
+          - PREPAID
+          - NOT_PREPAID
+          - UNKNOWN
+          example: NOT_PREPAID
+        user_agent_header:
+          type: string
+          example: Mozilla/5.0
+        worldpay_3ds_flex_ddc_result:
+          type: string
+          example: 1f1154b7-620d-4654-801b-893b5bb22db1
     AuthorisationSummary:
       type: object
       description: Object containing information about the authentication of the payment
       properties:
         three_d_secure:
           $ref: '#/components/schemas/ThreeDSecure'
+    AuthorisationSummary_FrontendView:
+      type: object
+      description: Object containing information about the authentication of the payment
+      properties:
+        three_d_secure:
+          $ref: '#/components/schemas/ThreeDSecure_FrontendView'
+    AuthoriseRequest:
+      type: object
+      properties:
+        card_number:
+          type: string
+          example: "4242424242424242"
+          maxLength: 19
+          minLength: 12
+        cardholder_name:
+          type: string
+          description: Cardholder name
+          example: Joe B
+          maxLength: 255
+        cvc:
+          type: string
+          example: "123"
+          maxLength: 4
+          minLength: 3
+        expiry_date:
+          type: string
+          description: 5 character string in MM/YY format
+          example: 01/99
+          maxLength: 5
+          minLength: 5
+        one_time_token:
+          type: string
+          description: the one time token provided in the `auth_url_post` link of
+            the create payment API response
+          example: 123abc123
+      required:
+      - card_number
+      - cardholder_name
+      - cvc
+      - expiry_date
+      - one_time_token
+    CardBrandLabelEntity_FrontendView:
+      type: object
+      properties:
+        brand:
+          type: string
+          example: visa
+        id:
+          type: string
+          format: uuid
+          example: ac8a3abd-bcfd-4fa6-8905-321ce913e7f5
+        label:
+          type: string
+          example: Visa
+        version:
+          type: integer
+          format: int64
+    CardDetailsEntity_FrontendView:
+      type: object
+      properties:
+        billing_address:
+          $ref: '#/components/schemas/AddressEntity_FrontendView'
+        cardBrand:
+          type: string
+          example: visa
+        cardTypeDetails:
+          $ref: '#/components/schemas/CardBrandLabelEntity_FrontendView'
+        card_type:
+          type: string
+          enum:
+          - CREDIT
+          - DEBIT
+          example: credit
+        cardholder_name:
+          type: string
+          example: Joe B
+        expiry_date:
+          $ref: '#/components/schemas/CardExpiryDate_FrontendView'
+        first_digits_card_number:
+          $ref: '#/components/schemas/FirstDigitsCardNumber_FrontendView'
+        last_digits_card_number:
+          $ref: '#/components/schemas/LastDigitsCardNumber_FrontendView'
     CardExpiryDate:
       type: object
-      description: The expiry date of the card the user paid with.
+      example: 01/99
+      properties:
+        fourDigitYear:
+          type: string
+        twoDigitMonth:
+          type: string
+        twoDigitYear:
+          type: string
+    CardExpiryDate_FrontendView:
+      type: object
       example: 01/99
       properties:
         fourDigitYear:
@@ -326,6 +2683,27 @@ components:
         twoDigitYear:
           type: string
     CardTypeEntity:
+      type: object
+      properties:
+        brand:
+          type: string
+          example: visa
+        id:
+          type: string
+          format: uuid
+          example: ac8a3abd-bcfd-4fa6-8905-321ce913e7f5
+        label:
+          type: string
+          example: Visa
+        requires3ds:
+          type: boolean
+        type:
+          type: string
+          enum:
+          - CREDIT
+          - DEBIT
+          example: DEBIT
+    CardTypeEntity_FrontendView:
       type: object
       properties:
         brand:
@@ -433,6 +2811,290 @@ components:
       - amount
       - description
       - reference
+    ChargeEntity_FrontendView:
+      type: object
+      description: The charge associated with the token
+      properties:
+        agreementId:
+          type: string
+        amount:
+          type: integer
+          format: int64
+          example: 100
+        authorisationMode:
+          type: string
+          enum:
+          - web
+          - moto_api
+          - agreement
+          - external
+        captureSubmitTime:
+          type: string
+          format: date-time
+        capturedTime:
+          type: string
+          format: date-time
+        cardDetails:
+          $ref: '#/components/schemas/CardDetailsEntity_FrontendView'
+        chargeStatus:
+          type: string
+          enum:
+          - UNDEFINED
+          - CREATED
+          - PAYMENT NOTIFICATION CREATED
+          - ENTERING CARD DETAILS
+          - AUTHORISATION ABORTED
+          - AUTHORISATION READY
+          - AUTHORISATION 3DS REQUIRED
+          - AUTHORISATION 3DS READY
+          - AUTHORISATION SUBMITTED
+          - AUTHORISATION SUCCESS
+          - AUTHORISATION REJECTED
+          - AUTHORISATION CANCELLED
+          - AUTHORISATION ERROR
+          - AUTHORISATION TIMEOUT
+          - AUTHORISATION UNEXPECTED ERROR
+          - AWAITING CAPTURE REQUEST
+          - CAPTURE APPROVED
+          - CAPTURE APPROVED RETRY
+          - CAPTURE READY
+          - CAPTURED
+          - CAPTURE SUBMITTED
+          - CAPTURE ERROR
+          - CAPTURE QUEUED
+          - EXPIRE CANCEL READY
+          - EXPIRE CANCEL FAILED
+          - EXPIRE CANCEL SUBMITTED
+          - EXPIRED
+          - SYSTEM CANCEL READY
+          - SYSTEM CANCEL ERROR
+          - SYSTEM CANCEL SUBMITTED
+          - SYSTEM CANCELLED
+          - USER CANCEL READY
+          - USER CANCEL SUBMITTED
+          - USER CANCELLED
+          - USER CANCEL ERROR
+          - AUTHORISATION ERROR CANCELLED
+          - AUTHORISATION ERROR REJECTED
+          - AUTHORISATION ERROR CHARGE MISSING
+        corporateSurcharge:
+          type: integer
+          format: int64
+        createdDate:
+          type: string
+          format: date-time
+        delayedCapture:
+          type: boolean
+        description:
+          type: string
+          example: payment description
+        email:
+          type: string
+          example: joe.blogs@example.org
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChargeEventEntity_FrontendView'
+        exemption3ds:
+          type: string
+          enum:
+          - EXEMPTION_NOT_REQUESTED
+          - EXEMPTION_HONOURED
+          - EXEMPTION_REJECTED
+          - EXEMPTION_OUT_OF_SCOPE
+        externalId:
+          type: string
+          example: 5t2rupktnsk0a3mu800st7irts
+        externalMetadata:
+          $ref: '#/components/schemas/ExternalMetadata_FrontendView'
+        feeAmount:
+          type: integer
+          format: int64
+        fees:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeeEntity_FrontendView'
+        gatewayAccount:
+          $ref: '#/components/schemas/GatewayAccountEntity_FrontendView'
+        gatewayAccountCredentialsEntity:
+          $ref: '#/components/schemas/GatewayAccountCredentialsEntity_FrontendView'
+        gatewayTransactionId:
+          type: string
+          example: bba59957-5155-4f59-8c69-a839f71772d3
+        get3dsRequiredDetails:
+          $ref: '#/components/schemas/Auth3dsRequiredEntity_FrontendView'
+        language:
+          type: string
+          enum:
+          - en
+          - cy
+          example: en
+        moto:
+          type: boolean
+        netAmount:
+          type: integer
+          format: int64
+        parityCheckDate:
+          type: string
+          format: date-time
+        parityCheckStatus:
+          type: string
+          enum:
+          - SKIPPED
+          - EXISTS_IN_LEDGER
+          - MISSING_IN_LEDGER
+          - DATA_MISMATCH
+        paymentGatewayName:
+          type: string
+          enum:
+          - SANDBOX
+          - SMARTPAY
+          - WORLDPAY
+          - EPDQ
+          - STRIPE
+        paymentInstrument:
+          $ref: '#/components/schemas/PaymentInstrumentEntity_FrontendView'
+        paymentProvider:
+          type: string
+          example: stripe
+        providerSessionId:
+          type: string
+        reference:
+          $ref: '#/components/schemas/ServicePaymentReference_FrontendView'
+        returnUrl:
+          type: string
+          example: https://service-name.gov.uk/transactions/12345
+        savePaymentInstrumentToAgreement:
+          type: boolean
+        serviceId:
+          type: string
+          example: 46eb1b601348499196c99de90482ee68
+        source:
+          type: string
+          enum:
+          - CARD_API
+          - CARD_PAYMENT_LINK
+          - CARD_AGENT_INITIATED_MOTO
+          - CARD_EXTERNAL_TELEPHONE
+          example: CARD_API
+        status:
+          type: string
+          example: AUTHORISATION SUCCESS
+        statusIgnoringValidTransitions:
+          type: string
+          enum:
+          - UNDEFINED
+          - CREATED
+          - PAYMENT NOTIFICATION CREATED
+          - ENTERING CARD DETAILS
+          - AUTHORISATION ABORTED
+          - AUTHORISATION READY
+          - AUTHORISATION 3DS REQUIRED
+          - AUTHORISATION 3DS READY
+          - AUTHORISATION SUBMITTED
+          - AUTHORISATION SUCCESS
+          - AUTHORISATION REJECTED
+          - AUTHORISATION CANCELLED
+          - AUTHORISATION ERROR
+          - AUTHORISATION TIMEOUT
+          - AUTHORISATION UNEXPECTED ERROR
+          - AWAITING CAPTURE REQUEST
+          - CAPTURE APPROVED
+          - CAPTURE APPROVED RETRY
+          - CAPTURE READY
+          - CAPTURED
+          - CAPTURE SUBMITTED
+          - CAPTURE ERROR
+          - CAPTURE QUEUED
+          - EXPIRE CANCEL READY
+          - EXPIRE CANCEL FAILED
+          - EXPIRE CANCEL SUBMITTED
+          - EXPIRED
+          - SYSTEM CANCEL READY
+          - SYSTEM CANCEL ERROR
+          - SYSTEM CANCEL SUBMITTED
+          - SYSTEM CANCELLED
+          - USER CANCEL READY
+          - USER CANCEL SUBMITTED
+          - USER CANCELLED
+          - USER CANCEL ERROR
+          - AUTHORISATION ERROR CANCELLED
+          - AUTHORISATION ERROR REJECTED
+          - AUTHORISATION ERROR CHARGE MISSING
+          writeOnly: true
+        version:
+          type: integer
+          format: int64
+        walletType:
+          type: string
+          enum:
+          - APPLE_PAY
+          - GOOGLE_PAY
+    ChargeEventEntity_FrontendView:
+      type: object
+      properties:
+        gatewayEventDate:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        status:
+          type: string
+          enum:
+          - UNDEFINED
+          - CREATED
+          - PAYMENT NOTIFICATION CREATED
+          - ENTERING CARD DETAILS
+          - AUTHORISATION ABORTED
+          - AUTHORISATION READY
+          - AUTHORISATION 3DS REQUIRED
+          - AUTHORISATION 3DS READY
+          - AUTHORISATION SUBMITTED
+          - AUTHORISATION SUCCESS
+          - AUTHORISATION REJECTED
+          - AUTHORISATION CANCELLED
+          - AUTHORISATION ERROR
+          - AUTHORISATION TIMEOUT
+          - AUTHORISATION UNEXPECTED ERROR
+          - AWAITING CAPTURE REQUEST
+          - CAPTURE APPROVED
+          - CAPTURE APPROVED RETRY
+          - CAPTURE READY
+          - CAPTURED
+          - CAPTURE SUBMITTED
+          - CAPTURE ERROR
+          - CAPTURE QUEUED
+          - EXPIRE CANCEL READY
+          - EXPIRE CANCEL FAILED
+          - EXPIRE CANCEL SUBMITTED
+          - EXPIRED
+          - SYSTEM CANCEL READY
+          - SYSTEM CANCEL ERROR
+          - SYSTEM CANCEL SUBMITTED
+          - SYSTEM CANCELLED
+          - USER CANCEL READY
+          - USER CANCEL SUBMITTED
+          - USER CANCELLED
+          - USER CANCEL ERROR
+          - AUTHORISATION ERROR CANCELLED
+          - AUTHORISATION ERROR REJECTED
+          - AUTHORISATION ERROR CHARGE MISSING
+          example: CAPTURED
+        updated:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+    ChargeEventsResponse:
+      type: object
+      properties:
+        charge_id:
+          type: string
+          example: 2c6vtn9pth38ppbmnt20d57t49
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionEvent'
     ChargeResponse:
       type: object
       properties:
@@ -613,6 +3275,72 @@ components:
           - APPLE_PAY
           - GOOGLE_PAY
           example: APPLE_PAY
+    EmailNotificationEntity:
+      type: object
+      description: The settings for the different emails (payments/refunds) that are
+        sent out
+      example:
+        REFUND_ISSUED:
+          version: 1
+          enabled: true
+          template_body: null
+        PAYMENT_CONFIRMED:
+          version: 1
+          enabled: true
+          template_body: null
+      properties:
+        enabled:
+          type: boolean
+          description: Indicates whether emails are enabled for notifications type
+          example: true
+        template_body:
+          type: string
+          description: Custom paragraph for the email template
+        version:
+          type: integer
+          format: int64
+    EmailNotificationEntity_ApiView:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Indicates whether emails are enabled for notifications type
+          example: true
+        template_body:
+          type: string
+          description: Custom paragraph for the email template
+        version:
+          type: integer
+          format: int64
+    EmailNotificationEntity_FrontendView:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Indicates whether emails are enabled for notifications type
+          example: true
+        template_body:
+          type: string
+          description: Custom paragraph for the email template
+        version:
+          type: integer
+          format: int64
+    EncryptedPaymentData:
+      type: object
+      properties:
+        protocol_version:
+          type: string
+          example: ECv1
+          writeOnly: true
+        signature:
+          type: string
+          example: MEQCIB54h8T/hWY3864Ufkwo4SF5IjhoMV9hjpJRIsqbAn4LAiBZz1VBZ+aiaduX8MN3dBtzyDOZVstwG/8bqJZDbrhKfQ=
+        signed_message:
+          type: string
+          example: aSignedMessage
+          writeOnly: true
+      required:
+      - signature
     ErrorResponse:
       type: object
       properties:
@@ -660,6 +3388,14 @@ components:
           type: object
           additionalProperties:
             type: object
+    ExternalMetadata_FrontendView:
+      type: object
+      example: {}
+      properties:
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
     ExternalTransactionState:
       type: object
       description: A structure representing the current state of the payment in its
@@ -679,14 +3415,1247 @@ components:
         status:
           type: string
           example: success
+    ExternalTransactionState_FrontendView:
+      type: object
+      description: A structure representing the current state of the payment in its
+        lifecycle
+      properties:
+        code:
+          type: string
+          description: Error code for failed payments
+          example: P0010
+        finished:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Message describing erro code if Payment failed
+          example: Payment method rejected
+        status:
+          type: string
+          example: success
+    FeeEntity_FrontendView:
+      type: object
+      properties:
+        amountCollected:
+          type: integer
+          format: int64
+        createdDate:
+          type: string
+          format: date-time
+        feeType:
+          type: string
+          enum:
+          - radar
+          - three_ds
+          - transaction
     FirstDigitsCardNumber:
       type: object
       description: The first 6 digits of the card the user paid with.
       example: 424242
+    FirstDigitsCardNumber_FrontendView:
+      type: object
+      example: 424242
+    FrontendChargeResponse_FrontendView:
+      type: object
+      properties:
+        agreement:
+          $ref: '#/components/schemas/AgreementResponse_FrontendView'
+        agreement_id:
+          type: string
+          description: 'Application for Recurring card payments. Agreement ID that
+            the payment is associated with '
+          example: md1mjge8gb6p4qndfs8mf8gto5
+        amount:
+          type: integer
+          format: int64
+          description: Amount of this charge
+          example: 100
+        auth_3ds_data:
+          $ref: '#/components/schemas/Auth3dsData_FrontendView'
+        auth_code:
+          type: string
+          description: Only applicable for telephone payments reported. Authorisation
+            ID received from payment provider when the payment was authorised
+          example: "91011"
+        authorisation_mode:
+          type: string
+          default: web
+          description: How the payment will be authorised. Payments created in `web`
+            mode require the paying user to visit the `next_url` to complete the payment.
+          enum:
+          - web
+          - moto_api
+          - agreement
+          - external
+          example: web
+        authorisation_summary:
+          $ref: '#/components/schemas/AuthorisationSummary_FrontendView'
+        authorised_date:
+          type: string
+          format: date-time
+          description: 'Only applicable for telephone payments reported. Date and
+            time Payment service provider authorised the payment. '
+          example: 2022-06-28T16:05:33Z
+        card_brand:
+          type: string
+          example: Visa
+        card_details:
+          $ref: '#/components/schemas/PersistedCard_FrontendView'
+        charge_id:
+          type: string
+          description: Unique identifier for the charge
+          example: b02b63b370fd35418ad66b0101
+        corporate_card_surcharge:
+          type: integer
+          format: int64
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-28T09:24:45.715Z
+        delayed_capture:
+          type: boolean
+          description: "Set to true, if payment is to be captured separately"
+        description:
+          type: string
+          description: The payment description
+          example: payment description
+        email:
+          type: string
+          example: Joe.Bogs@example.org
+        fee:
+          type: integer
+          format: int64
+          description: "processing fee taken by the GOV.UK Pay platform, in pence.\
+            \ Only available depending on payment service provider"
+          example: 10
+        gateway_account:
+          $ref: '#/components/schemas/GatewayAccountEntity_FrontendView'
+        gateway_transaction_id:
+          type: string
+          description: The reference number the payment gateway associated with the
+            payment.
+          example: 5422624d-12b1-4821-8b26-d0383ecf1602
+        language:
+          type: string
+          description: The language of the user’s payment page.
+          enum:
+          - en
+          - cy
+          example: en
+        links:
+          type: array
+          description: Array of relevant resource references related to this charge
+          example:
+          - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+            method: GET
+            rel: self
+          - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+            method: GET
+            rel: next_url
+          - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+            method: GET
+            rel: refunds
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              description: Array of relevant resource references related to this charge
+              example:
+              - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+                method: GET
+                rel: self
+              - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+                method: GET
+                rel: next_url
+              - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+                method: GET
+                rel: refunds
+            description: Array of relevant resource references related to this charge
+            example:
+            - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+              method: GET
+              rel: self
+            - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+              method: GET
+              rel: next_url
+            - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+              method: GET
+              rel: refunds
+        metadata:
+          $ref: '#/components/schemas/ExternalMetadata_FrontendView'
+        moto:
+          type: boolean
+          description: Mail Order / Telephone Order (MOTO) payment flag
+        net_amount:
+          type: integer
+          format: int64
+          description: "amount including all surcharges and less all fees, in pence.\
+            \ Available depending on payment service provider"
+          example: 90
+        payment_outcome:
+          $ref: '#/components/schemas/PaymentOutcome_FrontendView'
+        payment_provider:
+          type: string
+          description: The payment provider used for this transaction
+          example: sandbox
+        processor_id:
+          type: string
+          description: Only applicable for telephone payments reported. unique supplier
+            internal reference number associated with the payment
+          example: "12345"
+        provider_id:
+          type: string
+          description: Only applicable for telephone payments reported. Gateway transaction
+            ID
+          example: "45678"
+        reference:
+          $ref: '#/components/schemas/ServicePaymentReference_FrontendView'
+        refund_summary:
+          $ref: '#/components/schemas/RefundSummary_FrontendView'
+        return_url:
+          type: string
+          description: service return url
+          example: https://service-name.gov.uk/transactions/12345
+        save_payment_instrument_to_agreement:
+          type: boolean
+        settlement_summary:
+          $ref: '#/components/schemas/SettlementSummary_FrontendView'
+        state:
+          $ref: '#/components/schemas/ExternalTransactionState_FrontendView'
+        status:
+          type: string
+        telephone_number:
+          type: string
+          description: Only applicable for telephone payments reported. User's telephone
+            number
+          example: +44000000000
+        total_amount:
+          type: integer
+          format: int64
+          description: "Amount your user paid in pence, including corporate card fees.\
+            \ total_amount only appears if corporate card surcharge is applied to\
+            \ the payment."
+        wallet_type:
+          type: string
+          description: Indicates if the payment was completed using wallet payment
+            (GOOGLE_PAY or APPLE_PAY)
+          enum:
+          - APPLE_PAY
+          - GOOGLE_PAY
+          example: APPLE_PAY
+    GatewayAccountCredentials:
+      type: object
+      properties:
+        active_end_date:
+          type: string
+          format: date-time
+        active_start_date:
+          type: string
+          format: date-time
+          example: 2022-06-28T16:40:56.869Z
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-30T15:44:19.323Z
+        credentials:
+          type: object
+          additionalProperties:
+            type: string
+            example: "{\"stripe_account_id\":\"accnt_id\"}"
+          example:
+            stripe_account_id: accnt_id
+        external_id:
+          type: string
+          example: 787460d16d4a4d14b4c94787b8f427db
+        gateway_account_credential_id:
+          type: integer
+          format: int64
+          example: 1
+        gateway_account_id:
+          type: integer
+          format: int64
+          example: 1
+        last_updated_by_user_external_id:
+          type: string
+          description: User external ID
+          example: vdwke0d16d4a4d14b4c94787b8f427d
+        payment_provider:
+          type: string
+          example: stripe
+        state:
+          type: string
+          enum:
+          - CREATED
+          - ENTERED
+          - VERIFIED_WITH_LIVE_PAYMENT
+          - ACTIVE
+          - RETIRED
+          example: ACTIVE
+    GatewayAccountCredentialsEntity:
+      type: object
+      properties:
+        active_end_date:
+          type: string
+          format: date-time
+        active_start_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        credentials:
+          type: object
+          additionalProperties:
+            type: string
+            example: "{\"stripe_account_id\":\"an-id\"}"
+          example:
+            stripe_account_id: an-id
+        external_id:
+          type: string
+          example: 731193f990064e698ca1b89775b70bcc
+        gateway_account_credential_id:
+          type: integer
+          format: int64
+          example: 11
+        gateway_account_id:
+          type: integer
+          format: int64
+          example: 1
+        last_updated_by_user_external_id:
+          type: string
+        payment_provider:
+          type: string
+          example: stripe
+        state:
+          type: string
+          enum:
+          - CREATED
+          - ENTERED
+          - VERIFIED_WITH_LIVE_PAYMENT
+          - ACTIVE
+          - RETIRED
+          example: ACTIVE
+        version:
+          type: integer
+          format: int64
+    GatewayAccountCredentialsEntity_ApiView:
+      type: object
+      properties:
+        active_end_date:
+          type: string
+          format: date-time
+        active_start_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        credentials:
+          type: object
+          additionalProperties:
+            type: string
+            example: "{\"stripe_account_id\":\"an-id\"}"
+          example:
+            stripe_account_id: an-id
+        external_id:
+          type: string
+          example: 731193f990064e698ca1b89775b70bcc
+        gateway_account_credential_id:
+          type: integer
+          format: int64
+          example: 11
+        gateway_account_id:
+          type: integer
+          format: int64
+          example: 1
+        last_updated_by_user_external_id:
+          type: string
+        payment_provider:
+          type: string
+          example: stripe
+        state:
+          type: string
+          enum:
+          - CREATED
+          - ENTERED
+          - VERIFIED_WITH_LIVE_PAYMENT
+          - ACTIVE
+          - RETIRED
+          example: ACTIVE
+        version:
+          type: integer
+          format: int64
+    GatewayAccountCredentialsEntity_FrontendView:
+      type: object
+      properties:
+        active_end_date:
+          type: string
+          format: date-time
+        active_start_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-05-27T09:17:19.162Z
+        credentials:
+          type: object
+          additionalProperties:
+            type: string
+            example: "{\"stripe_account_id\":\"an-id\"}"
+          example:
+            stripe_account_id: an-id
+        external_id:
+          type: string
+          example: 731193f990064e698ca1b89775b70bcc
+        gateway_account_credential_id:
+          type: integer
+          format: int64
+          example: 11
+        gateway_account_id:
+          type: integer
+          format: int64
+          example: 1
+        last_updated_by_user_external_id:
+          type: string
+        payment_provider:
+          type: string
+          example: stripe
+        state:
+          type: string
+          enum:
+          - CREATED
+          - ENTERED
+          - VERIFIED_WITH_LIVE_PAYMENT
+          - ACTIVE
+          - RETIRED
+          example: ACTIVE
+        version:
+          type: integer
+          format: int64
+    GatewayAccountCredentialsRequest:
+      type: object
+      properties:
+        credentials:
+          type: object
+          additionalProperties:
+            type: string
+            example: "{\"stripe_account_id\":\"accnt_id\"}"
+          example:
+            stripe_account_id: accnt_id
+          writeOnly: true
+        payment_provider:
+          type: string
+          description: "Payment provider. Accepted values - stripe, worldpay"
+          example: stripe
+    GatewayAccountEntity:
+      type: object
+      properties:
+        allow_apple_pay:
+          type: boolean
+        allow_authorisation_api:
+          type: boolean
+        allow_google_pay:
+          type: boolean
+        allow_moto:
+          type: boolean
+        allow_telephone_payment_notifications:
+          type: boolean
+        allow_zero_amount:
+          type: boolean
+        analytics_id:
+          type: string
+        block_prepaid_cards:
+          type: boolean
+        card_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardTypeEntity'
+        corporateCreditCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporateDebitCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporate_credit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        description:
+          type: string
+        disabled:
+          type: boolean
+        disabled_reason:
+          type: string
+        email_collection_mode:
+          type: string
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EmailNotificationEntity'
+        external_id:
+          type: string
+        gateway_account_credentials:
+          type: array
+          items:
+            $ref: '#/components/schemas/GatewayAccountCredentialsEntity'
+        gateway_account_id:
+          type: integer
+          format: int64
+        gateway_merchant_id:
+          type: string
+        integration_version_3ds:
+          type: integer
+          format: int32
+        live:
+          type: boolean
+        moto_mask_card_number_input:
+          type: boolean
+        moto_mask_card_security_code_input:
+          type: boolean
+        notificationCredentials:
+          $ref: '#/components/schemas/NotificationCredentials'
+        notifySettings:
+          type: object
+          additionalProperties:
+            type: string
+        payment_provider:
+          type: string
+        provider_switch_enabled:
+          type: boolean
+        recurring_enabled:
+          type: boolean
+        requires3ds:
+          type: boolean
+        requires_additional_kyc_data:
+          type: boolean
+        send_payer_email_to_gateway:
+          type: boolean
+        send_payer_ip_address_to_gateway:
+          type: boolean
+        send_reference_to_gateway:
+          type: boolean
+        service_id:
+          type: string
+        service_name:
+          type: string
+        type:
+          type: string
+        version:
+          type: integer
+          format: int64
+        worldpay_3ds_flex:
+          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+    GatewayAccountEntity_ApiView:
+      type: object
+      properties:
+        allow_apple_pay:
+          type: boolean
+        allow_authorisation_api:
+          type: boolean
+        allow_google_pay:
+          type: boolean
+        allow_moto:
+          type: boolean
+        allow_telephone_payment_notifications:
+          type: boolean
+        allow_zero_amount:
+          type: boolean
+        analytics_id:
+          type: string
+        block_prepaid_cards:
+          type: boolean
+        corporateCreditCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporateDebitCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporate_credit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        description:
+          type: string
+        disabled:
+          type: boolean
+        disabled_reason:
+          type: string
+        email_collection_mode:
+          type: string
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EmailNotificationEntity_ApiView'
+        external_id:
+          type: string
+        gateway_account_credentials:
+          type: array
+          items:
+            $ref: '#/components/schemas/GatewayAccountCredentialsEntity_ApiView'
+        gateway_account_id:
+          type: integer
+          format: int64
+        integration_version_3ds:
+          type: integer
+          format: int32
+        live:
+          type: boolean
+        moto_mask_card_number_input:
+          type: boolean
+        moto_mask_card_security_code_input:
+          type: boolean
+        notificationCredentials:
+          $ref: '#/components/schemas/NotificationCredentials_ApiView'
+        notifySettings:
+          type: object
+          additionalProperties:
+            type: string
+        payment_provider:
+          type: string
+        provider_switch_enabled:
+          type: boolean
+        recurring_enabled:
+          type: boolean
+        requires3ds:
+          type: boolean
+        requires_additional_kyc_data:
+          type: boolean
+        send_payer_email_to_gateway:
+          type: boolean
+        send_payer_ip_address_to_gateway:
+          type: boolean
+        send_reference_to_gateway:
+          type: boolean
+        service_id:
+          type: string
+        service_name:
+          type: string
+        type:
+          type: string
+        version:
+          type: integer
+          format: int64
+        worldpay_3ds_flex:
+          $ref: '#/components/schemas/Worldpay3dsFlexCredentials_ApiView'
+    GatewayAccountEntity_FrontendView:
+      type: object
+      properties:
+        allow_apple_pay:
+          type: boolean
+        allow_authorisation_api:
+          type: boolean
+        allow_google_pay:
+          type: boolean
+        allow_moto:
+          type: boolean
+        allow_telephone_payment_notifications:
+          type: boolean
+        allow_zero_amount:
+          type: boolean
+        analytics_id:
+          type: string
+        block_prepaid_cards:
+          type: boolean
+        card_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardTypeEntity_FrontendView'
+        corporateCreditCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporateDebitCardSurchargeAmount:
+          type: integer
+          format: int64
+          writeOnly: true
+        corporate_credit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        disabled:
+          type: boolean
+        disabled_reason:
+          type: string
+        email_collection_mode:
+          type: string
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EmailNotificationEntity_FrontendView'
+        external_id:
+          type: string
+        gateway_account_id:
+          type: integer
+          format: int64
+        gateway_merchant_id:
+          type: string
+        integration_version_3ds:
+          type: integer
+          format: int32
+        live:
+          type: boolean
+        moto_mask_card_number_input:
+          type: boolean
+        moto_mask_card_security_code_input:
+          type: boolean
+        notifySettings:
+          type: object
+          additionalProperties:
+            type: string
+        payment_provider:
+          type: string
+        provider_switch_enabled:
+          type: boolean
+        recurring_enabled:
+          type: boolean
+        requires3ds:
+          type: boolean
+        requires_additional_kyc_data:
+          type: boolean
+        send_payer_email_to_gateway:
+          type: boolean
+        send_payer_ip_address_to_gateway:
+          type: boolean
+        send_reference_to_gateway:
+          type: boolean
+        service_id:
+          type: string
+        service_name:
+          type: string
+        type:
+          type: string
+        version:
+          type: integer
+          format: int64
+        worldpay_3ds_flex:
+          $ref: '#/components/schemas/Worldpay3dsFlexCredentials_FrontendView'
+    GatewayAccountRequest:
+      type: object
+      discriminator:
+        propertyName: payment_provider
+      properties:
+        analytics_id:
+          type: string
+          description: Google Analytics (GA) unique ID for the GOV.UK Pay platform
+          example: analytics-id
+          writeOnly: true
+        description:
+          type: string
+          description: Some useful non-ambiguous description about the gateway account
+          example: account for some gov org
+        payment_provider:
+          type: string
+          default: sandbox
+          description: The payment provider for which this account is created
+          example: stripe
+          writeOnly: true
+        requires_3ds:
+          type: boolean
+          description: Set to 'true' to enable 3DS for this account
+          writeOnly: true
+        service_id:
+          type: string
+          example: service-external-id
+          writeOnly: true
+        service_name:
+          type: string
+          example: service name
+          writeOnly: true
+        type:
+          type: string
+          default: test
+          description: Account type for this provider (test/live)
+          example: live
+          writeOnly: true
+    GatewayAccountResourceDTO:
+      type: object
+      properties:
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+              format: uri
+              example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+                ,            \"rel\": \"self\",            \"method\": \"GET\"   \
+                \     }    }"
+            example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+              ,            \"rel\": \"self\",            \"method\": \"GET\"     \
+              \   }    }"
+          example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+            ,            \"rel\": \"self\",            \"method\": \"GET\"       \
+            \ }    }"
+        allow_apple_pay:
+          type: boolean
+          default: false
+          description: Set to true to enable Apple Pay
+          example: true
+        allow_authorisation_api:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to initiate
+            MOTO payments that are authorised via an API request rather than the web
+            interface
+          example: true
+        allow_google_pay:
+          type: boolean
+          default: false
+          description: Set to true to enable Google Pay
+          example: true
+        allow_moto:
+          type: boolean
+          default: false
+          description: Indicates whether the Mail Order and Telephone Order (MOTO)
+            payments are allowed
+        allow_telephone_payment_notifications:
+          type: boolean
+          default: false
+          description: Indicates if the account is used for telephone payments reporting
+        allow_zero_amount:
+          type: boolean
+          default: false
+          description: Set to true to support charges with a zero amount
+          example: true
+        analytics_id:
+          type: string
+          description: An identifier used to identify the service in Google Analytics.
+            The default value is null
+        block_prepaid_cards:
+          type: boolean
+          default: false
+          description: Whether pre-paid cards are allowed as a payment method for
+            this gateway account
+          example: true
+        corporate_credit_card_surcharge_amount:
+          type: integer
+          format: int64
+          default: 0
+          description: A corporate credit card surcharge amount in pence
+          example: 250
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+          default: 0
+          description: A corporate debit card surcharge amount in pence
+          example: 250
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+          description: A corporate prepaid debit card surcharge amount in pence
+          example: 0
+        description:
+          type: string
+          default: "null"
+          description: An internal description to identify the gateway account. The
+            default value is null.
+          example: Account for service xxx
+        disabled:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to take payments
+            and make refunds
+          example: false
+        disabled_reason:
+          type: string
+          description: "The reason the account is disabled, if applicable"
+          example: No longer required
+        email_collection_mode:
+          type: string
+          description: "Whether email address is required from paying users. Can be\
+            \ MANDATORY, OPTIONAL or OFF"
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EmailNotificationEntity'
+          description: The settings for the different emails (payments/refunds) that
+            are sent out
+          example:
+            PAYMENT_CONFIRMED:
+              enabled: true
+              template_body: null
+              version: 1
+            REFUND_ISSUED:
+              enabled: true
+              template_body: null
+              version: 1
+        external_id:
+          type: string
+          description: External ID for the gateway account
+          example: fbf905a3f7ea416c8c252410eb45ddbd
+        gateway_account_id:
+          type: integer
+          format: int64
+          description: The account ID
+          example: 1
+        integration_version_3ds:
+          type: integer
+          format: int32
+          description: 3DS version used for payments for the gateway account
+          example: 2
+        moto_mask_card_number_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card number is masked when being input
+            for MOTO payments. The default value is false.
+        moto_mask_card_security_code_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card security code is masked when being
+            input for MOTO payments.
+        payment_provider:
+          type: string
+          description: The payment provider for which this account is created
+          example: sandbox
+        provider_switch_enabled:
+          type: boolean
+          default: false
+          description: Flag to enable payment provider switching
+          example: false
+        recurring_enabled:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to take recurring
+            card payments
+          example: true
+        requires3ds:
+          type: boolean
+          description: Flag to indicate whether 3DS is enabled
+          example: true
+        requires_additional_kyc_data:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account requires additional KYC
+            data. Used to enable additional KYC data collection for stripe accounts
+          example: true
+        send_payer_email_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, user email address is included in the authorisation\
+            \ request to gateway"
+          example: true
+        send_payer_ip_address_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, user IP address is sent to to gateway"
+          example: true
+        send_reference_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, service payment reference is sent to gateway as\
+            \ description. Otherwise payment description is sent to the gateway. Only\
+            \ applicable for Worldpay accounts. Default value is 'false'"
+          example: true
+        service_id:
+          type: string
+          description: Service external ID
+          example: cd1b871207a94a7fa157dee678146acd
+        service_name:
+          type: string
+          description: The service name for the account
+          example: service name
+        type:
+          type: string
+          description: Account type for the payment provider (test/live)
+          example: test
+        worldpay_3ds_flex:
+          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+    GatewayAccountResponse:
+      type: object
+      properties:
+        analytics_id:
+          type: string
+          example: ananytics-id
+        description:
+          type: string
+          example: account for some gov org
+        external_id:
+          type: string
+          example: ab2c296ed98647e9a25f045f5e6e87a2
+        gateway_account_id:
+          type: string
+          example: "2"
+        links:
+          type: array
+          example:
+          - href: https://connector.url/v1/api/accounts/2
+            method: GET
+            rel: self
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              example:
+              - href: https://connector.url/v1/api/accounts/2
+                method: GET
+                rel: self
+            example:
+            - href: https://connector.url/v1/api/accounts/2
+              method: GET
+              rel: self
+        requires_3ds:
+          type: boolean
+          example: true
+        service_name:
+          type: string
+          example: service name
+        type:
+          type: string
+          example: live
+    GatewayAccountSwitchPaymentProviderRequest:
+      type: object
+      properties:
+        gateway_account_credential_external_id:
+          type: string
+          description: Gateway account credential external ID to switch to
+          example: dfokpo23ji0213ldsm0123ofsm213kdfg
+          writeOnly: true
+        user_external_id:
+          type: string
+          description: User external ID switching payment service provider
+          example: vfrg4245bd0e7453c9b1b0d7e6999f11b
+          writeOnly: true
+    GatewayAccountsListDTO:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/GatewayAccountResourceDTO'
+    GatewayStatusComparison:
+      type: object
+      properties:
+        chargeId:
+          type: string
+          example: 2c6vtn9pth38ppbmnt20d57t49
+        gatewayExternalStatus:
+          type: string
+          enum:
+          - EXTERNAL_CREATED
+          - EXTERNAL_STARTED
+          - EXTERNAL_SUBMITTED
+          - EXTERNAL_CAPTURABLE
+          - EXTERNAL_SUCCESS
+          - EXTERNAL_FAILED_REJECTED
+          - EXTERNAL_FAILED_EXPIRED
+          - EXTERNAL_FAILED_CANCELLED
+          - EXTERNAL_CANCELLED
+          - EXTERNAL_ERROR_GATEWAY
+          example: EXTERNAL_SUBMITTED
+        gatewayStatus:
+          type: string
+          enum:
+          - UNDEFINED
+          - CREATED
+          - PAYMENT NOTIFICATION CREATED
+          - ENTERING CARD DETAILS
+          - AUTHORISATION ABORTED
+          - AUTHORISATION READY
+          - AUTHORISATION 3DS REQUIRED
+          - AUTHORISATION 3DS READY
+          - AUTHORISATION SUBMITTED
+          - AUTHORISATION SUCCESS
+          - AUTHORISATION REJECTED
+          - AUTHORISATION CANCELLED
+          - AUTHORISATION ERROR
+          - AUTHORISATION TIMEOUT
+          - AUTHORISATION UNEXPECTED ERROR
+          - AWAITING CAPTURE REQUEST
+          - CAPTURE APPROVED
+          - CAPTURE APPROVED RETRY
+          - CAPTURE READY
+          - CAPTURED
+          - CAPTURE SUBMITTED
+          - CAPTURE ERROR
+          - CAPTURE QUEUED
+          - EXPIRE CANCEL READY
+          - EXPIRE CANCEL FAILED
+          - EXPIRE CANCEL SUBMITTED
+          - EXPIRED
+          - SYSTEM CANCEL READY
+          - SYSTEM CANCEL ERROR
+          - SYSTEM CANCEL SUBMITTED
+          - SYSTEM CANCELLED
+          - USER CANCEL READY
+          - USER CANCEL SUBMITTED
+          - USER CANCELLED
+          - USER CANCEL ERROR
+          - AUTHORISATION ERROR CANCELLED
+          - AUTHORISATION ERROR REJECTED
+          - AUTHORISATION ERROR CHARGE MISSING
+          example: AUTHORISED
+        payExternalStatus:
+          type: string
+          example: EXTERNAL_SUBMITTED
+        payStatus:
+          type: string
+          enum:
+          - UNDEFINED
+          - CREATED
+          - PAYMENT NOTIFICATION CREATED
+          - ENTERING CARD DETAILS
+          - AUTHORISATION ABORTED
+          - AUTHORISATION READY
+          - AUTHORISATION 3DS REQUIRED
+          - AUTHORISATION 3DS READY
+          - AUTHORISATION SUBMITTED
+          - AUTHORISATION SUCCESS
+          - AUTHORISATION REJECTED
+          - AUTHORISATION CANCELLED
+          - AUTHORISATION ERROR
+          - AUTHORISATION TIMEOUT
+          - AUTHORISATION UNEXPECTED ERROR
+          - AWAITING CAPTURE REQUEST
+          - CAPTURE APPROVED
+          - CAPTURE APPROVED RETRY
+          - CAPTURE READY
+          - CAPTURED
+          - CAPTURE SUBMITTED
+          - CAPTURE ERROR
+          - CAPTURE QUEUED
+          - EXPIRE CANCEL READY
+          - EXPIRE CANCEL FAILED
+          - EXPIRE CANCEL SUBMITTED
+          - EXPIRED
+          - SYSTEM CANCEL READY
+          - SYSTEM CANCEL ERROR
+          - SYSTEM CANCEL SUBMITTED
+          - SYSTEM CANCELLED
+          - USER CANCEL READY
+          - USER CANCEL SUBMITTED
+          - USER CANCELLED
+          - USER CANCEL ERROR
+          - AUTHORISATION ERROR CANCELLED
+          - AUTHORISATION ERROR REJECTED
+          - AUTHORISATION ERROR CHARGE MISSING
+          example: AUTHORISATION SUCCESS
+        processed:
+          type: boolean
+        rawGatewayResponse:
+          type: string
+          example: Worldpay response ()
+    GooglePayAuthRequest:
+      type: object
+      properties:
+        encrypted_payment_data:
+          $ref: '#/components/schemas/EncryptedPaymentData'
+        payment_info:
+          $ref: '#/components/schemas/WalletPaymentInfo'
+    Header:
+      type: object
+      properties:
+        application_data:
+          type: string
+        ephemeral_public_key:
+          type: string
+          example: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMwliotf2ICjiMwREdqyHSilqZzuV2fZey86nBIDlTY8sNMJv9CPpL5/DKg4bIEMe6qaj67mz4LWdr7Er0Ld5qA==
+        public_key_hash:
+          type: string
+          example: LbsUwAT6w1JV9tFXocU813TCHks+LSuFF0R/eBkrWnQ=
+        transaction_id:
+          type: string
+          example: 2686f5297f123ec7fd9d31074d43d201953ca75f098890375f13aed2737d92f2
+        wrapped_key:
+          type: string
+    JsonNode:
+      type: object
     LastDigitsCardNumber:
       type: object
       description: The last 4 digits of the card the user paid with.
       example: 4242
+    LastDigitsCardNumber_FrontendView:
+      type: object
+      example: 4242
+    NewChargeStatusRequest_FrontendView:
+      type: object
+      properties:
+        new_status:
+          type: string
+          description: Only `ENTERING CARD DETAILS` is allowed
+          example: ENTERING CARD DETAILS
+      required:
+      - new_status
+    NotificationCredentials:
+      type: object
+      properties:
+        userName:
+          type: string
+        version:
+          type: integer
+          format: int64
+    NotificationCredentials_ApiView:
+      type: object
+      properties:
+        userName:
+          type: string
+        version:
+          type: integer
+          format: int64
+    PaymentInstrumentEntity_FrontendView:
+      type: object
+      properties:
+        cardDetails:
+          $ref: '#/components/schemas/CardDetailsEntity_FrontendView'
+        createdDate:
+          type: string
+          format: date-time
+        externalId:
+          type: string
+        recurringAuthToken:
+          type: object
+          additionalProperties:
+            type: string
+        startDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - CREATED
+          - ACTIVE
+          - EXPIRED
     PaymentOutcome:
       type: object
       description: Only applicable for telephone payments reported. Outcome after
@@ -701,6 +4670,20 @@ components:
           example: failed
         supplemental:
           $ref: '#/components/schemas/Supplemental'
+    PaymentOutcome_FrontendView:
+      type: object
+      description: Only applicable for telephone payments reported. Outcome after
+        the payment has been authorised with payment provider
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: P0010
+        status:
+          type: string
+          example: failed
+        supplemental:
+          $ref: '#/components/schemas/Supplemental_FrontendView'
     PersistedCard:
       type: object
       properties:
@@ -725,6 +4708,30 @@ components:
           $ref: '#/components/schemas/FirstDigitsCardNumber'
         last_digits_card_number:
           $ref: '#/components/schemas/LastDigitsCardNumber'
+    PersistedCard_FrontendView:
+      type: object
+      properties:
+        billing_address:
+          $ref: '#/components/schemas/Address_FrontendView'
+        card_brand:
+          type: string
+          example: Visa
+        card_type:
+          type: string
+          enum:
+          - CREDIT
+          - DEBIT
+          example: debit
+        cardholder_name:
+          type: string
+          description: The cardholder name the user entered when they paid.
+          example: Joe B
+        expiry_date:
+          $ref: '#/components/schemas/CardExpiryDate_FrontendView'
+        first_digits_card_number:
+          $ref: '#/components/schemas/FirstDigitsCardNumber_FrontendView'
+        last_digits_card_number:
+          $ref: '#/components/schemas/LastDigitsCardNumber_FrontendView'
     PrefilledAddress:
       type: object
       description: A structure representing the billing address of a card
@@ -766,7 +4773,54 @@ components:
           type: string
           description: prefilled cardholder name
           example: Joe B
+    RefundRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+          description: Amount to refund in pence
+          example: 3444
+        refund_amount_available:
+          type: integer
+          format: int64
+          description: Total amount still available before issuing the refund
+          example: 30000
+        user_email:
+          type: string
+          description: Email address of the user refunding payment
+          example: joeb@example.org
+        user_external_id:
+          type: string
+          description: The ID of the user who issued the refund
+          example: "3444"
+      required:
+      - amount
+      - refund_amount_available
     RefundSummary:
+      type: object
+      description: Provides refund amount available and the amount that has already
+        been submitted for refund
+      properties:
+        amount_available:
+          type: integer
+          format: int64
+          description: Amount available for refund in pence
+          example: 100
+        amount_submitted:
+          type: integer
+          format: int64
+          description: Amount submitted for refunds on this Payment in pence
+          example: 0
+        status:
+          type: string
+          description: Availability status of the refund
+          example: available
+        user_external_id:
+          type: string
+          description: User external ID issuing refund
+          example: sk03k2pojvsojd1po2joij92pspodrkwpenl
+    RefundSummary_FrontendView:
       type: object
       description: Provides refund amount available and the amount that has already
         been submitted for refund
@@ -793,6 +4847,9 @@ components:
       type: object
       description: Service reference for the payment
       example: payment reference
+    ServicePaymentReference_FrontendView:
+      type: object
+      example: payment reference
     SettlementSummary:
       type: object
       description: "Provides a settlement summary of the charge containing date and\
@@ -811,7 +4868,110 @@ components:
           type: string
           description: Date of the capture event
           example: 2022-06-28
+    SettlementSummary_FrontendView:
+      type: object
+      description: "Provides a settlement summary of the charge containing date and\
+        \ time of capture, if present"
+      properties:
+        capture_submit_time:
+          type: string
+          description: Date and time capture request has been submitted. May be null
+            if capture request was not immediately acknowledged by payment gateway.
+          example: 2022-06-28T09:26:45.715Z
+        capturedTime:
+          type: string
+          format: date-time
+          writeOnly: true
+        captured_date:
+          type: string
+          description: Date of the capture event
+          example: 2022-06-28
+    State:
+      type: object
+      properties:
+        code:
+          type: string
+          example: P0040
+        finished:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Payment was cancelled by service
+        status:
+          type: string
+          example: cancelled
+    StripeAccountResponse:
+      type: object
+      properties:
+        stripe_account_id:
+          type: string
+          example: acct_123example123
+      required:
+      - stripe_account_id
+    StripeAccountSetup:
+      type: object
+      properties:
+        additional_kyc_data:
+          type: boolean
+        bank_account:
+          type: boolean
+        company_number:
+          type: boolean
+        director:
+          type: boolean
+        government_entity_document:
+          type: boolean
+        organisation_details:
+          type: boolean
+        responsible_person:
+          type: boolean
+        vat_number:
+          type: boolean
+    StripeCredentials:
+      type: object
+      properties:
+        stripe_account_id:
+          type: string
+          writeOnly: true
+    StripeGatewayAccountRequest:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/GatewayAccountRequest'
+      - type: object
+        properties:
+          analytics_id:
+            type: string
+            writeOnly: true
+          credentials:
+            $ref: '#/components/schemas/StripeCredentials'
+          description:
+            type: string
+          payment_provider:
+            type: string
+            writeOnly: true
+          requires_3ds:
+            type: boolean
+            writeOnly: true
+          service_id:
+            type: string
+            writeOnly: true
+          service_name:
+            type: string
+            writeOnly: true
+          type:
+            type: string
+            writeOnly: true
     Supplemental:
+      type: object
+      properties:
+        error_code:
+          type: string
+          example: E1234
+        error_message:
+          type: string
+          example: The payment card does not exist
+    Supplemental_FrontendView:
       type: object
       properties:
         error_code:
@@ -916,3 +5076,158 @@ components:
           type: string
           description: 3DS version used to authorise payment
           example: 2.1.0
+    ThreeDSecure_FrontendView:
+      type: object
+      description: Object containing information about the 3D Secure authentication
+        of the payment
+      properties:
+        required:
+          type: boolean
+          description: Flag indicating whether the payment required 3D Secure authentication.
+          example: true
+        version:
+          type: string
+          description: 3DS version used to authorise payment
+          example: 2.1.0
+    TokenResponse_FrontendView:
+      type: object
+      properties:
+        charge:
+          $ref: '#/components/schemas/ChargeEntity_FrontendView'
+        used:
+          type: boolean
+          description: true or false depending on whether the token has been marked
+            as used or not
+    TransactionEvent:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+          example: 100
+        refund_reference:
+          type: string
+        state:
+          $ref: '#/components/schemas/State'
+        submitted_by:
+          type: string
+        type:
+          type: string
+          enum:
+          - PAYMENT
+          - REFUND
+          example: PAYMENT
+        updated:
+          type: string
+          example: 2022-06-28T10:41:40.460Z
+    ValidationResult:
+      type: object
+      properties:
+        result:
+          type: string
+          description: valid/invalid result for Worldpay flex credentials
+          example: valid
+    WalletPaymentInfo:
+      type: object
+      properties:
+        accept_header:
+          type: string
+          example: "text/html;q=1.0, */*;q=0.9"
+        brand:
+          type: string
+          example: visa
+        card_type:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          - CREDIT_OR_DEBIT
+          example: DEBIT
+        cardholder_name:
+          type: string
+          example: Joe B
+          maxLength: 255
+        email:
+          type: string
+          example: mr@payment.test
+          maxLength: 254
+        ip_address:
+          type: string
+          example: 203.0.113.1
+        last_digits_card_number:
+          type: string
+          description: last digits card number
+          example: "4242"
+        user_agent_header:
+          type: string
+          example: Mozilla/5.0
+    Worldpay3dsFlexCredentials:
+      type: object
+      properties:
+        exemption_engine_enabled:
+          type: boolean
+          example: true
+        issuer:
+          type: string
+          example: issuer
+        organisational_unit_id:
+          type: string
+          example: org_unit_id
+    Worldpay3dsFlexCredentialsRequest:
+      type: object
+      properties:
+        issuer:
+          type: string
+          description: "Lower-case hexadecimal characters. Should only contain characters\
+            \ [0-9a-f]"
+          example: 53f0917f101a4428b69d5fb0
+          maxLength: 24
+          minLength: 24
+        jwt_mac_key:
+          type: string
+          description: UUID in lowercase canonical representation
+          example: 4cabd5d2-0133-4e82-b0e5-2024dbeddaa9
+        organisational_unit_id:
+          type: string
+          description: "Lower-case hexadecimal characters. Should only contain characters\
+            \ [0-9a-f]"
+          example: 57992a087a0c4849895ab8a2
+          maxLength: 24
+          minLength: 24
+    Worldpay3dsFlexCredentials_ApiView:
+      type: object
+      properties:
+        exemption_engine_enabled:
+          type: boolean
+          example: true
+        issuer:
+          type: string
+          example: issuer
+        organisational_unit_id:
+          type: string
+          example: org_unit_id
+    Worldpay3dsFlexCredentials_FrontendView:
+      type: object
+      properties:
+        exemption_engine_enabled:
+          type: boolean
+          example: true
+        issuer:
+          type: string
+          example: issuer
+        organisational_unit_id:
+          type: string
+          example: org_unit_id
+    WorldpayCredentials:
+      type: object
+      properties:
+        merchant_id:
+          type: string
+        password:
+          type: string
+        username:
+          type: string
+      required:
+      - merchant_id
+      - password
+      - username
