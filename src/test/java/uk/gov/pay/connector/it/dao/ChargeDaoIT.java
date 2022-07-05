@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
@@ -59,6 +60,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargeDaoIT extends DaoITestBase {
 
@@ -884,8 +887,8 @@ public class ChargeDaoIT extends DaoITestBase {
         TestCharge worldpayAuthorisedCharge = insertTestChargeWithStatus(worldpayAccount, AUTHORISATION_SUCCESS);
         TestCharge stripeEnteringCardDetailsCharge = insertTestChargeWithStatus(stripeAccount, ENTERING_CARD_DETAILS);
 
-        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersInAndStatusIn(List.of("epdq", "worldpay", "stripe"),
-                List.of(CREATED, ENTERING_CARD_DETAILS), 10);
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(List.of("epdq", "worldpay", "stripe"),
+                List.of(CREATED, ENTERING_CARD_DETAILS), List.of(WEB), 10);
 
         assertThat(charges, hasSize(5));
         assertThat(charges, containsInAnyOrder(
@@ -911,12 +914,27 @@ public class ChargeDaoIT extends DaoITestBase {
         insertTestChargeWithStatus(stripeAccount, CREATED);
         insertTestChargeWithStatus(stripeAccount, CREATED);
 
-        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersInAndStatusIn(List.of("epdq", "worldpay", "stripe"),
-                List.of(CREATED), 2);
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(List.of("epdq", "worldpay", "stripe"),
+                List.of(CREATED), List.of(WEB), 2);
         assertThat(charges, hasSize(2));
         assertThat(charges, not(containsInAnyOrder(
                 hasProperty("externalId", is(smartpayCreatedCharge.externalChargeId))
         )));
+    }
+
+    @Test
+    public void findWithPaymentProvidersStatusesAndAuthorisationModesIn_shouldFindChargesWithAuthorisationModeCorrectly() {
+        DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
+        TestCharge chargeWithAuthorisationModeWeb = createTestCharge(stripeAccount, AUTHORISATION_TIMEOUT).withAuthorisationMode(WEB).insert();
+        createTestCharge(stripeAccount, AUTHORISATION_TIMEOUT).withAuthorisationMode(EXTERNAL).insert();
+        createTestCharge(stripeAccount, AUTHORISATION_TIMEOUT).withAuthorisationMode(EXTERNAL).insert();
+
+        List<ChargeEntity> charges = chargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(List.of("stripe"),
+                List.of(AUTHORISATION_TIMEOUT), List.of(WEB), 1);
+        assertThat(charges, hasSize(1));
+        assertThat(charges, containsInAnyOrder(
+                hasProperty("externalId", is(chargeWithAuthorisationModeWeb.externalChargeId))
+        ));
     }
 
     private void insertTestAccount() {
@@ -949,12 +967,16 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private TestCharge insertTestChargeWithStatus(DatabaseFixtures.TestAccount testAccount, ChargeStatus created) {
+        return createTestCharge(testAccount, created)
+                .insert();
+    }
+
+    private TestCharge createTestCharge(DatabaseFixtures.TestAccount testAccount, ChargeStatus created) {
         return DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper).aTestCharge()
                 .withTestAccount(testAccount)
                 .withChargeStatus(created)
-                .withPaymentProvider(testAccount.getPaymentProvider())
-                .insert();
+                .withPaymentProvider(testAccount.getPaymentProvider());
     }
 
     private void insertTestRefund() {

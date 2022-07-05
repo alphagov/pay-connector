@@ -30,7 +30,6 @@ public class GatewayCleanupResource {
     public GatewayCleanupResource(AuthorisationErrorGatewayCleanupService cleanupService) {
         this.cleanupService = cleanupService;
     }
-
     @POST
     @Path("/v1/tasks/gateway-cleanup-sweep")
     @Operation(
