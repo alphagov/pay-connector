@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -276,11 +277,14 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getResultList();
     }
 
-    public List<ChargeEntity> findWithPaymentProvidersInAndStatusIn(List<String> providers, List<ChargeStatus> statuses, int limit) {
+    public List<ChargeEntity> findWithPaymentProvidersStatusesAndAuthorisationModesIn(List<String> providers, List<ChargeStatus> statuses,
+                                                                                      List<AuthorisationMode> authorisationModes, int limit) {
         return entityManager.get()
-                .createQuery("SELECT c FROM ChargeEntity c WHERE c.paymentProvider IN :providers AND c.status IN :statuses", ChargeEntity.class)
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.paymentProvider IN :providers AND c.status IN :statuses" +
+                        " AND c.authorisationMode in :authorisationModes", ChargeEntity.class)
                 .setParameter("providers", providers)
                 .setParameter("statuses", statuses)
+                .setParameter("authorisationModes", authorisationModes)
                 .setMaxResults(limit)
                 .getResultList();
     }

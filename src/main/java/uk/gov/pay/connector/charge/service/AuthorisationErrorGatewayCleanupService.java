@@ -32,6 +32,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELL
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class AuthorisationErrorGatewayCleanupService {
 
@@ -57,15 +59,13 @@ public class AuthorisationErrorGatewayCleanupService {
     }
 
     public Map<String, Integer> sweepAndCleanupAuthorisationErrors(int limit) {
-        List<ChargeEntity> chargesToCleanUp = chargeDao.findWithPaymentProvidersInAndStatusIn(
-                List.of(EPDQ.getName(),
-                        WORLDPAY.getName(),
-                        STRIPE.getName()),
-                List.of(AUTHORISATION_ERROR,
-                        AUTHORISATION_TIMEOUT,
-                        AUTHORISATION_UNEXPECTED_ERROR
-                ),
-                limit);
+        List<ChargeEntity> chargesToCleanUp = chargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn
+                (
+                        List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName()),
+                        List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR),
+                        List.of(WEB, MOTO_API),
+                        limit
+                );
 
         logger.info("Found {} charges to clean up.", chargesToCleanUp.size());
 

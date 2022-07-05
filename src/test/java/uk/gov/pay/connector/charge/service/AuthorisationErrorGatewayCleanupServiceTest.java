@@ -47,6 +47,8 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorisationErrorGatewayCleanupServiceTest {
@@ -106,9 +108,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldCleanupChargeThatIsAuthorisedOnTheGateway() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge, stripeCharge));
         when(mockPaymentProviders.byName(STRIPE)).thenReturn(mockStripePaymentProvider);
         when(worldpayQueryResponse.getTransactionId()).thenReturn("worldpay-order-code");
@@ -135,9 +138,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldTransitionChargeStateToErrorRejectedWhenFailedOnGateway() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_REJECTED, worldpayQueryResponse);
@@ -154,9 +158,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldTransitionChargeStateToErrorChargeMissingWhenNotFoundOnGateway() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(null, worldpayQueryResponse);
@@ -173,9 +178,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldTransitionChargeStateToErrorCancelledWhenAlreadyCancelledOnGateway() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(USER_CANCELLED, worldpayQueryResponse);
@@ -192,9 +198,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldReportFailureWhenGatewayCancelFails() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, worldpayQueryResponse);
@@ -214,9 +221,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldReportFailureWhenGatewayStatusMapsToUnhandledStatus() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_UNEXPECTED_ERROR, worldpayQueryResponse);
@@ -233,9 +241,10 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Test
     public void shouldReportFailureWhenGatewayStatusDoesNotMapToInternalStatus() throws Exception {
-        when(mockChargeDao.findWithPaymentProvidersInAndStatusIn(
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge));
         when(worldpayQueryResponse.getTransactionId()).thenReturn("order-code");
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(null, worldpayQueryResponse);
