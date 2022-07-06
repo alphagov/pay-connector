@@ -35,7 +35,7 @@ import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_DISPUTE_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
 
 public class StripeWebhookTaskHandler {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
     private final LedgerService ledgerService;
     private final EventService eventService;
@@ -56,9 +56,9 @@ public class StripeWebhookTaskHandler {
             Optional<LedgerTransaction> ledgerTransaction = ledgerService
                     .getTransactionForProviderAndGatewayTransactionId(STRIPE.getName(), stripeDisputeData.getPaymentIntentId());
             ledgerTransaction.map(transaction -> {
-                var disputeCreatedEvent = createDisputeCreatedEvent(stripeDisputeData, transaction);
+                DisputeCreated disputeCreatedEvent = createDisputeCreatedEvent(stripeDisputeData, transaction);
 
-                emitEvent(disputeCreatedEvent);
+                emitEvent(disputeCreatedEvent, stripeDisputeData.getId());
 
                 return disputeCreatedEvent;
             }).orElseThrow(() ->
@@ -81,9 +81,7 @@ public class StripeWebhookTaskHandler {
                     logger.info("Unknown stripe dispute closed status: [status: {}, payment_intent: {}]", stripeDisputeData.getStatus(), stripeDisputeData.getPaymentIntentId());
                     throw new RuntimeException(format("Unknown stripe dispute closed status: [status: %s, payment_intent: %s]", stripeDisputeData.getStatus(), stripeDisputeData.getPaymentIntentId()));
                 }
-                if (disputeEvent != null) {
-                    emitEvent(disputeEvent);
-                }
+                emitEvent(disputeEvent, stripeDisputeData.getId());
                 return disputeEvent;
             }).orElseThrow(() ->
                     new RuntimeException(format("LedgerTransaction with gateway transaction id [%s] not found",
@@ -94,9 +92,9 @@ public class StripeWebhookTaskHandler {
                 Optional<LedgerTransaction> ledgerTransaction = ledgerService
                         .getTransactionForProviderAndGatewayTransactionId(STRIPE.getName(), stripeDisputeData.getPaymentIntentId());
                 ledgerTransaction.map(transaction -> {
-                    var disputeUpdatedEvent = createDisputeEvidenceSubmittedEvent(stripeNotification, stripeDisputeData, transaction);
+                    DisputeEvidenceSubmitted disputeUpdatedEvent = createDisputeEvidenceSubmittedEvent(stripeNotification, stripeDisputeData, transaction);
 
-                    emitEvent(disputeUpdatedEvent);
+                    emitEvent(disputeUpdatedEvent, stripeDisputeData.getId());
 
                     return disputeUpdatedEvent;
                 }).orElseThrow(() ->
@@ -110,11 +108,12 @@ public class StripeWebhookTaskHandler {
         }
     }
 
-    private void emitEvent(Event event) {
+    private void emitEvent(Event event, String gatewayDisputeId) {
         eventService.emitEvent(event);
         logger.info("Event sent to payment event queue: {}", event.getResourceExternalId(),
                 kv(LEDGER_EVENT_TYPE, event.getEventType()),
-                kv(GATEWAY_DISPUTE_ID, event.getResourceExternalId()));
+                kv("dispute_externalId", event.getResourceExternalId()),
+                kv(GATEWAY_DISPUTE_ID, gatewayDisputeId));
     }
 
     private DisputeCreated createDisputeCreatedEvent(StripeDisputeData stripeDisputeData,
@@ -125,7 +124,7 @@ public class StripeWebhookTaskHandler {
                 stripeDisputeData.getEvidenceDetails().getDueByTimestamp(), transaction.getGatewayAccountId(),
                 Math.abs(balanceTransaction.getAmount()), balanceTransaction.getNetAmount(),
                 stripeDisputeData.getReason());
-        return new DisputeCreated(stripeDisputeData.getResourceExternalId(), transaction.getTransactionId(),
+        return new DisputeCreated(idFromExternalId(stripeDisputeData.getId()), transaction.getTransactionId(),
                 transaction.getServiceId(), transaction.getLive(), eventDetails, stripeDisputeData.getDisputeCreated());
     }
 
@@ -133,18 +132,18 @@ public class StripeWebhookTaskHandler {
                                              StripeDisputeData stripeDisputeData,
                                              LedgerTransaction transaction) {
         var eventDetails = new DisputeWonEventDetails(transaction.getGatewayAccountId());
-        return new DisputeWon(idFromExternalId(stripeDisputeData.getResourceExternalId()),
+        return new DisputeWon(idFromExternalId(stripeDisputeData.getId()),
                 transaction.getTransactionId(), transaction.getServiceId(), transaction.getLive(), eventDetails,
                 stripeNotification.getCreated());
     }
 
     private DisputeLost createDisputeLostEvent(StripeNotification stripeNotification,
                                                StripeDisputeData stripeDisputeData,
-                                             LedgerTransaction transaction) {
+                                               LedgerTransaction transaction) {
         var balanceTransaction = stripeDisputeData.getBalanceTransactionList().get(0);
         var eventDetails = new DisputeLostEventDetails(transaction.getGatewayAccountId(), balanceTransaction.getNetAmount(),
                 Math.abs(stripeDisputeData.getAmount()), Math.abs(balanceTransaction.getFee()));
-        return new DisputeLost(idFromExternalId(stripeDisputeData.getResourceExternalId()),
+        return new DisputeLost(idFromExternalId(stripeDisputeData.getId()),
                 transaction.getTransactionId(), transaction.getServiceId(), transaction.getLive(), eventDetails,
                 stripeNotification.getCreated());
     }
@@ -153,7 +152,7 @@ public class StripeWebhookTaskHandler {
                                                                          StripeDisputeData stripeDisputeData,
                                                                          LedgerTransaction transaction) {
         var eventDetails = new DisputeEvidenceSubmittedEventDetails(transaction.getGatewayAccountId());
-        return new DisputeEvidenceSubmitted(idFromExternalId(stripeDisputeData.getResourceExternalId()),
+        return new DisputeEvidenceSubmitted(idFromExternalId(stripeDisputeData.getId()),
                 transaction.getTransactionId(), transaction.getServiceId(), transaction.getLive(), eventDetails,
                 stripeNotification.getCreated());
     }
