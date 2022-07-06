@@ -55,9 +55,8 @@ public class StripeCaptureHandler implements CaptureHandler {
 
             capturedCharge = captureWithPaymentIntentAPI(request);
 
-            List<Fee> feeList = generateFeeList(request.getCreatedDate(), request,
-                    capturedCharge.getFee().orElse(0L));
-            
+            List<Fee> feeList = generateFeeList(request, capturedCharge.getFee().orElse(0L));
+
             Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
 
             Long netTransferAmount = request.getAmount() - processingFee;
@@ -126,10 +125,10 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
     }
 
-    private List<Fee> generateFeeList(Instant createdDate, CaptureGatewayRequest request, Long stripeFee) {
+    private List<Fee> generateFeeList(CaptureGatewayRequest request, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
-                return StripeFeeCalculator.getFeeList(stripeFee, request, stripeGatewayConfig.getFeePercentage(),
-                        stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
+            return StripeFeeCalculator.getFeeList(stripeFee, request, stripeGatewayConfig.getFeePercentage(),
+                    stripeGatewayConfig.getRadarFeeInPence(), stripeGatewayConfig.getThreeDsFeeInPence());
         }
         return List.of();
     }
