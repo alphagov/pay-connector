@@ -108,9 +108,11 @@ public class CardCaptureService {
 
         List<Fee> feeList = captureResponse.getFeeList();
         feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee)).forEach(charge::addFee);
-        
+
         try {
-            sendToEventQueue(FeeIncurredEvent.from(charge));
+            if (!feeList.isEmpty()) {
+                sendToEventQueue(FeeIncurredEvent.from(charge));
+            }
         } catch (EventCreationException e) {
             LOG.warn(format("Failed to create fee incurred event [%s], exception: [%s]", charge.getExternalId(), e.getMessage()));
         }

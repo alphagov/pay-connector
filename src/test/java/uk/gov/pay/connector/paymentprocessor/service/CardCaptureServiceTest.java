@@ -222,6 +222,37 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
+    public void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() throws QueueException {
+
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWithFees("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
+
+        ChargeEntity chargeSpy = spy(charge);
+        mockChargeDaoOperations(chargeSpy);
+
+        worldpayWillRespondWithSuccess();
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
+
+        assertThat(response.isSuccessful(), is(true));
+        InOrder inOrder = Mockito.inOrder(chargeSpy);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
+        inOrder.verify(chargeSpy).setStatus(CAPTURE_SUBMITTED);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityCaptor.capture(), isNull());
+        assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURE_SUBMITTED.getValue()));
+
+        ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
+        verify(mockedPaymentProvider, times(1)).capture(request.capture());
+        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+
+        verifyNoInteractions(mockEventService);
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    @Test
     public void chargeIsCapturedAndEmailNotificationIsSentForDelayedCapture() {
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("sandbox", 1L, CAPTURE_APPROVED, gatewayTxId);
