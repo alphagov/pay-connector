@@ -30,6 +30,25 @@ public class StripeDisputeData {
     @JsonProperty("status")
     private String status;
 
+    public StripeDisputeData() {
+        // for  jackson
+    }
+
+    public StripeDisputeData(String id, String paymentIntentId, String status,
+                             Long amount, String reason, Long created,
+                             List<BalanceTransaction> balanceTransactionList,
+                             EvidenceDetails evidenceDetails
+    ) {
+        this.id = id;
+        this.status = status;
+        this.paymentIntentId = paymentIntentId;
+        this.amount = amount;
+        this.reason = reason;
+        this.created = created;
+        this.balanceTransactionList = balanceTransactionList;
+        this.evidenceDetails = evidenceDetails;
+    }
+
     public String getResourceType() {
         return resourceType;
     }

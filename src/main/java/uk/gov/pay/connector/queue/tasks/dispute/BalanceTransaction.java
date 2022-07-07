@@ -13,6 +13,16 @@ public class BalanceTransaction {
     @JsonProperty("net")
     private Long netAmount;
 
+    public BalanceTransaction() {
+        // for jackson
+    }
+
+    public BalanceTransaction(Long amount, Long fee, Long netAmount) {
+        this.amount = amount;
+        this.fee = fee;
+        this.netAmount = netAmount;
+    }
+
     public Long getAmount() {
         return amount;
     }
