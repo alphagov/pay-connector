@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
-import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -20,10 +19,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
-import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
-import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class CollectFeesForFailedPaymentsTaskHandler {
 

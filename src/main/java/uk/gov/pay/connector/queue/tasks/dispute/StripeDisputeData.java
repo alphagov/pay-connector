@@ -17,7 +17,7 @@ public class StripeDisputeData {
     @JsonProperty("amount")
     private Long amount;
     @JsonProperty("id")
-    private String resourceExternalId;
+    private String id;
     @JsonProperty("reason")
     private String reason;
     @JsonProperty("created")
@@ -42,8 +42,8 @@ public class StripeDisputeData {
         return amount;
     }
 
-    public String getResourceExternalId() {
-        return resourceExternalId;
+    public String getId() {
+        return id;
     }
 
     public String getReason() {
