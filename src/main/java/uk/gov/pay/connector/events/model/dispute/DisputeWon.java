@@ -1,13 +1,26 @@
 package uk.gov.pay.connector.events.model.dispute;
 
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeWonEventDetails;
 
 import java.time.ZonedDateTime;
+
+import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
 
 public class DisputeWon extends DisputeEvent {
     public DisputeWon(String resourceExternalId, String parentResourceExternalId, String serviceId,
                       Boolean live, DisputeWonEventDetails eventDetails, ZonedDateTime eventDate) {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, eventDate);
+    }
+
+    public static DisputeWon from(String gatewayDisputeId, ZonedDateTime eventDate,
+                                  LedgerTransaction transaction) {
+        return new DisputeWon(idFromExternalId(gatewayDisputeId),
+                transaction.getTransactionId(),
+                transaction.getServiceId(),
+                transaction.getLive(),
+                new DisputeWonEventDetails(transaction.getGatewayAccountId()),
+                eventDate);
     }
 
     @Override

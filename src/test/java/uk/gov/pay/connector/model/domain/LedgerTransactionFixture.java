@@ -72,6 +72,7 @@ public class LedgerTransactionFixture {
     private String refundedBy;
     private String refundedByUserEmail;
     private AuthorisationSummary authorisationSummary;
+    private String serviceId;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -186,6 +187,7 @@ public class LedgerTransactionFixture {
         var ledgerTransaction = new LedgerTransaction();
         ledgerTransaction.setState(new TransactionState(status));
         ledgerTransaction.setTransactionId(externalId);
+        ledgerTransaction.setServiceId(serviceId);
         ledgerTransaction.setAmount(amount);
         ledgerTransaction.setDescription(description);
         ledgerTransaction.setReference(reference);
@@ -379,6 +381,11 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withAuthorisationSummary(AuthorisationSummary authorisationSummary) {
         this.authorisationSummary = authorisationSummary;
+        return this;
+    }
+
+    public LedgerTransactionFixture withServiceId(String serviceId) {
+        this.serviceId = serviceId;
         return this;
     }
 }
