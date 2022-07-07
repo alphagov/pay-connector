@@ -251,11 +251,19 @@ public class StripeWebhookTaskHandlerTest {
                 .thenReturn(Optional.of(transaction));
         StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
         var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
-        assertThat(thrown.getMessage(), is("Unknown stripe dispute closed status: [status: charge_refunded, payment_intent: pi_1111111111]"));
+        assertThat(thrown.getMessage(), is("Unknown stripe dispute status: [status: charge_refunded, payment_intent: pi_1111111111]"));
     }
 
     @Test
     void shouldLogWhenDisputeUpdatedAndUnknownStatus() throws JsonProcessingException {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
         String finalPayload = payload
                 .replace(PLACEHOLDER_TYPE, "charge.dispute.updated")
                 .replace(PLACEHOLDER_STATUS, "needs_response");
@@ -272,6 +280,14 @@ public class StripeWebhookTaskHandlerTest {
 
     @Test
     void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresent() throws JsonProcessingException {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
         String finalPayload = payload
                 .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
                 .replace(PLACEHOLDER_STATUS, "needs_response")
