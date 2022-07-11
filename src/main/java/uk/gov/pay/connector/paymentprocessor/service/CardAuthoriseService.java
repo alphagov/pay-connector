@@ -30,6 +30,7 @@ import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import java.util.Map;
@@ -39,7 +40,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
-import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class CardAuthoriseService {
 
@@ -205,7 +205,7 @@ public class CardAuthoriseService {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
 
-        if (charge.getAuthorisationMode() != MOTO_API) {
+        if (charge.getAuthorisationMode() == AuthorisationMode.WEB) {
             getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
         }
 

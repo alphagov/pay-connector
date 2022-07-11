@@ -6,6 +6,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -61,6 +63,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -364,8 +367,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(nullValue()));
     }
 
-    @Test
-    void doAuthoriseShouldIgnoreCorporateCardSurchargeForChargeWithMotoApiAuthorisationMode() throws Exception {
+    @ParameterizedTest()
+    @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "WEB")
+    void doAuthoriseShouldIgnoreCorporateCardSurchargeForChargeWithNonWebAuthorisationMode(AuthorisationMode authorisationMode) throws Exception {
         mockRecordAuthorisationResult();
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -379,7 +383,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
-        charge.setAuthorisationMode(MOTO_API);
+        charge.setAuthorisationMode(authorisationMode);
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
