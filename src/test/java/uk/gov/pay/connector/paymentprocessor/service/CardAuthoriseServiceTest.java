@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -367,6 +368,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(nullValue()));
     }
 
+    @Disabled("Agreement and MOTO auth modes do not yet used shared authorise operation code")
     @ParameterizedTest()
     @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "WEB")
     void doAuthoriseShouldIgnoreCorporateCardSurchargeForChargeWithNonWebAuthorisationMode(AuthorisationMode authorisationMode) throws Exception {
@@ -396,6 +398,31 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
 
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
+
+    @Test
+    void doAuthoriseShouldThrowExceptionWhenCalledWithUnsupportedAuthorisationMode() throws Exception {
+        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
+        WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
+        GatewayResponse authResponse = gatewayResponseBuilder.withResponse(worldpayResponse).withSessionIdentifier(SESSION_IDENTIFIER).build();
+        providerWillRespondToAuthoriseWith(authResponse);
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCorporateCard(Boolean.TRUE)
+                .withCardType(PayersCardType.DEBIT)
+                .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
+                .build();
+
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
+                "Mr Test", CardExpiryDate.valueOf("12/99"), "VISA", CardType.DEBIT, null);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+
+        charge.setAuthorisationMode(AuthorisationMode.EXTERNAL);
+        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails));
+        assertThat(exception.getMessage(), is("Authorise operation does not support authorisation mode"));
     }
 
     @Test

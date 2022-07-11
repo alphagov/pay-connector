@@ -71,30 +71,39 @@ public class CardAuthoriseService {
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return authorisationService.executeAuthorise(chargeId, () -> {
-            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+        return authorisationService.executeAuthorise(chargeId, () -> authoriseOperation(chargeId, authCardDetails));
+    }
 
-            GatewayResponse<BaseAuthoriseResponse> operationResponse;
-            ChargeStatus newStatus;
+    private AuthorisationResponse authoriseOperation(String chargeId, AuthCardDetails authCardDetails) {
+        final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
 
-            try {
-                PaymentProvider paymentProvider = getPaymentProviderFor(charge);
-                CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-                operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+        GatewayResponse<BaseAuthoriseResponse> operationResponse;
+        ChargeStatus newStatus;
 
-                if (operationResponse.getBaseResponse().isEmpty()) {
-                    operationResponse.throwGatewayError();
-                }
+        try {
+            PaymentProvider paymentProvider = getPaymentProviderFor(charge);
+            CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
-                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-
-            } catch (GatewayException e) {
-                newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            switch(charge.getAuthorisationMode()) {
+                case WEB:
+                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Authorise operation does not support authorisation mode");
             }
 
-            return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
-        });
+            if (operationResponse.getBaseResponse().isEmpty()) {
+                operationResponse.throwGatewayError();
+            }
+
+            newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+
+        } catch (GatewayException e) {
+            newStatus = AuthorisationService.mapFromGatewayErrorException(e);
+            operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+        }
+
+        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
     }
 
     public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
