@@ -2,6 +2,7 @@ package uk.gov.pay.connector.common.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
+import uk.gov.pay.connector.charge.model.AddressEntity;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Address {
@@ -30,6 +31,10 @@ public class Address {
         this.city = city;
         this.county = county;
         this.country = country;
+    }
+
+    public static Address from(AddressEntity addressEntity) {
+        return new Address(addressEntity.getLine1(), addressEntity.getLine2(), addressEntity.getPostcode(), addressEntity.getCity(), addressEntity.getCounty(), addressEntity.getCountry());
     }
 
     public String getLine1() {

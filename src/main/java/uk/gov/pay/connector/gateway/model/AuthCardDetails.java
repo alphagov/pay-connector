@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -63,6 +64,19 @@ public class AuthCardDetails implements AuthorisationDetails {
         return new AuthCardDetails();
     }
 
+    public static AuthCardDetails of(PaymentInstrumentEntity paymentInstrumentEntity) {
+        var cardDetails = paymentInstrumentEntity.getCardDetails();
+        var authCardDetails = new AuthCardDetails();
+
+        authCardDetails.setCardBrand(cardDetails.getCardBrand());
+        authCardDetails.setCardHolder(cardDetails.getCardHolderName());
+        authCardDetails.setEndDate(cardDetails.getExpiryDate());
+        cardDetails.getBillingAddress()
+                .map(Address::from)
+                .ifPresent(authCardDetails::setAddress);
+        authCardDetails.setPayersCardType(PayersCardType.from(cardDetails.getCardType()));
+        return authCardDetails;
+    }
     public static AuthCardDetails of(AuthoriseRequest authoriseRequest, ChargeEntity chargeEntity, CardInformation cardInformation) {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(authoriseRequest.getCardNumber());

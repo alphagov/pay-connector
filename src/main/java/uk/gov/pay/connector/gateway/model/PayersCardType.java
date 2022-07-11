@@ -23,4 +23,15 @@ public enum PayersCardType {
                 return null;
         }
     }
+
+    public static PayersCardType from(CardType cardType) {
+        switch (cardType) {
+            case DEBIT:
+                return PayersCardType.DEBIT;
+            case CREDIT:
+                return PayersCardType.CREDIT;
+            default:
+                return null;
+        }
+    }
 }
