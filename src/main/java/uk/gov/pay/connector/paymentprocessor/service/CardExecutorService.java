@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
+import uk.gov.pay.connector.util.TimedThreadPoolExecutor;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.Map;
@@ -17,7 +18,6 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +42,7 @@ public class CardExecutorService {
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 1000;
     public static final int SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS = 10;
     private final MetricRegistry metricRegistry;
-
-    private ExecutorServiceConfig config;
-    private ExecutorService executor;
+    private final TimedThreadPoolExecutor timedExectuor;
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -58,9 +56,9 @@ public class CardExecutorService {
                 .setNameFormat("CardExecutorService-%d")
                 .build();
         this.metricRegistry = environment.metrics();
-        this.config = configuration.getExecutorServiceConfig();
+        ExecutorServiceConfig config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
-        this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
+        this.timedExectuor = new TimedThreadPoolExecutor(numberOfThreads, threadFactory, 60000, TimeUnit.MILLISECONDS);
         addShutdownHook();
     }
 
@@ -72,19 +70,19 @@ public class CardExecutorService {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             String className = CardExecutorService.class.getSimpleName();
             logger.info("Shutting down {}", className);
-            executor.shutdown();
+            timedExectuor.shutdown();
             logger.info("Awaiting for {} threads to terminate", className);
             try {
-                executor.awaitTermination(SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                timedExectuor.awaitTermination(SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.error("Error while waiting for {} threads to terminate", className);
             }
-            executor.shutdownNow();
+            timedExectuor.shutdownNow();
         }));
     }
 
     public ExecutorService getExecutor() {
-        return executor;
+        return timedExectuor;
     }
 
     // accepts a supplier function and executed that in a separate Thread of its own.
@@ -94,7 +92,7 @@ public class CardExecutorService {
         Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElse(Map.of());
         final long startTime = System.currentTimeMillis();
 
-        Future<T> futureObject = executor.submit(() -> {
+        Future<T> futureObject = timedExectuor.submit(() -> {
             MDC.setContextMap(mdcContextMap);
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
@@ -116,6 +114,8 @@ public class CardExecutorService {
                 throw (WebApplicationException) exception.getCause();
             } else if (exception.getCause() instanceof UnsupportedOperationException) {
                 throw (UnsupportedOperationException) exception.getCause();
+            } else if (exception.getCause() instanceof ExecutionException) {
+                logger.warn("Card operation task hit the timeout threshold and was interrupted");
             }
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {
