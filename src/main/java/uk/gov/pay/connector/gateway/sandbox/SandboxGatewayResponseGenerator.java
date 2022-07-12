@@ -39,7 +39,7 @@ public class SandboxGatewayResponseGenerator {
                 .build();
     }
 
-    private GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {
+    public GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseAuthoriseResponse() {
 
