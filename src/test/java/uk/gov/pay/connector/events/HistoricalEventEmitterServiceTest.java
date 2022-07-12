@@ -22,6 +22,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
+import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -65,6 +66,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -184,13 +189,13 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
                 .build();
 
         ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         chargeEntity.getEvents().add(firstEvent);
@@ -214,7 +219,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         chargeEntity.getEvents().add(authSuccessEvent);
@@ -232,7 +237,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
                 .build();
 
         chargeEntity.getEvents().add(firstEvent);
@@ -246,6 +251,103 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
+    public void executeShouldEmitGatewayTransactionIdSetEvent() {
+        chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayTransactionId("gateway-tx-id")
+                .build();
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .build();
+
+        chargeEntity.getEvents().add(firstEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService).emitAndRecordEvent(any(BackfillerGatewayTransactionIdSet.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldNotEmitGatewayTransactionIdSetEventWhenThereIsNoGatewayTransactionIdOnCharge() {
+        chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayTransactionId(null)
+                .build();
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .build();
+        chargeEntity.getEvents().add(firstEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(BackfillerGatewayTransactionIdSet.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeHasAuthorisationEvent() {
+        chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayTransactionId("gateway-tx-id")
+                .build();
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
+                .build();
+        ChargeEventEntity authorisedEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
+                .build();
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(authorisedEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(BackfillerGatewayTransactionIdSet.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeIsATelephonePaymentNotification() {
+        chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayTransactionId("gateway-tx-id")
+                .build();
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(CREATED)
+                .build();
+        ChargeEventEntity paymentNotificationEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(1))
+                .withCharge(chargeEntity)
+                .withChargeStatus(PAYMENT_NOTIFICATION_CREATED)
+                .build();
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(paymentNotificationEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, never()).emitAndRecordEvent(any(BackfillerGatewayTransactionIdSet.class), isNotNull());
+    }
+
+    @Test
     public void executeShouldNotEmitPaymentDetailsEnteredEventWithTerminalAuthenticationStateForNotificationPayment() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
@@ -256,7 +358,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         chargeEntity.getEvents().add(firstEvent);
@@ -296,7 +398,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().minusDays(10))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
         ChargeEventEntity capturedEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().minusSeconds(2))
@@ -398,13 +500,13 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now())
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
                 .build();
 
         ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         chargeEntity.getEvents().clear();
@@ -457,7 +559,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now())
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withChargeStatus(ENTERING_CARD_DETAILS)
                 .build();
 
         ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
@@ -469,7 +571,7 @@ public class HistoricalEventEmitterServiceTest {
         ChargeEventEntity thirdEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         chargeEntity.getEvents().clear();
@@ -499,7 +601,7 @@ public class HistoricalEventEmitterServiceTest {
         ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
         ChargeEventEntity firstEvent = getChargeEventEntity(chargeEntity, ChargeStatus.CREATED, eventDate);
-        ChargeEventEntity secondEvent = getChargeEventEntity(chargeEntity, ChargeStatus.ENTERING_CARD_DETAILS, eventDate);
+        ChargeEventEntity secondEvent = getChargeEventEntity(chargeEntity, ENTERING_CARD_DETAILS, eventDate);
         List<ChargeEventEntity> chargeEventEntities = List.of(firstEvent);
 
         chargeEntity.getEvents().clear();
