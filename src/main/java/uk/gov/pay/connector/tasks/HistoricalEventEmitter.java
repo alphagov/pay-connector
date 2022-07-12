@@ -17,6 +17,7 @@ import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
+import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -113,9 +115,10 @@ public class HistoricalEventEmitter {
         processFeeIncurredEvent(charge, forceEmission);
         processPaymentDetailEnteredEvent(chargeEventEntities, forceEmission);
         processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
+        processGatewayTransactionIdSetEvent(charge, chargeEventEntities, forceEmission);
     }
 
-    private void processFeeIncurredEvent(ChargeEntity charge,  boolean forceEmission) {
+    private void processFeeIncurredEvent(ChargeEntity charge, boolean forceEmission) {
         // We only want to emit the FEE_INCURRED event for charges using the new Stripe pricing. The original Stripe
         // pricing has no FeeType
         if (!filterFeesForStripeV2(charge.getFees()).isEmpty()) {
@@ -286,7 +289,7 @@ public class HistoricalEventEmitter {
         // checking against any terminal authentication transition
         chargeEventEntities
                 .stream()
-                .filter(event -> isNotATelephonePaymentNotification(chargeEventEntities))
+                .filter(event -> !isATelephonePaymentNotification(chargeEventEntities))
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(chargeEventEntity -> (chargeEventEntity.getChargeEntity().getAuthorisationMode() == MOTO_API)
                         ? PaymentDetailsSubmittedByAPI.from(chargeEventEntity)
@@ -313,8 +316,37 @@ public class HistoricalEventEmitter {
         }
     }
 
-    private boolean isNotATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
-        return !chargeEventEntities.stream()
+    /**
+     * GatewayTransactionId is set before a charge is authorised (for Worldpay payments). gateway_transaction_id is included in PAYMENT_ENTERED_DETAILS event.
+     * But sometimes, the thread could terminate without updating charge status and the charge will eventually expire.
+     * In this case gateway_transaction_id is not emitted to Ledger. Backfill gateway_trasaction_id so the charge can be expunged.
+     */
+    private void processGatewayTransactionIdSetEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        if (isBlank(charge.getGatewayTransactionId())) {
+            return;
+        }
+
+        boolean hasEnteringCardDetailsEvent = chargeEventEntities
+                .stream().anyMatch(event -> ENTERING_CARD_DETAILS.equals(event.getStatus()));
+
+        if (!hasEnteringCardDetailsEvent || isATelephonePaymentNotification(chargeEventEntities)) {
+            return;
+        }
+
+        boolean hasAnyValidAuthorisationState = chargeEventEntities
+                .stream()
+                .anyMatch(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event));
+
+        if (!hasAnyValidAuthorisationState) {
+            BackfillerGatewayTransactionIdSet backfillerGatewayTransactionIdSet = BackfillerGatewayTransactionIdSet.from(charge);
+            if (forceEmission || !emittedEventDao.hasBeenEmittedBefore(backfillerGatewayTransactionIdSet)) {
+                eventService.emitAndRecordEvent(backfillerGatewayTransactionIdSet, getDoNotRetryEmitUntilDate());
+            }
+        }
+    }
+
+    private boolean isATelephonePaymentNotification(List<ChargeEventEntity> chargeEventEntities) {
+        return chargeEventEntities.stream()
                 .map(ChargeEventEntity::getStatus)
                 .collect(Collectors.toList()).contains(PAYMENT_NOTIFICATION_CREATED);
     }
