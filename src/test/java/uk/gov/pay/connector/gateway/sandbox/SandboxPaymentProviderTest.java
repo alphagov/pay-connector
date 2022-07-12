@@ -3,6 +3,10 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -20,8 +24,11 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +42,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 
 public class SandboxPaymentProviderTest {
 
@@ -92,7 +100,38 @@ public class SandboxPaymentProviderTest {
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
         assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
-    }    
+    }
+    @Test
+    void authorise_shouldBeAuthorisedWithUserNotPresetSuccessPaymentInstrument() {
+        var cardNumber = AUTH_SUCCESS_CARD_NUMBER;
+        var cardDetails = new CardDetailsEntity(
+                LastDigitsCardNumber.of(cardNumber.substring(cardNumber.length() - 4)),
+                FirstDigitsCardNumber.of(cardNumber.substring(0, 6)),
+                "A-cardholder-name",
+                CardExpiryDate.valueOf("03/30"),
+                "visa",
+                CardType.DEBIT
+        );
+        var paymentInstrument = aPaymentInstrumentEntity(Instant.now())
+                .withCardDetails(cardDetails)
+                .build();
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withPaymentInstrument(paymentInstrument).build();
+        GatewayResponse gatewayResponse = provider.authoriseUserNotPresent(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
+
+        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
+        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
+        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
+        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+        assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
+    }
     
     @Test
     void authorise_shouldSetRecurringAuthToken() {

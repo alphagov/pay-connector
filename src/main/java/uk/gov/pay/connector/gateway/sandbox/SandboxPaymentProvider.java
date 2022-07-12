@@ -57,12 +57,20 @@ public class SandboxPaymentProvider implements PaymentProvider {
     
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
-        return authorise(request);
+        return authorise(request.getAuthCardDetails().getCardNo());
     }
 
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
-        return authorise(request);
+        return authorise(request.getAuthCardDetails().getCardNo());
+    }
+
+    @Override
+    public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+        var paymentInstrumentEntity = charge.getPaymentInstrument()
+                .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
+        var lastDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString();
+        return last4DigitsSandboxResponseGenerator.getSandboxGatewayResponse(lastDigitsCardNumber);
     }
 
     /**
@@ -70,10 +78,8 @@ public class SandboxPaymentProvider implements PaymentProvider {
      * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
      * executed.
      */
-    private GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
-        String cardNumber = request.getAuthCardDetails().getCardNo();
+    private GatewayResponse authorise(String cardNumber) {
         var gatewayResponse = fullCardNumberSandboxResponseGenerator.getSandboxGatewayResponse(cardNumber);
-
         return gatewayResponse;
     }
 
