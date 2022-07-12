@@ -12,6 +12,8 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
+
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class AuthCardDetailsToCardDetailsEntityConverter {
@@ -50,11 +52,17 @@ public class AuthCardDetailsToCardDetailsEntityConverter {
     }
 
     private static boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
-        return authCardDetails.getCardNo().length() > 6;
+        return Optional.ofNullable(authCardDetails)
+                .map(AuthCardDetails::getCardNo)
+                .map(cardNumber -> cardNumber.length() > 6)
+                .orElse(false);
     }
 
     private static boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
-        return authCardDetails.getCardNo().length() >= 4;
+        return Optional.ofNullable(authCardDetails)
+                .map(AuthCardDetails::getCardNo)
+                .map(cardNumber -> cardNumber.length() >= 4)
+                .orElse(false);
     }
 
 }

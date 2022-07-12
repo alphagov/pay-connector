@@ -108,13 +108,13 @@ public class DatabaseTestHelper {
                                 "description, created_date, reference, version, email, language, " +
                                 "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                                 "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
-                                "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode, updated_date) " +
+                                "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode, updated_date, payment_instrument_id) " +
                                 "VALUES(:id, :external_id, :amount, " +
                                 ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                                 ":description, :created_date, :reference, :version, :email, :language, " +
                                 ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                                 ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
-                                ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate)")
+                                ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, :paymentInstrumentId)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -142,6 +142,7 @@ public class DatabaseTestHelper {
                         .bind("savePaymentInstrumentToAgreement", addChargeParams.getSavePaymentInstrumentToAgreement())
                         .bind("authorisationMode", addChargeParams.getAuthorisationMode())
                         .bind("updatedDate", addChargeParams.getUpdatedDate() != null ? LocalDateTime.ofInstant(addChargeParams.getUpdatedDate(), UTC) : null)
+                        .bind("paymentInstrumentId", addChargeParams.getPaymentInstrumentId())
                         .execute());
     }
 
@@ -178,6 +179,7 @@ public class DatabaseTestHelper {
                                     "card_brand, " +
                                     "expiry_date, " +
                                     "last_digits_card_number, " +
+                                    "first_digits_card_number, " +
                                     "cardholder_name, " +
                                     "address_line1, " +
                                     "address_line2, " +
@@ -195,6 +197,7 @@ public class DatabaseTestHelper {
                                     ":card_brand, " +
                                     ":expiry_date, " +
                                     ":last_digits_card_number, " +
+                                    ":first_digits_card_number, " +
                                     ":cardholder_name, " +
                                     ":address_line1, " +
                                     ":address_line2, " +
@@ -212,6 +215,7 @@ public class DatabaseTestHelper {
                         .bind("card_brand", addPaymentInstrumentParams.getCardBrand())
                         .bind("expiry_date", addPaymentInstrumentParams.getExpiryDate().toString())
                         .bind("last_digits_card_number", addPaymentInstrumentParams.getLastDigitsCardNumber().toString())
+                        .bind("first_digits_card_number", addPaymentInstrumentParams.getFirstDigitsCardNumber().toString())
                         .bind("cardholder_name", addPaymentInstrumentParams.getCardholderName())
                         .bind("address_line1", addPaymentInstrumentParams.getAddressLine1())
                         .bind("address_line2", addPaymentInstrumentParams.getAddressLine2())
