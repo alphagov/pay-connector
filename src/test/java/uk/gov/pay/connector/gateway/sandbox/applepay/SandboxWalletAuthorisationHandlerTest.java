@@ -2,10 +2,12 @@ package uk.gov.pay.connector.gateway.sandbox.applepay;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gateway.sandbox.SandboxGatewayResponseGenerator;
+import uk.gov.pay.connector.gateway.sandbox.SandboxLast4DigitsCardNumbers;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 
@@ -27,7 +29,7 @@ public class SandboxWalletAuthorisationHandlerTest {
 
     @Before
     public void setup() {
-        sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler();
+        sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler(new SandboxGatewayResponseGenerator(new SandboxLast4DigitsCardNumbers()));
     }
 
     @Test
