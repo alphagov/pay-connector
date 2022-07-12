@@ -499,7 +499,7 @@ public class DatabaseFixtures {
             this.allowMoto = allowMoto;
             return this;
         }
-        
+
         public TestAccount withAllowAuthApi(boolean allowAuthApi) {
             this.allowAuthApi = allowAuthApi;
             return this;
@@ -570,7 +570,7 @@ public class DatabaseFixtures {
         }
 
     }
-    
+
     public class TestAgreement {
         Long agreementId = RandomUtils.nextLong();
         Long gatewayAccountId = RandomUtils.nextLong();
@@ -581,7 +581,7 @@ public class DatabaseFixtures {
         Instant createdDate = Instant.now();
         boolean live = false;
         String serviceId = "service-id";
-        
+
         public Long getAgreementId() {
             return agreementId;
         }
@@ -618,6 +618,7 @@ public class DatabaseFixtures {
             this.agreementId = agreementId;
             return this;
         }
+
         public DatabaseFixtures.TestAgreement withExternalId(String externalId) {
             this.externalId = externalId;
             return this;
@@ -700,6 +701,7 @@ public class DatabaseFixtures {
         private ZonedDateTime parityCheckDate;
         Long gatewayCredentialId;
         private AuthorisationMode authorisationMode = WEB;
+        private Instant updatedDate;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -757,6 +759,11 @@ public class DatabaseFixtures {
 
         public TestCharge withCreatedDate(Instant createdDate) {
             this.createdDate = createdDate;
+            return this;
+        }
+
+        public TestCharge withUpdatedDate(Instant updatedDate) {
+            this.updatedDate = updatedDate;
             return this;
         }
 
@@ -820,6 +827,7 @@ public class DatabaseFixtures {
                     .withParityCheckDate(parityCheckDate)
                     .withGatewayCredentialId(gatewayCredentialId)
                     .withAuthorisationMode(authorisationMode)
+                    .withUpdatedDate(updatedDate)
                     .build());
 
             if (cardDetails != null) {

@@ -46,21 +46,21 @@ public class DatabaseTestHelper {
     public void addGatewayAccount(AddGatewayAccountParams params) {
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO gateway_accounts (id, external_id, " +
-                        "service_name, type, description, analytics_id, email_collection_mode, " +
-                        "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
-                        "corporate_debit_card_surcharge_amount, " +
-                        "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
-                        "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
-                        "allow_telephone_payment_notifications, allow_authorisation_api, recurring_enabled," +
-                        "disabled, disabled_reason, provider_switch_enabled, service_id) " +
-                        "VALUES (:id, :external_id, :service_name, :type, " +
-                        ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
-                        ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
-                        ":corporate_prepaid_debit_card_surcharge_amount, " +
-                        ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
-                        ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
-                        ":allow_telephone_payment_notifications, :allow_authorisation_api, :recurring_enabled," +
-                        ":disabled, :disabled_reason, :provider_switch_enabled, :service_id)")
+                                "service_name, type, description, analytics_id, email_collection_mode, " +
+                                "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
+                                "corporate_debit_card_surcharge_amount, " +
+                                "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
+                                "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
+                                "allow_telephone_payment_notifications, allow_authorisation_api, recurring_enabled," +
+                                "disabled, disabled_reason, provider_switch_enabled, service_id) " +
+                                "VALUES (:id, :external_id, :service_name, :type, " +
+                                ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
+                                ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
+                                ":corporate_prepaid_debit_card_surcharge_amount, " +
+                                ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
+                                ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
+                                ":allow_telephone_payment_notifications, :allow_authorisation_api, :recurring_enabled," +
+                                ":disabled, :disabled_reason, :provider_switch_enabled, :service_id)")
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("service_name", params.getServiceName())
@@ -104,17 +104,17 @@ public class DatabaseTestHelper {
         }
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO charges(id, external_id, amount, " +
-                        "status, gateway_account_id, return_url, gateway_transaction_id, " +
-                        "description, created_date, reference, version, email, language, " +
-                        "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
-                        "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
-                        "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode) " +
-                        "VALUES(:id, :external_id, :amount, " +
-                        ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
-                        ":description, :created_date, :reference, :version, :email, :language, " +
-                        ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
-                        ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
-                        ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode)")
+                                "status, gateway_account_id, return_url, gateway_transaction_id, " +
+                                "description, created_date, reference, version, email, language, " +
+                                "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
+                                "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
+                                "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode, updated_date) " +
+                                "VALUES(:id, :external_id, :amount, " +
+                                ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
+                                ":description, :created_date, :reference, :version, :email, :language, " +
+                                ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
+                                ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
+                                ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -141,9 +141,10 @@ public class DatabaseTestHelper {
                         .bind("agreementId", addChargeParams.getAgreementId())
                         .bind("savePaymentInstrumentToAgreement", addChargeParams.getSavePaymentInstrumentToAgreement())
                         .bind("authorisationMode", addChargeParams.getAuthorisationMode())
+                        .bind("updatedDate", addChargeParams.getUpdatedDate() != null ? LocalDateTime.ofInstant(addChargeParams.getUpdatedDate(), UTC) : null)
                         .execute());
     }
-    
+
     public void addAgreement(AddAgreementParams addAgreementParams) {
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO agreements(id, external_id, service_id, created_date, " +
