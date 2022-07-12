@@ -368,6 +368,7 @@ class ChargeServiceTest {
         chargeService.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
 
         verify(chargeSpy).setStatus(ENTERING_CARD_DETAILS);
+        verify(chargeSpy).setUpdatedDate(any());
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
 
@@ -383,6 +384,7 @@ class ChargeServiceTest {
         verify(mockStateTransitionService).offerPaymentStateTransition(chargeSpy.getExternalId(), CREATED,
                 ENTERING_CARD_DETAILS, chargeEvent);
 
+        verify(chargeSpy).setUpdatedDate(any());
         verify(mockTaskQueueService).offerTasksOnStateTransition(chargeSpy);
     }
 

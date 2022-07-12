@@ -87,6 +87,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -251,7 +252,7 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
             checkIfGatewayAccountDisabled(gatewayAccount);
-            
+
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             var authorisationMode = chargeRequest.getAuthorisationMode();
@@ -748,6 +749,8 @@ public class ChargeService {
     ) {
         ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
         charge.setStatus(targetChargeState);
+
+        charge.setUpdatedDate(Instant.now());
         ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
 
         if (shouldEmitPaymentStateTransitionEvents) {
@@ -779,6 +782,7 @@ public class ChargeService {
 
         return PaymentGatewayStateTransitions.getEventForForceUpdate(targetChargeState).map(eventClass -> {
             charge.setStatusIgnoringValidTransitions(targetChargeState);
+            charge.setUpdatedDate(Instant.now());
             ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventDate);
 
             if (shouldEmitPaymentStateTransitionEvents) {
@@ -929,7 +933,7 @@ public class ChargeService {
             throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
         }
     }
-    
+
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());

@@ -212,6 +212,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Enumerated(EnumType.STRING)
     private AuthorisationMode authorisationMode;
 
+    @Column(name = "updated_date")
+    @JsonIgnore
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
+    @Schema(hidden = true)
+    private Instant updatedDate;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -573,6 +579,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
+    }
+
+    public void setUpdatedDate(Instant updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public Instant getUpdatedDate() {
+        return updatedDate;
     }
 
     public static final class WebChargeEntityBuilder {

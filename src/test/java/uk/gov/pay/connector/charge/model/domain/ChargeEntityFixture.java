@@ -70,6 +70,7 @@ public class ChargeEntityFixture {
     private boolean savePaymentInstrumentToAgreement = false;
     private PaymentInstrumentEntity paymentInstrument = null;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+    private Instant updatedDate;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -166,6 +167,7 @@ public class ChargeEntityFixture {
         chargeEntity.setExemption3ds(exemption3ds);
         chargeEntity.setAgreementId(agreementId);
         chargeEntity.setPaymentInstrument(paymentInstrument);
+        chargeEntity.setUpdatedDate(updatedDate);
 
         if (this.fees != null) {
             fees.stream().forEach(partialFee -> {
@@ -360,4 +362,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
+    public ChargeEntityFixture withUpdatedDate(Instant updatedDate){
+        this.updatedDate = updatedDate;
+        return this;
+    }
 }

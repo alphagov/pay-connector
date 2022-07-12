@@ -42,6 +42,7 @@ public class AddChargeParams {
     private final String agreementId;
     private final boolean savePaymentInstrumentToAgreement;
     private final AuthorisationMode authorisationMode;
+    private final Instant updatedDate;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -71,6 +72,7 @@ public class AddChargeParams {
         agreementId = builder.agreementId;
         savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         authorisationMode = builder.authorisationMode;
+        this.updatedDate = builder.updatedDate;
     }
 
     public Long getChargeId() {
@@ -181,6 +183,10 @@ public class AddChargeParams {
         return authorisationMode;
     }
 
+    public Instant getUpdatedDate() {
+        return updatedDate;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -209,6 +215,7 @@ public class AddChargeParams {
         private String agreementId;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+        private Instant updatedDate;
 
         private AddChargeParamsBuilder() {
         }
@@ -350,6 +357,11 @@ public class AddChargeParams {
         
         public AddChargeParamsBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withUpdatedDate(Instant updatedDate) {
+            this.updatedDate = updatedDate;
             return this;
         }
 

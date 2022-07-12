@@ -33,6 +33,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private static final String STATUS = "status";
     private static final String CREATED_DATE = "createdDate";
+    private static final String UPDATED_DATE = "updatedDate";
     private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE =
             "WHERE (c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus)" +
                     "AND NOT EXISTS (" +
@@ -128,6 +129,30 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
 
         List<Predicate> predicates = buildParamPredicates(cb, charge, date, statuses);
+        cq.select(charge)
+                .where(predicates.toArray(new Predicate[]{}))
+                .orderBy(cb.desc(charge.get(CREATED_DATE)));
+        Query query = entityManager.get().createQuery(cq);
+
+        return query.getResultList();
+    }
+
+    public List<ChargeEntity> findChargesByCreatedUpdatedDatesAndWithStatusIn(Instant createdBeforeDate,
+                                                                              Instant updatedBeforeDate,
+                                                                              List<ChargeStatus> statuses) {
+        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
+        CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
+        Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
+
+        List<Predicate> predicates = buildParamPredicates(cb, charge, createdBeforeDate, statuses);
+
+        if (updatedBeforeDate != null) {
+            predicates.add(cb.or(
+                    cb.isNull(charge.get(UPDATED_DATE)),
+                    cb.lessThan(charge.get(UPDATED_DATE), updatedBeforeDate)
+            ));
+        }
+
         cq.select(charge)
                 .where(predicates.toArray(new Predicate[]{}))
                 .orderBy(cb.desc(charge.get(CREATED_DATE)));

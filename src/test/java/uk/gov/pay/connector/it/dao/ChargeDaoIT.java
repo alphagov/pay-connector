@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.Duration.ofMinutes;
 import static java.time.ZonedDateTime.now;
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -232,6 +233,24 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getServiceId(), is(serviceId));
+    }
+
+    @Test
+    public void shouldSetUpdatedDateOnChargeCorrectly() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withUpdatedDate(Instant.parse("2022-12-03T10:15:30Z"))
+                .build();
+
+        assertThat(chargeEntity.getId(), is(nullValue()));
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getUpdatedDate().toString(), is("2022-12-03T10:15:30Z"));
     }
 
     @Test
@@ -521,7 +540,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(Instant.now().minus(Duration.ofMinutes(30)))
+                .withCreatedDate(Instant.now().minus(ofMinutes(30)))
                 .insert();
 
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
@@ -529,6 +548,42 @@ public class ChargeDaoIT extends DaoITestBase {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(Instant.now().minus(Duration.ofHours(1)), chargeStatuses);
 
         assertThat(charges.size(), is(0));
+    }
+
+    @Test
+    public void findChargesByCreatedUpdatedDatesAndWithStatusIn_shouldReturnChargesCorrectly() {
+        TestCharge chargeCreatedBeforeDateAndUpdateDateNullShouldReturn = createCharge(Instant.now().minus(ofMinutes(40)), null, CREATED);
+        TestCharge chargeUpdatedBeforeDateShouldReturn = createCharge(Instant.now().minus(ofMinutes(40)), Instant.now().minus(ofMinutes(15)), CREATED);
+        TestCharge chargeCreatedWithInLast20MinutesShouldExclude = createCharge(Instant.now().minus(ofMinutes(20)), Instant.now().minus(ofMinutes(15)), ENTERING_CARD_DETAILS);
+        TestCharge chargeUpdatedWithInLast3MinutesShouldExclude = createCharge(Instant.now().minus(ofMinutes(40)), Instant.now().minus(ofMinutes(3)), ENTERING_CARD_DETAILS);
+        TestCharge chargeWithStatusNotQueriedShouldExclude = createCharge(Instant.now().minus(ofMinutes(40)), Instant.now().minus(ofMinutes(3)), AUTHORISATION_3DS_READY);
+
+        ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
+
+        List<ChargeEntity> charges = chargeDao.findChargesByCreatedUpdatedDatesAndWithStatusIn(
+                Instant.now().minus(Duration.ofMinutes(30)),
+                Instant.now().minus(ofMinutes(10)),
+                chargeStatuses);
+
+        assertThat(charges.size(), is(2));
+
+        assertThat(charges, containsInAnyOrder(
+                hasProperty("externalId", is(chargeCreatedBeforeDateAndUpdateDateNullShouldReturn.externalChargeId)),
+                hasProperty("externalId", is(chargeUpdatedBeforeDateShouldReturn.externalChargeId))
+        ));
+    }
+
+    private TestCharge createCharge(Instant createdDate, Instant updatedDate, ChargeStatus status) {
+        return DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(nextLong())
+                .withExternalChargeId(RandomIdGenerator.newId())
+                .withCreatedDate(createdDate)
+                .withUpdatedDate(updatedDate)
+                .withChargeStatus(status)
+                .insert();
     }
 
     @Test
