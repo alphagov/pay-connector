@@ -12,7 +12,18 @@ public enum PayersCardType {
     DEBIT,
     CREDIT,
     CREDIT_OR_DEBIT;
-    
+
+    public static PayersCardType from(CardType cardType) {
+        switch (cardType) {
+            case DEBIT:
+                return PayersCardType.DEBIT;
+            case CREDIT:
+                return PayersCardType.CREDIT;
+            default:
+                return null;
+        }
+    }
+
     public static CardType toCardType(PayersCardType payersCardType) {
         switch (payersCardType) {
             case DEBIT:

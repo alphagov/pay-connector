@@ -16,11 +16,11 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 
 class AuthCardDetailsTest {
 
-    private final CardInformation cardInformation = CardInformationFixture.aCardInformation().build();
     private final AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Joe");
+    private final CardInformation cardInformation = CardInformationFixture.aCardInformation().build();
 
     @Test
-    void shouldReturnAuthCardDetailsWithCardAndAddressDetail() {
+    void shouldReturnAuthCardDetailsWithCardAndAddressDetailFromAuthoriseRequest() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .build();
@@ -42,7 +42,7 @@ class AuthCardDetailsTest {
     }
 
     @Test
-    void shouldReturnAuthCardDetailsWithOutAddress() {
+    void shouldReturnAuthCardDetailsWithoutAddressFromAuthoriseRequest() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .build();
 
@@ -54,13 +54,14 @@ class AuthCardDetailsTest {
 
     private void assertAuthCardDetails(AuthCardDetails authCardDetails, CardInformation cardInformation) {
         assertThat(authCardDetails.getCardNo(), is("4242424242424242"));
+        assertThat(authCardDetails.getCvc(), is("123"));
         assertThat(authCardDetails.getCardHolder(), is("Joe"));
         assertThat(authCardDetails.getEndDate().toString(), is("11/99"));
-        assertThat(authCardDetails.getCvc(), is("123"));
 
         assertThat(authCardDetails.getCardBrand(), is(cardInformation.getBrand()));
         assertThat(authCardDetails.isCorporateCard(), is(cardInformation.isCorporate()));
         assertThat(authCardDetails.getPayersCardType(), is(CardidCardType.toPayersCardType(cardInformation.getType())));
         assertThat(authCardDetails.getPayersCardPrepaidStatus(), is(cardInformation.getPrepaidStatus()));
     }
+
 }

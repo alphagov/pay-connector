@@ -29,6 +29,7 @@ import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -67,6 +68,7 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -107,6 +109,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TI
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -163,6 +166,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     private ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
 
     @Mock
+    private PaymentInstrumentEntityToAuthCardDetailsConverter mockPaymentInstrumentEntityToAuthCardDetailsConverter;
+
+    @Mock
     private ConnectorConfiguration mockConfiguration;
 
     @Mock
@@ -207,6 +213,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 chargeService,
                 new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging),
                 chargeEligibleForCaptureService,
+                mockPaymentInstrumentEntityToAuthCardDetailsConverter,
                 mockEnvironment);
     }
 
@@ -556,7 +563,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    void shouldRespondAuthorisationError() throws Exception {
+    void doAuthoriseWeb_shouldRespondAuthorisationError() throws Exception {
         mockRecordAuthorisationResult();
         providerWillError();
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -957,6 +964,44 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
+    @Test
+    void doAuthoriseUserNotPresent_shouldRespondAuthorisationSuccess() throws Exception {
+        mockRecordAuthorisationResult();
+        providerWillAuthoriseForUserNotPresentPayment();
+
+        var paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-12T10:00:00Z"))
+                .withCardDetails(cardDetailsEntity)
+                .build();
+        var authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+
+        charge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
+        charge.setPaymentInstrument(paymentInstrumentEntity);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockPaymentInstrumentEntityToAuthCardDetailsConverter.convert(paymentInstrumentEntity)).thenReturn(authCardDetails);
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthoriseUserNotPresent(charge);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(cardDetailsEntity));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
+
+    @Test
+    void doAuthoriseUserNotPresent_shouldThrowExceptionIfNoPaymentInstrument() throws Exception {
+        charge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
+        charge.setPaymentInstrument(null);
+
+        assertThrows(IllegalArgumentException.class, () -> cardAuthorisationService.doAuthoriseUserNotPresent(charge));
+    }
+
     private void providerWillRespondToAuthoriseWith(GatewayResponse value) throws Exception {
         when(mockedPaymentProvider.authorise(any(), any())).thenReturn(value);
 
@@ -966,6 +1011,13 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillRespondToAuthoriseMotoApiWith(GatewayResponse authResponse) throws GatewayException {
         when(mockedPaymentProvider.authoriseMotoApi(any())).thenReturn(authResponse);
+
+        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
+    }
+
+    private void providerWillRespondToAuthoriseUserNotPresentWith(GatewayResponse authResponse) throws GatewayException {
+        when(mockedPaymentProvider.authoriseUserNotPresent(any(), eq(charge))).thenReturn(authResponse);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
@@ -981,6 +1033,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
         providerWillRespondToAuthoriseMotoApiWith(authResponse);
+    }
+
+    private void providerWillAuthoriseForUserNotPresentPayment() throws Exception {
+        GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
+        providerWillRespondToAuthoriseUserNotPresentWith(authResponse);
     }
 
     private void epdqProviderWillRequire3ds() throws Exception {
