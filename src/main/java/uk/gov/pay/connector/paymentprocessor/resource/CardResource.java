@@ -154,7 +154,7 @@ public class CardResource {
     public Response authoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
                                     @PathParam("chargeId") String chargeId,
                                     @Valid AuthCardDetails authCardDetails) {
-        AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
+        AuthorisationResponse response = cardAuthoriseService.doAuthoriseWeb(chargeId, authCardDetails);
 
         return response.getGatewayError().map(this::handleError)
                 .orElseGet(() -> response.getAuthoriseStatus().map(status -> handleAuthResponse(chargeId, status))
