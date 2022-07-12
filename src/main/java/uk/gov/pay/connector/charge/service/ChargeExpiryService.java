@@ -136,8 +136,9 @@ public class ChargeExpiryService {
         Instant tokenExpiryThreshold = getExpiryThresholdForTokens();
         int numberOfTokensDeleted = deleteTokensOlderThanSpecifiedDate(tokenExpiryThreshold);
         logger.info("Tokens deleted - number_of_tokens={}, since_date={}", numberOfTokensDeleted, tokenExpiryThreshold);
-        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date={}",
-                chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
+        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, updated_before={}, awaiting_capture_date={}",
+                chargesToExpire.size(), getExpiryDateForRegularCharges(), getDateToExpireChargesUpdatedBefore(),
+                getExpiryDateForAwaitingCaptureRequest());
 
         return expire(chargesToExpire);
     }
@@ -156,7 +157,8 @@ public class ChargeExpiryService {
     }
 
     private List<ChargeEntity> getChargesToExpireWithRegularExpiryThreshold() {
-        return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(),
+        return chargeDao.findChargesByCreatedUpdatedDatesAndWithStatusIn(getExpiryDateForRegularCharges(),
+                getDateToExpireChargesUpdatedBefore(),
                 ExpirableChargeStatus.getValuesAsStream()
                         .filter(ExpirableChargeStatus::isRegularThresholdType)
                         .map(ExpirableChargeStatus::getChargeStatus)
@@ -322,6 +324,12 @@ public class ChargeExpiryService {
         Duration chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
         return clock.instant().minus(chargeExpiryWindowSeconds);
+    }
+
+    private Instant getDateToExpireChargesUpdatedBefore() {
+        Duration chargeUpdatedWindowSeconds = chargeSweepConfig.getSkipExpiringChargesLastUpdatedInSeconds();
+        logger.debug("Charge updated window size in seconds: [{}]", chargeUpdatedWindowSeconds.getSeconds());
+        return clock.instant().minus(chargeUpdatedWindowSeconds);
     }
 
     private Instant getExpiryDateForAwaitingCaptureRequest() {
