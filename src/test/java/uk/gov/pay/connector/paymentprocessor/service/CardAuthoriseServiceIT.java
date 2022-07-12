@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -26,7 +27,9 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardAuthoriseServiceIT extends ChargingITestBase {
     private final String SUCCESS_LAST_FOUR_DIGITS = "4242";
+    private final String SUCCESS_FIRST_SIX_DIGITS = "424242";
     private final String DECLINE_LAST_FOUR_DIGITS = "0002";
+    private final String DECLINE_FIRST_SIX_DIGITS = "400000";
 
     public CardAuthoriseServiceIT() {
         super("sandbox");
@@ -34,7 +37,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
     
     @Test
     public void shouldAuthoriseSandboxWebPayment() {
-        addCharge("external-charge-id", null);
+        addCharge("external-charge-id", null, null);
         var response = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class)
                 .doAuthoriseWeb("external-charge-id", AuthCardDetailsFixture.anAuthCardDetails().build());
         assertThat(response.getGatewayError(), is(Optional.empty()));
@@ -43,7 +46,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
 
     @Test
     public void shouldSuccessfullyAuthoriseSandboxUserNotPresentPayment() {
-        addCharge("success-charge-external-id", SUCCESS_LAST_FOUR_DIGITS);
+        addCharge("success-charge-external-id", SUCCESS_FIRST_SIX_DIGITS, SUCCESS_LAST_FOUR_DIGITS);
 
         var successCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("success-charge-external-id");
 
@@ -54,7 +57,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
 
     @Test
     public void shouldDeclineAuthoriseSandboxUserNotPresentPayment() {
-        addCharge("decline-charge-external-id", DECLINE_LAST_FOUR_DIGITS);
+        addCharge("decline-charge-external-id", DECLINE_FIRST_SIX_DIGITS, DECLINE_LAST_FOUR_DIGITS);
 
         var declineCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("decline-charge-external-id");
 
@@ -63,7 +66,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         assertThat(declineResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
     }
 
-    private void addCharge(String externalId, String last4DigitsCardNumber) {
+    private void addCharge(String externalId, String first6DigitsCardNumber, String last4DigitsCardNumber) {
         var chargeParams = anAddChargeParams()
                 .withExternalChargeId(externalId)
                 .withPaymentProvider(SANDBOX.getName())
@@ -77,6 +80,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
                     anAddPaymentInstrumentParams()
                             .withPaymentInstrumentId(paymentInstrumentId)
                             .withExternalPaymentInstrumentId(String.valueOf(nextInt()))
+                            .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(first6DigitsCardNumber))
                             .withLastDigitsCardNumber(LastDigitsCardNumber.of(last4DigitsCardNumber))
                             .build()
             );
