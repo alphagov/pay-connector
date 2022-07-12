@@ -6,7 +6,6 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -39,15 +38,16 @@ import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureRespon
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayResponseGenerator {
+public class SandboxPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
-
-    private SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
+    private final SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
+    private final SandboxGatewayResponseGenerator fullCardNumberSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxFullCardNumbers());
+    private final SandboxGatewayResponseGenerator last4DigitsSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxLast4DigitsCardNumbers());
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler();
+        this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler(last4DigitsSandboxResponseGenerator);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
      */
     private GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
-        var gatewayResponse = getSandboxGatewayResponse(cardNumber);
+        var gatewayResponse = fullCardNumberSandboxResponseGenerator.getSandboxGatewayResponse(cardNumber);
 
         return gatewayResponse;
     }

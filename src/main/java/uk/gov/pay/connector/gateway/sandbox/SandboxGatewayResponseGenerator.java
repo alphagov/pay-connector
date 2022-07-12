@@ -12,19 +12,25 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public interface SandboxGatewayResponseGenerator {
-    
-    default GatewayResponse getSandboxGatewayResponse(String lastDigitsCardNumber) {
+public class SandboxGatewayResponseGenerator {
+
+    private final SandboxCardNumbers sandboxCardNumbers;
+
+    public SandboxGatewayResponseGenerator(SandboxCardNumbers sandboxCardNumbers) {
+        this.sandboxCardNumbers = sandboxCardNumbers;
+    }
+
+    public GatewayResponse getSandboxGatewayResponse(String lastDigitsCardNumber) {
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         
-        if (SandboxCardNumbers.isErrorCard(lastDigitsCardNumber)) {
-            CardError errorInfo = SandboxCardNumbers.cardErrorFor(lastDigitsCardNumber);
+        if (sandboxCardNumbers.isErrorCard(lastDigitsCardNumber)) {
+            CardError errorInfo = sandboxCardNumbers.cardErrorFor(lastDigitsCardNumber);
             return gatewayResponseBuilder
                     .withGatewayError(new GatewayError(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR))
                     .build();
-        } else if (SandboxCardNumbers.isRejectedCard(lastDigitsCardNumber)) {
+        } else if (sandboxCardNumbers.isRejectedCard(lastDigitsCardNumber)) {
             return getSandboxGatewayResponse(false);
-        } else if (SandboxCardNumbers.isValidCard(lastDigitsCardNumber)) {
+        } else if (sandboxCardNumbers.isValidCard(lastDigitsCardNumber)) {
             return getSandboxGatewayResponse(true);
         }
 
@@ -33,7 +39,7 @@ public interface SandboxGatewayResponseGenerator {
                 .build();
     }
 
-    static GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {
+    private GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseAuthoriseResponse() {
 
@@ -76,4 +82,5 @@ public interface SandboxGatewayResponseGenerator {
             }
         }).build();
     }
+
 }

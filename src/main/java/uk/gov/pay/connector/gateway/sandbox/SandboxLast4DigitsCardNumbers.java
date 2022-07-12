@@ -2,13 +2,10 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toMap;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 
-public class SandboxWalletCardNumbers extends SandboxCardNumbers {
+public class SandboxLast4DigitsCardNumbers implements SandboxCardNumbers {
     
     /*
     The last four digits field for Apple and Google Pay aren't used for authorisation.
@@ -34,19 +31,24 @@ public class SandboxWalletCardNumbers extends SandboxCardNumbers {
     private static Map<String, CardError> ERROR_CARDS = Map.of(
             PROCESSING_ERROR_WALLET_LAST_DIGITS_CARD_NUMBER, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."));
 
-    public static boolean isValidCard(String cardNumber) {
+    @Override
+    public boolean isValidCard(String cardNumber) {
         return GOOD_CARDS.contains(cardNumber);
     }
 
-    public static boolean isRejectedCard(String cardNumber) {
+    @Override
+    public boolean isRejectedCard(String cardNumber) {
         return REJECTED_CARDS.contains(cardNumber);
     }
 
-    public static boolean isErrorCard(String cardNumber) {
+    @Override
+    public boolean isErrorCard(String cardNumber) {
         return ERROR_CARDS.containsKey(cardNumber);
     }
 
-    public static CardError cardErrorFor(String cardNumber) {
+    @Override
+    public CardError cardErrorFor(String cardNumber) {
         return ERROR_CARDS.get(cardNumber);
     }
+
 }
