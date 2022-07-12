@@ -1919,4 +1919,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add updated date to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="updated_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
