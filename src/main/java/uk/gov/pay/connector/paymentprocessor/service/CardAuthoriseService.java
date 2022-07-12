@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -51,6 +52,7 @@ public class CardAuthoriseService {
     private final PaymentProviders providers;
     private final AuthorisationLogger authorisationLogger;
     private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
+    private final PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter;
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -60,6 +62,7 @@ public class CardAuthoriseService {
                                 ChargeService chargeService,
                                 AuthorisationLogger authorisationLogger,
                                 ChargeEligibleForCaptureService chargeEligibleForCaptureService,
+                                PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter,
                                 Environment environment) {
         this.cardTypeDao = cardTypeDao;
         this.providers = providers;
@@ -67,11 +70,20 @@ public class CardAuthoriseService {
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
+        this.paymentInstrumentEntityToAuthCardDetailsConverter = paymentInstrumentEntityToAuthCardDetailsConverter;
         this.metricRegistry = environment.metrics();
     }
 
     public AuthorisationResponse doAuthoriseWeb(String chargeId, AuthCardDetails authCardDetails) {
         return authorisationService.executeAuthorise(chargeId, () -> doAuthorise(chargeId, authCardDetails));
+    }
+
+    public AuthorisationResponse doAuthoriseUserNotPresent(ChargeEntity chargeEntity) {
+        var paymentInstrumentEntity = chargeEntity.getPaymentInstrument()
+                .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
+
+        var authCardDetails = paymentInstrumentEntityToAuthCardDetailsConverter.convert(paymentInstrumentEntity);
+        return doAuthorise(chargeEntity.getExternalId(), authCardDetails);
     }
 
     private AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
@@ -87,6 +99,9 @@ public class CardAuthoriseService {
             switch(charge.getAuthorisationMode()) {
                 case WEB:
                     operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                    break;
+                case AGREEMENT:
+                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authoriseUserNotPresent(request, charge);
                     break;
                 default:
                     throw new IllegalArgumentException("Authorise operation does not support authorisation mode");

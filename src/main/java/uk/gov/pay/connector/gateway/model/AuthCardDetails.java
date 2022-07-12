@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
@@ -75,19 +74,10 @@ public class AuthCardDetails implements AuthorisationDetails {
         authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.getType()));
         authCardDetails.setPayersCardPrepaidStatus(cardInformation.getPrepaidStatus());
 
-        CardDetailsEntity cardDetailsEntity = chargeEntity.getCardDetails();
-        if (cardDetailsEntity != null) {
-            Optional<Address> mayBeAddress = cardDetailsEntity.getBillingAddress()
-                    .map((AddressEntity addressEntity) -> new Address(
-                            addressEntity.getLine1(),
-                            addressEntity.getLine2(),
-                            addressEntity.getPostcode(),
-                            addressEntity.getCity(),
-                            addressEntity.getCounty(),
-                            addressEntity.getCountry()
-                    ));
-            mayBeAddress.ifPresent(authCardDetails::setAddress);
-        }
+        Optional.ofNullable(chargeEntity.getCardDetails())
+                .flatMap(CardDetailsEntity::getBillingAddress)
+                .map(Address::from)
+                .ifPresent(authCardDetails::setAddress);
 
         return authCardDetails;
     }
