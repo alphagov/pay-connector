@@ -38,13 +38,14 @@ public class TaskQueueService {
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.objectMapper = objectMapper;
     }
- 
+
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
         boolean isTerminallyFailed = chargeEntity.getChargeStatus().isExpungeable() &&
                 chargeEntity.getChargeStatus().toExternal() != ExternalChargeState.EXTERNAL_SUCCESS;
 
         if (isTerminallyFailed && chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE &&
-                !isEmpty(chargeEntity.getGatewayTransactionId())) {
+                !isEmpty(chargeEntity.getGatewayTransactionId()) &&
+                chargeEntity.getFees().isEmpty()) {
             addCollectStripeFeeForFailedPaymentTask(chargeEntity);
         }
     }

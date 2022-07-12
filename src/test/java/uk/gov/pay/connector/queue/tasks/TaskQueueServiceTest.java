@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
@@ -136,6 +138,28 @@ class TaskQueueServiceTest {
                         .withType(LIVE)
                         .build())
                 .build();
+
+        taskQueueService.offerTasksOnStateTransition(chargeEntity);
+
+        verify(mockTaskQueue, never()).addTaskToQueue(any());
+    }
+
+    @Test
+    void shouldNotOfferFeeTask_whenChargeHasFees() throws Exception {
+        var chargeEntity = aValidChargeEntity()
+                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                .withGatewayTransactionId("a-gateway-transaction-id")
+                .withStatus(ChargeStatus.EXPIRED)
+                .withCreatedDate(Instant.ofEpochSecond(chargeCreatedDate))
+                .withGatewayAccountEntity(aGatewayAccountEntity()
+                        .withId(12L)
+                        .withGatewayName("stripe")
+                        .withRequires3ds(false)
+                        .withType(LIVE)
+                        .build())
+                .build();
+        var feeEntity = new FeeEntity(chargeEntity, Instant.now(), 10L, FeeType.RADAR);
+        chargeEntity.addFee(feeEntity);
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
