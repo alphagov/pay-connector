@@ -42,7 +42,7 @@ public class CardExecutorService {
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 1000;
     public static final int SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS = 10;
     private final MetricRegistry metricRegistry;
-    private final TimedThreadPoolExecutor timedExectuor;
+    private final TimedThreadPoolExecutor timedExecutor;
 
     public enum ExecutionStatus {
         COMPLETED,
@@ -58,7 +58,7 @@ public class CardExecutorService {
         this.metricRegistry = environment.metrics();
         ExecutorServiceConfig config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
-        this.timedExectuor = new TimedThreadPoolExecutor(numberOfThreads, threadFactory, 60000, TimeUnit.MILLISECONDS);
+        this.timedExecutor = new TimedThreadPoolExecutor(numberOfThreads, threadFactory, 60000, TimeUnit.MILLISECONDS);
         addShutdownHook();
     }
 
@@ -70,19 +70,19 @@ public class CardExecutorService {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             String className = CardExecutorService.class.getSimpleName();
             logger.info("Shutting down {}", className);
-            timedExectuor.shutdown();
+            timedExecutor.shutdown();
             logger.info("Awaiting for {} threads to terminate", className);
             try {
-                timedExectuor.awaitTermination(SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                timedExecutor.awaitTermination(SHUTDOWN_AWAIT_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.error("Error while waiting for {} threads to terminate", className);
             }
-            timedExectuor.shutdownNow();
+            timedExecutor.shutdownNow();
         }));
     }
 
     public ExecutorService getExecutor() {
-        return timedExectuor;
+        return timedExecutor;
     }
 
     // accepts a supplier function and executed that in a separate Thread of its own.
@@ -92,7 +92,7 @@ public class CardExecutorService {
         Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElse(Map.of());
         final long startTime = System.currentTimeMillis();
 
-        Future<T> futureObject = timedExectuor.submit(() -> {
+        Future<T> futureObject = timedExecutor.submit(() -> {
             MDC.setContextMap(mdcContextMap);
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);

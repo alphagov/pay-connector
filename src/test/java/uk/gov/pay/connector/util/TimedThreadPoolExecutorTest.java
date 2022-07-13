@@ -28,22 +28,14 @@ class TimedThreadPoolExecutorTest {
     void timedThreadPoolExecutor_shouldSubmitAndProcessTasks() throws InterruptedException, ExecutionException {
         var future = underTest.submit(() -> "done");
         assertThat(future.get(), is("done"));
-        assertThat(underTest.getCompletedTaskCount(), is(1L));
+        await().untilAsserted(() -> assertThat(underTest.getCompletedTaskCount(), is(1L)));
     }
     
     @Test
     void timedThreadPoolExecutor_shouldScheduleTimeoutTasks() {
-        for (int i = 0; i < 5; i++) {
-            underTest.submit(() -> {
-                try {
-                    Thread.sleep(20000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
+        addNTasksToQueue(5);
+        await().untilAsserted(() -> assertThat(underTest.getTaskCount(), is(5L)));
         await().untilAsserted(() -> assertThat(underTest.getTimeoutTasks().size(), is(5)));
-        assertThat(underTest.getTaskCount(), is(5L));
     }
     
     @Test
@@ -58,6 +50,25 @@ class TimedThreadPoolExecutorTest {
             });
             future.get();
         });
+    }
+    
+    @Test
+    void timedThreadPoolExecutor_shouldQueueTasks_whenCorePoolBusy() {
+        addNTasksToQueue(15);
+        await().untilAsserted(() -> assertThat(underTest.getActiveCount(), is(10)));
+        await().untilAsserted(() -> assertThat(underTest.getQueue().size(), is(5)));
+    }
+    
+    private void addNTasksToQueue(int n) {
+        for (int i = 0; i < n; i++) {
+            underTest.submit(() -> {
+                try {
+                    Thread.sleep(20000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
     }
 
 }
