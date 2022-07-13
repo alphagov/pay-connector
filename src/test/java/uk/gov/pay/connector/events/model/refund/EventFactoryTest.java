@@ -36,9 +36,11 @@ import uk.gov.pay.connector.events.model.charge.AuthorisationErrorCheckedWithGat
 import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CancelByExpirationFailed;
+import uk.gov.pay.connector.events.model.charge.CancelByExpirationSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceFailed;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelByUserFailed;
+import uk.gov.pay.connector.events.model.charge.CancelByUserSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelledByExpiration;
 import uk.gov.pay.connector.events.model.charge.CancelledByExternalService;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
@@ -298,7 +300,7 @@ public class EventFactoryTest {
 
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
-        assertThat(events.size(), is(1));
+        assertThat(events.size(), is(2)); // also creates RefundAvailabilityUpdated event
         CancelByExternalServiceSubmitted event = (CancelByExternalServiceSubmitted) events.get(0);
         assertThat(event, instanceOf(CancelByExternalServiceSubmitted.class));
         assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
@@ -312,6 +314,9 @@ public class EventFactoryTest {
                 new Object[]{GatewayErrorDuringAuthorisation.class, EmptyEventDetails.class},
                 new Object[]{GatewayTimeoutDuringAuthorisation.class, EmptyEventDetails.class},
                 new Object[]{UnexpectedGatewayErrorDuringAuthorisation.class, EmptyEventDetails.class},
+                new Object[]{CancelByExternalServiceSubmitted.class, EmptyEventDetails.class},
+                new Object[]{CancelByExpirationSubmitted.class, EmptyEventDetails.class},
+                new Object[]{CancelByUserSubmitted.class, EmptyEventDetails.class},
                 // terminal states
                 new Object[]{AuthorisationCancelled.class, EmptyEventDetails.class},
                 new Object[]{AuthorisationErrorCheckedWithGatewayChargeWasMissing.class, EmptyEventDetails.class},

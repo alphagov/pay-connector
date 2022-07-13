@@ -6,7 +6,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.refund.model.domain.Refund;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.util.List;
 
