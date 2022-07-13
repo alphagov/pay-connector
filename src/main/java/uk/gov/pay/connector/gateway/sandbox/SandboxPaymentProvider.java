@@ -37,6 +37,7 @@ import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.gateway.sandbox.SandboxCardNumbers.RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE;
 
 public class SandboxPaymentProvider implements PaymentProvider {
 
@@ -72,6 +73,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
                 .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
         var firstDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getFirstDigitsCardNumber().toString();
         var lastDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString();
+
+        if (RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE.startsWith(firstDigitsCardNumber) && RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE.endsWith(lastDigitsCardNumber)) {
+            return recurringSandboxResponseGenerator.getSandboxGatewayResponse(false);
+        }
         return recurringSandboxResponseGenerator.getSandboxGatewayResponse(firstDigitsCardNumber.concat(lastDigitsCardNumber));
     }
 
