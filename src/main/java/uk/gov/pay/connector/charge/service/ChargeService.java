@@ -635,6 +635,16 @@ public class ChargeService {
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
 
             CardDetailsEntity detailsEntity = authCardDetailsToCardDetailsEntityConverter.convert(authCardDetails);
+
+            // propagate details that aren't mapped from payment instrument to auth card details onto the charge
+            // this logic should be removable when payment instruments are modelled and used for all authorisation types
+            if (charge.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+                charge.getPaymentInstrument()
+                        .ifPresent(paymentInstrument -> {
+                            detailsEntity.setFirstDigitsCardNumber(paymentInstrument.getCardDetails().getFirstDigitsCardNumber());
+                            detailsEntity.setLastDigitsCardNumber(paymentInstrument.getCardDetails().getLastDigitsCardNumber());
+                        });
+            }
             charge.setCardDetails(detailsEntity);
 
             if (charge.isSavePaymentInstrumentToAgreement()) {

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -20,6 +21,7 @@ public class AddPaymentInstrumentParams {
     private final String cardBrand;
     private final CardExpiryDate expiryDate;
     private final LastDigitsCardNumber lastDigitsCardNumber;
+    private final FirstDigitsCardNumber firstDigitsCardNumber;
     private final String cardholderName;
     private final String addressLine1;
     private final String addressLine2;
@@ -92,6 +94,10 @@ public class AddPaymentInstrumentParams {
         return countryCode;
     }
 
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
+    }
+
     private AddPaymentInstrumentParams(AddPaymentInstrumentParamsBuilder builder) {
         paymentInstrumentId = builder.paymentInstrumentId;
         externalPaymentInstrumentId = builder.externalPaymentInstrumentId;
@@ -109,6 +115,7 @@ public class AddPaymentInstrumentParams {
         stateOrProvince = builder.stateOrProvince;
         postcode = builder.postcode;
         countryCode = builder.countryCode;
+        firstDigitsCardNumber = builder.firstDigitsCardNumber;
     }
 
     public static final class AddPaymentInstrumentParamsBuilder {
@@ -121,6 +128,7 @@ public class AddPaymentInstrumentParams {
         private String cardBrand = "visa";
         private CardExpiryDate expiryDate = CardExpiryDate.valueOf("12/27");
         private LastDigitsCardNumber lastDigitsCardNumber = LastDigitsCardNumber.of("1234");
+        private FirstDigitsCardNumber firstDigitsCardNumber = FirstDigitsCardNumber.of("123456");
         private String cardholderName = "Dr. Payment";
         private String addressLine1 = "1 Money Street";
         private String addressLine2 = "Payville";
@@ -178,6 +186,11 @@ public class AddPaymentInstrumentParams {
 
         public AddPaymentInstrumentParamsBuilder withLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
             this.lastDigitsCardNumber = lastDigitsCardNumber;
+            return this;
+        }
+
+        public AddPaymentInstrumentParamsBuilder withFirstDigitsCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
+            this.firstDigitsCardNumber = firstDigitsCardNumber;
             return this;
         }
 
