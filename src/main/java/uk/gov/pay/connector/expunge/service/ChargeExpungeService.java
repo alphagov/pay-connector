@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -28,6 +27,10 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
@@ -38,7 +41,6 @@ public class ChargeExpungeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ChargeDao chargeDao;
     private final ExpungeConfig expungeConfig;
-    private final StripeGatewayConfig stripeGatewayConfig;
     private final ParityCheckService parityCheckService;
     private final ChargeService chargeService;
     private final List<PaymentGatewayName> expungeExemptedGateways = List.of(
@@ -51,13 +53,18 @@ public class ChargeExpungeService {
             AUTHORISATION_TIMEOUT,
             AUTHORISATION_UNEXPECTED_ERROR);
 
+    private final List<ChargeStatus> historicChargeExceptionStatuses = List.of(
+            CAPTURE_SUBMITTED,
+            EXPIRE_CANCEL_SUBMITTED,
+            SYSTEM_CANCEL_SUBMITTED,
+            USER_CANCEL_SUBMITTED);
+
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService,
                                 ChargeService chargeService) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();
-        stripeGatewayConfig = connectorConfiguration.getStripeConfig();
         this.parityCheckService = parityCheckService;
         this.chargeService = chargeService;
     }
@@ -66,7 +73,7 @@ public class ChargeExpungeService {
         long ageInDays = ChronoUnit.DAYS.between(chargeEntity.getCreatedDate(), ZonedDateTime.now());
         boolean chargeIsHistoric = ageInDays > expungeConfig.getMinimumAgeForHistoricChargeExceptions();
         ChargeStatus status = ChargeStatus.fromString(chargeEntity.getStatus());
-        if (chargeIsHistoric && status.equals(ChargeStatus.CAPTURE_SUBMITTED)) {
+        if (chargeIsHistoric && historicChargeExceptionStatuses.contains(status)) {
             return true;
         }
         if (expungeExemptedGateways.contains(chargeEntity.getPaymentGatewayName()) &&

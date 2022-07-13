@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -21,7 +20,6 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -52,8 +50,6 @@ public class ChargeExpungeServiceTest {
     @Mock
     private ExpungeConfig mockExpungeConfig;
     @Mock
-    private StripeGatewayConfig mockStripeGatewayConfig;
-    @Mock
     private ChargeDao mockChargeDao;
     @Mock
     private ChargeService mockChargeService;
@@ -78,7 +74,6 @@ public class ChargeExpungeServiceTest {
     public void setUp() {
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(mockExpungeConfig);
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
-        when(mockConnectorConfiguration.getStripeConfig()).thenReturn(mockStripeGatewayConfig);
 
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
                 mockChargeService);
@@ -250,12 +245,13 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldExpungeChargeIfInCaptureSubmittedAndChargeIsOlderThanHistoric() {
+    @Parameters({"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED"})
+    public void expunge_shouldExpungeChargeIfInSubmittedStateAndChargeIsOlderThanHistoric(String state) {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
-                .withStatus(CAPTURE_SUBMITTED)
+                .withStatus(ChargeStatus.valueOf(state))
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
