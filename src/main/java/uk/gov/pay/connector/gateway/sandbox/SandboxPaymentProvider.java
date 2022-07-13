@@ -43,11 +43,12 @@ public class SandboxPaymentProvider implements PaymentProvider {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
     private final SandboxGatewayResponseGenerator fullCardNumberSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxFullCardNumbers());
-    private final SandboxGatewayResponseGenerator last4DigitsSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxLast4DigitsCardNumbers());
+    private final SandboxGatewayResponseGenerator walletSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxLast4DigitsCardNumbers());
+    private final SandboxGatewayResponseGenerator recurringSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxFirst6AndLast4CardNumbers());
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler(last4DigitsSandboxResponseGenerator);
+        this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler(walletSandboxResponseGenerator);
     }
 
     @Override
@@ -69,8 +70,9 @@ public class SandboxPaymentProvider implements PaymentProvider {
     public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         var paymentInstrumentEntity = charge.getPaymentInstrument()
                 .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
+        var firstDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getFirstDigitsCardNumber().toString();
         var lastDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString();
-        return last4DigitsSandboxResponseGenerator.getSandboxGatewayResponse(lastDigitsCardNumber);
+        return recurringSandboxResponseGenerator.getSandboxGatewayResponse(firstDigitsCardNumber.concat(lastDigitsCardNumber));
     }
 
     /**
