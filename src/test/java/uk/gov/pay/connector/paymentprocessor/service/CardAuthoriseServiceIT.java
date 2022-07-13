@@ -25,6 +25,8 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardAuthoriseServiceIT extends ChargingITestBase {
+    private final String SUCCESS_LAST_FOUR_DIGITS = "4242";
+    private final String DECLINE_LAST_FOUR_DIGITS = "0002";
 
     public CardAuthoriseServiceIT() {
         super("sandbox");
@@ -38,19 +40,25 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         assertThat(response.getGatewayError(), is(Optional.empty()));
         assertThat(response.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
     }
-    
+
     @Test
-    public void shouldAuthoriseSandboxUserNotPresentPayment() {
-        addCharge("success-charge-external-id", "4242");
-        addCharge("decline-charge-external-id", "0002");
+    public void shouldSuccessfullyAuthoriseSandboxUserNotPresentPayment() {
+        addCharge("success-charge-external-id", SUCCESS_LAST_FOUR_DIGITS);
 
         var successCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("success-charge-external-id");
-        var declineCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("decline-charge-external-id");
 
         var successResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(successCharge);
-        var declineResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(declineCharge);
         assertThat(successResponse.getGatewayError(), is(Optional.empty()));
         assertThat(successResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
+    }
+
+    @Test
+    public void shouldDeclineAuthoriseSandboxUserNotPresentPayment() {
+        addCharge("decline-charge-external-id", DECLINE_LAST_FOUR_DIGITS);
+
+        var declineCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("decline-charge-external-id");
+
+        var declineResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(declineCharge);
         assertThat(declineResponse.getGatewayError(), is(Optional.empty()));
         assertThat(declineResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
     }

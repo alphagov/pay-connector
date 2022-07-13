@@ -52,17 +52,15 @@ public class AuthCardDetailsToCardDetailsEntityConverter {
     }
 
     private static boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
-        return Optional.ofNullable(authCardDetails)
-                .map(AuthCardDetails::getCardNo)
+        return Optional.ofNullable(authCardDetails.getCardNo())
                 .map(cardNumber -> cardNumber.length() > 6)
                 .orElse(false);
     }
 
     private static boolean hasLastFourCharactersCardNumber(AuthCardDetails authCardDetails) {
-        return Optional.ofNullable(authCardDetails)
-                .map(AuthCardDetails::getCardNo)
+        return Optional.ofNullable(authCardDetails.getCardNo())
                 .map(cardNumber -> cardNumber.length() >= 4)
                 .orElse(false);
     }
 
-}
+};
