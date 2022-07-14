@@ -27,7 +27,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")},
+        configOverrides = {@ConfigOverride(key = "chargeAsyncOperationsConfig.backgroundProcessingEnabled", value = "true")},
         withDockerSQS = true
 )
 public class CardResourceAuthoriseMotoApiPaymentTimeoutIT extends ChargingITestBase {

@@ -9,7 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -28,17 +28,17 @@ public class ChargeEligibleForCaptureService {
 
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
-    private final CaptureQueue captureQueue;
+    private final ChargeAsyncOperationsQueue chargeAsyncOperationsQueue;
     private final LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
     private final UserNotificationService userNotificationService;
 
     @Inject
     public ChargeEligibleForCaptureService(ChargeService chargeService, ChargeDao chargeDao,
                                            LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService,
-                                           CaptureQueue captureQueue, UserNotificationService userNotificationService) {
+                                           ChargeAsyncOperationsQueue chargeAsyncOperationsQueue, UserNotificationService userNotificationService) {
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
-        this.captureQueue = captureQueue;
+        this.chargeAsyncOperationsQueue = chargeAsyncOperationsQueue;
         this.linkPaymentInstrumentToAgreementService = linkPaymentInstrumentToAgreementService;
         this.userNotificationService = userNotificationService;
     }
@@ -47,7 +47,7 @@ public class ChargeEligibleForCaptureService {
         ChargeEntity charge = update(externalId);
 
         if (!charge.isDelayedCapture()) {
-            addChargeToCaptureQueue(charge);
+            addCaptureToQueue(charge);
             userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         }
 
@@ -78,9 +78,9 @@ public class ChargeEligibleForCaptureService {
         return charge.getAuthorisationMode() == MOTO_API ? CAPTURE_QUEUED : CAPTURE_APPROVED;
     }
 
-    private void addChargeToCaptureQueue(ChargeEntity charge) {
+    private void addCaptureToQueue(ChargeEntity charge) {
         try {
-            captureQueue.sendForCapture(charge);
+            chargeAsyncOperationsQueue.sendForCapture(charge);
         } catch (QueueException e) {
             LOGGER.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
             throw new WebApplicationException(format(

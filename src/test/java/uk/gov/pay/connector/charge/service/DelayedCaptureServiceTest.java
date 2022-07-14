@@ -14,7 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.ws.rs.WebApplicationException;
@@ -45,13 +45,13 @@ class DelayedCaptureServiceTest {
     private ChargeDao mockChargeDao;
 
     @Mock
-    private CaptureQueue mockCaptureQueue;
+    private ChargeAsyncOperationsQueue mockChargeAsyncOperationsQueue;
 
     private DelayedCaptureService delayedCaptureService;
 
     @BeforeEach
     void setUp() {
-        delayedCaptureService = new DelayedCaptureService(mockChargeService, mockChargeDao, mockCaptureQueue);
+        delayedCaptureService = new DelayedCaptureService(mockChargeService, mockChargeDao, mockChargeAsyncOperationsQueue);
     }
 
     @Test
@@ -63,9 +63,9 @@ class DelayedCaptureServiceTest {
 
         assertThat(result, sameInstance(chargeEntity));
 
-        var inOrder = inOrder(mockChargeService, mockCaptureQueue);
+        var inOrder = inOrder(mockChargeService, mockChargeAsyncOperationsQueue);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
-        inOrder.verify(mockCaptureQueue).sendForCapture(chargeEntity);
+        inOrder.verify(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);
     }
 
     @ParameterizedTest
@@ -79,7 +79,7 @@ class DelayedCaptureServiceTest {
         assertThat(result, sameInstance(chargeEntity));
 
         verifyNoInteractions(mockChargeService);
-        verify(mockCaptureQueue).sendForCapture(chargeEntity);
+        verify(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);
     }
 
     @Test
@@ -93,7 +93,7 @@ class DelayedCaptureServiceTest {
         assertThat(conflictRuntimeException.getMessage(), containsString(HTTP_409_CONFLICT));
 
         verifyNoInteractions(mockChargeService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
     }
 
     @Test
@@ -108,21 +108,21 @@ class DelayedCaptureServiceTest {
 
         assertThat(conflictRuntimeException.getMessage(), containsString(HTTP_409_CONFLICT));
 
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
     }
 
     @Test
     void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(chargeEntity);
+        doThrow(new QueueException()).when(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);
 
         assertThrows(WebApplicationException.class,
                 () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId()));
 
-        var inOrder = inOrder(mockChargeService, mockCaptureQueue);
+        var inOrder = inOrder(mockChargeService, mockChargeAsyncOperationsQueue);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
-        inOrder.verify(mockCaptureQueue).sendForCapture(chargeEntity);
+        inOrder.verify(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);
     }
 
     @Test
@@ -134,7 +134,7 @@ class DelayedCaptureServiceTest {
                 () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(externalId));
 
         verifyNoInteractions(mockChargeService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
     }
 
 }

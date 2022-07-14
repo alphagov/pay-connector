@@ -61,7 +61,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
         withDockerSQS = true,
         configOverrides = {
                 @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true"),
-                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
+                @ConfigOverride(key = "chargeAsyncOperationsConfig.backgroundProcessingEnabled", value = "true")
         }
 )
 public class ChargesApiResourceCreateIT extends ChargingITestBase {

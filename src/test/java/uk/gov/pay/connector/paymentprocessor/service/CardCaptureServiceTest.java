@@ -40,7 +40,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -98,7 +98,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
     @Mock
-    private CaptureQueue mockCaptureQueue;
+    private ChargeAsyncOperationsQueue mockChargeAsyncOperationsQueue;
     @Mock
     private ConnectorConfiguration mockConfiguration;
     @Mock
@@ -135,7 +135,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockChargeAsyncOperationsQueue, mockEventService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);

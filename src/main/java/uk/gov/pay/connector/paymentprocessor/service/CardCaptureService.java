@@ -19,7 +19,7 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
@@ -49,7 +49,7 @@ public class CardCaptureService {
     private final EventService eventService;
     protected MetricRegistry metricRegistry;
     protected Clock clock;
-    protected CaptureQueue captureQueue;
+    protected ChargeAsyncOperationsQueue chargeAsyncOperationsQueue;
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
@@ -57,14 +57,14 @@ public class CardCaptureService {
                               UserNotificationService userNotificationService,
                               Environment environment,
                               Clock clock,
-                              CaptureQueue captureQueue,
+                              ChargeAsyncOperationsQueue chargeAsyncOperationsQueue,
                               EventService eventService) {
         this.chargeService = chargeService;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.clock = clock;
         this.userNotificationService = userNotificationService;
-        this.captureQueue = captureQueue;
+        this.chargeAsyncOperationsQueue = chargeAsyncOperationsQueue;
         this.eventService = eventService;
     }
 

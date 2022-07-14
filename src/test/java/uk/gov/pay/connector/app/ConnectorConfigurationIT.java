@@ -25,9 +25,9 @@ public class ConnectorConfigurationIT {
         Duration authReadTimeout = jerseyClientOverrides.getAuth().getReadTimeout();
         assertThat(authReadTimeout, is(Duration.milliseconds(222)));
 
-        CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
-        assertThat(captureProcessConfig.getChargesConsideredOverdueForCaptureAfter(), is(60));
-        assertThat(captureProcessConfig.getMaximumRetries(), is(48));
+        ChargeAsyncOperationsConfig chargeAsyncOperationsConfig = RULE.getConfiguration().getChargeAsyncOperationsConfig();
+        assertThat(chargeAsyncOperationsConfig.getChargesConsideredOverdueForCaptureAfter(), is(60));
+        assertThat(chargeAsyncOperationsConfig.getMaximumRetries(), is(48));
         assertThat(RULE.getConfiguration().getLedgerBaseUrl(), is(not(emptyString())));
         assertThat(RULE.getConfiguration().getRestClientConfig().isDisabledSecureConnection(), is(true));
         assertThat(RULE.getConfiguration().getEmittedEventSweepConfig().getNotEmittedEventMaxAgeInSeconds(), is(1800));

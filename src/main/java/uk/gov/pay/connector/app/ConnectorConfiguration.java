@@ -30,7 +30,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private CaptureProcessConfig captureProcessConfig;
+    private ChargeAsyncOperationsConfig chargeAsyncOperationsConfig;
 
     @Valid
     @NotNull
@@ -240,8 +240,8 @@ public class ConnectorConfiguration extends Configuration {
         return graphitePort;
     }
 
-    public CaptureProcessConfig getCaptureProcessConfig() {
-        return captureProcessConfig;
+    public ChargeAsyncOperationsConfig getChargeAsyncOperationsConfig() {
+        return chargeAsyncOperationsConfig;
     }
 
     public Boolean isXrayEnabled() {

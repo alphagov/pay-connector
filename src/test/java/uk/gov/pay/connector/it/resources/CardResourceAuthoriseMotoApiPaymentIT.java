@@ -42,7 +42,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
+        configOverrides = {@ConfigOverride(key = "chargeAsyncOperationsConfig.backgroundProcessingEnabled", value = "false")},
         withDockerSQS = true
 )
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {

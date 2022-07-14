@@ -12,7 +12,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
-import uk.gov.pay.connector.app.CaptureProcessConfig;
+import uk.gov.pay.connector.app.ChargeAsyncOperationsConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -155,7 +155,7 @@ class ChargeServiceTest {
     private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
 
     @Mock
-    private CaptureProcessConfig mockedCaptureProcessConfig;
+    private ChargeAsyncOperationsConfig mockedChargeAsyncOperationsConfig;
     
     @Mock
     private TaskQueueService mockTaskQueueService;
@@ -194,7 +194,7 @@ class ChargeServiceTest {
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);
 
-        when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
+        when(mockedConfig.getChargeAsyncOperationsConfig()).thenReturn(mockedChargeAsyncOperationsConfig);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
@@ -340,16 +340,16 @@ class ChargeServiceTest {
     @Test
     void shouldBeRetriableGivenChargeHasNotExceededMaxNumberOfCaptureAttempts() {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS);
-        when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
+        when(mockedChargeAsyncOperationsConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
 
-        assertThat(chargeService.isChargeRetriable(anyString()), is(true));
+        assertThat(chargeService.isChargeCaptureRetriable(anyString()), is(true));
     }
 
     @Test
     void shouldNotBeRetriableGivenChargeExceededMaxNumberOfCaptureAttempts() {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS + 1);
 
-        assertThat(chargeService.isChargeRetriable(anyString()), is(false));
+        assertThat(chargeService.isChargeCaptureRetriable(anyString()), is(false));
     }
 
     @Test

@@ -68,7 +68,7 @@ public class ContractTest {
 
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+            ConfigOverride.config("chargeAsyncOperationsConfig.backgroundProcessingEnabled", "false"));
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(app.getWireMockPort());

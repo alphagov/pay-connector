@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
-import uk.gov.pay.connector.app.CaptureProcessConfig;
+import uk.gov.pay.connector.app.ChargeAsyncOperationsConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -132,7 +132,7 @@ public class ChargeService {
     private final AgreementDao agreementDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
-    private final CaptureProcessConfig captureProcessConfig;
+    private final ChargeAsyncOperationsConfig chargeAsyncOperationsConfig;
     private final PaymentProviders providers;
 
     private final StateTransitionService stateTransitionService;
@@ -171,7 +171,7 @@ public class ChargeService {
         this.agreementDao = agreementDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
-        this.captureProcessConfig = config.getCaptureProcessConfig();
+        this.chargeAsyncOperationsConfig = config.getChargeAsyncOperationsConfig();
         this.stateTransitionService = stateTransitionService;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.ledgerService = ledgerService;
@@ -811,9 +811,9 @@ public class ChargeService {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
 
-    public boolean isChargeRetriable(String externalId) {
+    public boolean isChargeCaptureRetriable(String externalId) {
         int numberOfChargeRetries = chargeDao.countCaptureRetriesForChargeExternalId(externalId);
-        return numberOfChargeRetries <= captureProcessConfig.getMaximumRetries();
+        return numberOfChargeRetries <= chargeAsyncOperationsConfig.getMaximumRetries();
     }
 
     public boolean isChargeCaptureSuccess(String externalId) {
