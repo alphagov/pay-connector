@@ -10,7 +10,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -45,7 +45,7 @@ class ChargeEligibleForCaptureServiceTest {
     private LinkPaymentInstrumentToAgreementService mockLinkPaymentInstrumentToAgreementService;
 
     @Mock
-    private CaptureQueue mockCaptureQueue;
+    private ChargeAsyncOperationsQueue mockChargeAsyncOperationsQueue;
 
     @Mock
     private UserNotificationService mockUserNotificationService;
@@ -55,7 +55,7 @@ class ChargeEligibleForCaptureServiceTest {
     @BeforeEach
     void setUp() {
         chargeEligibleForCaptureService = new ChargeEligibleForCaptureService(mockChargeService, mockChargeDao,
-                mockLinkPaymentInstrumentToAgreementService, mockCaptureQueue, mockUserNotificationService);
+                mockLinkPaymentInstrumentToAgreementService, mockChargeAsyncOperationsQueue, mockUserNotificationService);
     }
 
     @Test
@@ -68,9 +68,9 @@ class ChargeEligibleForCaptureServiceTest {
 
         assertThat(result, sameInstance(chargeEntity));
 
-        var inOrder = inOrder(mockChargeService, mockCaptureQueue, mockUserNotificationService);
+        var inOrder = inOrder(mockChargeService, mockChargeAsyncOperationsQueue, mockUserNotificationService);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
-        inOrder.verify(mockCaptureQueue).sendForCapture(result);
+        inOrder.verify(mockChargeAsyncOperationsQueue).sendForCapture(result);
         inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
 
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
@@ -86,10 +86,10 @@ class ChargeEligibleForCaptureServiceTest {
 
         assertThat(result, sameInstance(chargeEntity));
 
-        var inOrder = inOrder(mockChargeService, mockLinkPaymentInstrumentToAgreementService, mockCaptureQueue, mockUserNotificationService);
+        var inOrder = inOrder(mockChargeService, mockLinkPaymentInstrumentToAgreementService, mockChargeAsyncOperationsQueue, mockUserNotificationService);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
         inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
-        inOrder.verify(mockCaptureQueue).sendForCapture(result);
+        inOrder.verify(mockChargeAsyncOperationsQueue).sendForCapture(result);
         inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
     }
 
@@ -105,9 +105,9 @@ class ChargeEligibleForCaptureServiceTest {
 
         assertThat(result, sameInstance(chargeEntity));
 
-        var inOrder = inOrder(mockChargeService, mockCaptureQueue, mockUserNotificationService);
+        var inOrder = inOrder(mockChargeService, mockChargeAsyncOperationsQueue, mockUserNotificationService);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_QUEUED);
-        inOrder.verify(mockCaptureQueue).sendForCapture(result);
+        inOrder.verify(mockChargeAsyncOperationsQueue).sendForCapture(result);
         inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
 
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
@@ -125,7 +125,7 @@ class ChargeEligibleForCaptureServiceTest {
 
         verify(mockChargeService).transitionChargeState(chargeEntity, AWAITING_CAPTURE_REQUEST);
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
         verifyNoInteractions(mockUserNotificationService);
     }
 
@@ -143,7 +143,7 @@ class ChargeEligibleForCaptureServiceTest {
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, AWAITING_CAPTURE_REQUEST);
         inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
 
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
         verifyNoInteractions(mockUserNotificationService);
     }
 
@@ -161,7 +161,7 @@ class ChargeEligibleForCaptureServiceTest {
 
         verify(mockChargeService).transitionChargeState(chargeEntity, AWAITING_CAPTURE_REQUEST);
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
         verifyNoInteractions(mockUserNotificationService);
     }
 
@@ -175,7 +175,7 @@ class ChargeEligibleForCaptureServiceTest {
                 () -> chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId()));
 
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
         verifyNoInteractions(mockUserNotificationService);
     }
 
@@ -183,7 +183,7 @@ class ChargeEligibleForCaptureServiceTest {
     void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        doThrow(QueueException.class).when(mockCaptureQueue).sendForCapture(chargeEntity);
+        doThrow(QueueException.class).when(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);
 
         assertThrows(WebApplicationException.class,
                 () -> chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId()));
@@ -202,7 +202,7 @@ class ChargeEligibleForCaptureServiceTest {
 
         verifyNoInteractions(mockChargeService);
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
-        verifyNoInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockChargeAsyncOperationsQueue);
         verifyNoInteractions(mockUserNotificationService);
     }
 

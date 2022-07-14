@@ -74,7 +74,7 @@ import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
-import uk.gov.pay.connector.queue.managed.CaptureMessageReceiver;
+import uk.gov.pay.connector.queue.managed.ChargeAsyncOperationsMessageReceiver;
 import uk.gov.pay.connector.queue.managed.PayoutReconcileMessageReceiver;
 import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
 import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
@@ -192,7 +192,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
         environment.jersey().register(injector.getInstance(AgreementsApiResource.class));
 
-        if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
+        if(configuration.getChargeAsyncOperationsConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
         }
         environment.lifecycle().manage(injector.getInstance(PayoutReconcileMessageReceiver.class));
@@ -255,7 +255,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(Environment environment, Injector injector) {
-        environment.lifecycle().manage(injector.getInstance(CaptureMessageReceiver.class));
+        environment.lifecycle().manage(injector.getInstance(ChargeAsyncOperationsMessageReceiver.class));
         environment.lifecycle().manage(injector.getInstance(StateTransitionMessageReceiver.class));
     }
 }

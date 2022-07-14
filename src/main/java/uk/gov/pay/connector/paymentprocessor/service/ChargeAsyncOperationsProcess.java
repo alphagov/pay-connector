@@ -7,8 +7,8 @@ import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
-import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsMessage;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
@@ -16,38 +16,39 @@ import java.util.List;
 
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
-public class CardCaptureProcess {
+public class ChargeAsyncOperationsProcess {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureProcess.class);
-    private final CaptureQueue captureQueue;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChargeAsyncOperationsProcess.class);
+    private final ChargeAsyncOperationsQueue chargeAsyncOperationsQueue;
     private final ChargeService chargeService;
     private CardCaptureService cardCaptureService;
 
     @Inject
-    public CardCaptureProcess(CaptureQueue captureQueue,
-                              CardCaptureService cardCaptureService,
-                              ChargeService chargeService,
-                              ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter) {
-        this.captureQueue = captureQueue;
+    public ChargeAsyncOperationsProcess(ChargeAsyncOperationsQueue chargeAsyncOperationsQueue,
+                                        CardCaptureService cardCaptureService,
+                                        ChargeService chargeService,
+                                        ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter) {
+        this.chargeAsyncOperationsQueue = chargeAsyncOperationsQueue;
         this.cardCaptureService = cardCaptureService;
         this.chargeService = chargeService;
 
         chargesAwaitingCaptureMetricEmitter.register();
     }
 
-    public void handleCaptureMessages() throws QueueException {
-        List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
-        for (ChargeCaptureMessage message : captureMessages) {
+    public void handleChargeAsyncOperationsMessage() throws QueueException {
+        List<ChargeAsyncOperationsMessage> chargeAsyncOperationsMessages = chargeAsyncOperationsQueue.retrieveAsyncOperations();
+        for (ChargeAsyncOperationsMessage message : chargeAsyncOperationsMessages) {
             try {
                 MDC.put(PAYMENT_EXTERNAL_ID, message.getChargeId());
-                LOGGER.info("Charge capture message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
+                LOGGER.info("Charge async operation message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
                         message.getQueueMessageId(),
                         message.getQueueMessageReceiptHandle()
                 );
 
+                // for now the only and default operation on charges is to capture
                 runCapture(message);
             } catch (Exception e) {
-                LOGGER.warn("Error capturing charge from SQS message [queueMessageId={}] [errorMessage={}]",
+                LOGGER.warn("Error processing async charge operation from SQS message [queueMessageId={}] [errorMessage={}]",
                         message.getQueueMessageId(),
                         e.getMessage()
                 );
@@ -57,14 +58,14 @@ public class CardCaptureProcess {
         }
     }
 
-    private void runCapture(ChargeCaptureMessage captureMessage) throws QueueException {
+    private void runCapture(ChargeAsyncOperationsMessage captureMessage) throws QueueException {
         String externalChargeId = captureMessage.getChargeId();
 
         try {
             CaptureResponse gatewayResponse = cardCaptureService.doCapture(externalChargeId);
 
             if (gatewayResponse.isSuccessful()) {
-                captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
+                chargeAsyncOperationsQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
             } else {
                 LOGGER.info(
                         "Failed to capture [externalChargeId={}] due to: {}",
@@ -78,25 +79,25 @@ public class CardCaptureProcess {
         }
     }
 
-    private void handleCaptureRetry(ChargeCaptureMessage captureMessage) throws QueueException {
-        boolean shouldRetry = chargeService.isChargeRetriable(captureMessage.getChargeId());
+    private void handleCaptureRetry(ChargeAsyncOperationsMessage captureMessage) throws QueueException {
+        boolean shouldRetry = chargeService.isChargeCaptureRetriable(captureMessage.getChargeId());
 
         if (shouldRetry) {
             LOGGER.info("Charge capture message [{}] scheduled for retry.", captureMessage.getChargeId());
-            captureQueue.scheduleMessageForRetry(captureMessage.getQueueMessage());
+            chargeAsyncOperationsQueue.scheduleMessageForRetry(captureMessage.getQueueMessage());
         } else {
             cardCaptureService.markChargeAsCaptureError(captureMessage.getChargeId());
-            captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
+            chargeAsyncOperationsQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
         }
     }
 
-    private void handleCapturedInvalidTransition(ChargeCaptureMessage captureMessage, IllegalStateRuntimeException e) throws QueueException {
+    private void handleCapturedInvalidTransition(ChargeAsyncOperationsMessage captureMessage, IllegalStateRuntimeException e) throws QueueException {
         if (chargeService.isChargeCaptureSuccess(captureMessage.getChargeId())) {
             LOGGER.info(
                     "Charge capture message [{}] already captured - marking as processed. [chargeId={}]",
                     captureMessage.getQueueMessageId(),
                     captureMessage.getChargeId());
-            captureQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
+            chargeAsyncOperationsQueue.markMessageAsProcessed(captureMessage.getQueueMessage());
             return;
         }
 

@@ -60,7 +60,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -197,11 +197,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
-        CaptureQueue captureQueue = mock(CaptureQueue.class);
+        ChargeAsyncOperationsQueue chargeAsyncOperationsQueue = mock(ChargeAsyncOperationsQueue.class);
         UserNotificationService userNotificationService = mock(UserNotificationService.class);
         ChargeEligibleForCaptureService chargeEligibleForCaptureService =
                 new ChargeEligibleForCaptureService(chargeService, mockedChargeDao, linkPaymentInstrumentToAgreementService,
-                        captureQueue,
+                        chargeAsyncOperationsQueue,
                         userNotificationService
                 );
 

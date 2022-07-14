@@ -39,7 +39,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
         config = "config/test-it-config.yaml",
         withDockerSQS = true,
         configOverrides = {
-                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true"),
+                @ConfigOverride(key = "chargeAsyncOperationsConfig.backgroundProcessingEnabled", value = "true"),
                 @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true")
         }
 )

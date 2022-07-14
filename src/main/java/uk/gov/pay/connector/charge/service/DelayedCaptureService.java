@@ -8,7 +8,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
@@ -25,13 +25,13 @@ public class DelayedCaptureService {
 
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
-    private final CaptureQueue captureQueue;
+    private final ChargeAsyncOperationsQueue chargeAsyncOperationsQueue;
 
     @Inject
-    public DelayedCaptureService(ChargeService chargeService, ChargeDao chargeDao, CaptureQueue captureQueue) {
+    public DelayedCaptureService(ChargeService chargeService, ChargeDao chargeDao, ChargeAsyncOperationsQueue chargeAsyncOperationsQueue) {
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;
-        this.captureQueue = captureQueue;
+        this.chargeAsyncOperationsQueue = chargeAsyncOperationsQueue;
     }
 
     public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
@@ -72,7 +72,7 @@ public class DelayedCaptureService {
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {
         try {
-            captureQueue.sendForCapture(charge);
+            chargeAsyncOperationsQueue.sendForCapture(charge);
         } catch (QueueException e) {
             LOGGER.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
             throw new WebApplicationException(format(

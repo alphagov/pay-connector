@@ -101,7 +101,7 @@ customJerseyClient:
 executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
-captureProcessConfig:
+chargeAsyncOperationsConfig:
   backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-false}
   chargesConsideredOverdueForCaptureAfter: 60
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}

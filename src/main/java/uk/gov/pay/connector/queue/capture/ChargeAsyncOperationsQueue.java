@@ -18,17 +18,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class CaptureQueue extends AbstractQueue {
+public class ChargeAsyncOperationsQueue extends AbstractQueue {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
-    public CaptureQueue(
+    public ChargeAsyncOperationsQueue(
             SqsQueueService sqsQueueService,
             ConnectorConfiguration connectorConfiguration, ObjectMapper objectMapper) {
         super(sqsQueueService, objectMapper,
                 connectorConfiguration.getSqsConfig().getCaptureQueueUrl(),
-                connectorConfiguration.getCaptureProcessConfig()
+                connectorConfiguration.getChargeAsyncOperationsConfig()
                         .getFailedCaptureRetryDelayInSeconds());
     }
 
@@ -42,23 +42,23 @@ public class CaptureQueue extends AbstractQueue {
         logger.info("Charge [{}] added to capture queue. Message ID [{}]", charge.getExternalId(), queueMessage.getMessageId());
     }
 
-    public List<ChargeCaptureMessage> retrieveChargesForCapture() throws QueueException {
+    public List<ChargeAsyncOperationsMessage> retrieveAsyncOperations() throws QueueException {
         List<QueueMessage> queueMessages = retrieveMessages();
 
         return queueMessages
                 .stream()
-                .map(this::getChargeCaptureMessage)
+                .map(this::getAsyncOperationsMessages)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private ChargeCaptureMessage getChargeCaptureMessage(QueueMessage qm) {
+    private ChargeAsyncOperationsMessage getAsyncOperationsMessages(QueueMessage qm) {
         try {
-            CaptureCharge captureCharge = objectMapper.readValue(qm.getMessageBody(), CaptureCharge.class);
+            AsyncChargeOperation asyncChargeOperation = objectMapper.readValue(qm.getMessageBody(), AsyncChargeOperation.class);
 
-            return ChargeCaptureMessage.of(captureCharge, qm);
+            return ChargeAsyncOperationsMessage.of(asyncChargeOperation, qm);
         } catch (IOException e) {
-            logger.warn("Error parsing the charge capture message [message={}] from queue [error={}]", qm.getMessageBody(), e.getMessage());
+            logger.warn("Error parsing the charge async operation message [message={}] from queue [error={}]", qm.getMessageBody(), e.getMessage());
             return null;
         }
     }

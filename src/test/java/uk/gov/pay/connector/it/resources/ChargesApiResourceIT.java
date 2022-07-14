@@ -12,7 +12,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
+import uk.gov.pay.connector.paymentprocessor.service.ChargeAsyncOperationsProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -82,7 +82,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .statusCode(204);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+        testContext.getInstanceFromGuiceContainer(ChargeAsyncOperationsProcess.class).handleChargeAsyncOperationsMessage();
 
         getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))

@@ -120,7 +120,7 @@ stripe:
 executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
-captureProcessConfig:
+chargeAsyncOperationsConfig:
   backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
   chargesConsideredOverdueForCaptureAfter: ${CHARGES_CONSIDERED_OVERDUE_FOR_CAPTURE_AFTER:-60}
 

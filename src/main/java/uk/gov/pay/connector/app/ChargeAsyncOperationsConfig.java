@@ -5,7 +5,7 @@ import io.dropwizard.Configuration;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class CaptureProcessConfig extends Configuration {
+public class ChargeAsyncOperationsConfig extends Configuration {
 
     private int chargesConsideredOverdueForCaptureAfter;
     private int maximumRetries;

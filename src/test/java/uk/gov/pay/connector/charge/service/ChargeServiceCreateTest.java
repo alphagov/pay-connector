@@ -9,7 +9,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
-import uk.gov.pay.connector.app.CaptureProcessConfig;
+import uk.gov.pay.connector.app.ChargeAsyncOperationsConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -162,7 +162,7 @@ class ChargeServiceCreateTest {
     private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
 
     @Mock
-    private CaptureProcessConfig mockedCaptureProcessConfig;
+    private ChargeAsyncOperationsConfig mockedChargeAsyncOperationsConfig;
 
     @Mock
     private TaskQueueService mockTaskQueueService;
@@ -219,7 +219,7 @@ class ChargeServiceCreateTest {
 
         when(mockedConfig.getLinks()).thenReturn(mockedLinksConfig);
 
-        when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
+        when(mockedConfig.getChargeAsyncOperationsConfig()).thenReturn(mockedChargeAsyncOperationsConfig);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,

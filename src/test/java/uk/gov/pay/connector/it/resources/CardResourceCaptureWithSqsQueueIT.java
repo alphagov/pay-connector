@@ -15,7 +15,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.capture.ChargeAsyncOperationsQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.Instant;
@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
+        configOverrides = {@ConfigOverride(key = "chargeAsyncOperationsConfig.backgroundProcessingEnabled", value = "false")},
         withDockerSQS = true
 )
 public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
@@ -51,7 +51,7 @@ public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
     @Before
     public void setUp() {
         super.setUp();
-        Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
+        Logger root = (Logger) LoggerFactory.getLogger(ChargeAsyncOperationsQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }

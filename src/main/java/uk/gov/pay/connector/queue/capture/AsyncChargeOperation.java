@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CaptureCharge {
+public class AsyncChargeOperation {
     
     @JsonProperty("chargeId")
     private String chargeId;
