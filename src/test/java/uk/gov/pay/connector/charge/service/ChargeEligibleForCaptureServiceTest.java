@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +60,7 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
-    void shouldChangeStateToCaptureApprovedAddToCaptureQueueAndSendPaymentConfirmedEmail() throws QueueException {
+    void shouldChangeStateToCaptureApprovedAddToCaptureQueueAndSendPaymentConfirmedEmail() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
                 .withDelayedCapture(false).withSavePaymentInstrumentToAgreement(false).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
@@ -77,7 +78,7 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
-    void shouldChangeStateToCaptureApprovedAddToCaptureQueueSendPaymentConfirmedEmailAndLinkPaymentInstrumentToAgreement() throws QueueException {
+    void shouldChangeStateToCaptureApprovedAddToCaptureQueueSendPaymentConfirmedEmailAndLinkPaymentInstrumentToAgreement() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
                 .withDelayedCapture(false).withSavePaymentInstrumentToAgreement(true).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
@@ -94,7 +95,7 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
-    void shouldChangeStateToCaptureQueuedAddToCaptureQueueAndSendPaymentConfirmedEmail_forChargesWithAutorisationModeMotoApi() throws QueueException {
+    void shouldChangeStateToCaptureQueuedAddToCaptureQueueAndSendPaymentConfirmedEmail_forChargesWithAutorisationModeMotoApi() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
                 .withDelayedCapture(false)
                 .withAuthorisationMode(MOTO_API)
@@ -180,7 +181,7 @@ class ChargeEligibleForCaptureServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException {
+    void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         doThrow(QueueException.class).when(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);

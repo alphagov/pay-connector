@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue;
 
 import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +67,7 @@ public class ChargeAsyncOperationsQueueTest {
     }
 
     @Test
-    public void shouldSendValidSerialisedChargeToQueue() throws QueueException {
+    public void shouldSendValidSerialisedChargeToQueue() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExternalId("charge-id").build();
         when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
 
@@ -74,6 +75,6 @@ public class ChargeAsyncOperationsQueueTest {
         queue.sendForCapture(chargeEntity);
 
         verify(sqsQueueService).sendMessage(connectorConfiguration.getSqsConfig().getCaptureQueueUrl(),
-                "{\"chargeId\":\"charge-id\"}");
+                "{\"operationKey\":\"CAPTURE\",\"chargeId\":\"charge-id\"}");
     }
 }

@@ -19,6 +19,10 @@ public class ChargeAsyncOperationsMessage {
         return asyncChargeOperation.getChargeId();
     }
 
+    public AsyncChargeOperationKey getOperationKey() {
+        return asyncChargeOperation.getOperationKey();
+    }
+
     public String getQueueMessageReceiptHandle() {
         return queueMessage.getReceiptHandle();
     }

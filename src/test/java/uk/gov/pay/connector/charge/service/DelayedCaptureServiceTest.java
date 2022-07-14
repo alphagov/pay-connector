@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,7 @@ class DelayedCaptureServiceTest {
     }
 
     @Test
-    void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInAwaitingCaptureRequestState() throws QueueException {
+    void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInAwaitingCaptureRequestState() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
@@ -70,7 +71,7 @@ class DelayedCaptureServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = ChargeStatus.class, names = {"CAPTURE_APPROVED", "CAPTURE_APPROVED_RETRY", "CAPTURE_READY", "CAPTURE_SUBMITTED", "CAPTURED"})
-    void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInCaptureState(ChargeStatus initialChargeStatus) throws QueueException {
+    void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInCaptureState(ChargeStatus initialChargeStatus) throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(initialChargeStatus).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
@@ -112,7 +113,7 @@ class DelayedCaptureServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException {
+    void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException, JsonProcessingException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         doThrow(new QueueException()).when(mockChargeAsyncOperationsQueue).sendForCapture(chargeEntity);

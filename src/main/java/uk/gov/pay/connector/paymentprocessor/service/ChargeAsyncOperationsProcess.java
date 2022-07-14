@@ -40,7 +40,8 @@ public class ChargeAsyncOperationsProcess {
         for (ChargeAsyncOperationsMessage message : chargeAsyncOperationsMessages) {
             try {
                 MDC.put(PAYMENT_EXTERNAL_ID, message.getChargeId());
-                LOGGER.info("Charge async operation message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
+                LOGGER.info("Charge async operation message received [operationKey={}] - [queueMessageId={}] [queueMessageReceiptHandle={}]",
+                        message.getOperationKey(),
                         message.getQueueMessageId(),
                         message.getQueueMessageReceiptHandle()
                 );

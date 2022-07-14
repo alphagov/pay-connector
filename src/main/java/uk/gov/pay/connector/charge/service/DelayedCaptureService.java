@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,7 @@ public class DelayedCaptureService {
     private void addChargeToCaptureQueue(ChargeEntity charge) {
         try {
             chargeAsyncOperationsQueue.sendForCapture(charge);
-        } catch (QueueException e) {
+        } catch (QueueException | JsonProcessingException e) {
             LOGGER.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
             throw new WebApplicationException(format(
                     "Unable to schedule charge [%s] for capture - %s",

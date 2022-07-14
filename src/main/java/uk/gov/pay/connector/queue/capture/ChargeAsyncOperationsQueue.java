@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.queue.capture;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.GsonBuilder;
@@ -32,10 +33,9 @@ public class ChargeAsyncOperationsQueue extends AbstractQueue {
                         .getFailedCaptureRetryDelayInSeconds());
     }
 
-    public void sendForCapture(ChargeEntity charge) throws QueueException {
-        String message = new GsonBuilder()
-                .create()
-                .toJson(ImmutableMap.of("chargeId", charge.getExternalId()));
+    public void sendForCapture(ChargeEntity charge) throws QueueException, JsonProcessingException {
+        var operation = new AsyncChargeOperation(charge.getExternalId(), AsyncChargeOperationKey.CAPTURE);
+        String message = objectMapper.writeValueAsString(operation);
 
         QueueMessage queueMessage = sendMessageToQueue(message);
 
