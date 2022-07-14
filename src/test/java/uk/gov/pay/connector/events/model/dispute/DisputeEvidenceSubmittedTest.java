@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.dispute;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
-import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +24,8 @@ public class DisputeEvidenceSubmittedTest {
                 .isLive(true)
                 .build();
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "under_review", 6500L, "fradulent", 1642579160L, null, null);
+                "pi_123456789", "under_review", 6500L, "fradulent",
+                1642579160L, null, null, null);
 
         DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(stripeDisputeData.getId(), toUTCZonedDateTime(1642579160L), transaction);
 

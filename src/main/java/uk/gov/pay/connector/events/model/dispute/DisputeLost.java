@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.dispute;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
-import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import java.time.ZonedDateTime;
 

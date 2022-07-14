@@ -13,10 +13,13 @@ import uk.gov.pay.connector.events.model.dispute.DisputeEvent;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
 import uk.gov.pay.connector.events.model.dispute.DisputeLost;
 import uk.gov.pay.connector.events.model.dispute.DisputeWon;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.stripe.StripeFullTestCardNumbers;
 import uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -44,11 +47,14 @@ public class StripeWebhookTaskHandler {
     private final ObjectMapper mapper = new ObjectMapper();
 
     private final List<StripeNotificationType> disputeTypes = List.of(DISPUTE_CREATED, DISPUTE_UPDATED, DISPUTE_CLOSED);
+    private final StripePaymentProvider stripePaymentProvider;
 
     @Inject
-    public StripeWebhookTaskHandler(LedgerService ledgerService, EventService eventService) {
+    public StripeWebhookTaskHandler(LedgerService ledgerService, EventService eventService,
+                                    StripePaymentProvider stripePaymentProvider) {
         this.ledgerService = ledgerService;
         this.eventService = eventService;
+        this.stripePaymentProvider = stripePaymentProvider;
     }
 
     public void process(StripeNotification stripeNotification) throws JsonProcessingException {
@@ -61,6 +67,9 @@ public class StripeWebhookTaskHandler {
                 case DISPUTE_CREATED:
                     DisputeCreated disputeCreatedEvent = DisputeCreated.from(stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
                     emitEvent(disputeCreatedEvent, stripeDisputeData.getId());
+                    if(!transaction.getLive()) {
+                        submitEvidenceForTestAccount(stripeDisputeData, transaction);
+                    }
                     break;
                 case DISPUTE_UPDATED:
                     StripeDisputeStatus stripeDisputeStatus = byStatus(stripeDisputeData.getStatus());
@@ -97,6 +106,27 @@ public class StripeWebhookTaskHandler {
         } else {
             throw new RuntimeException("Unknown webhook task: " + stripeNotification.getType());
         }
+    }
+
+    private void submitEvidenceForTestAccount(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {
+        if (transaction.getCardDetails() == null) {
+            throw new RuntimeException("Card details are not yet available on ledger transaction to submit test evidence");
+        }
+        Optional<String> evidenceText =
+                StripeFullTestCardNumbers.getSubmitTestDisputeEvidenceText(transaction.getCardDetails().getFirstDigitsCardNumber(),
+                        transaction.getCardDetails().getLastDigitsCardNumber());
+        evidenceText.ifPresent(submitEvidenceText -> {
+            try {
+                StripeDisputeData dispute = stripePaymentProvider.submitTestDisputeEvidence(stripeDisputeData.getId(),
+                        submitEvidenceText, transaction.getTransactionId());
+                logger.info("Updated dispute [{}] with evidence [{}] for transaction [{}]", dispute.getId(),
+                        dispute.getEvidence().getUncategorizedText(),
+                        transaction.getTransactionId());
+            } catch (GatewayException e) {
+                logger.info("Failed to post evidence for Stripe test account: error [{}], dispute id [{}], transaction id [{}]",
+                        e.getMessage(), stripeDisputeData.getId(), transaction.getTransactionId());
+            }
+        });
     }
 
     private LedgerTransaction getLedgerTransaction(StripeDisputeData stripeDisputeData) {

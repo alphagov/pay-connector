@@ -12,7 +12,8 @@ public enum OrderRequestType {
     STRIPE_TOKEN("authorise.create_token"), 
     STRIPE_CREATE_SOURCE("authorise.create_source"), 
     STRIPE_CREATE_CHARGE("authorise.create_charge"), 
-    STRIPE_CREATE_3DS_SOURCE("authorise.create_3ds_source");
+    STRIPE_CREATE_3DS_SOURCE("authorise.create_3ds_source"),
+    STRIPE_UPDATE_DISPUTE("dispute.update");
 
     private final String name;
 

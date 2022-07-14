@@ -39,6 +39,8 @@ import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeDisputeHandler;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -65,6 +67,7 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeAuthoriseHandler stripeAuthoriseHandler;
     private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
     private final StripeQueryPaymentStatusHandler stripeQueryPaymentStatusHandler;
+    private final StripeDisputeHandler stripeDisputeHandler;
 
     @Inject
     public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
@@ -81,6 +84,7 @@ public class StripePaymentProvider implements PaymentProvider {
         stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
         stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeQueryPaymentStatusHandler = new StripeQueryPaymentStatusHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeDisputeHandler = new StripeDisputeHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 
     @Override
@@ -174,4 +178,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(charge);
     }
 
+    public StripeDisputeData submitTestDisputeEvidence(String disputeId, String evidenceText, String transactionId) throws GatewayException {
+        return stripeDisputeHandler.submitTestDisputeEvidence(disputeId, evidenceText, transactionId);
+    }
 }
