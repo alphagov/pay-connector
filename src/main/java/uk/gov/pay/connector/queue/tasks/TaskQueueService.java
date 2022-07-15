@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
@@ -47,6 +48,8 @@ public class TaskQueueService {
                 !isEmpty(chargeEntity.getGatewayTransactionId()) &&
                 chargeEntity.getFees().isEmpty()) {
             addCollectStripeFeeForFailedPaymentTask(chargeEntity);
+        } else if (chargeEntity.getChargeStatus() == ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED) {
+            addAuthoriseUserNotPresentTask(chargeEntity);
         }
     }
 
@@ -57,6 +60,20 @@ public class TaskQueueService {
             logger.error("Error adding task to queue",
                     kv("task_name", task.getTaskType().getName()),
                     kv("error", e.getMessage()));
+        }
+    }
+
+    private void addAuthoriseUserNotPresentTask(ChargeEntity chargeEntity) {
+        try {
+            var data = new PaymentTaskData(chargeEntity.getExternalId());
+            add(new Task(objectMapper.writeValueAsString(data), TaskType.AUTHORISE_USER_NOT_PRESENT));
+        } catch (Exception e) {
+            logger.warn("Error adding payment task message to queue", ArrayUtils.addAll(
+                    chargeEntity.getStructuredLoggingArgs(),
+                    kv("task_name", TaskType.AUTHORISE_USER_NOT_PRESENT),
+                    kv("error", e.getMessage()))
+            );
+            Sentry.captureException(e);
         }
     }
 
