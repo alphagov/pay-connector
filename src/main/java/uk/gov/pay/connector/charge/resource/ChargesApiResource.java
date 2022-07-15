@@ -35,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.EnumSet;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -59,6 +60,7 @@ public class ChargesApiResource {
     );
     private static final String ACCOUNT_ID = "accountId";
     private static final String RETURN_URL = "return_url";
+    private static final EnumSet<AuthorisationMode> AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL = EnumSet.of(AuthorisationMode.MOTO_API, AuthorisationMode.AGREEMENT);
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     public static final int MIN_AMOUNT = 1;
     public static final int MAX_AMOUNT = 10_000_000;
@@ -127,7 +129,7 @@ public class ChargesApiResource {
                         throw new MissingMandatoryAttributeException(RETURN_URL);
                     });
 
-        } else if (authorisationMode == AuthorisationMode.MOTO_API && chargeRequest.getReturnUrl().isPresent()) {
+        } else if (AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL.contains(authorisationMode) && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
 
