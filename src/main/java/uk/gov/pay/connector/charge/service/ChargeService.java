@@ -265,14 +265,6 @@ public class ChargeService {
 
             checkAgreementOptions(authorisationMode, chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
 
-            if (chargeRequest.getAgreementId() != null) {
-                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId())
-                        .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
-                if (!chargeRequest.getSavePaymentInstrumentToAgreement()) {
-                    checkAgreementHasActivePaymentInstrument(agreementEntity);
-                }
-            }
-
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
                 if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
                     LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -311,6 +303,16 @@ public class ChargeService {
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
+
+            if (chargeRequest.getAgreementId() != null) {
+                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId())
+                        .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
+                if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                    checkAgreementHasActivePaymentInstrument(agreementEntity);
+                    agreementEntity.getPaymentInstrument()
+                            .ifPresent(chargeEntity::setPaymentInstrument);
+                }
+            }
 
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, CREATED);
