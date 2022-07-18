@@ -1,35 +1,62 @@
 package uk.gov.pay.connector.it.resources;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.tasks.TaskQueue;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(
+        app = ConnectorApp.class,
+        config = "config/test-it-config.yaml",
+        withDockerSQS = true
+)
 public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
+    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
@@ -40,6 +67,15 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
     public ChargesApiResourceCreateAgreementIT() {
         super(PROVIDER_NAME);
+    }
+
+    @Override
+    @Before
+    public void setUp() {
+        super.setUp();
+        Logger root = (Logger) LoggerFactory.getLogger(TaskQueue.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
     }
 
     @Test
@@ -59,11 +95,15 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
         ));
 
-        connectorRestApiClient
+        String chargeId = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
-                .contentType(JSON);
+                .contentType(JSON)
+                .extract().path("charge_id");
+
+        assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+        assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
     }
 
     @Test
@@ -90,11 +130,23 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        connectorRestApiClient
+        String chargeId = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
-                .contentType(JSON);
+                .contentType(JSON)
+                .extract().path("charge_id");
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+
+        LoggingEvent log = logEvents.get(0);
+        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).collect(Collectors.toUnmodifiableList());
+        assertThat(log.getMessage(), is("Task added to queue"));
+        assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
     }
 
     @Test

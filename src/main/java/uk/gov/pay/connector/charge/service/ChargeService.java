@@ -110,6 +110,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneCha
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -697,6 +698,13 @@ public class ChargeService {
             transitionChargeState(chargeEntity, nextStatus);
         }
         return chargeEntity;
+    }
+
+    @Transactional
+    public void markChargeAsEligibleForAuthoriseUserNotPresent(String chargeExternalId) {
+        var charge = findChargeByExternalId(chargeExternalId);
+        transitionChargeState(charge, AUTHORISATION_USER_NOT_PRESENT_QUEUED);
+        taskQueueService.addAuthoriseWithUserNotPresentTask(charge);
     }
 
     private void setTransactionId(ChargeEntity chargeEntity, String transactionId) {

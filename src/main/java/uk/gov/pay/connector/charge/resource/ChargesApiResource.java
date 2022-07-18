@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.resource;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.persist.Transactional;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -111,6 +112,7 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
     )
+    @Transactional
     public Response createNewCharge(
             @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid ChargeCreateRequest chargeRequest,
@@ -134,7 +136,12 @@ public class ChargesApiResource {
         }
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
-                .map(response -> created(response.getLink("self")).entity(response).build())
+                .map(response -> {
+                    if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                        chargeService.markChargeAsEligibleForAuthoriseUserNotPresent(response.getChargeId());
+                    }
+                    return created(response.getLink("self")).entity(response).build();
+                })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 

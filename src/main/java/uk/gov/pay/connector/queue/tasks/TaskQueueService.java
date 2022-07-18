@@ -60,6 +60,20 @@ public class TaskQueueService {
         }
     }
 
+    public void addAuthoriseWithUserNotPresentTask(ChargeEntity chargeEntity) {
+        try {
+            var data = new PaymentTaskData(chargeEntity.getExternalId());
+            add(new Task(objectMapper.writeValueAsString(data), TaskType.AUTHORISE_WITH_USER_NOT_PRESENT));
+        } catch (Exception e) {
+            logger.warn("Error adding payment task message to queue", ArrayUtils.addAll(
+                    chargeEntity.getStructuredLoggingArgs(),
+                    kv("task_name", TaskType.AUTHORISE_WITH_USER_NOT_PRESENT),
+                    kv("error", e.getMessage()))
+            );
+            Sentry.captureException(e);
+        }
+    }
+
     private void addCollectStripeFeeForFailedPaymentTask(ChargeEntity chargeEntity) {
         try {
             MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());

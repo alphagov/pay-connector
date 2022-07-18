@@ -33,6 +33,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
+import uk.gov.pay.connector.events.model.charge.QueuedForAuthorisationWithUserNotPresent;
 import uk.gov.pay.connector.events.model.charge.QueuedForCapture;
 import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
@@ -63,6 +64,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -128,6 +130,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(CREATED, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
         graph.putEdgeValue(CREATED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(CREATED, AUTHORISATION_READY, ModelledEvent.none());
+        graph.putEdgeValue(CREATED, AUTHORISATION_USER_NOT_PRESENT_QUEUED, ModelledEvent.of(QueuedForAuthorisationWithUserNotPresent.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_READY, ModelledEvent.none());
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
@@ -181,6 +184,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, ModelledEvent.none());
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, ModelledEvent.none());
 
+        graph.putEdgeValue(AUTHORISATION_USER_NOT_PRESENT_QUEUED, AUTHORISATION_READY, ModelledEvent.none());
         graph.putEdgeValue(CAPTURE_QUEUED, CAPTURE_READY, ModelledEvent.none());
         graph.putEdgeValue(CAPTURE_QUEUED, CAPTURE_ERROR, ModelledEvent.of(CaptureErrored.class));
 
