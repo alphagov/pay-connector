@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
@@ -45,7 +46,10 @@ class TaskQueueMessageHandlerTest {
 
     @Mock
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
-    
+
+    @Mock
+    private AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
+
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
@@ -64,6 +68,7 @@ class TaskQueueMessageHandlerTest {
                 taskQueue,
                 collectFeesForFailedPaymentsTaskHandler,
                 stripeWebhookTaskHandler,
+                authoriseWithUserNotPresentHandler,
                 objectMapper);
 
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
@@ -112,6 +117,14 @@ class TaskQueueMessageHandlerTest {
         TaskMessage taskMessage = setupQueueMessage("{ \"key\": \"value\"}", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueMessageHandler.processMessages();
         verify(stripeWebhookTaskHandler).process(any(StripeNotification.class));
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldProcessAuthoriseWithUserNotPresentTask() throws QueueException {
+        TaskMessage taskMessage = setupQueueMessage("{ \"payment_external_id\": \"external-charge-id\"}", TaskType.AUTHORISE_WITH_USER_NOT_PRESENT);
+        taskQueueMessageHandler.processMessages();
+        verify(authoriseWithUserNotPresentHandler).process("external-charge-id");
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
 

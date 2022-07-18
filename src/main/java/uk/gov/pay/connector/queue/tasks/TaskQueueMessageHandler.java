@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
@@ -23,16 +24,19 @@ public class TaskQueueMessageHandler {
     private final TaskQueue taskQueue;
     private final CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
     private final StripeWebhookTaskHandler stripeWebhookTaskHandler;
+    private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
     public TaskQueueMessageHandler(TaskQueue taskQueue,
                                    CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler,
                                    StripeWebhookTaskHandler stripeWebhookTaskHandler,
+                                   AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
         this.stripeWebhookTaskHandler = stripeWebhookTaskHandler;
+        this.authoriseWithUserNotPresentHandler = authoriseWithUserNotPresentHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -64,6 +68,12 @@ public class TaskQueueMessageHandler {
                         MDC.put(STRIPE_EVENT_ID, stripeNotification.getId());
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         stripeWebhookTaskHandler.process(stripeNotification);
+                        break;
+                    case AUTHORISE_WITH_USER_NOT_PRESENT:
+                        var taskData = objectMapper.readValue(taskMessage.getTask().getData(), PaymentTaskData.class);
+                        MDC.put(PAYMENT_EXTERNAL_ID, taskData.getPaymentExternalId());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        authoriseWithUserNotPresentHandler.process(taskData.getPaymentExternalId());
                         break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
