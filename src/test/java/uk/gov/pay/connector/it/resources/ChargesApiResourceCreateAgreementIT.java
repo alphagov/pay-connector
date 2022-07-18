@@ -86,7 +86,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
@@ -162,7 +161,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
@@ -172,6 +170,31 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message", contains("If [authorisation_mode] is [agreement], [agreement_id] must be specified"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void shouldReturn422WhenAuthorisationModeAgreementAndReturnUrlProvided() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: return_url"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
     @Test
@@ -187,7 +210,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 "authorisation_mode", "agreement"
         ));
@@ -218,7 +240,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 "authorisation_mode", "agreement"
         ));
@@ -257,7 +278,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 "authorisation_mode", "agreement"
         ));
@@ -311,7 +331,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, true,
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
