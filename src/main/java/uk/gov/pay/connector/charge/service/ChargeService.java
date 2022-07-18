@@ -704,6 +704,7 @@ public class ChargeService {
     public void markChargeAsEligibleForAuthoriseUserNotPresent(String chargeExternalId) {
         var charge = findChargeByExternalId(chargeExternalId);
         transitionChargeState(charge, AUTHORISATION_USER_NOT_PRESENT_QUEUED);
+        taskQueueService.addAuthoriseWithUserNotPresentTask(charge);
     }
 
     private void setTransactionId(ChargeEntity chargeEntity, String transactionId) {

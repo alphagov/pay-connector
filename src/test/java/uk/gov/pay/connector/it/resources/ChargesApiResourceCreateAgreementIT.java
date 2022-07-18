@@ -141,13 +141,13 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
 
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
-        var log = logEvents.get(0);
-        var logArguments= Arrays.stream(log.getArgumentArray()).map(String::valueOf).collect(Collectors.toList());
+        LoggingEvent log = logEvents.get(0);
+        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).collect(Collectors.toUnmodifiableList());
         assertThat(log.getMessage(), is("Task added to queue"));
-        assertThat(logArguments, hasItem("task_type=authorise_user_not_present"));
+        assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
     }
 
     @Test
