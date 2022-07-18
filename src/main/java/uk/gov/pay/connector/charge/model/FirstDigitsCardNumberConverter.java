@@ -14,7 +14,11 @@ public class FirstDigitsCardNumberConverter implements AttributeConverter<FirstD
     }
 
     @Override
-    public FirstDigitsCardNumber convertToEntityAttribute(String s) {
-        return FirstDigitsCardNumber.ofNullable(s);
+    public FirstDigitsCardNumber convertToEntityAttribute(String firstDigitsCardNumber) {
+        if (firstDigitsCardNumber == null) {
+            return null;
+        }
+        return FirstDigitsCardNumber.of(firstDigitsCardNumber);
     }
+
 }

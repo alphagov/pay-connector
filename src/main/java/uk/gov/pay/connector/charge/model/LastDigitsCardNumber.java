@@ -1,29 +1,25 @@
 package uk.gov.pay.connector.charge.model;
 
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.service.payments.commons.model.WrappedStringValue;
 
+import java.util.Objects;
+import java.util.regex.Pattern;
+
 public class LastDigitsCardNumber extends WrappedStringValue {
+
+    private static final Pattern FOUR_DIGITS = Pattern.compile("[0-9]{4}");
 
     private LastDigitsCardNumber(String lastDigitsCardNumber) {
         super(lastDigitsCardNumber);
     }
 
-    private static boolean isValid(String lastDigitsCardNumber) {
-        return lastDigitsCardNumber != null && lastDigitsCardNumber.length() == 4 && StringUtils.isNumeric(lastDigitsCardNumber);
-    }
-
     public static LastDigitsCardNumber of(String lastDigitsCardNumber) {
-        if (!(isValid(lastDigitsCardNumber))) {
-            throw new RuntimeException("Expecting 4 last digits of card number");
-        }
-        return new LastDigitsCardNumber(lastDigitsCardNumber);
-    }
+        Objects.requireNonNull(lastDigitsCardNumber, "lastDigitsCardNumber");
 
-    public static LastDigitsCardNumber ofNullable(String lastDigitsCardNumber) {
-        if (!(isValid(lastDigitsCardNumber))) {
-            return null;
+        if (!FOUR_DIGITS.matcher(lastDigitsCardNumber).matches()) {
+            throw new IllegalArgumentException("Expecting 4 last digits of card number");
         }
+
         return new LastDigitsCardNumber(lastDigitsCardNumber);
     }
 

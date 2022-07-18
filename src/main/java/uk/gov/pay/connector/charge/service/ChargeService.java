@@ -200,8 +200,8 @@ public class ChargeService {
         checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
 
         CardDetailsEntity cardDetails = new CardDetailsEntity(
-                LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
-                FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
+                telephoneChargeRequest.getLastFourDigits().map(LastDigitsCardNumber::of).orElse(null),
+                telephoneChargeRequest.getFirstSixDigits().map(FirstDigitsCardNumber::of).orElse(null),
                 telephoneChargeRequest.getNameOnCard().orElse(null),
                 telephoneChargeRequest.getCardExpiry().orElse(null),
                 telephoneChargeRequest.getCardType().orElse(null),

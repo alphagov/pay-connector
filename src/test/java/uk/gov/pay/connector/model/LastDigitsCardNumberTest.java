@@ -1,39 +1,57 @@
 package uk.gov.pay.connector.model;
 
-import org.junit.Test;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class LastDigitsCardNumberTest {
-
+class LastDigitsCardNumberTest {
 
     @Test
-    public void shouldConvertValidLastFourDigitsOfCard() {
-        assertThat(LastDigitsCardNumber.of("1234").toString(), is("1234"));
-        assertThat(LastDigitsCardNumber.ofNullable("1234").toString(), is("1234"));
+    void shouldConvertSixDigits() {
+        MatcherAssert.assertThat(LastDigitsCardNumber.of("1234").toString(), is("1234"));
     }
 
     @Test
-    public void shouldReturnNullIfStringIsNull() {
-        assertThat(LastDigitsCardNumber.ofNullable(null), is(nullValue()));
+    void shouldThrowIfNotArabicNumerals() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of("౧౨౩౪"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNonNumericLastFourDigitsOfCard() {
-        LastDigitsCardNumber.of("a234");
+    @Test
+    void shouldThrowIfNonNumeric() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of("1a34"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNotFourDigitsOfCard() {
-        LastDigitsCardNumber.of("24");
+    @Test
+    void shouldThrowIfFewerThanFourDigits() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of("123"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNullFourDigitsOfCard() {
-        LastDigitsCardNumber.of(null);
+    @Test
+    void shouldThrowIfMoreThanFourDigits() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of("12345"));
+    }
+
+    @Test
+    void shouldThrowIfPrecedingCharacters() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of(" 1234"));
+    }
+
+    @Test
+    void shouldThrowIfTrailingCharacters() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of("1234 "));
+    }
+
+    @Test
+    void shouldThrowIfEmptyString() {
+        assertThrows(IllegalArgumentException.class, () -> LastDigitsCardNumber.of(""));
+    }
+
+    @Test
+    void shouldThrowIfNull() {
+        assertThrows(NullPointerException.class, () -> LastDigitsCardNumber.of(null));
     }
 
 }
