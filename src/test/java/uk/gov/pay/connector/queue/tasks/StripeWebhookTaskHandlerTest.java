@@ -107,9 +107,8 @@ public class StripeWebhookTaskHandlerTest {
 
         DisputeCreatedEventDetails eventDetails = (DisputeCreatedEventDetails) disputeCreated.getEventDetails();
         assertThat(eventDetails.getReason(), is("general"));
-        assertThat(eventDetails.getFee(), is(1500L));
         assertThat(eventDetails.getAmount(), is(6500L));
-        assertThat(eventDetails.getNetAmount(), is(-8000L));
+        assertThat(eventDetails.getEvidenceDueDate().toString(), is("2022-02-14T23:59:59Z"));
 
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -285,25 +284,6 @@ public class StripeWebhookTaskHandlerTest {
         String expectedLogMessage = "Skipping dispute updated notification: [status: needs_response, payment_intent: pi_1111111111]";
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
-    }
-
-    @Test
-    void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresent() throws JsonProcessingException {
-        LedgerTransaction transaction = aValidLedgerTransaction()
-                .withExternalId("external-id")
-                .withGatewayAccountId(1000L)
-                .withGatewayTransactionId("gateway-transaction-id")
-                .isLive(true)
-                .build();
-        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
-                .thenReturn(Optional.of(transaction));
-        String finalPayload = payload
-                .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
-                .replace(PLACEHOLDER_STATUS, "needs_response")
-                .replace("],", ",{}],");
-        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
-        var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
-        assertThat(thrown.getMessage(), is("Dispute data has too many balance_transactions"));
     }
 
     @Test

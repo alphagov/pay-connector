@@ -3,6 +3,10 @@ package uk.gov.pay.connector.queue.tasks.dispute;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
+
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EvidenceDetails {
     @JsonProperty("due_by")
@@ -16,7 +20,7 @@ public class EvidenceDetails {
         this.dueByTimestamp = dueByTimestamp;
     }
 
-    public Long getDueByTimestamp() {
-        return dueByTimestamp;
+    public ZonedDateTime getEvidenceDueByDate() {
+        return toUTCZonedDateTime(dueByTimestamp);
     }
 }
