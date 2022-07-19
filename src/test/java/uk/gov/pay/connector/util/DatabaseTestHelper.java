@@ -1102,6 +1102,14 @@ public class DatabaseTestHelper {
                         .list());
     }
 
+    public Map<String, Object> getPaymentInstrument(Long paymentInstrumentId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * from payment_instruments where id = :id")
+                        .bind("id", paymentInstrumentId)
+                        .mapToMap()
+                        .first());
+    }
+
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
         PGobject credentialsJson = buildCredentialsJson(params);
 

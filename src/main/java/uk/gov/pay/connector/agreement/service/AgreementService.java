@@ -2,13 +2,17 @@ package uk.gov.pay.connector.agreement.service;
 
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.charge.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import java.time.Clock;
@@ -70,5 +74,19 @@ public class AgreementService {
             agreementResponseBuilder.withUserIdentifier(agreementEntity.getUserIdentifier());
             return agreementResponseBuilder.build();
         });
+    }
+
+    @Transactional
+    public void cancel(String agreementExternalId, AgreementCancelRequest agreementCancelRequest) {
+        var agreement = agreementDao
+                .findByExternalId(agreementExternalId)
+                .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
+        agreement.getPaymentInstrument()
+                .filter(paymentInstrument -> paymentInstrument.getPaymentInstrumentStatus() == PaymentInstrumentStatus.ACTIVE)
+                .ifPresentOrElse(paymentInstrument -> {
+                    paymentInstrument.setPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED);
+                }, () -> {
+                    throw new PaymentInstrumentNotActiveException("Payment instrument not active.");
+                });
     }
 }

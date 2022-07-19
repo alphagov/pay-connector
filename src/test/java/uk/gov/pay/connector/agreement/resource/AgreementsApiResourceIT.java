@@ -14,8 +14,11 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddAgreementParams;
+import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Map;
@@ -27,10 +30,15 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.matchesPattern;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -43,6 +51,7 @@ public class AgreementsApiResourceIT {
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%s/agreements";
+    private static final String CANCEL_AGREEMENT_URL = "/v1/api/accounts/%s/agreements/%s/cancel";
 
     @DropwizardTestContext
     private TestContext testContext;
@@ -128,7 +137,6 @@ public class AgreementsApiResourceIT {
         givenSetup()
                 .body(payload)
                 .post(format(CREATE_AGREEMENT_URL, accountId))
-
                 .then()
                 .statusCode(SC_UNPROCESSABLE_ENTITY);
     }
@@ -144,6 +152,29 @@ public class AgreementsApiResourceIT {
                 .post(format(CREATE_AGREEMENT_URL, accountId))
                 .then()
                 .statusCode(SC_UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void shouldReturn204AndCancelAgreement() {
+        var agreementId = "an-external-id";
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withExternalAgreementId(agreementId)
+                .withPaymentInstrumentId(paymentInstrumentParams.getPaymentInstrumentId())
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        givenSetup()
+                .post(format(CANCEL_AGREEMENT_URL, accountId, agreementId))
+                .then()
+                .statusCode(NO_CONTENT_204);
+        var agreementMap = databaseTestHelper.getPaymentInstrument(paymentInstrumentParams.getPaymentInstrumentId());
+        assertThat(agreementMap.get("status"), is("CANCELLED"));
     }
 
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider) {
