@@ -16,6 +16,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
@@ -28,8 +29,10 @@ import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
 import uk.gov.pay.connector.events.model.dispute.DisputeLost;
 import uk.gov.pay.connector.events.model.dispute.DisputeWon;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -40,6 +43,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
@@ -56,7 +62,8 @@ public class StripeWebhookTaskHandlerTest {
     private LedgerService ledgerService;
     @Mock
     private EventService eventService;
-
+    @Mock
+    private StripePaymentProvider stripePaymentProvider;
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -67,7 +74,7 @@ public class StripeWebhookTaskHandlerTest {
 
     @BeforeEach
     void setUp() {
-        stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, eventService);
+        stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, eventService, stripePaymentProvider);
         Logger logger = (Logger) LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockLogAppender);
@@ -75,7 +82,7 @@ public class StripeWebhookTaskHandlerTest {
     }
 
     @Test
-    void shouldReadPayloadProperlyWhenDisputeCreated() throws JsonProcessingException {
+    void shouldReadPayloadProperlyWhenDisputeCreatedNotification_andNotSubmitTestEvidence_whenAccountIsLive() throws JsonProcessingException, GatewayException {
         LedgerTransaction transaction = aValidLedgerTransaction()
                 .withExternalId("external-id")
                 .withGatewayAccountId(1000L)
@@ -110,6 +117,8 @@ public class StripeWebhookTaskHandlerTest {
         String expectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+
+        verify(stripePaymentProvider, never()).submitTestDisputeEvidence(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -307,5 +316,65 @@ public class StripeWebhookTaskHandlerTest {
         StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
         var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
         assertThat(thrown.getMessage(), is("LedgerTransaction with gateway transaction id [pi_1111111111] not found"));
+    }
+
+    @Test
+    void shouldTriggerSubmitEvidence_whenDisputeCreated_andCardNumbersMatch() throws JsonProcessingException, GatewayException {
+        String disputeId = "du_1111111111";
+        String evidenceText = "losing_evidence";
+        String transactionId = "external-id";
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .withCardDetails(new CardDetails(null, null, null,
+                        "0259", "400000", null, null))
+                .isLive(false)
+                .build();
+        String finalPayload = payload
+                .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
+                .replace(PLACEHOLDER_STATUS, "needs_response");
+        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
+        StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        when(stripePaymentProvider.submitTestDisputeEvidence(disputeId, evidenceText, transactionId)).thenReturn(stripeDisputeData);
+        stripeWebhookTaskHandler.process(stripeNotification);
+        ArgumentCaptor<DisputeCreated> disputeCreatedArgumentCaptor = ArgumentCaptor.forClass(DisputeCreated.class);
+        verify(eventService).emitEvent(disputeCreatedArgumentCaptor.capture());
+
+        DisputeCreated disputeCreated = disputeCreatedArgumentCaptor.getValue();
+        assertThat(disputeCreated.getEventType(), is("DISPUTE_CREATED"));
+        assertThat(disputeCreated.getResourceType(), is(ResourceType.DISPUTE));
+        assertThat(disputeCreated.getTimestamp(), is(stripeDisputeData.getDisputeCreated()));
+
+        verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String eventExpectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
+        String submitEvidenceExpectedLogMessage = "Updated dispute [du_1111111111] with evidence [losing_evidence] for transaction [external-id]";
+
+        assertThat(logStatement.get(0).getFormattedMessage(), is(eventExpectedLogMessage));
+        assertThat(logStatement.get(1).getFormattedMessage(), is(submitEvidenceExpectedLogMessage));
+    }
+
+    @Test
+    void shouldThrowExceptionIfNoCardDetailsPresent_whenHandlingSubmitTestEvidence() throws JsonProcessingException {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .withCardDetails(null)
+                .isLive(false)
+                .build();
+        String finalPayload = payload
+                .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
+                .replace(PLACEHOLDER_STATUS, "needs_response");
+        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+
+        var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
+        assertThat(thrown.getMessage(), is("Card details are not yet available on ledger transaction to submit test evidence"));
     }
 }

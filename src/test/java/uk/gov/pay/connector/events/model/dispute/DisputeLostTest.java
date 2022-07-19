@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
-import uk.gov.pay.connector.queue.tasks.dispute.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import java.util.List;
 
@@ -31,7 +31,8 @@ class DisputeLostTest {
                 .build();
         BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "lost", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction), null);
+                "pi_123456789", "lost", 6500L, "fradulent", 1642579160L,
+                List.of(balanceTransaction), null, null);
 
         DisputeLost disputeLost = from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction);
 
@@ -63,7 +64,8 @@ class DisputeLostTest {
         BalanceTransaction balanceTransaction2 = new BalanceTransaction(6500L, 1500L, 8000L);
         EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction, balanceTransaction2), evidenceDetails);
+                "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
+                balanceTransaction2), evidenceDetails, null);
 
         var thrown = assertThrows(RuntimeException.class, () ->
                 DisputeCreated.from(stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L)));

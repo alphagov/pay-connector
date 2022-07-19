@@ -1,7 +1,10 @@
-package uk.gov.pay.connector.queue.tasks.dispute;
+package uk.gov.pay.connector.gateway.stripe.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
+import uk.gov.pay.connector.queue.tasks.dispute.Evidence;
+import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -26,6 +29,8 @@ public class StripeDisputeData {
     private List<BalanceTransaction> balanceTransactionList;
     @JsonProperty("evidence_details")
     private EvidenceDetails evidenceDetails;
+    @JsonProperty("evidence")
+    private Evidence evidence;
 
     @JsonProperty("status")
     private String status;
@@ -37,7 +42,8 @@ public class StripeDisputeData {
     public StripeDisputeData(String id, String paymentIntentId, String status,
                              Long amount, String reason, Long created,
                              List<BalanceTransaction> balanceTransactionList,
-                             EvidenceDetails evidenceDetails
+                             EvidenceDetails evidenceDetails,
+                             Evidence evidence
     ) {
         this.id = id;
         this.status = status;
@@ -47,6 +53,7 @@ public class StripeDisputeData {
         this.created = created;
         this.balanceTransactionList = balanceTransactionList;
         this.evidenceDetails = evidenceDetails;
+        this.evidence = evidence;
     }
 
     public String getResourceType() {
@@ -83,5 +90,9 @@ public class StripeDisputeData {
 
     public String getStatus() {
         return status;
+    }
+
+    public Evidence getEvidence() {
+        return evidence;
     }
 }
