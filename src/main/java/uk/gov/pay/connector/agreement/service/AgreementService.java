@@ -10,12 +10,16 @@ import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.model.charge.AgreementCancelledByService;
+import uk.gov.pay.connector.events.model.charge.AgreementCancelledByUser;
 import uk.gov.pay.connector.events.model.charge.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
@@ -85,6 +89,12 @@ public class AgreementService {
                 .filter(paymentInstrument -> paymentInstrument.getPaymentInstrumentStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {
                     paymentInstrument.setPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED);
+
+                    if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
+                        ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, ZonedDateTime.now(ZoneOffset.UTC)));
+                    } else {
+                        ledgerService.postEvent(AgreementCancelledByService.from(agreement, ZonedDateTime.now(ZoneOffset.UTC)));
+                    }
                 }, () -> {
                     throw new PaymentInstrumentNotActiveException("Payment instrument not active.");
                 });

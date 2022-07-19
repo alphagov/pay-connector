@@ -17,19 +17,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.model.charge.AgreementCancelledByService;
+import uk.gov.pay.connector.events.model.charge.AgreementCancelledByUser;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
@@ -81,7 +84,7 @@ public class AgreementServiceTest {
     public void cancelAnAgreement_ThrowsAgreementNotFound() {
         var agreementId = "an-external-id";
         when(mockedAgreementDao.findByExternalId(agreementId)).thenReturn(Optional.empty());
-        assertThrows(AgreementNotFoundException.class, () -> agreementService.cancel(agreementId, null));
+        assertThrows(AgreementNotFoundException.class, () -> agreementService.cancel(agreementId, new AgreementCancelRequest()));
     }
 
     @Test
@@ -91,7 +94,7 @@ public class AgreementServiceTest {
                 .withPaymentInstrument(null)
                 .build();
         when(mockedAgreementDao.findByExternalId(agreementId)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
-        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, null));
+        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, new AgreementCancelRequest()));
     }
 
     @ParameterizedTest()
@@ -105,20 +108,39 @@ public class AgreementServiceTest {
                 .withPaymentInstrument(paymentInstrument)
                 .build();
         when(mockedAgreementDao.findByExternalId(agreementId)).thenReturn(Optional.of(agreement));
-        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, null));
+        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, new AgreementCancelRequest()));
     }
 
     @Test
-    public void cancelAnAgreement_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+    public void cancelAnAgreementWithUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
         var agreementId = "an-external-id";
         var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withStatus(PaymentInstrumentStatus.ACTIVE)
                 .build();
         var agreement = new AgreementEntity.AgreementEntityBuilder()
                 .withPaymentInstrument(paymentInstrument)
+                .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                .build();
+        var cancelRequest = new AgreementCancelRequest("valid-user-external-id", "valid@email.test");
+        when(mockedAgreementDao.findByExternalId(agreementId)).thenReturn(Optional.of(agreement));
+        agreementService.cancel(agreementId, cancelRequest);
+        verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
+        assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
+    }
+
+    @Test
+    public void cancelAnAgreementWithoutUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+        var agreementId = "an-external-id";
+        var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        var agreement = new AgreementEntity.AgreementEntityBuilder()
+                .withPaymentInstrument(paymentInstrument)
+                .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
                 .build();
         when(mockedAgreementDao.findByExternalId(agreementId)).thenReturn(Optional.of(agreement));
-        agreementService.cancel(agreementId, null);
+        agreementService.cancel(agreementId, new AgreementCancelRequest());
+        verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
         assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
     }
 }
