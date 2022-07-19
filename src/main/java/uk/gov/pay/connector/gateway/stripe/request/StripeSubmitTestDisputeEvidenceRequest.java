@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import com.google.gson.GsonBuilder;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -12,10 +13,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import javax.ws.rs.core.MediaType;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static uk.gov.pay.connector.gateway.model.OrderRequestType.STRIPE_UPDATE_DISPUTE;
 
 public class StripeSubmitTestDisputeEvidenceRequest implements GatewayClientPostRequest {
@@ -77,11 +80,11 @@ public class StripeSubmitTestDisputeEvidenceRequest implements GatewayClientPost
     }
 
     private GatewayOrder createGatewayOrder() {
-        String payload = new GsonBuilder()
-                .create()
-                .toJson(Map.of("evidence", Map.of("uncategorized_text", evidenceText),
-                        "submit", true));
-        GatewayOrder order = new GatewayOrder(orderRequestType(), payload, MediaType.APPLICATION_JSON_TYPE);
+        List<BasicNameValuePair> result = List.of(new BasicNameValuePair("evidence[uncategorized_text]", evidenceText));
+
+        String payload = URLEncodedUtils.format(result, UTF_8);
+
+        GatewayOrder order = new GatewayOrder(orderRequestType(), payload, MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         return order;
     }
 }
