@@ -346,7 +346,7 @@ public class QueueMessageContractTest {
 
         var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtained(
                 charge.getServiceId(),
-                charge.getGatewayAccount().isLive(), 
+                charge.getGatewayAccount().isLive(),
                 resourceId,
                 Gateway3dsExemptionResultObtainedEventDetails.from(charge),
                 ZonedDateTime.now()
@@ -398,7 +398,7 @@ public class QueueMessageContractTest {
                 .withStatus(ChargeStatus.CAPTURED)
                 .withFee(Fee.of(null, 42L))
                 .build();
-        
+
         ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
                 .withCharge(chargeEntity)
                 .withGatewayEventDate(ZonedDateTime.now())
@@ -423,7 +423,7 @@ public class QueueMessageContractTest {
                 .withFee(Fee.of(FeeType.RADAR, 4L))
                 .withFee(Fee.of(FeeType.THREE_D_S, 5L))
                 .build();
-        
+
         var feeIncurredEvent = FeeIncurredEvent.from(chargeEntity);
 
         return feeIncurredEvent.toJsonString();
@@ -432,8 +432,8 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a dispute created event")
     public String verifyDisputeCreatedEvent() throws JsonProcessingException {
         DisputeCreatedEventDetails eventDetails =
-                new DisputeCreatedEventDetails(1500L, 1644883199L, "a-gateway-account-id",
-                        6500L, -8000L, "duplicate");
+                new DisputeCreatedEventDetails(parse("2022-02-14T23:59:59.000Z"), "a-gateway-account-id",
+                        6500L, "duplicate");
         DisputeCreated disputeCreated =
                 new DisputeCreated("resource-external-id", "external-id", "service-id",
                         true, eventDetails, toUTCZonedDateTime(1642579160L));

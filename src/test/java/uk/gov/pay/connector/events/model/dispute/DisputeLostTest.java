@@ -68,7 +68,7 @@ class DisputeLostTest {
                 balanceTransaction2), evidenceDetails, null);
 
         var thrown = assertThrows(RuntimeException.class, () ->
-                DisputeCreated.from(stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L)));
+                DisputeLost.from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction));
         assertThat(thrown.getMessage(), is("Dispute data has too many balance_transactions"));
     }
 }
