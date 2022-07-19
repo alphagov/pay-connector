@@ -239,13 +239,13 @@ public class DatabaseFixtures {
         private String cardBrand = "visa";
         private CardType cardType = null;
 
-        public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
-            this.lastDigitsCardNumber = LastDigitsCardNumber.ofNullable(lastDigitsCardNumber);
+        public TestCardDetails withLastDigitsOfCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
+            this.lastDigitsCardNumber = lastDigitsCardNumber;
             return this;
         }
 
-        public TestCardDetails withFirstDigitsOfCardNumber(String firstDigitsCardNumber) {
-            this.firstDigitsCardNumber = FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber);
+        public TestCardDetails withFirstDigitsOfCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
+            this.firstDigitsCardNumber = firstDigitsCardNumber;
             return this;
         }
 

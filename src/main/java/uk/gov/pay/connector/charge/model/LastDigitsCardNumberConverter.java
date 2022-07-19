@@ -14,7 +14,10 @@ public class LastDigitsCardNumberConverter implements AttributeConverter<LastDig
     }
 
     @Override
-    public LastDigitsCardNumber convertToEntityAttribute(String s) {
-        return LastDigitsCardNumber.ofNullable(s);
+    public LastDigitsCardNumber convertToEntityAttribute(String lastDigitsCardNumber) {
+        if (lastDigitsCardNumber == null) {
+            return null;
+        }
+        return LastDigitsCardNumber.of(lastDigitsCardNumber);
     }
 }

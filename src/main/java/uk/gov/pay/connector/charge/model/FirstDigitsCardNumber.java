@@ -4,28 +4,23 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class FirstDigitsCardNumber extends WrappedStringValue {
+
+    private static final Pattern SIX_DIGITS = Pattern.compile("[0-9]{6}");
 
     private FirstDigitsCardNumber(String firstDigitsCardNumber) {
         super(firstDigitsCardNumber);
     }
 
-    private static boolean isValid(String firstDigitsCardNumber) {
-        return firstDigitsCardNumber != null && firstDigitsCardNumber.length() == 6 && StringUtils.isNumeric(firstDigitsCardNumber);
-    }
-
     public static FirstDigitsCardNumber of(String firstDigitsCardNumber) {
-        if (!(isValid(firstDigitsCardNumber))) {
-            throw new RuntimeException("Expecting 6 first digits of card number");
-        }
-        return new FirstDigitsCardNumber(firstDigitsCardNumber);
-    }
+        Objects.requireNonNull(firstDigitsCardNumber, "firstDigitsCardNumber");
 
-    public static FirstDigitsCardNumber ofNullable(String firstDigitsCardNumber) {
-        if (!(isValid(firstDigitsCardNumber))) {
-            return null;
+        if (!SIX_DIGITS.matcher(firstDigitsCardNumber).matches()) {
+            throw new IllegalArgumentException("Expecting 6 first digits of card number");
         }
+
         return new FirstDigitsCardNumber(firstDigitsCardNumber);
     }
 

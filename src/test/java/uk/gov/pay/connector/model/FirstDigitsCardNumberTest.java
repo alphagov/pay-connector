@@ -1,39 +1,57 @@
 package uk.gov.pay.connector.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class FirstDigitsCardNumberTest {
-
+class FirstDigitsCardNumberTest {
 
     @Test
-    public void shouldConvertValidFirstSixDigitsOfCard() {
+    void shouldConvertSixDigits() {
         assertThat(FirstDigitsCardNumber.of("123456").toString(), is("123456"));
-        assertThat(FirstDigitsCardNumber.ofNullable("123456").toString(), is("123456"));
     }
 
     @Test
-    public void shouldReturnNullIfStringIsNull() {
-        assertThat(FirstDigitsCardNumber.ofNullable(null), is(nullValue()));
+    void shouldThrowIfNotArabicNumerals() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of("१२३४५६"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNonNumericFirstSixDigitsOfCard() {
-        FirstDigitsCardNumber.of("a23442");
+    @Test
+    void shouldThrowIfNonNumeric() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of("1a3456"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNotSixDigitsOfCard() {
-        FirstDigitsCardNumber.of("22345");
+    @Test
+    void shouldThrowIfFewerThanSixDigits() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of("12345"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void shouldThrowIfNullSixDigitsOfCard() {
-        FirstDigitsCardNumber.of(null);
+    @Test
+    void shouldThrowIfMoreThanSixDigits() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of("1234567"));
+    }
+
+    @Test
+    void shouldThrowIfPrecedingCharacters() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of(" 123456"));
+    }
+
+    @Test
+    void shouldThrowIfTrailingCharacters() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of("123456 "));
+    }
+
+    @Test
+    void shouldThrowIfEmptyString() {
+        assertThrows(IllegalArgumentException.class, () -> FirstDigitsCardNumber.of(""));
+    }
+
+    @Test
+    void shouldThrowIfNull() {
+        assertThrows(NullPointerException.class, () -> FirstDigitsCardNumber.of(null));
     }
 
 }
