@@ -116,6 +116,8 @@ stripe:
   credentials: ['stripe_account_id']
   radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE}
   threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE}
+  rechargeServicesForLivePaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_LIVE_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
+  rechargeServicesForTestPaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_TEST_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
 
 executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}

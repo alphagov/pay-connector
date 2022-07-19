@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
@@ -20,6 +23,12 @@ import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -44,20 +53,30 @@ public class StripeWebhookTaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
     private final LedgerService ledgerService;
     private final EventService eventService;
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    private final List<StripeNotificationType> disputeTypes = List.of(DISPUTE_CREATED, DISPUTE_UPDATED, DISPUTE_CLOSED);
     private final StripePaymentProvider stripePaymentProvider;
+    private final GatewayAccountService gatewayAccountService;
+    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
+    private final StripeGatewayConfig stripeGatewayConfig;
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final List<StripeNotificationType> disputeTypes = List.of(DISPUTE_CREATED, DISPUTE_UPDATED, DISPUTE_CLOSED);
 
     @Inject
-    public StripeWebhookTaskHandler(LedgerService ledgerService, EventService eventService,
-                                    StripePaymentProvider stripePaymentProvider) {
+    public StripeWebhookTaskHandler(LedgerService ledgerService,
+                                    EventService eventService,
+                                    StripePaymentProvider stripePaymentProvider,
+                                    GatewayAccountService gatewayAccountService,
+                                    GatewayAccountCredentialsService gatewayAccountCredentialsService,
+                                    ConnectorConfiguration configuration) {
         this.ledgerService = ledgerService;
         this.eventService = eventService;
         this.stripePaymentProvider = stripePaymentProvider;
+        this.gatewayAccountService = gatewayAccountService;
+        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
+        this.stripeGatewayConfig = configuration.getStripeConfig();
     }
 
-    public void process(StripeNotification stripeNotification) throws JsonProcessingException {
+    public void process(StripeNotification stripeNotification) throws JsonProcessingException, GatewayException {
         StripeNotificationType stripeNotificationType = byType(stripeNotification.getType());
         if (disputeTypes.contains(stripeNotificationType)) {
             StripeDisputeData stripeDisputeData = deserialiseStripeDisputeData(stripeNotification);
@@ -67,7 +86,7 @@ public class StripeWebhookTaskHandler {
                 case DISPUTE_CREATED:
                     DisputeCreated disputeCreatedEvent = DisputeCreated.from(stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
                     emitEvent(disputeCreatedEvent, stripeDisputeData.getId());
-                    if(!transaction.getLive()) {
+                    if (!transaction.getLive()) {
                         submitEvidenceForTestAccount(stripeDisputeData, transaction);
                     }
                     break;
@@ -90,7 +109,7 @@ public class StripeWebhookTaskHandler {
                     if (disputeStatus == WON) {
                         disputeEvent = DisputeWon.from(stripeDisputeData.getId(), stripeNotification.getCreated(), transaction);
                     } else if (disputeStatus == LOST) {
-                        disputeEvent = DisputeLost.from(stripeDisputeData, stripeNotification.getCreated(), transaction);
+                        disputeEvent = handleDisputeLost(stripeNotification, stripeDisputeData, transaction);
                     } else {
                         logger.info("Unknown stripe dispute status: [status: {}, payment_intent: {}]",
                                 stripeDisputeData.getStatus(), stripeDisputeData.getPaymentIntentId());
@@ -106,6 +125,28 @@ public class StripeWebhookTaskHandler {
         } else {
             throw new RuntimeException("Unknown webhook task: " + stripeNotification.getType());
         }
+    }
+
+    private DisputeEvent handleDisputeLost(StripeNotification stripeNotification, StripeDisputeData stripeDisputeData,
+                                           LedgerTransaction transaction) throws GatewayException {
+        boolean shouldRechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
+        if (shouldRechargeDispute) {
+            Charge charge = Charge.from(transaction);
+            GatewayAccountEntity gatewayAccount = gatewayAccountService.getGatewayAccount(Long.valueOf(transaction.getGatewayAccountId()))
+                    .orElseThrow(() -> new GatewayAccountNotFoundException(transaction.getGatewayAccountId()));
+            GatewayAccountCredentialsEntity gatewayAccountCredentials = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccount)
+                    .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to resolve gateway account credentials for charge " + charge.getExternalId()));
+            stripePaymentProvider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccount, gatewayAccountCredentials);
+        } else {
+            logger.info("Skipping recharging for dispute {} for payment {} as it was created before the date we started recharging from",
+                    stripeDisputeData.getId(), transaction.getTransactionId());
+        }
+        return DisputeLost.from(stripeDisputeData, stripeNotification.getCreated(), transaction);
+    }
+
+    private boolean shouldRechargeDispute(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {
+        return (transaction.getLive() && stripeDisputeData.getDisputeCreated().toInstant().isAfter(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate())) || 
+                (!transaction.getLive() && stripeDisputeData.getDisputeCreated().toInstant().isAfter(stripeGatewayConfig.getRechargeServicesForTestPaymentDisputesFromDate()));
     }
 
     private void submitEvidenceForTestAccount(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {

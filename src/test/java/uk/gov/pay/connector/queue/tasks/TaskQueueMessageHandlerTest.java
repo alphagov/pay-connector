@@ -113,7 +113,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDisputeCreatedTask() throws QueueException, JsonProcessingException {
+    public void shouldProcessDisputeCreatedTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"key\": \"value\"}", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueMessageHandler.processMessages();
         verify(stripeWebhookTaskHandler).process(any(StripeNotification.class));

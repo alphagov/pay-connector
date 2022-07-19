@@ -35,14 +35,19 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeFailedPaymentFeeCollectionHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeQueryPaymentStatusHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeDisputeHandler;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
@@ -180,5 +185,37 @@ public class StripePaymentProvider implements PaymentProvider {
 
     public StripeDisputeData submitTestDisputeEvidence(String disputeId, String evidenceText, String transactionId) throws GatewayException {
         return stripeDisputeHandler.submitTestDisputeEvidence(disputeId, evidenceText, transactionId);
+    }
+    
+    public void transferDisputeAmount(StripeDisputeData stripeDisputeData, Charge charge, GatewayAccountEntity gatewayAccount,
+                                      GatewayAccountCredentialsEntity gatewayAccountCredentials) throws GatewayException {
+        
+        if (stripeDisputeData.getBalanceTransactionList().size() > 1) {
+            throw new RuntimeException("Expected lost dispute to have a single balance_transaction, but has " + stripeDisputeData.getBalanceTransactionList().size());
+        }
+        BalanceTransaction balanceTransaction = stripeDisputeData.getBalanceTransactionList().get(0);
+        long transferAmount = Math.abs(balanceTransaction.getNetAmount());
+        String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
+        
+        StripeTransferInRequest transferInRequest = StripeTransferInRequest.createDisputeTransferRequest(
+                String.valueOf(transferAmount),
+                gatewayAccount,
+                gatewayAccountCredentials,
+                stripeDisputeData.getPaymentIntentId(),
+                disputeExternalId,
+                charge.getExternalId(),
+                stripeGatewayConfig);
+
+        String rawResponse = client.postRequestFor(transferInRequest).getEntity();
+        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(rawResponse, StripeTransferResponse.class);
+
+        logger.info("Funds transferred for dispute {} for charge {}, transferred net amount {} - transfer id {} - from Stripe Connect account id {} in transfer group {}",
+                disputeExternalId,
+                charge.getExternalId(),
+                transferAmount,
+                stripeTransferResponse.getId(),
+                stripeTransferResponse.getDestinationStripeAccountId(),
+                stripeTransferResponse.getStripeTransferGroup()
+        );
     }
 }
