@@ -81,9 +81,7 @@ public class StripeSubmitTestDisputeEvidenceRequest implements GatewayClientPost
                 .create()
                 .toJson(Map.of("evidence", Map.of("uncategorized_text", evidenceText),
                         "submit", true));
-        Map<String, Object> result = Map.of("evidence", Map.of("uncategorized_text", evidenceText),
-                "submit", true);
-        GatewayOrder order = new GatewayOrder(orderRequestType(), payload, MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        GatewayOrder order = new GatewayOrder(orderRequestType(), payload, MediaType.APPLICATION_JSON_TYPE);
         return order;
     }
 }
