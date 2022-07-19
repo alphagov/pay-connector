@@ -9,7 +9,8 @@ public enum StripeTransferMetadataReason {
     NOT_DEFINED,
     TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT,
     TRANSFER_REFUND_AMOUNT,
-    TRANSFER_PAYMENT_AMOUNT;
+    TRANSFER_PAYMENT_AMOUNT,
+    TRANSFER_DISPUTE_AMOUNT;
     
     @Override
     public String toString() {
