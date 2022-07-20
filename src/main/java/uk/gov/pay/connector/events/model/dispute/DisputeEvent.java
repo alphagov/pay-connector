@@ -7,15 +7,20 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import java.time.ZonedDateTime;
 
 public class DisputeEvent extends Event {
-    private final String parentResourceExternalId;
-    private final String serviceId;
-    private final Boolean live;
+    private String parentResourceExternalId;
+    private String serviceId;
+    private Boolean live;
+    
     public DisputeEvent(String resourceExternalId, String parentResourceExternalId, String serviceId, Boolean live,
-                        EventDetails eventDetails, ZonedDateTime disputeCreated) {
-        super(resourceExternalId, eventDetails, disputeCreated);
+                        EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(resourceExternalId, eventDetails, timestamp);
         this.parentResourceExternalId = parentResourceExternalId;
         this.serviceId = serviceId;
         this.live = live;
+    }
+
+    public DisputeEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        super(resourceExternalId, eventDetails, timestamp);
     }
 
     @Override

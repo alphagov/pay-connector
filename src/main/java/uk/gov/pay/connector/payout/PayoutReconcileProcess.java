@@ -6,17 +6,20 @@ import com.stripe.model.Payout;
 import com.stripe.model.Transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
+import uk.gov.pay.connector.events.model.dispute.DisputeIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayoutStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -32,8 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT;
 import static uk.gov.service.payments.logging.LoggingKeys.CONNECT_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.DISPUTE_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_PAYOUT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
@@ -70,6 +73,8 @@ public class PayoutReconcileProcess {
         List<PayoutReconcileMessage> payoutReconcileMessages = payoutReconcileQueue.retrievePayoutMessages();
         for (PayoutReconcileMessage payoutReconcileMessage : payoutReconcileMessages) {
             try {
+                MDC.put(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId());
+                MDC.put(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId());
                 LOGGER.info("Processing payout [{}] for connect account [{}]",
                         payoutReconcileMessage.getGatewayPayoutId(),
                         payoutReconcileMessage.getConnectAccountId());
@@ -95,34 +100,29 @@ public class PayoutReconcileProcess {
                                     break;
                                 default:
                                     LOGGER.error(format("Payout contains balance transfer of type [%s], which is unexpected.",
-                                            balanceTransaction.getType()),
-                                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                                                    balanceTransaction.getType()));
                                     break;
                             }
                         });
 
                 if (payments.intValue() == 0 && transfers.intValue() == 0) {
-                    LOGGER.error(format("No payments or refunds retrieved for payout [%s]. Requires investigation.",
-                            payoutReconcileMessage.getGatewayPayoutId()),
-                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                    LOGGER.error("No payments or refunds retrieved for payout [{}]. Requires investigation.",
+                                    payoutReconcileMessage.getGatewayPayoutId());
                 } else {
-                    LOGGER.info(format("Finished processing payout [%s]. Emitted events for %s payments and %s transfers.",
-                            payoutReconcileMessage.getGatewayPayoutId(),
-                            payments.intValue(),
-                            transfers.intValue()),
-                            kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                            kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                    LOGGER.info("Finished processing payout [{}]. Emitted events for {} payments and {} transfers.",
+                                    payoutReconcileMessage.getGatewayPayoutId(),
+                                    payments.intValue(),
+                                    transfers.intValue());
 
                     payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
                 }
             } catch (Exception e) {
-                LOGGER.error(format("Error processing payout from SQS message [queueMessageId=%s] [errorMessage=%s]",
-                        payoutReconcileMessage.getQueueMessageId(),
-                        e.getMessage()),
-                        kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                        kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                LOGGER.error("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
+                                payoutReconcileMessage.getQueueMessageId(),
+                                e.getMessage());
+            } finally {
+                MDC.remove(GATEWAY_PAYOUT_ID);
+                MDC.remove(CONNECT_ACCOUNT_ID);
             }
         }
     }
@@ -161,7 +161,7 @@ public class PayoutReconcileProcess {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService
                 .findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
 
-         return gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
+        return gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
 
     private void reconcilePayment(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {
@@ -177,10 +177,24 @@ public class PayoutReconcileProcess {
         var sourceTransfer = (Transfer) balanceTransaction.getSourceObject();
         var stripeTransferMetadata = getStripeTransferMetadata(sourceTransfer);
         String transactionExternalId = resolveTransactionExternalId(payoutReconcileMessage, balanceTransaction, stripeTransferMetadata);
-        if (stripeTransferMetadata.getReason() == TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT) {
-            emitPaymentEvent(payoutReconcileMessage, transactionExternalId);
-        } else {
-            emitRefundEvent(payoutReconcileMessage, transactionExternalId);
+
+        StripeTransferMetadataReason reason = stripeTransferMetadata.getReason();
+        switch (reason) {
+            case TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT:
+                emitPaymentEvent(payoutReconcileMessage, transactionExternalId);
+                break;
+            case TRANSFER_REFUND_AMOUNT:
+            case NOT_DEFINED:
+                // Transfers for retunds didn't historically include the "reason" metadata attribute. Assume transfers 
+                // without a reason are refunds to handle any historic refunds included in new payouts when a Stripe
+                // account moves from negative balance to positive balance.
+                emitRefundEvent(payoutReconcileMessage, transactionExternalId);
+                break;
+            case TRANSFER_DISPUTE_AMOUNT:
+                emitDisputeEvent(payoutReconcileMessage, transactionExternalId);
+                break;
+            default:
+                throw new RuntimeException(String.format("Stripe balance transaction %s has unexpected 'reason' in metadata", balanceTransaction.getId()));
         }
     }
 
@@ -197,9 +211,7 @@ public class PayoutReconcileProcess {
         LOGGER.info(format("Emitted event for payment [%s] included in payout [%s]",
                         paymentExternalId,
                         payoutReconcileMessage.getGatewayPayoutId()),
-                kv(PAYMENT_EXTERNAL_ID, paymentExternalId),
-                kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                kv(PAYMENT_EXTERNAL_ID, paymentExternalId));
     }
 
     private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, String refundExternalId) {
@@ -209,11 +221,21 @@ public class PayoutReconcileProcess {
         emitEvent(refundEvent, payoutReconcileMessage, refundExternalId);
 
         LOGGER.info(format("Emitted event for refund [%s] included in payout [%s]",
-                refundExternalId,
-                payoutReconcileMessage.getGatewayPayoutId()),
-                kv(REFUND_EXTERNAL_ID, refundExternalId),
-                kv(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId()),
-                kv(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId()));
+                        refundExternalId,
+                        payoutReconcileMessage.getGatewayPayoutId()),
+                kv(REFUND_EXTERNAL_ID, refundExternalId));
+    }
+
+    private void emitDisputeEvent(PayoutReconcileMessage payoutReconcileMessage, String disputeExternalId) {
+        var disputeEvent = new DisputeIncludedInPayout(disputeExternalId,
+                payoutReconcileMessage.getGatewayPayoutId(),
+                payoutReconcileMessage.getCreatedDate());
+        emitEvent(disputeEvent, payoutReconcileMessage, disputeExternalId);
+
+        LOGGER.info(format("Emitted event for dispute [%s] included in payout [%s]",
+                        disputeExternalId,
+                        payoutReconcileMessage.getGatewayPayoutId()),
+                kv(DISPUTE_EXTERNAL_ID, disputeExternalId));
     }
 
     private String resolveTransactionExternalId(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction, StripeTransferMetadata stripeTransferMetadata) {

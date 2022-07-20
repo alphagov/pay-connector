@@ -23,6 +23,7 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
+import uk.gov.pay.connector.events.model.dispute.DisputeIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
@@ -43,12 +44,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -58,7 +59,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.GOVUK_PAY_TRANSACTION_EXTERNAL_ID;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.REASON_KEY;
+import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_DISPUTE_AMOUNT;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT;
+import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -96,7 +99,7 @@ public class PayoutReconcileProcessTest {
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-    
+
     private final String stripeAccountId = "acct_2RDpWRLXEC2XwBWp";
     private final String stripeApiKey = "a-fake-api-key";
     private final String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
@@ -104,6 +107,7 @@ public class PayoutReconcileProcessTest {
     private final String paymentExternalId = "payment-id";
     private final String refundExternalId = "refund-id";
     private final String failedPaymentWithFeeExternalId = "failed-payment-with-fee-id";
+    private final String disputeExternalId = "dispute-id";
 
     @Before
     public void setUp() throws Exception {
@@ -128,20 +132,22 @@ public class PayoutReconcileProcessTest {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate);
         var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
         var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate);
+        var disputeEvent = new DisputeIncludedInPayout(disputeExternalId, payoutId, payoutCreatedDate);
         var stripePayout = new StripePayout("po_123", 1213L, 1589395533L,
                 1589395500L, "pending", "card", "statement_desc");
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
-        
+
         payoutReconcileProcess.processPayouts();
 
-        verify(eventService, atMost(1)).emitEvent(paymentEvent, false);
-        verify(eventService, atMost(1)).emitEvent(refundEvent, false);
-        verify(eventService, atMost(1)).emitEvent(feeCollectionEvent, false);
+        verify(eventService).emitEvent(paymentEvent, false);
+        verify(eventService).emitEvent(refundEvent, false);
+        verify(eventService).emitEvent(feeCollectionEvent, false);
+        verify(eventService).emitEvent(disputeEvent, false);
         verifyNoMoreInteractions(eventService);
-        verify(payoutEmitterService, atMost(1)).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
+        verify(payoutEmitterService).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
                 stripeAccountId, stripePayout);
-        verify(payoutReconcileQueue, atMost(1)).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
     @Test
@@ -171,7 +177,7 @@ public class PayoutReconcileProcessTest {
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
 
         payoutReconcileProcess.processPayouts();
-        
+
         verify(payoutEmitterService, times(2)).emitPayoutEvent(
                 captor.capture(), any(), any(), captorForStripePayout.capture());
 
@@ -213,7 +219,7 @@ public class PayoutReconcileProcessTest {
     public void shouldNotMarkMessageAsSuccessfullyProcessedIfEventEmissionFails() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
-        
+
         doThrow(new QueueException()).when(eventService).emitEvent(any(), anyBoolean());
 
         payoutReconcileProcess.processPayouts();
@@ -224,7 +230,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfStripeTransferMetadataMissing() throws Exception {
+    public void shouldNotMarkMessageAsSuccessfullyProcessedIfStripeTransferTransactionIdMetadataMissing() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
         Transfer refundTransferSource = mock(Transfer.class);
@@ -239,6 +245,49 @@ public class PayoutReconcileProcessTest {
         verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Transaction external ID missing in metadata"));
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldNotMarkMessageAsSuccessfullyProcessedIfTransferMetadataReasonNotRecognised() throws Exception {
+        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
+        BalanceTransaction balanceTransaction = mock(BalanceTransaction.class);
+        Transfer transfer = mock(Transfer.class);
+        String balanceTransactionId = "balance-transaction-id";
+        when(balanceTransaction.getId()).thenReturn(balanceTransactionId);
+        when(balanceTransaction.getType()).thenReturn("transfer");
+        when(balanceTransaction.getSourceObject()).thenReturn(transfer);
+        when(transfer.getMetadata()).thenReturn(Map.of(
+                GOVUK_PAY_TRANSACTION_EXTERNAL_ID, "a_transaction_id",
+                REASON_KEY, "some_unknown_reason"
+        ));
+        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+                .thenReturn(List.of(balanceTransaction));
+
+        payoutReconcileProcess.processPayouts();
+
+        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString(format("Stripe balance transaction %s has unexpected 'reason' in metadata", balanceTransactionId)));
+        verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
+    }
+
+    @Test
+    public void shouldReconcileTransferMissingReasonMetadataAsRefund() throws Exception {
+        PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
+        BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
+        Transfer refundTransferSource = mock(Transfer.class);
+        when(refundBalanceTransaction.getType()).thenReturn("transfer");
+        when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
+        when(refundTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId));
+        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+                .thenReturn(List.of(refundBalanceTransaction));
+        when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
+
+        payoutReconcileProcess.processPayouts();
+
+        var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
+        verify(eventService).emitEvent(refundEvent, false);
+        verifyNoMoreInteractions(eventService);
+        verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
     private PayoutReconcileMessage setupQueueMessage() throws QueueException {
@@ -262,7 +311,10 @@ public class PayoutReconcileProcessTest {
         Transfer refundTransferSource = mock(Transfer.class);
         when(refundBalanceTransaction.getType()).thenReturn("transfer");
         when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
-        when(refundTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId));
+        when(refundTransferSource.getMetadata()).thenReturn(Map.of(
+                GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId,
+                REASON_KEY, TRANSFER_REFUND_AMOUNT.toString()
+        ));
 
         BalanceTransaction feeBalanceTransaction = mock(BalanceTransaction.class);
         Transfer feeTransferSource = mock(Transfer.class);
@@ -271,6 +323,15 @@ public class PayoutReconcileProcessTest {
         when(feeTransferSource.getMetadata()).thenReturn(Map.of(
                 GOVUK_PAY_TRANSACTION_EXTERNAL_ID, failedPaymentWithFeeExternalId,
                 REASON_KEY, TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT.toString()
+        ));
+
+        BalanceTransaction disputeBalanceTransaction = mock(BalanceTransaction.class);
+        Transfer disputeTransferSource = mock(Transfer.class);
+        when(disputeBalanceTransaction.getType()).thenReturn("transfer");
+        when(disputeBalanceTransaction.getSourceObject()).thenReturn(disputeTransferSource);
+        when(disputeTransferSource.getMetadata()).thenReturn(Map.of(
+                GOVUK_PAY_TRANSACTION_EXTERNAL_ID, disputeExternalId,
+                REASON_KEY, TRANSFER_DISPUTE_AMOUNT.toString()
         ));
 
         BalanceTransaction payoutBalanceTransaction = mock(BalanceTransaction.class);
@@ -296,6 +357,7 @@ public class PayoutReconcileProcessTest {
                 paymentBalanceTransaction,
                 refundBalanceTransaction,
                 feeBalanceTransaction,
+                disputeBalanceTransaction,
                 payoutBalanceTransaction);
         when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
                 .thenReturn(balanceTransactions);
