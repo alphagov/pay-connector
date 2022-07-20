@@ -443,7 +443,7 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a dispute lost event")
     public String verifyDisputeLostEvent() throws JsonProcessingException {
         DisputeLostEventDetails eventDetails = new DisputeLostEventDetails("a-gateway-account-id",
-                -8000L, 6500L, 1500L);
+                6500L, -8000L, 1500L);
         DisputeLost disputeLost = new DisputeLost("resource-external-id",
                 "external-id", "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
         return disputeLost.toJsonString();

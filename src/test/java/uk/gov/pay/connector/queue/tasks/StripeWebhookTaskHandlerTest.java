@@ -52,6 +52,7 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -291,9 +292,9 @@ public class StripeWebhookTaskHandlerTest {
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
-        assertThat(eventDetails.getFee(), is(stripeDisputeData.getBalanceTransactionList().get(0).getFee()));
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
-        assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().get(0).getNetAmount()));
+        assertThat(eventDetails.getFee(), is(nullValue()));
+        assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
         verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -325,9 +326,9 @@ public class StripeWebhookTaskHandlerTest {
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
-        assertThat(eventDetails.getFee(), is(stripeDisputeData.getBalanceTransactionList().get(0).getFee()));
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
-        assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().get(0).getNetAmount()));
+        assertThat(eventDetails.getFee(), is(nullValue()));
+        assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
         verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
