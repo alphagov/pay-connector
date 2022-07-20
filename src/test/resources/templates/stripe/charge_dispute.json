@@ -11,7 +11,7 @@
     "object": {
       "id": "du_1111111111",
       "object": "dispute",
-      "livemode": true,
+      "livemode": false,
       "payment_intent": "pi_1111111111",
       "status": "{{status}}",
       "amount": 6500,

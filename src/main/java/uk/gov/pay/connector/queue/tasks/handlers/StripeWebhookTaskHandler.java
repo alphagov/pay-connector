@@ -86,7 +86,7 @@ public class StripeWebhookTaskHandler {
                 case DISPUTE_CREATED:
                     DisputeCreated disputeCreatedEvent = DisputeCreated.from(stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
                     emitEvent(disputeCreatedEvent, stripeDisputeData.getId());
-                    if (!transaction.getLive()) {
+                    if(!stripeDisputeData.getLiveMode()) {
                         submitEvidenceForTestAccount(stripeDisputeData, transaction);
                     }
                     break;

@@ -35,6 +35,9 @@ public class StripeDisputeData {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("livemode")
+    private Boolean liveMode;
+
     public StripeDisputeData() {
         // for  jackson
     }
@@ -43,7 +46,7 @@ public class StripeDisputeData {
                              Long amount, String reason, Long created,
                              List<BalanceTransaction> balanceTransactionList,
                              EvidenceDetails evidenceDetails,
-                             Evidence evidence
+                             Evidence evidence, Boolean liveMode
     ) {
         this.id = id;
         this.status = status;
@@ -54,6 +57,7 @@ public class StripeDisputeData {
         this.balanceTransactionList = balanceTransactionList;
         this.evidenceDetails = evidenceDetails;
         this.evidence = evidence;
+        this.liveMode = liveMode;
     }
 
     public String getResourceType() {
@@ -94,5 +98,9 @@ public class StripeDisputeData {
 
     public Evidence getEvidence() {
         return evidence;
+    }
+
+    public Boolean getLiveMode() {
+        return liveMode;
     }
 }

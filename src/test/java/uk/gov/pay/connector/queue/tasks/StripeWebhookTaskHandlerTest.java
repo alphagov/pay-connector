@@ -117,7 +117,11 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response");
+        String finalPayload = payload
+                .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
+                .replace(PLACEHOLDER_STATUS, "needs_response");
+        finalPayload = finalPayload.replaceAll("\"livemode\": false", "\"livemode\": true");
+        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));

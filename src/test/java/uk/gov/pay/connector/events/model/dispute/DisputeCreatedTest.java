@@ -31,7 +31,7 @@ class DisputeCreatedTest {
         EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
                 "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction),
-                evidenceDetails, null);
+                evidenceDetails, null, true);
 
         DisputeCreated disputeCreated = from(stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L));
 

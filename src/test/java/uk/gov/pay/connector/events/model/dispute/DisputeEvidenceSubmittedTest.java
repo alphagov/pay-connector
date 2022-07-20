@@ -25,7 +25,7 @@ public class DisputeEvidenceSubmittedTest {
                 .build();
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
                 "pi_123456789", "under_review", 6500L, "fradulent",
-                1642579160L, null, null, null);
+                1642579160L, null, null, null, true);
 
         DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(stripeDisputeData.getId(), toUTCZonedDateTime(1642579160L), transaction);
 
