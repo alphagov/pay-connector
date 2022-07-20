@@ -433,7 +433,7 @@ public class QueueMessageContractTest {
     public String verifyDisputeCreatedEvent() throws JsonProcessingException {
         DisputeCreatedEventDetails eventDetails =
                 new DisputeCreatedEventDetails(parse("2022-02-14T23:59:59.000Z"), "a-gateway-account-id",
-                        6500L, "duplicate");
+                        6500L, "duplicate", "du_1LIaq8Dv3CZEaFO2MNQJK333");
         DisputeCreated disputeCreated =
                 new DisputeCreated("resource-external-id", "external-id", "service-id",
                         true, eventDetails, toUTCZonedDateTime(1642579160L));

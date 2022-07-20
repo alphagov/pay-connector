@@ -10,12 +10,15 @@ public class DisputeCreatedEventDetails extends DisputeEventDetails {
     private final ZonedDateTime evidenceDueDate;
     private final Long amount;
     private final String reason;
+    private final String gatewayTransactionId;
 
-    public DisputeCreatedEventDetails(ZonedDateTime evidenceDueDate, String gatewayAccountId, Long amount, String reason) {
+    public DisputeCreatedEventDetails(ZonedDateTime evidenceDueDate, String gatewayAccountId, Long amount,
+                                      String reason, String gatewayTransactionId) {
         super(gatewayAccountId);
         this.evidenceDueDate = evidenceDueDate;
         this.amount = amount;
         this.reason = reason;
+        this.gatewayTransactionId = gatewayTransactionId;
     }
 
     public ZonedDateTime getEvidenceDueDate() {
@@ -28,5 +31,9 @@ public class DisputeCreatedEventDetails extends DisputeEventDetails {
 
     public String getReason() {
         return reason;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
     }
 }
