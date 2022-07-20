@@ -69,7 +69,7 @@ public class AgreementEntity {
     }
     
     private AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
-                            String description, String userIdentifier, boolean live, Instant createdDate) {
+                            String description, String userIdentifier, boolean live, Instant createdDate, PaymentInstrumentEntity paymentInstrument) {
         this.externalId = RandomIdGenerator.newId();
         this.gatewayAccount = gatewayAccount;
         this.serviceId = serviceId;
@@ -78,6 +78,7 @@ public class AgreementEntity {
         this.createdDate = createdDate;
         this.description = description;
         this.userIdentifier = userIdentifier;
+        this.paymentInstrument = paymentInstrument;
     }
 
     public Long getId() {
@@ -168,6 +169,7 @@ public class AgreementEntity {
         private String userIdentifier;
         private String serviceId;
         private boolean live;
+        private PaymentInstrumentEntity paymentInstrument;
 
         public static AgreementEntityBuilder anAgreementEntity(Instant createdDate) {
             var agreementEntityBuilder = new AgreementEntityBuilder();
@@ -210,8 +212,13 @@ public class AgreementEntity {
             return this;
         }
 
+        public AgreementEntityBuilder withPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
+            this.paymentInstrument = paymentInstrument;
+            return this;
+        }
+
         public AgreementEntity build() {
-            return new AgreementEntity(gatewayAccount, serviceId, reference, description, userIdentifier, live, createdDate);
+            return new AgreementEntity(gatewayAccount, serviceId, reference, description, userIdentifier, live, createdDate, paymentInstrument);
         }
         
     }
