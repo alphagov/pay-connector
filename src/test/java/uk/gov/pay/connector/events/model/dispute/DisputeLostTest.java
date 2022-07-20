@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import java.util.List;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -21,7 +22,7 @@ import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 class DisputeLostTest {
 
     @Test
-    void shouldBuildAndSerialiseEventDetailsCorrectly() throws JsonProcessingException {
+    void shouldBuildAndSerialiseEventDetailsCorrectly_whenRechargedToServiceTrue() throws JsonProcessingException {
         LedgerTransaction transaction = aValidLedgerTransaction()
                 .withExternalId("payment-external-id")
                 .withGatewayAccountId(1234L)
@@ -34,7 +35,7 @@ class DisputeLostTest {
                 "pi_123456789", "lost", 6500L, "fradulent", 1642579160L,
                 List.of(balanceTransaction), null, null);
 
-        DisputeLost disputeLost = from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction);
+        DisputeLost disputeLost = from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, true);
 
         String disputeLostJson = disputeLost.toJsonString();
         assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
@@ -49,6 +50,37 @@ class DisputeLostTest {
         assertThat(disputeLostJson, hasJsonPath("$.event_details.net_amount", equalTo(-8000)));
         assertThat(disputeLostJson, hasJsonPath("$.event_details.amount", equalTo(6500)));
         assertThat(disputeLostJson, hasJsonPath("$.event_details.fee", equalTo(1500)));
+    }
+
+    @Test
+    void shouldBuildAndSerialiseEventDetailsCorrectly_whenRechargedToServiceFalse() throws JsonProcessingException {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("payment-external-id")
+                .withGatewayAccountId(1234L)
+                .withGatewayTransactionId("payment-intent-id")
+                .withServiceId("service-id")
+                .isLive(true)
+                .build();
+        BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
+        StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
+                "pi_123456789", "lost", 6500L, "fradulent", 1642579160L,
+                List.of(balanceTransaction), null, null);
+
+        DisputeLost disputeLost = from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, false);
+
+        String disputeLostJson = disputeLost.toJsonString();
+        assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
+        assertThat(disputeLostJson, hasJsonPath("$.resource_type", equalTo("dispute")));
+        assertThat(disputeLostJson, hasJsonPath("$.service_id", equalTo("service-id")));
+        assertThat(disputeLostJson, hasJsonPath("$.resource_external_id", equalTo("fca65e80d2293ee3bf158a0d12")));
+        assertThat(disputeLostJson, hasJsonPath("$.timestamp", equalTo("2022-01-19T07:59:20.000000Z")));
+        assertThat(disputeLostJson, hasJsonPath("$.live", equalTo(true)));
+        assertThat(disputeLostJson, hasJsonPath("$.parent_resource_external_id", equalTo("payment-external-id")));
+
+        assertThat(disputeLostJson, hasJsonPath("$.event_details.gateway_account_id", equalTo("1234")));
+        assertThat(disputeLostJson, hasJsonPath("$.event_details.amount", equalTo(6500)));
+        assertThat(disputeLostJson, hasNoJsonPath("$.event_details.net_amount"));
+        assertThat(disputeLostJson, hasNoJsonPath("$.event_details.fee"));
     }
 
     @Test
@@ -68,7 +100,7 @@ class DisputeLostTest {
                 balanceTransaction2), evidenceDetails, null);
 
         var thrown = assertThrows(RuntimeException.class, () ->
-                DisputeLost.from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction));
+                DisputeLost.from(stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, true));
         assertThat(thrown.getMessage(), is("Dispute data has too many balance_transactions"));
     }
 }

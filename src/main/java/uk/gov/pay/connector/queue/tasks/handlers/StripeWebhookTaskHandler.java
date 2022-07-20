@@ -129,8 +129,8 @@ public class StripeWebhookTaskHandler {
 
     private DisputeEvent handleDisputeLost(StripeNotification stripeNotification, StripeDisputeData stripeDisputeData,
                                            LedgerTransaction transaction) throws GatewayException {
-        boolean shouldRechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
-        if (shouldRechargeDispute) {
+        boolean rechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
+        if (rechargeDispute) {
             Charge charge = Charge.from(transaction);
             GatewayAccountEntity gatewayAccount = gatewayAccountService.getGatewayAccount(Long.valueOf(transaction.getGatewayAccountId()))
                     .orElseThrow(() -> new GatewayAccountNotFoundException(transaction.getGatewayAccountId()));
@@ -141,7 +141,7 @@ public class StripeWebhookTaskHandler {
             logger.info("Skipping recharging for dispute {} for payment {} as it was created before the date we started recharging from",
                     stripeDisputeData.getId(), transaction.getTransactionId());
         }
-        return DisputeLost.from(stripeDisputeData, stripeNotification.getCreated(), transaction);
+        return DisputeLost.from(stripeDisputeData, stripeNotification.getCreated(), transaction, rechargeDispute);
     }
 
     private boolean shouldRechargeDispute(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {

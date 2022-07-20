@@ -15,17 +15,25 @@ public class DisputeLost extends DisputeEvent {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, eventDate);
     }
 
-    public static DisputeLost from(StripeDisputeData stripeDisputeData, ZonedDateTime eventDate, LedgerTransaction transaction) {
+    public static DisputeLost from(StripeDisputeData stripeDisputeData, ZonedDateTime eventDate, LedgerTransaction transaction, boolean rechargedToService) {
         if (stripeDisputeData.getBalanceTransactionList().size() > 1) {
             throw new RuntimeException("Dispute data has too many balance_transactions");
         }
         BalanceTransaction balanceTransaction = stripeDisputeData.getBalanceTransactionList().get(0);
-        DisputeLostEventDetails eventDetails = new DisputeLostEventDetails(
-                transaction.getGatewayAccountId(),
-                balanceTransaction.getNetAmount(),
-                stripeDisputeData.getAmount(),
-                Math.abs(balanceTransaction.getFee()));
-
+        DisputeLostEventDetails eventDetails;
+        if (rechargedToService) {
+            eventDetails = new DisputeLostEventDetails(
+                    transaction.getGatewayAccountId(),
+                    stripeDisputeData.getAmount(),
+                    balanceTransaction.getNetAmount(),
+                    Math.abs(balanceTransaction.getFee()));
+        } else {
+            eventDetails = new DisputeLostEventDetails(
+                    transaction.getGatewayAccountId(),
+                    stripeDisputeData.getAmount()
+            );
+        }
+        
         return new DisputeLost(idFromExternalId(stripeDisputeData.getId()),
                 transaction.getTransactionId(),
                 transaction.getServiceId(),

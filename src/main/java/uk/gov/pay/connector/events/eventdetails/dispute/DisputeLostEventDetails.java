@@ -5,11 +5,15 @@ public class DisputeLostEventDetails extends DisputeEventDetails {
     private final Long amount;
     private final Long fee;
 
-    public DisputeLostEventDetails(String gatewayAccountId, Long netAmount, Long amount, Long fee) {
+    public DisputeLostEventDetails(String gatewayAccountId, Long amount, Long netAmount, Long fee) {
         super(gatewayAccountId);
         this.netAmount = netAmount;
         this.amount = amount;
         this.fee = fee;
+    }
+    
+    public DisputeLostEventDetails(String gatewayAccountId, Long amount) {
+        this(gatewayAccountId, amount, null, null);
     }
 
     public Long getNetAmount() {
