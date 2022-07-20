@@ -95,7 +95,7 @@ public class StripeFailedPaymentFeeCollectionHandler {
     private void transferFeeFromConnectAccount(long feeAmount,
                                                ChargeEntity charge)
             throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
-        StripeTransferInRequest transferInRequest = StripeTransferInRequest.of(
+        StripeTransferInRequest transferInRequest = StripeTransferInRequest.createFeesForFailedPaymentTransferRequest(
                 String.valueOf(feeAmount),
                 charge.getGatewayAccount(),
                 charge.getGatewayAccountCredentialsEntity(),

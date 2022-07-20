@@ -32,8 +32,8 @@ public class StripeTransferInRequest extends StripeTransferRequest {
         this.transferGroup = transferGroup;
     }
 
-    public static StripeTransferInRequest of(RefundGatewayRequest request, String stripeChargeId,
-                                             StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferInRequest createRefundTransferRequest(RefundGatewayRequest request, String stripeChargeId,
+                                                                      StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferInRequest(
                 request.getAmount(),
                 request.getGatewayAccount(),
@@ -46,13 +46,14 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT
         );
     }
-    
-    public static StripeTransferInRequest of(String feeAmount,
-                                             GatewayAccountEntity gatewayAccount,
-                                             GatewayAccountCredentialsEntity gatewayAccountCredentials,
-                                             String paymentIntentId,
-                                             String chargeExternalId,
-                                             StripeGatewayConfig stripeGatewayConfig) {
+
+    public static StripeTransferInRequest createFeesForFailedPaymentTransferRequest(
+            String feeAmount,
+            GatewayAccountEntity gatewayAccount,
+            GatewayAccountCredentialsEntity gatewayAccountCredentials,
+            String paymentIntentId,
+            String chargeExternalId,
+            StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferInRequest(
                 feeAmount,
                 gatewayAccount,
@@ -64,6 +65,26 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 chargeExternalId,
                 StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT);
     }
+    
+    public static StripeTransferInRequest createDisputeTransferRequest(
+            String amount,
+            GatewayAccountEntity gatewayAccount,
+            GatewayAccountCredentialsEntity gatewayAccountCredentials,
+            String paymentIntentId,
+            String disputeExternalId,
+            String chargeExternalId,
+            StripeGatewayConfig stripeGatewayConfig) {
+        return new StripeTransferInRequest(
+                amount,
+                gatewayAccount,
+                paymentIntentId,
+                disputeExternalId,
+                stripeGatewayConfig,
+                disputeExternalId,
+                gatewayAccountCredentials.getCredentials(),
+                chargeExternalId,
+                StripeTransferMetadataReason.TRANSFER_DISPUTE_AMOUNT);
+    }
 
     @Override
     public Map<String, String> params() {
@@ -73,7 +94,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 "transfer_group", transferGroup
         );
         Map<String, String> commonParams = super.params();
-        params.putAll(transferOutParams); 
+        params.putAll(transferOutParams);
         params.putAll(commonParams);
 
         return params;

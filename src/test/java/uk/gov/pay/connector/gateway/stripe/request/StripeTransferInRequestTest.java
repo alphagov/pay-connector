@@ -33,6 +33,8 @@ public class StripeTransferInRequestTest {
     private final String stripeChargeId = "stripeChargeId";
     private final long refundAmount = 100L;
     private final String feeAmount = "5";
+    private final String disputeAmount = "1000";
+    private final String disputeExternalId = "a-dispute-id";
     private final String stripeBaseUrl = "stripeUrl";
     private final String stripePlatformAccountId = "stripePlatformAccountId";
     private final String stripeConnectAccountId = "stripe_account_id";
@@ -47,7 +49,8 @@ public class StripeTransferInRequestTest {
     StripeAuthTokens stripeAuthTokens;
 
     private StripeTransferInRequest refundTransferInRequest;
-    StripeTransferInRequest feeTransferInRequest;
+    private StripeTransferInRequest feeTransferInRequest;
+    private StripeTransferInRequest disputeTransferInRequest;
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
@@ -75,8 +78,12 @@ public class StripeTransferInRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount, gatewayAccountCredentialsEntity);
 
-        refundTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
-        feeTransferInRequest = StripeTransferInRequest.of(feeAmount, gatewayAccount, gatewayAccountCredentialsEntity, stripeChargeId, chargeExternalId, stripeGatewayConfig);
+        refundTransferInRequest = StripeTransferInRequest.createRefundTransferRequest(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
+        feeTransferInRequest = StripeTransferInRequest.createFeesForFailedPaymentTransferRequest(feeAmount, gatewayAccount, gatewayAccountCredentialsEntity, stripeChargeId, chargeExternalId, stripeGatewayConfig);
+        
+        disputeTransferInRequest = StripeTransferInRequest.createDisputeTransferRequest(disputeAmount,
+                gatewayAccount, gatewayAccountCredentialsEntity, stripeChargeId, disputeExternalId, chargeExternalId,
+                stripeGatewayConfig);
     }
 
     @Test
@@ -87,7 +94,7 @@ public class StripeTransferInRequestTest {
     @Test
     public void shouldCreateCorrectPayload_forRefundTransfer() {
         String payload = refundTransferInRequest.getGatewayOrder().getPayload();
-        
+
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, containsString("amount=" + refundAmount));
         assertThat(payload, containsString("transfer_group=" + chargeExternalId));
@@ -115,6 +122,21 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
+    public void shouldCreateCorrectPayload_forDisputeTransfer() {
+        String payload = disputeTransferInRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("destination=" + stripePlatformAccountId));
+        assertThat(payload, containsString("amount=" + disputeAmount));
+        assertThat(payload, containsString("transfer_group=" + chargeExternalId));
+        assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
+        assertThat(payload, containsString("expand%5B%5D=destination_payment"));
+        assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + stripeChargeId));
+        assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
+        assertThat(payload, containsString("metadata%5Breason%5D=" + StripeTransferMetadataReason.TRANSFER_DISPUTE_AMOUNT));
+    }
+
+    @Test
     public void shouldHaveStripeAccountHeaderSetToStripeConnectAccountId() {
         assertThat(
                 refundTransferInRequest.getHeaders().get("Stripe-Account"),
@@ -135,6 +157,14 @@ public class StripeTransferInRequestTest {
         assertThat(
                 feeTransferInRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_in" + chargeExternalId)
+        );
+    }
+
+    @Test
+    public void shouldHaveIdempotencyKeySetToDisputeExternalId_forDisputeTransfer() {
+        assertThat(
+                disputeTransferInRequest.getHeaders().get("Idempotency-Key"),
+                is("transfer_in" + disputeExternalId)
         );
     }
 }

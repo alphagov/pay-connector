@@ -109,7 +109,7 @@ public class StripeRefundHandler {
     }
 
     private StripeTransferResponse transferFromConnectAccount(RefundGatewayRequest request, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String transferResponse = client.postRequestFor(StripeTransferInRequest.of(request, stripeChargeId, stripeGatewayConfig)).getEntity();
+        String transferResponse = client.postRequestFor(StripeTransferInRequest.createRefundTransferRequest(request, stripeChargeId, stripeGatewayConfig)).getEntity();
         StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
         logger.info("As part of refund {} refunding charge id {}, transferred net amount {} - transfer id {} -  from Stripe Connect account id {} in transfer group {}",
                 request.getRefundExternalId(),
