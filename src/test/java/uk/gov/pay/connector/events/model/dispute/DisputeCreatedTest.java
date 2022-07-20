@@ -47,5 +47,6 @@ class DisputeCreatedTest {
         assertThat(disputeCreatedJson, hasJsonPath("$.event_details.gateway_account_id", equalTo("1234")));
         assertThat(disputeCreatedJson, hasJsonPath("$.event_details.evidence_due_date", equalTo("2022-01-20T11:46:00.000000Z")));
         assertThat(disputeCreatedJson, hasJsonPath("$.event_details.amount", equalTo(6500)));
+        assertThat(disputeCreatedJson, hasJsonPath("$.event_details.gateway_transaction_id", equalTo("du_1LIaq8Dv3CZEaFO2MNQJK333")));
     }
 }

@@ -19,7 +19,8 @@ public class DisputeCreated extends DisputeEvent {
                 stripeDisputeData.getEvidenceDetails().getEvidenceDueByDate(),
                 transaction.getGatewayAccountId(),
                 stripeDisputeData.getAmount(),
-                stripeDisputeData.getReason());
+                stripeDisputeData.getReason(),
+                stripeDisputeData.getId());
 
         return new DisputeCreated(
                 idFromExternalId(stripeDisputeData.getId()),
