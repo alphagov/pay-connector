@@ -71,6 +71,8 @@ stripe:
   credentials: ['stripe_account_id']
   radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE:-5}
   threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE:-5}
+  rechargeServicesForLivePaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_LIVE_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
+  rechargeServicesForTestPaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_TEST_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
 
 jerseyClient:
   timeout: 500ms

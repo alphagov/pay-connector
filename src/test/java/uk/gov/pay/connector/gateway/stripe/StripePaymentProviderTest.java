@@ -3,8 +3,12 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
@@ -14,7 +18,6 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -28,10 +31,15 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
+import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.List;
@@ -42,11 +50,13 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -64,10 +74,15 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-public class StripePaymentProviderTest {
+@ExtendWith(MockitoExtension.class)
+class StripePaymentProviderTest {
 
+    @Captor
+    private ArgumentCaptor<StripeTransferInRequest> stripeTransferInRequestCaptor;
+    
     private StripePaymentProvider provider;
     private final GatewayClient gatewayClient = mock(GatewayClient.class);
     private final GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
@@ -83,8 +98,8 @@ public class StripePaymentProviderTest {
     private static final String issuerUrl = "http://stripe.url/3ds";
     private static final String threeDsVersion = "2.0.1";
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         when(gatewayConfig.getUrl()).thenReturn("http://stripe.url");
         when(gatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
         when(configuration.getStripeConfig()).thenReturn(gatewayConfig);
@@ -103,17 +118,17 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldGetPaymentProviderName() {
+    void shouldGetPaymentProviderName() {
         assertThat(provider.getPaymentGatewayName().getName(), is("stripe"));
     }
 
     @Test
-    public void shouldGenerateNoTransactionId() {
+    void shouldGenerateNoTransactionId() {
         assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
     @Test
-    public void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
+    void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
@@ -128,7 +143,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthorise_ForAddressInUs() throws Exception {
+    void shouldAuthorise_ForAddressInUs() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
@@ -143,7 +158,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
+    void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
         when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
 
@@ -164,7 +179,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
+    void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
 
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
@@ -181,7 +196,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+    void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
@@ -199,7 +214,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
+    void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
@@ -213,13 +228,13 @@ public class StripePaymentProviderTest {
         assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
-        provider.authoriseWallet(null);
+    @Test
+    void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
+        assertThrows(UnsupportedOperationException.class, () -> provider.authoriseWallet(null));
     }
 
     @Test
-    public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
+    void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
@@ -235,7 +250,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldMark3DSChargeAsSuccess_when3DSAuthDetailsStatusIsAuthorised() {
+    void shouldMark3DSChargeAsSuccess_when3DSAuthDetailsStatusIsAuthorised() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED);
         
@@ -247,7 +262,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
+    void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED);
 
@@ -259,7 +274,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
+    void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED);
 
@@ -270,7 +285,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
+    void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR);
 
@@ -281,7 +296,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldKeep3DSChargeInAuthReadyState_when3DSAuthDetailsAreNotAvailable() {
+    void shouldKeep3DSChargeInAuthReadyState_when3DSAuthDetailsAreNotAvailable() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(null);
 
@@ -289,6 +304,61 @@ public class StripePaymentProviderTest {
 
         assertTrue(response.isSuccessful());
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresentForDispute() throws Exception {
+        BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
+        BalanceTransaction balanceTransaction2 = new BalanceTransaction(6500L, 1500L, 8000L);
+        EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
+        StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
+                "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
+                balanceTransaction2), evidenceDetails, null);
+        
+        var gatewayAccountEntity = buildTestGatewayAccountEntity();
+        ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
+        Charge charge = Charge.from(chargeEntity);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity()));
+        assertThat(exception.getMessage(), is("Expected lost dispute to have a single balance_transaction, but has 2"));
+    }
+    
+    @Test
+    void shouldMakeTransferRequestForLostDispute() throws Exception {
+        BalanceTransaction balanceTransaction = new BalanceTransaction(-6500L, 1500L, -8000L);
+        EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
+        String stripeDisputeId = "du_1LIaq8Dv3CZEaFO2MNQJK333";
+        String paymentIntentId = "pi_123456789";
+        StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
+                paymentIntentId, "needs_response", 6500L, "fradulent", 
+                1642579160L, List.of(balanceTransaction), evidenceDetails, null);
+        String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
+
+        var gatewayAccountEntity = buildTestGatewayAccountEntity();
+        ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
+        Charge charge = Charge.from(chargeEntity);
+
+        String stripePlatformAccountId = "platform-account-id";
+        when(gatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
+        
+        GatewayClient.Response response = mock(GatewayClient.Response.class);
+        when(response.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(response);
+        
+        provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity());
+        
+        verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
+
+        String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("destination=" + stripePlatformAccountId));
+        assertThat(payload, containsString("amount=8000"));
+        assertThat(payload, containsString("transfer_group=" + charge.getExternalId()));
+        assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
+        assertThat(payload, containsString("expand%5B%5D=destination_payment"));
+        assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + paymentIntentId));
+        assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
     }
 
     private void assert3dsRequiredEntityForResponse(Gateway3DSAuthorisationResponse response) {

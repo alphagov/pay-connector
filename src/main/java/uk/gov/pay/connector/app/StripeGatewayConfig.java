@@ -5,6 +5,7 @@ import io.dropwizard.Configuration;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,12 @@ public class StripeGatewayConfig extends Configuration {
     @Valid
     private int threeDsFeeInPence;
 
+    @Valid
+    private Instant rechargeServicesForLivePaymentDisputesFromDate;
+    
+    @Valid
+    private Instant rechargeServicesForTestPaymentDisputesFromDate;
+
     public String getUrl() {
         return url;
     }
@@ -92,5 +99,13 @@ public class StripeGatewayConfig extends Configuration {
 
     public int getThreeDsFeeInPence() {
         return threeDsFeeInPence;
+    }
+
+    public Instant getRechargeServicesForLivePaymentDisputesFromDate() {
+        return rechargeServicesForLivePaymentDisputesFromDate;
+    }
+
+    public Instant getRechargeServicesForTestPaymentDisputesFromDate() {
+        return rechargeServicesForTestPaymentDisputesFromDate;
     }
 }
