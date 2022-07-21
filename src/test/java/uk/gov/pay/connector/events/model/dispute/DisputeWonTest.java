@@ -24,7 +24,8 @@ public class DisputeWonTest {
                 .isLive(true)
                 .build();
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "won", 6500L, "fradulent", 1642579160L, null, null, null);
+                "pi_123456789", "won", 6500L, "fradulent", 1642579160L,
+                null, null, null, false);
 
         DisputeWon disputeWon = from(stripeDisputeData.getId(), toUTCZonedDateTime(1642579160L), transaction);
 

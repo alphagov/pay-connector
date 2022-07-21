@@ -313,7 +313,7 @@ class StripePaymentProviderTest {
         EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
                 "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
-                balanceTransaction2), evidenceDetails, null);
+                balanceTransaction2), evidenceDetails, null, true);
         
         var gatewayAccountEntity = buildTestGatewayAccountEntity();
         ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
@@ -331,7 +331,7 @@ class StripePaymentProviderTest {
         String paymentIntentId = "pi_123456789";
         StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
                 paymentIntentId, "needs_response", 6500L, "fradulent", 
-                1642579160L, List.of(balanceTransaction), evidenceDetails, null);
+                1642579160L, List.of(balanceTransaction), evidenceDetails, null, false);
         String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
 
         var gatewayAccountEntity = buildTestGatewayAccountEntity();
