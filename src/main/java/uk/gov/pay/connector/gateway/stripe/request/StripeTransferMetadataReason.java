@@ -7,6 +7,7 @@ import java.util.Locale;
 
 public enum StripeTransferMetadataReason {
     NOT_DEFINED,
+    UNRECOGNISED,
     TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT,
     TRANSFER_REFUND_AMOUNT,
     TRANSFER_PAYMENT_AMOUNT,
@@ -24,6 +25,6 @@ public enum StripeTransferMetadataReason {
         return Arrays.stream(StripeTransferMetadataReason.values())
                 .filter(stripeTransferMetadataReason -> StringUtils.equalsIgnoreCase(stripeTransferMetadataReason.name(), value))
                 .findFirst()
-                .orElse(NOT_DEFINED);
+                .orElse(UNRECOGNISED);
     }
 }

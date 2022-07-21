@@ -22,8 +22,8 @@ class StripeTransferMetadataReasonTest {
     }
 
     @Test
-    void shouldResolveDefaultValueWhenNotExists() {
-        assertThat(StripeTransferMetadataReason.fromString("BLAH"), is(StripeTransferMetadataReason.NOT_DEFINED));
+    void shouldResolveUnrecognisedValueWhenNotRecognisedEnumValue() {
+        assertThat(StripeTransferMetadataReason.fromString("BLAH"), is(StripeTransferMetadataReason.UNRECOGNISED));
     }
 
     @Test
