@@ -51,6 +51,7 @@ public class LedgerTransaction {
     private String parentTransactionId;
     private String serviceId;
     private AuthorisationSummary authorisationSummary;
+    private boolean disputed;
 
     public LedgerTransaction() {
 
@@ -304,5 +305,13 @@ public class LedgerTransaction {
 
     public void setAuthorisationSummary(AuthorisationSummary authorisationSummary) {
         this.authorisationSummary = authorisationSummary;
+    }
+
+    public boolean isDisputed() {
+        return disputed;
+    }
+
+    public void setDisputed(boolean disputed) {
+        this.disputed = disputed;
     }
 }

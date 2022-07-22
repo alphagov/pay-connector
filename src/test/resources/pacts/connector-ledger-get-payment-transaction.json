@@ -51,6 +51,7 @@
           "moto": false,
           "live": false,
           "transaction_id": "e8eq11mi2ndmauvb51qsg8hccn",
+          "disputed": false
         },
         "matchingRules": {
           "body": {

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.refund.exception;
 
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -12,6 +12,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.REFUND_NOT_AVAILABLE;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.REFUND_NOT_AVAILABLE_DUE_TO_DISPUTE;
 
 public class RefundException extends WebApplicationException {
 
@@ -26,6 +27,10 @@ public class RefundException extends WebApplicationException {
     public static RefundException notAvailableForRefundException(String chargeId, ExternalChargeRefundAvailability currentAvailability) {
         return new RefundException(format("Charge with id [%s] not available for refund.", chargeId),
                 REFUND_NOT_AVAILABLE, BAD_REQUEST, currentAvailability.getStatus());
+    }
+    
+    public static RefundException unavailableDueToChargeDisputed() {
+        return new RefundException("Refund not available as the charge is disputed", REFUND_NOT_AVAILABLE_DUE_TO_DISPUTE, BAD_REQUEST, null);
     }
 
     private RefundException(String message, ErrorIdentifier errorIdentifier, Response.Status status, String reason) {
