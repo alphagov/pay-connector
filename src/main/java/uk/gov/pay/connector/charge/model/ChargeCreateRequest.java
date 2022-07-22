@@ -20,6 +20,8 @@ import javax.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import static java.util.function.Predicate.not;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChargeCreateRequest {
 
@@ -149,11 +151,11 @@ public class ChargeCreateRequest {
     }
 
     public Optional<String> getReturnUrl() {
-        return Optional.ofNullable(returnUrl).filter(Predicate.not(String::isEmpty));
+        return Optional.ofNullable(returnUrl).filter(not(String::isEmpty));
     }
 
-    public String getEmail() {
-        return email;
+    public Optional<String> getEmail() {
+        return Optional.ofNullable(email).filter(not(String::isBlank));
     }
 
     public boolean isDelayedCapture() {

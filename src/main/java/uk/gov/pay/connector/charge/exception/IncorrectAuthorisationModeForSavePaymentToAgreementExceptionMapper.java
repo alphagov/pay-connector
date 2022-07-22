@@ -10,16 +10,16 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-public class SavePaymentInstrumentToAgreementRequiresAuthorisationModeWebExceptionMapper
-        implements ExceptionMapper<SavePaymentInstrumentToAgreementRequiresAgreementModeWebException> {
+public class IncorrectAuthorisationModeForSavePaymentToAgreementExceptionMapper
+        implements ExceptionMapper<IncorrectAuthorisationModeForSavePaymentToAgreementException> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SavePaymentInstrumentToAgreementRequiresAuthorisationModeWebExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IncorrectAuthorisationModeForSavePaymentToAgreementExceptionMapper.class);
     
     @Override
-    public Response toResponse(SavePaymentInstrumentToAgreementRequiresAgreementModeWebException exception) {
+    public Response toResponse(IncorrectAuthorisationModeForSavePaymentToAgreementException exception) {
         LOGGER.info(exception.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, exception.getMessage());
+        var errorResponse = new ErrorResponse(ErrorIdentifier.INCORRECT_AUTHORISATION_MODE_FOR_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT, exception.getMessage());
 
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(errorResponse)
