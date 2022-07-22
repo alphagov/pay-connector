@@ -23,11 +23,12 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.events.model.charge.PaymentDisputed;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
@@ -131,25 +132,16 @@ public class StripeWebhookTaskHandlerTest {
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
         stripeWebhookTaskHandler.process(stripeNotification);
-        ArgumentCaptor<DisputeCreated> disputeCreatedArgumentCaptor = ArgumentCaptor.forClass(DisputeCreated.class);
-        verify(eventService).emitEvent(disputeCreatedArgumentCaptor.capture());
 
-        DisputeCreated disputeCreated = disputeCreatedArgumentCaptor.getValue();
-        assertThat(disputeCreated.getEventType(), is("DISPUTE_CREATED"));
-        assertThat(disputeCreated.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeCreated.getTimestamp(), is(stripeDisputeData.getDisputeCreated()));
-
-        DisputeCreatedEventDetails eventDetails = (DisputeCreatedEventDetails) disputeCreated.getEventDetails();
-        assertThat(eventDetails.getReason(), is("general"));
-        assertThat(eventDetails.getAmount(), is(6500L));
-        assertThat(eventDetails.getEvidenceDueDate().toString(), is("2022-02-14T23:59:59Z"));
-
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+        String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
+        var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+        var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
         
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
-
-        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+        verify(eventService).emitEvent(disputeCreated);
+        verify(eventService).emitEvent(paymentDisputed);
+        verify(eventService).emitEvent(refundAvailabilityUpdated);
 
         verify(stripePaymentProvider, never()).submitTestDisputeEvidence(anyString(), anyString(), anyString());
     }
@@ -475,22 +467,25 @@ public class StripeWebhookTaskHandlerTest {
                 .thenReturn(Optional.of(transaction));
         when(stripePaymentProvider.submitTestDisputeEvidence(disputeId, evidenceText, transactionId)).thenReturn(stripeDisputeData);
         stripeWebhookTaskHandler.process(stripeNotification);
-        ArgumentCaptor<DisputeCreated> disputeCreatedArgumentCaptor = ArgumentCaptor.forClass(DisputeCreated.class);
-        verify(eventService).emitEvent(disputeCreatedArgumentCaptor.capture());
 
-        DisputeCreated disputeCreated = disputeCreatedArgumentCaptor.getValue();
-        assertThat(disputeCreated.getEventType(), is("DISPUTE_CREATED"));
-        assertThat(disputeCreated.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeCreated.getTimestamp(), is(stripeDisputeData.getDisputeCreated()));
+        String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
+        var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+        var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
 
-        verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(eventService).emitEvent(disputeCreated);
+        verify(eventService).emitEvent(paymentDisputed);
+        verify(eventService).emitEvent(refundAvailabilityUpdated);
+
+        verify(mockLogAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String eventExpectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
         String submitEvidenceExpectedLogMessage = "Updated dispute [du_1111111111] with evidence [losing_evidence] for transaction [external-id]";
 
         assertThat(logStatement.get(0).getFormattedMessage(), is(eventExpectedLogMessage));
-        assertThat(logStatement.get(1).getFormattedMessage(), is(submitEvidenceExpectedLogMessage));
+        assertThat(logStatement.get(3).getFormattedMessage(), is(submitEvidenceExpectedLogMessage));
     }
 
     @Test
