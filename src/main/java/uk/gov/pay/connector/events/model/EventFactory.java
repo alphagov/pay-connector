@@ -72,8 +72,8 @@ public class EventFactory {
             CancelByExpirationSubmitted.class,
             CancelByUserSubmitted.class
     );
-    
-    private static final List<Class> EVENTS_LEADING_TO_TERMINAL_STATE = 
+
+    private static final List<Class> EVENTS_LEADING_TO_TERMINAL_STATE =
             PaymentGatewayStateTransitions.getAllEventsResultingInTerminalState();
 
     @Inject
@@ -116,10 +116,11 @@ public class EventFactory {
 
     private List<Event> createRefundEvents(RefundStateTransition refundStateTransition) throws EventCreationException {
         RefundHistory refundHistory = refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
-                refundStateTransition.getRefundExternalId(),
-                refundStateTransition.getRefundStatus())
+                        refundStateTransition.getRefundExternalId(),
+                        refundStateTransition.getRefundStatus())
                 .orElseThrow(() -> new EventCreationException(refundStateTransition.getIdentifier()));
-        Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId()).get();
+        Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
+                .orElseThrow(() -> new EventCreationException(refundHistory.getChargeExternalId()));
 
         Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass(),
                 charge);
@@ -190,33 +191,9 @@ public class EventFactory {
     }
 
     private Optional<Event> createRefundAvailabilityUpdatedEvent(
-            Charge charge, ZonedDateTime eventTimestamp, Class eventClass) throws EventCreationException {
+            Charge charge, ZonedDateTime eventTimestamp, Class eventClass) {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
-            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
-                    Optional.ofNullable(charge)
-                    .map(c -> {
-                        List<Refund> refundList = refundService.findRefunds(c);
-                        ExternalChargeRefundAvailability refundAvailability;
-
-                        refundAvailability = paymentProviders
-                                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                                .getExternalChargeRefundAvailability(charge, refundList);
-
-                        return new RefundAvailabilityUpdated(
-                                c.getServiceId(),
-                                c.isLive(),
-                                c.getExternalId(),
-                                RefundAvailabilityUpdatedEventDetails.from(
-                                        charge,
-                                        refundList,
-                                        refundAvailability
-                                ),
-                                eventTimestamp
-                        );
-                            }
-                    )
-                    .orElseThrow(() -> new EventCreationException(charge.getExternalId()));
-
+            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, eventTimestamp);
             return Optional.of(refundAvailabilityUpdatedEvent);
         }
 

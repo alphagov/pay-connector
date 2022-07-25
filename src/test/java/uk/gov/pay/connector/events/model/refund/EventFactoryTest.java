@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -90,7 +91,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 @RunWith(JUnitParamsRunner.class)
 public class EventFactoryTest {
 
-    private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
     private ChargeService chargeService;
     private RefundDao refundDao;
@@ -118,19 +119,22 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundCreatedStateTransition() throws Exception {
-        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
+        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundCreatedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.CREATED.getValue())
                 .withUserExternalId("user_external_id")
                 .withUserEmail("test@example.com")
-                .withChargeExternalId(charge.getExternalId())
-                .withAmount(charge.getAmount())
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .withAmount(chargeEntity.getAmount())
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundCreatedHistory.getExternalId(),
                 refundCreatedHistory.getStatus())
         ).thenReturn(Optional.of(refundCreatedHistory));
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), refundCreatedHistory.getHistoryStartDate()))
+                .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
                 refundCreatedHistory.getExternalId(), refundCreatedHistory.getStatus(), RefundCreatedByUser.class
@@ -144,28 +148,23 @@ public class EventFactoryTest {
                 .findFirst().get();
 
         RefundCreatedByUserEventDetails eventDetails = (RefundCreatedByUserEventDetails) refundCreatedByUser.getEventDetails();
-        assertThat(refundCreatedByUser.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundCreatedByUser.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(eventDetails.getRefundedBy(), is("user_external_id"));
         assertThat(eventDetails.getUserEmail(), is("test@example.com"));
         assertThat(refundCreatedByUser.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundCreatedByUser.getEventDetails(), is(instanceOf(RefundCreatedByUserEventDetails.class)));
-
-        RefundAvailabilityUpdated refundAvailabilityUpdated = (RefundAvailabilityUpdated) refundEvents.stream()
-                .filter(e -> ResourceType.PAYMENT.equals(e.getResourceType()))
-                .findFirst().get();
-        assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
-        assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
+        
+        assertThat(refundEvents, hasItem(refundAvailabilityUpdated));
     }
 
     @Test
     public void shouldCreateCorrectEventsFromRefundSubmittedStateTransition() throws Exception {
-        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
+        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundSubmittedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_SUBMITTED.getValue())
                 .withUserExternalId("user_external_id")
-                .withChargeExternalId(charge.getExternalId())
-                .withAmount(charge.getAmount())
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .withAmount(chargeEntity.getAmount())
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundSubmittedHistory.getExternalId(),
@@ -183,7 +182,7 @@ public class EventFactoryTest {
 
         RefundSubmitted refundSubmitted = (RefundSubmitted) refundEvents.get(0);
 
-        assertThat(refundSubmitted.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundSubmitted.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(refundSubmitted.getResourceExternalId(), is(refundSubmittedHistory.getExternalId()));
         assertThat(refundSubmitted.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundSubmitted.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
@@ -191,12 +190,12 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundSucceededStateTransition() throws Exception {
-        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
+        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundSucceededHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
                 .withUserExternalId("user_external_id")
-                .withChargeExternalId(charge.getExternalId())
-                .withAmount(charge.getAmount())
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .withAmount(chargeEntity.getAmount())
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundSucceededHistory.getExternalId(),
@@ -214,7 +213,7 @@ public class EventFactoryTest {
 
         RefundSucceeded refundSucceeded = (RefundSucceeded) refundEvents.get(0);
 
-        assertThat(refundSucceeded.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundSucceeded.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(refundSucceeded.getResourceExternalId(), is(refundSucceededHistory.getExternalId()));
         assertThat(refundSucceeded.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundSucceeded.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
@@ -222,19 +221,23 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundErrorStateTransition() throws Exception {
-        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
+        Charge charge = Charge.from(chargeEntity);
+        when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(charge));
         RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_ERROR.getValue())
                 .withUserExternalId("user_external_id")
-                .withChargeExternalId(charge.getExternalId())
+                .withChargeExternalId(chargeEntity.getExternalId())
                 .withGatewayTransactionId(randomAlphanumeric(30))
-                .withAmount(charge.getAmount())
+                .withAmount(chargeEntity.getAmount())
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundErrorHistory.getExternalId(),
                 refundErrorHistory.getStatus())
         ).thenReturn(Optional.of(refundErrorHistory));
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, refundErrorHistory.getHistoryStartDate()))
+                .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
                 refundErrorHistory.getExternalId(), refundErrorHistory.getStatus(), RefundError.class
@@ -247,17 +250,12 @@ public class EventFactoryTest {
         RefundError refundError = (RefundError) refundEvents.stream()
                 .filter(e -> ResourceType.REFUND.equals(e.getResourceType()))
                 .findFirst().get();
-        assertThat(refundError.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundError.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(((RefundEventWithGatewayTransactionIdDetails) refundError.getEventDetails()).getGatewayTransactionId(), is(refundErrorHistory.getGatewayTransactionId()));
         assertThat(refundError.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundError.getEventDetails(), is(instanceOf(RefundEventWithGatewayTransactionIdDetails.class)));
 
-        RefundAvailabilityUpdated refundAvailabilityUpdated = (RefundAvailabilityUpdated) refundEvents.stream()
-                .filter(e -> ResourceType.PAYMENT.equals(e.getResourceType()))
-                .findFirst().get();
-        assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
-        assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
+        assertThat(refundEvents, hasItem(refundAvailabilityUpdated));
     }
 
     @Test
@@ -265,7 +263,7 @@ public class EventFactoryTest {
         Long chargeEventEntityId = 100L;
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
-                .withCharge(charge)
+                .withCharge(chargeEntity)
                 .withId(chargeEventEntityId)
                 .build();
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
@@ -273,6 +271,10 @@ public class EventFactoryTest {
         );
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, PaymentCreated.class);
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+                .thenReturn(refundAvailabilityUpdated);
+        
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
@@ -281,9 +283,7 @@ public class EventFactoryTest {
         assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
         assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
 
-        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(events, hasItem(refundAvailabilityUpdated));
     }
 
     @Test
@@ -292,12 +292,17 @@ public class EventFactoryTest {
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
                 .withId(chargeEventEntityId)
+                .withCharge(chargeEntity)
                 .build();
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
                 Optional.of(chargeEventEntity)
         );
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CancelByExternalServiceSubmitted.class);
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+                .thenReturn(refundAvailabilityUpdated);
+        
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2)); // also creates RefundAvailabilityUpdated event
@@ -345,7 +350,7 @@ public class EventFactoryTest {
         Long chargeEventEntityId = 100L;
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
-                .withCharge(charge)
+                .withCharge(chargeEntity)
                 .withId(chargeEventEntityId)
                 .build();
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
@@ -353,6 +358,10 @@ public class EventFactoryTest {
         );
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, eventClass);
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+                .thenReturn(refundAvailabilityUpdated);
+        
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
@@ -360,9 +369,7 @@ public class EventFactoryTest {
         assertThat(event1, instanceOf(eventClass));
         assertThat(event1.getEventDetails(), instanceOf(eventDetailsClass));
 
-        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
-        assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
-        assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+        assertThat(events, hasItem(refundAvailabilityUpdated));
     }
 
     @Test
@@ -370,28 +377,32 @@ public class EventFactoryTest {
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");
         LedgerTransaction transaction = new LedgerTransaction();
-        transaction.setTransactionId(charge.getExternalId());
+        transaction.setTransactionId(chargeEntity.getExternalId());
         transaction.setPaymentProvider("sandbox");
         transaction.setRefundSummary(refundSummary);
-        transaction.setAmount(charge.getAmount());
-        transaction.setTotalAmount(charge.getAmount());
+        transaction.setAmount(chargeEntity.getAmount());
+        transaction.setTotalAmount(chargeEntity.getAmount());
         transaction.setCreatedDate(Instant.now().toString());
-        transaction.setGatewayAccountId(charge.getGatewayAccount().getId().toString());
-        transaction.setServiceId(charge.getServiceId());
-        transaction.setLive(charge.getGatewayAccount().isLive());
-        when(chargeService.findCharge(transaction.getTransactionId())).thenReturn(Optional.of(Charge.from(transaction)));
+        transaction.setGatewayAccountId(chargeEntity.getGatewayAccount().getId().toString());
+        transaction.setServiceId(chargeEntity.getServiceId());
+        transaction.setLive(chargeEntity.getGatewayAccount().isLive());
+        Charge chargeFromTransaction = Charge.from(transaction);
+        when(chargeService.findCharge(transaction.getTransactionId())).thenReturn(Optional.of(chargeFromTransaction));
 
         RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_ERROR.getValue())
                 .withUserExternalId("user_external_id")
-                .withChargeExternalId(charge.getExternalId())
-                .withAmount(charge.getAmount())
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .withAmount(chargeEntity.getAmount())
                 .build();
         when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                 refundErrorHistory.getExternalId(),
                 refundErrorHistory.getStatus())
         ).thenReturn(Optional.of(refundErrorHistory));
 
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(chargeFromTransaction, refundErrorHistory.getHistoryStartDate()))
+                .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
                 refundErrorHistory.getExternalId(), refundErrorHistory.getStatus(), RefundError.class
@@ -400,12 +411,7 @@ public class EventFactoryTest {
 
         assertThat(refundEvents.size(), is(2));
 
-        RefundAvailabilityUpdated refundAvailabilityUpdated = (RefundAvailabilityUpdated) refundEvents.stream()
-                .filter(e -> ResourceType.PAYMENT.equals(e.getResourceType()))
-                .findFirst().get();
-        assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(transaction.getTransactionId()));
-        assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
-        assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
+        assertThat(refundEvents, hasItem(refundAvailabilityUpdated));
     }
 
     @Test
