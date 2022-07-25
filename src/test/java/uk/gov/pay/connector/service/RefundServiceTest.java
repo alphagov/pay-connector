@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -40,6 +41,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -536,7 +538,41 @@ public class RefundServiceTest {
         var thrown = assertThrows(RefundException.class,
                 () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 0, userExternalId)));
         assertThat(thrown.getMessage(), is("HTTP 400 Bad Request"));
-        verify(mockRefundDao, never()).persist(new RefundEntity(chargeEntity.getAmount(), userExternalId, null, null));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_NOT_AVAILABLE));
+        verify(mockRefundDao, never()).persist(any());
+    }
+
+    @Test
+    void shouldFailWhenHistoricChargeAndIsDisputed() {
+        gatewayAccountCredentialsEntityList.add(gatewayAccountCredentialsEntity);
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        LedgerTransaction ledgerTransaction = aValidLedgerTransaction()
+                .withGatewayAccountId(accountId)
+                .withExternalId(externalChargeId)
+                .withRefundSummary(refundSummary)
+                .withDisputed(true)
+                .build();
+
+        Charge charge = Charge.from(ledgerTransaction);
+
+        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
+        when(mockGatewayAccountCredentialsService.findCredentialFromCharge(charge, account)).thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+        when(mockRefundDao.findRefundsByChargeExternalId(externalChargeId)).thenReturn(List.of());
+        when(mockProvider.getExternalChargeRefundAvailability(eq(charge), eq(List.of()))).thenReturn(EXTERNAL_UNAVAILABLE);
+
+        var refundTransactionsForPayment = aValidRefundTransactionsForPayment()
+                .withParentTransactionId(externalChargeId)
+                .withTransactions(List.of())
+                .build();
+        when(mockLedgerService.getRefundsForPayment(accountId, externalChargeId))
+                .thenReturn(refundTransactionsForPayment);
+
+        var thrown = assertThrows(RefundException.class,
+                () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 0, userExternalId)));
+        assertThat(thrown.getMessage(), is("HTTP 400 Bad Request"));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_NOT_AVAILABLE_DUE_TO_DISPUTE));
+        verify(mockRefundDao, never()).persist(any());
     }
 
     @Test
@@ -561,6 +597,7 @@ public class RefundServiceTest {
         var thrown = assertThrows(RefundException.class,
                 () -> refundService.doRefund(accountId, charge, new RefundRequest(amount, amount + 1, userExternalId)));
         assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH));
 
         verifyNoMoreInteractions(mockRefundDao);
     }
@@ -589,6 +626,7 @@ public class RefundServiceTest {
         var thrown = assertThrows(RefundException.class,
                 () -> refundService.doRefund(accountId, charge, new RefundRequest(amount, amount, userExternalId)));
         assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH));
 
         verifyNoMoreInteractions(mockRefundDao);
     }
@@ -648,6 +686,7 @@ public class RefundServiceTest {
         var thrown = assertThrows(RefundException.class,
                 () -> refundService.doRefund(accountId, charge, new RefundRequest(100L, 800L, userExternalId)));
         assertThat(thrown.getMessage(), is("HTTP 412 Precondition Failed"));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH));
 
         verifyNoMoreInteractions(mockRefundDao);
     }
@@ -676,6 +715,7 @@ public class RefundServiceTest {
         var thrown = assertThrows(RefundException.class,
                 () -> refundService.doRefund(accountId, charge, new RefundRequest(amount, amountAvailableForRefund, userExternalId)));
         assertThat(thrown.getMessage(), is("HTTP 400 Bad Request"));
+        assertThat(((ErrorResponse)thrown.getResponse().getEntity()).getIdentifier(), is(ErrorIdentifier.REFUND_NOT_AVAILABLE));
 
         verifyNoMoreInteractions(mockRefundDao);
     }

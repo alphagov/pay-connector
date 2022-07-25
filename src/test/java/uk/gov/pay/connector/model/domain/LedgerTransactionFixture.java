@@ -17,6 +17,7 @@ import uk.gov.pay.connector.client.ledger.model.SettlementSummary;
 import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.client.ledger.model.TransactionState;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -56,7 +57,7 @@ public class LedgerTransactionFixture {
     private ZonedDateTime createdDate = ZonedDateTime.now();
     private boolean live;
     private Long gatewayAccountId;
-    private String paymentProvider;
+    private String paymentProvider = PaymentGatewayName.SANDBOX.getName();
     private String walletType;
     private Long netAmount;
     private Source source;
@@ -73,6 +74,7 @@ public class LedgerTransactionFixture {
     private String refundedByUserEmail;
     private AuthorisationSummary authorisationSummary;
     private String serviceId;
+    private boolean disputed;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -230,6 +232,7 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setRefundedByUserEmail(refundedByUserEmail);
 
         ledgerTransaction.setAuthorisationSummary(authorisationSummary);
+        ledgerTransaction.setDisputed(disputed);
 
         return ledgerTransaction;
     }
@@ -386,6 +389,11 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withServiceId(String serviceId) {
         this.serviceId = serviceId;
+        return this;
+    }
+    
+    public LedgerTransactionFixture withDisputed(boolean disputed) {
+        this.disputed = disputed;
         return this;
     }
 }

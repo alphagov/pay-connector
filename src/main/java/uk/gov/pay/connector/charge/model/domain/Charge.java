@@ -25,10 +25,12 @@ public class Charge {
     private boolean historic;
     private String serviceId;
     private boolean live;
+    private Boolean disputed;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   String credentialExternalId, Long corporateSurcharge, String refundAvailabilityStatus, String reference,
-                  String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic, String serviceId, boolean live) {
+                  String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName,
+                  boolean historic, String serviceId, boolean live, Boolean disputed) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -46,6 +48,7 @@ public class Charge {
         this.historic = historic;
         this.serviceId = serviceId;
         this.live = live;
+        this.disputed = disputed;
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
@@ -73,7 +76,8 @@ public class Charge {
                 chargeEntity.getPaymentGatewayName().getName(),
                 false,
                 chargeEntity.getServiceId(),
-                chargeEntity.getGatewayAccount().isLive());
+                chargeEntity.getGatewayAccount().isLive(), 
+                null);
     }
 
     public static Charge from(LedgerTransaction transaction) {
@@ -105,7 +109,8 @@ public class Charge {
                 transaction.getPaymentProvider(),
                 true,
                 transaction.getServiceId(),
-                transaction.getLive()
+                transaction.getLive(),
+                transaction.isDisputed()
         );
     }
 
@@ -183,6 +188,10 @@ public class Charge {
 
     public boolean isLive(){
         return live;
+    }
+
+    public Boolean getDisputed() {
+        return disputed;
     }
 
     @Override

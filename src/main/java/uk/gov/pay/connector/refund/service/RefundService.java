@@ -42,6 +42,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
@@ -249,8 +250,9 @@ public class RefundService {
     }
 
     private void checkIfChargeIsRefundableOrTerminate(Charge reloadedCharge, ExternalChargeRefundAvailability refundAvailability, GatewayAccountEntity gatewayAccount) {
-        if (EXTERNAL_AVAILABLE != refundAvailability) {
-
+        if (refundAvailability == EXTERNAL_UNAVAILABLE && reloadedCharge.getDisputed() != null && reloadedCharge.getDisputed().equals(Boolean.TRUE)) {
+            throw RefundException.unavailableDueToChargeDisputed();
+        } else if (refundAvailability != EXTERNAL_AVAILABLE) {
             logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
                     reloadedCharge.getExternalId(),
                     reloadedCharge.getExternalStatus(),
