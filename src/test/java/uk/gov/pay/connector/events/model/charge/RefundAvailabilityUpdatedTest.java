@@ -40,6 +40,4 @@ public class RefundAvailabilityUpdatedTest {
         assertThat(event, hasJsonPath("$.event_details.refund_amount_available", equalTo(500)));
         assertThat(event, hasJsonPath("$.event_details.refund_amount_refunded", equalTo(0)));
     }
-
-
 }

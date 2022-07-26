@@ -13,6 +13,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.PaymentDisputed;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvent;
@@ -39,6 +40,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.LOST;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.UNDER_REVIEW;
@@ -100,6 +102,15 @@ public class StripeWebhookTaskHandler {
                     case DISPUTE_CREATED:
                         DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
                         emitEvent(disputeCreatedEvent);
+                        PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+                        emitEvent(paymentDisputedEvent);
+                        // NOTE: we update the refund availability in ledger - but for connector it is calculated separately.
+                        // So this status update will block a refund attempt made VIA the API is made if the charge has been
+                        // expunged from connector.
+                        RefundAvailabilityUpdated refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
+                                transaction, EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
+                        emitEvent(refundAvailabilityUpdated);
+
                         if (Boolean.FALSE.equals(stripeDisputeData.getLiveMode())) {
                             submitEvidenceForTestAccount(stripeDisputeData, transaction);
                         }

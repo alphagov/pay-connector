@@ -281,6 +281,33 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Missing required fields
       summary: Create an agreement
+  /v1/api/accounts/{accountId}/agreements/{agreementId}/cancel:
+    post:
+      operationId: cancelAgreement
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - in: path
+        name: agreementId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementCancelRequest'
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
   /v1/api/accounts/{accountId}/charges:
     post:
       operationId: createNewCharge
@@ -2340,6 +2367,13 @@ components:
         postcode:
           type: string
           example: AB1 2CD
+    AgreementCancelRequest:
+      type: object
+      properties:
+        user_email:
+          type: string
+        user_external_id:
+          type: string
     AgreementCreateRequest:
       type: object
       properties:
@@ -2862,6 +2896,7 @@ components:
           - CAPTURE SUBMITTED
           - CAPTURE ERROR
           - CAPTURE QUEUED
+          - AUTHORISATION USER NOT PRESENT QUEUED
           - EXPIRE CANCEL READY
           - EXPIRE CANCEL FAILED
           - EXPIRE CANCEL SUBMITTED
@@ -3006,6 +3041,7 @@ components:
           - CAPTURE SUBMITTED
           - CAPTURE ERROR
           - CAPTURE QUEUED
+          - AUTHORISATION USER NOT PRESENT QUEUED
           - EXPIRE CANCEL READY
           - EXPIRE CANCEL FAILED
           - EXPIRE CANCEL SUBMITTED
@@ -3063,6 +3099,7 @@ components:
           - CAPTURE SUBMITTED
           - CAPTURE ERROR
           - CAPTURE QUEUED
+          - AUTHORISATION USER NOT PRESENT QUEUED
           - EXPIRE CANCEL READY
           - EXPIRE CANCEL FAILED
           - EXPIRE CANCEL SUBMITTED
@@ -3350,6 +3387,7 @@ components:
           - GENERIC
           - REFUND_NOT_AVAILABLE
           - REFUND_AMOUNT_AVAILABLE_MISMATCH
+          - REFUND_NOT_AVAILABLE_DUE_TO_DISPUTE
           - ZERO_AMOUNT_NOT_ALLOWED
           - MOTO_NOT_ALLOWED
           - CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED
@@ -3368,6 +3406,7 @@ components:
           - AUTHORISATION_ERROR
           - AUTHORISATION_TIMEOUT
           - AGREEMENT_NOT_ACTIVE
+          - INCORRECT_AUTHORISATION_MODE_FOR_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT
           - MISSING_MANDATORY_ATTRIBUTE
           - UNEXPECTED_ATTRIBUTE
           - ACCOUNT_DISABLED
@@ -4510,6 +4549,7 @@ components:
           - CAPTURE SUBMITTED
           - CAPTURE ERROR
           - CAPTURE QUEUED
+          - AUTHORISATION USER NOT PRESENT QUEUED
           - EXPIRE CANCEL READY
           - EXPIRE CANCEL FAILED
           - EXPIRE CANCEL SUBMITTED
@@ -4555,6 +4595,7 @@ components:
           - CAPTURE SUBMITTED
           - CAPTURE ERROR
           - CAPTURE QUEUED
+          - AUTHORISATION USER NOT PRESENT QUEUED
           - EXPIRE CANCEL READY
           - EXPIRE CANCEL FAILED
           - EXPIRE CANCEL SUBMITTED
@@ -4655,6 +4696,7 @@ components:
           enum:
           - CREATED
           - ACTIVE
+          - CANCELLED
           - EXPIRED
     PaymentOutcome:
       type: object
