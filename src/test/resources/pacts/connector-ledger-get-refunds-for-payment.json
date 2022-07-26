@@ -10,7 +10,7 @@
       "description": "get a refunds for payment request",
       "providerStates": [
         {
-          "name": "refund transactions for a transaction exist",
+          "name": "refund and dispute transactions for a transaction exist",
           "params": {
             "gateway_account_id": "3",
             "transaction_external_id": "650516the13q5jpfo435f1m1fm"
@@ -23,6 +23,9 @@
         "query": {
           "gateway_account_id": [
             "3"
+          ],
+          "transaction_type": [
+            "REFUND"
           ]
         }
       },
