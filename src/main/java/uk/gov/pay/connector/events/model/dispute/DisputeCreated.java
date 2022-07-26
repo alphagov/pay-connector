@@ -6,15 +6,13 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import java.time.ZonedDateTime;
 
-import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
-
 public class DisputeCreated extends DisputeEvent {
     public DisputeCreated(String resourceExternalId, String parentResourceExternalId, String serviceId,
                           Boolean live, DisputeCreatedEventDetails eventDetails, ZonedDateTime disputeCreated) {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, disputeCreated);
     }
 
-    public static DisputeCreated from(StripeDisputeData stripeDisputeData, LedgerTransaction transaction, ZonedDateTime disputeCreatedDate) {
+    public static DisputeCreated from(String disputeExternalId, StripeDisputeData stripeDisputeData, LedgerTransaction transaction, ZonedDateTime disputeCreatedDate) {
         DisputeCreatedEventDetails eventDetails = new DisputeCreatedEventDetails(
                 stripeDisputeData.getEvidenceDetails().getEvidenceDueByDate(),
                 transaction.getGatewayAccountId(),
@@ -23,7 +21,7 @@ public class DisputeCreated extends DisputeEvent {
                 stripeDisputeData.getId());
 
         return new DisputeCreated(
-                idFromExternalId(stripeDisputeData.getId()),
+                disputeExternalId,
                 transaction.getTransactionId(),
                 transaction.getServiceId(),
                 transaction.getLive(),

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 public class DisputeCreatedEventDetails extends DisputeEventDetails {
     @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
@@ -35,5 +36,18 @@ public class DisputeCreatedEventDetails extends DisputeEventDetails {
 
     public String getGatewayTransactionId() {
         return gatewayTransactionId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DisputeCreatedEventDetails that = (DisputeCreatedEventDetails) o;
+        return Objects.equals(evidenceDueDate, that.evidenceDueDate) && Objects.equals(amount, that.amount) && Objects.equals(reason, that.reason) && Objects.equals(gatewayTransactionId, that.gatewayTransactionId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(evidenceDueDate, amount, reason, gatewayTransactionId);
     }
 }

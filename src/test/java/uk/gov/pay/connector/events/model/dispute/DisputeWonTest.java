@@ -27,13 +27,14 @@ public class DisputeWonTest {
                 "pi_123456789", "won", 6500L, "fradulent", 1642579160L,
                 null, null, null, false);
 
-        DisputeWon disputeWon = from(stripeDisputeData.getId(), toUTCZonedDateTime(1642579160L), transaction);
+        String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
+        DisputeWon disputeWon = from(disputeExternalId, toUTCZonedDateTime(1642579160L), transaction);
 
         String disputeWonJson = disputeWon.toJsonString();
         assertThat(disputeWonJson, hasJsonPath("$.event_type", equalTo("DISPUTE_WON")));
         assertThat(disputeWonJson, hasJsonPath("$.resource_type", equalTo("dispute")));
         assertThat(disputeWonJson, hasJsonPath("$.service_id", equalTo("service-id")));
-        assertThat(disputeWonJson, hasJsonPath("$.resource_external_id", equalTo("fca65e80d2293ee3bf158a0d12")));
+        assertThat(disputeWonJson, hasJsonPath("$.resource_external_id", equalTo(disputeExternalId)));
         assertThat(disputeWonJson, hasJsonPath("$.timestamp", equalTo("2022-01-19T07:59:20.000000Z")));
         assertThat(disputeWonJson, hasJsonPath("$.live", equalTo(true)));
         assertThat(disputeWonJson, hasJsonPath("$.parent_resource_external_id", equalTo("payment-external-id")));

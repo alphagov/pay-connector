@@ -3,9 +3,9 @@ package uk.gov.pay.connector.events.model.dispute;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
-import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
 import java.util.List;
 
@@ -32,14 +32,15 @@ class DisputeCreatedTest {
         StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
                 "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction),
                 evidenceDetails, null, true);
+        String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeCreated disputeCreated = from(stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L));
+        DisputeCreated disputeCreated = from(disputeExternalId, stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L));
 
         String disputeCreatedJson = disputeCreated.toJsonString();
         assertThat(disputeCreatedJson, hasJsonPath("$.event_type", equalTo("DISPUTE_CREATED")));
         assertThat(disputeCreatedJson, hasJsonPath("$.resource_type", equalTo("dispute")));
         assertThat(disputeCreatedJson, hasJsonPath("$.service_id", equalTo("service-id")));
-        assertThat(disputeCreatedJson, hasJsonPath("$.resource_external_id", equalTo("fca65e80d2293ee3bf158a0d12")));
+        assertThat(disputeCreatedJson, hasJsonPath("$.resource_external_id", equalTo(disputeExternalId)));
         assertThat(disputeCreatedJson, hasJsonPath("$.timestamp", equalTo("2022-01-19T07:59:20.000000Z")));
         assertThat(disputeCreatedJson, hasJsonPath("$.live", equalTo(true)));
         assertThat(disputeCreatedJson, hasJsonPath("$.parent_resource_external_id", equalTo("payment-external-id")));

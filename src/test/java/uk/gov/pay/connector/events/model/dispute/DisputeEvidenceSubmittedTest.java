@@ -27,13 +27,14 @@ public class DisputeEvidenceSubmittedTest {
                 "pi_123456789", "under_review", 6500L, "fradulent",
                 1642579160L, null, null, null, true);
 
-        DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(stripeDisputeData.getId(), toUTCZonedDateTime(1642579160L), transaction);
+        String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
+        DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(disputeExternalId, toUTCZonedDateTime(1642579160L), transaction);
 
         String disputeEvidenceSubmittedJson = disputeEvidenceSubmitted.toJsonString();
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.event_type", equalTo("DISPUTE_EVIDENCE_SUBMITTED")));
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.resource_type", equalTo("dispute")));
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.service_id", equalTo("service-id")));
-        assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.resource_external_id", equalTo("fca65e80d2293ee3bf158a0d12")));
+        assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.resource_external_id", equalTo(disputeExternalId)));
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.timestamp", equalTo("2022-01-19T07:59:20.000000Z")));
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.live", equalTo(true)));
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.parent_resource_external_id", equalTo("payment-external-id")));
