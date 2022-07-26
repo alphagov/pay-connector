@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmitted
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeWonEventDetails;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
 import uk.gov.pay.connector.events.model.dispute.DisputeLost;
@@ -57,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,6 +80,8 @@ public class StripeWebhookTaskHandlerTest {
     private LedgerService ledgerService;
     @Mock
     private EventService eventService;
+    @Mock 
+    private ChargeService chargeService;
     @Mock
     private StripePaymentProvider stripePaymentProvider;
     @Mock
@@ -105,7 +110,7 @@ public class StripeWebhookTaskHandlerTest {
         logger.addAppender(mockLogAppender);
         payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
-        stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, eventService, stripePaymentProvider,
+        stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, chargeService, eventService, stripePaymentProvider,
                 gatewayAccountService, gatewayAccountCredentialsService, configuration);
     }
 
@@ -157,29 +162,20 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
+        Charge charge = Charge.from(transaction);
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won");
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated())).thenReturn(refundAvailabilityUpdated);
         stripeWebhookTaskHandler.process(stripeNotification);
         ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
 
-        verify(eventService).emitEvent(argumentCaptor.capture());
-
-        DisputeWon disputeWon = argumentCaptor.getValue();
-        assertThat(disputeWon.getEventType(), is("DISPUTE_WON"));
-        assertThat(disputeWon.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeWon.getTimestamp(), is(stripeNotification.getCreated()));
-
-        DisputeWonEventDetails eventDetails = (DisputeWonEventDetails) disputeWon.getEventDetails();
-        assertThat(eventDetails.getGatewayAccountId(), is("1000"));
-
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeWon.getResourceExternalId();
-
-        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+        var disputeWon = DisputeWon.from(stripeDisputeData.getId(), stripeNotification.getCreated(), transaction);
+        verify(eventService).emitEvent(disputeWon);
+        verify(eventService).emitEvent(refundAvailabilityUpdated);
     }
 
     @Test

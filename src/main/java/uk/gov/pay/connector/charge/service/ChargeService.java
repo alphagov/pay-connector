@@ -52,16 +52,20 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
+import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -1010,6 +1014,27 @@ public class ChargeService {
             throw new PaymentInstrumentNotActiveException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
                     paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getPaymentInstrumentStatus() + "]");
         }
+    }
+    
+    public RefundAvailabilityUpdated createRefundAvailabilityUpdatedEvent(Charge charge, ZonedDateTime eventTimestamp) {
+        List<Refund> refundList = refundService.findRefunds(charge);
+        ExternalChargeRefundAvailability refundAvailability;
+
+        refundAvailability = providers
+                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+                .getExternalChargeRefundAvailability(charge, refundList);
+
+        return new RefundAvailabilityUpdated(
+                charge.getServiceId(),
+                charge.isLive(),
+                charge.getExternalId(),
+                RefundAvailabilityUpdatedEventDetails.from(
+                        charge,
+                        refundList,
+                        refundAvailability
+                ),
+                eventTimestamp
+        );
     }
 
 }

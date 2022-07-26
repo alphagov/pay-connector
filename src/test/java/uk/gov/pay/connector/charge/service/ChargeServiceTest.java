@@ -30,7 +30,10 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
+import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
+import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
@@ -45,9 +48,13 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
+import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
@@ -63,6 +70,7 @@ import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -444,4 +452,31 @@ class ChargeServiceTest {
         verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
     }
 
+    @Test
+    void shouldCreateRefundAvailabilityUpdatedEvent() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withAmount(1000L)
+                .build();
+        Charge charge = Charge.from(chargeEntity);
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
+                .withAmount(100L)
+                .withStatus(RefundStatus.REFUNDED)
+                .build();
+        Refund refund = Refund.from(refundEntity);
+        when(mockedRefundService.findRefunds(charge)).thenReturn(List.of(refund));
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(charge, List.of(refund))).thenReturn(EXTERNAL_AVAILABLE);
+        
+        ZonedDateTime timestamp = ZonedDateTime.now();
+        RefundAvailabilityUpdated refundAvailabilityUpdated = chargeService.createRefundAvailabilityUpdatedEvent(charge, timestamp);
+        
+        assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
+        assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
+        
+        RefundAvailabilityUpdatedEventDetails eventDetails = (RefundAvailabilityUpdatedEventDetails) refundAvailabilityUpdated.getEventDetails();
+        assertThat(eventDetails.getRefundAmountAvailable(), is(900L));
+        assertThat(eventDetails.getRefundAmountRefunded(), is(100L));
+        assertThat(eventDetails.getRefundStatus(), is(EXTERNAL_AVAILABLE.getStatus()));
+    }
 }

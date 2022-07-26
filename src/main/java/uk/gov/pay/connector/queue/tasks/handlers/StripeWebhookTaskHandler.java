@@ -7,10 +7,12 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvent;
 import uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted;
@@ -52,6 +54,7 @@ public class StripeWebhookTaskHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
     private final LedgerService ledgerService;
+    private final ChargeService chargeService;
     private final EventService eventService;
     private final StripePaymentProvider stripePaymentProvider;
     private final GatewayAccountService gatewayAccountService;
@@ -63,12 +66,13 @@ public class StripeWebhookTaskHandler {
 
     @Inject
     public StripeWebhookTaskHandler(LedgerService ledgerService,
-                                    EventService eventService,
+                                    ChargeService chargeService, EventService eventService,
                                     StripePaymentProvider stripePaymentProvider,
                                     GatewayAccountService gatewayAccountService,
                                     GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                     ConnectorConfiguration configuration) {
         this.ledgerService = ledgerService;
+        this.chargeService = chargeService;
         this.eventService = eventService;
         this.stripePaymentProvider = stripePaymentProvider;
         this.gatewayAccountService = gatewayAccountService;
@@ -108,6 +112,9 @@ public class StripeWebhookTaskHandler {
 
                     if (disputeStatus == WON) {
                         disputeEvent = DisputeWon.from(stripeDisputeData.getId(), stripeNotification.getCreated(), transaction);
+                        Charge charge = Charge.from(transaction);
+                        RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated());
+                        emitEvent(refundAvailabilityUpdatedEvent, stripeDisputeData.getId());
                     } else if (disputeStatus == LOST) {
                         disputeEvent = handleDisputeLost(stripeNotification, stripeDisputeData, transaction);
                     } else {
