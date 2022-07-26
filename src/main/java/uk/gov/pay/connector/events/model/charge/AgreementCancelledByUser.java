@@ -4,6 +4,7 @@ import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -19,7 +20,7 @@ public class AgreementCancelledByUser extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementCancelledByUserEventDetails(agreementCancelRequest, PaymentInstrumentStatus.CANCELLED),
+                new AgreementCancelledByUserEventDetails(agreementCancelRequest, AgreementStatus.CANCELLED),
                 timestamp
         );
     }
@@ -27,12 +28,12 @@ public class AgreementCancelledByUser extends AgreementEvent {
     static class AgreementCancelledByUserEventDetails extends EventDetails {
         private final String userExternalId;
         private final String userEmail;
-        private final String status;
+        private final AgreementStatus status;
 
-        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest, PaymentInstrumentStatus status) {
+        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest, AgreementStatus status) {
             this.userExternalId = agreementCancelRequest.getUserExternalId();
             this.userEmail = agreementCancelRequest.getUserEmail();
-            this.status = String.valueOf(status);
+            this.status = status;
         }
 
         public String getUserExternalId() {
@@ -43,7 +44,7 @@ public class AgreementCancelledByUser extends AgreementEvent {
             return userEmail;
         }
 
-        public String getStatus() {
+        public AgreementStatus getStatus() {
             return status;
         }
     }

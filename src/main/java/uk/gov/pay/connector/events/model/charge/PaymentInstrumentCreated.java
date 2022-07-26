@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.events.model.charge;
 
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.agreement.PaymentInstrumentType;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -21,7 +24,7 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
                 gatewayAccount.getServiceId(),
                 gatewayAccount.isLive(),
                 paymentInstrument.getExternalId(),
-                new PaymentInstrumentCreatedDetails(paymentInstrument),
+                new PaymentInstrumentCreatedDetails(paymentInstrument, PaymentInstrumentType.CARD),
                 ZonedDateTime.ofInstant(paymentInstrument.getCreatedDate(), ZoneOffset.UTC)
         );
     }
@@ -35,16 +38,21 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
         private String addressCounty;
         private String addressCountry;
         private String lastDigitsCardNumber;
+        private String firstDigitsCardNumber;
         private String expiryDate;
-        private String cardBrand; 
+        private String cardBrand;
+        private String cardType;
+        private PaymentInstrumentType type;
 
-        public PaymentInstrumentCreatedDetails(PaymentInstrumentEntity paymentInstrument) {
+        public PaymentInstrumentCreatedDetails(PaymentInstrumentEntity paymentInstrument, PaymentInstrumentType type) {
             Optional.ofNullable(paymentInstrument.getCardDetails())
                     .ifPresent(cardDetails -> {
                         this.cardholderName = cardDetails.getCardHolderName();
                         this.lastDigitsCardNumber = Optional.ofNullable(cardDetails.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null);
+                        this.firstDigitsCardNumber = Optional.ofNullable(cardDetails.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null);
                         this.expiryDate = Optional.ofNullable(cardDetails.getExpiryDate()).map(CardExpiryDate::toString).orElse(null);
                         this.cardBrand = cardDetails.getCardBrand();
+                        this.cardType = Optional.ofNullable(cardDetails.getCardType()).map(CardType::name).orElse(null);
                         
                         cardDetails.getBillingAddress().ifPresent(billingAddress -> {
                             this.addressLine1 = billingAddress.getLine1();
@@ -55,6 +63,7 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
                             this.addressCountry = billingAddress.getCountry();        
                         });
                     });
+            this.type = type;
         }
 
         public String getCardholderName() {
@@ -95,6 +104,10 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
 
         public String getCardBrand() {
             return cardBrand;
+        }
+
+        public PaymentInstrumentType getType() {
+            return type;
         }
     }
 }

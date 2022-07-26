@@ -4,6 +4,7 @@ import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -20,27 +21,27 @@ public class AgreementSetup extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementSetupEventDetails(agreement.getPaymentInstrument().orElse(null), PaymentInstrumentStatus.ACTIVE),
+                new AgreementSetupEventDetails(agreement.getPaymentInstrument().orElse(null), AgreementStatus.ACTIVE),
                 timestamp
         );
     }
 
     static class AgreementSetupEventDetails extends EventDetails {
         private String paymentInstrumentExternalId;
-        private String status;
+        private AgreementStatus status;
 
-        public AgreementSetupEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, PaymentInstrumentStatus status) {
+        public AgreementSetupEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, AgreementStatus status) {
             this.paymentInstrumentExternalId = Optional.ofNullable(paymentInstrumentEntity)
                     .map(PaymentInstrumentEntity::getExternalId)
                     .orElse(null);
-            this.status = String.valueOf(status);
+            this.status = status;
         }
 
         public String getPaymentInstrumentExternalId() {
             return paymentInstrumentExternalId;
         }
 
-        public String getStatus() {
+        public AgreementStatus getStatus() {
             return status;
         }
 
