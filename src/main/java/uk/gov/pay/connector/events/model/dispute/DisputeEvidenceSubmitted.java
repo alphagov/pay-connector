@@ -5,8 +5,6 @@ import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmitted
 
 import java.time.ZonedDateTime;
 
-import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
-
 public class DisputeEvidenceSubmitted extends DisputeEvent {
     public DisputeEvidenceSubmitted(String resourceExternalId, String parentResourceExternalId, String serviceId,
                                     Boolean live, DisputeEvidenceSubmittedEventDetails eventDetails,
@@ -14,9 +12,9 @@ public class DisputeEvidenceSubmitted extends DisputeEvent {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, eventDate);
     }
 
-    public static DisputeEvidenceSubmitted from(String gatewayDisputeId, ZonedDateTime eventDate, LedgerTransaction transaction) {
+    public static DisputeEvidenceSubmitted from(String disputeExternalId, ZonedDateTime eventDate, LedgerTransaction transaction) {
         return new DisputeEvidenceSubmitted(
-                idFromExternalId(gatewayDisputeId),
+                disputeExternalId,
                 transaction.getTransactionId(),
                 transaction.getServiceId(),
                 transaction.getLive(),

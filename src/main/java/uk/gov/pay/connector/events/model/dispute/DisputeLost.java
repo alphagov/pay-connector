@@ -2,12 +2,10 @@ package uk.gov.pay.connector.events.model.dispute;
 
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
-import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 
 import java.time.ZonedDateTime;
-
-import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
 
 public class DisputeLost extends DisputeEvent {
     public DisputeLost(String resourceExternalId, String parentResourceExternalId, String serviceId, Boolean live,
@@ -15,7 +13,7 @@ public class DisputeLost extends DisputeEvent {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, eventDate);
     }
 
-    public static DisputeLost from(StripeDisputeData stripeDisputeData, ZonedDateTime eventDate, LedgerTransaction transaction, boolean rechargedToService) {
+    public static DisputeLost from(String disputeExternalId, StripeDisputeData stripeDisputeData, ZonedDateTime eventDate, LedgerTransaction transaction, boolean rechargedToService) {
         if (stripeDisputeData.getBalanceTransactionList().size() > 1) {
             throw new RuntimeException("Dispute data has too many balance_transactions");
         }
@@ -34,7 +32,7 @@ public class DisputeLost extends DisputeEvent {
             );
         }
         
-        return new DisputeLost(idFromExternalId(stripeDisputeData.getId()),
+        return new DisputeLost(disputeExternalId,
                 transaction.getTransactionId(),
                 transaction.getServiceId(),
                 transaction.getLive(),
