@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.service.payments.commons.model.AuthorisationMode;
-import uk.gov.service.payments.commons.model.Source;
-import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
+import uk.gov.service.payments.commons.model.Source;
+import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +44,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final Source source;
     private final boolean moto;
     private String agreementId;
+    private String paymentInstrumentId;
     private boolean savePaymentInstrumentToAgreement;
     private final AuthorisationMode authorisationMode;
 
@@ -69,6 +71,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.source = builder.source;
         this.moto = builder.moto;
         this.agreementId = builder.agreementId;
+        this.paymentInstrumentId = builder.paymentInstrumentId;
         this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         this.authorisationMode = builder.authorisationMode;
     }
@@ -92,6 +95,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withAuthorisationMode(charge.getAuthorisationMode());
 
         charge.getAgreementId().ifPresent(builder::withAgreementId);
+        charge.getPaymentInstrument().map(PaymentInstrumentEntity::getExternalId).ifPresent(builder::withPaymentInstrumentId);
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -222,6 +226,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return agreementId;
     }
 
+    public String getPaymentInstrumentId() {
+        return paymentInstrumentId;
+    }
+
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
     }
@@ -255,6 +263,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(addressCounty, that.addressCounty) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
                 Objects.equals(agreementId, that.agreementId) &&
+                Objects.equals(paymentInstrumentId, that.paymentInstrumentId) &&
                 Objects.equals(savePaymentInstrumentToAgreement, that.savePaymentInstrumentToAgreement) &&
                 Objects.equals(source, that.source);
     }
@@ -262,7 +271,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, credentialExternalId,
-                paymentProvider, language, delayedCapture, live, externalMetadata, agreementId, savePaymentInstrumentToAgreement, source);
+                paymentProvider, language, delayedCapture, live, externalMetadata, agreementId, paymentInstrumentId,
+                savePaymentInstrumentToAgreement, source);
     }
 
     public static class Builder {
@@ -288,6 +298,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private boolean moto;
         private String credentialExternalId;
         private String agreementId;
+        private String paymentInstrumentId;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
 
@@ -397,6 +408,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withAgreementId(String agreementId) {
             this.agreementId = agreementId;
+            return this;
+        }
+
+        public Builder withPaymentInstrumentId(String paymentInstrumentId) {
+            this.paymentInstrumentId = paymentInstrumentId;
             return this;
         }
 
