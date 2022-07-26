@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -23,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 
 @SuppressWarnings("PMD.UnusedPrivateMethod")
 public class PaymentCreatedTest {
@@ -63,20 +65,6 @@ public class PaymentCreatedTest {
     }
 
     @Test
-    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreement() throws JsonProcessingException {
-        chargeEntityFixture
-                .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId(AGREEMENT_EXTERNAL_ID);
-
-        var paymentCreatedEvent = preparePaymentCreatedEvent();
-
-        assertBasePaymentCreatedDetails(paymentCreatedEvent);
-        assertDoesNotContainCardDetails(paymentCreatedEvent);
-        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id"));
-        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.save_payment_instrument_to_agreement"));
-    }
-
-    @Test
     void serializesPayloadForCreatedWithoutCredentialExternalId() throws JsonProcessingException {
         chargeEntity = chargeEntityFixture
                 .withGatewayAccountCredentialsEntity(null)
@@ -107,6 +95,36 @@ public class PaymentCreatedTest {
 
         assertBasePaymentCreatedDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasJsonPath("$.service_id", equalTo("test-service-id")));
+    }
+
+    @Test
+    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreement() throws JsonProcessingException {
+        chargeEntityFixture
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementId(AGREEMENT_EXTERNAL_ID);
+
+        var paymentCreatedEvent = preparePaymentCreatedEvent();
+
+        assertBasePaymentCreatedDetails(paymentCreatedEvent);
+        assertDoesNotContainCardDetails(paymentCreatedEvent);
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(true)));
+    }
+
+    @Test
+    void serializesPayloadWithAgreementIdAndPaymentInstrumentId() throws JsonProcessingException {
+        PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-26T11:22:25Z")).build();
+        
+        chargeEntityFixture
+                .withAgreementId(AGREEMENT_EXTERNAL_ID)
+                .withPaymentInstrument(paymentInstrumentEntity);
+
+        var paymentCreatedEvent = preparePaymentCreatedEvent();
+
+        assertBasePaymentCreatedDetails(paymentCreatedEvent);
+        assertDoesNotContainCardDetails(paymentCreatedEvent);
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.payment_instrument_id", equalTo(paymentInstrumentEntity.getExternalId())));
     }
 
     @ParameterizedTest
