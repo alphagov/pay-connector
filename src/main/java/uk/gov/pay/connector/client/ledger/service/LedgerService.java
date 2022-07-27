@@ -76,7 +76,8 @@ public class LedgerService {
         var uri = UriBuilder
                 .fromPath(ledgerUrl)
                 .path(format("/v1/transaction/%s/transaction", paymentExternalId))
-                .queryParam("gateway_account_id", gatewayAccountId);
+                .queryParam("gateway_account_id", gatewayAccountId)
+                .queryParam("transaction_type", "REFUND");
 
         Response response = getResponse(uri);
 
