@@ -109,5 +109,13 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
         public PaymentInstrumentType getType() {
             return type;
         }
+
+        public String getFirstDigitsCardNumber() {
+            return firstDigitsCardNumber;
+        }
+
+        public String getCardType() {
+            return cardType;
+        }
     }
 }
