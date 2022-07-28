@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
@@ -201,7 +202,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn400WhenAuthorisationModeAgreementButNoAgreementId() {
+    public void shouldReturn422WhenAuthorisationModeAgreementButNoAgreementId() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
@@ -218,10 +219,10 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_BAD_REQUEST)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
-                .body("message", contains("If [authorisation_mode] is [agreement], [agreement_id] must be specified"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Missing mandatory attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.MISSING_MANDATORY_ATTRIBUTE.toString()));
     }
 
     @Test
@@ -246,6 +247,94 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: return_url"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
+    @Test
+    public void shouldReturn422WhenAuthorisationModeAgreementAndMotoTrue() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withAccountId(accountId)
+                .withAllowMoto(true)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_MOTO_KEY, true
+                ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: moto"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
+    @Test
+    public void shouldReturn422WhenAuthorisationModeAgreementAndEmailProvided() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_EMAIL_KEY, "test@test.test"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: email"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
+    @Test
+    public void shouldReturn422WhenAuthorisationModeAgreementAndPrefilledCardholderDetailsProvided() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("sandbox")
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                "prefilled_cardholder_details", Map.of(
+                        "cardholder_name", "Gwen Denise Smith",
+                        "billing_address", Map.of(
+                                "line1", "The White Chapel Building",
+                                "line2", "10 Whitechapel High Street",
+                                "city", "London",
+                                "postcode", "E1 8QS",
+                                "country", "GB"
+                        )
+                )
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: prefilled_cardholder_details"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
@@ -364,10 +453,10 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_BAD_REQUEST)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
-                .body("message", contains("If [agreement_id] is present, [authorisation_mode] must be [agreement] or [web]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Unexpected attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
     @Test
@@ -415,11 +504,10 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_BAD_REQUEST)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
-                .body("message", contains("If [agreement_id] is present, either [save_payment_instrument_to_agreement] must be true " +
-                        "or [authorisation_mode] must be [agreement]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Unexpected attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
     @Test
@@ -442,11 +530,10 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_BAD_REQUEST)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
-                .body("message", contains("If [agreement_id] is present, either [save_payment_instrument_to_agreement] must be true " +
-                        "or [authorisation_mode] must be [agreement]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Unexpected attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
     @Test

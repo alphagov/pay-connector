@@ -35,7 +35,7 @@ import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeExceptionM
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveExceptionMapper;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdExceptionMapper;
-import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAuthorisationModeWebExceptionMapper;
+import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementExceptionMapper;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
@@ -148,7 +148,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new NoCredentialsExistForProviderExceptionMapper());
         environment.jersey().register(new NoCredentialsInUsableStateExceptionMapper());
         environment.jersey().register(new SavePaymentInstrumentToAgreementRequiresAgreementIdExceptionMapper());
-        environment.jersey().register(new SavePaymentInstrumentToAgreementRequiresAuthorisationModeWebExceptionMapper());
+        environment.jersey().register(new IncorrectAuthorisationModeForSavePaymentToAgreementExceptionMapper());
         environment.jersey().register(new AuthorisationModeAgreementRequiresAgreementIdExceptionMapper());
         environment.jersey().register(new AgreementIdWithIncompatibleOtherOptionsExceptionMapper());
         environment.jersey().register(new AgreementNotFoundExceptionMapper());

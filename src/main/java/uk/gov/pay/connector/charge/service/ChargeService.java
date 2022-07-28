@@ -11,16 +11,16 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsException;
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
-import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
+import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
+import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
-import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementModeWebException;
+import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -268,7 +268,7 @@ public class ChargeService {
                 checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
             }
 
-            checkAgreementOptions(authorisationMode, chargeRequest.getAgreementId(), chargeRequest.getSavePaymentInstrumentToAgreement());
+            checkAgreementOptions(chargeRequest);
 
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
                 if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
@@ -291,7 +291,7 @@ public class ChargeService {
                     .withGatewayAccount(gatewayAccount)
                     .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
                     .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
-                    .withEmail(isBlank(chargeRequest.getEmail()) ? null : chargeRequest.getEmail())
+                    .withEmail(chargeRequest.getEmail().orElse(null))
                     .withLanguage(chargeRequest.getLanguage())
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
@@ -970,37 +970,37 @@ public class ChargeService {
         }
     }
 
-    private void checkAgreementOptions(AuthorisationMode authorisationMode, String agreementId, boolean savePaymentInstrumentToAgreement) {
-        switch (authorisationMode) {
+    private void checkAgreementOptions(ChargeCreateRequest chargeCreateRequest) {
+        switch (chargeCreateRequest.getAuthorisationMode()) {
             case AGREEMENT:
-                if (agreementId == null) {
-                    throw new AuthorisationModeAgreementRequiresAgreementIdException("If [authorisation_mode] is [agreement], " +
-                            "[agreement_id] must be specified");
-                } else if (savePaymentInstrumentToAgreement) {
-                    throw new SavePaymentInstrumentToAgreementRequiresAgreementModeWebException("If [save_payment_instrument_to_agreement] is true, " +
-                            "[authorisation_mode] must be [web]");
+                if (chargeCreateRequest.getAgreementId() == null) {
+                    throw new MissingMandatoryAttributeException("agreement_id");
+                } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                    throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
+                } else if (chargeCreateRequest.isMoto()) {
+                    throw new UnexpectedAttributeException("moto");
+                } else if (chargeCreateRequest.getEmail().isPresent()) {
+                    throw new UnexpectedAttributeException("email");
+                }  else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
+                    throw new UnexpectedAttributeException("prefilled_cardholder_details");
                 }
                 break;
             case WEB:
-                if (agreementId != null) {
-                    if (!savePaymentInstrumentToAgreement) {
-                        throw new AgreementIdWithIncompatibleOtherOptionsException("If [agreement_id] is present, " +
-                                "either [save_payment_instrument_to_agreement] must be true or [authorisation_mode] must be [agreement]");
+                if (chargeCreateRequest.getAgreementId() != null) {
+                    if (!chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                        throw new UnexpectedAttributeException("agreement_id");
                     }
                 } else {
-                    if (savePaymentInstrumentToAgreement) {
-                        throw new SavePaymentInstrumentToAgreementRequiresAgreementIdException("If [save_payment_instrument_to_agreement] is true, " +
-                                "[agreement_id] must be specified");
+                    if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                        throw new SavePaymentInstrumentToAgreementRequiresAgreementIdException();
                     }
                 }
                 break;
             default:
-                if (agreementId != null) {
-                    throw new AgreementIdWithIncompatibleOtherOptionsException("If [agreement_id] is present, " +
-                            "[authorisation_mode] must be [agreement] or [web]");
-                } else if (savePaymentInstrumentToAgreement) {
-                    throw new SavePaymentInstrumentToAgreementRequiresAgreementModeWebException("If [save_payment_instrument_to_agreement] is true, " +
-                            "[authorisation_mode] must be [web]");
+                if (chargeCreateRequest.getAgreementId() != null) {
+                    throw new UnexpectedAttributeException("agreement_id");
+                } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                    throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
                 }
         }
     }
