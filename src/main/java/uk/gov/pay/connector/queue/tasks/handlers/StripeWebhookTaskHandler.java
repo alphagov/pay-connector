@@ -35,6 +35,9 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
+import java.time.Clock;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +69,7 @@ public class StripeWebhookTaskHandler {
     private final GatewayAccountService gatewayAccountService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final StripeGatewayConfig stripeGatewayConfig;
+    private final Clock clock;
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final List<StripeNotificationType> disputeTypes = List.of(DISPUTE_CREATED, DISPUTE_UPDATED, DISPUTE_CLOSED);
@@ -76,7 +80,8 @@ public class StripeWebhookTaskHandler {
                                     StripePaymentProvider stripePaymentProvider,
                                     GatewayAccountService gatewayAccountService,
                                     GatewayAccountCredentialsService gatewayAccountCredentialsService,
-                                    ConnectorConfiguration configuration) {
+                                    ConnectorConfiguration configuration, 
+                                    Clock clock) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
         this.eventService = eventService;
@@ -84,6 +89,7 @@ public class StripeWebhookTaskHandler {
         this.gatewayAccountService = gatewayAccountService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.stripeGatewayConfig = configuration.getStripeConfig();
+        this.clock = clock;
     }
 
     public void process(StripeNotification stripeNotification) throws JsonProcessingException, GatewayException {
@@ -98,6 +104,8 @@ public class StripeWebhookTaskHandler {
                 MDC.put(GATEWAY_DISPUTE_ID, stripeDisputeData.getId());
                 MDC.put(PAYMENT_EXTERNAL_ID, transaction.getTransactionId());
 
+                boolean isTestStripeTransaction = Boolean.FALSE.equals(stripeDisputeData.getLiveMode());
+                
                 switch (stripeNotificationType) {
                     case DISPUTE_CREATED:
                         DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
@@ -108,10 +116,10 @@ public class StripeWebhookTaskHandler {
                         // So this status update will block a refund attempt made VIA the API is made if the charge has been
                         // expunged from connector.
                         RefundAvailabilityUpdated refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                                transaction, EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
+                                transaction, EXTERNAL_UNAVAILABLE, ZonedDateTime.ofInstant(clock.instant(), clock.getZone()));
                         emitEvent(refundAvailabilityUpdated);
-
-                        if (Boolean.FALSE.equals(stripeDisputeData.getLiveMode())) {
+                        
+                        if (isTestStripeTransaction) {
                             submitEvidenceForTestAccount(stripeDisputeData, transaction);
                         }
                         break;
@@ -131,13 +139,19 @@ public class StripeWebhookTaskHandler {
                         StripeDisputeStatus disputeStatus = byStatus(stripeDisputeData.getStatus());
                         DisputeEvent disputeEvent;
 
+                        // For test transactions, the dispute updated and dispute closed notification will have the same
+                        // created date. Add a second onto the timestamp for events we send to ledger to ensure these
+                        // appear in the correct order.
+                        ZonedDateTime disputeClosedEventTimestamp = isTestStripeTransaction ? 
+                                stripeNotification.getCreated().plus(1, ChronoUnit.SECONDS) : stripeNotification.getCreated();
+
                         if (disputeStatus == WON) {
-                            disputeEvent = DisputeWon.from(disputeExternalId, stripeNotification.getCreated(), transaction);
-                        Charge charge = Charge.from(transaction);
-                        RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated());
-                        emitEvent(refundAvailabilityUpdatedEvent);
+                            disputeEvent = DisputeWon.from(disputeExternalId, disputeClosedEventTimestamp, transaction);
+                            Charge charge = Charge.from(transaction);
+                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated());
+                            emitEvent(refundAvailabilityUpdatedEvent);
                         } else if (disputeStatus == LOST) {
-                            disputeEvent = handleDisputeLost(stripeNotification, stripeDisputeData, transaction, disputeExternalId);
+                            disputeEvent = handleDisputeLost(stripeDisputeData, transaction, disputeExternalId, disputeClosedEventTimestamp);
                         } else {
                             logger.info("Unknown stripe dispute status: [status: {}, payment_intent: {}]",
                                     stripeDisputeData.getStatus(), stripeDisputeData.getPaymentIntentId());
@@ -158,8 +172,8 @@ public class StripeWebhookTaskHandler {
         }
     }
 
-    private DisputeEvent handleDisputeLost(StripeNotification stripeNotification, StripeDisputeData stripeDisputeData,
-                                           LedgerTransaction transaction, String disputeExternalId) throws GatewayException {
+    private DisputeEvent handleDisputeLost(StripeDisputeData stripeDisputeData, LedgerTransaction transaction, 
+                                           String disputeExternalId, ZonedDateTime eventTimestamp) throws GatewayException {
         boolean rechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
         if (rechargeDispute) {
             Charge charge = Charge.from(transaction);
@@ -172,7 +186,7 @@ public class StripeWebhookTaskHandler {
             logger.info("Skipping recharging for dispute {} for payment {} as it was created before the date we started recharging from",
                     stripeDisputeData.getId(), transaction.getTransactionId());
         }
-        return DisputeLost.from(disputeExternalId, stripeDisputeData, stripeNotification.getCreated(), transaction, rechargeDispute);
+        return DisputeLost.from(disputeExternalId, stripeDisputeData, eventTimestamp, transaction, rechargeDispute);
     }
 
     private boolean shouldRechargeDispute(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {

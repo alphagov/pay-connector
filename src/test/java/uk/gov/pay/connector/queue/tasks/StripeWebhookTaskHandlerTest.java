@@ -48,7 +48,10 @@ import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +97,9 @@ public class StripeWebhookTaskHandlerTest {
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
 
+    private final String fixedClockDateTime = "2020-01-01T10:10:10.100Z";
+    private final Clock clock = Clock.fixed(Instant.parse(fixedClockDateTime), ZoneOffset.UTC);
+
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -112,7 +118,7 @@ public class StripeWebhookTaskHandlerTest {
         payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
         stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, chargeService, eventService, stripePaymentProvider,
-                gatewayAccountService, gatewayAccountCredentialsService, configuration);
+                gatewayAccountService, gatewayAccountCredentialsService, configuration, clock);
     }
 
     @Test
@@ -123,11 +129,7 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
-        String finalPayload = payload
-                .replace(PLACEHOLDER_TYPE, "charge.dispute.created")
-                .replace(PLACEHOLDER_STATUS, "needs_response");
-        finalPayload = finalPayload.replaceAll("\"livemode\": false", "\"livemode\": true");
-        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
@@ -137,7 +139,7 @@ public class StripeWebhookTaskHandlerTest {
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
         var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, ZonedDateTime.parse(fixedClockDateTime));
         
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);
@@ -155,7 +157,7 @@ public class StripeWebhookTaskHandlerTest {
                 .isLive(true)
                 .build();
         Charge charge = Charge.from(transaction);
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
 
@@ -178,7 +180,7 @@ public class StripeWebhookTaskHandlerTest {
         GatewayAccountEntity gatewayAccount = aGatewayAccountEntity().withId(gatewayAccountId).build();
         GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity().build();
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         
         when(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1259539200));
@@ -223,7 +225,7 @@ public class StripeWebhookTaskHandlerTest {
         GatewayAccountEntity gatewayAccount = aGatewayAccountEntity().withId(gatewayAccountId).build();
         GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity().build();
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", false);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
 
         when(stripeGatewayConfig.getRechargeServicesForTestPaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1259539200));
@@ -245,7 +247,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeLost disputeLost = argumentCaptor.getValue();
         assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
         assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated()));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().plusSeconds(1)));
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
@@ -265,7 +267,7 @@ public class StripeWebhookTaskHandlerTest {
     void shouldNotMakeTransferForLostDispute_whenDisputeCreatedBeforeRechargeEnabledDate_forLivePayment() throws Exception {
         LedgerTransaction transaction = buildTransaction(true);
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
 
         when(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1642579172));
@@ -299,7 +301,7 @@ public class StripeWebhookTaskHandlerTest {
     void shouldNotMakeTransferForLostDispute_whenDisputeCreatedBeforeRechargeEnabledDate_forTestPayment() throws Exception {
         LedgerTransaction transaction = buildTransaction(false);
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
 
         when(stripeGatewayConfig.getRechargeServicesForTestPaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1642579172));
@@ -333,7 +335,7 @@ public class StripeWebhookTaskHandlerTest {
     void shouldThrowExceptionWhenGatewayAccountNotFoundForLostDispute() throws Exception {
         LedgerTransaction transaction = buildTransaction(true);
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", true);
         
         when(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1259539200));
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
@@ -349,7 +351,7 @@ public class StripeWebhookTaskHandlerTest {
         Charge charge = Charge.from(transaction);
         GatewayAccountEntity gatewayAccount = aGatewayAccountEntity().withId(gatewayAccountId).build();
 
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "lost", true);
         
         when(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1259539200));
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
@@ -368,7 +370,7 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "under_review");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "under_review", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
@@ -395,7 +397,7 @@ public class StripeWebhookTaskHandlerTest {
 
     @Test
     void shouldThrowExceptionWhenNotDispute() throws JsonProcessingException {
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.solved", "under_review");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.solved", "under_review", true);
         var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
         assertThat(thrown.getMessage(), is("Unknown webhook task: charge.dispute.solved"));
     }
@@ -408,12 +410,9 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
-        String finalPayload = payload
-                .replace(PLACEHOLDER_TYPE, "charge.dispute.closed")
-                .replace(PLACEHOLDER_STATUS, "charge_refunded");
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        StripeNotification stripeNotification = objectMapper.readValue(finalPayload, StripeNotification.class);
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "charge_refunded", true);
         var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
         assertThat(thrown.getMessage(), is("Unknown stripe dispute status: [status: charge_refunded, payment_intent: pi_1111111111]"));
     }
@@ -428,7 +427,7 @@ public class StripeWebhookTaskHandlerTest {
                 .build();
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "needs_response");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "needs_response", true);
 
         stripeWebhookTaskHandler.process(stripeNotification);
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -443,7 +442,7 @@ public class StripeWebhookTaskHandlerTest {
     void shouldThrowExceptionWhenNoLedgerTransactionFound() throws JsonProcessingException {
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.empty());
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response", true);
         var thrown = assertThrows(RuntimeException.class, () -> stripeWebhookTaskHandler.process(stripeNotification));
         assertThat(thrown.getMessage(), is("LedgerTransaction with gateway transaction id [pi_1111111111] not found"));
     }
@@ -461,7 +460,7 @@ public class StripeWebhookTaskHandlerTest {
                         "0259", "400000", null, null))
                 .isLive(false)
                 .build();
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response", false);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
@@ -472,7 +471,7 @@ public class StripeWebhookTaskHandlerTest {
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
         var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, stripeDisputeData.getDisputeCreated());
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, ZonedDateTime.parse(fixedClockDateTime));
 
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);
@@ -497,7 +496,7 @@ public class StripeWebhookTaskHandlerTest {
                 .withCardDetails(null)
                 .isLive(false)
                 .build();
-        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response");
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "needs_response", false);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
 
@@ -517,10 +516,13 @@ public class StripeWebhookTaskHandlerTest {
                 .build();
     }
 
-    private StripeNotification getDisputeNotification(String webhookType, String status) throws JsonProcessingException {
+    private StripeNotification getDisputeNotification(String webhookType, String status, boolean liveStripeAccount) throws JsonProcessingException {
         String finalPayload = payload
                 .replace(PLACEHOLDER_TYPE, webhookType)
                 .replace(PLACEHOLDER_STATUS, status);
+        if (!liveStripeAccount) {
+            finalPayload = finalPayload.replaceAll("\"livemode\": true", "\"livemode\": false");
+        }
         return objectMapper.readValue(finalPayload, StripeNotification.class);
     }
 }
