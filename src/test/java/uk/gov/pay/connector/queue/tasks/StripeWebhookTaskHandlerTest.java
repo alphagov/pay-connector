@@ -456,7 +456,7 @@ public class StripeWebhookTaskHandlerTest {
                 .withExternalId("external-id")
                 .withGatewayAccountId(1000L)
                 .withGatewayTransactionId("gateway-transaction-id")
-                .withCardDetails(new CardDetails(null, null, null,
+                .withCardDetails(new CardDetails("John Doe", null, null,
                         "0259", "400000", null, null))
                 .isLive(false)
                 .build();
