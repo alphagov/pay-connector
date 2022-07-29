@@ -200,7 +200,7 @@ public class StripeWebhookTaskHandler {
         }
         Optional<String> evidenceText =
                 StripeFullTestCardNumbers.getSubmitTestDisputeEvidenceText(transaction.getCardDetails().getFirstDigitsCardNumber(),
-                        transaction.getCardDetails().getLastDigitsCardNumber());
+                        transaction.getCardDetails().getLastDigitsCardNumber(), transaction.getCardDetails().getCardholderName());
         evidenceText.ifPresent(submitEvidenceText -> {
             try {
                 StripeDisputeData dispute = stripePaymentProvider.submitTestDisputeEvidence(stripeDisputeData.getId(),
