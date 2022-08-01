@@ -148,7 +148,7 @@ public class StripeWebhookTaskHandler {
                         if (disputeStatus == WON) {
                             disputeEvent = DisputeWon.from(disputeExternalId, disputeClosedEventTimestamp, transaction);
                             Charge charge = Charge.from(transaction);
-                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated());
+                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, disputeClosedEventTimestamp);
                             emitEvent(refundAvailabilityUpdatedEvent);
                         } else if (disputeStatus == LOST) {
                             disputeEvent = handleDisputeLost(stripeDisputeData, transaction, disputeExternalId, disputeClosedEventTimestamp);
