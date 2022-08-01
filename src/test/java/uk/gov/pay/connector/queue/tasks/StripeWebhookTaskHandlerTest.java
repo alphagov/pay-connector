@@ -149,7 +149,7 @@ public class StripeWebhookTaskHandlerTest {
     }
 
     @Test
-    void shouldReadPayloadProperlyWhenDisputeClosedAndStatusWon() throws Exception {
+    void shouldEmitEventsWhenDisputeWon() throws Exception {
         LedgerTransaction transaction = aValidLedgerTransaction()
                 .withExternalId("external-id")
                 .withGatewayAccountId(1000L)
@@ -169,6 +169,31 @@ public class StripeWebhookTaskHandlerTest {
         ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
 
         var disputeWon = DisputeWon.from(resourceExternalId, stripeNotification.getCreated(), transaction);
+        verify(eventService).emitEvent(disputeWon);
+        verify(eventService).emitEvent(refundAvailabilityUpdated);
+    }
+
+    @Test
+    void shouldEmitEventsWhenDisputeWon_withAdjustedEventDateForTestPayment() throws Exception {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        Charge charge = Charge.from(transaction);
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won", false);
+        StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+
+        String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().plusSeconds(1))).thenReturn(refundAvailabilityUpdated);
+        stripeWebhookTaskHandler.process(stripeNotification);
+        ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
+
+        var disputeWon = DisputeWon.from(resourceExternalId, stripeNotification.getCreated().plusSeconds(1), transaction);
         verify(eventService).emitEvent(disputeWon);
         verify(eventService).emitEvent(refundAvailabilityUpdated);
     }
