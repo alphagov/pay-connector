@@ -13,7 +13,8 @@ public class ContractTestSuite {
     public static TestSuite suite() {
         ImmutableSetMultimap<String, JUnit4TestAdapter> consumerToJUnitTest = ImmutableSetMultimap.of(
                 "frontend", new JUnit4TestAdapter(FrontendContractTest.class),
-                "ledger", new JUnit4TestAdapter(QueueMessageContractTest.class),
+                "ledger", new JUnit4TestAdapter(LedgerQueueMessageContractTest.class),
+                "adminusers", new JUnit4TestAdapter(AdminusersQueueMessageContractTest.class),
                 "publicapi", new JUnit4TestAdapter(PublicApiContractTest.class),
                 "selfservice", new JUnit4TestAdapter(SelfServiceContractTest.class));
         return CreateTestSuite.create(consumerToJUnitTest);
