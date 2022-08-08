@@ -12,13 +12,13 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
+import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
-import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -107,7 +107,6 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -311,7 +310,7 @@ public class ChargeService {
 
             if (chargeRequest.getAgreementId() != null) {
                 var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId())
-                        .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
+                        .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
                 if (authorisationMode == AuthorisationMode.AGREEMENT) {
                     checkAgreementHasActivePaymentInstrument(agreementEntity);
                     agreementEntity.getPaymentInstrument()

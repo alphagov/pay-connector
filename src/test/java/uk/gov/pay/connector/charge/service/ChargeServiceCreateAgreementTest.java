@@ -15,14 +15,12 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsException;
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
-import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdException;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
+import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
-import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
@@ -416,7 +414,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(UNKNOWN_AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
         when(mockAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(AgreementNotFoundException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -431,7 +429,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(AgreementNotFoundException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }

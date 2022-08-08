@@ -2,12 +2,12 @@ package uk.gov.pay.connector.agreement.service;
 
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.charge.AgreementCancelledByService;
