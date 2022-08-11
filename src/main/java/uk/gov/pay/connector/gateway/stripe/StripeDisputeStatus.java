@@ -7,6 +7,11 @@ public enum StripeDisputeStatus {
     WON,
     LOST,
     UNDER_REVIEW,
+
+    WARNING_NEEDS_RESPONSE,
+    WARNING_UNDER_REVIEW,
+    WARNING_CLOSED,
+
     UNKNOWN;
 
     public static StripeDisputeStatus byStatus(String status) {

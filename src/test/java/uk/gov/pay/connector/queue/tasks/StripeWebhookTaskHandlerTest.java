@@ -67,6 +67,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -140,12 +141,37 @@ public class StripeWebhookTaskHandlerTest {
         var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
                 transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, ZonedDateTime.parse(fixedClockDateTime));
-        
+
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);
         verify(eventService).emitEvent(refundAvailabilityUpdated);
 
         verify(stripePaymentProvider, never()).submitTestDisputeEvidence(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void shouldNotEmitEventsAndShouldLogWhenDisputeCreatedWithWarningNeedsResponse() throws Exception {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.created", "warning_needs_response", true);
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        stripeWebhookTaskHandler.process(stripeNotification);
+
+        verify(stripePaymentProvider, never()).submitTestDisputeEvidence(anyString(), anyString(), anyString());
+
+        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_needs_response, type: charge.dispute.created, payment_intent: pi_1111111111]";
+
+        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+
+        verifyNoInteractions(eventService);
     }
 
     @Test
@@ -388,6 +414,30 @@ public class StripeWebhookTaskHandlerTest {
     }
 
     @Test
+    void shouldNotEmitEventsAndShouldLogWhenDisputeClosedWithWarning() throws Exception {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "warning_closed", true);
+
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        stripeWebhookTaskHandler.process(stripeNotification);
+
+        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_closed, type: charge.dispute.closed, payment_intent: pi_1111111111]";
+
+        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+
+        verifyNoInteractions(eventService);
+    }
+
+    @Test
     void shouldReadPayloadProperlyWhenDisputeUpdated() throws Exception {
         LedgerTransaction transaction = aValidLedgerTransaction()
                 .withExternalId("external-id")
@@ -418,6 +468,29 @@ public class StripeWebhookTaskHandlerTest {
         String expectedLogMessage = "Event sent to payment event queue: " + disputeEvidenceSubmitted.getResourceExternalId();
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+    }
+
+    @Test
+    void shouldNotEmitEventsAndShouldLogWhenDisputeUnderReviewHasWarning() throws Exception {
+        LedgerTransaction transaction = aValidLedgerTransaction()
+                .withExternalId("external-id")
+                .withGatewayAccountId(1000L)
+                .withGatewayTransactionId("gateway-transaction-id")
+                .isLive(true)
+                .build();
+        StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "warning_under_review", true);
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        stripeWebhookTaskHandler.process(stripeNotification);
+
+        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_under_review, type: charge.dispute.updated, payment_intent: pi_1111111111]";
+
+        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+
+        verifyNoInteractions(eventService);
     }
 
     @Test
