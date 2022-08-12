@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeSearchResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeSearchPaymentIntentsResponse;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeQueryPaymentStatusRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeQueryResponse;
@@ -42,7 +42,7 @@ public class StripeQueryPaymentStatusHandler {
                 stripeGatewayConfig, chargeQueryGatewayRequest.getChargeExternalId());
         try {
             String rawResponse = client.getRequestFor(request).getEntity();
-            StripeSearchResponse queryResponse = jsonObjectMapper.getObject(rawResponse, StripeSearchResponse.class);
+            StripeSearchPaymentIntentsResponse queryResponse = jsonObjectMapper.getObject(rawResponse, StripeSearchPaymentIntentsResponse.class);
             List<StripePaymentIntent> paymentIntentList = queryResponse.getPaymentIntents();
             if (paymentIntentList == null || paymentIntentList.isEmpty()) {
                 LOGGER.info("There are no payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());

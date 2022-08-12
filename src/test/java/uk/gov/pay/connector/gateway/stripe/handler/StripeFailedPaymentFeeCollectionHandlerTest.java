@@ -28,6 +28,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -183,7 +184,8 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
     @Test
     void shouldThrowExceptionWhenMultipleChargesForPaymentIntent() throws Exception {
         mockGetRequestResponse(STRIPE_GET_PAYMENT_INTENT_WITH_MULTIPLE_CHARGES);
-        assertThrows(RuntimeException.class, () -> stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(chargeEntityFixture.build()));
+        RuntimeException runtimeException = assertThrows(RuntimeException.class, () -> stripeFailedPaymentFeeCollectionHandler.calculateAndTransferFees(chargeEntityFixture.build()));
+        assertThat(runtimeException.getMessage(), containsString("Expected at most 1 Charge for PaymentIntent, found"));
         verify(gatewayClient, never()).postRequestFor(any(StripeTransferInRequest.class));
     }
 

@@ -53,7 +53,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
                 .withDate(LocalDate.now(ZoneOffset.UTC))
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmountAsString())
-                .withTransactionId(request.getTransactionId())
+                .withTransactionId(request.getGatewayTransactionId())
                 .build();
     }
 

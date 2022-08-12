@@ -26,6 +26,9 @@ public class StripeCharge {
 
     @JsonProperty("payment_method_details")
     private PaymentMethodDetails paymentMethodDetails;
+    
+    @JsonProperty("captured")
+    private Boolean captured;
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class BalanceTransaction {
@@ -68,5 +71,9 @@ public class StripeCharge {
 
     public PaymentMethodDetails getPaymentMethodDetails() {
         return paymentMethodDetails;
+    }
+
+    public Boolean getCaptured() {
+        return captured;
     }
 }

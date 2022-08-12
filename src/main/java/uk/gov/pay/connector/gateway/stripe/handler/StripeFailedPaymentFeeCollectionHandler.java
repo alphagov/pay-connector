@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -103,14 +103,14 @@ public class StripeFailedPaymentFeeCollectionHandler {
                 charge.getExternalId(),
                 stripeGatewayConfig);
         String rawResponse = client.postRequestFor(transferInRequest).getEntity();
-        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(rawResponse, StripeTransferResponse.class);
+        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(rawResponse, StripeTransfer.class);
 
         LOGGER.info("To collect fees for failed payment {}, transferred net amount {} - transfer id {} - from Stripe Connect account id {} in transfer group {}",
                 charge.getExternalId(),
                 feeAmount,
-                stripeTransferResponse.getId(),
-                stripeTransferResponse.getDestinationStripeAccountId(),
-                stripeTransferResponse.getStripeTransferGroup()
+                stripeTransfer.getId(),
+                stripeTransfer.getDestinationStripeAccountId(),
+                stripeTransfer.getStripeTransferGroup()
         );
     }
 }

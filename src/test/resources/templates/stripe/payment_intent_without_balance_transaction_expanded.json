@@ -10,9 +10,7 @@
         "id": "ch_123456",
         "amount": 2400,
         "captured": true,
-        "balance_transaction": {
-          "fee": 50
-        }
+        "balance_transaction": "abcd"
       }
     ]
   }

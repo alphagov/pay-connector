@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeRefund;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
@@ -108,18 +108,18 @@ public class StripeRefundHandler {
 
     }
 
-    private StripeTransferResponse transferFromConnectAccount(RefundGatewayRequest request, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+    private StripeTransfer transferFromConnectAccount(RefundGatewayRequest request, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         String transferResponse = client.postRequestFor(StripeTransferInRequest.createRefundTransferRequest(request, stripeChargeId, stripeGatewayConfig)).getEntity();
-        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
+        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(transferResponse, StripeTransfer.class);
         logger.info("As part of refund {} refunding charge id {}, transferred net amount {} - transfer id {} -  from Stripe Connect account id {} in transfer group {}",
                 request.getRefundExternalId(),
                 request.getChargeExternalId(),
-                stripeTransferResponse.getAmount(),
-                stripeTransferResponse.getId(),
-                stripeTransferResponse.getDestinationStripeAccountId(),
-                stripeTransferResponse.getStripeTransferGroup()
+                stripeTransfer.getAmount(),
+                stripeTransfer.getId(),
+                stripeTransfer.getDestinationStripeAccountId(),
+                stripeTransfer.getStripeTransferGroup()
         );
 
-        return stripeTransferResponse;
+        return stripeTransfer;
     }
 }
