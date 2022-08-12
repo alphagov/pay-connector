@@ -47,6 +47,9 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.LOST;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.UNDER_REVIEW;
+import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.WARNING_CLOSED;
+import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.WARNING_NEEDS_RESPONSE;
+import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.WARNING_UNDER_REVIEW;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.WON;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.byStatus;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CLOSED;
@@ -105,6 +108,13 @@ public class StripeWebhookTaskHandler {
                 MDC.put(PAYMENT_EXTERNAL_ID, transaction.getTransactionId());
 
                 boolean isTestStripeTransaction = Boolean.FALSE.equals(stripeDisputeData.getLiveMode());
+                StripeDisputeStatus disputeStatus = byStatus(stripeDisputeData.getStatus());
+
+                if (disputeStatus == WARNING_NEEDS_RESPONSE || disputeStatus == WARNING_UNDER_REVIEW || disputeStatus == WARNING_CLOSED) {
+                    logger.warn("Skipping dispute notification: [status: {}, type: {}, payment_intent: {}]",
+                            stripeDisputeData.getStatus(), stripeNotificationType, stripeDisputeData.getPaymentIntentId());
+                    return;
+                }
                 
                 switch (stripeNotificationType) {
                     case DISPUTE_CREATED:
@@ -118,14 +128,13 @@ public class StripeWebhookTaskHandler {
                         RefundAvailabilityUpdated refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
                                 transaction, EXTERNAL_UNAVAILABLE, ZonedDateTime.ofInstant(clock.instant(), clock.getZone()));
                         emitEvent(refundAvailabilityUpdated);
-                        
+
                         if (isTestStripeTransaction) {
                             submitEvidenceForTestAccount(stripeDisputeData, transaction);
                         }
                         break;
                     case DISPUTE_UPDATED:
-                        StripeDisputeStatus stripeDisputeStatus = byStatus(stripeDisputeData.getStatus());
-                        if (stripeDisputeStatus == UNDER_REVIEW) {
+                        if (disputeStatus == UNDER_REVIEW) {
                             DisputeEvidenceSubmitted disputeUpdatedEvent = DisputeEvidenceSubmitted.from(
                                     disputeExternalId, stripeNotification.getCreated(), transaction);
 
@@ -136,7 +145,6 @@ public class StripeWebhookTaskHandler {
                         }
                         break;
                     case DISPUTE_CLOSED:
-                        StripeDisputeStatus disputeStatus = byStatus(stripeDisputeData.getStatus());
                         DisputeEvent disputeEvent;
 
                         // For test transactions, the dispute updated and dispute closed notification will have the same
