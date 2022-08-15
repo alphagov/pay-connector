@@ -167,7 +167,7 @@ public class StripeWebhookTaskHandlerTest {
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_needs_response, type: charge.dispute.created, payment_intent: pi_1111111111]";
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_needs_response, type: charge.dispute.created, payment_intent: pi_1111111111, reason: general]";
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
 
@@ -430,7 +430,7 @@ public class StripeWebhookTaskHandlerTest {
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_closed, type: charge.dispute.closed, payment_intent: pi_1111111111]";
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_closed, type: charge.dispute.closed, payment_intent: pi_1111111111, reason: general]";
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
 
@@ -486,7 +486,7 @@ public class StripeWebhookTaskHandlerTest {
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_under_review, type: charge.dispute.updated, payment_intent: pi_1111111111]";
+        String expectedLogMessage = "Skipping dispute notification: [status: warning_under_review, type: charge.dispute.updated, payment_intent: pi_1111111111, reason: general]";
 
         assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
 

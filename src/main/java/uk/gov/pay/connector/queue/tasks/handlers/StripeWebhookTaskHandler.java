@@ -111,8 +111,9 @@ public class StripeWebhookTaskHandler {
                 StripeDisputeStatus disputeStatus = byStatus(stripeDisputeData.getStatus());
 
                 if (disputeStatus == WARNING_NEEDS_RESPONSE || disputeStatus == WARNING_UNDER_REVIEW || disputeStatus == WARNING_CLOSED) {
-                    logger.warn("Skipping dispute notification: [status: {}, type: {}, payment_intent: {}]",
-                            stripeDisputeData.getStatus(), stripeNotificationType, stripeDisputeData.getPaymentIntentId());
+                    logger.warn("Skipping dispute notification: [status: {}, type: {}, payment_intent: {}, reason: {}]",
+                            stripeDisputeData.getStatus(), stripeNotificationType, stripeDisputeData.getPaymentIntentId(),
+                            stripeDisputeData.getReason());
                     return;
                 }
                 
