@@ -29,16 +29,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.restassured.http.ContentType.JSON;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -482,7 +480,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .statusCode(SC_BAD_REQUEST)
                 .contentType(JSON)
                 .body("message", contains("If [save_payment_instrument_to_agreement] is true, [authorisation_mode] must be [web]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.INCORRECT_AUTHORISATION_MODE_FOR_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT.toString()));
     }
 
     @Test
