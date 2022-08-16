@@ -35,7 +35,7 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeFailedPaymentFeeCollectionHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeQueryPaymentStatusHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
@@ -207,15 +207,15 @@ public class StripePaymentProvider implements PaymentProvider {
                 stripeGatewayConfig);
 
         String rawResponse = client.postRequestFor(transferInRequest).getEntity();
-        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(rawResponse, StripeTransferResponse.class);
+        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(rawResponse, StripeTransfer.class);
 
         logger.info("Funds transferred for dispute {} for charge {}, transferred net amount {} - transfer id {} - from Stripe Connect account id {} in transfer group {}",
                 disputeExternalId,
                 charge.getExternalId(),
                 transferAmount,
-                stripeTransferResponse.getId(),
-                stripeTransferResponse.getDestinationStripeAccountId(),
-                stripeTransferResponse.getStripeTransferGroup()
+                stripeTransfer.getId(),
+                stripeTransfer.getDestinationStripeAccountId(),
+                stripeTransfer.getStripeTransferGroup()
         );
     }
 }

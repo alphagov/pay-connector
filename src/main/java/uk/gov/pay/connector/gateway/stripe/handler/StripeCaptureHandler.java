@@ -15,13 +15,15 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeSearchTransfersResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
+import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeSearchTransfersRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.time.Instant;
 import java.util.List;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -48,21 +50,10 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        String transactionId = request.getTransactionId();
+        String transactionId = request.getGatewayTransactionId();
 
         try {
-            StripeCharge capturedCharge;
-
-            capturedCharge = captureWithPaymentIntentAPI(request);
-
-            List<Fee> feeList = generateFeeList(request, capturedCharge.getFee().orElse(0L));
-
-            Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
-
-            Long netTransferAmount = request.getAmount() - processingFee;
-
-            transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
-
+            List<Fee> feeList = doCaptureAndTransferIfNotPreviouslySucceeded(request);
             return new CaptureResponse(transactionId, COMPLETE, feeList);
         } catch (GatewayErrorException e) {
 
@@ -93,17 +84,70 @@ public class StripeCaptureHandler implements CaptureHandler {
         }
     }
 
+    private List<Fee> doCaptureAndTransferIfNotPreviouslySucceeded(CaptureGatewayRequest request) throws GatewayException {
+        if (request.isCaptureRetry()) {
+            StripeCharge stripeCharge = queryStripeCharge(request);
+            if (Boolean.TRUE.equals(stripeCharge.getCaptured())) {
+                LOGGER.info("Charge already captured with Stripe on a previous attempt");
+                return transferToConnectAccount(request, stripeCharge, true);
+            }
+        }
+
+        LOGGER.info("Making request to Stripe to capture charge");
+        StripeCharge capturedCharge = captureWithPaymentIntentAPI(request);
+        return transferToConnectAccount(request, capturedCharge, false);
+    }
+
+    private StripeCharge queryStripeCharge(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
+        var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayTransactionId());
+        String rawResponse = client.getRequestFor(getPaymentIntentRequest).getEntity();
+        StripePaymentIntent paymentIntent = jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
+
+        return getStripeChargeFromPaymentIntent(paymentIntent);
+    }
+
+    private StripeCharge getStripeChargeFromPaymentIntent(StripePaymentIntent paymentIntent) throws GatewayException.GenericGatewayException {
+        List<StripeCharge> stripeCharges = paymentIntent.getChargesCollection().getCharges();
+
+        if (stripeCharges.size() != 1) {
+            throw new GatewayException.GenericGatewayException(
+                String.format("Expected exactly one charge associated with payment intent %s, got %s", paymentIntent.getId(), stripeCharges.size()));
+        }
+        return stripeCharges.get(0);
+    }
+
+    private List<Fee> transferToConnectAccount(CaptureGatewayRequest request, StripeCharge capturedCharge, boolean checkForExistingTransfer) 
+            throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+
+        Long stripeFee = capturedCharge.getFee().orElseThrow(() -> new GatewayException.GenericGatewayException(
+                String.format("Fee not found on Stripe charge %s when attempting to capture payment", capturedCharge.getId())));
+        List<Fee> feeList = generateFeeList(request, stripeFee);
+        Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
+        Long netTransferAmount = request.getAmount() - processingFee;
+
+        if (checkForExistingTransfer) {
+            StripeSearchTransfersRequest searchTransfersRequest = new StripeSearchTransfersRequest(
+                    request.getGatewayAccount(), stripeGatewayConfig, request.getExternalId());
+            
+            String rawResponse = client.getRequestFor(searchTransfersRequest).getEntity();
+            StripeSearchTransfersResponse transfersResponse = jsonObjectMapper.getObject(rawResponse,
+                    StripeSearchTransfersResponse.class);
+            
+            if (!transfersResponse.getTransfers().isEmpty()) {
+                LOGGER.info("Transfer of captured funds previously succeeded.");
+                return feeList;
+            }
+        }
+
+        LOGGER.info("Making request to Stripe to transfer funds for captured amount to connect account");
+        transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
+        return feeList;
+    }
+
     private StripeCharge captureWithPaymentIntentAPI(CaptureGatewayRequest request) throws GatewayException {
         String captureResponse = client.postRequestFor(StripePaymentIntentCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
         StripePaymentIntent stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripePaymentIntent.class);
-        List<StripeCharge> stripeCharges = stripeCaptureResponse.getChargesCollection().getCharges();
-
-        if (stripeCharges.size() != 1) {
-            throw new GatewayErrorException(
-                    String.format("Expected exactly one charge associated with payment intent %s, got %s", request.getTransactionId(), stripeCharges.size()));
-        }
-
-        StripeCharge stripeCharge = stripeCharges.get(0);
+        StripeCharge stripeCharge = getStripeChargeFromPaymentIntent(stripeCaptureResponse);
 
         LOGGER.info("Captured charge id {} with platform account - stripe capture id {}",
                 request.getExternalId(),
@@ -115,13 +159,13 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount.toString(), stripeChargeId, request, stripeGatewayConfig)).getEntity();
-        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
+        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(transferResponse, StripeTransfer.class);
         LOGGER.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
                 request.getExternalId(),
-                stripeTransferResponse.getAmount(),
-                stripeTransferResponse.getId(),
-                stripeTransferResponse.getDestinationStripeAccountId(),
-                stripeTransferResponse.getStripeTransferGroup()
+                stripeTransfer.getAmount(),
+                stripeTransfer.getId(),
+                stripeTransfer.getDestinationStripeAccountId(),
+                stripeTransfer.getStripeTransferGroup()
         );
     }
 

@@ -183,7 +183,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+        assertThat(request.getValue().getGatewayTransactionId(), is(gatewayTxId));
 
         verifyNoInteractions(mockUserNotificationService);
     }
@@ -214,7 +214,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+        assertThat(request.getValue().getGatewayTransactionId(), is(gatewayTxId));
 
         verify(mockEventService, times(1)).emitAndRecordEvent(any());
 
@@ -246,7 +246,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
+        assertThat(request.getValue().getGatewayTransactionId(), is(gatewayTxId));
 
         verifyNoInteractions(mockEventService);
         verifyNoInteractions(mockUserNotificationService);
@@ -302,7 +302,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(chargeSpy.getGatewayTransactionId()));
+        assertThat(request.getValue().getGatewayTransactionId(), is(chargeSpy.getGatewayTransactionId()));
     }
 
 

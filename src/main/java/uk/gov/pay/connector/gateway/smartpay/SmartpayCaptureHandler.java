@@ -43,7 +43,7 @@ public class SmartpayCaptureHandler implements CaptureHandler {
 
     private GatewayOrder buildCaptureOrderFor(CaptureGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder()
-                .withTransactionId(request.getTransactionId())
+                .withTransactionId(request.getGatewayTransactionId())
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmountAsString())
                 .build();

@@ -53,7 +53,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
         epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME));
         epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD));
         epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinitionForCaptureOrder.setPayId(request.getTransactionId());
+        epdqPayloadDefinitionForCaptureOrder.setPayId(request.getGatewayTransactionId());
         epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE));
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }

@@ -1,0 +1,36 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tr_3Lxxxx",
+      "object": "transfer",
+      "amount": 948,
+      "amount_reversed": 0,
+      "balance_transaction": "txn_3LS1xxxxxx",
+      "created": 1659369757,
+      "currency": "gbp",
+      "description": null,
+      "destination": "acct_absdasdjkhs",
+      "destination_payment": "py_1LS14xxxxxx",
+      "livemode": false,
+      "metadata": {
+        "govuk_pay_transaction_external_id": "2cdf8fxxxxxx",
+        "reason": "transfer_payment_amount",
+        "stripe_charge_id": "ch_3LS14bHj08xxxxxxx"
+      },
+      "reversals": {
+        "object": "list",
+        "data": [],
+        "has_more": false,
+        "total_count": 0,
+        "url": "/v1/transfers/tr_3Lxxxx/reversals"
+      },
+      "reversed": false,
+      "source_transaction": "ch_3LSxxxxxx",
+      "source_type": "card",
+      "transfer_group": "2cdf8fxxxxxx"
+    }
+  ],
+  "has_more": false,
+  "url": "/v1/transfers"
+}

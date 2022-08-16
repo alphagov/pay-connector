@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StripeSearchResponse {
+public class StripeSearchPaymentIntentsResponse {
 
     @JsonProperty("has_more")
     private boolean hasMore;

@@ -8,13 +8,13 @@ import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;
@@ -28,9 +28,9 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.eclipse.jetty.http.HttpStatus.ACCEPTED_202;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
@@ -105,8 +105,8 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(testChargeCreatedWithStripeChargeAPI.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
-        MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
-        MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
+        assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
+        assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
         String refundId = response.extract().path("refund_id");
         
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
@@ -145,7 +145,8 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         String refundId = response.extract().path("refund_id");
-        wireMockServer.verify(getRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
+        String paymentIntentUrl = "/v1/payment_intents/" + defaultTestCharge.getTransactionId() + "?expand%5B%5D=charges.data.balance_transaction";
+        wireMockServer.verify(getRequestedFor(urlEqualTo(paymentIntentUrl)));
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123456"))

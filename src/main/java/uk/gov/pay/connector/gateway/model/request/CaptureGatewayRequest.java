@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -12,7 +13,7 @@ import java.util.Map;
 
 public class CaptureGatewayRequest implements GatewayRequest {
 
-    private ChargeEntity charge;
+    private final ChargeEntity charge;
 
     private CaptureGatewayRequest(ChargeEntity charge) {
         this.charge = charge;
@@ -26,7 +27,7 @@ public class CaptureGatewayRequest implements GatewayRequest {
         return charge.getAmount();
     }
     
-    public String getTransactionId() {
+    public String getGatewayTransactionId() {
         return charge.getGatewayTransactionId();
     }
     
@@ -40,6 +41,10 @@ public class CaptureGatewayRequest implements GatewayRequest {
 
     public List<ChargeEventEntity> getEvents() {
         return charge.getEvents();
+    }
+    
+    public boolean isCaptureRetry() {
+        return charge.getEvents().stream().anyMatch(event -> event.getStatus() == ChargeStatus.CAPTURE_APPROVED_RETRY);
     }
 
     @Override
