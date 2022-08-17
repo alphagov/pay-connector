@@ -32,7 +32,6 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -42,6 +41,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 class LinkPaymentInstrumentToAgreementServiceTest {
 
     private static final String AGREEMENT_ID = "I am very agreeable";
+    private static final long GATEWAY_ACCOUNT_ID = 1;
 
     @Mock
     private AgreementDao mockAgreementDao;
@@ -54,6 +54,9 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Mock
     private PaymentInstrumentEntity mockPaymentInstrumentEntity;
+    
+    @Mock
+    private GatewayAccountEntity mockGatewayAccountEntity;
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
@@ -77,8 +80,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void linksPaymentInstrumentFromChargeToAgreementFromChargeAndSetsPaymentInstrumentToActive() {
-        given(mockAgreementDao.findByExternalId(AGREEMENT_ID)).willReturn(Optional.of(mockAgreementEntity));
-        when(mockAgreementEntity.getGatewayAccount()).thenReturn(mock(GatewayAccountEntity.class));
+        when(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
+        when(mockAgreementEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(AGREEMENT_ID).build();
@@ -129,7 +132,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void logsErrorIfChargeHasPaymentInstrumentAndAgreementIdButAgreementNotFound() {
-        given(mockAgreementDao.findByExternalId(AGREEMENT_ID)).willReturn(Optional.empty());
+        given(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).willReturn(Optional.empty());
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(AGREEMENT_ID).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);

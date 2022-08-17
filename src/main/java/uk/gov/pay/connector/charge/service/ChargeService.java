@@ -309,7 +309,7 @@ public class ChargeService {
                     .ifPresent(chargeEntity::setCardDetails);
 
             if (chargeRequest.getAgreementId() != null) {
-                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId())
+                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                         .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
                 if (authorisationMode == AuthorisationMode.AGREEMENT) {
                     checkAgreementHasActivePaymentInstrument(agreementEntity);

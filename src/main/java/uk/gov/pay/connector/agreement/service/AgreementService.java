@@ -39,8 +39,8 @@ public class AgreementService {
         this.clock = clock;
     }
 
-    public Optional<AgreementResponse> findByExternalId(String externalId) {
-        return agreementDao.findByExternalId(externalId)
+    public Optional<AgreementResponse> findByExternalId(String externalId, long gatewayAccountId) {
+        return agreementDao.findByExternalId(externalId, gatewayAccountId)
                 .map(agreementEntity -> new AgreementResponseBuilder()
                         .withAgreementId(agreementEntity.getExternalId())
                         .withServiceId(agreementEntity.getServiceId())
@@ -81,9 +81,9 @@ public class AgreementService {
     }
 
     @Transactional
-    public void cancel(String agreementExternalId, AgreementCancelRequest agreementCancelRequest) {
+    public void cancel(String agreementExternalId, long gatewayAccountId, AgreementCancelRequest agreementCancelRequest) {
         var agreement = agreementDao
-                .findByExternalId(agreementExternalId)
+                .findByExternalId(agreementExternalId, gatewayAccountId)
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
         agreement.getPaymentInstrument()
                 .filter(paymentInstrument -> paymentInstrument.getPaymentInstrumentStatus() == PaymentInstrumentStatus.ACTIVE)

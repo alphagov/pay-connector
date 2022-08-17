@@ -69,7 +69,7 @@ public class AgreementsApiResource {
             @PathParam("agreementId") String agreementId,
             @Valid AgreementCancelRequest agreementCancelRequest
     ) {
-        agreementService.cancel(agreementId, agreementCancelRequest);
+        agreementService.cancel(agreementId, accountId, agreementCancelRequest);
         return Response.noContent().build();
     }
 }
