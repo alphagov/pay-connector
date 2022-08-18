@@ -219,8 +219,8 @@ public class ChargesFrontendResource {
                 .map(CardTypeEntity::getLabel);
     }
 
-    private Optional<AgreementResponse> findAgreement(String agreementExternalId) {
-        return agreementService.findByExternalId(agreementExternalId);
+    private Optional<AgreementResponse> findAgreement(String agreementExternalId, long gatewayAccountId) {
+        return agreementService.findByExternalId(agreementExternalId, gatewayAccountId);
     }
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
@@ -256,7 +256,7 @@ public class ChargesFrontendResource {
         }
 
         charge.getAgreementId().ifPresent(responseBuilder::withAgreementId);
-        charge.getAgreementId().flatMap(this::findAgreement).ifPresent(responseBuilder::withAgreement);
+        charge.getAgreementId().flatMap(agreementId -> findAgreement(agreementId, charge.getGatewayAccount().getId())).ifPresent(responseBuilder::withAgreement);
 
         if (charge.get3dsRequiredDetails() != null) {
             var auth3dsData = new ChargeResponse.Auth3dsData();

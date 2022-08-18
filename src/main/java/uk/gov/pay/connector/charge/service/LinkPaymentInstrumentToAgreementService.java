@@ -12,7 +12,6 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import java.time.Clock;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -35,7 +34,7 @@ public class LinkPaymentInstrumentToAgreementService {
     public void linkPaymentInstrumentFromChargeToAgreementFromCharge(ChargeEntity chargeEntity) {
         chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity -> {
             chargeEntity.getAgreementId().ifPresentOrElse(agreementId -> {
-                agreementDao.findByExternalId(agreementId).ifPresentOrElse(agreementEntity -> {
+                agreementDao.findByExternalId(agreementId, chargeEntity.getGatewayAccount().getId()).ifPresentOrElse(agreementEntity -> {
                     agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
                     paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
                     ledgerService.postEvent(List.of(
