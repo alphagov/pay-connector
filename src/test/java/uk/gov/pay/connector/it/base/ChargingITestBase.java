@@ -146,6 +146,7 @@ public class ChargingITestBase {
             );
         }
         databaseTestHelper = testContext.getDatabaseTestHelper();
+        ledgerStub.acceptPostEvent();
 
         credentialParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayAccountCredentialsId)
