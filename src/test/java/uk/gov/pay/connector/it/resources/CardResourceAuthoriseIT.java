@@ -4,6 +4,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -27,6 +29,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -44,6 +47,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -55,8 +59,11 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -290,6 +297,38 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
+    }
+
+    @Test
+    public void shouldAuthoriseChargeWithSavePaymentInstrumentToAgreement() {
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId("12345678901234567890123456")
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        long chargeId = RandomUtils.nextInt();
+        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(getPaymentProvider())
+                .withAmount(6234L)
+                .withStatus(ENTERING_CARD_DETAILS)
+                .withEmail("email@fake.test")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementId("12345678901234567890123456")
+                .withGatewayCredentialId((long) gatewayAccountCredentialsId)
+                .build());
+
+        givenSetup()
+                .body(buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT_OR_DEBIT))
+                .post(authoriseChargeUrlFor(externalChargeId.toString()))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
