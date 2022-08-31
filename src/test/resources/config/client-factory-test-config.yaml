@@ -96,7 +96,7 @@ executorServiceConfig:
 captureProcessConfig:
   backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-false}
   chargesConsideredOverdueForCaptureAfter: 60
-  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-26}
   failedCaptureRetryDelayInSeconds: ${CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS:-3600}
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
