@@ -6,17 +6,16 @@ import io.dropwizard.util.Duration;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
 
 public class ConnectorConfigurationIT {
 
     @Rule
     public final DropwizardAppRule<ConnectorConfiguration> RULE =
             new DropwizardAppRule<>(ConnectorApp.class, ResourceHelpers.resourceFilePath("config/test-config.yaml"));
-
 
     @Test
     public void shouldParseConfiguration() {
@@ -27,7 +26,7 @@ public class ConnectorConfigurationIT {
 
         CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
         assertThat(captureProcessConfig.getChargesConsideredOverdueForCaptureAfter(), is(60));
-        assertThat(captureProcessConfig.getMaximumRetries(), is(48));
+        assertThat(captureProcessConfig.getMaximumRetries(), is(26));
         assertThat(RULE.getConfiguration().getLedgerBaseUrl(), is(not(emptyString())));
         assertThat(RULE.getConfiguration().getRestClientConfig().isDisabledSecureConnection(), is(true));
         assertThat(RULE.getConfiguration().getEmittedEventSweepConfig().getNotEmittedEventMaxAgeInSeconds(), is(1800));
