@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase.version>4.16.0</liquibase.version>
-        <dropwizard.version>2.0.29</dropwizard.version>
+        <dropwizard.version>2.1.2</dropwizard.version>
         <wiremock.version>2.33.2</wiremock.version>
         <eclipselink.version>2.7.11</eclipselink.version>
         <guice.version>5.1.0</guice.version>
@@ -513,6 +513,11 @@
             <artifactId>jdbi3-core</artifactId>
             <version>3.30.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.connectors</groupId>
+            <artifactId>jersey-apache-connector</artifactId>
+            <version>2.36</version>
         </dependency>
     </dependencies>
     <build>
