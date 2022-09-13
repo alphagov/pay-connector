@@ -70,7 +70,6 @@ public class ClientFactoryIT {
         wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
                 .willReturn(aResponse().withBody("world").withStatus(200)));
 
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
@@ -86,8 +85,6 @@ public class ClientFactoryIT {
 
         wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
                 .willReturn(aResponse().withBody("world").withStatus(200)));
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
-
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
@@ -100,8 +97,6 @@ public class ClientFactoryIT {
     @Test
     public void anHttpRequestShouldTimeOut_whenCustomJerseyReadTimeoutIsConfigured() {
         app = startApp("config/client-factory-test-config.yaml", false);
-
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
 
@@ -172,8 +167,6 @@ public class ClientFactoryIT {
     public void shouldUseGatewaySpecificReadTimeoutOverride_whenSpecified() {
         app = startApp("config/client-factory-test-config-with-worldpay-timeout-override.yaml", false);
 
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
-
         String path = "/hello";
         
         wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
@@ -193,8 +186,6 @@ public class ClientFactoryIT {
     @Test
     public void shouldUseGatewaySpecificReadTimeoutOverrideForSmartpay_whenSpecified() {
         app = startApp("config/client-factory-test-config-with-smartpay-timeout-override.yaml", false);
-
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
         
