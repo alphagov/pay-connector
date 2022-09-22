@@ -18,9 +18,9 @@ import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

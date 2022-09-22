@@ -4,8 +4,8 @@ import org.junit.Test;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class RefundStatusMapTest {
 

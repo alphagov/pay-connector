@@ -4,8 +4,8 @@ import org.junit.Test;
 import uk.gov.pay.connector.gateway.model.status.IgnoredStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class IgnoredStatusTest {
 

@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.number.BigDecimalCloseTo.closeTo;
-import static org.junit.Assert.assertThat;
 
 public class PerformanceReportDaoIT extends DaoITestBase {
 

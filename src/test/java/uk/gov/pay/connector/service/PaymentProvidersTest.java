@@ -16,9 +16,9 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
 @RunWith(MockitoJUnitRunner.class)

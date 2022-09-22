@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.model.domain;
 
-import junit.framework.TestCase;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.history.HistoryPolicy;
 import org.junit.Test;
@@ -13,12 +12,12 @@ import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import java.util.Vector;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class HistoryCustomizerTest extends TestCase {
+public class HistoryCustomizerTest {
 
     @Mock
     private ClassDescriptor mockClassDescriptor;
