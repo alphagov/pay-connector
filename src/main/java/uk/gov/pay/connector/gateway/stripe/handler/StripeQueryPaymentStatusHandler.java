@@ -53,7 +53,7 @@ public class StripeQueryPaymentStatusHandler {
                 throw new ChargeNotFoundRuntimeException(request.getChargeExternalId());
             }
             return new ChargeQueryResponse(StripeChargeStatus.mapToChargeStatus(StripeChargeStatus.fromString(paymentIntentList.get(0).getStatus())),
-                    new StripeQueryResponse(request.getChargeExternalId()));
+                    new StripeQueryResponse(paymentIntentList.get(0).getId()));
         } catch (GatewayException.GatewayErrorException ex) {
             if ((ex.getStatus().isPresent() && ex.getStatus().get() == SC_UNAUTHORIZED) || ex.getFamily() == SERVER_ERROR) {
                 LOGGER.info("Querying payment status failed due to an internal error. Reason: {}. Status code from Stripe: {}.",

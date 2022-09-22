@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -134,6 +135,31 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
 
         verify(mockChargeService).transitionChargeState(eq(worldpayCharge.getExternalId()), eq(AUTHORISATION_ERROR_CANCELLED));
         verify(mockChargeService).transitionChargeState(eq(stripeCharge.getExternalId()), eq(AUTHORISATION_ERROR_CANCELLED));
+    }
+
+    @Test
+    public void shouldSetStripeGatewayTransactionIdOnChargeWhenNull() throws Exception {
+        assertThat(stripeCharge.getGatewayTransactionId(), is(nullValue()));
+
+        when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
+                eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
+                eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
+                eq(List.of(WEB, MOTO_API)),
+                any(Integer.class))).thenReturn(List.of(stripeCharge));
+        when(mockPaymentProviders.byName(STRIPE)).thenReturn(mockStripePaymentProvider);
+        when(stripeQueryResponse.getTransactionId()).thenReturn("stripe-order-code");
+        ChargeQueryResponse stripeChargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_3DS_REQUIRED, stripeQueryResponse);
+        when(mockQueryService.getChargeGatewayStatus(eq(stripeCharge))).thenReturn(stripeChargeQueryResponse);
+
+        BaseCancelResponse stripeCancelResponse = buildStripeCancelResponse(stripeCharge.getGatewayTransactionId());
+        when(mockStripePaymentProvider.cancel(any())).thenReturn(responseBuilder().withResponse(stripeCancelResponse).build());
+
+        Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
+
+        assertThat(result.get(CLEANUP_SUCCESS), is(1));
+        assertThat(result.get(CLEANUP_FAILED), is(0));
+
+        assertThat(stripeCharge.getGatewayTransactionId(), is("stripe-order-code"));
     }
 
     @Test

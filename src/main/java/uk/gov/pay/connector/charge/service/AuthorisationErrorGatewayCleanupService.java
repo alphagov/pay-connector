@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -100,7 +101,8 @@ public class AuthorisationErrorGatewayCleanupService {
                 CLEANUP_FAILED, failures.intValue()
         );
     }
-
+    
+    @Transactional
     private boolean cleanUpChargeWithGateway(ChargeEntity chargeEntity, ChargeQueryResponse chargeQueryResponse) {
         if (!chargeQueryResponse.foundCharge()) {
             // The charge might not be found with the gateway when the authorisation failed due to an error with ePDQ
@@ -115,6 +117,9 @@ public class AuthorisationErrorGatewayCleanupService {
         return chargeQueryResponse.getMappedStatus().map(mappedStatus -> {
             // Attempt to cancel the charge with the gateway if it is not in a terminal state with them
             if (!mappedStatus.toExternal().isFinished()) {
+                if (chargeEntity.getGatewayTransactionId() == null && chargeQueryResponse.getRawGatewayResponse().isPresent()) {
+                    chargeEntity.setGatewayTransactionId(chargeQueryResponse.getRawGatewayResponse().get().getTransactionId());
+                }
                 if (attemptCancelWithGateway(chargeEntity)) {
                     chargeService.transitionChargeState(chargeEntity.getExternalId(), AUTHORISATION_ERROR_CANCELLED);
                     return true;

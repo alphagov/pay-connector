@@ -18,15 +18,16 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.CancelledWithGatewayAfterAuthorisationErrorEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
-import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
+import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.ResourceType;
@@ -333,7 +334,7 @@ public class EventFactoryTest {
                 new Object[]{CancelledByExpiration.class, EmptyEventDetails.class},
                 new Object[]{CancelledByExternalService.class, EmptyEventDetails.class},
                 new Object[]{CancelledByUser.class, CancelledByUserEventDetails.class},
-                new Object[]{CancelledWithGatewayAfterAuthorisationError.class, EmptyEventDetails.class},
+                new Object[]{CancelledWithGatewayAfterAuthorisationError.class, CancelledWithGatewayAfterAuthorisationErrorEventDetails.class},
                 new Object[]{CaptureAbandonedAfterTooManyRetries.class, EmptyEventDetails.class},
                 new Object[]{CaptureConfirmed.class, CaptureConfirmedEventDetails.class},
                 new Object[]{CaptureErrored.class, EmptyEventDetails.class},
@@ -511,5 +512,40 @@ public class EventFactoryTest {
         GatewayRequires3dsAuthorisationEventDetails eventDetails = (GatewayRequires3dsAuthorisationEventDetails) event.getEventDetails();
         assertThat(eventDetails.getVersion3DS(), is("2.1.0"));
         assertThat(eventDetails.isRequires3DS(), is(true));
+    }
+    
+    @Test
+    public void shouldCreateCorrectEventForCancelledWithGatewayAfterAuthorisationErrorEvent() throws EventCreationException {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_ERROR)
+                .withGatewayTransactionId("gateway_transaction_id")
+                .withEmail("test@example.org")
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                .withId(chargeEventEntityId)
+                .build();
+        charge.getEvents().add(chargeEventEntity);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId,
+                CancelledWithGatewayAfterAuthorisationError.class);
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated()))
+                .thenReturn(refundAvailabilityUpdated);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+        
+        CancelledWithGatewayAfterAuthorisationError event = (CancelledWithGatewayAfterAuthorisationError) events.get(0);
+        assertThat(event.getEventDetails(), is(instanceOf(CancelledWithGatewayAfterAuthorisationErrorEventDetails.class)));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
+        
+        CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails = (CancelledWithGatewayAfterAuthorisationErrorEventDetails) event.getEventDetails();
+        assertThat(eventDetails.getGatewayTransactionId(), is("gateway_transaction_id"));
     }
 }

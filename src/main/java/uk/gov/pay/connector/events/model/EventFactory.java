@@ -4,9 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
-import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
@@ -14,6 +12,7 @@ import uk.gov.pay.connector.events.model.charge.CancelByExpirationSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelByUserSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelledByUser;
+import uk.gov.pay.connector.events.model.charge.CancelledWithGatewayAfterAuthorisationError;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
@@ -24,21 +23,19 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
-import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
-import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundService;
 
@@ -155,6 +152,8 @@ public class EventFactory {
                 return BackfillerRecreatedUserEmailCollected.from(chargeEvent.getChargeEntity());
             } else if (eventClass == StatusCorrectedToCapturedToMatchGatewayStatus.class) {
                 return StatusCorrectedToCapturedToMatchGatewayStatus.from(chargeEvent);
+            } else if (eventClass == CancelledWithGatewayAfterAuthorisationError.class) {
+                return CancelledWithGatewayAfterAuthorisationError.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class,
                         boolean.class, String.class, ZonedDateTime.class).newInstance(
@@ -190,8 +189,7 @@ public class EventFactory {
         }
     }
 
-    private Optional<Event> createRefundAvailabilityUpdatedEvent(
-            Charge charge, ZonedDateTime eventTimestamp, Class eventClass) {
+    private Optional<Event> createRefundAvailabilityUpdatedEvent(Charge charge, ZonedDateTime eventTimestamp, Class eventClass) {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, eventTimestamp);
             return Optional.of(refundAvailabilityUpdatedEvent);

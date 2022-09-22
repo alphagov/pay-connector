@@ -98,6 +98,16 @@ public class StripeQueryPaymentStatusHandlerTest {
         assertThat(response.getMappedStatus().isPresent(), is(true));
         assertThat(response.getMappedStatus().get(), is(ChargeStatus.AUTHORISATION_CANCELLED));
     }
+    
+    @Test
+    public void shouldReturnGatewayTransactionIdInTheResponse() throws GatewayException {
+        chargeEntity.setGatewayTransactionId(null);
+        when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
+        when(paymentSearchResponse.getEntity()).thenReturn(searchResponse().replace("succeeded", "canceled"));
+        ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
+        
+        assertThat(response.getRawGatewayResponse().get().getTransactionId(), is("pi_1FJMFKDv3CZEaFO2UhknVpXZ"));
+    }
 
     @Test
     public void shouldReturnError_whenQueryingByMetadataFindsNoCharge() throws GatewayException {
