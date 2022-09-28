@@ -33,6 +33,12 @@
                 </#if>
             </shopper>
             </#if>
+            <#if walletAuthorisationData.paymentInfo.worldpay3dsFlexDdcResult.isPresent()>
+            <additional3DSData
+                dfReferenceId="${walletAuthorisationData.paymentInfo.worldpay3dsFlexDdcResult.get()?xml}"
+                challengeWindowSize="390x400" challengePreference="noPreference"
+            />
+            </#if>
         </order>
     </submit>
 </paymentService>

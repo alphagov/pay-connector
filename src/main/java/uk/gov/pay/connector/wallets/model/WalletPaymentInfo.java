@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.wallets.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,7 +13,7 @@ import java.util.Optional;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WalletPaymentInfo {
-    
+
     @Schema(description = "last digits card number", example = "4242")
     private String lastDigitsCardNumber;
     @Schema(example = "visa")
@@ -32,6 +33,10 @@ public class WalletPaymentInfo {
     @Schema(example = "203.0.113.1")
     private String ipAddress;
 
+    @Schema(example = "1f1154b7-620d-4654-801b-893b5bb22db1", description = "SessionId returned by Worldpay/CardinalCommerce as part of device data collection. Applicable for Google Pay payments only")
+    @JsonProperty("worldpay_3ds_flex_ddc_result")
+    private String worldpay3dsFlexDdcResult;
+
     public WalletPaymentInfo() {
     }
 
@@ -43,13 +48,13 @@ public class WalletPaymentInfo {
         this.email = email;
     }
 
-    public WalletPaymentInfo(String lastDigitsCardNumber, 
+    public WalletPaymentInfo(String lastDigitsCardNumber,
                              String brand,
-                             PayersCardType cardType, 
+                             PayersCardType cardType,
                              String cardholderName,
                              String email,
-                             String acceptHeader, 
-                             String userAgentHeader, 
+                             String acceptHeader,
+                             String userAgentHeader,
                              String ipAddress) {
         this(lastDigitsCardNumber, brand, cardType, cardholderName, email);
         this.acceptHeader = acceptHeader;
@@ -89,6 +94,10 @@ public class WalletPaymentInfo {
         return ipAddress;
     }
 
+    public Optional<String> getWorldpay3dsFlexDdcResult() {
+        return Optional.ofNullable(worldpay3dsFlexDdcResult);
+    }
+
     @Override
     public String toString() { //this might be logged, so we serialise without PII
         return "WalletPaymentInfo{" +
@@ -98,6 +107,7 @@ public class WalletPaymentInfo {
                 ", acceptHeader=" + acceptHeader +
                 ", userAgentHeader=" + userAgentHeader +
                 ", ipAddress=" + Optional.ofNullable(ipAddress).map(x -> "ipAddress is present").orElse("ipAddress is not present") +
+                ", worldpay3dsFlexDdcResult=" + getWorldpay3dsFlexDdcResult().map(x -> "present").orElse("not present") +
                 '}';
     }
 }
