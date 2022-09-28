@@ -5203,6 +5203,11 @@ components:
         user_agent_header:
           type: string
           example: Mozilla/5.0
+        worldpay_3ds_flex_ddc_result:
+          type: string
+          description: SessionId returned by Worldpay/CardinalCommerce as part of
+            device data collection. Applicable for Google Pay payments only
+          example: 1f1154b7-620d-4654-801b-893b5bb22db1
     Worldpay3dsFlexCredentials:
       type: object
       properties:
