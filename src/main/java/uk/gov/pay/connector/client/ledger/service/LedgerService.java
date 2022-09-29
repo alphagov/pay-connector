@@ -23,9 +23,12 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_ACCEPTED;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.URL;
 
 public class LedgerService {
 
@@ -124,16 +127,20 @@ public class LedgerService {
 
         if (response.getStatus() == SC_OK) {
             return Optional.of(response.readEntity(LedgerTransaction.class));
+        } 
+        if (response.getStatus() == SC_NOT_FOUND) {
+            return Optional.empty();
         }
-
-        return Optional.empty();
+        logger.error("Received error status code for GET transaction from ledger.", 
+                kv(URL, uri),
+                kv(HTTP_STATUS, response.getStatus()));
+        throw new LedgerException(response);
     }
 
     private Response getResponse(UriBuilder uri) {
         return client
                 .target(uri)
                 .request()
-                .accept(MediaType.APPLICATION_JSON)
                 .get();
     }
 

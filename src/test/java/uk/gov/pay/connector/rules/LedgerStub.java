@@ -89,6 +89,12 @@ public class LedgerStub {
                 null, 404);
     }
 
+    public void return500ForFindByProviderAndGatewayTransactionId(String paymentProvider,
+                                                                       String gatewayTransactionId) throws JsonProcessingException {
+        stubResponseForProviderAndGatewayTransactionId(gatewayTransactionId, paymentProvider,
+                null, 500);
+    }
+    
     public void returnLedgerTransactionForProviderAndGatewayTransactionId(DatabaseFixtures.TestCharge testCharge,
                                                                           String paymentProvider) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, null);

@@ -131,6 +131,24 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturn500_whenChargeNotInConnectorAndLedgerReturnsAnError() throws Exception {
+        String gatewayTransactionId = RandomIdGenerator.newId();
+        String refundExternalId = String.valueOf(nextLong());
+        String chargeExternalId = randomAlphanumeric(26);
+
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(getTestAccount())
+                .withExternalChargeId(chargeExternalId)
+                .withTransactionId(gatewayTransactionId);
+
+        ledgerStub.return500ForFindByProviderAndGatewayTransactionId(getPaymentProvider(), testCharge.getTransactionId());
+
+        notifyConnector(gatewayTransactionId, "REFUNDED", refundExternalId)
+                .statusCode(500);
+    }
+
+    @Test
     public void shouldIgnoreAuthorisedNotification() {
 
         String transactionId = RandomIdGenerator.newId();
