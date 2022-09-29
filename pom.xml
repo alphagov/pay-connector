@@ -17,7 +17,7 @@
         <eclipselink.version>2.7.11</eclipselink.version>
         <guice.version>5.1.0</guice.version>
         <jackson.version>2.13.4</jackson.version>
-        <pay-java-commons.version>1.0.20220921092955</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20220927102701</pay-java-commons.version>
         <surefire.version>3.0.0-M7</surefire.version>
         <jooq.version>3.17.4</jooq.version>
         <postgresql.version>42.5.0</postgresql.version>
