@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.client.ledger.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentException;
 import uk.gov.pay.connector.client.ledger.exception.LedgerException;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AgreementCreated;
@@ -19,83 +21,130 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LedgerServiceTest {
-    private LedgerService ledgerService;
-    private Response mockResponse;
+
+    @Mock
+    private Client mockClient;
+    @Mock
+    private ConnectorConfiguration mockConnectorConfiguration;
+    @Mock
+    private WebTarget mockWebTarget;
+    @Mock
     private Invocation.Builder mockClientRequestInvocationBuilder;
+    @Mock
+    private Response mockResponse;
 
-    @Before
-    public void setUp() {
-        Client mockClient = mock(Client.class);
-        ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
-        WebTarget mockWebTarget = mock(WebTarget.class);
-        mockClientRequestInvocationBuilder = mock(Invocation.Builder.class);
-        mockResponse = mock(Response.class);
+    private LedgerService ledgerService;
 
+    @BeforeEach
+    void setUp() {
         when(mockConnectorConfiguration.getLedgerBaseUrl()).thenReturn("http://ledgerUrl");
         when(mockClient.target(any(UriBuilder.class))).thenReturn(mockWebTarget);
         when(mockWebTarget.request()).thenReturn(mockClientRequestInvocationBuilder);
-        when(mockClientRequestInvocationBuilder.accept(APPLICATION_JSON)).thenReturn(mockClientRequestInvocationBuilder);
-        when(mockClientRequestInvocationBuilder.post(any(Entity.class))).thenReturn(mockResponse);
-        when(mockClientRequestInvocationBuilder.get()).thenReturn(mockResponse);
-
-        when(mockResponse.getStatus()).thenReturn(SC_OK);
+        
         ledgerService = new LedgerService(mockClient, mockClient, mockConnectorConfiguration);
     }
 
-    @Test(expected = GetRefundsForPaymentException.class)
-    public void getRefundsFromLedgerShouldThrowExceptionForNon2xxResponse() {
-        when(mockResponse.getStatus()).thenReturn(SC_NOT_FOUND);
-
-        ledgerService.getRefundsForPayment(152L, "external-id");
+    private void setupMocksForPostRequest() {
+        when(mockClientRequestInvocationBuilder.accept(APPLICATION_JSON)).thenReturn(mockClientRequestInvocationBuilder);
+        when(mockClientRequestInvocationBuilder.post(any(Entity.class))).thenReturn(mockResponse);
     }
 
-    @Test(expected = LedgerException.class)
-    public void getRefundsFromLedgerShouldThrowExceptionIfResponseCannotBeProcessed() {
-        when(mockResponse.readEntity(RefundTransactionsForPayment.class)).
-                thenThrow(ProcessingException.class);
-
-        ledgerService.getRefundsForPayment(152L, "external-id");
+    private void setupMocksForGetRequest() {
+        when(mockClientRequestInvocationBuilder.get()).thenReturn(mockResponse);
     }
 
     @Test
-    public void serialiseAndSendEvent() {
+    void getRefundsFromLedgerShouldThrowExceptionForNon2xxResponse() {
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_NOT_FOUND);
+
+        assertThrows(GetRefundsForPaymentException.class, () -> ledgerService.getRefundsForPayment(152L, "external-id"));
+    }
+
+    @Test
+    void getRefundsFromLedgerShouldThrowExceptionIfResponseCannotBeProcessed() {
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_OK);
+        when(mockResponse.readEntity(RefundTransactionsForPayment.class)).
+                thenThrow(ProcessingException.class);
+
+        assertThrows(LedgerException.class, () -> ledgerService.getRefundsForPayment(152L, "external-id"));
+    }
+
+    @Test
+    void serialiseAndSendEvent() {
+        setupMocksForPostRequest();
         var event = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(event);
         verify(mockClientRequestInvocationBuilder).post(Entity.json(List.of(event)));
     }
 
-    @Test(expected = LedgerException.class)
-    public void sendEventShouldThrowExceptionIfResponseIsNotAccepted() {
+    @Test
+    void sendEventShouldThrowExceptionIfResponseIsNotAccepted() {
+        setupMocksForPostRequest();
         var event = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
         when(mockResponse.getStatus()).thenReturn(SC_BAD_REQUEST);
-        ledgerService.postEvent(event);
+        assertThrows(LedgerException.class, () -> ledgerService.postEvent(event));
     }
     
     @Test
-    public void serialiseAndSendMultipleEvents() {
+    void serialiseAndSendMultipleEvents() {
+        setupMocksForPostRequest();
         var eventOne = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
         var eventTwo = new AgreementSetup("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
         List<Event> list = List.of(eventOne, eventTwo);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(list);
         verify(mockClientRequestInvocationBuilder).post(Entity.json(list));
+    }
+
+    @Test
+    void shouldReturnTransactionWhenLedgerReturnsSuccessResponse() {
+        LedgerTransaction ledgerTransaction = aValidLedgerTransaction().build();
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_OK);
+        when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(ledgerTransaction);
+
+        Optional<LedgerTransaction> maybeTransaction = ledgerService.getTransaction("transactiom-id");
+        assertThat(maybeTransaction.isPresent(), is(true));
+        assertThat(maybeTransaction.get(), is(ledgerTransaction));
+    }
+
+    @Test
+    void getTransaction_shouldReturnEmptyOptionalWhenLedgerReturns404() {
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_NOT_FOUND);
+
+        assertThat(ledgerService.getTransaction("transaction-id").isEmpty(), is(true));
+    }
+
+    @Test
+    void getTransaction_shouldThrowExceptionWhenLedgerReturns500() {
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_INTERNAL_SERVER_ERROR);
+        
+        assertThrows(LedgerException.class, () -> ledgerService.getTransaction("transaction-id"));
     }
 }
