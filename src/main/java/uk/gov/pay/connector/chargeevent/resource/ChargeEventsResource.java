@@ -87,7 +87,7 @@ public class ChargeEventsResource {
                         event.getChargeEntity().getExternalId(),
                         extractState(event.getStatus().toExternal()),
                         event.getChargeEntity().getAmount(),
-                        event.getUpdated()
+                        event.getUpdated().toInstant()
                 ))
                 .collect(toList());
     }
@@ -100,7 +100,7 @@ public class ChargeEventsResource {
                         event.getGatewayTransactionId(),
                         extractState(event.getStatus().toExternal()),
                         event.getAmount(),
-                        event.getHistoryStartDate(),
+                        event.getHistoryStartDate().toInstant(),
                         event.getUserExternalId()
                 ))
                 .collect(toList());
