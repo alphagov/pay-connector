@@ -565,9 +565,10 @@ public class ChargeResponse {
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     @Schema(description = "Provides a settlement summary of the charge containing date and time of capture, if present")
     public static class SettlementSummary {
-        private ZonedDateTime captureSubmitTime, capturedTime;
+        private Instant captureSubmitTime;
+        private ZonedDateTime capturedTime;
 
-        public void setCaptureSubmitTime(ZonedDateTime captureSubmitTime) {
+        public void setCaptureSubmitTime(Instant captureSubmitTime) {
             this.captureSubmitTime = captureSubmitTime;
         }
 
