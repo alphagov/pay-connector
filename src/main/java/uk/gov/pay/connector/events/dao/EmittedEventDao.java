@@ -10,12 +10,10 @@ import uk.gov.pay.connector.events.model.ResourceType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-
-import static java.time.ZonedDateTime.now;
 
 @Transactional
 public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
@@ -36,7 +34,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 .setParameter("resource_type", event.getResourceType().getLowercase())
                 .setParameter("resource_external_id", event.getResourceExternalId())
                 .setParameter("event_type", event.getEventType())
-                .setParameter("event_date", event.getTimestamp())
+                .setParameter("event_date", event.getTimestamp().toInstant())
                 .getResultList();
         return !singleResult.isEmpty();
     }
@@ -45,15 +43,15 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         final EmittedEventEntity emittedEvent = new EmittedEventEntity(event.getResourceType().getLowercase(),
                 event.getResourceExternalId(),
                 event.getEventType(),
-                event.getTimestamp(),
-                now(),
+                event.getTimestamp().toInstant(),
+                Instant.now(),
                 doNotRetryEmitUntilDate
         );
 
         persist(emittedEvent);
     }
 
-    public void recordEmission(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate,
+    public void recordEmission(ResourceType resourceType, String externalId, String eventType, Instant eventDate,
                                ZonedDateTime doNotRetryEmitUntil) {
         final EmittedEventEntity emittedEvent = new EmittedEventEntity(
                 resourceType.getLowercase(),
@@ -79,13 +77,13 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         query.setParameter("resource_type", event.getResourceType().getLowercase())
                 .setParameter("resource_external_id", event.getResourceExternalId())
                 .setParameter("event_type", event.getEventType())
-                .setParameter("emittedDate", ZonedDateTime.now(ZoneId.of("UTC")))
-                .setParameter("eventDate", event.getTimestamp());
+                .setParameter("emittedDate", Instant.now())
+                .setParameter("eventDate", event.getTimestamp().toInstant());
 
         query.executeUpdate();
     }
 
-    public Optional<Long> findNotEmittedEventMaxIdOlderThan(ZonedDateTime cutOffDate, ZonedDateTime now) {
+    public Optional<Long> findNotEmittedEventMaxIdOlderThan(Instant cutOffDate, ZonedDateTime now) {
         String query = "SELECT MAX(e.id) from EmittedEventEntity e " +
                 "WHERE e.eventDate < :cutOffDate " +
                 "AND e.emittedDate is null " +
@@ -98,7 +96,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 .getSingleResult());
     }
 
-    public List<EmittedEventEntity> findNotEmittedEventsOlderThan(ZonedDateTime cutOffDate, int size,
+    public List<EmittedEventEntity> findNotEmittedEventsOlderThan(Instant cutOffDate, int size,
                                                                   Long lastProcessedId, Long maxId,
                                                                   ZonedDateTime now) {
         String query = "SELECT e from EmittedEventEntity e " +

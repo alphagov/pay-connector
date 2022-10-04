@@ -8,6 +8,7 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 public class EventService {
@@ -66,7 +67,7 @@ public class EventService {
             emittedEventDao.recordEmission(event, doNotRetryEmitUntilDate);
         } catch (QueueException e) {
             emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(),
-                    event.getEventType(), event.getTimestamp(), doNotRetryEmitUntilDate);
+                    event.getEventType(), event.getTimestamp().toInstant(), doNotRetryEmitUntilDate);
             logger.error("Failed to emit event {} due to {} [externalId={}]",
                     event.getEventType(), e.getMessage(), event.getResourceExternalId());
         }
@@ -81,12 +82,12 @@ public class EventService {
         emittedEventDao.markEventAsEmitted(event);
     }
 
-    public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate) {
+    public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType, Instant eventDate) {
         this.recordOfferedEvent(resourceType, externalId, eventType, eventDate, null);
     }
 
     public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType,
-                                   ZonedDateTime eventDate, ZonedDateTime doNotRetryEmitUntilDate) {
+                                   Instant eventDate, ZonedDateTime doNotRetryEmitUntilDate) {
         emittedEventDao.recordEmission(resourceType, externalId, eventType, eventDate, doNotRetryEmitUntilDate);
     }
 }

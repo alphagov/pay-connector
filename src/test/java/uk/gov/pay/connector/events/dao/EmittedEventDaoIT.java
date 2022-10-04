@@ -9,6 +9,7 @@ import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +32,14 @@ public class EmittedEventDaoIT extends DaoITestBase {
 
     @Test
     public void persistEmittedEvent_succeeds() {
-        final ZonedDateTime eventDate = ZonedDateTime.parse("2019-01-01T12:00:00+01:00");
+        final Instant eventDate = Instant.parse("2019-01-01T11:00:00Z");
 
         EmittedEventEntity emittedEvent = new EmittedEventEntity(
                 "resource-type",
                 "external-id",
                 "event-type",
                 eventDate,
-                ZonedDateTime.parse("2019-01-01T13:00:00Z"),
+                Instant.parse("2019-01-01T13:00:00Z"),
                 ZonedDateTime.parse("2019-01-02T13:00:00Z")
         );
 
@@ -94,7 +95,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp(), doNotRetryEmitUntilDate);
+                eventToRecord.getEventType(), eventToRecord.getTimestamp().toInstant(), doNotRetryEmitUntilDate);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
@@ -109,15 +110,15 @@ public class EmittedEventDaoIT extends DaoITestBase {
 
     @Test
     public void markEventAsEmitted_shouldRecordEventAndEmittedDate() {
-        final RefundSubmitted eventToRecord = aRefundSubmittedEvent(null);
+        final RefundSubmitted eventToRecord = aRefundSubmittedEvent(ZonedDateTime.parse("2018-01-01T12:00:00Z"));
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
+                eventToRecord.getEventType(), eventToRecord.getTimestamp().toInstant(), null);
 
         List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
         Map<String, Object> event = events.get(0);
         assertThat(event.get("emitted_date"), is(nullValue()));
-        assertThat(event.get("event_date"), is(nullValue()));
+        assertThat(event.get("event_date").toString(), is("2018-01-01 12:00:00.0"));
 
         final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.markEventAsEmitted(eventToUpdate);
@@ -148,14 +149,14 @@ public class EmittedEventDaoIT extends DaoITestBase {
     public void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), null);
 
-        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"),
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(Instant.parse("2019-01-01T14:00:01Z"),
                 ZonedDateTime.now(UTC));
         assertThat(maxId.isPresent(), is(true));
 
         List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(
-                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE,  ZonedDateTime.now(UTC));
+                Instant.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE,  ZonedDateTime.now(UTC));
 
         assertThat(notEmittedEvents.size(), is(1));
         assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
@@ -169,18 +170,18 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), null);
         ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
         emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
-                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), doNotRetryEmitUntil);
+                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp().toInstant(), doNotRetryEmitUntil);
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), ZonedDateTime.now(UTC).plusSeconds(120));
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), ZonedDateTime.now(UTC).plusSeconds(120));
 
-        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"), ZonedDateTime.now(UTC));
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(Instant.parse("2019-01-01T14:00:01Z"), ZonedDateTime.now(UTC));
         assertThat(maxId.isPresent(), is(true));
 
         List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(
-                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 2, 0L, Long.MAX_VALUE, ZonedDateTime.now(UTC));
+                Instant.parse("2019-01-01T14:00:01Z"), 2, 0L, Long.MAX_VALUE, ZonedDateTime.now(UTC));
 
         assertThat(notEmittedEvents.size(), is(2));
         assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());

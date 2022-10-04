@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
@@ -26,6 +25,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static java.time.ZoneOffset.UTC;
@@ -88,7 +88,7 @@ public class StateTransitionServiceTest {
         assertThat(paymentStateTransitionArgumentCaptor.getValue().getChargeEventId(), is(100L));
         assertThat(paymentStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(PaymentStarted.class));
 
-        verify(mockEventService).recordOfferedEvent(PAYMENT, "external-id", "PAYMENT_STARTED", chargeEvent.getUpdated());
+        verify(mockEventService).recordOfferedEvent(PAYMENT, "external-id", "PAYMENT_STARTED", chargeEvent.getUpdated().toInstant());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class StateTransitionServiceTest {
         assertThat(refundStateTransitionArgumentCaptor.getValue().getRefundExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
 
-        ArgumentCaptor<ZonedDateTime> eventDateArgumentCaptor = forClass(ZonedDateTime.class);
+        ArgumentCaptor<Instant> eventDateArgumentCaptor = forClass(Instant.class);
         ArgumentCaptor<ResourceType> resourceTypeCaptor = forClass(ResourceType.class);
         ArgumentCaptor<String> externalIdCaptor = forClass(String.class);
         ArgumentCaptor<String> eventTypeCaptor = forClass(String.class);
@@ -148,6 +148,6 @@ public class StateTransitionServiceTest {
         assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
 
         verify(mockEventService).recordOfferedEvent(REFUND, refundHistory.getExternalId(),
-                "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate(), doNotEmitRetryUntil);
+                "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate().toInstant(), doNotEmitRetryUntil);
     }
 }
