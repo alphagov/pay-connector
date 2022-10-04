@@ -869,7 +869,7 @@ public class ChargeService {
     private ChargeResponse.SettlementSummary buildSettlementSummary(ChargeEntity charge) {
         ChargeResponse.SettlementSummary settlement = new ChargeResponse.SettlementSummary();
 
-        settlement.setCaptureSubmitTime(charge.getCaptureSubmitTime());
+        settlement.setCaptureSubmitTime(Optional.ofNullable(charge.getCaptureSubmitTime()).map(ZonedDateTime::toInstant).orElse(null));
         settlement.setCapturedTime(charge.getCapturedTime());
 
         return settlement;
