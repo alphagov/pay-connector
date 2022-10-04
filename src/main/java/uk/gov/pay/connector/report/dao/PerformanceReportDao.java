@@ -20,7 +20,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 @Transactional
 public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
   @Inject
-    public PerformanceReportDao(final Provider<EntityManager> entityManager) {
+  public PerformanceReportDao(final Provider<EntityManager> entityManager) {
       super(entityManager);
     }
 
@@ -94,5 +94,31 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
       .setParameter("startDate", startDate)
       .setParameter("endDate", endDate)
       .getSingleResult();
+  }
+
+  public PerformanceReportEntity aggregateNumberAndValueOfPaymentsForBetweenGivenDates(ZonedDateTime fromDate, ZonedDateTime toDate) {
+    Instant startDate = fromDate.truncatedTo(DAYS).toInstant();
+    Instant endDate = toDate.truncatedTo(DAYS).toInstant();
+
+    return (PerformanceReportEntity) entityManager
+            .get()
+            .createQuery(
+                    "SELECT new uk.gov.pay.connector.report.model.domain.PerformanceReportEntity("
+                            + " COALESCE(COUNT(c.amount), 0),"
+                            + " COALESCE(SUM(c.amount),   0),"
+                            + " COALESCE(AVG(c.amount),   0)"
+                            + " )"
+                            + " FROM ChargeEntity c"
+                            + " JOIN GatewayAccountEntity g"
+                            + " ON c.gatewayAccount.id = g.id"
+                            + " WHERE c.status = :status"
+                            + " AND   g.type = :type"
+                            + " AND   c.createdDate BETWEEN :startDate AND :endDate"
+            )
+            .setParameter("status", CAPTURED.toString())
+            .setParameter("type", LIVE)
+            .setParameter("startDate", startDate)
+            .setParameter("endDate", endDate)
+            .getSingleResult();
   }
 }

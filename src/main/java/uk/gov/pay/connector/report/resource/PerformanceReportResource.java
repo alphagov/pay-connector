@@ -91,6 +91,43 @@ public class PerformanceReportResource {
     }
 
     @GET
+    @Path("/v1/api/reports/between-dates-performance-report")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Retrieves performance summary scoped for between two given dates",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "" +
+                                    "  \"total_volume\": 12345," +
+                                    "  \"total_amount\": 12345," +
+                                    "  \"average_amount\": 1" +
+                                    "}"))),
+            }
+    )
+    public Response getBetweenDatesPerformanceReport(@Parameter(required = true, example = "2022-06-21T00:00:00Z")
+                                                     @QueryParam("fromDate") String rawFromDate,
+                                                     @Parameter(required = true, example = "2022-07-21T00:00:00Z")
+                                                     @QueryParam("toDate") String rawToDate) {
+
+        return parseZonedDateTime(rawFromDate)
+                .map(fromDate -> parseZonedDateTime(rawToDate)
+                        .map(toDate -> {
+                            PerformanceReportEntity performanceReport = performanceReportDao
+                                    .aggregateNumberAndValueOfPaymentsForBetweenGivenDates(fromDate, toDate);
+
+                            ImmutableMap<String, Object> responsePayload = ImmutableMap.of(
+                                    "total_volume", performanceReport.getTotalVolume(),
+                                    "total_amount", performanceReport.getTotalAmount(),
+                                    "average_amount", performanceReport.getAverageAmount());
+
+                            return ok().entity(responsePayload).build();
+                        })
+                        .orElseGet(() -> ResponseUtil.badRequestResponse("Could not parse dates")))
+                .orElseGet(() -> ResponseUtil.badRequestResponse("Could not parse dates"));
+    }
+
+    @GET
     @Path("/v1/api/reports/gateway-account-performance-report")
     @Produces(APPLICATION_JSON)
     @Operation(
@@ -122,4 +159,5 @@ public class PerformanceReportResource {
 
         return ok().entity(response).build();
     }
+
 }

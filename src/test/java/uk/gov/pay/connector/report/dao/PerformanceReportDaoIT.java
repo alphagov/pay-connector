@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.number.BigDecimalCloseTo.closeTo;
-import static org.junit.Assert.assertThat;
 
 public class PerformanceReportDaoIT extends DaoITestBase {
 
@@ -108,6 +108,27 @@ public class PerformanceReportDaoIT extends DaoITestBase {
                 ZonedDateTime.ofInstant(validDate1, ZoneOffset.UTC));
         assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
         assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
+        assertThat(performanceReportEntity.getTotalVolume(), is(2L));
+    }
+
+    @Test
+    public void shouldAggregateNumberAndValueOfPaymentsForBetweenGivenDays() {
+        Instant oldDate = Instant.parse("2020-07-18T18:00:00Z");
+        Instant pickedDate1 = Instant.parse("2020-08-19T10:00:00Z");
+        Instant pickedDate2 = Instant.parse("2020-09-19T21:00:00Z");
+        Instant newerDate = Instant.parse("2020-10-20T01:00:00Z");
+        insertCharge(testAccountFixture, 10L, oldDate);
+        insertCharge(testAccountFixture, 2L, pickedDate1);
+        insertCharge(testAccountFixture, 2L, pickedDate2);
+        insertCharge(testAccountFixture, 10L, newerDate);
+        Instant fromDate = Instant.parse("2020-08-01T00:00:00Z");
+        Instant toDate = Instant.parse("2020-09-30T00:00:00Z");
+        PerformanceReportEntity performanceReportEntity = performanceReportDao
+                .aggregateNumberAndValueOfPaymentsForBetweenGivenDates(
+                        ZonedDateTime.ofInstant(fromDate, ZoneOffset.UTC),
+                        ZonedDateTime.ofInstant(toDate, ZoneOffset.UTC));
+        assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("2"), ZERO)));
+        assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("4"), ZERO)));
         assertThat(performanceReportEntity.getTotalVolume(), is(2L));
     }
 }
