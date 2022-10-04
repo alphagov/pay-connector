@@ -52,6 +52,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.common.model.api.ApiResponseUtcDateFormatter.ISO_LOCAL_DATE_IN_UTC;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -71,8 +72,8 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
     @Test
     public void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
-        ZonedDateTime startOfTest = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC);
-        String expectedDayOfCapture = DateTimeUtils.toUTCDateString(startOfTest);
+        Instant startOfTest = Instant.now();
+        String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
 
         String chargeId = authoriseNewCharge();
 
