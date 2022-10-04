@@ -12,7 +12,6 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
@@ -29,6 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
+import static uk.gov.pay.connector.common.model.api.ApiResponseUtcDateFormatter.ISO_LOCAL_DATE_IN_UTC;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonInclude(Include.NON_NULL)
@@ -566,7 +566,7 @@ public class ChargeResponse {
     @Schema(description = "Provides a settlement summary of the charge containing date and time of capture, if present")
     public static class SettlementSummary {
         private Instant captureSubmitTime;
-        private ZonedDateTime capturedTime;
+        private Instant capturedTime;
 
         public void setCaptureSubmitTime(Instant captureSubmitTime) {
             this.captureSubmitTime = captureSubmitTime;
@@ -579,14 +579,14 @@ public class ChargeResponse {
             return (captureSubmitTime != null) ? ISO_INSTANT_MILLISECOND_PRECISION.format(captureSubmitTime) : null;
         }
 
-        public void setCapturedTime(ZonedDateTime capturedTime) {
+        public void setCapturedTime(Instant capturedTime) {
             this.capturedTime = capturedTime;
         }
 
         @JsonProperty("captured_date")
         @Schema(example = "2022-06-28", description = "Date of the capture event")
         public String getCapturedDate() {
-            return (capturedTime != null) ? DateTimeUtils.toUTCDateString(capturedTime) : null;
+            return (capturedTime != null) ? ISO_LOCAL_DATE_IN_UTC.format(capturedTime) : null;
         }
 
         @Override
