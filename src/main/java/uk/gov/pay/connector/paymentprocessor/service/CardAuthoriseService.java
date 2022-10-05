@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -96,7 +98,7 @@ public class CardAuthoriseService {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
             CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
-            switch(charge.getAuthorisationMode()) {
+            switch (charge.getAuthorisationMode()) {
                 case WEB:
                     operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
                     break;
@@ -230,7 +232,12 @@ public class CardAuthoriseService {
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
 
         if (charge.getAuthorisationMode() == AuthorisationMode.WEB) {
-            getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+            getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(corporateCardSurcharge -> {
+                charge.setCorporateSurcharge(corporateCardSurcharge);
+
+                LOGGER.info("Applied corporate card surcharge for charge",
+                        ArrayUtils.addAll(charge.getStructuredLoggingArgs(), kv("corporate_card_surcharge", corporateCardSurcharge)));
+            });
         }
 
         getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);

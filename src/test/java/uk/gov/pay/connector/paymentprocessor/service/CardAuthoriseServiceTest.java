@@ -1,8 +1,14 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -10,8 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
@@ -26,6 +34,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
@@ -69,8 +78,10 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
@@ -79,6 +90,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -173,6 +185,12 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
+
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private CardAuthoriseService cardAuthorisationService;
     private final CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(
@@ -331,6 +349,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
+        Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -344,6 +366,12 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(cardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(250L));
+
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
+                hasItems("Applied corporate card surcharge for charge"));
+        assertThat(loggingEvents.get(0).getArgumentArray().length, CoreMatchers.is(5));
     }
 
     @Test
@@ -486,7 +514,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        
+
         assertThrows(RuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeExternalId, authCardDetails));
         assertThat(charge.getGatewayTransactionId(), is(generatedTransactionId));
     }
@@ -521,7 +549,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeWithConflicting3dsId)).thenReturn(Optional.of(charge));
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        
+
         assertThrows(IllegalStateRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeWithConflicting3dsId, authCardDetails));
         assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
