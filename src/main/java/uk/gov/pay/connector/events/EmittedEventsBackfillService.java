@@ -15,7 +15,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
 import javax.inject.Inject;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static java.time.ZoneOffset.UTC;
@@ -53,7 +53,7 @@ public class EmittedEventsBackfillService {
                     "Processing not emitted events [lastProcessedId={}, no.of.events={}, oldestDate={}]",
                     batch.getStartId(),
                     batch.getEndId().map(Object::toString).orElse("none"),
-                    batch.oldestEventDate().map(ZonedDateTime::toString).orElse("none")
+                    batch.oldestEventDate().map(Instant::toString).orElse("none")
             );
 
             batch.getEvents().forEach(this::backfillEvent);
@@ -76,7 +76,7 @@ public class EmittedEventsBackfillService {
             } else {
                 historicalEventEmitter.emitEventsForRefund(event.getResourceExternalId(), true);
             }
-            event.setEmittedDate(now(ZoneId.of("UTC")));
+            event.setEmittedDate(Instant.now());
         } catch (Exception e) {
             logger.error(
                     "Failed to process backfill for event {} due to {} [externalId={}] [event_type={}] [event_date={}]",

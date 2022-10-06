@@ -17,12 +17,10 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 
 import javax.inject.Inject;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
-import static java.time.ZonedDateTime.now;
-import static net.logstash.logback.argument.StructuredArguments.e;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
 public class StateTransitionService {
@@ -51,7 +49,7 @@ public class StateTransitionService {
         eventService.recordOfferedEvent(ResourceType.REFUND,
                 refundEntity.getExternalId(),
                 Event.eventTypeForClass(refundEventClass),
-                now(ZoneId.of("UTC")));
+                Instant.now());
     }
 
     @Transactional
@@ -88,7 +86,7 @@ public class StateTransitionService {
         eventService.recordOfferedEvent(ResourceType.PAYMENT,
                 externalId,
                 Event.eventTypeForClass(eventClass),
-                chargeEventEntity.getUpdated());
+                chargeEventEntity.getUpdated().toInstant());
     }
 
     private void incrementPerGatewayAccountStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
@@ -120,6 +118,6 @@ public class StateTransitionService {
                                      ZonedDateTime doNotRetryEmitUntilDate) {
         stateTransitionQueue.offer(stateTransition);
         eventService.recordOfferedEvent(event.getResourceType(), event.getResourceExternalId(),
-                event.getEventType(), event.getTimestamp(), doNotRetryEmitUntilDate);
+                event.getEventType(), event.getTimestamp().toInstant(), doNotRetryEmitUntilDate);
     }
 }

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.events;
 
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -10,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -31,13 +33,13 @@ public class EmittedEventEntity {
     @Column(name = "event_type")
     private String eventType;
 
-    @Convert(converter = UTCDateTimeConverter.class)
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     @Column(name = "event_date")
-    private ZonedDateTime eventDate;
+    private Instant eventDate;
 
-    @Convert(converter = UTCDateTimeConverter.class)
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     @Column(name = "emitted_date")
-    private ZonedDateTime emittedDate;
+    private Instant emittedDate;
 
     @Convert(converter = UTCDateTimeConverter.class)
     @Column(name = "do_not_retry_emit_until")
@@ -46,8 +48,8 @@ public class EmittedEventEntity {
     protected EmittedEventEntity() {
     }
 
-    public EmittedEventEntity(String resourceType, String resourceExternalId, String eventType, 
-                              ZonedDateTime eventDate, ZonedDateTime emittedDate,
+    public EmittedEventEntity(String resourceType, String resourceExternalId, String eventType,
+                              Instant eventDate, Instant emittedDate,
                               ZonedDateTime doNotRetryEmitUntil) {
         this.resourceType = resourceType;
         this.resourceExternalId = resourceExternalId;
@@ -73,11 +75,11 @@ public class EmittedEventEntity {
         return eventType;
     }
 
-    public ZonedDateTime getEventDate() {
+    public Instant getEventDate() {
         return eventDate;
     }
 
-    public ZonedDateTime getEmittedDate() {
+    public Instant getEmittedDate() {
         return emittedDate;
     }
 
@@ -85,7 +87,7 @@ public class EmittedEventEntity {
         return doNotRetryEmitUntil;
     }
 
-    public void setEmittedDate(ZonedDateTime emittedDate) {
+    public void setEmittedDate(Instant emittedDate) {
         this.emittedDate = emittedDate;
     }
 

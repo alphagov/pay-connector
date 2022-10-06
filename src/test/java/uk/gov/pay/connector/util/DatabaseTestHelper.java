@@ -995,7 +995,7 @@ public class DatabaseTestHelper {
                                 " :eventType, :emittedDate, :doNotRetryEmitUntil)")
                         .bind("resourceType", resourceType)
                         .bind("externalId", externalId)
-                        .bind("eventDate", Timestamp.from(eventDate))
+                        .bind("eventDate", LocalDateTime.ofInstant(eventDate, UTC))
                         .bind("eventType", eventType)
                         .bind("emittedDate", emittedDate)
                         .bind("doNotRetryEmitUntil", doNotRetryEmitUntil == null ? null : Timestamp.from(doNotRetryEmitUntil))

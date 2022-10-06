@@ -3,6 +3,7 @@ package uk.gov.pay.connector.events;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.List;
@@ -16,7 +17,7 @@ class EmittedEventBatchIterator implements Iterator<EmittedEventBatchIterator.Ev
     private final ZonedDateTime batchStartTime;
     private EventBatch currentBatch;
     private Optional<Long> maybeMaximumIdOfEventsEligibleForReEmission;
-    private ZonedDateTime cutoffDate;
+    private Instant cutoffDate;
 
     EmittedEventBatchIterator(EmittedEventDao emittedEventDao,
                               EmittedEventSweepConfig sweepConfig,
@@ -69,9 +70,9 @@ class EmittedEventBatchIterator implements Iterator<EmittedEventBatchIterator.Ev
         return new EventBatch(emittedEventEntities, startFromId);
     }
 
-    private ZonedDateTime getCutoffDateForProcessingNotEmittedEvents(ZonedDateTime batchStartTime) {
+    private Instant getCutoffDateForProcessingNotEmittedEvents(ZonedDateTime batchStartTime) {
         int notEmittedEventMaxAgeInSeconds = sweepConfig.getNotEmittedEventMaxAgeInSeconds();
-        return batchStartTime.minusSeconds(notEmittedEventMaxAgeInSeconds);
+        return batchStartTime.minusSeconds(notEmittedEventMaxAgeInSeconds).toInstant();
     }
     
 
@@ -100,9 +101,8 @@ class EmittedEventBatchIterator implements Iterator<EmittedEventBatchIterator.Ev
             return events.isEmpty();
         }
 
-        public Optional<ZonedDateTime> oldestEventDate() {
-            return events.stream()
-                    .map(EmittedEventEntity::getEventDate).min(ZonedDateTime::compareTo);
+        public Optional<Instant> oldestEventDate() {
+            return events.stream().map(EmittedEventEntity::getEventDate).min(Instant::compareTo);
         }
         
         public Optional<EmittedEventEntity> last() {
