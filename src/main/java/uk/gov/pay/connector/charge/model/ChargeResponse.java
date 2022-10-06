@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
-import static uk.gov.pay.connector.common.model.api.ApiResponseUtcDateFormatter.ISO_LOCAL_DATE_IN_UTC;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonInclude(Include.NON_NULL)
