@@ -4,7 +4,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -20,7 +20,8 @@ public class TransactionEventTest {
     @Test
     public void equals_shouldReturnTrue_whenSameInstance() {
 
-        TransactionEvent event = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED), 100L, ZonedDateTime.now());
+        TransactionEvent event = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED),
+                100L, Instant.now());
 
         assertEquals(event, event);
     }
@@ -28,8 +29,10 @@ public class TransactionEventTest {
     @Test
     public void equals_shouldReturnTrue_whenFieldsAreTheSame() {
 
-        TransactionEvent event1 = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED), 100L, ZonedDateTime.now());
-        TransactionEvent event2 = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED), 100L, ZonedDateTime.now());
+        TransactionEvent event1 = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED),
+                100L, Instant.now());
+        TransactionEvent event2 = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED),
+                100L, Instant.now());
 
         assertThat(event1.equals(event2), is(true));
     }
@@ -37,8 +40,10 @@ public class TransactionEventTest {
     @Test
     public void equals_shouldReturnFalse_whenFieldsRefundTransactionIdIsDifferent() {
 
-        TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", "success", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(), USER_EXTERNAL_ID);
-        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
+        TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", "success", extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(), USER_EXTERNAL_ID);
+        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(),USER_EXTERNAL_ID);
 
         assertThat(event1.equals(event2), is(false));
     }
@@ -46,8 +51,10 @@ public class TransactionEventTest {
     @Test
     public void equals_shouldReturnFalse_whenFirstObjectRefundTransactionIdIsNull() {
 
-        TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
-        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
+        TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(),USER_EXTERNAL_ID);
+        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", "submitted", extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(),USER_EXTERNAL_ID);
 
         assertThat(event1.equals(event2), is(false));
     }
@@ -55,8 +62,10 @@ public class TransactionEventTest {
     @Test
     public void equals_shouldReturnFalse_whenSecondObjectRefundTransactionIdIsNull() {
 
-        TransactionEvent event1 = new TransactionEvent(Type.REFUND, null, "success", extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
-        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED), 100L, ZonedDateTime.now(),USER_EXTERNAL_ID);
+        TransactionEvent event1 = new TransactionEvent(Type.REFUND, null, "success", extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(),USER_EXTERNAL_ID);
+        TransactionEvent event2 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED),
+                100L, Instant.now(),USER_EXTERNAL_ID);
 
         assertThat(event1.equals(event2), is(false));
     }

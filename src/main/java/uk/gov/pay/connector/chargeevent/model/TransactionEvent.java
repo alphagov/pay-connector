@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
@@ -94,9 +94,9 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     private String userExternalId;
     private State state;
     private Long amount;
-    private ZonedDateTime updated;
+    private Instant updated;
 
-    public TransactionEvent(Type type, String extChargeId, State state, Long amount, ZonedDateTime updated) {
+    public TransactionEvent(Type type, String extChargeId, State state, Long amount, Instant updated) {
         this.type = type;
         this.extChargeId = extChargeId;
         this.state = state;
@@ -104,7 +104,8 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         this.updated = updated;
     }
 
-    public TransactionEvent(Type type, String extChargeId, String refundGatewayTransactionId, State state, Long amount, ZonedDateTime updated, String userExternalId) {
+    public TransactionEvent(Type type, String extChargeId, String refundGatewayTransactionId,
+                            State state,Long amount, Instant updated, String userExternalId) {
         this.type = type;
         this.refundGatewayTransactionId = refundGatewayTransactionId;
         this.extChargeId = extChargeId;
@@ -157,7 +158,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
     }
 
     @JsonIgnore
-    public ZonedDateTime getTimeUpdate() {
+    public Instant getTimeUpdate() {
         return updated;
     }
 
