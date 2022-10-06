@@ -18,7 +18,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import static java.util.function.Predicate.not;
 
@@ -213,6 +212,10 @@ public class ChargeCreateRequest {
                 (agreementId != null ? ", agreement_id=" + agreementId : "") +
                 (savePaymentInstrumentToAgreement != null ? ", save_payment_instrument_to_agreement=" + savePaymentInstrumentToAgreement : "") +
                 (authorisationMode != null ? ", authorisation_mode=" + authorisationMode : "") +
+                (getPrefilledCardHolderDetails().isPresent() && prefilledCardHolderDetails.getAddress().isPresent() ? ", prefilled_billing_address=true" : "") +
+                (getPrefilledCardHolderDetails().isPresent() && prefilledCardHolderDetails.getCardHolderName().isPresent() ? ", prefilled_cardholder_name=true" : "") +
+                (getEmail().isPresent() ? ", prefilled_email=true" : "") +
+                (getExternalMetadata().isPresent() ? ", metadata=true" : "") +
                 '}';
     }
 }
