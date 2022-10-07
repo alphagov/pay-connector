@@ -5,7 +5,7 @@ import org.hamcrest.core.IsEqual;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +24,7 @@ class PaymentDisputedTest {
                 .isLive(true)
                 .build();
         String timestampString = "2022-01-19T07:59:20.000000Z";
-        ZonedDateTime timestamp = ZonedDateTime.parse(timestampString);
+        Instant timestamp = Instant.parse(timestampString);
         
         var paymentDisputed = PaymentDisputed.from(transaction, timestamp);
         

@@ -5,10 +5,10 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class CaptureSubmitted extends PaymentEvent {
-    public CaptureSubmitted(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public CaptureSubmitted(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -20,7 +20,7 @@ public class CaptureSubmitted extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 CaptureSubmittedEventDetails.from(chargeEvent),
-                chargeEvent.getUpdated()
+                chargeEvent.getUpdated().toInstant()
         );
     }
 }

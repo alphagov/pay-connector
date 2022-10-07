@@ -7,11 +7,9 @@ import uk.gov.pay.connector.events.eventdetails.charge.FeeIncurredEventDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 
 public class FeeIncurredEvent extends PaymentEvent {
-    public FeeIncurredEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public FeeIncurredEvent(String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
 
@@ -22,12 +20,10 @@ public class FeeIncurredEvent extends PaymentEvent {
                 .min(Instant::compareTo)
                 .orElseThrow(() -> new EventCreationException(charge.getExternalId(), "Failed to create FeeIncurredEvent due to no fees present on charge"));
 
-        ZonedDateTime earliestCreatedDate = ZonedDateTime.ofInstant(earliestInstant, ZoneId.of("UTC"));
-
         return new FeeIncurredEvent(
                 charge.getExternalId(),
                 FeeIncurredEventDetails.from(charge),
-                earliestCreatedDate
+                earliestInstant
         );
     }
 }

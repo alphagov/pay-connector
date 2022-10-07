@@ -101,8 +101,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.time.ZoneOffset.UTC;
-import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -393,7 +391,7 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     if (chargePatchRequest.getPath().equals(ChargesApiResource.EMAIL_KEY)) {
                         chargeEntity.setEmail(chargePatchRequest.getValue());
-                        eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity, now(UTC)));
+                        eventService.emitAndRecordEvent(UserEmailCollected.from(chargeEntity, Instant.now()));
                     }
                     return Optional.of(chargeEntity);
                 })
@@ -686,7 +684,7 @@ public class ChargeService {
             }
 
             if (auth3dsRequiredDetails != null && isNotBlank(auth3dsRequiredDetails.getThreeDsVersion())) {
-                eventService.emitAndRecordEvent(Gateway3dsInfoObtained.from(charge, ZonedDateTime.now()));
+                eventService.emitAndRecordEvent(Gateway3dsInfoObtained.from(charge, Instant.now()));
             }
 
             return charge;
@@ -1015,7 +1013,7 @@ public class ChargeService {
         }
     }
     
-    public RefundAvailabilityUpdated createRefundAvailabilityUpdatedEvent(Charge charge, ZonedDateTime eventTimestamp) {
+    public RefundAvailabilityUpdated createRefundAvailabilityUpdatedEvent(Charge charge, Instant eventTimestamp) {
         List<Refund> refundList = refundService.findRefunds(charge);
         ExternalChargeRefundAvailability refundAvailability;
 

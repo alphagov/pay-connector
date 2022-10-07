@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 /**
@@ -19,7 +20,7 @@ public class PaymentDetailsEntered extends PaymentEvent {
                                  boolean live,
                                  String resourceExternalId,
                                  PaymentDetailsEnteredEventDetails eventDetails,
-                                 ZonedDateTime timestamp) {
+                                 Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -35,7 +36,7 @@ public class PaymentDetailsEntered extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
-                lastEventDate);
+                lastEventDate.toInstant());
     }
 
     public static PaymentDetailsEntered from (ChargeEventEntity chargeEvent) {
@@ -46,7 +47,7 @@ public class PaymentDetailsEntered extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
-                chargeEvent.getUpdated()
+                chargeEvent.getUpdated().toInstant()
         );
     }
 

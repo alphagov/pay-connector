@@ -51,7 +51,6 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -138,9 +137,9 @@ public class StripeWebhookTaskHandlerTest {
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
-        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, ZonedDateTime.parse(fixedClockDateTime));
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedClockDateTime));
 
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);
@@ -190,7 +189,7 @@ public class StripeWebhookTaskHandlerTest {
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated())).thenReturn(refundAvailabilityUpdated);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().toInstant())).thenReturn(refundAvailabilityUpdated);
         stripeWebhookTaskHandler.process(stripeNotification);
         ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
 
@@ -215,7 +214,7 @@ public class StripeWebhookTaskHandlerTest {
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().plusSeconds(1))).thenReturn(refundAvailabilityUpdated);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().plusSeconds(1).toInstant())).thenReturn(refundAvailabilityUpdated);
         stripeWebhookTaskHandler.process(stripeNotification);
         ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
 
@@ -567,9 +566,9 @@ public class StripeWebhookTaskHandlerTest {
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
-        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, ZonedDateTime.parse(fixedClockDateTime));
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedClockDateTime));
 
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);

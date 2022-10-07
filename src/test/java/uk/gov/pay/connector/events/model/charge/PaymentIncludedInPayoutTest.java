@@ -2,7 +2,7 @@ package uk.gov.pay.connector.events.model.charge;
 
 import org.junit.Test;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
@@ -16,7 +16,7 @@ public class PaymentIncludedInPayoutTest {
         var paymentExternalId = "payment-id";
         var gatewayPayoutId = "payout-id";
         String eventDateStr = "2020-05-10T10:30:00.000000Z";
-        var event = new PaymentIncludedInPayout(paymentExternalId, gatewayPayoutId, ZonedDateTime.parse(eventDateStr));
+        var event = new PaymentIncludedInPayout(paymentExternalId, gatewayPayoutId, Instant.parse(eventDateStr));
         
         var json = event.toJsonString();
 

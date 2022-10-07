@@ -134,7 +134,7 @@ public class EventFactoryTest {
         ).thenReturn(Optional.of(refundCreatedHistory));
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), refundCreatedHistory.getHistoryStartDate()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), refundCreatedHistory.getHistoryStartDate().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
@@ -237,7 +237,7 @@ public class EventFactoryTest {
         ).thenReturn(Optional.of(refundErrorHistory));
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, refundErrorHistory.getHistoryStartDate()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, refundErrorHistory.getHistoryStartDate().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
@@ -273,7 +273,7 @@ public class EventFactoryTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, PaymentCreated.class);
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
         
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
@@ -301,7 +301,7 @@ public class EventFactoryTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CancelByExternalServiceSubmitted.class);
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
         
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
@@ -360,7 +360,7 @@ public class EventFactoryTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, eventClass);
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
         
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
@@ -402,7 +402,7 @@ public class EventFactoryTest {
         ).thenReturn(Optional.of(refundErrorHistory));
 
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(chargeFromTransaction, refundErrorHistory.getHistoryStartDate()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(chargeFromTransaction, refundErrorHistory.getHistoryStartDate().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
 
         StateTransition refundStateTransition = new RefundStateTransition(
@@ -535,7 +535,7 @@ public class EventFactoryTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId,
                 CancelledWithGatewayAfterAuthorisationError.class);
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
-        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated()))
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 

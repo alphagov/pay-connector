@@ -5,6 +5,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.BackFillerGatewayTransactionIdSetEventDetails;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -15,7 +16,7 @@ public class BackfillerGatewayTransactionIdSet extends PaymentEvent {
                                              boolean live,
                                              String resourceExternalId,
                                              BackFillerGatewayTransactionIdSetEventDetails eventDetails,
-                                             ZonedDateTime timestamp) {
+                                             Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -31,6 +32,6 @@ public class BackfillerGatewayTransactionIdSet extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 BackFillerGatewayTransactionIdSetEventDetails.from(charge),
-                lastEventDate);
+                lastEventDate.toInstant());
     }
 }

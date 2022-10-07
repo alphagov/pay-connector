@@ -13,8 +13,8 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.ZonedDateTime;
 
+import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
-import static java.time.ZonedDateTime.now;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -72,7 +72,7 @@ public class EventServiceTest {
     @Test
     public void emitAndRecordEvent_shouldRecordEmissionWithDoNotRetryEmitUntilDate() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
-        ZonedDateTime doNotRetryEmitUntilDate = now(UTC);
+        ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.now(UTC);
         eventService.emitAndRecordEvent(event, doNotRetryEmitUntilDate);
 
         verify(emittedEventDao).recordEmission(event, doNotRetryEmitUntilDate);

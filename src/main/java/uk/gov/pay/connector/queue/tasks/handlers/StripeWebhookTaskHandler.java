@@ -121,13 +121,13 @@ public class StripeWebhookTaskHandler {
                     case DISPUTE_CREATED:
                         DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
                         emitEvent(disputeCreatedEvent);
-                        PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
+                        PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
                         emitEvent(paymentDisputedEvent);
                         // NOTE: we update the refund availability in ledger - but for connector it is calculated separately.
                         // So this status update will block a refund attempt made VIA the API is made if the charge has been
                         // expunged from connector.
                         RefundAvailabilityUpdated refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                                transaction, EXTERNAL_UNAVAILABLE, ZonedDateTime.ofInstant(clock.instant(), clock.getZone()));
+                                transaction, EXTERNAL_UNAVAILABLE, clock.instant());
                         emitEvent(refundAvailabilityUpdated);
 
                         if (isTestStripeTransaction) {
@@ -157,7 +157,8 @@ public class StripeWebhookTaskHandler {
                         if (disputeStatus == WON) {
                             disputeEvent = DisputeWon.from(disputeExternalId, disputeClosedEventTimestamp, transaction);
                             Charge charge = Charge.from(transaction);
-                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, disputeClosedEventTimestamp);
+                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge,
+                                    disputeClosedEventTimestamp.toInstant());
                             emitEvent(refundAvailabilityUpdatedEvent);
                         } else if (disputeStatus == LOST) {
                             disputeEvent = handleDisputeLost(stripeDisputeData, transaction, disputeExternalId, disputeClosedEventTimestamp);

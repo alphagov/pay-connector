@@ -18,7 +18,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
@@ -85,8 +85,10 @@ public class PaymentGatewayStateTransitionsTest {
 
     @Test
     public void isValidTransition_deniesTransitionWithInvalidEvent() {
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmitted("id", true, "a", new EmptyEventDetails(), ZonedDateTime.now())), is(true));
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrored("id", true, "a", ZonedDateTime.now())), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED,
+                new CaptureSubmitted("id", true, "a", new EmptyEventDetails(), Instant.now())), is(true));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED,
+                new CaptureErrored("id", true, "a", Instant.now())), is(false));
     }
 
     @Test

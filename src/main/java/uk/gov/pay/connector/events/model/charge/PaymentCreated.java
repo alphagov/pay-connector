@@ -4,12 +4,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class PaymentCreated extends PaymentEvent {
 
-    public PaymentCreated(String serviceId, boolean live, String resourceExternalId, PaymentCreatedEventDetails eventDetails, ZonedDateTime timestamp) {
+    public PaymentCreated(String serviceId, boolean live, String resourceExternalId, PaymentCreatedEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -19,7 +18,7 @@ public class PaymentCreated extends PaymentEvent {
                 event.getChargeEntity().getGatewayAccount().isLive(),
                 event.getChargeEntity().getExternalId(),
                 PaymentCreatedEventDetails.from(event.getChargeEntity()),
-                event.getUpdated()
+                event.getUpdated().toInstant()
         );
     }
 
@@ -29,7 +28,7 @@ public class PaymentCreated extends PaymentEvent {
                 charge.getGatewayAccount().isLive(), 
                 charge.getExternalId(),
                 PaymentCreatedEventDetails.from(charge),
-                ZonedDateTime.ofInstant(charge.getCreatedDate(), ZoneOffset.UTC)
+                charge.getCreatedDate()
         );
     }
 }
