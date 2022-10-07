@@ -88,7 +88,7 @@ public class EventServiceTest {
         verify(eventQueue).emitEvent(event);
         verify(emittedEventDao, never()).recordEmission(event, null);
         verify(emittedEventDao).recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(),
-                event.getTimestamp().toInstant(), null);
+                event.getTimestamp(), null);
     }
 
     @Test

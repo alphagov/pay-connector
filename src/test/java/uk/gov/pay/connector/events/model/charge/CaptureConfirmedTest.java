@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MICROSECOND_PRECISION;
 
 public class CaptureConfirmedTest {
 
@@ -65,6 +66,7 @@ public class CaptureConfirmedTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CAPTURE_CONFIRMED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(ISO_INSTANT_MICROSECOND_PRECISION.format(updated))));
 
         assertThat(actual, hasJsonPath("$.event_details.gateway_event_date", equalTo("2018-03-12T16:25:01.123456Z")));
         assertThat(actual, hasNoJsonPath("$.event_details.fee"));
@@ -74,7 +76,9 @@ public class CaptureConfirmedTest {
 
     @Test
     public void serializesEventGivenNoDetailValues() throws JsonProcessingException {
+        ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        when(chargeEvent.getUpdated()).thenReturn(updated);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
         when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.empty());
 
@@ -83,6 +87,7 @@ public class CaptureConfirmedTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CAPTURE_CONFIRMED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(ISO_INSTANT_MICROSECOND_PRECISION.format(updated))));
 
         assertThat(actual, hasNoJsonPath("$.event_details.gateway_event_date"));
         assertThat(actual, hasNoJsonPath("$.event_details.fee"));

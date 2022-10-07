@@ -11,6 +11,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -20,12 +21,14 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MICROSECOND_PRECISION;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class PaymentNotificationCreatedTest {
 
     private final String providerId = "validTransactionId";
+    private final ZonedDateTime notificationTimestamp = ZonedDateTime.parse("2022-10-06T15:00:00.123456Z");
 
     private ChargeEntityFixture chargeEntityFixture;
 
@@ -57,12 +60,14 @@ public class PaymentNotificationCreatedTest {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity);
+        when(chargeEvent.getUpdated()).thenReturn(notificationTimestamp);
 
         String actual = PaymentNotificationCreated.from(chargeEvent).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_NOTIFICATION_CREATED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(ISO_INSTANT_MICROSECOND_PRECISION.format(notificationTimestamp))));
 
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
         assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
@@ -93,12 +98,14 @@ public class PaymentNotificationCreatedTest {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity);
+        when(chargeEvent.getUpdated()).thenReturn(notificationTimestamp);
 
         String actual = PaymentNotificationCreated.from(chargeEvent).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_NOTIFICATION_CREATED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(ISO_INSTANT_MICROSECOND_PRECISION.format(notificationTimestamp))));
         assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
 
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
@@ -130,12 +137,14 @@ public class PaymentNotificationCreatedTest {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity);
+        when(chargeEvent.getUpdated()).thenReturn(notificationTimestamp);
 
         String actual = PaymentNotificationCreated.from(chargeEvent).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_NOTIFICATION_CREATED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(ISO_INSTANT_MICROSECOND_PRECISION.format(notificationTimestamp))));
         assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
 
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));

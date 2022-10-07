@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.processor;
 
 import junitparams.JUnitParamsRunner;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
+import org.exparity.hamcrest.date.InstantMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,9 +20,9 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.Instant;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verify;
@@ -68,7 +68,7 @@ public class ChargeNotificationProcessorTest {
         Event event = eventArgumentCaptor.getValue();
 
         assertThat(event.getEventType(), is("CAPTURE_CONFIRMED_BY_GATEWAY_NOTIFICATION"));
-        assertThat(event.getTimestamp(), ZonedDateTimeMatchers.within(5, ChronoUnit.SECONDS, ZonedDateTime.now()));
+        assertThat(event.getTimestamp(), InstantMatchers.within(5, SECONDS, Instant.now()));
         assertThat(event.getResourceType(), is(ResourceType.PAYMENT));
     }
 }
