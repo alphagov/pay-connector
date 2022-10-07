@@ -41,6 +41,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -102,7 +103,7 @@ public class EventFactory {
 
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
                 Charge.from(chargeEvent.getChargeEntity()),
-                chargeEvent.getUpdated(),
+                chargeEvent.getUpdated().toInstant(),
                 paymentStateTransition.getStateTransitionEventClass()
         );
 
@@ -123,7 +124,7 @@ public class EventFactory {
                 charge);
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
                 charge,
-                refundHistory.getHistoryStartDate(),
+                refundHistory.getHistoryStartDate().toInstant(),
                 refundStateTransition.getStateTransitionEventClass()
         );
 
@@ -156,11 +157,11 @@ public class EventFactory {
                 return CancelledWithGatewayAfterAuthorisationError.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class,
-                        boolean.class, String.class, ZonedDateTime.class).newInstance(
+                        boolean.class, String.class, Instant.class).newInstance(
                         chargeEvent.getChargeEntity().getServiceId(),
                         chargeEvent.getChargeEntity().getGatewayAccount().isLive(),
                         chargeEvent.getChargeEntity().getExternalId(),
-                        chargeEvent.getUpdated()
+                        chargeEvent.getUpdated().toInstant()
                 );
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -189,7 +190,7 @@ public class EventFactory {
         }
     }
 
-    private Optional<Event> createRefundAvailabilityUpdatedEvent(Charge charge, ZonedDateTime eventTimestamp, Class eventClass) {
+    private Optional<Event> createRefundAvailabilityUpdatedEvent(Charge charge, Instant eventTimestamp, Class eventClass) {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge, eventTimestamp);
             return Optional.of(refundAvailabilityUpdatedEvent);

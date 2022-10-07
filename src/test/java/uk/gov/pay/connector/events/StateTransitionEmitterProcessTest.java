@@ -12,10 +12,10 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +54,7 @@ public class StateTransitionEmitterProcessTest {
                 new PaymentCreated("service-id", true,
                         "id",
                         mock(PaymentCreatedEventDetails.class),
-                        ZonedDateTime.now()
+                        Instant.now()
                 )));
         when(stateTransitionQueue.poll(anyLong(), any(TimeUnit.class))).thenReturn(paymentStateTransition);
 
@@ -84,7 +84,7 @@ public class StateTransitionEmitterProcessTest {
                 new PaymentCreated("service-id", true,
                         "id",
                         mock(PaymentCreatedEventDetails.class),
-                        ZonedDateTime.now()
+                        Instant.now()
                 )));
         doThrow(QueueException.class).when(mockEventService).emitAndMarkEventAsEmitted(any());
 

@@ -4,13 +4,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 /**
  *  Confirmed by notification from payment gateway
  **/
 public class CaptureConfirmed extends PaymentEvent {
-    public CaptureConfirmed(String serviceId, boolean live, String resourceExternalId, CaptureConfirmedEventDetails captureConfirmedEventDetails, ZonedDateTime timestamp) {
+    public CaptureConfirmed(String serviceId, boolean live, String resourceExternalId,
+                            CaptureConfirmedEventDetails captureConfirmedEventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, captureConfirmedEventDetails, timestamp);
     }
 
@@ -22,7 +23,7 @@ public class CaptureConfirmed extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 CaptureConfirmedEventDetails.from(chargeEvent),
-                chargeEvent.getUpdated()
+                chargeEvent.getUpdated().toInstant()
         );
     }
 

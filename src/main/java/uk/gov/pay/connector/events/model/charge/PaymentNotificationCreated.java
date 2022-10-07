@@ -4,10 +4,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class PaymentNotificationCreated extends PaymentEvent {
-    public PaymentNotificationCreated(String serviceId, boolean live, String resourceExternalId, PaymentNotificationCreatedEventDetails eventDetails, ZonedDateTime timestamp) {
+    public PaymentNotificationCreated(String serviceId, boolean live, String resourceExternalId,
+                                      PaymentNotificationCreatedEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -17,6 +18,6 @@ public class PaymentNotificationCreated extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 PaymentNotificationCreatedEventDetails.from(charge),
-                chargeEvent.getUpdated());
+                chargeEvent.getUpdated().toInstant());
     }
 }

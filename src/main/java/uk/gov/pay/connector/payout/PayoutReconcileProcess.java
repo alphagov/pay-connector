@@ -205,7 +205,7 @@ public class PayoutReconcileProcess {
     private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, String paymentExternalId) {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate());
+                payoutReconcileMessage.getCreatedDate().toInstant());
         emitEvent(paymentEvent, payoutReconcileMessage, paymentExternalId);
 
         LOGGER.info(format("Emitted event for payment [%s] included in payout [%s]",

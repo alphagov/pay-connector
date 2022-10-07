@@ -4,11 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -29,7 +29,7 @@ public class RefundAvailabilityUpdatedTest {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 RefundAvailabilityUpdatedEventDetails.from(Charge.from(charge), List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
-                ZonedDateTime.now()
+                Instant.now()
         ).toJsonString();
         
         assertThat(event, hasJsonPath("$.event_type", equalTo("REFUND_AVAILABILITY_UPDATED")));

@@ -4,12 +4,12 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledWithGatewayAfterAuthorisationErrorEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class CancelledWithGatewayAfterAuthorisationError extends PaymentEvent {
     public CancelledWithGatewayAfterAuthorisationError(String serviceId, boolean live, String resourceExternalId,
                                                        CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails, 
-                                                       ZonedDateTime timestamp) {
+                                                       Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
     
@@ -21,7 +21,7 @@ public class CancelledWithGatewayAfterAuthorisationError extends PaymentEvent {
                 charge.getGatewayAccount().isLive(),
                 charge.getExternalId(),
                 CancelledWithGatewayAfterAuthorisationErrorEventDetails.from(charge),
-                chargeEvent.getUpdated()
+                chargeEvent.getUpdated().toInstant()
         );
     }
 }

@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
@@ -103,7 +104,7 @@ public class ChargeNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
                 kv(PROVIDER, charge.getPaymentGatewayName()));
         
-        Event event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(), charge.getExternalId(), ZonedDateTime.now());
+        Event event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(), charge.getExternalId(), Instant.now());
         eventService.emitEvent(event);
     }
 }

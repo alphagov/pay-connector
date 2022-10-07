@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.model.charge;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 
 /**
@@ -17,7 +17,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class SystemCancelled extends PaymentEventWithoutDetails {
-    public SystemCancelled(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+    public SystemCancelled(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
         super(serviceId, live, resourceExternalId, timestamp);
     }
 }

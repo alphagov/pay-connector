@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.model.charge;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 /**
  * Payment has been rejected
@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
  *
  */
 public class AuthorisationRejected extends PaymentEventWithoutDetails {
-    public AuthorisationRejected(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+    public AuthorisationRejected(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
         super(serviceId, live, resourceExternalId, timestamp);
     }
 }

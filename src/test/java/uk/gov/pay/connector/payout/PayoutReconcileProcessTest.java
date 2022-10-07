@@ -129,9 +129,9 @@ public class PayoutReconcileProcessTest {
 
     @Test
     public void shouldEmitEventsForMessageAndMarkAsProcessed() throws Exception {
-        var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate);
+        var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate.toInstant());
         var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
-        var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate);
+        var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate.toInstant());
         var disputeEvent = new DisputeIncludedInPayout(disputeExternalId, payoutId, payoutCreatedDate);
         var stripePayout = new StripePayout("po_123", 1213L, 1589395533L,
                 1589395500L, "pending", "card", "statement_desc");

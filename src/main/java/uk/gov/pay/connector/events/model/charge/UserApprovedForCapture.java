@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.events.model.charge;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class UserApprovedForCapture extends PaymentEventWithoutDetails {
-    public UserApprovedForCapture(String serviceId, boolean live, String resourceExternalId, ZonedDateTime timestamp) {
+    public UserApprovedForCapture(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
         super(serviceId, live, resourceExternalId, timestamp);
     }
 }

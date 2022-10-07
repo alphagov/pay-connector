@@ -45,13 +45,12 @@ import javax.inject.Named;
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static java.time.ZoneOffset.UTC;
-import static java.time.ZonedDateTime.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
@@ -267,7 +266,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         charge.setExemption3ds(exemption3ds);
         LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
         chargeDao.merge(charge);
-        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, now(UTC)));
+        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, Instant.now()));
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {

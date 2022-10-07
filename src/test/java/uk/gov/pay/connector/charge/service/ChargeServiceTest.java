@@ -59,6 +59,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.ws.rs.core.UriInfo;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -467,8 +468,7 @@ class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(charge, List.of(refund))).thenReturn(EXTERNAL_AVAILABLE);
         
-        ZonedDateTime timestamp = ZonedDateTime.now();
-        RefundAvailabilityUpdated refundAvailabilityUpdated = chargeService.createRefundAvailabilityUpdatedEvent(charge, timestamp);
+        RefundAvailabilityUpdated refundAvailabilityUpdated = chargeService.createRefundAvailabilityUpdatedEvent(charge, Instant.now());
         
         assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));

@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
@@ -40,7 +39,8 @@ public class CancelledByUserTest {
     public void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
-        String actual = new CancelledByUser(chargeEntity.getServiceId(), chargeEntity.getGatewayAccount().isLive(), transactionId, CancelledByUserEventDetails.from(chargeEntity), ZonedDateTime.parse(time)).toJsonString();
+        String actual = new CancelledByUser(chargeEntity.getServiceId(), chargeEntity.getGatewayAccount().isLive(), transactionId,
+                CancelledByUserEventDetails.from(chargeEntity), Instant.parse(time)).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CANCELLED_BY_USER")));
         assertThat(actual, hasJsonPath("event_details.gateway_transaction_id", equalTo(gatewayTransactionId)));
@@ -51,7 +51,8 @@ public class CancelledByUserTest {
         ChargeEntity charge = new ChargeEntity();
         charge.setExternalId(transactionId);
         charge.setGatewayTransactionId(null);
-        String actual = new CancelledByUser(charge.getServiceId(), live, transactionId, CancelledByUserEventDetails.from(charge), ZonedDateTime.parse(time)).toJsonString();
+        String actual = new CancelledByUser(charge.getServiceId(), live, transactionId,
+                CancelledByUserEventDetails.from(charge), Instant.parse(time)).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CANCELLED_BY_USER")));
         assertThat(actual, hasNoJsonPath("event_details.gateway_transaction_id"));

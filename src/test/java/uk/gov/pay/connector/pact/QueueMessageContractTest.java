@@ -59,6 +59,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -95,7 +96,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 PaymentCreatedEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return paymentCreatedEvent.toJsonString();
@@ -119,7 +120,7 @@ public class QueueMessageContractTest {
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return captureConfirmedEvent.toJsonString();
@@ -138,7 +139,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 PaymentDetailsEnteredEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return captureConfirmedEvent.toJsonString();
@@ -157,7 +158,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 PaymentDetailsSubmittedByAPIEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return paymentDetailsSubmittedByAPIEvent.toJsonString();
@@ -174,7 +175,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 UserEmailCollectedEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return userEmailCollected.toJsonString();
@@ -191,7 +192,7 @@ public class QueueMessageContractTest {
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
                 resourceId,
                 CaptureSubmittedEventDetails.from(chargeEventEntity),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return captureSubmittedEvent.toJsonString();
@@ -300,7 +301,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a payment included in payout message")
     public String verifyPaymentIncludedInPayoutEvent() throws JsonProcessingException {
-        PaymentIncludedInPayout event = new PaymentIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+        PaymentIncludedInPayout event = new PaymentIncludedInPayout(resourceId, "po_1234567890", Instant.now());
 
         return event.toJsonString();
     }
@@ -337,7 +338,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 Gateway3dsExemptionResultObtainedEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return gateway3dsExemptionResultObtained.toJsonString();
@@ -356,7 +357,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 Gateway3dsInfoObtainedEventDetails.from(charge),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return gateway3dsInfoObtained.toJsonString();
@@ -375,7 +376,7 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().isLive(),
                 resourceId,
                 GatewayRequires3dsAuthorisationEventDetails.from(charge),
-                ZonedDateTime.now());
+                Instant.now());
 
         return gatewayRequires3dsAuthorisation.toJsonString();
     }
@@ -397,7 +398,7 @@ public class QueueMessageContractTest {
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
-                ZonedDateTime.now()
+                Instant.now()
         );
 
         return event.toJsonString();
