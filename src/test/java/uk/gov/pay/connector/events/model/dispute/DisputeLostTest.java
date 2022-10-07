@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 
+import java.time.Instant;
 import java.util.List;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -17,7 +18,6 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.events.model.dispute.DisputeLost.from;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 class DisputeLostTest {
 
@@ -36,7 +36,7 @@ class DisputeLostTest {
                 List.of(balanceTransaction), null, null, true);
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, true);
+        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, true);
 
         String disputeLostJson = disputeLost.toJsonString();
         assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
@@ -68,7 +68,7 @@ class DisputeLostTest {
                 List.of(balanceTransaction), null, null, false);
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, false);
+        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, false);
 
         String disputeLostJson = disputeLost.toJsonString();
         assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
@@ -102,7 +102,8 @@ class DisputeLostTest {
                 balanceTransaction2), evidenceDetails, null, false);
 
         var thrown = assertThrows(RuntimeException.class, () ->
-                DisputeLost.from("a-dispute-external-id", stripeDisputeData, toUTCZonedDateTime(1642579160L), transaction, true));
+                DisputeLost.from("a-dispute-external-id", stripeDisputeData, Instant.ofEpochSecond(1642579160L),
+                        transaction, true));
         assertThat(thrown.getMessage(), is("Dispute data has too many balance_transactions"));
     }
 }

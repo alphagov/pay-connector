@@ -69,7 +69,6 @@ import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -276,7 +275,7 @@ public class QueueMessageContractTest {
     public String verifyPayoutFailedEvent() throws JsonProcessingException {
         StripePayout payout = new StripePayout("po_failed_1234567890", "failed", "account_closed",
                 "The bank account has been closed", "ba_aaaaaaaaaa");
-        PayoutFailed payoutFailed = PayoutFailed.from(parse("2020-05-13T18:50:00Z"), payout);
+        PayoutFailed payoutFailed = PayoutFailed.from(Instant.parse("2020-05-13T18:50:00Z"), payout);
 
         return payoutFailed.toJsonString();
     }
@@ -285,7 +284,7 @@ public class QueueMessageContractTest {
     public String verifyPayoutPaidEvent() throws JsonProcessingException {
         StripePayout payout = new StripePayout("po_paid_1234567890", 1000L, 1589395533L,
                 1589395500L, "paid", "bank_account", "SERVICE NAME");
-        PayoutPaid payoutPaid = PayoutPaid.from(parse("2020-05-13T18:50:00Z"), payout);
+        PayoutPaid payoutPaid = PayoutPaid.from(Instant.parse("2020-05-13T18:50:00Z"), payout);
 
         return payoutPaid.toJsonString();
     }
@@ -294,7 +293,7 @@ public class QueueMessageContractTest {
     public String verifyPayoutUpdatedEvent() throws JsonProcessingException {
         StripePayout payout = new StripePayout("po_updated_1234567890", 1000L, 1589395533L,
                 1589395500L, "pending", "bank_account", "SERVICE NAME");
-        PayoutUpdated payoutPaid = PayoutUpdated.from(parse("2020-05-13T18:50:00Z"), payout);
+        PayoutUpdated payoutPaid = PayoutUpdated.from(Instant.parse("2020-05-13T18:50:00Z"), payout);
 
         return payoutPaid.toJsonString();
     }
@@ -425,7 +424,7 @@ public class QueueMessageContractTest {
                         6500L, "duplicate", "du_1LIaq8Dv3CZEaFO2MNQJK333");
         DisputeCreated disputeCreated =
                 new DisputeCreated("resource-external-id", "external-id", "service-id",
-                        true, eventDetails, toUTCZonedDateTime(1642579160L));
+                        true, eventDetails, Instant.ofEpochSecond(1642579160L));
         return disputeCreated.toJsonString();
     }
 
@@ -434,7 +433,7 @@ public class QueueMessageContractTest {
         DisputeLostEventDetails eventDetails = new DisputeLostEventDetails("a-gateway-account-id",
                 6500L, -8000L, 1500L);
         DisputeLost disputeLost = new DisputeLost("resource-external-id",
-                "external-id", "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+                "external-id", "service-id", true, eventDetails, Instant.ofEpochSecond(1642579160L));
         return disputeLost.toJsonString();
     }
 
@@ -442,7 +441,7 @@ public class QueueMessageContractTest {
     public String verifyDisputeWonEvent() throws JsonProcessingException {
         DisputeWonEventDetails eventDetails = new DisputeWonEventDetails("a-gateway-account-id");
         DisputeWon disputeWon = new DisputeWon("resource-external-id", "external-id",
-                "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+                "service-id", true, eventDetails, Instant.ofEpochSecond(1642579160L));
         return disputeWon.toJsonString();
     }
 
@@ -450,7 +449,7 @@ public class QueueMessageContractTest {
     public String verifyDisputeEvidenceSubmittedEvent() throws JsonProcessingException {
         DisputeEvidenceSubmittedEventDetails eventDetails = new DisputeEvidenceSubmittedEventDetails("a-gateway-account-id");
         DisputeEvidenceSubmitted disputeEvidenceSubmitted = new DisputeEvidenceSubmitted("resource-external-id",
-                "external-id", "service-id", true, eventDetails, toUTCZonedDateTime(1642579160L));
+                "external-id", "service-id", true, eventDetails, Instant.ofEpochSecond(1642579160L));
         return disputeEvidenceSubmitted.toJsonString();
     }
 }

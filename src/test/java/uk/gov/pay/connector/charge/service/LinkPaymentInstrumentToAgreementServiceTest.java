@@ -25,7 +25,6 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,8 +90,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
         verify(mockPaymentInstrumentEntity).setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
         verify(ledgerService).postEvent(List.of(
-                AgreementSetup.from(mockAgreementEntity, ZonedDateTime.now(clock)),
-                PaymentInstrumentConfirmed.from(mockAgreementEntity, ZonedDateTime.now(clock))
+                AgreementSetup.from(mockAgreementEntity, clock.instant()),
+                PaymentInstrumentConfirmed.from(mockAgreementEntity, clock.instant())
         ));
     }
 

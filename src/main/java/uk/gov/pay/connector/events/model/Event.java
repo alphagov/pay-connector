@@ -33,16 +33,6 @@ public abstract class Event {
         this(timestamp, resourceExternalId, new EmptyEventDetails());
     }
 
-    @Deprecated
-    public Event(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        this(timestamp.toInstant(), resourceExternalId, eventDetails);
-    }
-
-    @Deprecated
-    public Event(String resourceExternalId, ZonedDateTime timestamp) {
-        this(timestamp.toInstant(), resourceExternalId);
-    }
-
     public abstract ResourceType getResourceType();
 
     public String getResourceExternalId() {

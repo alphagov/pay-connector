@@ -18,8 +18,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import java.time.Clock;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
@@ -91,9 +90,9 @@ public class AgreementService {
                     paymentInstrument.setPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED);
 
                     if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
-                        ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, ZonedDateTime.now(ZoneOffset.UTC)));
+                        ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, Instant.now()));
                     } else {
-                        ledgerService.postEvent(AgreementCancelledByService.from(agreement, ZonedDateTime.now(ZoneOffset.UTC)));
+                        ledgerService.postEvent(AgreementCancelledByService.from(agreement, Instant.now()));
                     }
                 }, () -> {
                     throw new PaymentInstrumentNotActiveException("Payment instrument not active.");

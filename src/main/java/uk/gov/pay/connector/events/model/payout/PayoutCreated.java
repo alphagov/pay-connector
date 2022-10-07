@@ -3,11 +3,11 @@ package uk.gov.pay.connector.events.model.payout;
 import uk.gov.pay.connector.events.eventdetails.payout.PayoutCreatedEventDetails;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class PayoutCreated extends PayoutEvent {
 
-    private PayoutCreated(String resourceExternalId, PayoutCreatedEventDetails eventDetails, ZonedDateTime timestamp) {
+    private PayoutCreated(String resourceExternalId, PayoutCreatedEventDetails eventDetails, Instant timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
 
@@ -21,6 +21,6 @@ public class PayoutCreated extends PayoutEvent {
                         payout.getStatus(),
                         payout.getType(),
                         payout.getStatementDescriptor()),
-                payout.getCreated());
+                payout.getCreated().toInstant());
     }
 }

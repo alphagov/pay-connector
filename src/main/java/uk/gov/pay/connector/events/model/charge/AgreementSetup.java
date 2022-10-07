@@ -3,20 +3,19 @@ package uk.gov.pay.connector.events.model.charge;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
 public class AgreementSetup extends AgreementEvent {
 
-    public AgreementSetup(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public AgreementSetup(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static AgreementSetup from(AgreementEntity agreement, ZonedDateTime timestamp) {
+    public static AgreementSetup from(AgreementEntity agreement, Instant timestamp) {
         return new AgreementSetup(
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),

@@ -21,8 +21,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -95,7 +94,7 @@ public class LedgerServiceTest {
     @Test
     void serialiseAndSendEvent() {
         setupMocksForPostRequest();
-        var event = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
+        var event = new AgreementCreated("service-id", false, "resource-id", null, Instant.now());
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(event);
         verify(mockClientRequestInvocationBuilder).post(Entity.json(List.of(event)));
@@ -104,7 +103,7 @@ public class LedgerServiceTest {
     @Test
     void sendEventShouldThrowExceptionIfResponseIsNotAccepted() {
         setupMocksForPostRequest();
-        var event = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
+        var event = new AgreementCreated("service-id", false, "resource-id", null, Instant.now());
         when(mockResponse.getStatus()).thenReturn(SC_BAD_REQUEST);
         assertThrows(LedgerException.class, () -> ledgerService.postEvent(event));
     }
@@ -112,8 +111,8 @@ public class LedgerServiceTest {
     @Test
     void serialiseAndSendMultipleEvents() {
         setupMocksForPostRequest();
-        var eventOne = new AgreementCreated("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
-        var eventTwo = new AgreementSetup("service-id", false, "resource-id", null, ZonedDateTime.now(ZoneOffset.UTC));
+        var eventOne = new AgreementCreated("service-id", false, "resource-id", null, Instant.now());
+        var eventTwo = new AgreementSetup("service-id", false, "resource-id", null, Instant.now());
         List<Event> list = List.of(eventOne, eventTwo);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(list);

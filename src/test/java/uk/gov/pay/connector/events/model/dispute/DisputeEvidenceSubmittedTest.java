@@ -5,12 +5,13 @@ import org.junit.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
+import java.time.Instant;
+
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.events.model.dispute.DisputeEvidenceSubmitted.from;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 public class DisputeEvidenceSubmittedTest {
 
@@ -28,7 +29,7 @@ public class DisputeEvidenceSubmittedTest {
                 1642579160L, null, null, null, true);
 
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
-        DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(disputeExternalId, toUTCZonedDateTime(1642579160L), transaction);
+        DisputeEvidenceSubmitted disputeEvidenceSubmitted = from(disputeExternalId, Instant.ofEpochSecond(1642579160L), transaction);
 
         String disputeEvidenceSubmittedJson = disputeEvidenceSubmitted.toJsonString();
         assertThat(disputeEvidenceSubmittedJson, hasJsonPath("$.event_type", equalTo("DISPUTE_EVIDENCE_SUBMITTED")));
