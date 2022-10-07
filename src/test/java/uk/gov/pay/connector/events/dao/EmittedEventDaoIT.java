@@ -95,7 +95,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp().toInstant(), doNotRetryEmitUntilDate);
+                eventToRecord.getEventType(), eventToRecord.getTimestamp(), doNotRetryEmitUntilDate);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
@@ -113,7 +113,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final RefundSubmitted eventToRecord = aRefundSubmittedEvent(ZonedDateTime.parse("2018-01-01T12:00:00Z"));
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp().toInstant(), null);
+                eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
 
         List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
         Map<String, Object> event = events.get(0);
@@ -149,7 +149,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     public void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), null);
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
 
         Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(Instant.parse("2019-01-01T14:00:01Z"),
                 ZonedDateTime.now(UTC));
@@ -170,12 +170,12 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), null);
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
         ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
         emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
-                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp().toInstant(), doNotRetryEmitUntil);
+                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), doNotRetryEmitUntil);
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp().toInstant(), ZonedDateTime.now(UTC).plusSeconds(120));
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), ZonedDateTime.now(UTC).plusSeconds(120));
 
         Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(Instant.parse("2019-01-01T14:00:01Z"), ZonedDateTime.now(UTC));
         assertThat(maxId.isPresent(), is(true));

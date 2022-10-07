@@ -50,6 +50,7 @@ public class PayoutEmitterServiceTest {
     private PayoutEmitterService payoutEmitterService;
     private StripePayout payout;
     private ZonedDateTime eventDate = parse("2019-09-04T18:43:23Z");
+    private ZonedDateTime arrivalDate = parse("2020-05-19T00:00Z");
     private String connectAccount = "connect-account";
     @Captor
     private ArgumentCaptor<PayoutEvent> payoutArgumentCaptor;
@@ -66,8 +67,8 @@ public class PayoutEmitterServiceTest {
                 .thenReturn(gatewayAccountEntity);
 
         payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
-        payout = new StripePayout("po_123", 1213L, 1589846400L,
-                null, "pending", "card", null);
+        payout = new StripePayout("po_123", 1213L, arrivalDate.toEpochSecond(),
+                eventDate.toEpochSecond(), "pending", "card", null);
     }
 
     @Test
@@ -82,6 +83,7 @@ public class PayoutEmitterServiceTest {
         assertThat(payoutEvent.getEventType(), is("PAYOUT_CREATED"));
         assertThat(payoutEvent.getResourceExternalId(), is("po_123"));
         assertThat(payoutEvent.getResourceType(), is(PAYOUT));
+        assertThat(payoutEvent.getTimestamp(), is(eventDate.toInstant()));
         assertThat(details.getAmount(), is(1213L));
         assertThat(details.getGatewayStatus(), is("pending"));
     }
@@ -125,13 +127,13 @@ public class PayoutEmitterServiceTest {
 
         assertCommonPayoutFields(payoutEvent, details.getGatewayStatus());
         assertThat(payoutEvent.getEventType(), is("PAYOUT_PAID"));
-        assertThat(details.getPaidOutDate().toString(), is("2020-05-19T00:00Z"));// arrival date of payout
+        assertThat(details.getPaidOutDate(), is(arrivalDate));
     }
 
     private void assertCommonPayoutFields(PayoutEvent event, String gatewayStatus) {
         assertThat(event.getResourceExternalId(), is("po_123"));
         assertThat(event.getResourceType(), is(PAYOUT));
-        assertThat(event.getTimestamp(), is(eventDate));
+        assertThat(event.getTimestamp(), is(eventDate.toInstant()));
         assertThat(gatewayStatus, is("pending"));
     }
 

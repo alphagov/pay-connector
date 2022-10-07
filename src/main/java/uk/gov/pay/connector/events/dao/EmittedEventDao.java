@@ -34,7 +34,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 .setParameter("resource_type", event.getResourceType().getLowercase())
                 .setParameter("resource_external_id", event.getResourceExternalId())
                 .setParameter("event_type", event.getEventType())
-                .setParameter("event_date", event.getTimestamp().toInstant())
+                .setParameter("event_date", event.getTimestamp())
                 .getResultList();
         return !singleResult.isEmpty();
     }
@@ -43,7 +43,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         final EmittedEventEntity emittedEvent = new EmittedEventEntity(event.getResourceType().getLowercase(),
                 event.getResourceExternalId(),
                 event.getEventType(),
-                event.getTimestamp().toInstant(),
+                event.getTimestamp(),
                 Instant.now(),
                 doNotRetryEmitUntilDate
         );
@@ -78,7 +78,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 .setParameter("resource_external_id", event.getResourceExternalId())
                 .setParameter("event_type", event.getEventType())
                 .setParameter("emittedDate", Instant.now())
-                .setParameter("eventDate", event.getTimestamp().toInstant());
+                .setParameter("eventDate", event.getTimestamp());
 
         query.executeUpdate();
     }

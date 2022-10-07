@@ -253,7 +253,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeLost disputeLost = argumentCaptor.getValue();
         assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
         assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated()));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().toInstant()));
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
@@ -298,7 +298,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeLost disputeLost = argumentCaptor.getValue();
         assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
         assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().plusSeconds(1)));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().plusSeconds(1).toInstant()));
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
@@ -334,7 +334,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeLost disputeLost = argumentCaptor.getValue();
         assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
         assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated()));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().toInstant()));
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
@@ -368,7 +368,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeLost disputeLost = argumentCaptor.getValue();
         assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
         assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated()));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().toInstant()));
 
         DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
@@ -457,7 +457,7 @@ public class StripeWebhookTaskHandlerTest {
         DisputeEvidenceSubmitted disputeEvidenceSubmitted = argumentCaptor.getValue();
         assertThat(disputeEvidenceSubmitted.getEventType(), is("DISPUTE_EVIDENCE_SUBMITTED"));
         assertThat(disputeEvidenceSubmitted.getResourceType(), is(ResourceType.DISPUTE));
-        assertThat(disputeEvidenceSubmitted.getTimestamp(), is(stripeNotification.getCreated()));
+        assertThat(disputeEvidenceSubmitted.getTimestamp(), is(stripeNotification.getCreated().toInstant()));
 
         DisputeEvidenceSubmittedEventDetails eventDetails = (DisputeEvidenceSubmittedEventDetails) disputeEvidenceSubmitted.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));

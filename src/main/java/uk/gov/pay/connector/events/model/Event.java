@@ -7,10 +7,11 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.dropwizard.jackson.Jackson;
-import uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecondPrecisionSerializer;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -20,18 +21,26 @@ public abstract class Event {
     private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
     private String resourceExternalId;
     private EventDetails eventDetails;
-    private ZonedDateTime timestamp;
+    private Instant timestamp;
 
-    public Event(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public Event(Instant timestamp, String resourceExternalId, EventDetails eventDetails) {
+        this.timestamp = timestamp;
         this.resourceExternalId = resourceExternalId;
         this.eventDetails = eventDetails;
-        this.timestamp = timestamp;
     }
 
+    public Event(Instant timestamp, String resourceExternalId) {
+        this(timestamp, resourceExternalId, new EmptyEventDetails());
+    }
+
+    @Deprecated
+    public Event(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+        this(timestamp.toInstant(), resourceExternalId, eventDetails);
+    }
+
+    @Deprecated
     public Event(String resourceExternalId, ZonedDateTime timestamp) {
-        this.resourceExternalId = resourceExternalId;
-        this.timestamp = timestamp;
-        this.eventDetails = new EmptyEventDetails();
+        this(timestamp.toInstant(), resourceExternalId);
     }
 
     public abstract ResourceType getResourceType();
@@ -44,8 +53,8 @@ public abstract class Event {
         return eventDetails;
     }
 
-    @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    public ZonedDateTime getTimestamp() {
+    @JsonSerialize(using = ApiResponseInstantWithMicrosecondPrecisionSerializer.class)
+    public Instant getTimestamp() {
         return timestamp;
     }
 

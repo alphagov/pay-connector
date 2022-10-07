@@ -2,16 +2,12 @@ package uk.gov.pay.connector.events.model;
 
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class UnspecifiedEvent extends Event {
 
     public UnspecifiedEvent() {
-        super(null, null);
-    }
-
-    public UnspecifiedEvent(String resourceExternalId, ZonedDateTime timestamp) {
-        super(resourceExternalId, timestamp);
+        super((Instant) null, null);
     }
 
     @Override
@@ -35,7 +31,7 @@ public class UnspecifiedEvent extends Event {
     }
 
     @Override
-    public ZonedDateTime getTimestamp() {
+    public Instant getTimestamp() {
         return null;
     }
 }

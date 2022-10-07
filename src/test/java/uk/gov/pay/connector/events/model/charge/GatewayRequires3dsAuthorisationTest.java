@@ -38,6 +38,8 @@ public class GatewayRequires3dsAuthorisationTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_REQUIRES_3DS_AUTHORISATION")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo("2018-03-12T16:25:02.123456Z")));
+
 
         assertThat(actual, hasJsonPath("$.event_details.requires_3ds", equalTo(true)));
         assertThat(actual, hasJsonPath("$.event_details.version_3ds", equalTo("2.1.0")));
@@ -45,8 +47,11 @@ public class GatewayRequires3dsAuthorisationTest {
 
     @Test
     public void serializesEventCorrectlyWhenVersion3dsIsNotAvailable() throws JsonProcessingException {
+        ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
+
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
+        when(chargeEvent.getUpdated()).thenReturn(updated);
         when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.empty());
 
         String actual = GatewayRequires3dsAuthorisation.from(chargeEvent).toJsonString();
@@ -54,6 +59,7 @@ public class GatewayRequires3dsAuthorisationTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_REQUIRES_3DS_AUTHORISATION")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo("2018-03-12T16:25:02.123456Z")));
 
         assertThat(actual, hasJsonPath("$.event_details.requires_3ds", equalTo(true)));
         assertThat(actual, hasNoJsonPath("$.event_details.version_3ds"));

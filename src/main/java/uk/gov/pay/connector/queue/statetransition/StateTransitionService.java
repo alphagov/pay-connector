@@ -118,6 +118,6 @@ public class StateTransitionService {
                                      ZonedDateTime doNotRetryEmitUntilDate) {
         stateTransitionQueue.offer(stateTransition);
         eventService.recordOfferedEvent(event.getResourceType(), event.getResourceExternalId(),
-                event.getEventType(), event.getTimestamp().toInstant(), doNotRetryEmitUntilDate);
+                event.getEventType(), event.getTimestamp(), doNotRetryEmitUntilDate);
     }
 }
