@@ -4,22 +4,23 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.ResourceType;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public abstract class RefundEvent extends Event {
     private String serviceId;
     private Boolean live;
     private String parentResourceExternalId;
 
-    public RefundEvent(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public RefundEvent(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId,
+                       EventDetails eventDetails, Instant timestamp) {
+        super(timestamp, resourceExternalId, eventDetails);
         this.parentResourceExternalId = parentResourceExternalId;
         this.serviceId = serviceId;
         this.live = live;
     }
-    
-    public RefundEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+
+    public RefundEvent(String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
+        super(timestamp, resourceExternalId, eventDetails);
     }
 
     @Override

@@ -42,7 +42,6 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -176,13 +175,14 @@ public class EventFactory {
             } else if (eventClass == RefundCreatedByUser.class) {
                 return RefundCreatedByUser.from(refundHistory, charge);
             } else {
-                return eventClass.getConstructor(String.class, boolean.class, String.class, String.class, RefundEventWithGatewayTransactionIdDetails.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class, boolean.class, String.class, String.class,
+                        RefundEventWithGatewayTransactionIdDetails.class, Instant.class).newInstance(
                         charge.getServiceId(),
                         charge.isLive(),
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
                         new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),
-                        refundHistory.getHistoryStartDate()
+                        refundHistory.getHistoryStartDate().toInstant()
                 );
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {

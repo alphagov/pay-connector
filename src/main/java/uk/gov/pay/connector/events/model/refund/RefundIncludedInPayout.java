@@ -2,10 +2,10 @@ package uk.gov.pay.connector.events.model.refund;
 
 import uk.gov.pay.connector.events.eventdetails.TransactionIncludedInPayoutEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class RefundIncludedInPayout extends RefundEvent {
-    public RefundIncludedInPayout(String refundExternalId, String gatewayPayoutId, ZonedDateTime payoutCreatedDate) {
+    public RefundIncludedInPayout(String refundExternalId, String gatewayPayoutId, Instant payoutCreatedDate) {
         super(refundExternalId, new TransactionIncludedInPayoutEventDetails(gatewayPayoutId), payoutCreatedDate);
     }
 }

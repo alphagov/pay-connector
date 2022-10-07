@@ -308,7 +308,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a refund included in payout message")
     public String verifyRefundIncludedInPayoutEvent() throws JsonProcessingException {
-        RefundIncludedInPayout event = new RefundIncludedInPayout(resourceId, "po_1234567890", ZonedDateTime.now());
+        RefundIncludedInPayout event = new RefundIncludedInPayout(resourceId, "po_1234567890", Instant.now());
 
         return event.toJsonString();
     }

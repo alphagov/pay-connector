@@ -4,11 +4,12 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class RefundCreatedByUser extends RefundEvent {
 
-    private RefundCreatedByUser(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId, RefundCreatedByUserEventDetails eventDetails, ZonedDateTime timestamp) {
+    private RefundCreatedByUser(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId,
+                                RefundCreatedByUserEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
     }
 
@@ -23,6 +24,6 @@ public class RefundCreatedByUser extends RefundEvent {
                         refundHistory.getUserExternalId(),
                         charge.getGatewayAccountId().toString(),
                         refundHistory.getUserEmail()),
-                refundHistory.getHistoryStartDate());
+                refundHistory.getHistoryStartDate().toInstant());
     }
 }
