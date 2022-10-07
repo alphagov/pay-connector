@@ -217,7 +217,7 @@ public class PayoutReconcileProcess {
     private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, String refundExternalId) {
         var refundEvent = new RefundIncludedInPayout(refundExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate());
+                payoutReconcileMessage.getCreatedDate().toInstant());
         emitEvent(refundEvent, payoutReconcileMessage, refundExternalId);
 
         LOGGER.info(format("Emitted event for refund [%s] included in payout [%s]",

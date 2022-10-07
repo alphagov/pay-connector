@@ -110,7 +110,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
 
     @Test
     public void markEventAsEmitted_shouldRecordEventAndEmittedDate() {
-        final RefundSubmitted eventToRecord = aRefundSubmittedEvent(ZonedDateTime.parse("2018-01-01T12:00:00Z"));
+        final RefundSubmitted eventToRecord = aRefundSubmittedEvent(Instant.parse("2018-01-01T12:00:00Z"));
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
                 eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
@@ -120,7 +120,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         assertThat(event.get("emitted_date"), is(nullValue()));
         assertThat(event.get("event_date").toString(), is("2018-01-01 12:00:00.0"));
 
-        final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+        final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.markEventAsEmitted(eventToUpdate);
         events = databaseTestHelper.readEmittedEvents();
         event = events.get(0);
@@ -168,7 +168,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Test
     public void findNotEmittedEventsOlderThan_shouldNotReturnRecordsWithDoNotRetryEmitUntilValueInFuture() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
-        final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+        final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
         ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
@@ -214,7 +214,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
                 Instant.parse("2019-01-01T14:00:00Z"));
     }
 
-    private RefundSubmitted aRefundSubmittedEvent(ZonedDateTime eventTimestamp) {
+    private RefundSubmitted aRefundSubmittedEvent(Instant eventTimestamp) {
         return new RefundSubmitted("service-id", true, "my-resource-external-id",
                 "parent-external-id",
                 null, eventTimestamp);

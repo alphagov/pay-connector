@@ -130,7 +130,7 @@ public class PayoutReconcileProcessTest {
     @Test
     public void shouldEmitEventsForMessageAndMarkAsProcessed() throws Exception {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate.toInstant());
-        var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
+        var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate.toInstant());
         var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate.toInstant());
         var disputeEvent = new DisputeIncludedInPayout(disputeExternalId, payoutId, payoutCreatedDate);
         var stripePayout = new StripePayout("po_123", 1213L, 1589395533L,
@@ -284,7 +284,7 @@ public class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
-        var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate);
+        var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate.toInstant());
         verify(eventService).emitEvent(refundEvent, false);
         verifyNoMoreInteractions(eventService);
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
