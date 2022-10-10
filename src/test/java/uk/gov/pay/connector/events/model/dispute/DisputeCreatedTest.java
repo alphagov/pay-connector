@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 
+import java.time.Instant;
 import java.util.List;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -14,7 +15,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.events.model.dispute.DisputeCreated.from;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 class DisputeCreatedTest {
 
@@ -34,7 +34,7 @@ class DisputeCreatedTest {
                 evidenceDetails, null, true);
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeCreated disputeCreated = from(disputeExternalId, stripeDisputeData, transaction, toUTCZonedDateTime(1642579160L));
+        DisputeCreated disputeCreated = from(disputeExternalId, stripeDisputeData, transaction, Instant.ofEpochSecond(1642579160L));
 
         String disputeCreatedJson = disputeCreated.toJsonString();
         assertThat(disputeCreatedJson, hasJsonPath("$.event_type", equalTo("DISPUTE_CREATED")));

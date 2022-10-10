@@ -132,7 +132,7 @@ public class PayoutReconcileProcessTest {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate.toInstant());
         var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate.toInstant());
         var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate.toInstant());
-        var disputeEvent = new DisputeIncludedInPayout(disputeExternalId, payoutId, payoutCreatedDate);
+        var disputeEvent = new DisputeIncludedInPayout(disputeExternalId, payoutId, payoutCreatedDate.toInstant());
         var stripePayout = new StripePayout("po_123", 1213L, 1589395533L,
                 1589395500L, "pending", "card", "statement_desc");
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
@@ -145,7 +145,7 @@ public class PayoutReconcileProcessTest {
         verify(eventService).emitEvent(feeCollectionEvent, false);
         verify(eventService).emitEvent(disputeEvent, false);
         verifyNoMoreInteractions(eventService);
-        verify(payoutEmitterService).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
+        verify(payoutEmitterService).emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated().toInstant(),
                 stripeAccountId, stripePayout);
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }

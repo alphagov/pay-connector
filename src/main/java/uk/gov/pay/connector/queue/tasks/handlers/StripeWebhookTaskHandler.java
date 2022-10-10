@@ -36,7 +36,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 
 import javax.inject.Inject;
 import java.time.Clock;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -119,7 +119,8 @@ public class StripeWebhookTaskHandler {
                 
                 switch (stripeNotificationType) {
                     case DISPUTE_CREATED:
-                        DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction, stripeDisputeData.getDisputeCreated());
+                        DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction,
+                                stripeDisputeData.getDisputeCreated().toInstant());
                         emitEvent(disputeCreatedEvent);
                         PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
                         emitEvent(paymentDisputedEvent);
@@ -137,7 +138,7 @@ public class StripeWebhookTaskHandler {
                     case DISPUTE_UPDATED:
                         if (disputeStatus == UNDER_REVIEW) {
                             DisputeEvidenceSubmitted disputeUpdatedEvent = DisputeEvidenceSubmitted.from(
-                                    disputeExternalId, stripeNotification.getCreated(), transaction);
+                                    disputeExternalId, stripeNotification.getCreated().toInstant(), transaction);
 
                             emitEvent(disputeUpdatedEvent);
                         } else {
@@ -151,14 +152,15 @@ public class StripeWebhookTaskHandler {
                         // For test transactions, the dispute updated and dispute closed notification will have the same
                         // created date. Add a second onto the timestamp for events we send to ledger to ensure these
                         // appear in the correct order.
-                        ZonedDateTime disputeClosedEventTimestamp = isTestStripeTransaction ? 
-                                stripeNotification.getCreated().plus(1, ChronoUnit.SECONDS) : stripeNotification.getCreated();
+                        Instant disputeClosedEventTimestamp = isTestStripeTransaction
+                                ? stripeNotification.getCreated().plus(1, ChronoUnit.SECONDS).toInstant()
+                                : stripeNotification.getCreated().toInstant();
 
                         if (disputeStatus == WON) {
                             disputeEvent = DisputeWon.from(disputeExternalId, disputeClosedEventTimestamp, transaction);
                             Charge charge = Charge.from(transaction);
                             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge,
-                                    disputeClosedEventTimestamp.toInstant());
+                                    disputeClosedEventTimestamp);
                             emitEvent(refundAvailabilityUpdatedEvent);
                         } else if (disputeStatus == LOST) {
                             disputeEvent = handleDisputeLost(stripeDisputeData, transaction, disputeExternalId, disputeClosedEventTimestamp);
@@ -183,7 +185,7 @@ public class StripeWebhookTaskHandler {
     }
 
     private DisputeEvent handleDisputeLost(StripeDisputeData stripeDisputeData, LedgerTransaction transaction, 
-                                           String disputeExternalId, ZonedDateTime eventTimestamp) throws GatewayException {
+                                           String disputeExternalId, Instant eventTimestamp) throws GatewayException {
         boolean rechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
         if (rechargeDispute) {
             Charge charge = Charge.from(transaction);

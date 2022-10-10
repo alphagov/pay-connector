@@ -73,7 +73,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void emitPayoutEventForPayoutCreatedShouldEmitCorrectEvent() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
 
@@ -90,7 +90,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void shouldEmitPayoutUpdatedEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate, connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate.toInstant(), connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutUpdated payoutEvent = (PayoutUpdated) payoutArgumentCaptor.getValue();
@@ -104,7 +104,7 @@ public class PayoutEmitterServiceTest {
     public void shouldEmitPayoutFailedEventCorrectly() throws QueueException {
         payout = new StripePayout("po_123", "pending", "account_closed",
                 "The bank account has been closed", "ba_1GkZtqDv3CZEaFO2CQhLrluk");
-        payoutEmitterService.emitPayoutEvent(PayoutFailed.class, eventDate, "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutFailed.class, eventDate.toInstant(), "connect-account", payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutFailed payoutEvent = (PayoutFailed) payoutArgumentCaptor.getValue();
@@ -119,7 +119,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void shouldEmitPayoutPaidEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate, connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate.toInstant(), connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutPaid payoutEvent = (PayoutPaid) payoutArgumentCaptor.getValue();
@@ -139,7 +139,7 @@ public class PayoutEmitterServiceTest {
 
     @Test
     public void emitPayoutEventShouldEmitEventIfFeatureFlagToEmitEventsIsEnabled() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
         verify(mockEventService).emitEvent(any(), anyBoolean());
     }
 
@@ -147,13 +147,13 @@ public class PayoutEmitterServiceTest {
     public void emitPayoutEventShouldNotEmitEventIfFeatureFlagToEmitEventsIsDisabled() throws QueueException {
         when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(false);
         payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
     }
 
     @Test
     public void emitPayoutEventShouldNotEmitEventForAnUnknownPayoutEvent() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutEvent.class, eventDate, null, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutEvent.class, eventDate.toInstant(), null, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
     }
 }

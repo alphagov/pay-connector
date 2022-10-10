@@ -12,7 +12,6 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import java.time.Clock;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 public class LinkPaymentInstrumentToAgreementService {
@@ -38,8 +37,8 @@ public class LinkPaymentInstrumentToAgreementService {
                     agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
                     paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
                     ledgerService.postEvent(List.of(
-                            AgreementSetup.from(agreementEntity, ZonedDateTime.now(clock)),
-                            PaymentInstrumentConfirmed.from(agreementEntity, ZonedDateTime.now(clock))
+                            AgreementSetup.from(agreementEntity, clock.instant()),
+                            PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
                     ));
                 }, () -> LOGGER.error("Charge {} references agreement {} but that agreement does not exist", chargeEntity.getExternalId(), agreementId));
             }, () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId()));

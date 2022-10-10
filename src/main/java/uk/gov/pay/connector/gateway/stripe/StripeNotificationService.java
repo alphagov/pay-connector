@@ -25,9 +25,9 @@ import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
-import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.queue.tasks.TaskType;
+import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -174,7 +174,7 @@ public class StripeNotificationService {
                             kv(GATEWAY_PAYOUT_ID, stripePayout.getId()),
                             kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
                 } else {
-                    payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated(),
+                    payoutEmitterService.emitPayoutEvent(mayBeEventClass.get(), notification.getCreated().toInstant(),
                             notification.getAccount(), stripePayout);
                 }
             }

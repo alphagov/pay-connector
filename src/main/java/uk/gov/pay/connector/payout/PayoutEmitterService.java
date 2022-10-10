@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -44,7 +44,7 @@ public class PayoutEmitterService {
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
-    public void emitPayoutEvent(Class<? extends PayoutEvent> eventClass, ZonedDateTime eventDate,
+    public void emitPayoutEvent(Class<? extends PayoutEvent> eventClass, Instant eventDate,
                                 String connectAccount, StripePayout payout) {
         Event event = getPayoutEvent(eventClass, connectAccount, eventDate, payout);
 
@@ -70,7 +70,7 @@ public class PayoutEmitterService {
     }
 
     private Event getPayoutEvent(Class<? extends PayoutEvent> eventClass, String connectAccount,
-                                 ZonedDateTime eventDate, StripePayout payout) {
+                                 Instant eventDate, StripePayout payout) {
         if (eventClass == PayoutCreated.class) {
             return getPayoutCreatedEvent(connectAccount, payout);
         } else if (eventClass == PayoutPaid.class) {

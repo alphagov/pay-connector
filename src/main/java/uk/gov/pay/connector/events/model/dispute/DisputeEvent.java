@@ -4,7 +4,7 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.ResourceType;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class DisputeEvent extends Event {
     private String parentResourceExternalId;
@@ -12,15 +12,15 @@ public class DisputeEvent extends Event {
     private Boolean live;
     
     public DisputeEvent(String resourceExternalId, String parentResourceExternalId, String serviceId, Boolean live,
-                        EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+                        EventDetails eventDetails, Instant timestamp) {
+        super(timestamp, resourceExternalId, eventDetails);
         this.parentResourceExternalId = parentResourceExternalId;
         this.serviceId = serviceId;
         this.live = live;
     }
 
-    public DisputeEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
-        super(resourceExternalId, eventDetails, timestamp);
+    public DisputeEvent(String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
+        super(timestamp, resourceExternalId, eventDetails);
     }
 
     @Override

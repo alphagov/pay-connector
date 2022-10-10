@@ -9,13 +9,12 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.agreement.PaymentInstrumentType;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
 
-    public PaymentInstrumentCreated(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public PaymentInstrumentCreated(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -25,7 +24,7 @@ public class PaymentInstrumentCreated extends PaymentInstrumentEvent {
                 gatewayAccount.isLive(),
                 paymentInstrument.getExternalId(),
                 new PaymentInstrumentCreatedDetails(paymentInstrument, PaymentInstrumentType.CARD),
-                ZonedDateTime.ofInstant(paymentInstrument.getCreatedDate(), ZoneOffset.UTC)
+                paymentInstrument.getCreatedDate()
         );
     }
 

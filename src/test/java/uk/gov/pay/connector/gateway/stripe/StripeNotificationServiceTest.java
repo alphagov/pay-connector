@@ -29,13 +29,13 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.pay.connector.queue.payout.Payout;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
@@ -45,7 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -71,7 +70,6 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_CREATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
@@ -302,7 +300,7 @@ class StripeNotificationServiceTest {
             assertTrue(notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES));
 
             verify(mockPayoutEmitterService).emitPayoutEvent(stripeNotificationType.getEventClass().get(),
-                    toUTCZonedDateTime(1567622603L), "connect_account_id", payout);
+                    Instant.ofEpochSecond(1567622603L), "connect_account_id", payout);
 
             reset(mockPayoutEmitterService);
         });

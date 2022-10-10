@@ -1,9 +1,8 @@
 package uk.gov.pay.connector.events.model.dispute;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
@@ -17,7 +16,7 @@ class DisputeIncludedInPayoutTest {
         var disputeExternalId = "dispute-id";
         var gatewayPayoutId = "payout-id";
         String eventDateStr = "2020-05-10T10:30:00.000000Z";
-        var event = new DisputeIncludedInPayout(disputeExternalId, gatewayPayoutId, ZonedDateTime.parse(eventDateStr));
+        var event = new DisputeIncludedInPayout(disputeExternalId, gatewayPayoutId, Instant.parse(eventDateStr));
 
         var json = event.toJsonString();
 

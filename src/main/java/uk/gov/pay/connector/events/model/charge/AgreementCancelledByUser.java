@@ -3,19 +3,17 @@ package uk.gov.pay.connector.events.model.charge;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class AgreementCancelledByUser extends AgreementEvent {
 
-    public AgreementCancelledByUser(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public AgreementCancelledByUser(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static AgreementCancelledByUser from(AgreementEntity agreement, AgreementCancelRequest agreementCancelRequest, ZonedDateTime timestamp) {
+    public static AgreementCancelledByUser from(AgreementEntity agreement, AgreementCancelRequest agreementCancelRequest, Instant timestamp) {
         return new AgreementCancelledByUser(
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),

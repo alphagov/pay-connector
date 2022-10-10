@@ -2,15 +2,13 @@ package uk.gov.pay.connector.events.model.charge;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class AgreementCreated extends AgreementEvent {
 
-    public AgreementCreated(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public AgreementCreated(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
@@ -26,7 +24,7 @@ public class AgreementCreated extends AgreementEvent {
                         agreement.getUserIdentifier(),
                         AgreementStatus.CREATED
                 ),
-                ZonedDateTime.ofInstant(agreement.getCreatedDate(), ZoneOffset.UTC)
+                agreement.getCreatedDate()
         );
     }
 

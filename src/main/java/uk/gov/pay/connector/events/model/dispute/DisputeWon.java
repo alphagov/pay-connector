@@ -3,15 +3,15 @@ package uk.gov.pay.connector.events.model.dispute;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeWonEventDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class DisputeWon extends DisputeEvent {
     public DisputeWon(String resourceExternalId, String parentResourceExternalId, String serviceId,
-                      Boolean live, DisputeWonEventDetails eventDetails, ZonedDateTime eventDate) {
+                      Boolean live, DisputeWonEventDetails eventDetails, Instant eventDate) {
         super(resourceExternalId, parentResourceExternalId, serviceId, live, eventDetails, eventDate);
     }
 
-    public static DisputeWon from(String disputeExternalId, ZonedDateTime eventDate,
+    public static DisputeWon from(String disputeExternalId, Instant eventDate,
                                   LedgerTransaction transaction) {
         return new DisputeWon(disputeExternalId,
                 transaction.getTransactionId(),

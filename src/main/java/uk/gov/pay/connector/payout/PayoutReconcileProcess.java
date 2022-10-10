@@ -131,7 +131,7 @@ public class PayoutReconcileProcess {
         Payout payoutObject = (Payout) balanceTransaction.getSourceObject();
         StripePayout stripePayout = StripePayout.from(payoutObject);
 
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated().toInstant(),
                 payoutReconcileMessage.getConnectAccountId(), stripePayout);
 
         emitTerminalPayoutEvent(payoutReconcileMessage.getConnectAccountId(), stripePayout);
@@ -148,7 +148,7 @@ public class PayoutReconcileProcess {
         if (stripePayoutStatus.isTerminal()) {
             Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripePayoutStatus.getEventClass();
             mayBeEventClass.ifPresentOrElse(
-                    eventClass -> payoutEmitterService.emitPayoutEvent(eventClass, stripePayout.getCreated(),
+                    eventClass -> payoutEmitterService.emitPayoutEvent(eventClass, stripePayout.getCreated().toInstant(),
                             connectAccountId, stripePayout),
                     () -> LOGGER.warn("Event class is not available for a payout in terminal status. " +
                                     "gateway_payout_id [{}], connect_account_id [{}], status [{}]",
@@ -229,7 +229,7 @@ public class PayoutReconcileProcess {
     private void emitDisputeEvent(PayoutReconcileMessage payoutReconcileMessage, String disputeExternalId) {
         var disputeEvent = new DisputeIncludedInPayout(disputeExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate());
+                payoutReconcileMessage.getCreatedDate().toInstant());
         emitEvent(disputeEvent, payoutReconcileMessage, disputeExternalId);
 
         LOGGER.info(format("Emitted event for dispute [%s] included in payout [%s]",
