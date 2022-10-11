@@ -19,6 +19,6 @@ class StripeClientWrapper {
                 "payout", payoutId,
                 "expand", List.of("data.source", "data.source.source_transfer"));
         
-        return BalanceTransaction.list(params, requestOptions).autoPagingIterable();
+        return BalanceTransaction.list(params, requestOptions).autoPagingIterable(params, requestOptions);
     }
 }
