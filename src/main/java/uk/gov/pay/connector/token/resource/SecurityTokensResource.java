@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @Path("/")
 @Tag(name = "Secure token")
@@ -60,6 +62,7 @@ public class SecurityTokensResource {
                              @PathParam("chargeTokenId") String chargeTokenId) {
         logger.debug("get token {}", chargeTokenId);
         return tokenDao.findByTokenId(chargeTokenId)
+                .filter(tokenEntity -> tokenEntity.getChargeEntity().getAuthorisationMode() != MOTO_API)
                 .map(tokenEntity -> new TokenResponse(tokenEntity.isUsed(), tokenEntity.getChargeEntity()))
                 .map(ResponseUtil::successResponseWithEntity)
                 .orElseGet(() -> notFoundResponse("Token invalid!"));
@@ -81,6 +84,7 @@ public class SecurityTokensResource {
         logger.debug("get charge for token {}", chargeTokenId);
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
         return chargeOpt
+                .filter(chargeEntity -> chargeEntity.getAuthorisationMode() != MOTO_API)
                 .map(ResponseUtil::successResponseWithEntity)
                 .orElseGet(() -> notFoundResponse("Token invalid!"));
     }

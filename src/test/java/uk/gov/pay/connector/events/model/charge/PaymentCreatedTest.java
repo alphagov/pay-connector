@@ -9,6 +9,8 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
@@ -22,16 +24,20 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @SuppressWarnings("PMD.UnusedPrivateMethod")
-public class PaymentCreatedTest {
+class PaymentCreatedTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
-    
+
     private final String AGREEMENT_EXTERNAL_ID = "12345678901234567890123456";
 
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
@@ -87,6 +93,28 @@ public class PaymentCreatedTest {
     }
 
     @Test
+    void serializesPayloadWithCardDetailsAndEmailForMotoAPIPaymentInAuthorisedState() throws JsonProcessingException {
+        ChargeEventEntity chargeEventCreated = ChargeEventEntityFixture.aValidChargeEventEntity().withChargeStatus(CREATED).build();
+        ChargeEventEntity chargeEventAuthorisationSuccess = ChargeEventEntityFixture.aValidChargeEventEntity().withChargeStatus(AUTHORISATION_SUCCESS).build();
+
+        chargeEntityFixture
+                .withEmail("test@email.gov.uk")
+                .withAuthorisationMode(MOTO_API)
+                .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
+                .withEvents(List.of(chargeEventCreated, chargeEventAuthorisationSuccess))
+                .withStatus(CAPTURED);
+
+        var paymentCreatedEvent = preparePaymentCreatedEvent();
+
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_type", equalTo("PAYMENT_CREATED")));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.authorisation_mode", equalTo("moto_api")));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+
+        assertContainsCardDetails(paymentCreatedEvent);
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.email", equalTo("test@email.gov.uk")));
+    }
+
+    @Test
     void serializesPayloadWithServiceId() throws JsonProcessingException {
         chargeEntityFixture
                 .withServiceId("test-service-id");
@@ -114,7 +142,7 @@ public class PaymentCreatedTest {
     @Test
     void serializesPayloadWithAgreementIdAndPaymentInstrumentId() throws JsonProcessingException {
         PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-26T11:22:25Z")).build();
-        
+
         chargeEntityFixture
                 .withAgreementId(AGREEMENT_EXTERNAL_ID)
                 .withPaymentInstrument(paymentInstrumentEntity);
