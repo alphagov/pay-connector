@@ -10,10 +10,12 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -221,6 +223,36 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         Optional<GatewayAccountCredentialsEntity> mayBeActiveCredential = gatewayAccountCredentialsEntities
                 .stream()
                 .filter(entity -> entity.getState() == ACTIVE)
+                .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
+
+        if (mayBeActiveCredential.isPresent()) {
+            return mayBeActiveCredential;
+        } else {
+            LOGGER.warn("Gateway account [id={}] has multiple credentials but no active credential found", getId(),
+                    kv(GATEWAY_ACCOUNT_ID, getId()),
+                    kv(GATEWAY_ACCOUNT_TYPE, getType())
+            );
+
+            return gatewayAccountCredentialsEntities
+                    .stream()
+                    .filter(entity -> entity.getState() != RETIRED)
+                    .min(comparing(GatewayAccountCredentialsEntity::getCreatedDate))
+                    .or(() -> getGatewayAccountCredentials().stream().findFirst());
+        }
+    }
+
+    @JsonIgnore
+    public Optional<GatewayAccountCredentialsEntity> getCurrentOrActiveGatewayAccountCredential(AuthorisationMode authorisationMode) {
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
+        if (getGatewayAccountCredentials().size() == 1) {
+            return Optional.of(gatewayAccountCredentialsEntities.get(0));
+        }
+
+        GatewayAccountCredentialState filterState = authorisationMode == AuthorisationMode.AGREEMENT ? GatewayAccountCredentialState.ACTIVE_MOTO : GatewayAccountCredentialState.ACTIVE;
+
+        Optional<GatewayAccountCredentialsEntity> mayBeActiveCredential = gatewayAccountCredentialsEntities
+                .stream()
+                .filter(entity -> entity.getState() == filterState)
                 .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate));
 
         if (mayBeActiveCredential.isPresent()) {

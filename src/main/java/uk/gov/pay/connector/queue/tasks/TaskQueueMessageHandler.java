@@ -73,6 +73,9 @@ public class TaskQueueMessageHandler {
                         var taskData = objectMapper.readValue(taskMessage.getTask().getData(), PaymentTaskData.class);
                         MDC.put(PAYMENT_EXTERNAL_ID, taskData.getPaymentExternalId());
                         LOGGER.info("Processing [{}] task.", taskType.getName());
+                        
+                        // if everything happens too quickly the transaction creating the charge may not yet have completed by the time the job runs(?)
+                        Thread.sleep(1000);
                         authoriseWithUserNotPresentHandler.process(taskData.getPaymentExternalId());
                         break;
                     default:

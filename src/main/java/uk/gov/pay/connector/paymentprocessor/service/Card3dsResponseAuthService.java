@@ -15,10 +15,12 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 
 import javax.inject.Inject;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -120,13 +122,15 @@ public class Card3dsResponseAuthService {
                 oldChargeStatus,
                 newStatus);
 
+
         ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(
                 chargeExternalId,
                 newStatus,
                 AUTHORISATION_3DS,
                 transactionId.orElse(null),
                 operationResponse.getGateway3dsRequiredParams().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity).orElse(null),
-                operationResponse.getProviderSessionIdentifier().orElse(null)
+                operationResponse.getProviderSessionIdentifier().orElse(null),
+                operationResponse.getGatewayRecurringAuthToken().orElse(null)
         );
 
         var worldPay3dsOrFlexLogMessage = integration3dsType(auth3dsResult, updatedCharge);

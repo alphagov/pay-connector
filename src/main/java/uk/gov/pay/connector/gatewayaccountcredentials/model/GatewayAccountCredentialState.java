@@ -5,5 +5,6 @@ public enum GatewayAccountCredentialState {
     ENTERED,
     VERIFIED_WITH_LIVE_PAYMENT,
     ACTIVE,
+    ACTIVE_MOTO,
     RETIRED;
 }

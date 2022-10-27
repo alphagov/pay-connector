@@ -35,6 +35,29 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private boolean exemptionEngineEnabled;
         private int integrationVersion3ds;
 
+        private boolean setUpPaymentInstrument;
+        private boolean authModeAgreement;
+        private String paymentTokenId;
+        private String paymentInstrumentExternalId;
+        private String agreementId;
+        private String schemeTransactionIdentifier;
+
+        public String getSchemeTransactionIdentifier() {
+            return schemeTransactionIdentifier;
+        }
+
+        public void setSchemeTransactionIdentifier(String schemeTransactionIdentifier) {
+            this.schemeTransactionIdentifier = schemeTransactionIdentifier;
+        }
+
+        public String getAgreementId() {
+            return agreementId;
+        }
+
+        public void setAgreementId(String agreementId) {
+            this.agreementId = agreementId;
+        }
+
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
         }
@@ -140,6 +163,38 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setExemptionEngineEnabled(boolean exemptionEngineEnabled) {
             this.exemptionEngineEnabled = exemptionEngineEnabled;
+        }
+
+        public boolean isSetUpPaymentInstrument() {
+            return setUpPaymentInstrument;
+        }
+
+        public void setSetUpPaymentInstrument(boolean setUpPaymentInstrument) {
+            this.setUpPaymentInstrument = setUpPaymentInstrument;
+        }
+
+        public boolean isAuthModeAgreement() {
+            return authModeAgreement;
+        }
+
+        public void setAuthModeAgreement(boolean authModeAgreement) {
+            this.authModeAgreement = authModeAgreement;
+        }
+
+        public String getPaymentTokenId() {
+            return paymentTokenId;
+        }
+
+        public void setPaymentTokenId(String paymentTokenId) {
+            this.paymentTokenId = paymentTokenId;
+        }
+
+        public String getPaymentInstrumentExternalId() {
+            return paymentInstrumentExternalId;
+        }
+
+        public void setPaymentInstrumentExternalId(String paymentInstrumentExternalId) {
+            this.paymentInstrumentExternalId = paymentInstrumentExternalId;
         }
     }
 
@@ -262,6 +317,36 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withPaResponse3ds(String paResponse) {
         worldpayTemplateData.setPaResponse3ds(paResponse);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withSetUpPaymentInstrument(boolean setUpPaymentInstrument) {
+        worldpayTemplateData.setSetUpPaymentInstrument(setUpPaymentInstrument);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPaymentInstrumentExternalId(String paymentInstrumentExternalId) {
+        worldpayTemplateData.setPaymentInstrumentExternalId(paymentInstrumentExternalId);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withAuthModeAgreement(boolean authModeAgreement) {
+        worldpayTemplateData.setAuthModeAgreement(authModeAgreement);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPaymentTokenId(String paymentTokenId) {
+        worldpayTemplateData.setPaymentTokenId(paymentTokenId);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withAgreementId(String agreementId) {
+        worldpayTemplateData.setAgreementId(agreementId);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withSchemeTransactionIdentifier(String schemeTransactionIdentifier) {
+        worldpayTemplateData.setSchemeTransactionIdentifier(schemeTransactionIdentifier);
         return this;
     }
 

@@ -25,7 +25,11 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
                 other.getReference(),
                 other.getGovUkPayPaymentId(),
                 other.getGatewayCredentials(),
-                other.getGatewayAccount());
+                other.getGatewayAccount(),
+                other.isSavePaymentInstrumentToAgreement(),
+                other.getAuthorisationMode(),
+                other.getPaymentInstrument().orElse(null),
+                other.getAgreementId());
         this.authCardDetails = authCardDetails;
     }
 

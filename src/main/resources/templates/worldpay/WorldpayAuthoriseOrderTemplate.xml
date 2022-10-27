@@ -7,6 +7,14 @@
             <description>${description?xml}</description>
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
+                <#if authModeAgreement?? && paymentTokenId??>
+                <TOKEN-SSL tokenScope="shopper">
+                    <paymentTokenID>${paymentTokenId}</paymentTokenID>
+                </TOKEN-SSL>
+                <storedCredentials usage="USED" merchantInitiatedReason="UNSCHEDULED">
+                   <schemeTransactionIdentifier>${schemeTransactionIdentifier}</schemeTransactionIdentifier>
+                </storedCredentials>
+                <#else>
                 <VISA-SSL>
                     <cardNumber>${authCardDetails.cardNo}</cardNumber>
                     <expiryDate>
@@ -31,6 +39,10 @@
                     </cardAddress>
                     </#if>
                 </VISA-SSL>
+                <#if setUpPaymentInstrument>
+                <storedCredentials usage="FIRST"/>
+                </#if>
+                </#if>
                 <#if requires3ds>
                 <#if payerIpAddress??>
                 <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>
@@ -39,12 +51,15 @@
                 </#if>
                 </#if>
             </paymentDetails>
-            <#if requires3ds || payerEmail??>
+            <#if requires3ds || payerEmail?? || setUpPaymentInstrument || authModeAgreement??>
             <shopper>
+                <#if setUpPaymentInstrument || authModeAgreement??>
+                <authenticatedShopperID>${agreementId?xml}</authenticatedShopperID>
+                </#if>
                 <#if payerEmail??>
                 <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
                 </#if>
-                <#if requires3ds>
+                <#if requires3ds && authModeAgreement == false>
                 <browser>
                     <acceptHeader>${authCardDetails.acceptHeader?xml}</acceptHeader>
                     <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
@@ -54,6 +69,11 @@
                 </browser>
                 </#if>
             </shopper>
+            </#if>
+            <#if setUpPaymentInstrument>
+            <createToken tokenScope="shopper">
+                <tokenEventReference>${agreementId?xml}</tokenEventReference>
+            </createToken>
             </#if>
             <#if requires3ds>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>

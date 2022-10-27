@@ -1,12 +1,16 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -16,7 +20,7 @@ import static org.apache.commons.lang3.StringUtils.trim;
 
 @XmlRootElement(name = "paymentService")
 public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseCancelResponse, BaseInquiryResponse {
-
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Set<String> SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS = Set.of("REJECTED", "OUT_OF_SCOPE");
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
@@ -25,6 +29,20 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
 
+    @XmlPath("reply/orderStatus/token/tokenDetails/paymentTokenID/text()")
+    private String paymentTokenId;
+
+    // get transaction identifier to be passed with subsequent requests
+    // get "CONFLICT"/ "CREATED" status to check to see if we should be storing a new payment isntrument - if it's conflict don't save new payment instrument refer to a previous
+    // will need to think carefully about how that works across multiple gateway accounts/ services but I think we should be OK as the user is providing their details and getting through to auth
+    
+    // this is probably only provided _after_ auth
+    @XmlPath("reply/orderStatus/payment/schemeResponse/transactionIdentifier/text()")
+    private String schemeTransactionIdentifier;
+    
+    @XmlPath("reply/orderStatus/token/tokenDetails/@tokenEvent")
+    private String tokenEvent;
+    
     @XmlPath("reply/orderStatus/payment/lastEvent/text()")
     private String lastEvent;
 
@@ -202,6 +220,36 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return Optional.empty();
     }
 
+    @Override
+    public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
+        // we only want to actually create the payment instrument if this is a new token to worldpay, 
+        // otherwise this card has already been used to set up a token (we've likely received "CONFLICT") and we should 
+        // be using that payment instrument
+        
+        // if that's the case we probably want to _lookup_ what that payment instrument is
+//        if (tokenEvent != null && tokenEvent.equals("NEW")) {
+            
+//        }
+        logger.info("Scheme transaction identifier from response {}", schemeTransactionIdentifier);
+        logger.info("Payment token ID from response {}", paymentTokenId);
+        logger.info("Token event from response {}", tokenEvent);
+
+        Map<String, String> recurringAuthToken = new HashMap<>();
+        Optional.ofNullable(paymentTokenId).ifPresent(paymentTokenId -> recurringAuthToken.put("payment_token_id", paymentTokenId));
+        
+        Optional.ofNullable(schemeTransactionIdentifier).ifPresent(schemeTransactionIdentifier -> recurringAuthToken.put("scheme_transaction_identifier", schemeTransactionIdentifier));
+        
+        // for now only return anything if we got a payment token id
+        if (paymentTokenId != null) {
+            return Optional.of(recurringAuthToken);
+        } else {
+            return Optional.empty();
+        }
+//        return Optional.ofNullable(paymentTokenId).map(paymentTokenId ->
+//                Map.of("payment_token_id", paymentTokenId)
+//        );
+    }
+
     private boolean is3dsVersionOneRequired() {
         return issuerUrl != null && paRequest != null;
     }
@@ -255,7 +303,27 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (isNotBlank(getErrorMessage())) {
             joiner.add("error: " + getErrorMessage());
         }
+        if (isNotBlank(getPaymentTokenId())) {
+            joiner.add("payment token id: " + getPaymentTokenId());
+        }
+        if (isNotBlank(getSchemeTransactionIdentifier())) {
+            joiner.add("scheme transaction identifier: " + getSchemeTransactionIdentifier());
+        }
+        if (isNotBlank(getTokenEvent())) {
+            joiner.add("token event: " + getTokenEvent());
+        }
         return joiner.toString();
     }
 
+    public String getPaymentTokenId() {
+        return paymentTokenId;
+    }
+
+    public String getSchemeTransactionIdentifier() {
+        return schemeTransactionIdentifier;
+    }
+
+    public String getTokenEvent() {
+        return tokenEvent;
+    }
 }

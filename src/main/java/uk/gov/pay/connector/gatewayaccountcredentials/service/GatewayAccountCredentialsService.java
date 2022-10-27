@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExi
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
@@ -39,6 +40,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE_MOTO;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
@@ -207,8 +209,51 @@ public class GatewayAccountCredentialsService {
         return credentialsInState.get(0);
     }
 
+    public GatewayAccountCredentialsEntity getUsableCredentials(GatewayAccountEntity gatewayAccountEntity, String paymentProvider, AuthorisationMode authorisationMode) {
+        List<GatewayAccountCredentialsEntity> credentialsForProvider = gatewayAccountEntity.getGatewayAccountCredentials()
+                .stream()
+                .filter(gatewayAccountCredentialsEntity -> gatewayAccountCredentialsEntity.getPaymentProvider().equals(paymentProvider))
+                .collect(Collectors.toList());
+
+        if (credentialsForProvider.isEmpty()) {
+            throw new NoCredentialsExistForProviderException(paymentProvider);
+        }
+
+        List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider
+                .stream()
+                .filter(gatewayAccountCredentialsEntity -> USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()) || ACTIVE_MOTO.equals(gatewayAccountCredentialsEntity.getState()))
+                .collect(Collectors.toList());
+
+        if (credentialsInState.isEmpty()) {
+            throw new NoCredentialsInUsableStateException();
+        }
+        if (credentialsInState.size() > 2) {
+            throw new WebApplicationException(badRequestResponse(Collections.singletonList("Multiple usable credentials exist for payment provider [%s], unable to determine which to use.")));
+        }
+        
+        // try and return the appropriate credential following some moto-credentials schema
+        LOGGER.info("Selecting which gateway account credential to use based on the auth mode {}", authorisationMode);
+        if (authorisationMode == AuthorisationMode.AGREEMENT) {
+            return credentialsInState.stream().filter(gatewayAccountCredentialsEntity -> ACTIVE_MOTO.equals(gatewayAccountCredentialsEntity.getState())).collect(Collectors.toList()).get(0);
+        } else {
+            return credentialsInState.stream().filter(gatewayAccountCredentialsEntity -> USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState())).collect(Collectors.toList()).get(0);
+        }
+    }
+
     public GatewayAccountCredentialsEntity getCurrentOrActiveCredential(GatewayAccountEntity gatewayAccountEntity) {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
+                .orElseThrow(() -> new WebApplicationException(
+                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]", gatewayAccountEntity.getId()))));
+
+        if (CREATED.equals(gatewayAccountCredentialsEntity.getState())) {
+            throw new NoCredentialsInUsableStateException();
+        }
+
+        return gatewayAccountCredentialsEntity;
+    }
+
+    public GatewayAccountCredentialsEntity getCurrentOrActiveCredential(GatewayAccountEntity gatewayAccountEntity, AuthorisationMode authorisationMode) {
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential(authorisationMode)
                 .orElseThrow(() -> new WebApplicationException(
                         serviceErrorResponse(format("Active or current credential not found for gateway account [%s]", gatewayAccountEntity.getId()))));
 

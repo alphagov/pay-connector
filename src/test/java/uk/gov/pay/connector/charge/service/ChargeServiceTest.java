@@ -407,7 +407,7 @@ class ChargeServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
 
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
-                null, null);
+                null, null, null);
 
         verify(chargeSpy, never()).setGatewayTransactionId(anyString());
         verify(chargeSpy).setStatus(AUTHORISATION_REJECTED);
@@ -424,7 +424,7 @@ class ChargeServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
         
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
-                null, null);
+                null, null, null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
@@ -444,7 +444,7 @@ class ChargeServiceTest {
         when(mockedAuth3dsRequiredEntity.getThreeDsVersion()).thenReturn("2.1.0");
         
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
-                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"));
+                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"), null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);

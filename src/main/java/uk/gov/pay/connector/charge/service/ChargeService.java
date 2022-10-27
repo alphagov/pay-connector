@@ -275,10 +275,10 @@ public class ChargeService {
 
             GatewayAccountCredentialsEntity gatewayAccountCredential;
             if (chargeRequest.getPaymentProvider() != null) {
-                gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentialsForProvider(
-                        gatewayAccount, chargeRequest.getPaymentProvider());
+                gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentials(
+                        gatewayAccount, chargeRequest.getPaymentProvider(), chargeRequest.getAuthorisationMode());
             } else {
-                gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
+                gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount, chargeRequest.getAuthorisationMode());
             }
 
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
@@ -669,13 +669,27 @@ public class ChargeService {
                                                          OperationType operationType,
                                                          String transactionId,
                                                          Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                         ProviderSessionIdentifier sessionIdentifier) {
+                                                         ProviderSessionIdentifier sessionIdentifier,
+                                                         Map<String, String> recurringAuthToken) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
                 setTransactionId(charge, transactionId);
-                transitionChargeState(charge, status);
                 Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
                 Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
+
+                LOGGER.info("Figuring out if I should save recurring auth token");
+                if (charge.isSavePaymentInstrumentToAgreement()) {
+                    LOGGER.info("Save payment instrument is true, NOT saving recurring auth token {}", recurringAuthToken);
+                    try {
+                        Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
+                    } catch (Exception e) {
+                        LOGGER.info("Failed {}", e.getMessage());
+                        LOGGER.error("Failed to create payment instrument", e);
+                        
+                    }
+                }
+                transitionChargeState(charge, status);
+
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());

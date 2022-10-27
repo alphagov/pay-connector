@@ -234,6 +234,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return worldpayAuthoriseHandler.authoriseWithoutExemption(request);
     }
 
+    @Override
+    public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+        return worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+    }
+
     private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
         if (!exemptionEngineEnabled) {
             updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);
@@ -303,7 +308,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
 
             return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId(),
-                    authoriseResponse.getGatewayParamsFor3ds().orElse(null), gatewayResponse.getSessionIdentifier().orElse(null));
+                    authoriseResponse.getGatewayParamsFor3ds().orElse(null), gatewayResponse.getSessionIdentifier().orElse(null), authoriseResponse.getGatewayRecurringAuthToken().orElse(null));
         } catch (GatewayException e) {
             return Gateway3DSAuthorisationResponse.of(e.getMessage(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
         }
