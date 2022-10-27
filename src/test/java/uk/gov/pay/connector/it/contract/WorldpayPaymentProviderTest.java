@@ -4,10 +4,9 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -58,9 +57,10 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -76,8 +76,8 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
-public class WorldpayPaymentProviderTest {
+@Disabled("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
+class WorldpayPaymentProviderTest {
 
     private static final String MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS = "3D";
     private static final String MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE = "3DS_V2_CHALLENGE_IDENTIFIED";
@@ -97,8 +97,8 @@ public class WorldpayPaymentProviderTest {
     private ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
     private AuthorisationConfig mockAuthorisationConfig = mock(AuthorisationConfig.class);
 
-    @Before
-    public void checkThatWorldpayIsUp() throws IOException {
+    @BeforeEach
+    void checkThatWorldpayIsUp() throws IOException {
         try {
             validCredentials = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
@@ -110,7 +110,7 @@ public class WorldpayPaymentProviderTest {
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
         } catch (IllegalStateException ex) {
-            Assume.assumeTrue("Ignoring test since credentials not configured", false);
+            assumeTrue(false, "Ignoring test since credentials not configured");
         }
 
         new URL(gatewayUrlMap().get(TEST.toString()).toString()).openConnection().connect();
@@ -157,7 +157,7 @@ public class WorldpayPaymentProviderTest {
     }
     
     @Test
-    public void submitAuthForSoftDecline() {
+    void submitAuthForSoftDecline() {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -177,7 +177,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void submitAuthRequestWithExemptionEngineFlag() {
+    void submitAuthRequestWithExemptionEngineFlag() {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -200,7 +200,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void submit3DS2FlexAuthRequest() {
+    void submit3DS2FlexAuthRequest() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         var authCardDetails = anAuthCardDetails().withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString()).build();
         ChargeEntity charge = createChargeEntity();
@@ -210,7 +210,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void submit3DS2FlexAuthRequest_requiresChallenge() {
+    void submit3DS2FlexAuthRequest_requiresChallenge() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE)
@@ -230,7 +230,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchant() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchant() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         ChargeEntity charge = createChargeEntity();
@@ -240,7 +240,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(null).build();
         ChargeEntity charge = createChargeEntity();
@@ -250,7 +250,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantWithUsAddress() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithUsAddress() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         Address usAddress = new Address();
         usAddress.setLine1("125 Kingsway");
@@ -266,7 +266,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantWithCanadaAddress() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithCanadaAddress() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         Address canadaAddress = new Address();
         canadaAddress.setLine1("125 Kingsway");
@@ -282,7 +282,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
@@ -302,7 +302,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
@@ -323,7 +323,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         validGatewayAccountFor3ds.setSendPayerEmailToGateway(true);
@@ -353,7 +353,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs() {
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         validGatewayAccount.setRequires3ds(true);
@@ -392,14 +392,14 @@ public class WorldpayPaymentProviderTest {
      * It simply accepts anything as long as the request is well formed. (And ignores it silently)
      */
     @Test
-    public void shouldBeAbleToSendCaptureRequestForMerchant() {
+    void shouldBeAbleToSendCaptureRequestForMerchant() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         CaptureResponse response = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
     }
 
     @Test
-    public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() {
+    void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
 
@@ -425,7 +425,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
+    void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         ChargeEntity charge = createChargeEntity();
@@ -445,7 +445,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() {
+    void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() {
 
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
