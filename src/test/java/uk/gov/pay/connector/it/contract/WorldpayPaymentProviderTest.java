@@ -7,6 +7,9 @@ import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -49,6 +52,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.not;
@@ -61,6 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -155,9 +160,10 @@ class WorldpayPaymentProviderTest {
                 .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
                 .build();
     }
-    
-    @Test
-    void submitAuthForSoftDecline() {
+
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void submitAuthForSoftDecline(String cardBrand, String cardNumber) {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -165,6 +171,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         // card holder of "EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED" elicits a soft decline response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
         var authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder("EE.REJECTED_ISSUER_REJECTED.SOFT_DECLINED")
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
@@ -176,8 +183,9 @@ class WorldpayPaymentProviderTest {
         assertEquals(response.getBaseResponse().get().getLastEvent().get(), "AUTHORISED");
     }
 
-    @Test
-    void submitAuthRequestWithExemptionEngineFlag() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void submitAuthRequestWithExemptionEngineFlag(String cardBrand, String cardNumber) {
         validGatewayAccount.setRequires3ds(true);
         validGatewayAccount.setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
@@ -185,6 +193,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         // card holder of "EE.HONOURED_ISSUER_HONOURED.AUTHORISED" elicits an authorised response, see https://developer.worldpay.com/docs/wpg/scaexemptionservices/exemptionengine#testing-exemption-engine
         var authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder("EE.HONOURED_ISSUER_HONOURED.AUTHORISED")
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
@@ -199,20 +208,26 @@ class WorldpayPaymentProviderTest {
         assertEquals(response.getBaseResponse().get().getExemptionResponseReason(), "ISSUER_HONOURED");
     }
 
-    @Test
-    void submit3DS2FlexAuthRequest() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void submit3DS2FlexAuthRequest(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        var authCardDetails = anAuthCardDetails().withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString()).build();
+        var authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
+                .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
+                .build();
         ChargeEntity charge = createChargeEntity();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
-    @Test
-    void submit3DS2FlexAuthRequest_requiresChallenge() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersThatRequire3ds")
+    void submit3DS2FlexAuthRequest_requiresChallenge(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE)
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
@@ -229,28 +244,31 @@ class WorldpayPaymentProviderTest {
         });
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchant() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void shouldBeAbleToSendAuthorisationRequestForMerchant(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = anAuthCardDetails().build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).build();
         ChargeEntity charge = createChargeEntity();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(null).build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(null).build();
         ChargeEntity charge = createChargeEntity();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantWithUsAddress() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithUsAddress(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         Address usAddress = new Address();
         usAddress.setLine1("125 Kingsway");
@@ -258,15 +276,16 @@ class WorldpayPaymentProviderTest {
         usAddress.setPostcode("90210");
         usAddress.setCity("Washington D.C.");
         usAddress.setCountry("US");
-        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(usAddress).build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(usAddress).build();
         ChargeEntity charge = createChargeEntity();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantWithCanadaAddress() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantWithCanadaAddress(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         Address canadaAddress = new Address();
         canadaAddress.setLine1("125 Kingsway");
@@ -274,17 +293,19 @@ class WorldpayPaymentProviderTest {
         canadaAddress.setPostcode("X0A0A0");
         canadaAddress.setCity("Arctic Bay");
         canadaAddress.setCountry("CA");
-        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(canadaAddress).build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(canadaAddress).build();
         ChargeEntity charge = createChargeEntity();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersThatRequire3ds")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .build();
 
@@ -301,10 +322,12 @@ class WorldpayPaymentProviderTest {
         });
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersThatRequire3ds")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .withAddress(null)
                 .build();
@@ -322,8 +345,9 @@ class WorldpayPaymentProviderTest {
         });
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersThatRequire3ds")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         validGatewayAccountFor3ds.setSendPayerEmailToGateway(true);
@@ -336,6 +360,7 @@ class WorldpayPaymentProviderTest {
                 .build();
 
         AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .build();
 
@@ -352,8 +377,9 @@ class WorldpayPaymentProviderTest {
         });
     }
 
-    @Test
-    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs() {
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersThatRequire3ds")
+    void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         validGatewayAccount.setRequires3ds(true);
@@ -368,6 +394,7 @@ class WorldpayPaymentProviderTest {
                 .build();
 
         AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardNo(cardNumber)
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE)
                 .withWorldpay3dsFlexDdcResult(null)
                 .build();
@@ -474,6 +501,38 @@ class WorldpayPaymentProviderTest {
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         assertFalse(paymentProvider.authorise(request, charge).getBaseResponse().isPresent());
+    }
+
+    // https://developerengine.fisglobal.com/apis/wpg/reference/testvalues#test-card-numbers
+    // China UnionPay does not seem to be enabled on at least some Worldpay test accounts
+    static Stream<Arguments> worldpayTestCardNumbers() {
+        return Stream.of(
+                arguments("American Express", "343434343434343"),
+                arguments("Diners Club", "36700102000000"),
+                arguments("Diners Club", "36148900647913"),
+                arguments("Discover", "6011000400000000"),
+                arguments("JCB", "3528000700000000"),
+                arguments("Maestro", "6759649826438453"),
+                arguments("Mastercard", "5555555555554444"),
+                arguments("Mastercard", "5454545454545454"),
+                arguments("Mastercard", "2221000000000009"),
+                arguments("Mastercard Debit", "5163613613613613"),
+                arguments("Visa", "4444333322221111"),
+                arguments("Visa", "4911830000000"),
+                arguments("Visa", "4917610000000000"),
+                arguments("Visa Debit", "4462030000000000"),
+                arguments("Visa Debit", "4917610000000000003"),
+                arguments("Visa Electron", "4917300800000000"),
+                arguments("Visa Purchasing", "4484070000000000")
+        );
+    }
+
+    // For at least some Worldpay test accounts, Diners Club and Discover
+    // cards never seem to require 3DS and instead authorise immediately
+    static Stream<Arguments> worldpayTestCardNumbersThatRequire3ds() {
+        return worldpayTestCardNumbers()
+                .filter(arguments -> !("Diners Club".equals(arguments.get()[0])))
+                .filter(arguments -> !("Discover".equals(arguments.get()[0])));
     }
 
     private ChargeEntity createChargeEntity() {
