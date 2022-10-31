@@ -97,7 +97,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
         charge.getAgreementId().ifPresent(builder::withAgreementId);
         charge.getPaymentInstrument().map(PaymentInstrumentEntity::getExternalId).ifPresent(builder::withPaymentInstrumentId);
 
-        if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
+        if (isAMotoAPIPayment(charge.getAuthorisationMode()) ||
+                (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge))) {
             addCardDetailsIfExist(charge, builder);
         }
 
@@ -110,6 +111,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
     private static boolean isInCreatedState(ChargeEntity charge) {
         return ChargeStatus.CREATED.equals(ChargeStatus.fromString(charge.getStatus()));
+    }
+
+    private static boolean isAMotoAPIPayment(AuthorisationMode chargeAuthorisationMode) {
+        return AuthorisationMode.MOTO_API == chargeAuthorisationMode;
     }
 
     private static boolean hasNotGoneThroughAuthorisation(ChargeEntity charge) {
@@ -420,12 +425,12 @@ public class PaymentCreatedEventDetails extends EventDetails {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
-        
+
         public Builder withCredentialExternalId(String credentialExternalId) {
             this.credentialExternalId = credentialExternalId;
             return this;
         }
-        
+
         public Builder withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
             return this;
