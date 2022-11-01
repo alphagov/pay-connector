@@ -11,7 +11,6 @@
     </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liquibase.version>4.17.1</liquibase.version>
         <dropwizard.version>2.1.4</dropwizard.version>
         <wiremock.version>2.34.0</wiremock.version>
         <eclipselink.version>2.7.11</eclipselink.version>
@@ -89,23 +88,6 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-migrations</artifactId>
             <version>${dropwizard.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.liquibase</groupId>
-                    <artifactId>liquibase-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>${liquibase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>jstl</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
