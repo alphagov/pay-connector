@@ -68,6 +68,10 @@ public class AuthorisationRequestSummaryStringifier {
         Optional.ofNullable(authorisationRequestSummary.ipAddress())
                 .map(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
 
+        if (authorisationRequestSummary.worldpayCardSsl() == AuthorisationRequestSummary.Presence.PRESENT) {
+            stringJoiner.add("using CARD-SSL");
+        }
+
         return stringJoiner.toString();
     }
 

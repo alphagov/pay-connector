@@ -1,23 +1,28 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.LocalDate;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
@@ -32,6 +37,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPEC
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS_CARD_SSL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
@@ -45,10 +51,14 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
+@RunWith(MockitoJUnitRunner.class)
 public class WorldpayOrderRequestBuilderTest {
 
     protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
     protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
+
+    @Mock
+    private CardAuthorisationGatewayRequest mockCardAuthorisationGatewayRequest;
 
     private AppleDecryptedPaymentData validApplePayData =
             anApplePayDecryptedPaymentData()
@@ -63,8 +73,9 @@ public class WorldpayOrderRequestBuilderTest {
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -85,8 +96,9 @@ public class WorldpayOrderRequestBuilderTest {
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .with3dsRequired(true)
                 .withAcceptHeader("text/html")
@@ -103,13 +115,39 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
+    public void shouldGenerateValidAuthoriseOrderRequestWhenAccountConfiguredToUseCardSsl() throws Exception {
+
+        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
+
+        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
+        authCardDetails.setUseCardSslForWorldpay(true);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .with3dsRequired(true)
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS_CARD_SSL), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
 
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
         AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -130,8 +168,9 @@ public class WorldpayOrderRequestBuilderTest {
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
         AuthCardDetails authCardDetails = getValidTestCard(usAddress);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .with3dsRequired(true)
                 .withAcceptHeader("text/html")
@@ -153,8 +192,9 @@ public class WorldpayOrderRequestBuilderTest {
         Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -175,8 +215,9 @@ public class WorldpayOrderRequestBuilderTest {
         Address address = new Address("123 & My Street", "This road -->", "SW8 > URR", "London !>", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -194,8 +235,9 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
         AuthCardDetails authCardDetails = getValidTestCard(null);
+        given(mockCardAuthorisationGatewayRequest.getAuthCardDetails()).willReturn(authCardDetails);
 
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder(mockCardAuthorisationGatewayRequest)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -13,13 +12,14 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private final Presence billingAddress;
     private final Presence dataFor3ds;
     private final Presence deviceDataCollectionResult;
+    private final Presence useCardSsl;
     private String ipAddress;
-    
 
     public WorldpayAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         deviceDataCollectionResult = authCardDetails.getWorldpay3dsFlexDdcResult().map(address -> PRESENT).orElse(NOT_PRESENT);
         dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.isRequires3ds()) ? PRESENT : NOT_PRESENT;
+        useCardSsl = authCardDetails.isUseCardSslForWorldpay() ? PRESENT : NOT_PRESENT;
         ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 
@@ -36,6 +36,11 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     @Override
     public Presence deviceDataCollectionResult() {
         return deviceDataCollectionResult;
+    }
+
+    @Override
+    public Presence worldpayCardSsl() {
+        return useCardSsl;
     }
 
     @Override
