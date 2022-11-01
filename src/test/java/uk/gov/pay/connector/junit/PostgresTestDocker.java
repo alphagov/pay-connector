@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.junit;
 
+import liquibase.Liquibase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import uk.gov.service.payments.commons.testing.db.PostgresContainer;
 
 import java.sql.Connection;
@@ -8,38 +12,32 @@ import java.sql.SQLException;
 import static java.sql.DriverManager.getConnection;
 
 final class PostgresTestDocker {
-
-    private static final String DB_NAME = "connector_tests";
     private static PostgresContainer container;
 
     static void getOrCreate() {
         try {
             if (container == null) {
-                container = new PostgresContainer();
-                createDatabase(DB_NAME);
+                container = new PostgresContainer("11.16");
+                createDatabase();
             }
         } catch (Exception e) {
             throw new PostgresTestDockerException(e);
         }
     }
     
-    private static void createDatabase(String dbName) {
+    private static void createDatabase() {
         final String dbUser = getDbUsername();
-
-        try (Connection connection = getConnection(getDbRootUri(), dbUser, getDbPassword())) {
-            connection.createStatement().execute("CREATE DATABASE " + dbName + " WITH owner=" + dbUser + " TEMPLATE postgres");
-            connection.createStatement().execute("GRANT ALL PRIVILEGES ON DATABASE " + dbName + " TO " + dbUser);
-        } catch (SQLException e) {
+        
+        try (Connection connection = getConnection(getDbUri(), dbUser, getDbPassword())) {
+            Liquibase migrator = new Liquibase("it-migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
+            migrator.update("");
+        }  catch (LiquibaseException | SQLException e) {
             throw new PostgresTestDockerException(e);
         }
     }
 
-    private static String getDbRootUri() {
-        return container.getConnectionUrl();
-    }
-
     static String getDbUri() {
-        return getDbRootUri() + DB_NAME;
+        return container.getConnectionUrl();
     }
 
     static String getDbPassword() {

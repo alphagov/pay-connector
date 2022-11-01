@@ -9,8 +9,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import uk.gov.pay.connector.rules.PostgresDockerRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.testing.db.PostgresDockerRule;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,13 +23,11 @@ abstract public class DaoITestBase {
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static GuicedTestEnvironment env;
+    
+    private static String CHANGE_LOG_FILE = "it-migrations.xml";
 
     static {
-        try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
+        postgres = new PostgresDockerRule("11.16");
     }
 
     @BeforeClass
@@ -52,7 +50,7 @@ abstract public class DaoITestBase {
         databaseTestHelper = new DatabaseTestHelper(Jdbi.create(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword()));
 
         try (Connection connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword())) {
-            Liquibase migrator = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
+            Liquibase migrator = new Liquibase(CHANGE_LOG_FILE, new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
             migrator.update("");
         }
 
@@ -61,10 +59,9 @@ abstract public class DaoITestBase {
 
     @AfterClass
     public static void tearDown() {
-//        Connection connection;
         try {
             Connection connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword());
-            Liquibase migrator = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
+            Liquibase migrator = new Liquibase(CHANGE_LOG_FILE, new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
             migrator.dropAll();
             connection.close();
         } catch (Exception e) {

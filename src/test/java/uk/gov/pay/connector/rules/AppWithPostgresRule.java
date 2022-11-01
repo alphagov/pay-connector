@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import com.spotify.docker.client.exceptions.DockerException;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
+import liquibase.Liquibase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
@@ -12,15 +15,20 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.junit.PostgresTestDockerException;
+import uk.gov.service.payments.commons.testing.db.PostgresDockerRule;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
+import static java.sql.DriverManager.getConnection;
 
 abstract public class AppWithPostgresRule implements TestRule {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
@@ -31,7 +39,7 @@ abstract public class AppWithPostgresRule implements TestRule {
     private final RuleChain rules;
 
     private DatabaseTestHelper databaseTestHelper;
-    private int wireMockPort = PortFactory.findFreePort();
+    private final int wireMockPort = PortFactory.findFreePort();
 
     public AppWithPostgresRule(ConfigOverride... configOverrides) {
         this("config/test-it-config.yaml", configOverrides);
@@ -39,11 +47,7 @@ abstract public class AppWithPostgresRule implements TestRule {
 
     public AppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
-        try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
+        postgres = new PostgresDockerRule("11.16");
 
         ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
         newConfigOverrides = overrideSqsConfig(newConfigOverrides);
@@ -64,8 +68,13 @@ abstract public class AppWithPostgresRule implements TestRule {
             public void evaluate() throws Throwable {
                 logger.info("Clearing database.");
                 appRule.getApplication().run("db", "drop-all", "--confirm-delete-everything", configFilePath);
-                appRule.getApplication().run("db", "migrate", configFilePath);
 
+                try (Connection connection = getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword())) {
+                    Liquibase migrator = new Liquibase("it-migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
+                    migrator.update("");
+                }  catch (LiquibaseException | SQLException e) {
+                    throw new PostgresTestDockerException(e);
+                }
                 restoreDropwizardsLogging();
 
                 DataSourceFactory dataSourceFactory = appRule.getConfiguration().getDataSourceFactory();

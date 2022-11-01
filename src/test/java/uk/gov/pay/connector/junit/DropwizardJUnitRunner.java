@@ -93,10 +93,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         configOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
 
         try {
-            Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
-            if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
-                createdApp.get().getApplication().run("db", "migrate", resourceFilePath(dropwizardConfigAnnotation.config()));
-            }
+            createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
         } catch (Exception e) {
             throw new DropwizardJUnitRunnerException(e);
         } finally {
