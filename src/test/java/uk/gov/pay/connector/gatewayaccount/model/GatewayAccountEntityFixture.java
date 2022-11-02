@@ -27,6 +27,8 @@ public final class GatewayAccountEntityFixture {
     private boolean requires3ds;
     private boolean allowGooglePay;
     private boolean allowApplePay;
+
+    private boolean allowMoto;
     private long corporateCreditCardSurchargeAmount;
     private long corporateDebitCardSurchargeAmount;
     private long corporatePrepaidDebitCardSurchargeAmount;
@@ -99,6 +101,11 @@ public final class GatewayAccountEntityFixture {
 
     public GatewayAccountEntityFixture withAllowApplePay(boolean allowApplePay) {
         this.allowApplePay = allowApplePay;
+        return this;
+    }
+
+    public GatewayAccountEntityFixture withAllowMoto(boolean allowMoto) {
+        this.allowMoto = allowMoto;
         return this;
     }
 
@@ -213,6 +220,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setRequiresAdditionalKycData(requiresAdditionalKycData);
         gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
         gatewayAccountEntity.setDisabled(disabled);
+        gatewayAccountEntity.setAllowMoto(allowMoto);
 
         if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {
