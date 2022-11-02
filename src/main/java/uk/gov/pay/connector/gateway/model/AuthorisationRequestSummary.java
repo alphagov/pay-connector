@@ -32,4 +32,8 @@ public interface AuthorisationRequestSummary {
         return null; 
     };
 
+    default Presence worldpayCardSsl() {
+        return NOT_APPLICABLE;
+    }
+
 }

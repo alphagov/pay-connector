@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -134,6 +135,8 @@ public class WorldpayPaymentProviderTest {
     private EventService eventService;
     @Captor
     private ArgumentCaptor<CardAuthorisationGatewayRequest> cardAuthorisationGatewayRequestArgumentCaptor;
+    @Mock
+    private ConnectorConfiguration connectorConfiguration;
 
     private WorldpayPaymentProvider worldpayPaymentProvider;
     private ChargeEntityFixture chargeEntityFixture;
@@ -141,6 +144,8 @@ public class WorldpayPaymentProviderTest {
 
     @BeforeEach
     void setup() {
+        when(connectorConfiguration.getWorldpayCardSslAccounts()).thenReturn(List.of("42"));
+
         worldpayPaymentProvider = new WorldpayPaymentProvider(
                 GATEWAY_URL_MAP,
                 authoriseClient,
@@ -153,7 +158,8 @@ public class WorldpayPaymentProviderTest {
                 new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class), mock(ConnectorConfiguration.class)),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 chargeDao,
-                eventService);
+                eventService,
+                connectorConfiguration);
 
         gatewayAccountEntity = aServiceAccount();
         chargeEntityFixture = aValidChargeEntity()
@@ -646,6 +652,38 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(result.getProviderSessionIdentifier().isPresent(), is(true));
         assertThat(result.getProviderSessionIdentifier().get(), is(ProviderSessionIdentifier.of("new-machine-cookie-value")));
+    }
+
+    @Test
+    void should_set_worldpay_card_ssl_flag_when_account_in_list() throws Exception {
+        gatewayAccountEntity.setId(42L);
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity,authCardDetails);
+
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
+
+        assertThat(authCardDetails.isUseCardSslForWorldpay(), is(true));
+    }
+
+    @Test
+    void should_not_set_worldpay_card_ssl_flag_when_account_not_in_list() throws Exception {
+        gatewayAccountEntity.setId(43L);
+        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity,authCardDetails);
+
+        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
+
+        assertThat(authCardDetails.isUseCardSslForWorldpay(), is(false));
     }
 
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {

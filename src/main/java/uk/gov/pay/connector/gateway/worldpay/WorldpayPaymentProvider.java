@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -92,6 +93,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final AuthorisationLogger authorisationLogger;
     private final ChargeDao chargeDao;
     private final EventService eventService;
+    private final List<String> cardSslAccounts;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -105,7 +107,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    AuthorisationService authorisationService,
                                    AuthorisationLogger authorisationLogger,
                                    ChargeDao chargeDao,
-                                   EventService eventService) {
+                                   EventService eventService,
+                                   ConnectorConfiguration configuration) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -120,6 +123,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.chargeDao = chargeDao;
         this.eventService = eventService;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        this.cardSslAccounts = configuration.getWorldpayCardSslAccounts();
     }
 
     @Override
@@ -191,6 +195,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+
+        if (cardSslAccounts.contains(String.valueOf(charge.getGatewayAccount().getId()))) {
+            request.getAuthCardDetails().setUseCardSslForWorldpay(true);
+        }
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         GatewayResponse<WorldpayOrderStatusResponse> response;
