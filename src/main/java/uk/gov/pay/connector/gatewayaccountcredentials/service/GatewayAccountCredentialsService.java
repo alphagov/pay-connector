@@ -37,6 +37,8 @@ import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
@@ -158,18 +160,38 @@ public class GatewayAccountCredentialsService {
         HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
         patchRequest.valueAsObject().forEach(updatableMap::put);
         gatewayAccountCredentialsEntity.setCredentials(updatableMap);
-        if (gatewayAccountCredentialsEntity.getState() == CREATED) {
-            updateStateForEnteredCredentials(gatewayAccountCredentialsEntity);
+        
+        updateStateForCredentials(gatewayAccountCredentialsEntity);
+    }
+
+    public void updateStateForCredentials(GatewayAccountCredentialsEntity credentialsEntity) {
+        if (credentialsEntity.getState() == CREATED) {
+            if (hasRequiredCredentials(credentialsEntity)) {
+                if (credentialsEntity.getGatewayAccountEntity().getGatewayAccountCredentials().size() == 1) {
+                    credentialsEntity.setState(ACTIVE);
+                    credentialsEntity.setActiveStartDate(Instant.now());
+                } else {
+                    credentialsEntity.setState(ENTERED);
+                }
+            }
         }
     }
 
-    private void updateStateForEnteredCredentials(GatewayAccountCredentialsEntity credentialsEntity) {
-        if (credentialsEntity.getGatewayAccountEntity().getGatewayAccountCredentials().size() == 1) {
-            credentialsEntity.setState(ACTIVE);
-            credentialsEntity.setActiveStartDate(Instant.now());
-        } else {
-            credentialsEntity.setState(ENTERED);
+    private boolean hasRequiredCredentials(GatewayAccountCredentialsEntity credentialsEntity) {
+        PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(credentialsEntity.getPaymentProvider());
+        GatewayAccountEntity gatewayAccountEntity = credentialsEntity.getGatewayAccountEntity();
+
+        if (credentialsEntity.getCredentials() == null ||
+                credentialsEntity.getCredentials().isEmpty()) {
+            return false;
         }
+
+        if (paymentGatewayName == WORLDPAY && LIVE.name().equalsIgnoreCase(gatewayAccountEntity.getType())) {
+            return gatewayAccountEntity.isAllowMoto() ||
+                    gatewayAccountEntity.getWorldpay3dsFlexCredentials().isPresent();
+        }
+
+        return true;
     }
 
     @Transactional

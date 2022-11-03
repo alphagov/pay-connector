@@ -51,6 +51,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
@@ -307,6 +308,145 @@ public class GatewayAccountCredentialsServiceTest {
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
 
             assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
+        }
+
+        @Test
+        void shouldNotChangeStateWhenCredentialsAreEmpty() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of()
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldNotChangeStateForWorldpayLiveAccount_whenCredentialsAreSetButNotFlexCredentials() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(null)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-merchant-id")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldNotChangeStateForWorldpayLiveAccount_whenCredentialsAreNotConfiguredButFlexCredentialsAre() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of()
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldChangeStateForWorldpayLiveAccount_whenBothCredentialsAreFlexCredentialsConfigured() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-merchant-id")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldChangeStateForWorldpayTestAccount_whenCredentialsAreConfiguredAndNotFlexCredentials() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(TEST)
+                    .withWorldpay3dsFlexCredentialsEntity(null)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-merchant-id")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldChangeStateForWorldpayLiveMOTOAccount_whenCredentialsAreConfiguredAndNotFlexCredentials() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withAllowMoto(true)
+                    .withWorldpay3dsFlexCredentialsEntity(null)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-merchant-id")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
         }
     }
 
