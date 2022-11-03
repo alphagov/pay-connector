@@ -7,7 +7,7 @@
             <description>This is the description</description>
             <amount currencyCode="GBP" exponent="2" value="500"/>
             <paymentDetails>
-                <VISA-SSL>
+                <CARD-SSL>
                     <cardNumber>4111111111111111</cardNumber>
                     <expiryDate>
                         <date month="12" year="2015"/>
@@ -23,7 +23,7 @@
                             <countryCode>US</countryCode>
                         </address>
                     </cardAddress>
-                </VISA-SSL>
+                </CARD-SSL>
             </paymentDetails>
         </order>
     </submit>

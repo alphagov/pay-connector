@@ -572,8 +572,7 @@ class WorldpayPaymentProviderTest {
                 new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration), 
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
                 mock(ChargeDao.class),
-                mock(EventService.class),
-                mock(ConnectorConfiguration.class));
+                mock(EventService.class));
     }
 
     private Map<String, URI> gatewayUrlMap() {

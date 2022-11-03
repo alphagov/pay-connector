@@ -7,7 +7,7 @@
             <description>${description?xml}</description>
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
-                <VISA-SSL>
+                <CARD-SSL>
                     <cardNumber>${authCardDetails.cardNo}</cardNumber>
                     <expiryDate>
                         <date month="${authCardDetails.endDate.twoDigitMonth?xml}" year="${authCardDetails.endDate.fourDigitYear?xml}"/>
@@ -30,7 +30,7 @@
                         </address>
                     </cardAddress>
                     </#if>
-                </VISA-SSL>
+                </CARD-SSL>
                 <#if requires3ds>
                 <#if payerIpAddress??>
                 <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>

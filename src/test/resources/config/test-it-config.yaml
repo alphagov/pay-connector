@@ -225,5 +225,3 @@ authorisation3dsConfig:
 authorisationConfig:
   asynchronousAuthTimeoutInMilliseconds: ${AUTH_READ_TIMEOUT_MILLISECONDS:-1000}
   synchronousAuthTimeoutInMilliseconds: ${SYNCHRONOUS_AUTH_READ_TIMEOUT_IN_MILLISECONDS::-10000}
-
-worldpayCardSslAccounts: ${WORLDPAY_CARD_SSL_ACCOUNTS:-42}
