@@ -4,12 +4,15 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.http.Fault;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.COOKIE;
+import static javax.ws.rs.core.HttpHeaders.SET_COOKIE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
@@ -44,6 +47,16 @@ public class WorldpayMockClient {
     public void mockAuthorisationRequires3ds() {
         String authorise3dsResponse = load(WORLDPAY_3DS_RESPONSE);
         paymentServiceResponse(authorise3dsResponse);
+    }
+
+    public void mockAuthorisationRequires3dsWithMachineCookie(String cookie) {
+        String authorise3dsResponse = load(WORLDPAY_3DS_RESPONSE);
+        paymentServiceResponseWithMachineCookie(authorise3dsResponse, cookie);
+    }
+
+    public void mockAuthorisationSuccess3dsMatchingOnMachineCookie(String cookie) {
+        String authorise3dsResponse = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        paymentServiceResponseStubWithMatchingCookieHeader(authorise3dsResponse, cookie);
     }
 
     public void mockAuthorisationFailure() {
@@ -137,6 +150,32 @@ public class WorldpayMockClient {
                         .willReturn(
                                 aResponse()
                                         .withHeader(CONTENT_TYPE, TEXT_XML)
+                                        .withStatus(200)
+                                        .withBody(responseBody)
+                        )
+        );
+    }
+
+    private void paymentServiceResponseStubWithMatchingCookieHeader(String responseBody, String cookie) {
+        wireMockServer.stubFor(
+                post(urlPathEqualTo(WORLDPAY_URL))
+                        .withHeader(COOKIE, matching("machine=" + cookie))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader(CONTENT_TYPE, TEXT_XML)
+                                        .withStatus(200)
+                                        .withBody(responseBody)
+                        )
+        );
+    }
+
+    private void paymentServiceResponseWithMachineCookie(String responseBody, String cookie) {
+        wireMockServer.stubFor(
+                post(urlPathEqualTo(WORLDPAY_URL))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader(CONTENT_TYPE, TEXT_XML)
+                                        .withHeader(SET_COOKIE, "machine=" + cookie)
                                         .withStatus(200)
                                         .withBody(responseBody)
                         )

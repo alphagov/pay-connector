@@ -9,16 +9,21 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.util.Map;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingXPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.HttpHeaders.COOKIE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -303,5 +308,46 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
+    }
+
+    @Test
+    public void shouldIncludeMachineCookieInTheRequestHeaderInThe3dsAuthorisationRequestToWorldpay() {
+        String machineCookie = "0ab20016";
+        String chargeExternalId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationRequires3dsWithMachineCookie(machineCookie);
+
+        givenSetup()
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeExternalId))
+                .then()
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeExternalId, AUTHORISATION_3DS_REQUIRED.toString());
+
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+
+        assertThat(charge.get("provider_session_id").toString(), is(machineCookie));
+
+        worldpayMockClient.mockAuthorisationSuccess3dsMatchingOnMachineCookie(machineCookie);
+
+        givenSetup()
+                .body(buildJsonWithPaResponse())
+                .post(authorise3dsChargeUrlFor(chargeExternalId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeExternalId, AUTHORISATION_SUCCESS.getValue());
+
+        wireMockServer.verify(
+                postRequestedFor(urlPathEqualTo(WORLDPAY_URL))
+                        .withHeader("Content-Type", equalTo("application/xml"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withHeader(COOKIE, matching("machine=" + machineCookie))
+                        .withRequestBody(matchingXPath(getMatchingXPath("paymentService", "merchantCode", "merchant-id")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("order", "orderCode", "ExampleOrder1")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("paResponse", "this-is-a-test-pa-response")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("session", "id", "charge-" + charge.get("id"))))
+        );
     }
 }

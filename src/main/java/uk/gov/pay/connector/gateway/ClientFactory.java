@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static org.glassfish.jersey.apache.connector.ApacheClientProperties.CONNECTION_MANAGER;
+import static org.glassfish.jersey.apache.connector.ApacheClientProperties.DISABLE_COOKIES;
 import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT;
 
 public class ClientFactory {
@@ -56,7 +57,8 @@ public class ClientFactory {
                 .using(new ApacheConnectorProvider())
                 .using(conf.getClientConfiguration())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
-                .withProperty(CONNECTION_MANAGER, 
+                .withProperty(DISABLE_COOKIES, true)
+                .withProperty(CONNECTION_MANAGER,
                         createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClient().getConnectionTTL()));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
