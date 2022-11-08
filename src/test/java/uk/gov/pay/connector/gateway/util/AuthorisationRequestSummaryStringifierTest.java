@@ -27,12 +27,11 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.exemptionRequest()).willReturn(PRESENT);
-        given(mockAuthorisationRequestSummary.worldpayCardSsl()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
-        assertThat(result, is(" with billing address and with 3DS data and without device data collection result and with exemption and with remote IP 1.1.1.1 and using CARD-SSL"));
+        assertThat(result, is(" with billing address and with 3DS data and without device data collection result and with exemption and with remote IP 1.1.1.1"));
     }
 
     @Test

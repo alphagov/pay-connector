@@ -171,11 +171,11 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                         .withRequestBody(matchingXPath(getMatchingXPathForText("description", "Test description")))
                         .withRequestBody(matchingXPath(getMatchingXPath("amount", "value", "6234")))
                         .withRequestBody(matchingXPath(getMatchingXPath("amount", "currencyCode", "GBP")))
-                        .withRequestBody(matchingXPath(getMatchingXPathForText("VISA-SSL//cardHolderName", "Scrooge McDuck")))
-                        .withRequestBody(matchingXPath(getMatchingXPathForText("VISA-SSL//cardNumber", "4242424242424242")))
-                        .withRequestBody(matchingXPath(getMatchingXPath("VISA-SSL//date", "month", "11")))
-                        .withRequestBody(matchingXPath(getMatchingXPath("VISA-SSL//date", "year", "2099")))
-                        .withRequestBody(matchingXPath(getMatchingXPathForText("VISA-SSL//cvc", "123")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cardHolderName", "Scrooge McDuck")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cardNumber", "4242424242424242")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("date", "month", "11")))
+                        .withRequestBody(matchingXPath(getMatchingXPath("date", "year", "2099")))
+                        .withRequestBody(matchingXPath(getMatchingXPathForText("cvc", "123")))
         );
     }
 

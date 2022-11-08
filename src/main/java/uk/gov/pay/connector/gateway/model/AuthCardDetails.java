@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
@@ -58,8 +57,6 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String jsTimezoneOffsetMins;
     @Schema(example = "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5")
     private String acceptLanguageHeader;
-    @JsonIgnore
-    private boolean useCardSslForWorldpay = false;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -255,14 +252,6 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getJsNavigatorLanguage() {
         return Optional.ofNullable(jsNavigatorLanguage);
-    }
-
-    public boolean isUseCardSslForWorldpay() {
-        return useCardSslForWorldpay;
-    }
-
-    public void setUseCardSslForWorldpay(boolean useCardSsl) {
-        this.useCardSslForWorldpay = useCardSsl;
     }
 
     @Override

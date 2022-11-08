@@ -66,11 +66,4 @@ class WorldpayAuthorisationRequestSummaryTest {
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds2(), is(NOT_APPLICABLE));
     }
 
-    @Test
-    void cardSslPresent() {
-        given(mockAuthCardDetails.isUseCardSslForWorldpay()).willReturn(true);
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
-        assertThat(worldpayAuthorisationRequestSummary.worldpayCardSsl(), is(PRESENT));
-    }
-
 }

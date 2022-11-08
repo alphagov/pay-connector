@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
@@ -12,14 +11,12 @@ import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.app.config.PayoutReconcileProcessConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
-import uk.gov.pay.connector.app.config.StringToListConverter;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
-import java.util.List;
 
 public class ConnectorConfiguration extends Configuration {
 
@@ -151,11 +148,6 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private Long ledgerPostEventTimeoutInMillis;
 
-    @Valid
-    @JsonDeserialize(converter = StringToListConverter.class)
-    @JsonProperty("worldpayCardSslAccounts")
-    private List<String> worldpayCardSslAccounts;
-
     public String getLedgerBaseUrl() {
         return ledgerBaseUrl;
     }
@@ -274,10 +266,6 @@ public class ConnectorConfiguration extends Configuration {
 
     public Boolean getEmitPayoutEvents() {
         return emitPayoutEvents;
-    }
-
-    public List<String> getWorldpayCardSslAccounts() {
-        return worldpayCardSslAccounts;
     }
 
     public RestClientConfig getRestClientConfig() {

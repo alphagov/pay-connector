@@ -124,12 +124,6 @@ public class ChargingITestBase {
         this.gatewayAccountCredentialsId = RandomUtils.nextInt();
     }
 
-    public ChargingITestBase(String paymentProvider, String gatewayAccountId) {
-        this.paymentProvider = paymentProvider;
-        this.accountId = gatewayAccountId;
-        this.gatewayAccountCredentialsId = RandomUtils.nextInt();
-    }
-
     @Before
     public void setUp() {
         wireMockServer = testContext.getWireMockServer();
@@ -274,20 +268,12 @@ public class ChargingITestBase {
         return createNewChargeWith(status, null);
     }
 
-    protected String createNewChargeWithNoTransactionIdForSpecfiedGatewayAccount(ChargeStatus status, String gatewayAccountId) {
-        return createNewChargeWith(status, null, gatewayAccountId);
-    }
-
     protected String createNewCharge(ChargeStatus status) {
         return createNewChargeWith(status, randomId());
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider, credentialParams.getId()).toString();
-    }
-
-    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, gatewayAccountId, databaseTestHelper, paymentProvider, credentialParams.getId()).toString();
     }
 
     protected RequestSpecification givenSetup() {

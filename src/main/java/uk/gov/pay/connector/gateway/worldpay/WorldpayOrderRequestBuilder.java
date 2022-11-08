@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
@@ -145,7 +144,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
-    public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER_CARD_SSL = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate_CARD-SSL.xml");
     public static final TemplateBuilder AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseApplePayOrderTemplate.xml");
     public static final TemplateBuilder AUTHORISE_GOOGLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml");
     public static final TemplateBuilder AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/Worldpay3dsResponseAuthOrderTemplate.xml");
@@ -157,10 +155,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     private final WorldpayTemplateData worldpayTemplateData;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
-    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder(CardAuthorisationGatewayRequest request) {
-        if (request.getAuthCardDetails().isUseCardSslForWorldpay()) {
-            return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER_CARD_SSL, OrderRequestType.AUTHORISE);
-        }
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
 
