@@ -125,7 +125,7 @@ public class GatewayAuthFailuresIT {
                 .body(authCardDetails)
                 .post(cardAuthUrl)
                 .then()
-                .statusCode(500)
+                .statusCode(402)
                 .contentType(JSON)
                 .body("message", contains(errorMessage))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));

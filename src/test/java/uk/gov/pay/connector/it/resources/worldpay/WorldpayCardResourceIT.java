@@ -21,8 +21,8 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.COOKIE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -222,7 +222,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+                .statusCode(PAYMENT_REQUIRED.getStatusCode());
 
         assertFrontendChargeStatusAndTransactionId(chargeId, AUTHORISATION_UNEXPECTED_ERROR.toString());
     }
@@ -273,7 +273,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnStatus500_WhenAuthorisationCallThrowsException() {
+    public void shouldReturnStatus402_WhenAuthorisationCallThrowsException() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
         String expectedErrorMessage = "There was an error when attempting to authorise the transaction.";
@@ -283,7 +283,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .body(buildJsonWithPaResponse())
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
-                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .statusCode(PAYMENT_REQUIRED.getStatusCode())
                 .contentType(JSON)
                 .body("message", contains(expectedErrorMessage))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
@@ -292,7 +292,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnStatus500_AWorldpayPaResParseError() {
+    public void shouldReturnStatus402_AWorldpayPaResParseError() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
         String expectedErrorMessage = "There was an error when attempting to authorise the transaction.";
@@ -302,7 +302,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .body(buildJsonWithPaResponse())
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
-                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .statusCode(PAYMENT_REQUIRED.getStatusCode())
                 .contentType(JSON)
                 .body("message", contains(expectedErrorMessage))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
