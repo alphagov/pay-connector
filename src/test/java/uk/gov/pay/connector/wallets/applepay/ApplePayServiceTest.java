@@ -87,7 +87,7 @@ public class ApplePayServiceTest {
         Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest);
 
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
-        assertThat(authorisationResponse.getStatus(), is(500));
+        assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
     }

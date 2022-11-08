@@ -97,7 +97,7 @@ public class GooglePayServiceTest {
         Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest);
 
         verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
-        assertThat(authorisationResponse.getStatus(), is(500));
+        assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
     }

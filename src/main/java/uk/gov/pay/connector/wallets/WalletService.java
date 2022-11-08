@@ -13,7 +13,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.gatewayErrorResponse;
+
 
 public abstract class WalletService {
 
@@ -55,7 +56,7 @@ public abstract class WalletService {
         switch (error.getErrorType()) {
             case GATEWAY_ERROR:
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
-                return serviceErrorResponse(error.getMessage());
+                return gatewayErrorResponse(error.getMessage());
             default:
                 LOGGER.error("Charge {}: error {}", chargeId, error.getMessage());
                 return badRequestResponse(error.getMessage());
