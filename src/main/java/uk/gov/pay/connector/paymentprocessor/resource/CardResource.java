@@ -51,7 +51,7 @@ import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.gatewayErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
 
 @Path("/")
@@ -200,7 +200,7 @@ public class CardResource {
                     ));
         }
         if (response.isException()) {
-            return serviceErrorResponse("There was an error when attempting to authorise the transaction.");
+            return gatewayErrorResponse("There was an error when attempting to authorise the transaction.");
         }
         return ResponseUtil.badRequestResponseWithEntity(
                 Map.of(
@@ -328,7 +328,7 @@ public class CardResource {
         switch (error.getErrorType()) {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
             case GATEWAY_ERROR:
-                return serviceErrorResponse(error.getMessage());
+                return gatewayErrorResponse(error.getMessage());
             default:
                 return badRequestResponse(error.getMessage());
         }

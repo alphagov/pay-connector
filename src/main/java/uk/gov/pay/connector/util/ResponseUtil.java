@@ -11,11 +11,12 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status;
-import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -73,6 +74,11 @@ public class ResponseUtil {
         return buildErrorResponse(INTERNAL_SERVER_ERROR, message);
     }
 
+    public static Response gatewayErrorResponse(String message) {
+        LOGGER.info(message);
+        return buildErrorResponse(PAYMENT_REQUIRED, message);
+    }
+    
     public static Response conflictErrorResponse(String message) {
         LOGGER.info(message);
         return buildErrorResponse(CONFLICT, message);
