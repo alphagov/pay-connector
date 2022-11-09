@@ -1,4 +1,9 @@
-FROM eclipse-temurin:11-jre@sha256:08a2a85a8c948146f8e052216c5450b5290fe13ab5d3922aeb829b3bf61e08c1
+FROM maven:3.8.6-eclipse-temurin-11 as builder
+WORKDIR /home/build
+COPY . .
+RUN ["mvn", "clean", "package", "-DskipTests"]
+
+FROM eclipse-temurin:11-jre@sha256:08a2a85a8c948146f8e052216c5450b5290fe13ab5d3922aeb829b3bf61e08c1 as final
 
 ARG DNS_TTL=15
 
@@ -23,9 +28,9 @@ EXPOSE 8081
 
 WORKDIR /app
 
-COPY docker-startup.sh /app/docker-startup.sh
-COPY target/*.yaml /app/
-COPY target/pay-*-allinone.jar /app/
+COPY --from=builder /home/build/docker-startup.sh .
+COPY --from=builder /home/build/target/*.yaml .
+COPY --from=builder /home/build/target/pay-*-allinone.jar .
 
 ENTRYPOINT ["tini", "-e", "143", "--"]
 

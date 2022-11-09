@@ -1,5 +1,3 @@
-*/*
-!newrelic/*
-!docker-startup.sh
-!target/pay-*-allinone.jar
-!target/*.yaml
+target/
+.idea/
+.github/
