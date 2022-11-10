@@ -44,6 +44,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -80,7 +82,7 @@ public class GatewayAccountCredentialsResourceIT {
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
-        testAccount = addGatewayAccountAndCredential("worldpay");
+        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE);
         accountId = testAccount.getAccountId();
 
         credentialsId = testAccount.getCredentials().get(0).getId();
@@ -150,6 +152,29 @@ public class GatewayAccountCredentialsResourceIT {
         assertThat(result.get("issuer"), is(VALID_ISSUER));
         assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
         assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
+    }
+
+    @Test
+    public void updateFlexCredentialsShouldSetGatewayAccountCredentialsStateToActive() throws JsonProcessingException {
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED);
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "issuer", VALID_ISSUER,
+                "organisational_unit_id", VALID_ORG_UNIT_ID,
+                "jwt_mac_key", VALID_JWT_MAC_KEY
+        ));
+        givenSetup()
+                .body(payload)
+                .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
+                .then()
+                .statusCode(200);
+
+        var result = databaseTestHelper.getWorldpay3dsFlexCredentials(testAccount.getAccountId());
+        assertThat(result.get("issuer"), is(VALID_ISSUER));
+        assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
+        assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
+
+        List<Map<String, Object>> gatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsForAccount(testAccount.getAccountId());
+        assertThat(gatewayAccountCredentials.get(0).get("state"), is("ACTIVE"));
     }
 
     @Test
@@ -327,7 +352,7 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
-        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe");
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE);
         AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
 
         givenSetup()
@@ -358,7 +383,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
-        Map<String, Object> newCredentials =  Map.of("op", "replace",
+        Map<String, Object> newCredentials = Map.of("op", "replace",
                 "path", "credentials",
                 "value", Map.of("username", "new-username",
                         "password", "new-password",
@@ -380,7 +405,7 @@ public class GatewayAccountCredentialsResourceIT {
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
 
-        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject)updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasEntry("username", "new-username"));
         assertThat(updatedCredentials, hasEntry("password", "new-password"));
         assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
@@ -402,7 +427,7 @@ public class GatewayAccountCredentialsResourceIT {
         ));
     }
 
-    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state) {
         long accountId = nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
@@ -414,7 +439,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .withCreatedDate(createdDate.toInstant(ZoneOffset.UTC))
                 .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
                 .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
-                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withState(state)
                 .withCredentials(Map.of(
                         "merchant_id", "a-merchant-id",
                         "username", "a-username",

@@ -160,7 +160,7 @@ public class GatewayAccountCredentialsService {
         HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
         patchRequest.valueAsObject().forEach(updatableMap::put);
         gatewayAccountCredentialsEntity.setCredentials(updatableMap);
-        
+
         updateStateForCredentials(gatewayAccountCredentialsEntity);
     }
 
@@ -173,6 +173,7 @@ public class GatewayAccountCredentialsService {
                 } else {
                     credentialsEntity.setState(ENTERED);
                 }
+                gatewayAccountCredentialsDao.merge(credentialsEntity);
             }
         }
     }
