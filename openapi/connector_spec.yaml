@@ -1704,6 +1704,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
         "404":
           description: Not found - charge not found
         "500":
@@ -1792,6 +1798,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
         "404":
           description: Not found - charge not found
         "422":
@@ -1868,6 +1880,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
         "404":
           description: Not found
         "422":
@@ -1911,6 +1929,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
         "404":
           description: Not found
         "422":
