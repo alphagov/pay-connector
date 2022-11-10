@@ -239,7 +239,7 @@ public class GatewayAccountCredentialsServiceTest {
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
-            verify(mockGatewayAccountCredentialsDao).merge(credentialsEntity);
+            verify(mockGatewayAccountCredentialsDao, times(2)).merge(credentialsEntity);
             assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
             assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
             assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));

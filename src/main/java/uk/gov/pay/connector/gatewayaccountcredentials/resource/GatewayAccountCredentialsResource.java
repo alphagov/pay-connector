@@ -96,7 +96,6 @@ public class GatewayAccountCredentialsResource {
                 .orElseGet(() -> notFoundResponse("Not a Worldpay gateway account"));
     }
 
-
     @POST
     @Path("/v1/api/accounts/{accountId}/worldpay/check-3ds-flex-config")
     @Produces(APPLICATION_JSON)
