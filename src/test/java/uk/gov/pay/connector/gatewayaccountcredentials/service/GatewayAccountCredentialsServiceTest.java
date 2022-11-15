@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -447,6 +448,148 @@ public class GatewayAccountCredentialsServiceTest {
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
 
             assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+    }
+
+    @Nested
+    @DisplayName("Update state post flex credentials update")
+    class UpdateStatePostFlexCredentialsUpdate {
+        @Test
+        void shouldSetCredentialsStateToActiveWhenFlexAndIntegrationCredentialsAreSetForALiveAccount() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .withType(LIVE)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldNotSetCredentialsStateToActiveWhenFlexCredentialsAreNotSetForALiveAccount() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(null)
+                    .withType(LIVE)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldSetCredentialsStateToActiveEvenWhenFlexCredentialsAreNotSetForATestAccount() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(null)
+                    .withType(TEST)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldNotUpdateStateWhenIntegrationCredentialsAreNotSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(null)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldChangeStateToEnteredForAWorldpayCredential_ifMultipleCredentialsExists() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialToUpdate = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(CREATED)
+                    .build();
+            GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(STRIPE.getName())
+                    .withState(ACTIVE)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialToUpdate, activeCredentials));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialToUpdate.getState(), is(ENTERED));
+            assertThat(activeCredentials.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldNotChangeStateToEnteredForAWorldpayCredential_ifMultipleCredentialsExistsAndWorldpayIntegrationCredentialsAreNotSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialToUpdate = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withCredentials(null)
+                    .withState(CREATED)
+                    .build();
+            GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(STRIPE.getName())
+                    .withState(ACTIVE)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialToUpdate, activeCredentials));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialToUpdate.getState(), is(CREATED));
+            assertThat(activeCredentials.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldThrowErrorIfWorldpayCredentialIsNotFoundOnGatewayAccount() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(STRIPE.getName())
+                    .withState(ACTIVE)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials));
+
+            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> {
+                gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+            });
+
+            assertEquals("HTTP 500 Internal Server Error", exception.getMessage());
         }
     }
 

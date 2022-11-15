@@ -11,6 +11,7 @@ import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -44,6 +45,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -82,7 +85,7 @@ public class GatewayAccountCredentialsResourceIT {
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
-        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE);
+        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST);
         accountId = testAccount.getAccountId();
 
         credentialsId = testAccount.getCredentials().get(0).getId();
@@ -155,8 +158,8 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void updateFlexCredentialsShouldSetGatewayAccountCredentialsStateToActive() throws JsonProcessingException {
-        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED);
+    public void updateFlexCredentialsShouldSetGatewayAccountCredentialsStateToActiveForLiveAccount() throws JsonProcessingException {
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED, LIVE);
         String payload = objectMapper.writeValueAsString(Map.of(
                 "issuer", VALID_ISSUER,
                 "organisational_unit_id", VALID_ORG_UNIT_ID,
@@ -352,7 +355,7 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
-        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE);
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST);
         AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
 
         givenSetup()
@@ -427,7 +430,8 @@ public class GatewayAccountCredentialsResourceIT {
         ));
     }
 
-    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state) {
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state,
+                                                                        GatewayAccountType gatewayAccountType) {
         long accountId = nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
@@ -449,6 +453,7 @@ public class GatewayAccountCredentialsResourceIT {
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
+                .withType(gatewayAccountType)
                 .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
                 .insert();
     }

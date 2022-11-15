@@ -12,14 +12,10 @@ import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsReque
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
-import javax.ws.rs.WebApplicationException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -56,23 +52,6 @@ class Worldpay3dsFlexCredentialsServiceTest {
                 gatewayAccountEntity);
 
         verify(mockWorldpay3dsFlexCredentialsDao).merge(any(Worldpay3dsFlexCredentialsEntity.class));
-        verify(mockGatewayAccountCredentialsService).updateStateForCredentials(credentialsEntity);
-    }
-
-    @Test
-    void shouldThrowErrorWhenGatewayCredentialToUpdateStateIsNotFound() {
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
-
-        Worldpay3dsFlexCredentialsRequest worldpay3dsFlexCredentialsRequest
-                = new Worldpay3dsFlexCredentialsRequest();
-
-        WebApplicationException exception = assertThrows(WebApplicationException.class, () -> {
-            worldpay3dsFlexCredentialsService.setGatewayAccountWorldpay3dsFlexCredentials(worldpay3dsFlexCredentialsRequest,
-                    gatewayAccountEntity);
-        });
-
-        assertEquals("HTTP 500 Internal Server Error", exception.getMessage());
-
-        verifyNoInteractions(mockGatewayAccountCredentialsService);
+        verify(mockGatewayAccountCredentialsService).updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
     }
 }
