@@ -4,15 +4,11 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.gatewayaccount.dao.Worldpay3dsFlexCredentialsDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
-import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class Worldpay3dsFlexCredentialsService {
 
@@ -40,14 +36,10 @@ public class Worldpay3dsFlexCredentialsService {
                     .withJwtMacKey(worldpay3DsFlexCredentialsRequest.getJwtMacKey())
                     .withOrganisationalUnitId(worldpay3DsFlexCredentialsRequest.getOrganisationalUnitId())
                     .build();
+            gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(newWorldpay3dsFlexCredentialsEntity);
             worldpay3dsFlexCredentialsDao.merge(newWorldpay3dsFlexCredentialsEntity);
         });
 
-        //TODO: To move Flex credentials to gateway account credentials level so correct Worldpay credential can be updated (as part of PP-10143)
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
-                .orElseThrow(() -> new WebApplicationException(
-                        serviceErrorResponse(format("Active or current credential not found for gateway account [%s]", gatewayAccountEntity.getId()))));
-
-        gatewayAccountCredentialsService.updateStateForCredentials(gatewayAccountCredentialsEntity);
+        gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
     }
 }
