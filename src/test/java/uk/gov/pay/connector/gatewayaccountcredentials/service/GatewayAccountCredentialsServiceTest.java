@@ -28,6 +28,7 @@ import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
@@ -550,6 +552,33 @@ public class GatewayAccountCredentialsServiceTest {
         }
 
         @Test
+        void shouldChangeStateToEnteredForLatestWorldpayCredential_ifMultipleWorldpayCredentialsExists() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withCreatedDate(Instant.now().minus(10, MINUTES))
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(ACTIVE)
+                    .build();
+            GatewayAccountCredentialsEntity latestCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withCreatedDate(Instant.now())
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials, latestCredentials));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(activeCredentials.getState(), is(ACTIVE));
+            assertThat(latestCredentials.getState(), is(ENTERED));
+        }
+
+        @Test
         void shouldNotChangeStateToEnteredForAWorldpayCredential_ifMultipleCredentialsExistsAndWorldpayIntegrationCredentialsAreNotSet() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                     .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
@@ -582,6 +611,25 @@ public class GatewayAccountCredentialsServiceTest {
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withPaymentProvider(STRIPE.getName())
                     .withState(ACTIVE)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials));
+
+            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> {
+                gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+            });
+
+            assertEquals("HTTP 500 Internal Server Error", exception.getMessage());
+        }
+
+        @Test
+        void shouldThrowErrorIfOnlyNonRetiredWorldpayCredentialsExists() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withState(RETIRED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials));
 

@@ -167,10 +167,11 @@ public class GatewayAccountCredentialsService {
     @Transactional
     public void updateStatePostFlexCredentialsUpdate(GatewayAccountEntity gatewayAccountEntity) {
         // Flex credentials are currently set at the Gateway account level, and it is not possible to get the Worldpay
-        // credentials entity for which Flex credentials are updated if multiple exist. So get any Worldpay credential entity.
+        // credentials entity for which Flex credentials are updated if multiple exist. So get latest non-retired Worldpay credential entity.
         // Flex credentials should be moved to the Gateway credentials level to support multiple Flex credentials and
         // get the correct credential entity here.
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity =
+                gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity(WORLDPAY.getName());
 
         updateStateForCredentials(gatewayAccountCredentialsEntity);
     }
