@@ -17,7 +17,11 @@ public class PaymentInstrumentEntityToAuthCardDetailsConverter {
         cardDetails.getBillingAddress()
                 .map(Address::from)
                 .ifPresent(authCardDetails::setAddress);
-        authCardDetails.setPayersCardType(PayersCardType.from(cardDetails.getCardType()));
+        
+        // @FIXME(sfount): if the card was identified as neither CREDIT NOR DEBIT this line will fail with an NPE
+        if (cardDetails.getCardType() != null) {
+            authCardDetails.setPayersCardType(PayersCardType.from(cardDetails.getCardType()));
+        }
         return authCardDetails;
     }
 }

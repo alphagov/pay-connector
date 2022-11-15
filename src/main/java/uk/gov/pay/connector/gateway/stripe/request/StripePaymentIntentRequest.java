@@ -4,6 +4,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,11 +22,15 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     private final String chargeExternalId;
     private final String description;
     private boolean moto;
+    
+    private String customerId;
+    private boolean savePaymentInstrumentToAgreement;
+    private boolean authModeApi;
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto, Map<String, String> credentials) {
+            String description, boolean moto, Map<String, String> credentials, String customerId, boolean savePaymentInstrumentToAgreement, boolean authModeApi) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
@@ -34,11 +39,15 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         this.chargeExternalId = chargeExternalId;
         this.description = description;
         this.moto = moto;
+        this.customerId = customerId;
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.authModeApi = authModeApi;
     }
 
     public static StripePaymentIntentRequest of(
             CardAuthorisationGatewayRequest request,
             String paymentMethodId,
+            String customerId,
             StripeGatewayConfig stripeGatewayConfig,
             String frontendUrl) {
         return new StripePaymentIntentRequest(
@@ -52,7 +61,10 @@ public class StripePaymentIntentRequest extends StripePostRequest {
                 request.getGovUkPayPaymentId(),
                 request.getDescription(),
                 request.isMoto(),
-                request.getGatewayCredentials()
+                request.getGatewayCredentials(),
+                customerId,
+                request.isSavePaymentInstrumentToAgreement(),
+                request.getAuthorisationMode() == AuthorisationMode.AGREEMENT
         );
     }
 
@@ -83,6 +95,16 @@ public class StripePaymentIntentRequest extends StripePostRequest {
 
         if (moto) {
             params.put("payment_method_options[card[moto]]", "true");
+        }
+        
+        if (savePaymentInstrumentToAgreement) {
+            params.put("setup_future_usage", "off_session");
+            params.put("customer", customerId);
+        }
+        
+        if (authModeApi) {
+            params.put("off_session", "true");
+            params.put("customer", customerId);
         }
 
         return params;

@@ -126,6 +126,11 @@ public class StripePaymentProvider implements PaymentProvider {
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
         return stripeAuthoriseHandler.authorise(request);
     }
+    
+    @Override
+    public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
+        return stripeAuthoriseHandler.authorise(request);
+    }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {

@@ -15,11 +15,15 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
+import uk.gov.pay.connector.gateway.stripe.response.StripeCustomerResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -52,9 +56,26 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
-            StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
-
+            String customerId = null;
+            String paymentMethodId = null;
+            if (request.isSavePaymentInstrumentToAgreement()) {
+                // set a customer up to be stored by this agreement
+                customerId = createCustomer(request).getId();
+            }
+            
+            if (request.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+                if (request.getPaymentInstrument().isPresent()) {
+                    customerId = request.getPaymentInstrument().get().getRecurringAuthToken().get("customer_id");
+                    paymentMethodId = request.getPaymentInstrument().get().getRecurringAuthToken().get("payment_method_id");
+                }
+            } else {
+                paymentMethodId = createPaymentMethod(request).getId();
+                
+            }
+            StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, paymentMethodId, customerId);
+            
+            // if we did set up a customer for recurring payments and everything auth'd appropriately, we can't to return those for the payment instrument
+            // we'll need the customer id and the payment method id (both of these are likely returned in the payment intent response)
             return GatewayResponse
                     .GatewayResponseBuilder
                     .responseBuilder()
@@ -85,9 +106,15 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
     }
 
-    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
+    private StripeCustomerResponse createCustomer(CardAuthorisationGatewayRequest request)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+        String jsonResponse = client.postRequestFor(StripeCustomerRequest.of(request, stripeGatewayConfig)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripeCustomerResponse.class);
+    }
+    
+    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId, String customerId)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
     }
 

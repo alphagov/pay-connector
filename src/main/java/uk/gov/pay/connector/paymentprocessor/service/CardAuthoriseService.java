@@ -81,11 +81,18 @@ public class CardAuthoriseService {
     }
 
     public AuthorisationResponse doAuthoriseUserNotPresent(ChargeEntity chargeEntity) {
-        var paymentInstrumentEntity = chargeEntity.getPaymentInstrument()
-                .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
+        LOGGER.info("Attempting authorise user not present");
+        try {
+            var paymentInstrumentEntity = chargeEntity.getPaymentInstrument()
+                    .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
 
-        var authCardDetails = paymentInstrumentEntityToAuthCardDetailsConverter.convert(paymentInstrumentEntity);
-        return doAuthorise(chargeEntity.getExternalId(), authCardDetails);
+            var authCardDetails = paymentInstrumentEntityToAuthCardDetailsConverter.convert(paymentInstrumentEntity);
+            LOGGER.info("Calling standard do authorise with converted details");
+            return doAuthorise(chargeEntity.getExternalId(), authCardDetails);
+        } catch (Exception e) {
+            LOGGER.error("Failed to appropriately convert something {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     private AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {

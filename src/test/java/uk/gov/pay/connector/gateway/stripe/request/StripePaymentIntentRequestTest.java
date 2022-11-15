@@ -131,6 +131,6 @@ public class StripePaymentIntentRequestTest {
     
     private StripePaymentIntentRequest createStripePaymentIntentRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-        return StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+        return StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, null, stripeGatewayConfig, frontendUrl);
     }
 }

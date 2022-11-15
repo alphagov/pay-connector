@@ -3729,6 +3729,7 @@ components:
           - ENTERED
           - VERIFIED_WITH_LIVE_PAYMENT
           - ACTIVE
+          - ACTIVE_MOTO
           - RETIRED
           example: ACTIVE
     GatewayAccountCredentialsEntity:
@@ -3775,6 +3776,7 @@ components:
           - ENTERED
           - VERIFIED_WITH_LIVE_PAYMENT
           - ACTIVE
+          - ACTIVE_MOTO
           - RETIRED
           example: ACTIVE
         version:
@@ -3824,6 +3826,7 @@ components:
           - ENTERED
           - VERIFIED_WITH_LIVE_PAYMENT
           - ACTIVE
+          - ACTIVE_MOTO
           - RETIRED
           example: ACTIVE
         version:
@@ -3873,6 +3876,7 @@ components:
           - ENTERED
           - VERIFIED_WITH_LIVE_PAYMENT
           - ACTIVE
+          - ACTIVE_MOTO
           - RETIRED
           example: ACTIVE
         version:

@@ -22,6 +22,15 @@ public class StripePaymentIntentResponse {
     @JsonProperty("next_action")
     private NextAction nextAction;
     
+    @JsonProperty("setup_future_usage")
+    private String isSetupFutureUsage;
+    
+    @JsonProperty("customer")
+    private String customerId;
+    
+    @JsonProperty("payment_method")
+    private String paymentMethodId;
+    
     private String status;
 
     public String getId() {
@@ -46,6 +55,18 @@ public class StripePaymentIntentResponse {
     public Optional<BaseAuthoriseResponse.AuthoriseStatus> getAuthoriseStatus() {
         return Optional.ofNullable(statusMap.get(StripeChargeStatus.fromString(status)));
 
+    }
+
+    public String getSetupFutureUsage() {
+        return isSetupFutureUsage;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public String getPaymentMethodId() {
+        return paymentMethodId;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
