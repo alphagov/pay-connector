@@ -175,11 +175,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "recurring_enabled")
     private boolean recurringEnabled;
-    
-    @Column(name ="disabled")
+
+    @Column(name = "disabled")
     private boolean disabled;
-    
-    @Column(name="disabled_reason")
+
+    @Column(name = "disabled_reason")
     private String disabledReason;
 
     public GatewayAccountEntity() {
@@ -256,6 +256,17 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return gatewayAccountCredentials.stream()
                 .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
                 .findFirst()
+                .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
+                        format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
+                                getId(), paymentProvider))));
+    }
+
+    @JsonIgnore
+    public GatewayAccountCredentialsEntity getRecentNonRetiredGatewayAccountCredentialsEntity(String paymentProvider) {
+        return gatewayAccountCredentials.stream()
+                .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
+                .filter(entity -> entity.getState() != RETIRED)
+                .max(comparing(GatewayAccountCredentialsEntity::getCreatedDate))
                 .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
                         format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
                                 getId(), paymentProvider))));
@@ -626,7 +637,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setDisabledReason(String disabledReason) {
         this.disabledReason = disabledReason;
     }
-    
+
     public class Views {
         public class ApiView {
         }

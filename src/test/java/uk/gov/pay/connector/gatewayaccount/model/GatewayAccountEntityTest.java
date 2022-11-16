@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -268,5 +271,76 @@ class GatewayAccountEntityTest {
         assertThrows(WebApplicationException.class, () -> {
             gatewayAccountEntity.getGatewayAccountCredentialsEntity("worldpay");
         });
+    }
+
+    @Nested
+    @DisplayName("Test get latest non-retired credential")
+    class TestGetRecentNonRetiredGatewayAccountCredentialsEntity {
+        @Test
+        void shouldReturnCorrectCredentialForPaymentProvider() {
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withCredentials(Map.of("stripe-accnt-id", "some-id"))
+                    .withPaymentProvider("stripe").build();
+            GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                    .withPaymentProvider("worldpay")
+                    .withCredentials(Map.of("username", "some-user-name"))
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity, credentialsEntityWorldpay));
+
+            GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity("worldpay");
+            assertThat(actualCreds.getPaymentProvider(), is("worldpay"));
+            assertThat(actualCreds.getCredentials(), hasEntry("username", "some-user-name"));
+        }
+
+        @Test
+        void shouldReturnNonRetiredCredential() {
+            GatewayAccountCredentialsEntity credentialsEntityRetired = aGatewayAccountCredentialsEntity()
+                    .withCredentials(Map.of("username", "retired-creds-user-name"))
+                    .withState(RETIRED)
+                    .withCreatedDate(Instant.now())
+                    .withPaymentProvider("worldpay")
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntityActive = aGatewayAccountCredentialsEntity()
+                    .withState(ACTIVE)
+                    .withCreatedDate(Instant.now().minus(1, MINUTES))
+                    .withCredentials(Map.of("username", "active-creds-user-name"))
+                    .withPaymentProvider("worldpay")
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityRetired, credentialsEntityActive));
+
+            GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity("worldpay");
+            assertThat(actualCreds.getCredentials(), hasEntry("username", "active-creds-user-name"));
+            assertThat(actualCreds.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldReturnLatestCredentialIfMultipleExistForPaymentProvider() {
+            GatewayAccountCredentialsEntity credentialsEntityLatest = aGatewayAccountCredentialsEntity()
+                    .withCredentials(Map.of("username", "latest-creds-user-name"))
+                    .withState(CREATED)
+                    .withCreatedDate(Instant.now())
+                    .withPaymentProvider("worldpay")
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntityOld = aGatewayAccountCredentialsEntity()
+                    .withState(ACTIVE)
+                    .withCreatedDate(Instant.now().minus(10, MINUTES))
+                    .withCredentials(Map.of("username", "old-creds-user-name"))
+                    .withPaymentProvider("worldpay")
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityLatest, credentialsEntityOld));
+
+            GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity("worldpay");
+            assertThat(actualCreds.getCredentials(), hasEntry("username", "latest-creds-user-name"));
+            assertThat(actualCreds.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldThrowErrorIfNoCredentialsAreAvailable() {
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of());
+            assertThrows(WebApplicationException.class, () -> {
+                gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity("worldpay");
+            });
+        }
+
     }
 }
