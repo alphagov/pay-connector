@@ -171,6 +171,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_PAYOUT_NOTIFICATION = TEMPLATE_BASE_NAME + "/stripe/payout_notification.json";
     public static final String STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_query_response.json";
     public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";
+    public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent_payment_failed.json";
     public static final String STRIPE_NOTIFICATION_ACCOUNT_UPDATED = TEMPLATE_BASE_NAME + "/stripe/account_updated.json";
     public static final String STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED = TEMPLATE_BASE_NAME + "/stripe/charge_refund_updated.json";
     public static final String STRIPE_NOTIFICATION_CHARGE_DISPUTE = TEMPLATE_BASE_NAME + "/stripe/charge_dispute.json";
