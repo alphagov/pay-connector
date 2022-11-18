@@ -75,6 +75,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED;
 
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
@@ -374,7 +375,7 @@ class StripeNotificationServiceTest {
     @Test
     void shouldUpdateCharge_WhenNotificationIsForPaymentIntentPaymentFailed() {
         setUpCharge();
-        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED,
                 "pi_123", PAYMENT_INTENT_PAYMENT_FAILED);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
 

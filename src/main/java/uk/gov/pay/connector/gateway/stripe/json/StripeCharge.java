@@ -30,6 +30,15 @@ public class StripeCharge {
     @JsonProperty("captured")
     private Boolean captured;
 
+    @JsonProperty("failure_code")
+    private String failureCode;
+
+    @JsonProperty("failure_message")
+    private String failureMessage;
+
+    @JsonProperty("outcome")
+    private Outcome outcome;
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class BalanceTransaction {
 
@@ -75,5 +84,9 @@ public class StripeCharge {
 
     public Boolean getCaptured() {
         return captured;
+    }
+
+    public Outcome getOutcome() {
+        return outcome;
     }
 }
