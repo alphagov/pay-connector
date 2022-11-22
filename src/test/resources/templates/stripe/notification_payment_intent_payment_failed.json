@@ -96,7 +96,7 @@
                   "authentication_flow": "challenge",
                   "result": "authenticated",
                   "result_reason": null,
-                  "succeeded": true,
+                  "succeeded": false,
                   "version": "2.0.1"
                 },
                 "wallet": null
@@ -120,7 +120,7 @@
             "source_transfer": null,
             "statement_descriptor": null,
             "statement_descriptor_suffix": null,
-            "status": "succeeded",
+            "status": "failed",
             "transfer_data": null,
             "transfer_group": "rg7gqgpf9do5qs19nvannj4oiq"
           }
@@ -138,6 +138,7 @@
         "code": "payment_intent_authentication_failure",
         "doc_url": "https://stripe.com/docs/error-codes/payment-intent-authentication-failure",
         "message": "The provided PaymentMethod has failed authentication. You can provide payment_method_data or a new PaymentMethod to attempt to fulfill this PaymentIntent again.",
+        "decline_code": "generic_decline",
         "payment_method": {
           "id": "pm_1FJMFJDv3CZEaFO2DIv09Tul",
           "object": "payment_method",
@@ -213,7 +214,7 @@
       "shipping": null,
       "statement_descriptor": null,
       "statement_descriptor_suffix": null,
-      "status": "succeeded",
+      "status": "requires_payment_method",
       "transfer_data": null,
       "transfer_group": "8hh0gbvt6285btreek23isjoe8"
     }

@@ -120,7 +120,7 @@ public class AddPaymentInstrumentParams {
 
     public static final class AddPaymentInstrumentParamsBuilder {
         private Long paymentInstrumentId;
-        private String externalPaymentInstrumentId = "anExternalPaymentInstrumentId";
+        private String externalPaymentInstrumentId = RandomIdGenerator.newId();
         private Instant createdDate = Instant.now();
         private Instant startDate = Instant.now();
         private PaymentInstrumentStatus paymentInstrumentStatus = PaymentInstrumentStatus.ACTIVE;

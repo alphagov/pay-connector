@@ -3,7 +3,9 @@ package uk.gov.pay.connector.gateway.stripe.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -56,15 +58,15 @@ public class StripeErrorResponse {
         public String getCharge() {
             return charge;
         }
-        
-        public StripePaymentIntent getStripePaymentIntent() {
-            return stripePaymentIntent;
+
+        public Optional<StripePaymentIntent> getStripePaymentIntent() {
+            return Optional.ofNullable(stripePaymentIntent);
         }
 
         @Override
         public String toString() {
             StringJoiner joiner = new StringJoiner(", ");
-            if (StringUtils.isNotBlank(type)) {
+            if (StringUtils.isNotBlank(charge)) {
                 joiner.add("stripe charge: " + getCharge());
             }
             if (StringUtils.isNotBlank(type)) {
@@ -76,9 +78,17 @@ public class StripeErrorResponse {
             if (StringUtils.isNotBlank(message)) {
                 joiner.add("message: " + getMessage());
             }
-            if (stripePaymentIntent != null) {
-                joiner.add("payment intent: " + stripePaymentIntent.getId());
-            }
+            getStripePaymentIntent()
+                    .map(paymentIntent -> {
+                        joiner.add("payment intent: " + stripePaymentIntent.getId());
+                        stripePaymentIntent.getCharge()
+                                .map(charge -> {
+                                    charge.getOutcome()
+                                            .map(outcome -> PaymentIntentStringifier.appendOutcomeLogs(outcome, joiner));
+                                    return joiner;
+                                });
+                        return joiner;
+                    });
             return joiner.toString();
         }
     }

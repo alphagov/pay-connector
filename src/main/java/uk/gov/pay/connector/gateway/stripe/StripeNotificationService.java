@@ -253,6 +253,8 @@ public class StripeNotificationService {
             Auth3dsResult auth3DsResult = new Auth3dsResult();
             auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
 
+            auth3DsResult.setGatewayResponseStringified(paymentIntent.stringify());
+
             Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
             optionalStripeCharge.ifPresent(stripeCharge -> {
                 if (stripeCharge.getPaymentMethodDetails() != null &&
@@ -266,7 +268,7 @@ public class StripeNotificationService {
         } catch (OperationAlreadyInProgressRuntimeException e) {
             // CardExecutorService is asynchronous and sends back 'OperationAlreadyInProgressRuntimeException' 
             // exception while the charge is being authorised. Catch this exception to send a response with 
-            // http status 200 instead of depending on the status returned by Exception 
+            // http status 200 instead of depending on the status returned by Exception
         }
     }
 
