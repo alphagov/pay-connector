@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,9 @@ public class StripePaymentIntent {
 
     @JsonProperty("status")
     private String status;
+
+    @JsonProperty("last_payment_error")
+    private LastPaymentError lastPaymentError;
 
     public ChargesCollection getChargesCollection() {
         return chargesCollection;
@@ -41,6 +45,10 @@ public class StripePaymentIntent {
         return status;
     }
 
+    public Optional<LastPaymentError> getLastPaymentError() {
+        return Optional.ofNullable(lastPaymentError);
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChargesCollection {
 
@@ -50,5 +58,9 @@ public class StripePaymentIntent {
         public List<StripeCharge> getCharges() {
             return charges;
         }
+    }
+
+    public String stringify() {
+        return PaymentIntentStringifier.stringify(this);
     }
 }

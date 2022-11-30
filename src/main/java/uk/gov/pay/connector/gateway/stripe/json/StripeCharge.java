@@ -86,7 +86,15 @@ public class StripeCharge {
         return captured;
     }
 
-    public Outcome getOutcome() {
-        return outcome;
+    public Optional<Outcome> getOutcome() {
+        return Optional.ofNullable(outcome);
+    }
+
+    public String getFailureCode() {
+        return failureCode;
+    }
+
+    public String getFailureMessage() {
+        return failureMessage;
     }
 }

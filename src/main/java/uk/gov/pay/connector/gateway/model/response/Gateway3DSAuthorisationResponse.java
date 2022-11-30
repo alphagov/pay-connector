@@ -12,26 +12,26 @@ public class Gateway3DSAuthorisationResponse {
 
     private final BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
     private final String transactionId;
-    private final String stringified;
+    private final String stringifiedResponse;
     private final Gateway3dsRequiredParams gateway3dsRequiredParams;
     private final ProviderSessionIdentifier providerSessionIdentifier;
 
-    private Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, String stringified,
+    private Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, String stringifiedResponse,
                                             Gateway3dsRequiredParams gateway3dsRequiredParams, ProviderSessionIdentifier providerSessionIdentifier) {
         this.transactionId = transactionId;
         this.authorisationStatus = authorisationStatus;
-        this.stringified = stringified;
+        this.stringifiedResponse = stringifiedResponse;
         this.gateway3dsRequiredParams = gateway3dsRequiredParams;
         this.providerSessionIdentifier = providerSessionIdentifier;
     }
 
-    public static Gateway3DSAuthorisationResponse of(String stringified, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringified, null, null);
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null);
     }
 
-    public static Gateway3DSAuthorisationResponse of(String stringified, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId,
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId,
                                                      Gateway3dsRequiredParams gateway3dsRequiredParams, ProviderSessionIdentifier providerSessionIdentifier) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringified, gateway3dsRequiredParams, providerSessionIdentifier);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, gateway3dsRequiredParams, providerSessionIdentifier);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
@@ -43,16 +43,16 @@ public class Gateway3DSAuthorisationResponse {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "", gateway3dsRequiredParams, providerSessionIdentifier);
     }
 
-    public static Gateway3DSAuthorisationResponse of(String stringified, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringified, null, null);
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, null, null);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", null, null);
     }
 
-    public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, Gateway3dsRequiredParams gateway3dsRequiredParams) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", gateway3dsRequiredParams, null);
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, Gateway3dsRequiredParams gateway3dsRequiredParams) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, gateway3dsRequiredParams, null);
     }
 
     public boolean isSuccessful() {
@@ -81,7 +81,7 @@ public class Gateway3DSAuthorisationResponse {
     }
 
     public String toString() {
-        return stringified;
+        return stringifiedResponse;
     }
 
 }
