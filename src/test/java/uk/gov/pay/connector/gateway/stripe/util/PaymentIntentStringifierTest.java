@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
@@ -25,19 +26,16 @@ class PaymentIntentStringifierTest {
         StripeNotification notification = mapper.readValue(payload, StripeNotification.class);
         StripePaymentIntent paymentIntent = mapper.readValue(notification.getObject(), StripePaymentIntent.class);
 
+        String expectedStringifiedPaymentIntent = "Stripe authorisation response - payment intent: pi_123 " +
+                "(stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde, type: invalid_request_error, decline code: generic_decline, " +
+                "code: card_declined, message: Your card was declined, status: failed, " +
+                "outcome.network_status: declined_by_network, " +
+                "outcome.reason: insufficient_funds, outcome.risk_level: normal, " +
+                "outcome.seller_message: The bank returned the decline code `insufficient_funds`., " +
+                "outcome.type: issuer_declined)";
         String stringified = PaymentIntentStringifier.stringify(paymentIntent);
 
-        assertThat(stringified, containsString("stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde"));
-        assertThat(stringified, containsString("type: invalid_request_error"));
-        assertThat(stringified, containsString("code: card_declined"));
-        assertThat(stringified, containsString("message: Your card was declined"));
-        assertThat(stringified, containsString("decline code: generic_decline"));
-        assertThat(stringified, containsString("payment intent: pi_123"));
-        assertThat(stringified, containsString("outcome.network_status: declined_by_network"));
-        assertThat(stringified, containsString("outcome.reason: insufficient_funds"));
-        assertThat(stringified, containsString("outcome.risk_level: normal"));
-        assertThat(stringified, containsString("outcome.seller_message: The bank returned the decline code `insufficient_funds`."));
-        assertThat(stringified, containsString("outcome.type: issuer_declined"));
+        assertThat(stringified, is(expectedStringifiedPaymentIntent));
     }
 
     @Test
@@ -48,8 +46,9 @@ class PaymentIntentStringifierTest {
         StripeNotification notification = mapper.readValue(payload, StripeNotification.class);
         StripePaymentIntent paymentIntent = mapper.readValue(notification.getObject(), StripePaymentIntent.class);
 
+        String expectedStringifiedPaymentIntent = "Stripe authorisation response - payment intent: pi_123 " +
+                "(stripe charge: ch_1FF3RuEZsufgnuO0IPT8CY3o)";
         String stringified = PaymentIntentStringifier.stringify(paymentIntent);
-
-        assertThat(stringified, containsString("stripe charge: ch_1FF3RuEZsufgnuO0IPT8CY3o"));
+        assertThat(stringified, is(expectedStringifiedPaymentIntent));
     }
 }

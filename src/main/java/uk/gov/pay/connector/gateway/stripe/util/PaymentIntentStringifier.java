@@ -19,7 +19,7 @@ public class PaymentIntentStringifier {
 
         Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
         optionalStripeCharge.map(charge -> {
-            joiner.add("(");
+            joiner.add(" (");
             if (charge.getId() != null) {
                 joiner.add("stripe charge: " + charge.getId());
             }
@@ -45,6 +45,10 @@ public class PaymentIntentStringifier {
 
             charge.getOutcome()
                     .map(outcome -> appendOutcomeLogs(outcome, delimitedJoiner));
+
+            if (delimitedJoiner.length() > 0) {
+                joiner.add(", ");
+            }
 
             joiner.merge(delimitedJoiner);
             return joiner.add(")");
