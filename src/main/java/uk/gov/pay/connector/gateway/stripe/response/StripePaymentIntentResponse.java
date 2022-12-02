@@ -3,7 +3,10 @@ package uk.gov.pay.connector.gateway.stripe.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +24,10 @@ public class StripePaymentIntentResponse {
     
     @JsonProperty("next_action")
     private NextAction nextAction;
-    
+
+    @JsonProperty("charges")
+    private StripePaymentIntent.ChargesCollection chargesCollection;
+
     private String status;
 
     public String getId() {
@@ -65,11 +71,20 @@ public class StripePaymentIntentResponse {
         }
     }
 
+    public Optional<StripeCharge> getCharge() {
+        return chargesCollection != null ? chargesCollection.getCharges().stream().findFirst() :
+                Optional.empty();
+    }
+
     @Override
     public String toString() {
         return "StripePaymentIntentResponse{" +
                 "id='" + id + '\'' +
                 ", nextAction=" + nextAction +
                 '}';
+    }
+
+    public String getStringifiedOutcome() {
+        return PaymentIntentStringifier.stringify(this);
     }
 }

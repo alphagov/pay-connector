@@ -15,20 +15,24 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     private final AuthoriseStatus authoriseStatus;
     private final String redirectUrl;
 
-    private StripeAuthorisationResponse(String transactionId, AuthoriseStatus authoriseStatus, String redirectUrl) {
+    private final String stringifiedResponse;
+
+    private StripeAuthorisationResponse(String transactionId, AuthoriseStatus authoriseStatus, String redirectUrl, String stringifiedResponse) {
         if (Objects.isNull(authoriseStatus )) {
             throw new IllegalArgumentException("Authorise status cannot be null");
         }
         this.transactionId = transactionId;
         this.authoriseStatus = authoriseStatus;
         this.redirectUrl = redirectUrl;
+        this.stringifiedResponse = stringifiedResponse;
     }
 
     public static StripeAuthorisationResponse of(StripePaymentIntentResponse stripePaymentIntent) {
         return new StripeAuthorisationResponse(
                 stripePaymentIntent.getId(),
                 stripePaymentIntent.getAuthoriseStatus().orElse(null),
-                stripePaymentIntent.getRedirectUrl().orElse(null)
+                stripePaymentIntent.getRedirectUrl().orElse(null),
+                stripePaymentIntent.getStringifiedOutcome()
         );
     }
 
@@ -36,6 +40,7 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
         return new StripeAuthorisationResponse(
                 stripeCharge.getId(),
                 stripeCharge.getAuthorisationStatus().orElse(null),
+                null,
                 null
         );
     }
@@ -64,5 +69,10 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     @Override
     public String getErrorMessage() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return stringifiedResponse == null ? "" : stringifiedResponse;
     }
 }

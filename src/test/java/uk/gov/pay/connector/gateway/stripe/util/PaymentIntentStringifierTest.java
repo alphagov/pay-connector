@@ -5,15 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CHARGE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class PaymentIntentStringifierTest {
     private ObjectMapper mapper = new ObjectMapper();
@@ -50,5 +52,17 @@ class PaymentIntentStringifierTest {
                 "(stripe charge: ch_1FF3RuEZsufgnuO0IPT8CY3o)";
         String stringified = PaymentIntentStringifier.stringify(paymentIntent);
         assertThat(stringified, is(expectedStringifiedPaymentIntent));
+    }
+
+    @Test
+    void shouldBuildStringFromPaymentIntentResponse() throws JsonProcessingException {
+        String payload = load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CHARGE);
+        StripePaymentIntentResponse response = mapper.readValue(payload, StripePaymentIntentResponse.class);
+
+        String expectedStringified = "payment intent: pi_1FHESeEZsufgnuO08A2FUSPy (stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde, " +
+                "outcome.network_status: approved_by_network, outcome.risk_level: normal, " +
+                "outcome.seller_message: Payment complete., outcome.type: authorized)";
+        String stringified = response.getStringifiedOutcome();
+        assertThat(stringified, is(expectedStringified));
     }
 }
