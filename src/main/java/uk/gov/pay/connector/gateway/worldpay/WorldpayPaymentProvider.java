@@ -211,7 +211,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     LOGGER,
                     authorisationRequestSummary,
                     charge,
-                    authorisationService.extractTransactionId(charge.getExternalId(), response)
+                    authorisationService.extractTransactionId(charge.getExternalId(), response, charge.getGatewayTransactionId())
                             .orElse("missing transaction ID"),
                     response,
                     charge.getChargeStatus(),

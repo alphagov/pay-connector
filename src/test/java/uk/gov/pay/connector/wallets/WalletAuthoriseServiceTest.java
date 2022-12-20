@@ -145,7 +145,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private CardDetailsEntity mockCardDetailsEntity;
-    
+
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
 
@@ -159,10 +159,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     @InjectMocks
-    private EventService mockEventService;    
-    
+    private EventService mockEventService;
+
     @InjectMocks
     private PaymentInstrumentService mockPaymentInstrumentService;
 
@@ -193,7 +193,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                 chargeService,
                 authorisationService,
                 mockWalletAuthorisationDataToAuthCardDetailsConverter,
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mockEnvironment);
 
         setUpLogging();
@@ -289,7 +289,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         WalletAuthorisationData authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
-        
+
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
 
         assertThat(response.isSuccessful(), is(true));
@@ -324,6 +324,20 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+    }
+
+    @Test
+    public void doAuthorise_shouldSetProviderTransactionId_whenProviderAuthorisationIsErroredWithoutProviderId() throws Exception {
+        providerWillRejectWithNoTransactionId();
+
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+
+        GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
     }
@@ -399,7 +413,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
             walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
             fail("Exception not thrown.");
         } catch (OperationAlreadyInProgressRuntimeException e) {
-            ErrorResponse response = (ErrorResponse)e.getResponse().getEntity();
+            ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
             assertThat(response.getMessages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
         }
     }
@@ -466,11 +480,22 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                 .build();
     }
 
+    private GatewayResponse mockAuthResponseWithNoTransactionId(AuthoriseStatus authoriseStatus, String errorCode) {
+        WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
+        when(worldpayResponse.getTransactionId()).thenReturn(null);
+        when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
+        when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        return responseBuilder()
+                .withResponse(worldpayResponse)
+                .withSessionIdentifier(SESSION_IDENTIFIER)
+                .build();
+    }
+
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
-    
+
     private GatewayResponse providerWillAuthorise() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
@@ -479,12 +504,17 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillReject() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
-         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+    }
+
+    private void providerWillRejectWithNoTransactionId() throws Exception {
+        GatewayResponse authResponse = mockAuthResponseWithNoTransactionId(AuthoriseStatus.EXCEPTION, null);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
     private void providerWillError() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
-         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
     private void providerWillRespondWithError(Exception gatewayError) throws Exception {

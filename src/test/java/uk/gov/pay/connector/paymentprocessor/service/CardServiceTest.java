@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -77,9 +76,13 @@ public abstract class CardServiceTest {
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
         ChargeEntity entity = ChargeEntityFixture
                 .aValidChargeEntity()
+                .withPaymentProvider(provider)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withId(chargeId)
                 .withStatus(status)
+                .withEvents(List.of(
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(status).withUpdated(ZonedDateTime.now().minusHours(1)).build()
+                ))
                 .build();
         entity.setGatewayTransactionId(gatewayTransactionId);
         return entity;
