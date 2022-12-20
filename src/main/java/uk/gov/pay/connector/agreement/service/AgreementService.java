@@ -3,6 +3,7 @@ package uk.gov.pay.connector.agreement.service;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
@@ -54,6 +55,9 @@ public class AgreementService {
     @Transactional
     public Optional<AgreementResponse> create(AgreementCreateRequest agreementCreateRequest, long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {
+            if(!gatewayAccountEntity.isRecurringEnabled()) {
+                throw new RecurringCardPaymentsNotAllowedException(gatewayAccountEntity.getId());
+            }
             AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
                     .withReference(agreementCreateRequest.getReference())
                     .withDescription(agreementCreateRequest.getDescription())
