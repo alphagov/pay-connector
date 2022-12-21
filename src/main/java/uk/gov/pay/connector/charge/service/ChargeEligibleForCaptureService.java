@@ -16,10 +16,13 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 
+import java.util.List;
+
 import static java.lang.String.format;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeEligibleForCaptureService {
@@ -75,7 +78,7 @@ public class ChargeEligibleForCaptureService {
     }
 
     private ChargeStatus deriveCaptureStatusForChargeAuthorisationMode(ChargeEntity charge) {
-        return charge.getAuthorisationMode() == MOTO_API ? CAPTURE_QUEUED : CAPTURE_APPROVED;
+        return List.of(MOTO_API, AGREEMENT).contains(charge.getAuthorisationMode()) ? CAPTURE_QUEUED : CAPTURE_APPROVED;
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {

@@ -30,6 +30,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,6 +112,22 @@ class ChargeEligibleForCaptureServiceTest {
         inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
 
         verifyNoInteractions(mockLinkPaymentInstrumentToAgreementService);
+    }
+
+    @Test
+    void shouldChangeStateToCaptureQueued_forChargeWithAuthorisationModeAgreement() throws QueueException {
+        ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
+                .withAuthorisationMode(AGREEMENT)
+                .build();
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+
+        ChargeEntity result = chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+
+        assertThat(result, sameInstance(chargeEntity));
+
+        var inOrder = inOrder(mockChargeService, mockCaptureQueue);
+        inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_QUEUED);
+        inOrder.verify(mockCaptureQueue).sendForCapture(result);
     }
 
     @Test

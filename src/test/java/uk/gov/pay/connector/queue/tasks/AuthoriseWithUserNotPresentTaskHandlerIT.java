@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_FAILED_REJECTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
@@ -78,7 +78,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_APPROVED.getValue());
+        assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
         assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
