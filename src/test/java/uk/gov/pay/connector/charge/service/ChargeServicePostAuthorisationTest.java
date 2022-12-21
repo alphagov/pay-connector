@@ -18,6 +18,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -30,6 +31,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -41,6 +43,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
@@ -129,6 +132,31 @@ class ChargeServicePostAuthorisationTest {
 
         verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
+    }
+
+    @Test
+    void updateChargePostAuthorisationUpdatesChargeAndEmitsEvent_forAuthorisationModeAgreement() {
+        var cardDetails = defaultCardDetails();
+        var chargeEntity = chargeEntityFixture
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withCardDetails(cardDetails)
+                .build();
+        when(mockChargeDao.findByExternalId(EXTERNAL_ID)).thenReturn(Optional.of(chargeEntity));
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetails);
+        when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
+
+        chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);
+
+        assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
+        assertThat(chargeEntity.getEmail(), is(EMAIL));
+        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(chargeEntity.getWalletType(), is(nullValue()));
+        assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
+        verify(mockEventService).emitAndRecordEvent(PaymentDetailsTakenFromPaymentInstrument.from(chargeEntity));
     }
 
     @Test
