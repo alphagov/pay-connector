@@ -78,4 +78,60 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetails extends EventD
     public int hashCode() {
         return Objects.hash(cardType, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, expiryDate);
     }
+
+    public String getCardType() {
+        return cardType;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public String getCardBrandLabel() {
+        return cardBrandLabel;
+    }
+
+    public String getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
+    }
+
+    public String getLastDigitsCardNumber() {
+        return lastDigitsCardNumber;
+    }
+
+    public String getCardholderName() {
+        return cardholderName;
+    }
+
+    public String getExpiryDate() {
+        return expiryDate;
+    }
+
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+
+    public String getAddressPostcode() {
+        return addressPostcode;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+
+    public String getAddressCounty() {
+        return addressCounty;
+    }
+
+    public String getAddressStateProvince() {
+        return addressStateProvince;
+    }
+
+    public String getAddressCountry() {
+        return addressCountry;
+    }
 }
