@@ -23,6 +23,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundExceptionMapper;
+import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsExceptionMapper;
@@ -168,6 +169,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new AuthorisationRejectedExceptionMapper());
         environment.jersey().register(new AuthorisationTimedOutExceptionMapper());
         environment.jersey().register(new GatewayAccountDisabledExceptionMapper());
+        environment.jersey().register(new RecurringCardPaymentsNotAllowedExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

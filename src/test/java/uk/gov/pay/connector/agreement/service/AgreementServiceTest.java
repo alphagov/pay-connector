@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
+import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
@@ -62,11 +63,12 @@ public class AgreementServiceTest {
     }
 
     @Test
-    public void shouldCreateAnAgreement() {
+    public void shouldCreateAnAgreementWhenRecurringEnabled() {
         var description = "a valid description";
         var userIdentifier = "a-valid-user-reference";
         when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
         when(gatewayAccount.isLive()).thenReturn(false);
+        when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
         AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
@@ -79,6 +81,16 @@ public class AgreementServiceTest {
         assertThat(response.get().getUserIdentifier(), is(userIdentifier));
     }
 
+    @Test
+    public void createAnAgreement_ShouldThrowRecurringCardPaymentsNotAllowedExceptionWhenRecurringDisabled() {
+        var description = "a valid description";
+        var userIdentifier = "a-valid-user-reference";
+        when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+        assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+    }
+    
     @Test
     public void cancelAnAgreement_ThrowsAgreementNotFound() {
         var agreementId = "an-external-id";
