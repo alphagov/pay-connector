@@ -31,6 +31,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
@@ -70,6 +71,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -230,6 +232,29 @@ public class HistoricalEventEmitterServiceTest {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verify(eventService).emitAndRecordEvent(any(PaymentDetailsSubmittedByAPI.class), isNotNull());
+    }
+
+    @Test
+    public void executeShouldEmitPaymentDetailsTakenFromPaymentInstrumentEventForAgreementCharges() {
+        chargeEntity.setAuthorisationMode(AGREEMENT);
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
+                "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
+        chargeEntity.setCardDetails(cardDetailsEntity);
+
+        ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().add(authSuccessEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService).emitAndRecordEvent(any(PaymentDetailsTakenFromPaymentInstrument.class), isNotNull());
     }
 
     @Test

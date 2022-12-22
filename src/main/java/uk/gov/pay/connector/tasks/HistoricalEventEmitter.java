@@ -22,6 +22,7 @@ import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailColl
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
@@ -29,6 +30,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -291,11 +293,20 @@ public class HistoricalEventEmitter {
                 .stream()
                 .filter(event -> !isATelephonePaymentNotification(chargeEventEntities))
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
-                .map(chargeEventEntity -> (chargeEventEntity.getChargeEntity().getAuthorisationMode() == MOTO_API)
-                        ? PaymentDetailsSubmittedByAPI.from(chargeEventEntity)
-                        : PaymentDetailsEntered.from(chargeEventEntity))
+                .map(this::determinePaymentDetailsEnteredEvent)
                 .filter(event -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
+    }
+
+    private Event determinePaymentDetailsEnteredEvent(ChargeEventEntity chargeEventEntity) {
+        switch (chargeEventEntity.getChargeEntity().getAuthorisationMode()) {
+            case MOTO_API:
+                return PaymentDetailsSubmittedByAPI.from(chargeEventEntity);
+            case AGREEMENT:
+                return PaymentDetailsTakenFromPaymentInstrument.from(chargeEventEntity);
+            default:
+                return PaymentDetailsEntered.from(chargeEventEntity);
+        }
     }
 
     private void processUserEmailCollectedEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {

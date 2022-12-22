@@ -59,10 +59,12 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsTakenFromPaymentInstrumentEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -119,6 +121,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class ChargeService {
@@ -613,6 +616,8 @@ public class ChargeService {
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
+        } else if (chargeEntity.getAuthorisationMode() == AGREEMENT) {
+            eventService.emitAndRecordEvent(PaymentDetailsTakenFromPaymentInstrument.from(chargeEntity));
         } else {
             eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
         }
