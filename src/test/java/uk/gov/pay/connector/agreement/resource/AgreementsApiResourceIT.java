@@ -20,6 +20,7 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
 
@@ -32,6 +33,7 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -167,7 +169,9 @@ public class AgreementsApiResourceIT {
                 .body(payload)
                 .post(format(CREATE_AGREEMENT_URL, accountId))
                 .then()
-                .statusCode(SC_UNPROCESSABLE_ENTITY);
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .body("message", contains("Recurring payment agreements are not enabled on this account"))
+                .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
     }
     @Test
     public void shouldReturn204AndCancelAgreement() {
