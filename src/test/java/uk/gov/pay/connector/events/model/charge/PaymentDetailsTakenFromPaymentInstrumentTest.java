@@ -40,6 +40,7 @@ class PaymentDetailsTakenFromPaymentInstrumentTest {
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withExternalId(paymentId)
                 .withCorporateSurcharge(10L)
+                .withGatewayTransactionId("a-gateway-transaction-id")
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .withAmount(100L)
                 .withEvents(list);
@@ -90,6 +91,7 @@ class PaymentDetailsTakenFromPaymentInstrumentTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.title", equalTo("Payment details taken from payment instrument")));
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are taken from a payment instrument during a recurring card payment")));
+        assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo("a-gateway-transaction-id")));
         assertThat(actual, hasJsonPath("$.event_details.card_type", equalTo("DEBIT")));
         assertThat(actual, hasJsonPath("$.event_details.address_line1", equalTo("125 Kingsway")));
         assertThat(actual, hasJsonPath("$.event_details.address_city", equalTo("London")));

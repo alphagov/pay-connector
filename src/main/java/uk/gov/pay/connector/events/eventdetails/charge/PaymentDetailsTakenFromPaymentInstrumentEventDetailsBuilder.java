@@ -15,6 +15,7 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder {
     String addressCounty;
     String addressStateProvince;
     String addressCountry;
+    String gatewayTransactionId;
 
     public PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder setCardType(String cardType) {
         this.cardType = cardType;
@@ -83,6 +84,11 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder {
 
     public PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder setAddressCountry(String addressCountry) {
         this.addressCountry = addressCountry;
+        return this;
+    }
+
+    public PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder setGatewayTransactionId(String gatewayTransactionId) {
+        this.gatewayTransactionId = gatewayTransactionId;
         return this;
     }
 

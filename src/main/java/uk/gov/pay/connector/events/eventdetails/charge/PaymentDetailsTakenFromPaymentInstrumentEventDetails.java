@@ -22,6 +22,7 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetails extends EventD
     private final String addressCounty;
     private final String addressStateProvince;
     private final String addressCountry;
+    private final String gatewayTransactionId;
 
     public PaymentDetailsTakenFromPaymentInstrumentEventDetails(PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder builder) {
         this.cardType = builder.cardType;
@@ -38,11 +39,13 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetails extends EventD
         this.addressCounty = builder.addressCounty;
         this.addressStateProvince = builder.addressStateProvince;
         this.addressCountry = builder.addressCountry;
+        this.gatewayTransactionId = builder.gatewayTransactionId;
     }
 
     public static PaymentDetailsTakenFromPaymentInstrumentEventDetails from(ChargeEntity charge) {
         var cardDetails = charge.getCardDetails();
         var builder = new PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder()
+                .setGatewayTransactionId(charge.getGatewayTransactionId())
                 .setCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
                 .setCardBrand(cardDetails.getCardBrand())
                 .setCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
@@ -135,5 +138,9 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetails extends EventD
 
     public String getAddressCountry() {
         return addressCountry;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
     }
 }
