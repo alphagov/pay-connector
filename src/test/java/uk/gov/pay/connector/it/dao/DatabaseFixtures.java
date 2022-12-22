@@ -353,6 +353,8 @@ public class DatabaseFixtures {
         private boolean motoMaskCardNumberInput;
         private boolean motoMaskCardSecurityCodeInput;
         private boolean allowTelephonePaymentNotifications;
+
+        private boolean recurringEnabled;
         private final Map<String, String> defaultCredentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "username",
@@ -415,6 +417,14 @@ public class DatabaseFixtures {
             return allowTelephonePaymentNotifications;
         }
 
+        public boolean isRecurringEnabled() {
+            return recurringEnabled;
+        }
+
+        public void setRecurringEnabled(boolean recurringEnabled) {
+            this.recurringEnabled = recurringEnabled;
+        }
+        
         public TestAccount withAccountId(long accountId) {
             this.accountId = accountId;
             return this;
@@ -524,7 +534,11 @@ public class DatabaseFixtures {
             this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
             return this;
         }
-
+        
+        public TestAccount withRecurringEnabled(boolean recurringEnabled) {
+            this.recurringEnabled = recurringEnabled;
+            return this;
+        }
         public TestAccount withDefaultCredentials() {
             this.credentialsMap = defaultCredentials;
             return this;
@@ -560,6 +574,7 @@ public class DatabaseFixtures {
                     .withMotoMaskCardSecurityCodeInput(motoMaskCardSecurityCodeInput)
                     .withAllowTelephonePaymentNotifications(allowTelephonePaymentNotifications)
                     .withServiceId(serviceId)
+                    .withRecurringEnabled(recurringEnabled)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());

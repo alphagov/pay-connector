@@ -77,7 +77,7 @@ public class AgreementsApiResourceIT {
         ledgerStub = new LedgerStub(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
-        testAccount = createTestAccount("worldpay");
+        testAccount = createTestAccount("worldpay", true);
         accountId = testAccount.getAccountId();
 
         credentialsId = testAccount.getCredentials().get(0).getId();
@@ -155,6 +155,21 @@ public class AgreementsApiResourceIT {
     }
 
     @Test
+    public void shouldReturn422WhenRecurringDisabled() throws JsonProcessingException{
+        testAccount = createTestAccount("worldpay", false);
+        accountId = testAccount.getAccountId();
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "reference", REFERENCE_ID,
+                "description", DESCRIPTION,
+                "user_identifier", USER_IDENTIFIER
+        ));
+        givenSetup()
+                .body(payload)
+                .post(format(CREATE_AGREEMENT_URL, accountId))
+                .then()
+                .statusCode(SC_UNPROCESSABLE_ENTITY);
+    }
+    @Test
     public void shouldReturn204AndCancelAgreement() {
         var agreementId = "an-external-id";
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -177,12 +192,13 @@ public class AgreementsApiResourceIT {
         assertThat(agreementMap.get("status"), is("CANCELLED"));
     }
 
-    private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider) {
+    private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider, boolean recurringEnabled) {
         long accountId = nextLong(2, 10000);
 
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
+                .withRecurringEnabled(recurringEnabled)
                 .insert();
     }
 }
