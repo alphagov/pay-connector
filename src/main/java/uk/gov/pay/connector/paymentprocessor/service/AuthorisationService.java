@@ -55,7 +55,7 @@ public class AuthorisationService {
     public <T> T executeAuthoriseSync(Supplier<T> authorisationSupplier) throws AuthorisationExecutorTimedOutException {
         int timeoutInMilliseconds = authorisationConfig.getSynchronousAuthTimeoutInMilliseconds();
         return executeAuthorise(authorisationSupplier, timeoutInMilliseconds);
-    } 
+    }
 
     private <T> T executeAuthorise(Supplier<T> authorisationSupplier, int timeoutInMilliseconds)
             throws AuthorisationExecutorTimedOutException {
@@ -71,13 +71,16 @@ public class AuthorisationService {
         }
     }
 
-    public Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<? extends BaseAuthoriseResponse> operationResponse) {
+    public Optional<String> extractTransactionId(String chargeExternalId,
+                                                 GatewayResponse<? extends BaseAuthoriseResponse> operationResponse,
+                                                 String currentGatewayTransactionId) {
         Optional<String> transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId);
 
         if (transactionId.isEmpty() || StringUtils.isBlank(transactionId.get())) {
             logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
                     chargeExternalId);
+            return Optional.ofNullable(currentGatewayTransactionId);
         }
 
         return transactionId;
