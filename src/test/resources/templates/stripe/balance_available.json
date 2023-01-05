@@ -1,0 +1,37 @@
+{
+  "id": "evt_1FF3RvEZsufgnuO0tnyTrqsL",
+  "type": "balance.available",
+  "object": "event",
+  "api_version": "2019-02-19",
+  "created": 1567622604,
+  "data": {
+    "object": {
+      "object": "balance",
+      "available": [
+        {
+          "amount": 853067,
+          "currency": "gbp",
+          "source_types": {
+            "card": 853067
+          }
+        }
+      ],
+      "connect_reserved": [
+        {
+          "amount": 22648,
+          "currency": "gbp"
+        }
+      ],
+      "livemode": false,
+      "pending": [
+        {
+          "amount": 210,
+          "currency": "gbp",
+          "source_types": {
+            "card": 210
+          }
+        }
+      ]
+    }
+  }
+}
