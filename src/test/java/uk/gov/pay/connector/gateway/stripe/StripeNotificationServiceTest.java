@@ -76,6 +76,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_BALANCE_AVAILABLE;
 
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
@@ -152,6 +153,21 @@ class StripeNotificationServiceTest {
 
     private String signPayloadWithTestSecret(String payload) {
         return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
+    }
+    
+    @Test
+    void shouldLogForBalanceAvailableEvent() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_BALANCE_AVAILABLE);
+
+        final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+        assertTrue(result);
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getFormattedMessage(), containsString("Logging stripe balance"));
     }
 
     @Test

@@ -17,6 +17,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.stripe.json.StripeBalance;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
@@ -42,6 +43,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.BALANCE_AVAILABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CLOSED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_CREATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.DISPUTE_UPDATED;
@@ -144,6 +146,8 @@ public class StripeNotificationService {
             stripeRefundUpdatedHandler.process(notification);
         } else if (isADisputeNotification(notification)) {
             processDisputeNotification(notification, payload);
+        } else if (isABalanceAvailableNotification(notification)) {
+            processBalanceAvailableNotification(notification);
         }
         MDC.remove(STRIPE_EVENT_ID);
         return true;
@@ -154,6 +158,33 @@ public class StripeNotificationService {
         taskQueueService.add(new Task(payload, TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION));
     }
 
+    private void processBalanceAvailableNotification(StripeNotification notification) {
+        try {
+            StripeBalance stripeBalance = toStripeBalance(notification.getObject());
+            if (!stripeBalance.getAvailable().isEmpty()) {
+                StripeBalance.Available available = stripeBalance.getAvailable().iterator().next();
+                // Logging the currency and amount is used as part of a splunk search to track our stripe balance
+                // over time
+                logger.info("Logging stripe balance",
+                        kv("currency", available.getCurrency()),
+                        kv("amount", available.getAmount())
+                );
+            } else {
+                logger.info("Stripe balance.available notification contains no 'available' attribute. See https://stripe.com/docs/api/balance/balance_object");
+            }
+        } catch (StripeParseException e) {
+            logger.error("{} notification parsing for balance available object failed: {}", PAYMENT_GATEWAY_NAME, e);
+        }
+    }
+
+    private StripeBalance toStripeBalance(String payload) throws StripeParseException {
+        try {
+            return objectMapper.readValue(payload, StripeBalance.class);
+        } catch (Exception e) {
+            throw new StripeParseException(e.getMessage());
+        }
+    }
+    
     private void processPayoutNotification(StripeNotification notification) {
         logger.info(format("Processing %s payout created notification with id [%s]", PAYMENT_GATEWAY_NAME,
                 notification.getId()),
@@ -305,6 +336,10 @@ public class StripeNotificationService {
     
     private boolean isARefundUpdatedNotification(StripeNotification notification) {
         return byType(notification.getType()) == REFUND_UPDATED;
+    }
+    
+    private boolean isABalanceAvailableNotification(StripeNotification notification) {
+        return byType(notification.getType()) == BALANCE_AVAILABLE;
     }
 
     private boolean isADisputeNotification(StripeNotification notification) {

@@ -12,6 +12,7 @@ import java.util.Optional;
 public enum StripeNotificationType {
 
     ACCOUNT_UPDATED("account.updated"),
+    BALANCE_AVAILABLE("balance.available"),
     DISPUTE_CREATED("charge.dispute.created"),
     DISPUTE_CLOSED("charge.dispute.closed"),
     DISPUTE_UPDATED("charge.dispute.updated"),
