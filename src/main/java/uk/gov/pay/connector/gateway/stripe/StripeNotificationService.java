@@ -128,7 +128,7 @@ public class StripeNotificationService {
 
         StripeNotification notification;
         try {
-            notification = parseNotification(payload);
+            notification = deserialise(payload, StripeNotification.class);
             MDC.put(STRIPE_EVENT_ID, notification.getId());
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
         } catch (StripeParseException e) {
@@ -160,7 +160,7 @@ public class StripeNotificationService {
 
     private void processBalanceAvailableNotification(StripeNotification notification) {
         try {
-            StripeBalance stripeBalance = toStripeBalance(notification.getObject());
+            StripeBalance stripeBalance = deserialise(notification.getObject(), StripeBalance.class);
             if (!stripeBalance.getAvailable().isEmpty()) {
                 StripeBalance.Available available = stripeBalance.getAvailable().iterator().next();
                 // Logging the currency and amount is used as part of a splunk search to track our stripe balance
@@ -177,20 +177,21 @@ public class StripeNotificationService {
         }
     }
 
-    private StripeBalance toStripeBalance(String payload) throws StripeParseException {
+
+    private <T> T deserialise(String payload, Class<T> targetClass) throws StripeParseException {
         try {
-            return objectMapper.readValue(payload, StripeBalance.class);
+            return (T) objectMapper.readValue(payload, targetClass);
         } catch (Exception e) {
             throw new StripeParseException(e.getMessage());
         }
     }
-    
+
     private void processPayoutNotification(StripeNotification notification) {
         logger.info(format("Processing %s payout created notification with id [%s]", PAYMENT_GATEWAY_NAME,
                 notification.getId()),
                 kv(CONNECT_ACCOUNT_ID, notification.getAccount()));
         try {
-            StripePayout stripePayout = toPayout(notification.getObject());
+            StripePayout stripePayout = deserialise(notification.getObject(), StripePayout.class);
             StripeNotificationType stripeNotificationType = byType(notification.getType());
 
             if (PAYOUT_CREATED.equals(stripeNotificationType)) {
@@ -228,7 +229,7 @@ public class StripeNotificationService {
 
     private void processPaymentIntentNotification(StripeNotification notification) {
         try {
-            StripePaymentIntent paymentIntent = toPaymentIntent(notification.getObject());
+            StripePaymentIntent paymentIntent = deserialise(notification.getObject(), StripePaymentIntent.class);
 
             if (isBlank(paymentIntent.getId())) {
                 logger.warn("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
@@ -258,22 +259,6 @@ public class StripeNotificationService {
 
         } catch (StripeParseException e) {
             logger.error("{} notification parsing for payment intent object failed: {}", PAYMENT_GATEWAY_NAME, e);
-        }
-    }
-
-    private StripePaymentIntent toPaymentIntent(String payload) throws StripeParseException {
-        try {
-            return objectMapper.readValue(payload, StripePaymentIntent.class);
-        } catch (Exception e) {
-            throw new StripeParseException(e.getMessage());
-        }
-    }
-
-    private StripePayout toPayout(String payload) throws StripeParseException {
-        try {
-            return objectMapper.readValue(payload, StripePayout.class);
-        } catch (Exception e) {
-            throw new StripeParseException(e.getMessage());
         }
     }
 
@@ -360,14 +345,6 @@ public class StripeNotificationService {
 
     private boolean isChargeIn3DSRequiredOrReadyState(ChargeStatus chargeStatus) {
         return threeDSAuthorisableStates.contains(chargeStatus);
-    }
-
-    private StripeNotification parseNotification(String payload) throws StripeParseException {
-        try {
-            return objectMapper.readValue(payload, StripeNotification.class);
-        } catch (Exception e) {
-            throw new StripeParseException(e.getMessage());
-        }
     }
 
     private boolean isValidNotificationSignature(String payload, String signatureHeader) {
