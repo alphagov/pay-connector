@@ -163,6 +163,8 @@ public class StripeNotificationService {
             StripeBalance stripeBalance = toStripeBalance(notification.getObject());
             if (!stripeBalance.getAvailable().isEmpty()) {
                 StripeBalance.Available available = stripeBalance.getAvailable().iterator().next();
+                // Logging the currency and amount is used as part of a splunk search to track our stripe balance
+                // over time
                 logger.info("Logging stripe balance",
                         kv("currency", available.getCurrency()),
                         kv("amount", available.getAmount())
