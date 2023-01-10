@@ -11,6 +11,7 @@ import java.util.List;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
 
 public class OneTimeTokenUsageInvalidForMotoApiExceptionMapper implements ExceptionMapper<OneTimeTokenUsageInvalidForMotoApiException> {
 
@@ -20,7 +21,7 @@ public class OneTimeTokenUsageInvalidForMotoApiExceptionMapper implements Except
     public Response toResponse(OneTimeTokenUsageInvalidForMotoApiException exception) {
         LOGGER.info(exception.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(GENERIC, List.of(exception.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse(ONE_TIME_TOKEN_INVALID, List.of(exception.getMessage()));
 
         return Response.status(BAD_REQUEST)
                 .entity(errorResponse)

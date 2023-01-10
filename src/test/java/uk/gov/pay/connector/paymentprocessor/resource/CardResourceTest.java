@@ -270,7 +270,7 @@ class CardResourceTest {
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(errorResponse.getMessages(), hasItem("The one_time_token is not a valid moto api token"));
-        assertThat(errorResponse.getIdentifier(), is(GENERIC));
+        assertThat(errorResponse.getIdentifier(), is(ONE_TIME_TOKEN_INVALID));
     }
 
     @Test
