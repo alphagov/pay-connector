@@ -112,7 +112,6 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
     )
-    @Transactional
     public Response createNewCharge(
             @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid ChargeCreateRequest chargeRequest,
