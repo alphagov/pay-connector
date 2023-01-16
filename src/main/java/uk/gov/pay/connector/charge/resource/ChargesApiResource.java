@@ -139,6 +139,11 @@ public class ChargesApiResource {
                 .map(response -> {
                     if (authorisationMode == AuthorisationMode.AGREEMENT) {
                         chargeService.markChargeAsEligibleForAuthoriseUserNotPresent(response.getChargeId());
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                     return created(response.getLink("self")).entity(response).build();
                 })
