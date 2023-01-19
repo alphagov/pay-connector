@@ -23,6 +23,7 @@ public class TaskQueue extends AbstractQueue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueue.class);
     private final int deliveryDelayInSeconds;
+    
     @Inject
     public TaskQueue(SqsQueueService sqsQueueService,
                      ConnectorConfiguration connectorConfiguration,
