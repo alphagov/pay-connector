@@ -34,7 +34,7 @@ public class TaskQueue extends AbstractQueue {
 
     public void addTaskToQueue(Task task) throws QueueException, JsonProcessingException {
         String message = objectMapper.writeValueAsString(task);
-        QueueMessage queueMessage = sendMessageToQueue(message);
+        QueueMessage queueMessage = sendMessageToQueueWithDelay(message, 2);
         LOGGER.info("Task added to queue",
                 kv("task_type", task.getTaskType().getName()),
                 kv("message_id", queueMessage.getMessageId()));

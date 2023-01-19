@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -116,13 +117,13 @@ public class TaskQueueTest {
 
     @Test
     public void shouldSendValidSerialisedChargeToQueue() throws QueueException, JsonProcessingException {
-        when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
+        when(sqsQueueService.sendMessage(anyString(), anyString(), anyInt())).thenReturn(mock(QueueMessage.class));
 
         TaskQueue queue = new TaskQueue(sqsQueueService, connectorConfiguration, objectMapper);
         Task task = new Task("payload data", TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
         queue.addTaskToQueue(task);
 
         verify(sqsQueueService).sendMessage(connectorConfiguration.getSqsConfig().getTaskQueueUrl(),
-                "{\"data\":\"payload data\",\"task\":\"collect_fee_for_stripe_failed_payment\"}");
+                "{\"data\":\"payload data\",\"task\":\"collect_fee_for_stripe_failed_payment\"}", 2);
     }
 }
