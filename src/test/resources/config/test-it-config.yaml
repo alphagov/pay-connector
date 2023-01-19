@@ -108,6 +108,7 @@ taskQueue:
   queueSchedulerNumberOfThreads: ${TASKS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
   queueSchedulerThreadDelayInSeconds: ${TASKS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerShutdownTimeoutInSeconds: ${TASKS_QUEUE_SCHEDULER_SHUTDOWN_TIMEOUT_IN_SECONDS:-40}
+  deliveryDelayInSeconds: ${TASK_QUEUE_DELIVERY_DELAY_IN_SECONDS:-2}
 
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
