@@ -22,7 +22,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class TaskQueue extends AbstractQueue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueue.class);
-
+    private final int deliveryDelayInSeconds;
     @Inject
     public TaskQueue(SqsQueueService sqsQueueService,
                      ConnectorConfiguration connectorConfiguration,
@@ -30,11 +30,12 @@ public class TaskQueue extends AbstractQueue {
         super(sqsQueueService, objectMapper,
                 connectorConfiguration.getSqsConfig().getTaskQueueUrl(),
                 connectorConfiguration.getTaskQueueConfig().getFailedMessageRetryDelayInSeconds());
+        this.deliveryDelayInSeconds = connectorConfiguration.getTaskQueueConfig().getDeliveryDelayInSeconds();
     }
 
     public void addTaskToQueue(Task task) throws QueueException, JsonProcessingException {
         String message = objectMapper.writeValueAsString(task);
-        QueueMessage queueMessage = sendMessageToQueue(message);
+        QueueMessage queueMessage = sendMessageToQueueWithDelay(message, deliveryDelayInSeconds);
         LOGGER.info("Task added to queue",
                 kv("task_type", task.getTaskType().getName()),
                 kv("message_id", queueMessage.getMessageId()));
