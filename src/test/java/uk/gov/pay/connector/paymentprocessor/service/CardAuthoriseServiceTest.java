@@ -86,10 +86,12 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static junit.framework.TestCase.assertTrue;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThrows;
@@ -371,7 +373,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
                 hasItems("Applied corporate card surcharge for charge"));
-        assertThat(loggingEvents.get(0).getArgumentArray().length, CoreMatchers.is(5));
+        assertThat(loggingEvents.get(0).getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
     }
 
     @Test

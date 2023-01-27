@@ -6,10 +6,15 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.fee.model.Fee;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,6 +28,13 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.AUTHORISATION_MODE;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class ChargeEntityTest {
 
@@ -144,5 +156,62 @@ public class ChargeEntityTest {
 
         Optional<Long> netAmount = chargeCreated.getNetAmount();
         assertThat(netAmount.isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldReturnLoggingFieldsWithoutAgreementId() {
+        Long gatewayAccountId = 12L;
+        String externalId = "anExternalId";
+        String paymentProvider = "sandbox";
+        GatewayAccountType gatewayAccountType = GatewayAccountType.LIVE;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withId(gatewayAccountId)
+                .withType(gatewayAccountType)
+                .build();
+        AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(externalId)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(paymentProvider)
+                .withAuthorisationMode(authorisationMode)
+                .build();
+        Object[] structuredLoggingArgs = chargeEntity.getStructuredLoggingArgs();
+        assertThat(structuredLoggingArgs, arrayContainingInAnyOrder(
+                kv(PAYMENT_EXTERNAL_ID, externalId),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountId),
+                kv(PROVIDER, paymentProvider),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountType.toString()),
+                kv(AUTHORISATION_MODE, authorisationMode)
+        ));
+    }
+
+    @Test
+    public void shouldReturnLoggingFieldsWithAgreementId() {
+        Long gatewayAccountId = 12L;
+        String externalId = "anExternalId";
+        String paymentProvider = "sandbox";
+        String agreementId = "anAgreementId";
+        GatewayAccountType gatewayAccountType = GatewayAccountType.LIVE;
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withId(gatewayAccountId)
+                .withType(gatewayAccountType)
+                .build();
+        AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(externalId)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(paymentProvider)
+                .withAuthorisationMode(authorisationMode)
+                .withAgreementId(agreementId)
+                .build();
+        Object[] structuredLoggingArgs = chargeEntity.getStructuredLoggingArgs();
+        assertThat(structuredLoggingArgs, arrayContainingInAnyOrder(
+                kv(PAYMENT_EXTERNAL_ID, externalId),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountId),
+                kv(PROVIDER, paymentProvider),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountType.toString()),
+                kv(AUTHORISATION_MODE, authorisationMode),
+                kv(AGREEMENT_EXTERNAL_ID, agreementId)
+        ));
     }
 }

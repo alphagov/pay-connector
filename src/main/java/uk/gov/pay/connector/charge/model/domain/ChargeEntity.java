@@ -68,6 +68,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.AUTHORISATION_MODE;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -407,12 +409,15 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @JsonIgnore
     public Object[] getStructuredLoggingArgs() {
-        return new StructuredArgument[]{
+        ArrayList<StructuredArgument> structuredArguments = new ArrayList<>(List.of(
                 kv(PAYMENT_EXTERNAL_ID, externalId),
                 kv(GATEWAY_ACCOUNT_ID, getGatewayAccount().getId()),
                 kv(PROVIDER, paymentProvider),
-                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType())
-        };
+                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType()),
+                kv(AUTHORISATION_MODE, authorisationMode)
+        ));
+        getAgreementId().ifPresent(agreementExternalId -> structuredArguments.add(kv(AGREEMENT_EXTERNAL_ID, agreementExternalId)));
+        return structuredArguments.toArray();
     }
 
     public void setAmount(Long amount) {

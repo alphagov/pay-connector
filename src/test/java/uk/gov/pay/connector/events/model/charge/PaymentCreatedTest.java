@@ -51,7 +51,8 @@ class PaymentCreatedTest {
             .withEmail(null)
             .withSource(Source.CARD_API)
             .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key1", "value1", "key2", "value2")))
-            .withAuthorisationMode(AuthorisationMode.WEB);
+            .withAuthorisationMode(AuthorisationMode.WEB)
+            .withAgreementId(AGREEMENT_EXTERNAL_ID);
     private ChargeEntity chargeEntity;
 
     private String preparePaymentCreatedEvent() throws JsonProcessingException {
