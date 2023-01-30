@@ -11,8 +11,8 @@ import uk.gov.pay.connector.client.ledger.exception.LedgerException;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.events.model.Event;
-import uk.gov.pay.connector.events.model.charge.AgreementCreated;
-import uk.gov.pay.connector.events.model.charge.AgreementSetUp;
+import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
+import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;

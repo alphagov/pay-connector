@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events.model.charge;
+package uk.gov.pay.connector.events.model.agreement;
 
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;

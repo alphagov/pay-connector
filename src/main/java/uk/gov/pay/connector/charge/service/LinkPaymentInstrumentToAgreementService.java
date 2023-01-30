@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.events.model.charge.AgreementSetUp;
+import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
