@@ -56,7 +56,10 @@ public class AgreementService {
     public Optional<AgreementResponse> create(AgreementCreateRequest agreementCreateRequest, long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {
             if(!gatewayAccountEntity.isRecurringEnabled()) {
-                throw new RecurringCardPaymentsNotAllowedException(gatewayAccountEntity.getId());
+                throw new RecurringCardPaymentsNotAllowedException(
+                        "Attempt to create an agreement for gateway account " + 
+                        gatewayAccountEntity.getId() + 
+                        ", which does not have recurring card payments enabled");
             }
             AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
                     .withReference(agreementCreateRequest.getReference())
