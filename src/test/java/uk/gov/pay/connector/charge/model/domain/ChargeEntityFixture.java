@@ -66,7 +66,7 @@ public class ChargeEntityFixture {
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
     private String serviceId = randomUuid();
-    private String agreementId = randomUuid().substring(26);
+    private String agreementId;
     private boolean savePaymentInstrumentToAgreement = false;
     private PaymentInstrumentEntity paymentInstrument = null;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;

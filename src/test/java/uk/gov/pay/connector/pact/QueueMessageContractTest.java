@@ -88,6 +88,7 @@ public class QueueMessageContractTest {
                 .withCorporateSurcharge(55L)
                 .withSource(CARD_API)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
+                .withAgreementId("an-agreement-id")
                 .build();
 
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
@@ -167,6 +168,7 @@ public class QueueMessageContractTest {
     public String verifyUserEmailCollectedEvent() throws JsonProcessingException {
         ChargeEntity charge = aValidChargeEntity()
                 .withEmail("test@example.org")
+                .withAgreementId("an-agreement-id")
                 .build();
 
         UserEmailCollected userEmailCollected = new UserEmailCollected(

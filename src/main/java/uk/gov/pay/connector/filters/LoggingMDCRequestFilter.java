@@ -13,6 +13,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import java.util.Optional;
 
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.SECURE_TOKEN;
@@ -44,6 +45,9 @@ public class LoggingMDCRequestFilter implements ContainerRequestFilter {
 
         getPathParameterFromRequest("gatewayTransactionId", requestContext)
                 .ifPresent(gatewayTxId -> MDC.put(PROVIDER_PAYMENT_ID, gatewayTxId));
+        
+        getPathParameterFromRequest("agreementId", requestContext)
+                .ifPresent(agreementId -> MDC.put(AGREEMENT_EXTERNAL_ID, agreementId));
     }
 
     private Optional<ChargeEntity> getChargeFromRequest(ContainerRequestContext requestContext) {
