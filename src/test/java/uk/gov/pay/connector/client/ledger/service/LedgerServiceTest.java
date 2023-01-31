@@ -12,7 +12,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AgreementCreated;
-import uk.gov.pay.connector.events.model.charge.AgreementSetup;
+import uk.gov.pay.connector.events.model.charge.AgreementSetUp;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -112,7 +112,7 @@ public class LedgerServiceTest {
     void serialiseAndSendMultipleEvents() {
         setupMocksForPostRequest();
         var eventOne = new AgreementCreated("service-id", false, "resource-id", null, Instant.now());
-        var eventTwo = new AgreementSetup("service-id", false, "resource-id", null, Instant.now());
+        var eventTwo = new AgreementSetUp("service-id", false, "resource-id", null, Instant.now());
         List<Event> list = List.of(eventOne, eventTwo);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(list);

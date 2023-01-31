@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.events.model.charge.AgreementSetup;
+import uk.gov.pay.connector.events.model.charge.AgreementSetUp;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
@@ -37,7 +37,7 @@ public class LinkPaymentInstrumentToAgreementService {
                     agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
                     paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
                     ledgerService.postEvent(List.of(
-                            AgreementSetup.from(agreementEntity, clock.instant()),
+                            AgreementSetUp.from(agreementEntity, clock.instant()),
                             PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
                     ));
                 }, () -> LOGGER.error("Charge {} references agreement {} but that agreement does not exist", chargeEntity.getExternalId(), agreementId));

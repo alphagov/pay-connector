@@ -67,7 +67,7 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseRecurringSandboxAgreementSetupAndDeclineSubsequentRecurringPayment() {
+    public void shouldAuthoriseRecurringSandboxAgreementSetUpAndDeclineSubsequentRecurringPayment() {
         addWebCharge("setup-external-id");
         String SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS = "5100";
         String SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS = "510510";
@@ -77,11 +77,11 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         var chargeRecurring = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("recurring-external-id");
 
         String RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE = "5105105105105100";
-        var agreementSetupResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseWeb("setup-external-id", AuthCardDetailsFixture.anAuthCardDetails().withCardNo(RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE).build());
+        var agreementSetUpResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseWeb("setup-external-id", AuthCardDetailsFixture.anAuthCardDetails().withCardNo(RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE).build());
         var recurringPaymentResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(chargeRecurring);
 
-        assertThat(agreementSetupResponse.getGatewayError(), is(Optional.empty()));
-        assertThat(agreementSetupResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
+        assertThat(agreementSetUpResponse.getGatewayError(), is(Optional.empty()));
+        assertThat(agreementSetUpResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
         assertThat(recurringPaymentResponse.getGatewayError(), is(Optional.empty()));
         assertThat(recurringPaymentResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
     }

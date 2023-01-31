@@ -9,27 +9,27 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
-public class AgreementSetup extends AgreementEvent {
+public class AgreementSetUp extends AgreementEvent {
 
-    public AgreementSetup(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
+    public AgreementSetUp(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static AgreementSetup from(AgreementEntity agreement, Instant timestamp) {
-        return new AgreementSetup(
+    public static AgreementSetUp from(AgreementEntity agreement, Instant timestamp) {
+        return new AgreementSetUp(
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementSetupEventDetails(agreement.getPaymentInstrument().orElse(null), AgreementStatus.ACTIVE),
+                new AgreementSetUpEventDetails(agreement.getPaymentInstrument().orElse(null), AgreementStatus.ACTIVE),
                 timestamp
         );
     }
 
-    static class AgreementSetupEventDetails extends EventDetails {
+    static class AgreementSetUpEventDetails extends EventDetails {
         private String paymentInstrumentExternalId;
         private AgreementStatus status;
 
-        public AgreementSetupEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, AgreementStatus status) {
+        public AgreementSetUpEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, AgreementStatus status) {
             this.paymentInstrumentExternalId = Optional.ofNullable(paymentInstrumentEntity)
                     .map(PaymentInstrumentEntity::getExternalId)
                     .orElse(null);
@@ -48,7 +48,7 @@ public class AgreementSetup extends AgreementEvent {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            AgreementSetupEventDetails that = (AgreementSetupEventDetails) o;
+            AgreementSetUpEventDetails that = (AgreementSetUpEventDetails) o;
             return Objects.equals(paymentInstrumentExternalId, that.paymentInstrumentExternalId) && Objects.equals(status, that.status);
         }
 

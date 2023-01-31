@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.events.model.charge.AgreementSetup;
+import uk.gov.pay.connector.events.model.charge.AgreementSetUp;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
@@ -90,7 +90,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
         verify(mockPaymentInstrumentEntity).setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
         verify(ledgerService).postEvent(List.of(
-                AgreementSetup.from(mockAgreementEntity, clock.instant()),
+                AgreementSetUp.from(mockAgreementEntity, clock.instant()),
                 PaymentInstrumentConfirmed.from(mockAgreementEntity, clock.instant())
         ));
     }
