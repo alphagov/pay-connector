@@ -66,6 +66,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
     }
 
     @Test

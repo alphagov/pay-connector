@@ -10,6 +10,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -162,6 +163,7 @@ class ChargeServiceCreateAgreementTest {
 
         gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
+        gatewayAccount.setRecurringEnabled(true);
 
         gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
@@ -469,5 +471,28 @@ class ChargeServiceCreateAgreementTest {
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
+    
+    @Test 
+    void shouldThrowExceptionWhenRecurringNotEnabledForGatewayAccountForAuthorisationModeAgreement() {
+        gatewayAccount.setRecurringEnabled(false);
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
+        
+        var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        
+        assertThat(thrown.getMessage(), is("Attempt to use authorisation mode 'agreement' for gateway account 10, which does not have recurring card payments enabled"));
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+        }
 
+    @Test
+    void shouldThrowExceptionWhenRecurringNotEnabledForSavePaymentInstrumentToAgreement() {
+        gatewayAccount.setRecurringEnabled(false);
+        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
+        
+        var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+
+        assertThat(thrown.getMessage(), is("Attempt to save payment instrument to agreement for gateway account 10, which does not have recurring card payments enabled"));
+        verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
+    }
 }

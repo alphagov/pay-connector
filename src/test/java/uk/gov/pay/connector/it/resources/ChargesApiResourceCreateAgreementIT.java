@@ -79,6 +79,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
     @Test
     public void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrue() {
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(accountId)
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
@@ -107,6 +108,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
     @Test
     public void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreement() {
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -154,6 +156,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -180,6 +183,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -205,6 +209,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -229,6 +234,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -255,6 +261,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
                 .withAllowMoto(true)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -281,6 +288,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -307,6 +315,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -342,6 +351,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -366,6 +376,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -396,6 +407,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         long paymentInstrumentId = 11L;
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
@@ -463,6 +475,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
+                .withRecurringEnabled(true)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
@@ -592,6 +605,31 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON);
     }
+    
+    @Test
+    public void shouldReturn422OnSavePaymentToInstrumentRequestWhenRecurringNotEnabledForGatewayAccount() {
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+        
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
+                ));
+        
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Recurring payment agreements are not enabled on this account"))
+                .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
+        }
 
     @After
     public void tearDown() {
