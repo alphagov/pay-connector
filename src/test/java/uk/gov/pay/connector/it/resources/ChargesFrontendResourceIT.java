@@ -162,6 +162,7 @@ public class ChargesFrontendResourceIT {
         var agreementServiceId = "service-id";
         var agreementDescription = "a valid description";
         var agreementUserIdentifier = "a-valid-user-identifier";
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
         databaseTestHelper.addAgreement(anAddAgreementParams().withServiceId(agreementServiceId).withExternalAgreementId(AGREEMENT_ID)
                 .withReference(agreementReference).withDescription(agreementDescription).withUserIdentifier(agreementUserIdentifier)
                 .withCreatedDate(Instant.now()).withLive(false).withGatewayAccountId(accountId).build());
