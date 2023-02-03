@@ -631,38 +631,6 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
         }
 
-    @Test
-    public void shouldReturn422OnRecurringPaymentRequestWhenRecurringNotEnabledForGatewayAccount() {
-        Long paymentInstrumentId = RandomUtils.nextLong();
-
-        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(paymentInstrumentId)
-                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
-        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
-
-        AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(accountId)
-                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
-                .withPaymentInstrumentId(paymentInstrumentId)
-                .build();
-        databaseTestHelper.addAgreement(agreementParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
-                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
-                .contentType(JSON)
-                .body("message", contains("Recurring payment agreements are not enabled on this account"))
-                .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
-    }
-        
     @After
     public void tearDown() {
         databaseTestHelper.truncateAllData();
