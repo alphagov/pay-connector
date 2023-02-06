@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -110,6 +111,9 @@ public class LedgerService {
     }
     
     private Response postEvents(List<Event> events) {
+        String eventsList = events.stream().map(Event::getEventType).collect(Collectors.joining(", "));
+        logger.info("Making POST request to send events to ledger for: [" + eventsList + "]", 
+                kv("events", events.stream().map(Event::toString).collect(Collectors.toList())));
         var response = postEventClient.target(eventUri)
                 .request()
                 .accept(MediaType.APPLICATION_JSON)

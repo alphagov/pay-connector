@@ -38,13 +38,4 @@ public class PaymentEvent extends Event {
     public String getServiceId() {
         return serviceId;
     }
-
-    @Override
-    public String toString() {
-        return "PaymentEvent{" +
-                "resourceExternalId='" + getResourceExternalId() + '\'' +
-                ", eventDetails=" + getEventDetails() +
-                ", timestamp=" + getTimestamp() +
-                '}';
-    }
 }

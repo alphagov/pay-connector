@@ -2,10 +2,10 @@ package uk.gov.pay.connector.paymentinstrument.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
@@ -26,19 +26,25 @@ import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
 
+import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
+
 
 @Entity
-@Table(name="payment_instruments")
+@Table(name = "payment_instruments")
 @Access(AccessType.FIELD)
-@SequenceGenerator(name="payment_instruments_id_seq", sequenceName = "payment_instruments_id_seq", allocationSize = 1)
+@SequenceGenerator(name = "payment_instruments_id_seq", sequenceName = "payment_instruments_id_seq", allocationSize = 1)
 public class PaymentInstrumentEntity {
+
+    private final static Logger logger = LoggerFactory.getLogger(PaymentInstrumentEntity.class);
 
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_instruments_id_seq")
     private Long id;
 
-    @Column(name="recurring_auth_token", columnDefinition = "json")
+    @Column(name = "recurring_auth_token", columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
     private Map<String, String> recurringAuthToken;
 
@@ -50,10 +56,10 @@ public class PaymentInstrumentEntity {
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant startDate;
 
-    @Column(name="external_id")
+    @Column(name = "external_id")
     private String externalId;
 
-    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus paymentInstrumentStatus ) {
+    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus paymentInstrumentStatus) {
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.recurringAuthToken = recurringAuthToken;
@@ -98,8 +104,12 @@ public class PaymentInstrumentEntity {
         return paymentInstrumentStatus;
     }
 
-    public void setPaymentInstrumentStatus(PaymentInstrumentStatus paymentInstrumentStatus) {
-        this.paymentInstrumentStatus = paymentInstrumentStatus;
+    public void setPaymentInstrumentStatus(PaymentInstrumentStatus newStatus) {
+        logger.info(format("Changing payment instrument status for externalId [%s] [%s]->[%s]", this.externalId, this.paymentInstrumentStatus, newStatus),
+                kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, this.externalId),
+                kv("from_state", this.paymentInstrumentStatus),
+                kv("to_state", newStatus));
+        this.paymentInstrumentStatus = newStatus;
     }
 
     public CardDetailsEntity getCardDetails() {
@@ -144,23 +154,23 @@ public class PaymentInstrumentEntity {
         public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withCreatedDate(Instant createdDate) {
             this.createdDate = createdDate;
             return this;
-        }        
-        
+        }
+
         public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withStartDate(Instant startDate) {
             this.startDate = startDate;
             return this;
-        }        
-        
+        }
+
         public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withStatus(PaymentInstrumentStatus status) {
             this.status = status;
             return this;
-        }        
-        
+        }
+
         public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withRecurringAuthToken(Map<String, String> recurringAuthToken) {
             this.recurringAuthToken = recurringAuthToken;
             return this;
         }
-        
+
 
         public PaymentInstrumentEntity build() {
             return new PaymentInstrumentEntity(createdDate, recurringAuthToken, startDate, cardDetails, status);
