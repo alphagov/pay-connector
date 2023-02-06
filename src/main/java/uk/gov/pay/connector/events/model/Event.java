@@ -14,6 +14,7 @@ import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecon
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -78,8 +79,8 @@ public abstract class Event {
     @Override
     public String toString() {
         return "Event{" +
-                "resourceExternalId='" + resourceExternalId + '\'' +
-                ", eventDetails=" + eventDetails.getClass().getCanonicalName() +
+                "eventType=" + getEventType() +
+                ", resourceExternalId='" + resourceExternalId + '\'' +
                 ", timestamp=" + timestamp +
                 '}';
     }

@@ -34,13 +34,4 @@ public class AgreementEvent extends Event {
     public String getServiceId() {
         return serviceId;
     }
-
-    @Override
-    public String toString() {
-        return "AgreementEvent{" +
-                "resourceExternalId='" + getResourceExternalId() + '\'' +
-                ", eventDetails=" + getEventDetails() +
-                ", timestamp=" + getTimestamp() +
-                '}';
-    }
 }
