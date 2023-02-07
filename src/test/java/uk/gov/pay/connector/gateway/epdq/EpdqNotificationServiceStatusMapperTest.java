@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -244,6 +245,6 @@ class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTes
     private Charge getCharge(boolean isHistoric){
         return new Charge("external-id", 10L, null, null, "transaction-id",
                 "credential-external-id", 10L, null, "ref-1", "desc", Instant.now(),
-                "test@example.org", 123L, "epdq", isHistoric, "service-id", true, false);
+                "test@example.org", 123L, "epdq", isHistoric, "service-id", true, false, AuthorisationMode.WEB);
     }
 }

@@ -212,6 +212,8 @@ public class LedgerStub {
             Optional.of(testCharge.getAmount()).ifPresent(amount -> map.put("total_amount", amount));
         }
 
+        Optional.ofNullable(testCharge.getAuthorisationMode()).ifPresent(authMode -> map.put("authorisation_mode", authMode.getName()));
+
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");
         Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("refund_summary",

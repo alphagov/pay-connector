@@ -920,6 +920,10 @@ public class DatabaseFixtures {
         public Long getCorporateCardSurcharge() {
             return corporateCardSurcharge;
         }
+
+        public AuthorisationMode getAuthorisationMode() {
+            return authorisationMode;
+        }
     }
 
     public class TestToken {

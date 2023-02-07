@@ -10,6 +10,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -68,7 +69,8 @@ public class DiscrepancyResourceIT extends ChargingITestBase {
                 .withTestAccount(getTestAccount())
                 .withExternalChargeId("external_charge_id_10")
                 .withTransactionId("gateway_transaction_id_")
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS);
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withAuthorisationMode(AuthorisationMode.WEB);
 
         ledgerStub.returnLedgerTransaction(charge.getExternalChargeId(), charge, null);
         epdqMockClient.mockAuthorisationQuerySuccess();

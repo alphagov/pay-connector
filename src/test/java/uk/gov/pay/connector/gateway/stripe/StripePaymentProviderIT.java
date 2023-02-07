@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class StripePaymentProviderIT {
         String chargeExternalId = "a-charge-external-id";
         stripeMockClient.mockSearchPaymentIntentsByMetadata(chargeExternalId);
 
-        ChargeQueryGatewayRequest request = new ChargeQueryGatewayRequest(gatewayAccountEntity, gatewayAccountCredentialsEntity, chargeExternalId, chargeExternalId);
+        ChargeQueryGatewayRequest request = new ChargeQueryGatewayRequest(gatewayAccountEntity, gatewayAccountCredentialsEntity, chargeExternalId, chargeExternalId, AuthorisationMode.WEB);
         ChargeQueryResponse chargeQueryResponse = stripePaymentProvider.queryPaymentStatus(request);
         
         assertThat(chargeQueryResponse.foundCharge(), is(true));

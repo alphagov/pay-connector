@@ -24,6 +24,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -75,6 +76,7 @@ public class LedgerTransactionFixture {
     private AuthorisationSummary authorisationSummary;
     private String serviceId;
     private boolean disputed;
+    private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -111,7 +113,6 @@ public class LedgerTransactionFixture {
             ledgerTransactionFixture.isLive(gatewayAccount.isLive());
         }
         if (nonNull(chargeEntity.getCardDetails())) {
-
             CardDetailsEntity chargeEntityCardDetails = chargeEntity.getCardDetails();
             Address ledgerAddress = chargeEntityCardDetails.getBillingAddress().map(addressEntity -> {
                 return new Address(addressEntity.getLine1(),
@@ -157,6 +158,9 @@ public class LedgerTransactionFixture {
             authorisationSummary.setThreeDSecure(threeDSecure);
             ledgerTransactionFixture.withAuthorisationSummary(authorisationSummary);
         }
+
+        ledgerTransactionFixture.withAuthorisationMode(chargeEntity.getAuthorisationMode() == null ?
+                AuthorisationMode.WEB : chargeEntity.getAuthorisationMode());
 
         return ledgerTransactionFixture;
     }
@@ -233,6 +237,7 @@ public class LedgerTransactionFixture {
 
         ledgerTransaction.setAuthorisationSummary(authorisationSummary);
         ledgerTransaction.setDisputed(disputed);
+        ledgerTransaction.setAuthorisationMode(authorisationMode);
 
         return ledgerTransaction;
     }
@@ -394,6 +399,11 @@ public class LedgerTransactionFixture {
     
     public LedgerTransactionFixture withDisputed(boolean disputed) {
         this.disputed = disputed;
+        return this;
+    }
+
+    public LedgerTransactionFixture withAuthorisationMode(AuthorisationMode authorisationMode) {
+        this.authorisationMode = authorisationMode;
         return this;
     }
 }

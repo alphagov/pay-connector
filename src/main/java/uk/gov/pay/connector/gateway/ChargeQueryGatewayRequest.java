@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Map;
 
@@ -13,12 +14,15 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
     private final GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
     private final String chargeExternalId;
     private final String transactionId;
+    private final AuthorisationMode authorisationMode;
 
-    public ChargeQueryGatewayRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity, String chargeExternalId, String transactionId) {
+    public ChargeQueryGatewayRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
+                                     String chargeExternalId, String transactionId, AuthorisationMode authorisationMode) {
         this.gatewayAccountEntity = gatewayAccountEntity;
         this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
         this.chargeExternalId = chargeExternalId;
         this.transactionId = transactionId;
+        this.authorisationMode = authorisationMode;
     }
 
     @Override
@@ -39,6 +43,10 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
         return transactionId;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
     @Override
     public Map<String, String> getGatewayCredentials() {
         return gatewayAccountCredentialsEntity.getCredentials();
@@ -49,7 +57,8 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
                 gatewayAccountEntity,
                 gatewayAccountCredentialsEntity,
                 charge.getExternalId(),
-                charge.getGatewayTransactionId()
+                charge.getGatewayTransactionId(),
+                charge.getAuthorisationMode()
         );
     }
 }
