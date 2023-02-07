@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events.model.charge;
+package uk.gov.pay.connector.events.model.agreement;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
@@ -20,28 +20,22 @@ public class AgreementSetUp extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementSetUpEventDetails(agreement.getPaymentInstrument().orElse(null), AgreementStatus.ACTIVE),
+                new AgreementSetUpEventDetails(agreement.getPaymentInstrument().orElse(null)),
                 timestamp
         );
     }
 
     static class AgreementSetUpEventDetails extends EventDetails {
         private String paymentInstrumentExternalId;
-        private AgreementStatus status;
 
-        public AgreementSetUpEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, AgreementStatus status) {
+        public AgreementSetUpEventDetails(PaymentInstrumentEntity paymentInstrumentEntity) {
             this.paymentInstrumentExternalId = Optional.ofNullable(paymentInstrumentEntity)
                     .map(PaymentInstrumentEntity::getExternalId)
                     .orElse(null);
-            this.status = status;
         }
 
         public String getPaymentInstrumentExternalId() {
             return paymentInstrumentExternalId;
-        }
-
-        public AgreementStatus getStatus() {
-            return status;
         }
 
         @Override
@@ -49,12 +43,12 @@ public class AgreementSetUp extends AgreementEvent {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             AgreementSetUpEventDetails that = (AgreementSetUpEventDetails) o;
-            return Objects.equals(paymentInstrumentExternalId, that.paymentInstrumentExternalId) && Objects.equals(status, that.status);
+            return Objects.equals(paymentInstrumentExternalId, that.paymentInstrumentExternalId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(paymentInstrumentExternalId, status);
+            return Objects.hash(paymentInstrumentExternalId);
         }
     }
 }

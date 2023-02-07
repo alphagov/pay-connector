@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events.model.charge;
+package uk.gov.pay.connector.events.model.agreement;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
@@ -21,8 +21,7 @@ public class AgreementCreated extends AgreementEvent {
                         agreement.getGatewayAccount().getId(),
                         agreement.getReference(),
                         agreement.getDescription(),
-                        agreement.getUserIdentifier(),
-                        AgreementStatus.CREATED
+                        agreement.getUserIdentifier()
                 ),
                 agreement.getCreatedDate()
         );
@@ -33,18 +32,12 @@ public class AgreementCreated extends AgreementEvent {
         private final String reference;
         private final String description;
         private final String userIdentifier;
-        private final AgreementStatus status;
 
-        public AgreementCreatedEventDetails(Long gatewayAccountId, String reference, String description, String userIdentifier, AgreementStatus status) {
+        public AgreementCreatedEventDetails(Long gatewayAccountId, String reference, String description, String userIdentifier) {
             this.gatewayAccountId = String.valueOf(gatewayAccountId);
             this.reference = reference;
             this.description = description;
             this.userIdentifier = userIdentifier;
-            this.status = status;
-        }
-
-        public AgreementStatus getStatus() {
-            return status;
         }
 
         public String getGatewayAccountId() {

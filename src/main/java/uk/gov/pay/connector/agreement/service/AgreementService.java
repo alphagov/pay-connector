@@ -11,9 +11,9 @@ import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.events.model.charge.AgreementCancelledByService;
-import uk.gov.pay.connector.events.model.charge.AgreementCancelledByUser;
-import uk.gov.pay.connector.events.model.charge.AgreementCreated;
+import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
+import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
+import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.events.model.charge;
+package uk.gov.pay.connector.events.model.agreement;
 
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
@@ -18,7 +18,7 @@ public class AgreementCancelledByUser extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementCancelledByUserEventDetails(agreementCancelRequest, AgreementStatus.CANCELLED),
+                new AgreementCancelledByUserEventDetails(agreementCancelRequest),
                 timestamp
         );
     }
@@ -26,12 +26,10 @@ public class AgreementCancelledByUser extends AgreementEvent {
     static class AgreementCancelledByUserEventDetails extends EventDetails {
         private final String userExternalId;
         private final String userEmail;
-        private final AgreementStatus status;
 
-        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest, AgreementStatus status) {
+        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest) {
             this.userExternalId = agreementCancelRequest.getUserExternalId();
             this.userEmail = agreementCancelRequest.getUserEmail();
-            this.status = status;
         }
 
         public String getUserExternalId() {
@@ -40,10 +38,6 @@ public class AgreementCancelledByUser extends AgreementEvent {
 
         public String getUserEmail() {
             return userEmail;
-        }
-
-        public AgreementStatus getStatus() {
-            return status;
         }
     }
 }
