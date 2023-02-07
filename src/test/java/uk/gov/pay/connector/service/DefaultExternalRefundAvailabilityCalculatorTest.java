@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -156,6 +157,6 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
     private Charge getHistoricCharge(ExternalChargeRefundAvailability availability) {
         return new Charge("external-id", 500L, null, "success", "transaction-id",
                 "credentials_external_id", 0L, availability.getStatus(), "ref-1", "desc", Instant.now(),
-                "test@example.org", 123L, "epdq", true, "service-id", true, false);
+                "test@example.org", 123L, "epdq", true, "service-id", true, false, AuthorisationMode.WEB);
     }
 }

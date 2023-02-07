@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -26,11 +27,12 @@ public class Charge {
     private String serviceId;
     private boolean live;
     private Boolean disputed;
+    private AuthorisationMode authorisationMode;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   String credentialExternalId, Long corporateSurcharge, String refundAvailabilityStatus, String reference,
                   String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName,
-                  boolean historic, String serviceId, boolean live, Boolean disputed) {
+                  boolean historic, String serviceId, boolean live, Boolean disputed, AuthorisationMode authorisationMode) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -49,6 +51,7 @@ public class Charge {
         this.serviceId = serviceId;
         this.live = live;
         this.disputed = disputed;
+        this.authorisationMode = authorisationMode;
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
@@ -77,7 +80,8 @@ public class Charge {
                 false,
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(), 
-                null);
+                null,
+                chargeEntity.getAuthorisationMode());
     }
 
     public static Charge from(LedgerTransaction transaction) {
@@ -110,7 +114,8 @@ public class Charge {
                 true,
                 transaction.getServiceId(),
                 transaction.getLive(),
-                transaction.isDisputed()
+                transaction.isDisputed(),
+                transaction.getAuthorisationMode()
         );
     }
 
@@ -192,6 +197,14 @@ public class Charge {
 
     public Boolean getDisputed() {
         return disputed;
+    }
+
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+
+    public void setAuthorisationMode(AuthorisationMode authorisationMode) {
+        this.authorisationMode = authorisationMode;
     }
 
     @Override
