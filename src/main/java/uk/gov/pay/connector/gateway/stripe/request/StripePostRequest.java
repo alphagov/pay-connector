@@ -30,15 +30,15 @@ public abstract class StripePostRequest implements GatewayClientPostRequest {
     protected StripeGatewayConfig stripeGatewayConfig;
     protected String stripeConnectAccountId;
     protected String gatewayAccountType;
-    protected Map<String, String> credentials;
+    protected Map<String, Object> credentials;
 
     protected StripePostRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
-                                StripeGatewayConfig stripeGatewayConfig, Map<String, String>  credentials) {
+                                StripeGatewayConfig stripeGatewayConfig, Map<String, Object>  credentials) {
         if (gatewayAccount == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a gateway account");
         }
 
-        String stripeAccountId = credentials.get("stripe_account_id");
+        String stripeAccountId = credentials.get("stripe_account_id").toString();
         if (stripeAccountId == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a stripe account id in credentials");
         }

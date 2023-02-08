@@ -17,7 +17,7 @@ public class StripeRefundRequest extends StripePostRequest {
             String idempotencyKey,
             String stripeChargeId,
             StripeGatewayConfig stripeGatewayConfig,
-            Map<String, String> credentials) {
+            Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;
         this.amount = amount;

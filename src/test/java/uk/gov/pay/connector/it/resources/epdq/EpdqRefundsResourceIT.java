@@ -115,10 +115,10 @@ public class EpdqRefundsResourceIT extends ChargingITestBase {
         EpdqPayloadDefinitionForRefundOrder order = new EpdqPayloadDefinitionForRefundOrder();
         order.setAmount(refundAmount.toString());
         order.setPayId(defaultTestCharge.getTransactionId());
-        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
-        order.setUserId(credentials.get(CREDENTIALS_USERNAME));
-        order.setPassword(credentials.get(CREDENTIALS_PASSWORD));
-        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID).toString());
+        order.setUserId(credentials.get(CREDENTIALS_USERNAME).toString());
+        order.setPassword(credentials.get(CREDENTIALS_PASSWORD).toString());
+        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
         
         wireMockServer.verify(
                 postRequestedFor(urlPathEqualTo(String.format("/epdq/%s", ROUTE_FOR_MAINTENANCE_ORDER)))

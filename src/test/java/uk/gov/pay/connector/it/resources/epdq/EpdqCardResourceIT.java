@@ -201,10 +201,10 @@ public class EpdqCardResourceIT extends ChargingITestBase {
         EpdqPayloadDefinitionForNewOrder epdqPayloadDefinition = new EpdqPayloadDefinitionForNewOrder();
         epdqPayloadDefinition.setAmount("6234");
         epdqPayloadDefinition.setOrderId(chargeId);
-        epdqPayloadDefinition.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
-        epdqPayloadDefinition.setUserId(credentials.get(CREDENTIALS_USERNAME));
-        epdqPayloadDefinition.setPassword(credentials.get(CREDENTIALS_PASSWORD));
-        epdqPayloadDefinition.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        epdqPayloadDefinition.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID).toString());
+        epdqPayloadDefinition.setUserId(credentials.get(CREDENTIALS_USERNAME).toString());
+        epdqPayloadDefinition.setPassword(credentials.get(CREDENTIALS_PASSWORD).toString());
+        epdqPayloadDefinition.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
 
         Address address = new Address(ADDRESS_LINE_1, null, ADDRESS_POSTCODE, ADDRESS_CITY, ADDRESS_CITY, ADDRESS_COUNTRY_GB);
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()

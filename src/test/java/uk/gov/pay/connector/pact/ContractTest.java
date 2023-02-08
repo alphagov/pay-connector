@@ -575,7 +575,7 @@ public class ContractTest {
 
     @State("a Worldpay gateway account with id 444 with gateway account credentials with id 555 and valid credentials")
     public void aWorldpayGatewayAccountWithFilledCredentialsWithIdExists() {
-        Map<String, String> credentials = Map.of(
+        Map<String, Object> credentials = Map.of(
                 "merchant_id", "a-merchant-id",
                 "username", "a-username",
                 "password", "blablabla");

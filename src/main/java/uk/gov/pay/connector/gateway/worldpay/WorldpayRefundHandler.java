@@ -49,7 +49,7 @@ public class WorldpayRefundHandler implements RefundHandler {
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
                 .withReference(request.getRefundExternalId())
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
                 .withAmount(request.getAmount())
                 .withTransactionId(request.getTransactionId())
                 .build();

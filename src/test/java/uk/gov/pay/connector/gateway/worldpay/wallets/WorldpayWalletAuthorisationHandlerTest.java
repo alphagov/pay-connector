@@ -60,7 +60,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     @Mock
     private GatewayClient mockGatewayClient;
     private GatewayAccountEntity gatewayAccountEntity;
-    private Map<String, String> gatewayAccountCredentials = Map.of(
+    private Map<String, Object> gatewayAccountCredentials = Map.of(
             CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
             CREDENTIALS_USERNAME, "worldpay-password",
             CREDENTIALS_PASSWORD, "password"

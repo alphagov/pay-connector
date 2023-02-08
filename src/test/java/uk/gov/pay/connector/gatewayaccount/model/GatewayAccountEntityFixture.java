@@ -20,7 +20,7 @@ public final class GatewayAccountEntityFixture {
     private Long id = 1L;
     private String gatewayName = SANDBOX.getName();
     private GatewayAccountType type = TEST;
-    private Map<String, String> credentials = Map.of();
+    private Map<String, Object> credentials = Map.of();
     private String serviceName = "Test Service";
     private String description;
     private String analyticsId;
@@ -69,7 +69,7 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withCredentials(Map<String, String> credentials) {
+    public GatewayAccountEntityFixture withCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
         return this;
     }

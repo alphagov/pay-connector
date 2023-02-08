@@ -16,7 +16,7 @@ public class AddGatewayAccountCredentialsParams {
     private Instant activeStartDate;
     private Instant activeEndDate;
     private String paymentProvider;
-    private Map<String, String> credentials;
+    private Map<String, Object> credentials;
     private GatewayAccountCredentialState state;
     private String externalId;
     private String lastUpdatedByUserExternalId;
@@ -42,7 +42,7 @@ public class AddGatewayAccountCredentialsParams {
         return paymentProvider;
     }
 
-    public Map<String, String> getCredentials() {
+    public Map<String, Object> getCredentials() {
         return credentials;
     }
 
@@ -68,7 +68,7 @@ public class AddGatewayAccountCredentialsParams {
         private Instant activeStartDate = null;
         private Instant activeEndDate = null;
         private String paymentProvider = WORLDPAY.getName();
-        private Map<String, String> credentials = Map.of();
+        private Map<String, Object> credentials = Map.of();
         private GatewayAccountCredentialState state = ACTIVE;
         private String externalId = randomUuid();
         private String lastUpdatedByUserExternalId;
@@ -106,7 +106,7 @@ public class AddGatewayAccountCredentialsParams {
             return this;
         }
 
-        public AddGatewayAccountCredentialsParamsBuilder withCredentials(Map<String, String> credentials) {
+        public AddGatewayAccountCredentialsParamsBuilder withCredentials(Map<String, Object> credentials) {
             this.credentials = credentials;
             return this;
         }

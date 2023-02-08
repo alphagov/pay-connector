@@ -239,7 +239,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         }
     }
 
-    public Map<String, String> getCredentials(String paymentProvider) {
+    public Map<String, Object> getCredentials(String paymentProvider) {
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
 
         return gatewayAccountCredentialsEntities.stream()
@@ -276,8 +276,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView(Views.FrontendView.class)
     public String getGatewayMerchantId() {
         return getCurrentOrActiveGatewayAccountCredential()
-                .map(credentialsEntity -> credentialsEntity.getCredentials().get("gateway_merchant_id"))
-                .orElse(null);
+                .map(credentialsEntity -> {
+                    if (credentialsEntity.getCredentials() != null &&
+                            credentialsEntity.getCredentials().containsKey("gateway_merchant_id") &&
+                            credentialsEntity.getCredentials().get("gateway_merchant_id") != null) {
+                        return credentialsEntity.getCredentials().get("gateway_merchant_id").toString();
+                    }
+                    return null;
+                }).orElse(null);
     }
 
     @JsonProperty("gateway_account_credentials")

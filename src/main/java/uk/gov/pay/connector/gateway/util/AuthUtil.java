@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Base64;
 import java.util.Map;
@@ -43,8 +44,8 @@ public class AuthUtil {
     }
 
 
-    public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, String> gatewayCredentials) {
-        String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME), gatewayCredentials.get(CREDENTIALS_PASSWORD));
+    public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, Object> gatewayCredentials) {
+        String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME).toString(), gatewayCredentials.get(CREDENTIALS_PASSWORD).toString());
         return ImmutableMap.of(AUTHORIZATION, value);
     }
     

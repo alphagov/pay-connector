@@ -182,8 +182,8 @@ public class GatewayAccountResourceTestBase {
             return this;
         }
 
-        public Map<String, String> getCredentials() {
-            HashMap<String, String> credentials = new HashMap<>();
+        public Map<String, Object> getCredentials() {
+            HashMap<String, Object> credentials = new HashMap<>();
 
             if (this.userName != null) {
                 credentials.put("username", userName);

@@ -330,7 +330,7 @@ public class DatabaseFixtures {
         long accountId = RandomUtils.nextLong(1, 99999);
         String externalId = randomUuid();
         private String paymentProvider = "sandbox";
-        private Map<String, String> credentialsMap = Map.of();
+        private Map<String, Object> credentialsMap = Map.of();
         private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service_name";
         private String serviceId = "valid-external-service-id";
@@ -355,7 +355,7 @@ public class DatabaseFixtures {
         private boolean allowTelephonePaymentNotifications;
 
         private boolean recurringEnabled;
-        private final Map<String, String> defaultCredentials = Map.of(
+        private final Map<String, Object> defaultCredentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "username",
                 CREDENTIALS_PASSWORD, "password"
@@ -445,7 +445,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestAccount withCredentials(Map<String, String> credentials) {
+        public TestAccount withCredentials(Map<String, Object> credentials) {
             this.credentialsMap = credentials;
             return this;
         }

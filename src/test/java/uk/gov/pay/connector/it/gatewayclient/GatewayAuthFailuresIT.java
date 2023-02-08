@@ -50,7 +50,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 public class GatewayAuthFailuresIT {
 
     private static final String TRANSACTION_ID = "7914440428682669";
-    private static final Map<String, String> CREDENTIALS =
+    private static final Map<String, Object> CREDENTIALS =
             ImmutableMap.of("username", "a-user", "password", "a-password", "merchant_id", "aMerchantCode");
     private static final String PAYMENT_PROVIDER = "smartpay";
 

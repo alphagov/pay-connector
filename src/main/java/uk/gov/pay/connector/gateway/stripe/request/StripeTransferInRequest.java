@@ -24,7 +24,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String govukPayTransactionExternalId,
-            Map<String, String> credentials,
+            Map<String, Object> credentials,
             String transferGroup,
             StripeTransferMetadataReason reason) {
         super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig,

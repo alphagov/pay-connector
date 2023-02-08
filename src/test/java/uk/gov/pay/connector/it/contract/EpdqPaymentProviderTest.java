@@ -365,7 +365,7 @@ public class EpdqPaymentProviderTest {
     private void epdqSetupWithStatusCheck(boolean require3ds, boolean requires3ds2) {
         try {
             new URL(url).openConnection().connect();
-            Map<String, String> validEpdqCredentials = ImmutableMap.of(
+            Map<String, Object> validEpdqCredentials = ImmutableMap.of(
                     "merchant_id", merchantId,
                     "username", username,
                     "password", password,

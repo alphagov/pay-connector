@@ -89,8 +89,8 @@ class WorldpayPaymentProviderTest {
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
-    private Map<String, String> validCredentials;
-    private Map<String, String> validCredentialsFor3ds;
+    private Map<String, Object> validCredentials;
+    private Map<String, Object> validCredentialsFor3ds;
     private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntity;
     private GatewayAccountCredentialsEntity validGatewayAccountCredentialsEntityFor3ds;
     private ChargeEntity chargeEntity;
@@ -477,7 +477,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
         Long gatewayAccountId = 112233L;
-        var credentials = Map.of(
+        Map<String, Object> credentials = Map.of(
                 "merchant_id", "non-existent-id",
                 "username", "non-existent-username",
                 "password", "non-existent-password"

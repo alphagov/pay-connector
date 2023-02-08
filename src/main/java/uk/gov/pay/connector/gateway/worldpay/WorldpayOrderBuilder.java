@@ -43,7 +43,7 @@ public interface WorldpayOrderBuilder {
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())

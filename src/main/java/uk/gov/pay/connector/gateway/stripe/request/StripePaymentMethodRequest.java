@@ -21,7 +21,7 @@ public class StripePaymentMethodRequest extends StripePostRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             AuthCardDetails authCardDetails,
-            Map<String, String> credentials) {
+            Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.authCardDetails = authCardDetails;
         this.northAmericanRegionMapper = new NorthAmericanRegionMapper();

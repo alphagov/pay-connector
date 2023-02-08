@@ -25,7 +25,7 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto, Map<String, String> credentials) {
+            String description, boolean moto, Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;

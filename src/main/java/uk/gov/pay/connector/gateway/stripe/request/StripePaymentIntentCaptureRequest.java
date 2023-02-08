@@ -16,7 +16,7 @@ public class StripePaymentIntentCaptureRequest extends StripeCaptureRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String stripeIdentifier,
-            Map<String, String> credentials) {
+            Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeIdentifier = stripeIdentifier;
     }

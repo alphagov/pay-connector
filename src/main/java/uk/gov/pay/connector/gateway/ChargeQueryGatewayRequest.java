@@ -48,7 +48,7 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, String> getGatewayCredentials() {
+    public Map<String, Object> getGatewayCredentials() {
         return gatewayAccountCredentialsEntity.getCredentials();
     }
     

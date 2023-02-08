@@ -106,7 +106,7 @@ public class ChargingITestBase {
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
     protected final int gatewayAccountCredentialsId; 
-    protected Map<String, String> credentials;
+    protected Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
 
     @DropwizardTestContext
@@ -175,7 +175,7 @@ public class ChargingITestBase {
         databaseTestHelper.truncateAllData();
     }
 
-    public Map<String, String> getCredentials() {
+    public Map<String, Object> getCredentials() {
         return credentials;
     }
 

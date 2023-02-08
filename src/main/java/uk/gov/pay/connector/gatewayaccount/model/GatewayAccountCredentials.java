@@ -29,7 +29,7 @@ public class GatewayAccountCredentials {
     @Schema(example = "{" +
             "  \"stripe_account_id\": \"accnt_id\"" +
             "  }")
-    private Map<String, String> credentials;
+    private Map<String, Object> credentials;
 
     @Schema(example = "ACTIVE")
     private GatewayAccountCredentialState state;
@@ -80,7 +80,7 @@ public class GatewayAccountCredentials {
         return paymentProvider;
     }
 
-    public Map<String, String> getCredentials() {
+    public Map<String, Object> getCredentials() {
         return credentials;
     }
 
