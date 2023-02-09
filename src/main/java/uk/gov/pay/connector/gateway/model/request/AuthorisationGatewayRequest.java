@@ -24,7 +24,9 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final Map<String, Object> credentials;
     private final GatewayAccountEntity gatewayAccount;
     private final AuthorisationMode authorisationMode;
-
+    private final boolean savePaymentInstrumentToAgreement;
+    private final String agreementId;
+    
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
         // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
         // updating the charge in the database.
@@ -39,6 +41,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null);
         this.gatewayAccount = charge.getGatewayAccount();
         this.authorisationMode = charge.getAuthorisationMode();
+        this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
+        this.agreementId = charge.getAgreementId().orElse(null);
     }
 
     public AuthorisationGatewayRequest(String gatewayTransactionId,
@@ -51,7 +55,9 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        String govUkPayPaymentId,
                                        Map<String, Object> credentials,
                                        GatewayAccountEntity gatewayAccount,
-                                       AuthorisationMode authorisationMode) {
+                                       AuthorisationMode authorisationMode,
+                                       boolean savePaymentInstrumentToAgreement,
+                                       String agreementId) {
         this.gatewayTransactionId = gatewayTransactionId;
         this.email = email;
         this.language = language;
@@ -63,6 +69,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.credentials = credentials;
         this.gatewayAccount = gatewayAccount;
         this.authorisationMode = authorisationMode;
+        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.agreementId = agreementId;
     }
 
     public String getEmail() {
@@ -116,4 +124,13 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     public AuthorisationMode getAuthorisationMode() {
         return authorisationMode;
     }
+
+    public boolean isSavePaymentInstrumentToAgreement() {
+        return savePaymentInstrumentToAgreement;
+    }
+
+    public String getAgreementId() {
+        return agreementId;
+    }
+
 }

@@ -34,6 +34,9 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String state;
         private boolean exemptionEngineEnabled;
         private int integrationVersion3ds;
+        private boolean savePaymentInstrumentToAgreement;
+
+        private String agreementId;
 
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
@@ -140,6 +143,22 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setExemptionEngineEnabled(boolean exemptionEngineEnabled) {
             this.exemptionEngineEnabled = exemptionEngineEnabled;
+        }
+
+        public boolean isSavePaymentInstrumentToAgreement() {
+            return savePaymentInstrumentToAgreement;
+        }
+
+        public void setSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+            this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        }
+
+        public String getAgreementId() {
+            return agreementId;
+        }
+
+        public void setAgreementId(String agreementId) {
+            this.agreementId = agreementId;
         }
     }
 
@@ -265,6 +284,15 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
+    public WorldpayOrderRequestBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
+        worldpayTemplateData.setSavePaymentInstrumentToAgreement(savePaymentInstrumentToAgreement);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withAgreementId(String agreementId) {
+        worldpayTemplateData.setAgreementId(agreementId);
+        return this;
+    }
     @Override
     public MediaType getMediaType() {
         return MediaType.APPLICATION_XML_TYPE;

@@ -31,6 +31,9 @@
                     </cardAddress>
                     </#if>
                 </CARD-SSL>
+                <#if savePaymentInstrumentToAgreement>
+                <storedCredentials usage="FIRST"/>
+                </#if>
                 <#if requires3ds>
                 <#if payerIpAddress??>
                 <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>
@@ -39,8 +42,11 @@
                 </#if>
                 </#if>
             </paymentDetails>
-            <#if requires3ds || payerEmail??>
+            <#if requires3ds || payerEmail?? || savePaymentInstrumentToAgreement>
             <shopper>
+                <#if savePaymentInstrumentToAgreement>
+                <authenticatedShopperID>${agreementId?xml}</authenticatedShopperID>
+                </#if>
                 <#if payerEmail??>
                 <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
                 </#if>
@@ -54,6 +60,11 @@
                 </browser>
                 </#if>
             </shopper>
+            </#if>
+            <#if savePaymentInstrumentToAgreement>
+            <createToken tokenScope="shopper">
+                <tokenEventReference>${paymentPlatformReference?xml}</tokenEventReference>
+            </createToken>
             </#if>
             <#if requires3ds>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>

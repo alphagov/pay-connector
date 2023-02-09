@@ -42,11 +42,14 @@ public interface WorldpayOrderBuilder {
         return (WorldpayOrderRequestBuilder) builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
+                .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
+                .withAgreementId(request.getAgreementId())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
+                .withPaymentPlatformReference(request.getGovUkPayPaymentId())
                 .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()));
     }
     
