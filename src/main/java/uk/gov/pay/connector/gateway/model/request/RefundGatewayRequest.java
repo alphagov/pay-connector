@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Map;
 
@@ -16,16 +17,19 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final String refundExternalId;
     private final String chargeExternalId;
     private final GatewayAccountCredentialsEntity credentialsEntity;
+    private final AuthorisationMode authorisationMode;
 
     private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount,
                                  String amount, String refundExternalId, String chargeExternalId,
-                                 GatewayAccountCredentialsEntity credentialsEntity) {
+                                 GatewayAccountCredentialsEntity credentialsEntity,
+                                 AuthorisationMode authorisationMode) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
         this.refundExternalId = refundExternalId;
         this.chargeExternalId = chargeExternalId;
         this.credentialsEntity = credentialsEntity;
+        this.authorisationMode = authorisationMode;
     }
 
     public String getAmount() {
@@ -53,6 +57,11 @@ public class RefundGatewayRequest implements GatewayRequest {
     @Override
     public Map<String, Object> getGatewayCredentials() {
         return credentialsEntity.getCredentials();
+    }
+
+    @Override
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
     }
 
     public String getRefundExternalId() {
@@ -86,7 +95,8 @@ public class RefundGatewayRequest implements GatewayRequest {
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId(),
                 charge.getExternalId(),
-                gatewayAccountCredentialsEntity
+                gatewayAccountCredentialsEntity,
+                charge.getAuthorisationMode()
         );
     }
     
