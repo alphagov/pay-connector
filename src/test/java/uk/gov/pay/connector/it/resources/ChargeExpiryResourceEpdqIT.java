@@ -152,20 +152,20 @@ public class ChargeExpiryResourceEpdqIT extends ChargingITestBase {
     private String getExpectedRequestBodyToPspForMaintenanceOrder(String gatewayTransactionId) {
         EpdqPayloadDefinitionForCancelOrder order = new EpdqPayloadDefinitionForCancelOrder();
         order.setPayId(gatewayTransactionId);
-        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
-        order.setUserId(credentials.get(CREDENTIALS_USERNAME));
-        order.setPassword(credentials.get(CREDENTIALS_PASSWORD));
-        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID).toString());
+        order.setUserId(credentials.get(CREDENTIALS_USERNAME).toString());
+        order.setPassword(credentials.get(CREDENTIALS_PASSWORD).toString());
+        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
         return order.createGatewayOrder().getPayload();
     }
 
     private String getExpectedRequestBodyToPspForQueryOrder(String chargeId) {
         EpdqPayloadDefinitionForQueryOrder order = new EpdqPayloadDefinitionForQueryOrder();
         order.setOrderId(chargeId);
-        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID));
-        order.setUserId(credentials.get(CREDENTIALS_USERNAME));
-        order.setPassword(credentials.get(CREDENTIALS_PASSWORD));
-        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE));
+        order.setPspId(credentials.get(CREDENTIALS_MERCHANT_ID).toString());
+        order.setUserId(credentials.get(CREDENTIALS_USERNAME).toString());
+        order.setPassword(credentials.get(CREDENTIALS_PASSWORD).toString());
+        order.setShaInPassphrase(credentials.get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
         return order.createGatewayOrder().getPayload();
     }
 

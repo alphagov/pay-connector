@@ -12,7 +12,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 public final class GatewayAccountCredentialsEntityFixture {
     private Instant activeStartDate = Instant.now();
     private String paymentProvider = WORLDPAY.getName();
-    private Map<String, String> credentials = Map.of();
+    private Map<String, Object> credentials = Map.of();
     private GatewayAccountCredentialState state = ACTIVE;
     private GatewayAccountEntity gatewayAccountEntity;
     private String externalId = randomUuid();
@@ -40,7 +40,7 @@ public final class GatewayAccountCredentialsEntityFixture {
         return this;
     }
 
-    public GatewayAccountCredentialsEntityFixture withCredentials(Map<String, String> credentials) {
+    public GatewayAccountCredentialsEntityFixture withCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
         return this;
     }

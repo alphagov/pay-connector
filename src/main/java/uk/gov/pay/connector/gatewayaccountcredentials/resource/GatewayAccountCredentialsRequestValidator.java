@@ -81,7 +81,7 @@ public class GatewayAccountCredentialsRequestValidator {
                 .collect(Collectors.toList());
     }
 
-    public void validatePatch(JsonNode patchRequest, String paymentProvider, Map<String, String> credentials) {
+    public void validatePatch(JsonNode patchRequest, String paymentProvider, Map<String, Object> credentials) {
         Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
                 new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider),
                 new PatchPathOperation(FIELD_LAST_UPDATED_BY_USER, JsonPatchOp.REPLACE), JsonPatchRequestValidator::throwIfValueNotString,
@@ -110,7 +110,7 @@ public class GatewayAccountCredentialsRequestValidator {
     }
 
     private void validateGatewayMerchantId(JsonPatchRequest request, String paymentProvider,
-                                           Map<String, String> credentials) {
+                                           Map<String, Object> credentials) {
         if (!WORLDPAY.getName().equals(paymentProvider)) {
             throw new ValidationException(List.of(format("Gateway '%s' does not support digital wallets.", paymentProvider)));
         }

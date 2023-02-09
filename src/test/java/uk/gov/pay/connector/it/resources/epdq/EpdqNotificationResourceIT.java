@@ -63,7 +63,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(chargeStatus, transactionId);
 
-        String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString().toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -78,7 +78,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_ERROR, transactionId);
 
-        String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString().toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -103,7 +103,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
 
         ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
         
-        String response = notifyConnector(gatewayTransactionId, payIdSub, "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(gatewayTransactionId, payIdSub, "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -119,7 +119,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(USER_CANCELLED, transactionId);
 
-        String response = notifyConnector(transactionId, "1", "6", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, "1", "6", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -138,7 +138,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
                 transactionId,
                 "1",
                 epdqAuthorisedNotificationCode,
-                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)
+                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString()
         )
                 .statusCode(200)
                 .extract().body()
@@ -156,7 +156,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
                 transactionId,
                 "1",
                 epdqAuthorisedCancelledNotificationCode,
-                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)
+                getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString()
         )
                 .statusCode(200)
                 .extract().body()
@@ -177,7 +177,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
                 REFUND_SUBMITTED, transactionId + "/" + payIdSub, ZonedDateTime.now(),
                 externalChargeId.toString());
 
-        String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -209,7 +209,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
                 REFUND_SUBMITTED, refundReference, ZonedDateTime.now(),
                 chargeExternalId);
 
-        String response = notifyConnector(gatewayTransactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(gatewayTransactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -231,7 +231,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
-        String response = notifyConnector(transactionId, "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -246,7 +246,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
         ledgerStub.returnNotFoundForFindByProviderAndGatewayTransactionId( "epdq", "unknown-transation-id");
 
-        notifyConnector("unknown-transation-id", "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        notifyConnector("unknown-transation-id", "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString())
                 .statusCode(200)
                 .extract().body()
                 .asString();
@@ -272,7 +272,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
     @Test
     public void shouldFailWhenUnexpectedContentType() {
         given().port(testContext.getPort())
-                .body(epdqNotificationPayload("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
+                .body(epdqNotificationPayload("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString()))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -284,7 +284,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_READY, transactionId);
 
-        notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE), UNEXPECTED_IP_ADDRESS)
+        notifyConnector(transactionId, "1", "9", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString(), UNEXPECTED_IP_ADDRESS)
                 .statusCode(403);
     }
 

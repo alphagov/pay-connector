@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 @RunWith(MockitoJUnitRunner.class)
 abstract public class BaseGatewayITest {
     private static final String TRANSACTION_ID = String.valueOf(nextLong());
-    private static final Map<String, String> CREDENTIALS =
+    private static final Map<String, Object> CREDENTIALS =
             ImmutableMap.of(
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",

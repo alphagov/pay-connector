@@ -55,7 +55,7 @@ public class SendRefundEmailIT {
     private static NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
     private static NotificationClient notificationClient = mock(NotificationClient.class);
     private static DatabaseTestHelper databaseTestHelper;
-    private static Map<String, String> credentials = ImmutableMap.of(
+    private static Map<String, Object> credentials = ImmutableMap.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "test-user",
             CREDENTIALS_PASSWORD, "test-password",
@@ -90,7 +90,7 @@ public class SendRefundEmailIT {
 
         given().port(testContext.getPort())
                 .header("X-Forwarded-For", EPDQ_IP_ADDRESS)
-                .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
+                .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString()))
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post("/v1/api/notifications/epdq");
 

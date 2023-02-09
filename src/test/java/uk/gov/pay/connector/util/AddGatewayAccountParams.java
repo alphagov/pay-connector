@@ -20,20 +20,11 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
-    private static final Map<String, String> defaultCredentials = Map.of(
+    private static final Map<String, Object> defaultCredentials = Map.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "username",
             CREDENTIALS_PASSWORD, "password"
     );
-
-    private static final Map<String, String> epdqCredentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, "merchant-id",
-            CREDENTIALS_USERNAME, "username",
-            CREDENTIALS_PASSWORD, "password",
-            CREDENTIALS_SHA_IN_PASSPHRASE, "sha-in",
-            CREDENTIALS_SHA_OUT_PASSPHRASE, "sha-out"
-    );
-
     private String accountId;
     private String externalId;
     private List<AddGatewayAccountCredentialsParams> credentials;
@@ -163,7 +154,7 @@ public class AddGatewayAccountParams {
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "sandbox";
-        private Map<String, String> credentialsMap = Map.of();
+        private Map<String, Object> credentialsMap = Map.of();
         private List<AddGatewayAccountCredentialsParams> gatewayAccountCredentialsParams;
         private String serviceName = "service name";
         private String serviceId = "a-valid-service-external-id";
@@ -206,7 +197,7 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withCredentials(Map<String, String> credentials) {
+        public AddGatewayAccountParamsBuilder withCredentials(Map<String, Object> credentials) {
             this.credentialsMap = credentials;
             return this;
         }

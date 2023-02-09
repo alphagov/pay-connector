@@ -101,7 +101,7 @@ public abstract class BaseEpdqPaymentProviderIT {
 
     private Invocation.Builder mockClientInvocationBuilder;
 
-    private final Map<String, String> credentials = Map.of(
+    private final Map<String, Object> credentials = Map.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "username",
             CREDENTIALS_PASSWORD, "password",

@@ -137,7 +137,7 @@ class GatewayAccountEntityTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity, credentialsEntityWorldpay));
 
-        Map<String, String> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
+        Map<String, Object> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
         assertThat(actualCreds, hasEntry("username", "some-user-name"));
     }
 
@@ -155,7 +155,7 @@ class GatewayAccountEntityTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay, credentialsEntityWorldpayLatest));
 
-        Map<String, String> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
+        Map<String, Object> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
         assertThat(actualCreds, hasEntry("username", "latest-creds-user-name"));
     }
 

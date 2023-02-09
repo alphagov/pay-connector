@@ -25,7 +25,7 @@ public class StripeAuthoriseRequest extends StripePostRequest {
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            Map<String, String> credentials) {
+            Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.description = description;

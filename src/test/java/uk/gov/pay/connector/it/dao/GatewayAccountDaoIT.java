@@ -553,7 +553,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     public void isATelephonePaymentNotificationAccount_shouldReturnTrueIfTelephonePaymentNotificationsAreEnabled() {
         long id = nextLong();
         String externalId = randomUuid();
-        Map<String, String> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
+        Map<String, Object> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
 
         databaseFixtures
                 .aTestAccount()
@@ -578,7 +578,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     public void isATelephonePaymentNotificationAccount_shouldReturnFalseIfTelephonePaymentNotificationsAreNotEnabled() {
         long id = nextLong();
         String externalId = randomUuid();
-        Map<String, String> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
+        Map<String, Object> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
 
         databaseFixtures.aTestAccount()
                 .withAccountId(id)

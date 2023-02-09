@@ -207,7 +207,7 @@ public class EpdqNotificationService {
     }
 
     private String getShaOutPassphrase(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-        return gatewayAccountCredentialsEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
+        return gatewayAccountCredentialsEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString();
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, Charge charge) {

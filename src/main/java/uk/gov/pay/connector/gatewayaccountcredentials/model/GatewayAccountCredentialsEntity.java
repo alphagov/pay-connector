@@ -28,6 +28,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 
 @Entity
 @Table(name = "gateway_account_credentials")
@@ -50,7 +51,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     @Schema(example = "{" +
             "                \"stripe_account_id\": \"an-id\"" +
             "            }")
-    private Map<String, String> credentials;
+    private Map<String, Object> credentials;
 
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -87,7 +88,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     }
 
     public GatewayAccountCredentialsEntity(GatewayAccountEntity gatewayAccountEntity, String paymentProvider,
-                                           Map<String, String> credentials, GatewayAccountCredentialState state) {
+                                           Map<String, Object> credentials, GatewayAccountCredentialState state) {
         this.paymentProvider = paymentProvider;
         this.gatewayAccountEntity = gatewayAccountEntity;
         this.credentials = credentials;
@@ -105,7 +106,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return paymentProvider;
     }
 
-    public Map<String, String> getCredentials() {
+    public Map<String, Object> getCredentials() {
         return credentials;
     }
 
@@ -162,7 +163,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         this.activeEndDate = activeEndDate;
     }
 
-    public void setCredentials(Map<String, String> credentials) {
+    public void setCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
     }
 

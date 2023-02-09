@@ -12,7 +12,7 @@ public class StripePaymentIntentCancelRequest extends StripePostRequest {
 
     private StripePaymentIntentCancelRequest(GatewayAccountEntity gatewayAccount, String stripePaymentIntentId,
                                              String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
-                                             Map<String, String> credentials) {
+                                             Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripePaymentIntentId = stripePaymentIntentId;
     }

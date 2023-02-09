@@ -51,7 +51,7 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, String> getGatewayCredentials() {
+    public Map<String, Object> getGatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentials();
     }
 

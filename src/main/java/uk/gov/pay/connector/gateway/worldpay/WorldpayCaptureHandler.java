@@ -51,7 +51,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         return aWorldpayCaptureOrderRequestBuilder()
                 .withDate(LocalDate.now(ZoneOffset.UTC))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
                 .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getGatewayTransactionId())
                 .build();

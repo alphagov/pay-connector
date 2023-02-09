@@ -64,7 +64,7 @@ public class WorldpayCaptureHandlerTest {
     @Mock
     private Response response;
 
-    private final Map<String, String> credentials = Map.of(
+    private final Map<String, Object> credentials = Map.of(
             CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
             CREDENTIALS_USERNAME, "worldpay-password",
             CREDENTIALS_PASSWORD, "password"

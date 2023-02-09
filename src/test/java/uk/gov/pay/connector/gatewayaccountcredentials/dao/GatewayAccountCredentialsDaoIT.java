@@ -115,7 +115,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
     @Test
     public void findByCredentialsKeyValue_shouldFindGatewayAccountCredentialEntity() {
         long gatewayAccountId = nextLong();
-        var credMap = Map.of("some_payment_provider_account_id", "accountid");
+        Map<String, Object> credMap = Map.of("some_payment_provider_account_id", "accountid");
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("test provider")
@@ -138,7 +138,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
 
         Optional<GatewayAccountCredentialsEntity> maybeGatewayAccountCredentials = gatewayAccountCredentialsDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
         assertThat(maybeGatewayAccountCredentials.isPresent(), is(true));
-        Map<String, String> credentialsMap = maybeGatewayAccountCredentials.get().getCredentials();
+        Map<String, Object> credentialsMap = maybeGatewayAccountCredentials.get().getCredentials();
         assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
     }
 

@@ -3725,8 +3725,9 @@ components:
         credentials:
           type: object
           additionalProperties:
-            type: string
-            example: "{\"stripe_account_id\":\"accnt_id\"}"
+            type: object
+            example:
+              stripe_account_id: accnt_id
           example:
             stripe_account_id: accnt_id
         external_id:
@@ -3773,8 +3774,9 @@ components:
         credentials:
           type: object
           additionalProperties:
-            type: string
-            example: "{\"stripe_account_id\":\"an-id\"}"
+            type: object
+            example:
+              stripe_account_id: an-id
           example:
             stripe_account_id: an-id
         external_id:
@@ -3822,8 +3824,9 @@ components:
         credentials:
           type: object
           additionalProperties:
-            type: string
-            example: "{\"stripe_account_id\":\"an-id\"}"
+            type: object
+            example:
+              stripe_account_id: an-id
           example:
             stripe_account_id: an-id
         external_id:
@@ -3871,8 +3874,9 @@ components:
         credentials:
           type: object
           additionalProperties:
-            type: string
-            example: "{\"stripe_account_id\":\"an-id\"}"
+            type: object
+            example:
+              stripe_account_id: an-id
           example:
             stripe_account_id: an-id
         external_id:

@@ -69,7 +69,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();

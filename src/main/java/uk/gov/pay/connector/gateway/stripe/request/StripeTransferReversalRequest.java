@@ -15,7 +15,7 @@ public class StripeTransferReversalRequest extends StripePostRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String transferId,
-            Map<String, String> credentials) {
+            Map<String, Object> credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.transferId = transferId;
     }

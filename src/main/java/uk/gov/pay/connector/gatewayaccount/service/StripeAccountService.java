@@ -11,7 +11,8 @@ public class StripeAccountService {
 
     public Optional<StripeAccountResponse> buildStripeAccountResponse(GatewayAccountEntity gatewayAccountEntity) {
         return Optional.ofNullable(gatewayAccountEntity.getCredentials(STRIPE.getName()))
-                .map(credentials -> credentials.get("stripe_account_id"))
+                .map(credentials -> credentials.get("stripe_account_id") != null ?
+                        credentials.get("stripe_account_id").toString() : null)
                 .map(StripeAccountResponse::new);
     }
 

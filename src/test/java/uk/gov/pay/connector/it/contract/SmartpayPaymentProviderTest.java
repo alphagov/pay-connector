@@ -90,7 +90,7 @@ public class SmartpayPaymentProviderTest {
         }
 
         new URL(url).openConnection().connect();
-        Map<String, String> validSmartPayCredentials = ImmutableMap.of(
+        Map<String, Object> validSmartPayCredentials = ImmutableMap.of(
                 "merchant_id", "DCOTest",
                 "username", username,
                 "password", password);

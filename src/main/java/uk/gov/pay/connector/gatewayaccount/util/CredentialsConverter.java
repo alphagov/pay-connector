@@ -12,12 +12,12 @@ import java.sql.SQLException;
 import java.util.Map;
 
 @Converter
-public class CredentialsConverter implements AttributeConverter<Map<String,String>, PGobject> {
+public class CredentialsConverter implements AttributeConverter<Map<String,Object>, PGobject> {
     
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public PGobject convertToDatabaseColumn(Map<String,String> credentials) {
+    public PGobject convertToDatabaseColumn(Map<String,Object> credentials) {
         PGobject pgCredentials = new PGobject();
         pgCredentials.setType("json");
         try {
@@ -29,7 +29,7 @@ public class CredentialsConverter implements AttributeConverter<Map<String,Strin
     }
 
     @Override
-    public Map<String,String> convertToEntityAttribute(PGobject dbCredentials) {
+    public Map<String, Object> convertToEntityAttribute(PGobject dbCredentials) {
         try {
             return objectMapper.readValue(dbCredentials.toString(), new TypeReference<>() {});
         } catch (IOException e) {

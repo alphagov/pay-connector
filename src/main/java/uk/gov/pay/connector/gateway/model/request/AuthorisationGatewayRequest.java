@@ -20,7 +20,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final String description;
     private final ServicePaymentReference reference;
     private final String govUkPayPaymentId;
-    private final Map<String, String> credentials;
+    private final Map<String, Object> credentials;
     private final GatewayAccountEntity gatewayAccount;
 
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
@@ -38,7 +38,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = charge.getGatewayAccount();
     }
 
-    public AuthorisationGatewayRequest(String gatewayTransactionId, 
+    public AuthorisationGatewayRequest(String gatewayTransactionId,
                                        String email,
                                        SupportedLanguage language,
                                        boolean moto,
@@ -46,7 +46,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        String description,
                                        ServicePaymentReference reference,
                                        String govUkPayPaymentId,
-                                       Map<String, String> credentials,
+                                       Map<String, Object> credentials,
                                        GatewayAccountEntity gatewayAccount) {
         this.gatewayTransactionId = gatewayTransactionId;
         this.email = email;
@@ -93,7 +93,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, String> getGatewayCredentials() {
+    public Map<String, Object> getGatewayCredentials() {
         return credentials;
     }
 

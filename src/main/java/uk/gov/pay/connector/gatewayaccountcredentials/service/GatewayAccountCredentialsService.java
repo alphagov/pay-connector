@@ -28,6 +28,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -75,8 +76,10 @@ public class GatewayAccountCredentialsService {
                                                                      String paymentProvider,
                                                                      Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
+        // We refactored the type to <String, Object> for nested credentials. We need to "cast" credentials until we refactor creation as well
+        Map<String, Object> newMap = new HashMap<>(credentials);
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
-                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, credentials, state);
+                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, newMap, state);
 
         if (state == ACTIVE) {
             gatewayAccountCredentialsEntity.setActiveStartDate(Instant.now());
@@ -147,7 +150,7 @@ public class GatewayAccountCredentialsService {
                         GatewayAccountCredentialState.valueOf(patchRequest.valueAsString()));
                 break;
             case GATEWAY_MERCHANT_ID_PATH:
-                HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+                HashMap<String, Object> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
                 updatableMap.put(FIELD_GATEWAY_MERCHANT_ID, patchRequest.valueAsString());
                 gatewayAccountCredentialsEntity.setCredentials(updatableMap);
                 break;
@@ -157,7 +160,7 @@ public class GatewayAccountCredentialsService {
     }
 
     private void updateCredentials(JsonPatchRequest patchRequest, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-        HashMap<String, String> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+        HashMap<String, Object> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
         patchRequest.valueAsObject().forEach(updatableMap::put);
         gatewayAccountCredentialsEntity.setCredentials(updatableMap);
 
