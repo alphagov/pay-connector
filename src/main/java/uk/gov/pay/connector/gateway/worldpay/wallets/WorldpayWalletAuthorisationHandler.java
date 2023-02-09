@@ -41,7 +41,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
                 buildWalletAuthoriseOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
         
         return getWorldpayGatewayResponse(response);
     }

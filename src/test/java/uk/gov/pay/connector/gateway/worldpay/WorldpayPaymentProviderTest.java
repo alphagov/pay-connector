@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import io.dropwizard.setup.Environment;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,20 +40,24 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -80,6 +85,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORL
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
@@ -564,6 +570,72 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(headers.getValue().size(), is(1));
         assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getGatewayAccountCredentials().get(0).getCredentials())));
+    }
+
+    @Test
+    void assert_authorization_header_is_passed_to_gateway_client_when_using_recurring_payment() throws Exception {
+        var credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                CREDENTIALS_USERNAME, "worldpay-password",
+                CREDENTIALS_PASSWORD, "password",
+                RECURRING_MERCHANT_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_ID, "RECURRING_MERCHANTCODE",
+                        CREDENTIALS_USERNAME, "recurring-worldpay-password",
+                        CREDENTIALS_PASSWORD, "recurring-password"));
+        String providerSessionId = "provider-session-id";
+        ChargeEntity mockChargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withProviderSessionId(providerSessionId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(credentials)
+                        .build())
+                .build();
+
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
+                .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
+
+        worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+
+        verify(authoriseClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(WORLDPAY), eq("test"),
+                gatewayOrderArgumentCaptor.capture(),
+                anyList(),
+                headers.capture());
+
+        assertThat(headers.getValue().size(), is(1));
+
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String("recurring-worldpay-password" + ":" + "recurring-password").getBytes());
+        assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
+    }
+
+    @Test
+    void should_throw_exception_when_using_recurring_payment_and_no_creds() throws Exception {
+        Map<String, Object> credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                CREDENTIALS_USERNAME, "worldpay-password",
+                CREDENTIALS_PASSWORD, "password");
+        String providerSessionId = "provider-session-id";
+        ChargeEntity mockChargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withProviderSessionId(providerSessionId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(credentials)
+                        .build())
+                .build();
+
+        Assertions.assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
+            worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
+        });
     }
 
     @Test

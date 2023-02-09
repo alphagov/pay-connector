@@ -143,7 +143,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 WORLDPAY,
                 chargeQueryGatewayRequest.getGatewayAccount().getType(),
                 buildQuery(chargeQueryGatewayRequest),
-                getGatewayAccountCredentialsAsAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials())
+                getGatewayAccountCredentialsAsAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials(), chargeQueryGatewayRequest.getAuthorisationMode())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -289,7 +289,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     request.getGatewayAccount().getType(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
             calculateAndStoreExemption(request.getCharge(), gatewayResponse);
@@ -331,7 +331,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
                 buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
         return getWorldpayGatewayResponse(response);
     }
 

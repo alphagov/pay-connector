@@ -67,6 +67,7 @@ import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthent
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentExceptionMapper;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderExceptionMapper;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateExceptionMapper;
 import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsResource;
@@ -170,6 +171,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new AuthorisationTimedOutExceptionMapper());
         environment.jersey().register(new GatewayAccountDisabledExceptionMapper());
         environment.jersey().register(new RecurringCardPaymentsNotAllowedExceptionMapper());
+        environment.jersey().register(new MissingCredentialsForRecurringPaymentExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

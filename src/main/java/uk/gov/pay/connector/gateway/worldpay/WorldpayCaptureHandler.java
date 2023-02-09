@@ -41,7 +41,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
