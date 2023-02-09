@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final String govUkPayPaymentId;
     private final Map<String, Object> credentials;
     private final GatewayAccountEntity gatewayAccount;
+    private final AuthorisationMode authorisationMode;
 
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
         // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
@@ -36,6 +38,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.govUkPayPaymentId = charge.getExternalId();
         this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null);
         this.gatewayAccount = charge.getGatewayAccount();
+        this.authorisationMode = charge.getAuthorisationMode();
     }
 
     public AuthorisationGatewayRequest(String gatewayTransactionId,
@@ -47,7 +50,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        ServicePaymentReference reference,
                                        String govUkPayPaymentId,
                                        Map<String, Object> credentials,
-                                       GatewayAccountEntity gatewayAccount) {
+                                       GatewayAccountEntity gatewayAccount,
+                                       AuthorisationMode authorisationMode) {
         this.gatewayTransactionId = gatewayTransactionId;
         this.email = email;
         this.language = language;
@@ -58,6 +62,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.govUkPayPaymentId = govUkPayPaymentId;
         this.credentials = credentials;
         this.gatewayAccount = gatewayAccount;
+        this.authorisationMode = authorisationMode;
     }
 
     public String getEmail() {
@@ -105,5 +110,10 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     @Override
     public GatewayOperation getRequestType() {
         return GatewayOperation.AUTHORISE;
+    }
+
+    @Override
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
     }
 }
