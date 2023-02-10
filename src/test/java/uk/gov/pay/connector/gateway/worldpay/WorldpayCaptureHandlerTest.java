@@ -45,6 +45,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -68,6 +69,17 @@ public class WorldpayCaptureHandlerTest {
             CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
             CREDENTIALS_USERNAME, "worldpay-password",
             CREDENTIALS_PASSWORD, "password"
+    );
+
+    Map<String, Object> recurringCredentials = Map.of(
+            CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+            CREDENTIALS_USERNAME, "worldpay-password",
+            CREDENTIALS_PASSWORD, "password",
+            RECURRING_MERCHANT_INITIATED, Map.of(
+                    CREDENTIALS_MERCHANT_ID, "ECURRING-MERCHANTCODE",
+                    CREDENTIALS_USERNAME, "recurring-worldpay-password",
+                    CREDENTIALS_PASSWORD, "recurring-password"
+            )
     );
 
     @Before
@@ -94,6 +106,42 @@ public class WorldpayCaptureHandlerTest {
         if (corporateSurchargeAmount != null) {
             chargeEntity.setCorporateSurcharge(corporateSurchargeAmount);
         }
+        CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+
+        assertTrue(gatewayResponse.isSuccessful());
+        assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(client).postRequestFor(
+                any(URI.class),
+                eq(WORLDPAY), eq("test"),
+                gatewayOrderArgumentCaptor.capture(),
+                anyMap());
+
+        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        assertThat(xPath.evaluate("/paymentService/modify/orderModification/capture/amount/@value", document),
+                is(String.valueOf(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L))));
+    }
+
+    @Test
+    public void shouldCaptureARecurringPaymentSuccessfully() throws Exception {
+
+        when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
+        when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
+        GatewayClient.Response response = new TestResponse(this.response);
+        when(client.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(response);
+
+        var chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(aServiceAccount())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider("worldpay")
+                        .withCredentials(recurringCredentials)
+                        .build())
+                .build();
+
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(gatewayResponse.isSuccessful());
