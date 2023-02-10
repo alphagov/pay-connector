@@ -166,7 +166,7 @@ public class DatabaseTestHelper {
                         .bind("payment_instrument_id", addAgreementParams.getPaymentInstrumentId())
                         .execute());
     }
-
+    
     public void addPaymentInstrument(AddPaymentInstrumentParams addPaymentInstrumentParams) {
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO payment_instruments(" +
@@ -376,7 +376,25 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
+    
+    public Map<String, Object> getAgreementByExternalId(String agreementExternalId) {
+        return jdbi.withHandle(h -> 
+                h.createQuery("SELECT * FROM agreements WHERE external_id = :agreement_external_id")
+                        .bind("agreement_external_id", agreementExternalId)
+                        .mapToMap()
+                        .first());
+    }
 
+    public Map<String, Object> getPaymentInstrumentByChargeExternalId(String chargeExternalId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT payment_instruments.* FROM charges " +
+                                "INNER JOIN payment_instruments ON charges.payment_instrument_id = payment_instruments.id " +
+                                "WHERE charges.external_id = :charge_external_id")
+                        .bind("charge_external_id", chargeExternalId)
+                        .mapToMap()
+                        .first());
+    }
+    
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->

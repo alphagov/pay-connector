@@ -1,12 +1,18 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -25,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -35,11 +42,15 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -51,7 +62,8 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
-
+    private final ObjectMapper mapper = new ObjectMapper();
+    
     public WorldpayCardResourceIT() {
         super("worldpay");
     }
@@ -74,6 +86,49 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
         assertNotEquals(databaseTestHelper.getChargeByExternalId(chargeId), gatewayTransactionId);
     }
 
+    @Test
+    public void shouldAuthoriseChargeAndCreatePaymentInstrumentWhenTokenInWorldpayResponse() throws JsonProcessingException {
+
+        String agreementId = "12345678901234567890123456";
+        
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(agreementId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        long chargeId = RandomUtils.nextInt();
+        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(getPaymentProvider())
+                .withAmount(6234L)
+                .withStatus(ENTERING_CARD_DETAILS)
+                .withEmail("email@fake.test")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementId(agreementId)
+                .withGatewayCredentialId((long) gatewayAccountCredentialsId)
+                .build());
+
+        worldpayMockClient.mockAuthorisationSuccessWithRecurringPaymentToken();
+        
+        givenSetup()
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId.toString()))
+                .then()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+        
+        Map<String, Object> paymentInstrument = databaseTestHelper.getPaymentInstrumentByChargeExternalId(externalChargeId.toString());
+        Map<String, String> recurringAuthTokenMap = mapper.readValue(paymentInstrument.get("recurring_auth_token").toString(), new TypeReference<Map<String, String>>() {});
+        
+        assertThat(recurringAuthTokenMap, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "9961191959944156907"));
+        assertThat(recurringAuthTokenMap, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "1234567890"));
+        assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.toString());
+    }
+    
     @Test
     public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 

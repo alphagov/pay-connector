@@ -7,6 +7,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -22,6 +24,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
     private static final String WORLDPAY_CANCELLED_EVENT = "CANCELLED";
 
+    public static final String WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY = "paymentTokenID";
+
+    public static final String WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY = "schemeTransactionIdentifier";
+
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
 
@@ -33,7 +39,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("reply/orderStatus/payment/ISO8583ReturnCode/@code")
     private String refusedReturnCode;
-    
+
     private String errorCode;
 
     private String errorMessage;
@@ -59,6 +65,15 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/threeDSVersion/text()")
     private String threeDsVersion;
+
+    @XmlPath("reply/orderStatus/token/tokenDetails/paymentTokenID/text()")
+    private String paymentTokenId;
+
+    @XmlPath("reply/orderStatus/payment/schemeResponse/transactionIdentifier/text()")
+    private String schemeTransactionIdentifier;
+
+    @XmlPath("reply/orderStatus/token/tokenDetails/@tokenEvent")
+    private String tokenEvent;
 
     @XmlPath("reply/error/@code")
     public void setErrorCode(String errorCode) {
@@ -89,7 +104,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     public void setChallengeAcsUrl(String challengeAcsUrl) {
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
-    
+
     public boolean isSoftDecline() {
         return Optional.ofNullable(lastEvent).map("REFUSED"::equals).orElse(false)
                 && Optional.ofNullable(exemptionResponseResult).map(SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS::contains).orElse(false);
@@ -200,6 +215,18 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
                     threeDsVersion));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
+        return Optional.ofNullable(paymentTokenId).map(tokenId -> {
+            Map<String, String> recurringAuthToken = new HashMap<>();
+            recurringAuthToken.put(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, tokenId);
+
+            Optional.ofNullable(schemeTransactionIdentifier)
+                    .ifPresent(transactionIdentifier -> recurringAuthToken.put(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, transactionIdentifier));
+            return recurringAuthToken;
+        });
     }
 
     private boolean is3dsVersionOneRequired() {

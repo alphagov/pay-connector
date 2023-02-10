@@ -3,14 +3,28 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITHOUT_TRANSACTION_IDENTIFIER;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITH_TRANSACTION_IDENTIFIER;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class WorldpayOrderStatusResponseTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "OUT_OF_SCOPE", "REJECTED" })
+    @ValueSource(strings = {"OUT_OF_SCOPE", "REJECTED"})
     void worldpay_response_should_be_soft_decline(String exemptionResponseResult) {
         var worldpayOrderStatusResponse = new WorldpayOrderStatusResponse();
         worldpayOrderStatusResponse.setLastEvent("REFUSED");
@@ -35,5 +49,37 @@ class WorldpayOrderStatusResponseTest {
         worldpayOrderStatusResponse.setExemptionResponseResult("REFUSED");
 
         assertFalse(worldpayOrderStatusResponse.isSoftDecline());
+    }
+
+    @Test
+    void should_get_recurring_payment_token_with_transaction_scheme_identifier() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITH_TRANSACTION_IDENTIFIER);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+
+        assertThat(worldpayOrderStatusResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
+
+        Map<String, String> gatewayRecurringAuthToken = worldpayOrderStatusResponse.getGatewayRecurringAuthToken().get();
+        assertThat(gatewayRecurringAuthToken, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "9961191959944156907"));
+        assertThat(gatewayRecurringAuthToken, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "1234567890"));
+    }
+
+    @Test
+    void should_get_recurring_payment_token_without_transaction_scheme_identifier() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITHOUT_TRANSACTION_IDENTIFIER);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+
+        assertThat(worldpayOrderStatusResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
+
+        Map<String, String> gatewayRecurringAuthToken = worldpayOrderStatusResponse.getGatewayRecurringAuthToken().get();
+        assertThat(gatewayRecurringAuthToken, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "9961191959944156907"));
+        assertThat(gatewayRecurringAuthToken, not(hasKey(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY)));
+    }
+
+    @Test
+    void get_recurring_payment_token_should_return_empty_optional_when_no_token_id_in_response() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+
+        assertThat(worldpayOrderStatusResponse.getGatewayRecurringAuthToken().isPresent(), is(false));
     }
 }
