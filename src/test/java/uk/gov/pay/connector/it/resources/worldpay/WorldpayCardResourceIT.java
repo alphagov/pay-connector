@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -12,7 +11,6 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -49,8 +47,6 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
-import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
-import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -89,28 +85,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     @Test
     public void shouldAuthoriseChargeAndCreatePaymentInstrumentWhenTokenInWorldpayResponse() throws JsonProcessingException {
 
-        String agreementId = "12345678901234567890123456";
-        
-        AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(accountId)
-                .withExternalAgreementId(agreementId)
-                .build();
-        databaseTestHelper.addAgreement(agreementParams);
-
-        long chargeId = RandomUtils.nextInt();
-        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId.toString())
-                .withGatewayAccountId(accountId)
-                .withPaymentProvider(getPaymentProvider())
-                .withAmount(6234L)
-                .withStatus(ENTERING_CARD_DETAILS)
-                .withEmail("email@fake.test")
-                .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId(agreementId)
-                .withGatewayCredentialId((long) gatewayAccountCredentialsId)
-                .build());
+        ChargeUtils.ExternalChargeId externalChargeId = addChargeForSetUpAgreement(ENTERING_CARD_DETAILS);
 
         worldpayMockClient.mockAuthorisationSuccessWithRecurringPaymentToken();
         
@@ -128,7 +103,28 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
         assertThat(recurringAuthTokenMap, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "1234567890"));
         assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.toString());
     }
-    
+
+    @Test
+    public void shouldAuthoriseChargeAndCreatePaymentInstrumentWhenTokenInWorldpayResponse_for3dsRequiredCharge() throws JsonProcessingException {
+
+        ChargeUtils.ExternalChargeId externalChargeId = addChargeForSetUpAgreement(AUTHORISATION_3DS_REQUIRED);
+
+        worldpayMockClient.mockAuthorisationSuccessWithRecurringPaymentToken();
+
+        givenSetup()
+                .body(buildJsonWithPaResponse())
+                .post(authorise3dsChargeUrlFor(externalChargeId.toString()))
+                .then()
+                .statusCode(200);
+
+        Map<String, Object> paymentInstrument = databaseTestHelper.getPaymentInstrumentByChargeExternalId(externalChargeId.toString());
+        Map<String, String> recurringAuthTokenMap = mapper.readValue(paymentInstrument.get("recurring_auth_token").toString(), new TypeReference<Map<String, String>>() {});
+
+        assertThat(recurringAuthTokenMap, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "9961191959944156907"));
+        assertThat(recurringAuthTokenMap, hasEntry(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "1234567890"));
+        assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.toString());
+    }
+
     @Test
     public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 

@@ -675,13 +675,17 @@ public class ChargeService {
                                                          OperationType operationType,
                                                          String transactionId,
                                                          Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                         ProviderSessionIdentifier sessionIdentifier) {
+                                                         ProviderSessionIdentifier sessionIdentifier,
+                                                         Map<String, String> recurringAuthToken) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
                 setTransactionId(charge, transactionId);
                 transitionChargeState(charge, status);
                 Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
                 Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
+                if (charge.isSavePaymentInstrumentToAgreement()) {
+                    Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
+                }
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());

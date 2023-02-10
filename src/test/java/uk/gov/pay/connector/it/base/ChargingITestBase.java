@@ -14,6 +14,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -23,6 +24,7 @@ import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -59,6 +61,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -441,6 +444,32 @@ public class ChargingITestBase {
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
                 CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
 
+        return externalChargeId;
+    }
+
+    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {
+        String agreementId = "12345678901234567890123456";
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(agreementId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        long chargeId = RandomUtils.nextInt();
+        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withGatewayAccountId(accountId)
+                .withPaymentProvider(getPaymentProvider())
+                .withAmount(6234L)
+                .withStatus(status)
+                .withEmail("email@fake.test")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementId(agreementId)
+                .withGatewayCredentialId((long) gatewayAccountCredentialsId)
+                .build());
         return externalChargeId;
     }
 

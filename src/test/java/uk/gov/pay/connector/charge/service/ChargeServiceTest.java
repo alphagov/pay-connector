@@ -49,6 +49,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -75,6 +76,7 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
@@ -407,7 +409,7 @@ class ChargeServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
 
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
-                null, null);
+                null, null, null);
 
         verify(chargeSpy, never()).setGatewayTransactionId(anyString());
         verify(chargeSpy).setStatus(AUTHORISATION_REJECTED);
@@ -424,7 +426,7 @@ class ChargeServiceTest {
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
         
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
-                null, null);
+                null, null, null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
@@ -444,13 +446,37 @@ class ChargeServiceTest {
         when(mockedAuth3dsRequiredEntity.getThreeDsVersion()).thenReturn("2.1.0");
         
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
-                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"));
+                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"), null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
         verify(chargeSpy).setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
         verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
+    }
+
+    @Test
+    void shouldUpdateChargePost3dsAuthorisationWithGatewayRecurringAuthToken_whenSavePaymentInstrumentToAgreementTrue() {
+        ChargeEntity chargeSpy = spy(aValidChargeEntity()
+                .withStatus(AUTHORISATION_3DS_READY)
+                .withSavePaymentInstrumentToAgreement(true)
+                .build());
+
+        Map<String, String> recurringAuthToken = Map.of("token", "foo");
+        PaymentInstrumentEntity paymentInstrument = new PaymentInstrumentEntity();
+
+        final String chargeEntityExternalId = chargeSpy.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
+        when(mockPaymentInstrumentService.createPaymentInstrument(chargeSpy, recurringAuthToken)).thenReturn(paymentInstrument);
+        
+        chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
+                null, null, recurringAuthToken);
+
+        verify(chargeSpy).setGatewayTransactionId("transaction-id");
+        verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
+        verify(chargeSpy).setPaymentInstrument(paymentInstrument);
+        verify(mockPaymentInstrumentService).createPaymentInstrument(chargeSpy, recurringAuthToken);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
 
     @Test
