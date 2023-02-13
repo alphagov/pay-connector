@@ -59,6 +59,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -323,6 +325,21 @@ class WorldpayPaymentProviderTest {
     }
 
     @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbersForAgreements")
+    void shouldBeAbleToSendSetUpAgreementRequestForMerchant(String cardBrand, String cardNumber) {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).build();
+        ChargeEntity charge = createChargeEntity();
+        charge.setSavePaymentInstrumentToAgreement(true);
+        charge.setAgreementId("test-agreement-123456");
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
+        assertTrue(response.getBaseResponse().isPresent());
+        assertTrue(response.getBaseResponse().get().getGatewayRecurringAuthToken().isPresent());
+        assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get(), hasKey(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY));
+    }
+
+    @ParameterizedTest
     @MethodSource("worldpayTestCardNumbersThatRequire3ds")
     void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
@@ -331,7 +348,7 @@ class WorldpayPaymentProviderTest {
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .withAddress(null)
                 .build();
-        
+
         ChargeEntity charge = createChargeWithRequires3ds();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
@@ -410,7 +427,7 @@ class WorldpayPaymentProviderTest {
             assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengeTransactionId(), is(notNullValue()));
             assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getWorldpayChallengePayload(), is(notNullValue()));
             assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getThreeDsVersion(), startsWith("2."));
-                
+
         });
     }
 
@@ -527,6 +544,13 @@ class WorldpayPaymentProviderTest {
         );
     }
 
+    // The Visa Purchasing test card does not currently create a token when setting up an agreement.
+    // This is being checked with Worldpay.
+    static Stream<Arguments> worldpayTestCardNumbersForAgreements() {
+        return worldpayTestCardNumbers()
+                .filter(arguments -> !("Visa Purchasing".equals(arguments.get()[0])));
+    }
+
     // For at least some Worldpay test accounts, Diners Club and Discover
     // cards never seem to require 3DS and instead authorise immediately
     static Stream<Arguments> worldpayTestCardNumbersThatRequire3ds() {
@@ -537,23 +561,23 @@ class WorldpayPaymentProviderTest {
 
     private ChargeEntity createChargeEntity() {
         return aValidChargeEntity()
-                    .withTransactionId(randomUUID().toString())
-                    .withGatewayAccountEntity(validGatewayAccount)
-                    .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
-                    .build();
+                .withTransactionId(randomUUID().toString())
+                .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntity)
+                .build();
     }
 
     private ChargeEntity createChargeWithRequires3ds() {
         return aValidChargeEntity()
-                    .withTransactionId(randomUUID().toString())
-                    .withGatewayAccountEntity(validGatewayAccountFor3ds)
-                    .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntityFor3ds)
-                    .build();
+                .withTransactionId(randomUUID().toString())
+                .withGatewayAccountEntity(validGatewayAccountFor3ds)
+                .withGatewayAccountCredentialsEntity(validGatewayAccountCredentialsEntityFor3ds)
+                .build();
     }
 
     private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
         GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), mockMetricRegistry);
-        
+
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(
                 any(PaymentGatewayName.class),
@@ -561,16 +585,16 @@ class WorldpayPaymentProviderTest {
                 any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         return new WorldpayPaymentProvider(
-                gatewayUrlMap(), 
-                gatewayClient, 
+                gatewayUrlMap(),
                 gatewayClient,
-                gatewayClient, 
-                new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap()), 
-                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()), 
+                gatewayClient,
+                gatewayClient,
+                new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap()),
+                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()),
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
-                new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()), 
-                new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration), 
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()), 
+                new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()),
+                new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration),
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mock(ChargeDao.class),
                 mock(EventService.class));
     }
