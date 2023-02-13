@@ -96,6 +96,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -207,7 +208,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @BeforeEach
     void setUpCardAuthorisationService() {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
-        when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(GatewayAccountEntity.class), any(AuthCardDetails.class)))
+        when(mockedPaymentProvider.generateAuthorisationRequestSummary(any(GatewayAccountEntity.class), any(AuthCardDetails.class), anyBoolean()))
                 .thenReturn(new SandboxAuthorisationRequestSummary());
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
 

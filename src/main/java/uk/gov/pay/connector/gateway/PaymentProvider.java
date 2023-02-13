@@ -53,6 +53,6 @@ public interface PaymentProvider {
 
     ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundEntityList);
     
-    AuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails);
+    AuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement);
 
 }

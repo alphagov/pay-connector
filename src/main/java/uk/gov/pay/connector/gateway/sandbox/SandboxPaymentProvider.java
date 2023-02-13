@@ -137,7 +137,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public SandboxAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
+    public SandboxAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
         return new SandboxAuthorisationRequestSummary();
     }
 

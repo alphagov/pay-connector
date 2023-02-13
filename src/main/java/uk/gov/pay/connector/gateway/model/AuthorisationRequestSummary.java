@@ -31,5 +31,7 @@ public interface AuthorisationRequestSummary {
     default String ipAddress() { 
         return null; 
     };
+    
+    default Presence setUpAgreement() { return NOT_APPLICABLE; }
 
 }
