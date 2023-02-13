@@ -176,7 +176,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public SmartpayAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
+    public SmartpayAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
         return new SmartpayAuthorisationRequestSummary(gatewayAccount, authCardDetails);
     }
 

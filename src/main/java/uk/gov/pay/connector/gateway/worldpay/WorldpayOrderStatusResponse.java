@@ -276,6 +276,15 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (isNotBlank(exemptionResponseReason)) {
             joiner.add("exemptionResponse reason: " + exemptionResponseReason);
         }
+        if (isNotBlank(paymentTokenId)) {
+            joiner.add("paymentTokenId: present");
+        }
+        if (isNotBlank(schemeTransactionIdentifier)) {
+            joiner.add("schemeTransactionIdentifier: present");
+        }
+        if (isNotBlank(tokenEvent)) {
+            joiner.add("tokenEvent: " + tokenEvent);
+        }
         if (isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());
         }

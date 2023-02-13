@@ -140,8 +140,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedProviders.byName(WORLDPAY)).thenReturn(mockedWorldpayPaymentProvider);
         when(mockedWorldpayPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
 
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
@@ -154,8 +154,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -176,8 +176,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 

@@ -27,43 +27,54 @@ class WorldpayAuthorisationRequestSummaryTest {
     @Test
     void billingAddressPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.of(mock(Address.class)));
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.billingAddress(), is(PRESENT));
     }
 
     @Test
     void billingAddressNotPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.empty());
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.billingAddress(), is(NOT_PRESENT));
     }
 
     @Test
     void requires3dsFalseMeansDataFor3dsNotPresent() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds(), is(NOT_PRESENT));
     }
 
     @Test
     void deviceDataCollectionResultPresentMeansDataFor3dsPresent() {
         given(mockAuthCardDetails.getWorldpay3dsFlexDdcResult()).willReturn(Optional.of("DDC Result"));
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds(), is(PRESENT));
     }
 
     @Test
     void deviceDataCollectionResultPresent() {
         given(mockAuthCardDetails.getWorldpay3dsFlexDdcResult()).willReturn(Optional.of("DDC Result"));
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.deviceDataCollectionResult(), is(PRESENT));
     }
 
     @Test
     void dataFor3ds2AlwaysNotApplicable() {
         given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
-        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds2(), is(NOT_APPLICABLE));
     }
 
+    @Test
+    void isSetUpAgreementTrue() {
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, true);
+        assertThat(worldpayAuthorisationRequestSummary.setUpAgreement(), is(PRESENT));
+    }
+
+    @Test
+    void isSetUpAgreementFalse() {
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
+        assertThat(worldpayAuthorisationRequestSummary.setUpAgreement(), is(NOT_PRESENT));
+    }
 }

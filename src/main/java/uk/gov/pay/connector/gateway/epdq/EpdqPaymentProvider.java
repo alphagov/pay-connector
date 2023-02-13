@@ -253,7 +253,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public EpdqAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
+    public EpdqAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
         return new EpdqAuthorisationRequestSummary(gatewayAccount, authCardDetails);
     }
 
