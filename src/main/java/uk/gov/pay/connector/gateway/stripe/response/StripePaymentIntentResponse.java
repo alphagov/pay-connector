@@ -29,6 +29,12 @@ public class StripePaymentIntentResponse {
     private StripePaymentIntent.ChargesCollection chargesCollection;
 
     private String status;
+    
+    @JsonProperty("customer")
+    private String customerId;
+    
+    @JsonProperty("payment_method")
+    private String paymentMethodId;
 
     public String getId() {
         return id;
@@ -36,6 +42,14 @@ public class StripePaymentIntentResponse {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public String getPaymentMethodId() {
+        return paymentMethodId;
     }
 
     public Optional<String> getRedirectUrl() {

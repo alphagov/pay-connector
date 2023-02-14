@@ -128,6 +128,28 @@ public class StripePaymentIntentRequestTest {
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
         assertThat(payload, not(containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8))));
     }
+
+    @Test
+    public void shouldIncludeCustomerIdAndSetupFutureUsageFlagWhenCustomerIdProvided() {
+        final var customerId = "a-customer-id";
+
+        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        var stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl, customerId);
+        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString("customer=" + customerId));
+        assertThat(payload, containsString("setup_future_usage=off_session"));
+    }
+
+    @Test
+    public void shouldNotIncludeCustomerIdAndSetupFutureUsageFlagWhenCustomerIdNotProvided() {
+        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        var stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, not(containsString("customer=")));
+        assertThat(payload, not(containsString("setup_future_usage=")));
+    }
     
     private StripePaymentIntentRequest createStripePaymentIntentRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());

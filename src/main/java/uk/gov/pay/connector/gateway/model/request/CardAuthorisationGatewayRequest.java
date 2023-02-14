@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
     private AuthCardDetails authCardDetails;
@@ -29,8 +28,7 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
                 other.getGatewayAccount(),
                 other.getAuthorisationMode(),
                 other.isSavePaymentInstrumentToAgreement(),
-                other.getAgreementId(),
-                other.getPaymentInstrument().orElse(null));
+                other.getAgreement().orElse(null));
         this.authCardDetails = authCardDetails;
     }
 

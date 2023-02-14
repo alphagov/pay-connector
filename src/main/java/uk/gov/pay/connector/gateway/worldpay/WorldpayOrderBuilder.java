@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
@@ -47,7 +48,7 @@ public interface WorldpayOrderBuilder {
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
-                .withAgreementId(request.getAgreementId())
+                .withAgreementId(request.getAgreement().map(AgreementEntity::getExternalId).orElse(null))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withAmount(request.getAmount())
