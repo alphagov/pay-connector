@@ -72,4 +72,46 @@ class AuthUtilTest {
         Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsAsAuthHeader(credentials, AuthorisationMode.WEB);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
+
+    @Test
+    void shouldThrowException_whenAuthModeAgreement_andNoCredentialsForMerchantId() {
+        MissingCredentialsForRecurringPaymentException thrown = Assertions.assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
+            Map<String, Object> credentials = Map.of(
+                    CREDENTIALS_MERCHANT_ID, merchantCode,
+                    CREDENTIALS_USERNAME, username,
+                    CREDENTIALS_PASSWORD, password);
+            AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT);
+        });
+        assertThat(thrown.getMessage(), is("Credentials are missing for merchant initiated recurring payment"));
+    }
+
+    @Test
+    void shouldRetrieveTheRightMerchantIdForRecurringPayments() {
+        Map<String, Object> credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, merchantCode,
+                CREDENTIALS_USERNAME, username,
+                CREDENTIALS_PASSWORD, password,
+                RECURRING_MERCHANT_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
+                        CREDENTIALS_USERNAME, "RC-" + username,
+                        CREDENTIALS_PASSWORD, "RC-" + password
+                ));
+        String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT);
+        assertThat(merchantId, is("RC-" + merchantCode));
+    }
+
+    @Test
+    void shouldRetrieveTheRightMerchantIdForNonRecurringPayments() {
+        Map<String, Object> credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, merchantCode,
+                CREDENTIALS_USERNAME, username,
+                CREDENTIALS_PASSWORD, password,
+                RECURRING_MERCHANT_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
+                        CREDENTIALS_USERNAME, "RC-" + username,
+                        CREDENTIALS_PASSWORD, "RC-" + password
+                ));
+        String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB);
+        assertThat(merchantId, is(merchantCode));
+    }
 }

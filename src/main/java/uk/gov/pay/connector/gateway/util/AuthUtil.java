@@ -8,10 +8,12 @@ import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentia
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
@@ -43,6 +45,18 @@ public class AuthUtil {
                 AUTHORIZATION, value,
                 STRIPE_VERSION_HEADER, apiVersion
         );
+    }
+
+    public static String getWorldpayMerchantCode(Map<String, Object> gatewayCredentials, AuthorisationMode authorisationMode) {
+        if (authorisationMode == AuthorisationMode.AGREEMENT) {
+            if (gatewayCredentials.get(RECURRING_MERCHANT_INITIATED) == null) {
+                throw new MissingCredentialsForRecurringPaymentException();
+            }
+            Map<String, Object> recurringCreds = (Map<String, Object>) gatewayCredentials.get(RECURRING_MERCHANT_INITIATED);
+
+            return recurringCreds.get(CREDENTIALS_MERCHANT_ID).toString();
+        }
+        return gatewayCredentials.get(CREDENTIALS_MERCHANT_ID).toString();
     }
 
     public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, Object> gatewayCredentials) {

@@ -2,12 +2,12 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public interface WorldpayOrderBuilder {
     
@@ -45,7 +45,7 @@ public interface WorldpayOrderBuilder {
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.getAgreementId())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
