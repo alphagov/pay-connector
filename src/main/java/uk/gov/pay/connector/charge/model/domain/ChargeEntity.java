@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
@@ -200,8 +201,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Schema(example = "46eb1b601348499196c99de90482ee68")
     private String serviceId;
 
-    @Column(name = "agreement_id")
-    private String agreementId;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "agreement_id", referencedColumnName="external_id", updatable = false, nullable = true)
+    private AgreementEntity agreementEntity;
     
     @Column(name = "save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
@@ -244,7 +247,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
             CardDetailsEntity cardDetails,
             boolean moto,
             String serviceId,
-            String agreementId,
+            AgreementEntity agreementEntity,
             boolean savePaymentInstrumentToAgreement,
             AuthorisationMode authorisationMode
     ) {
@@ -267,7 +270,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.cardDetails = cardDetails;
         this.moto = moto;
         this.serviceId = serviceId;
-        this.agreementId = agreementId;
+        this.agreementEntity = agreementEntity;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
     }
@@ -416,7 +419,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                 kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType()),
                 kv(AUTHORISATION_MODE, authorisationMode)
         ));
-        getAgreementId().ifPresent(agreementExternalId -> structuredArguments.add(kv(AGREEMENT_EXTERNAL_ID, agreementExternalId)));
+        getAgreement().ifPresent(agreementEntity -> structuredArguments.add(kv(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId())));
         return structuredArguments.toArray();
     }
 
@@ -448,8 +451,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.walletType = walletType;
     }
     
-    public void setAgreementId(String agreementId) {
-        this.agreementId = agreementId;
+    public void setAgreementEntity(AgreementEntity agreementEntity) {
+        this.agreementEntity = agreementEntity;
     }
 
     public void setSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
@@ -570,8 +573,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.serviceId = serviceId;
     }
 
-    public Optional<String> getAgreementId() {
-        return Optional.ofNullable(agreementId);
+    @JsonIgnore
+    public Optional<AgreementEntity> getAgreement() {
+        return Optional.ofNullable(agreementEntity);
     }
 
     public boolean isSavePaymentInstrumentToAgreement() {
@@ -609,7 +613,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private Source source;
         private boolean moto;
         private String serviceId;
-        private String agreementId;
+        private AgreementEntity agreementEntity;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
 
@@ -691,8 +695,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return this;
         }
 
-        public WebChargeEntityBuilder withAgreementId(String agreementId) {
-            this.agreementId = agreementId;
+        public WebChargeEntityBuilder withAgreementEntity(AgreementEntity agreementEntity) {
+            this.agreementEntity = agreementEntity;
             return this;
         }
 
@@ -726,7 +730,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     null,
                     moto,
                     serviceId,
-                    agreementId,
+                    agreementEntity,
                     savePaymentInstrumentToAgreement,
                     authorisationMode);
         }
@@ -744,7 +748,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private ServicePaymentReference reference;
         private ExternalMetadata externalMetadata;
         private String serviceId;
-        private String agreementId;
+        private AgreementEntity agreementEntity;
         private boolean savePaymentInstrumentToAgreement;
 
         private TelephoneChargeEntityBuilder() {
@@ -810,8 +814,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return this;
         }
 
-        public TelephoneChargeEntityBuilder withAgreementId(String agreementId) {
-            this.agreementId = agreementId;
+        public TelephoneChargeEntityBuilder withAgreementId(AgreementEntity agreementEntity) {
+            this.agreementEntity = agreementEntity;
             return this;
         }
 
@@ -840,7 +844,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     cardDetails,
                     false,
                     serviceId,
-                    agreementId,
+                    agreementEntity,
                     savePaymentInstrumentToAgreement,
                     AuthorisationMode.EXTERNAL);
         }

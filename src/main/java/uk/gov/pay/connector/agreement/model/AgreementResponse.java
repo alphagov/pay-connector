@@ -43,14 +43,31 @@ public class AgreementResponse {
     @JsonProperty
     private boolean live;
 
+    private AgreementResponse(String agreementId,
+            Instant createdDate,
+            String reference,
+            String description,
+            String userIdentifier,
+            String serviceId,
+            boolean live) {
+        this.agreementId = agreementId;
+        this.createdDate = createdDate;
+        this.reference = reference;
+        this.description = description;
+        this.userIdentifier = userIdentifier;
+        this.serviceId = serviceId;
+        this.live = live;
+    }
+
     public AgreementResponse(AgreementResponseBuilder agreementResponseBuilder) {
-        this.agreementId = agreementResponseBuilder.getAgreementId();
-        this.createdDate = agreementResponseBuilder.getCreatedDate();
-        this.reference = agreementResponseBuilder.getReference();
-        this.description = agreementResponseBuilder.getDescription();
-        this.userIdentifier = agreementResponseBuilder.getUserIdentifier();
-        this.serviceId = agreementResponseBuilder.getServiceId();
-        this.live = agreementResponseBuilder.isLive();
+        this(agreementResponseBuilder.getAgreementId(),
+            agreementResponseBuilder.getCreatedDate(),
+            agreementResponseBuilder.getReference(),
+            agreementResponseBuilder.getDescription(),
+            agreementResponseBuilder.getUserIdentifier(),
+            agreementResponseBuilder.getServiceId(),
+            agreementResponseBuilder.isLive()
+        );
     }
     
     public String getAgreementId() {
@@ -79,6 +96,18 @@ public class AgreementResponse {
 
     public String getUserIdentifier() {
         return userIdentifier;
+    }
+
+    public static AgreementResponse from(AgreementEntity agreementEntity) {
+        return new AgreementResponse(
+                agreementEntity.getExternalId(),
+                agreementEntity.getCreatedDate(),
+                agreementEntity.getReference(),
+                agreementEntity.getDescription(),
+                agreementEntity.getUserIdentifier(),
+                agreementEntity.getServiceId(),
+                agreementEntity.isLive()
+        );
     }
 
     @Override

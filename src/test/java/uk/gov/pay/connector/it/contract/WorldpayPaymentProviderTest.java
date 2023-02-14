@@ -71,6 +71,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
@@ -331,7 +332,7 @@ class WorldpayPaymentProviderTest {
         AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).build();
         ChargeEntity charge = createChargeEntity();
         charge.setSavePaymentInstrumentToAgreement(true);
-        charge.setAgreementId("test-agreement-123456");
+        charge.setAgreementEntity(anAgreementEntity().build());
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());

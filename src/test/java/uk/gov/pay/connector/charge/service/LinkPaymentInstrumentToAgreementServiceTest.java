@@ -34,6 +34,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,11 +80,10 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void linksPaymentInstrumentFromChargeToAgreementFromChargeAndSetsPaymentInstrumentToActive() {
-        when(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
         when(mockAgreementEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
-        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(AGREEMENT_ID).build();
+        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementEntity(mockAgreementEntity).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
 
@@ -97,7 +97,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void logsErrorIfChargeDoesNotHavePaymentInstrument() {
-        var chargeEntity = aValidChargeEntity().withPaymentInstrument(null).withAgreementId(AGREEMENT_ID).build();
+        var chargeEntity = aValidChargeEntity().withPaymentInstrument(null).withAgreementEntity(mockAgreementEntity).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
 
@@ -114,7 +114,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void logsErrorIfChargeHasPaymentInstrumentButDoesNotHaveAgreementId() {
-        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(null).build();
+        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementEntity(null).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
 
@@ -123,24 +123,6 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         assertThat(loggingEvent.getLevel(), is(Level.ERROR));
         assertThat(loggingEvent.getFormattedMessage(),
                 is("Expected charge " + chargeEntity.getExternalId() + " to have an agreement but it does not have one"));
-
-        verifyNoInteractions(mockAgreementEntity);
-        verifyNoInteractions(mockPaymentInstrumentEntity);
-        verifyNoInteractions(ledgerService);
-    }
-
-    @Test
-    void logsErrorIfChargeHasPaymentInstrumentAndAgreementIdButAgreementNotFound() {
-        given(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).willReturn(Optional.empty());
-        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementId(AGREEMENT_ID).build();
-
-        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
-
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        var loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-        assertThat(loggingEvent.getFormattedMessage(),
-                is("Charge " + chargeEntity.getExternalId() + " references agreement " + AGREEMENT_ID + " but that agreement does not exist"));
 
         verifyNoInteractions(mockAgreementEntity);
         verifyNoInteractions(mockPaymentInstrumentEntity);

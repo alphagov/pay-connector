@@ -64,6 +64,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static java.time.ZonedDateTime.parse;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
@@ -88,7 +89,7 @@ public class QueueMessageContractTest {
                 .withCorporateSurcharge(55L)
                 .withSource(CARD_API)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
-                .withAgreementId("an-agreement-id")
+                .withAgreementEntity(anAgreementEntity().build())
                 .build();
 
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
@@ -168,7 +169,7 @@ public class QueueMessageContractTest {
     public String verifyUserEmailCollectedEvent() throws JsonProcessingException {
         ChargeEntity charge = aValidChargeEntity()
                 .withEmail("test@example.org")
-                .withAgreementId("an-agreement-id")
+                .withAgreementEntity(anAgreementEntity().build())
                 .build();
 
         UserEmailCollected userEmailCollected = new UserEmailCollected(
