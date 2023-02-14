@@ -19,6 +19,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -202,7 +203,7 @@ public class ChargeEntityTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(paymentProvider)
                 .withAuthorisationMode(authorisationMode)
-                .withAgreementId(agreementId)
+                .withAgreementEntity(anAgreementEntity().withExternalId(agreementId).build())
                 .build();
         Object[] structuredLoggingArgs = chargeEntity.getStructuredLoggingArgs();
         assertThat(structuredLoggingArgs, arrayContainingInAnyOrder(

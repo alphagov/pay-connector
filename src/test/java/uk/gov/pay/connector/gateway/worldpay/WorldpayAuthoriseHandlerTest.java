@@ -62,6 +62,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -482,7 +483,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .withEmail(null)
                 .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId("test-agreement-123456")
+                .withAgreementEntity(anAgreementEntity().withExternalId("test-agreement-123456").build())
                 .build();
 
         gatewayAccountEntity.setRequires3ds(false);

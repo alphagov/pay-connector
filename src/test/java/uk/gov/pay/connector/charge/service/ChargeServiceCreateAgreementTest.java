@@ -204,8 +204,8 @@ class ChargeServiceCreateAgreementTest {
         verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(createdChargeEntity.getAgreementId().isPresent(), is(true));
-        assertThat(createdChargeEntity.getAgreementId().get(), is(AGREEMENT_ID));
+        assertThat(createdChargeEntity.getAgreement().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreement().get(), is(mockAgreementEntity));
         assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(true));
     }
 
@@ -230,8 +230,8 @@ class ChargeServiceCreateAgreementTest {
         verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(createdChargeEntity.getAgreementId().isPresent(), is(true));
-        assertThat(createdChargeEntity.getAgreementId().get(), is(AGREEMENT_ID));
+        assertThat(createdChargeEntity.getAgreement().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreement().get(), is(mockAgreementEntity));
         assertThat(createdChargeEntity.getAuthorisationMode(), is(AuthorisationMode.AGREEMENT));
         assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(false));
         assertThat(createdChargeEntity.getPaymentInstrument(), is(Optional.of(mockPaymentInstrumentEntity)));

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -66,7 +67,7 @@ public class ChargeEntityFixture {
     private Exemption3ds exemption3ds;
     private String paymentProvider = "sandbox";
     private String serviceId = randomUuid();
-    private String agreementId;
+    private AgreementEntity agreementEntity;
     private boolean savePaymentInstrumentToAgreement = false;
     private PaymentInstrumentEntity paymentInstrument = null;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
@@ -154,7 +155,7 @@ public class ChargeEntityFixture {
                 cardDetails,
                 moto,
                 serviceId,
-                agreementId,
+                agreementEntity,
                 savePaymentInstrumentToAgreement,
                 authorisationMode);
         chargeEntity.setId(id);
@@ -165,7 +166,7 @@ public class ChargeEntityFixture {
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
-        chargeEntity.setAgreementId(agreementId);
+        chargeEntity.setAgreementEntity(agreementEntity);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
 
@@ -342,8 +343,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withAgreementId(String agreementId) {
-        this.agreementId = agreementId;
+    public ChargeEntityFixture withAgreementEntity(AgreementEntity agreementEntity) {
+        this.agreementEntity = agreementEntity;
         return this;
     }
 

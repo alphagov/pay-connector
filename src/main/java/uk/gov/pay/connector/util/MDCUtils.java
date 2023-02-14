@@ -16,7 +16,7 @@ public class MDCUtils {
         MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
         MDC.put(PROVIDER, charge.getPaymentProvider());
         MDC.put(AUTHORISATION_MODE, charge.getAuthorisationMode().getName());
-        charge.getAgreementId().ifPresent(agreementId -> MDC.put(AGREEMENT_EXTERNAL_ID, agreementId));
+        charge.getAgreement().ifPresent(agreementEntity -> MDC.put(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId()));
         
         addGatewayAccountDetailsToMDC(charge.getGatewayAccount());
     }

@@ -68,7 +68,7 @@ public class AgreementEntity {
         // For JPA
     }
     
-    private AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
+    public AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
                             String description, String userIdentifier, boolean live, Instant createdDate, PaymentInstrumentEntity paymentInstrument) {
         this.externalId = RandomIdGenerator.newId();
         this.gatewayAccount = gatewayAccount;

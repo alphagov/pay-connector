@@ -41,15 +41,7 @@ public class AgreementService {
 
     public Optional<AgreementResponse> findByExternalId(String externalId, long gatewayAccountId) {
         return agreementDao.findByExternalId(externalId, gatewayAccountId)
-                .map(agreementEntity -> new AgreementResponseBuilder()
-                        .withAgreementId(agreementEntity.getExternalId())
-                        .withServiceId(agreementEntity.getServiceId())
-                        .withReference(agreementEntity.getReference())
-                        .withLive(agreementEntity.isLive())
-                        .withCreatedDate(agreementEntity.getCreatedDate())
-                        .withDescription(agreementEntity.getDescription())
-                        .withUserIdentifier(agreementEntity.getUserIdentifier())
-                        .build());
+                .map(AgreementResponse::from);
     }
 
     @Transactional

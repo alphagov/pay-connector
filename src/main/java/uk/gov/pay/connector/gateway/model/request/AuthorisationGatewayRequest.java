@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.model.request;
 
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
@@ -42,7 +43,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = charge.getGatewayAccount();
         this.authorisationMode = charge.getAuthorisationMode();
         this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
-        this.agreementId = charge.getAgreementId().orElse(null);
+        this.agreementId = charge.getAgreement().map(AgreementEntity::getExternalId).orElse(null);
     }
 
     public AuthorisationGatewayRequest(String gatewayTransactionId,

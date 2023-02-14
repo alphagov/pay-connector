@@ -2873,8 +2873,6 @@ components:
       type: object
       description: The charge associated with the token
       properties:
-        agreementId:
-          type: string
         amount:
           type: integer
           format: int64

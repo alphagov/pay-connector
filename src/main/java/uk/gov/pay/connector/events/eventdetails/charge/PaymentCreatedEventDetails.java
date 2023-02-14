@@ -94,7 +94,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
                 .withAuthorisationMode(charge.getAuthorisationMode());
 
-        charge.getAgreementId().ifPresent(builder::withAgreementId);
+        charge.getAgreement().ifPresent(agreementEntity -> builder.withAgreementId(agreementEntity.getExternalId()));
         charge.getPaymentInstrument().map(PaymentInstrumentEntity::getExternalId).ifPresent(builder::withPaymentInstrumentId);
 
         if (isAMotoAPIPayment(charge.getAuthorisationMode()) ||

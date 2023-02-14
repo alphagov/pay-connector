@@ -35,17 +35,15 @@ public class LinkPaymentInstrumentToAgreementService {
     @Transactional
     public void linkPaymentInstrumentFromChargeToAgreementFromCharge(ChargeEntity chargeEntity) {
         chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity -> {
-            chargeEntity.getAgreementId().ifPresentOrElse(agreementId -> {
-                agreementDao.findByExternalId(agreementId, chargeEntity.getGatewayAccount().getId()).ifPresentOrElse(agreementEntity -> {
-                    agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
-                    paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
-                    ledgerService.postEvent(List.of(
-                            AgreementSetUp.from(agreementEntity, clock.instant()),
-                            PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
-                    ));
-                    LOGGER.info("Agreement successfully set up with payment instrument",
-                            kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId()));
-                }, () -> LOGGER.error("Charge {} references agreement {} but that agreement does not exist", chargeEntity.getExternalId(), agreementId));
+            chargeEntity.getAgreement().ifPresentOrElse(agreementEntity -> {
+                agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
+                paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
+                ledgerService.postEvent(List.of(
+                        AgreementSetUp.from(agreementEntity, clock.instant()),
+                        PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
+                ));
+                LOGGER.info("Agreement successfully set up with payment instrument",
+                        kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId()));
             }, () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId()));
         }, () -> LOGGER.error("Expected charge {} to have a payment instrument but it does not have one", chargeEntity.getExternalId()));
     }

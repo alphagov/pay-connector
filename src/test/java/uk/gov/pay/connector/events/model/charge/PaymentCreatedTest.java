@@ -24,6 +24,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -52,11 +53,11 @@ class PaymentCreatedTest {
             .withSource(Source.CARD_API)
             .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key1", "value1", "key2", "value2")))
             .withAuthorisationMode(AuthorisationMode.WEB)
-            .withAgreementId(AGREEMENT_EXTERNAL_ID);
+            .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build());
     private ChargeEntity chargeEntity;
 
     private String preparePaymentCreatedEvent() throws JsonProcessingException {
-        chargeEntity = chargeEntityFixture.build();
+        chargeEntity = chargeEntityFixture.withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build()).build();
         var paymentCreatedEvent = PaymentCreated.from(chargeEntity);
         return paymentCreatedEvent.toJsonString();
     }
@@ -130,7 +131,7 @@ class PaymentCreatedTest {
     void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreement() throws JsonProcessingException {
         chargeEntityFixture
                 .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId(AGREEMENT_EXTERNAL_ID);
+                .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build());
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
 
@@ -145,7 +146,7 @@ class PaymentCreatedTest {
         PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-26T11:22:25Z")).build();
 
         chargeEntityFixture
-                .withAgreementId(AGREEMENT_EXTERNAL_ID)
+                .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build())
                 .withPaymentInstrument(paymentInstrumentEntity);
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
@@ -257,7 +258,7 @@ class PaymentCreatedTest {
 
     private void assertRecurringPaymentCreatedDetails(String actual) {
         assertBasePaymentCreatedDetails(actual);
-        assertThat(actual, hasJsonPath("$.event_details.agreement_id", equalTo(chargeEntity.getAgreementId().orElseThrow(IllegalStateException::new))));
+        assertThat(actual, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
         assertThat(actual, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(chargeEntity.isSavePaymentInstrumentToAgreement())));
     }
 }

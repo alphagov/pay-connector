@@ -60,7 +60,6 @@ import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsTakenFromPaymentInstrumentEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -285,6 +284,10 @@ public class ChargeService {
                 gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
             }
 
+            var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
+                agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
+                        .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
+
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withDescription(chargeRequest.getDescription())
@@ -300,7 +303,7 @@ public class ChargeService {
                     .withMoto(authorisationMode == MOTO_API || chargeRequest.isMoto())
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
-                    .withAgreementId(chargeRequest.getAgreementId())
+                    .withAgreementEntity(agreementEntity.orElse(null))
                     .withAuthorisationMode(chargeRequest.getAuthorisationMode());
 
             chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
@@ -310,14 +313,12 @@ public class ChargeService {
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
 
-            if (chargeRequest.getAgreementId() != null) {
-                var agreementEntity = agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
-                        .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found."));
-                if (authorisationMode == AuthorisationMode.AGREEMENT) {
-                    checkAgreementHasActivePaymentInstrument(agreementEntity);
-                    agreementEntity.getPaymentInstrument()
+            if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                agreementEntity.ifPresent(agreement -> {
+                    checkAgreementHasActivePaymentInstrument(agreement);
+                    agreement.getPaymentInstrument()
                             .ifPresent(chargeEntity::setPaymentInstrument);
-                }
+                });
             }
 
             chargeDao.persist(chargeEntity);
@@ -539,7 +540,7 @@ public class ChargeService {
                 .withAuthorisationMode(chargeEntity.getAuthorisationMode());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
-        chargeEntity.getAgreementId().ifPresent(builderOfResponse::withAgreementId);
+        chargeEntity.getAgreement().ifPresent(agreement -> builderOfResponse.withAgreementId(agreement.getExternalId()));
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
 
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(chargeEntity.getStatus())) {

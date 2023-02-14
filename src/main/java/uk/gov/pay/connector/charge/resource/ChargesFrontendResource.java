@@ -255,8 +255,8 @@ public class ChargesFrontendResource {
             responseBuilder.withCardDetails(persistedCard);
         }
 
-        charge.getAgreementId().ifPresent(responseBuilder::withAgreementId);
-        charge.getAgreementId().flatMap(agreementId -> findAgreement(agreementId, charge.getGatewayAccount().getId())).ifPresent(responseBuilder::withAgreement);
+        charge.getAgreement().ifPresent(agreementEntity -> responseBuilder.withAgreementId(agreementEntity.getExternalId()));
+        charge.getAgreement().map(AgreementResponse::from).ifPresent(responseBuilder::withAgreement);
 
         if (charge.get3dsRequiredDetails() != null) {
             var auth3dsData = new ChargeResponse.Auth3dsData();
