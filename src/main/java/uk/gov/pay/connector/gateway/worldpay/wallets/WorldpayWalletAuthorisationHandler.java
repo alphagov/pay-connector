@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderSessionId;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayGatewayResponseGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHandler, WorldpayGatewayResponseGenerator {
 
@@ -69,7 +69,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();

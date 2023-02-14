@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -19,7 +20,6 @@ import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshal
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayCaptureHandler implements CaptureHandler {
 
@@ -51,7 +51,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         return aWorldpayCaptureOrderRequestBuilder()
                 .withDate(LocalDate.now(ZoneOffset.UTC))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getGatewayTransactionId())
                 .build();

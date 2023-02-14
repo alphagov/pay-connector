@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -17,7 +18,6 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayRefundHandler implements RefundHandler {
 
@@ -49,7 +49,7 @@ public class WorldpayRefundHandler implements RefundHandler {
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
                 .withReference(request.getRefundExternalId())
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withAmount(request.getAmount())
                 .withTransactionId(request.getTransactionId())
                 .build();

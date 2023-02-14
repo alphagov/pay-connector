@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
@@ -59,7 +60,6 @@ import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCreden
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -185,7 +185,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private GatewayOrder buildQuery(ChargeQueryGatewayRequest chargeQueryGatewayRequest) {
         return aWorldpayInquiryRequestBuilder()
                 .withTransactionId(chargeQueryGatewayRequest.getTransactionId())
-                .withMerchantCode(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(chargeQueryGatewayRequest.getGatewayCredentials(),
+                        chargeQueryGatewayRequest.getAuthorisationMode()))
                 .build();
     }
 
@@ -351,14 +352,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .build();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
         return aWorldpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
-                .withMerchantCode(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .build();
     }
 
