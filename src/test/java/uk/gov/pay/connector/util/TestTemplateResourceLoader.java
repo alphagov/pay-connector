@@ -35,6 +35,9 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-3ds-with-email.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-state.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-min-address.xml";
+    
+    public static final String WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-recurring-request-with-scheme-identifier.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-recurring-request-without-scheme-identifier.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-without-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_SETUP_AGREEMENT = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-setup-agreement.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay-min-data.xml";

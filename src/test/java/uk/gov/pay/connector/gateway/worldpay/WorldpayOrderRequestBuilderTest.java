@@ -20,6 +20,7 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
@@ -30,6 +31,8 @@ import static uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFi
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
@@ -79,6 +82,37 @@ public class WorldpayOrderRequestBuilderTest {
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
+    @Test
+    public void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() throws Exception {
+        GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
+                .withPaymentTokenId("test-payment-token-123456")
+                .withSchemeTransactionIdentifier("test-transaction-id-999999")
+                .withAgreementId("test-agreement-123456")
+                .withTransactionId("test-transaction-id-123")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseRecurringOrderRequestWithOutSchemeIdentifier() throws Exception {
+        GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
+                .withPaymentTokenId("test-payment-token-123456")
+                .withAgreementId("test-agreement-123456")
+                .withTransactionId("test-transaction-id-123")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+    
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
 
