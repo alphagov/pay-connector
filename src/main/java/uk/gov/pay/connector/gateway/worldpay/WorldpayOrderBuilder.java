@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
@@ -64,7 +65,7 @@ public interface WorldpayOrderBuilder {
         }
     }
 
-    static GatewayOrder buildAuthoriseRecurringOrder(CardAuthorisationGatewayRequest request) {
+    static GatewayOrder buildAuthoriseRecurringOrder(RecurringPaymentAuthorisationGatewayRequest request) {
         var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new RuntimeException("Payment instrument not provided when trying to authorise a recurring payment"));
 
         WorldpayOrderRequestBuilder builder = (WorldpayOrderRequestBuilder) aWorldpayAuthoriseRecurringOrderRequestBuilder()
@@ -72,11 +73,11 @@ public interface WorldpayOrderBuilder {
                 .withPaymentTokenId(Optional.ofNullable(paymentInstrument.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY)).orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
                 .withAmount(request.getAmount())
-                .withTransactionId(request.getTransactionId().orElse(""))
+                .withTransactionId(request.getGatewayTransactionId().orElse(""))
                 .withDescription(request.getDescription());
 
         if (paymentInstrument.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY) != null) {
-            builder.withSchemeTransactionIdentifier(request.getPaymentInstrument().get().getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY));
+            builder.withSchemeTransactionIdentifier(paymentInstrument.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY));
         }
 
         return builder.build();
