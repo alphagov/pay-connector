@@ -29,7 +29,8 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
                 other.getGatewayAccount(),
                 other.getAuthorisationMode(),
                 other.isSavePaymentInstrumentToAgreement(),
-                other.getAgreementId());
+                other.getAgreementId(),
+                other.getPaymentInstrument().orElse(null));
         this.authCardDetails = authCardDetails;
     }
 

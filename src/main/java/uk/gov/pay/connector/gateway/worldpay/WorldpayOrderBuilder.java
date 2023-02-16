@@ -8,6 +8,9 @@ import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 
 public interface WorldpayOrderBuilder {
     
@@ -38,7 +41,7 @@ public interface WorldpayOrderBuilder {
 
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
-
+        
         return (WorldpayOrderRequestBuilder) builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
@@ -59,5 +62,23 @@ public interface WorldpayOrderBuilder {
         } else {
             return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request, acceptLanguageHeaderParser).build();
         }
+    }
+
+    static GatewayOrder buildAuthoriseRecurringOrder(CardAuthorisationGatewayRequest request) {
+        var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new RuntimeException("Payment instrument not provided when trying to authorise a recurring payment"));
+
+        WorldpayOrderRequestBuilder builder = (WorldpayOrderRequestBuilder) aWorldpayAuthoriseRecurringOrderRequestBuilder()
+                .withAgreementId(request.getAgreementId())
+                .withPaymentTokenId(Optional.ofNullable(paymentInstrument.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY)).orElse(""))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
+                .withAmount(request.getAmount())
+                .withTransactionId(request.getTransactionId().orElse(""))
+                .withDescription(request.getDescription());
+
+        if (paymentInstrument.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY) != null) {
+            builder.withSchemeTransactionIdentifier(request.getPaymentInstrument().get().getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY));
+        }
+
+        return builder.build();
     }
 }

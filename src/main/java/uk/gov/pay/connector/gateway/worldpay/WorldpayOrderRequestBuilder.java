@@ -35,9 +35,9 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private boolean exemptionEngineEnabled;
         private int integrationVersion3ds;
         private boolean savePaymentInstrumentToAgreement;
-
         private String agreementId;
-
+        private String schemeTransactionIdentifier;
+        private String paymentTokenId;
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
         }
@@ -160,9 +160,26 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setAgreementId(String agreementId) {
             this.agreementId = agreementId;
         }
+
+        public String getSchemeTransactionIdentifier() {
+            return schemeTransactionIdentifier;
+        }
+
+        public void setSchemeTransactionIdentifier(String schemeTransactionIdentifier) {
+            this.schemeTransactionIdentifier = schemeTransactionIdentifier;
+        }
+
+        public String getPaymentTokenId() {
+            return paymentTokenId;
+        }
+
+        public void setPaymentTokenId(String paymentTokenId) {
+            this.paymentTokenId = paymentTokenId;
+        }
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
+    public static final TemplateBuilder AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseRecurringOrderTemplate.xml");
     public static final TemplateBuilder AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseApplePayOrderTemplate.xml");
     public static final TemplateBuilder AUTHORISE_GOOGLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml");
     public static final TemplateBuilder AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/Worldpay3dsResponseAuthOrderTemplate.xml");
@@ -176,6 +193,10 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
+    }
+
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseRecurringOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType walletType) {
@@ -291,6 +312,16 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withAgreementId(String agreementId) {
         worldpayTemplateData.setAgreementId(agreementId);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPaymentTokenId(String paymentTokenId) {
+        worldpayTemplateData.setPaymentTokenId(paymentTokenId);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withSchemeTransactionIdentifier(String schemeTransactionIdentifier) {
+        worldpayTemplateData.setSchemeTransactionIdentifier(schemeTransactionIdentifier);
         return this;
     }
     @Override
