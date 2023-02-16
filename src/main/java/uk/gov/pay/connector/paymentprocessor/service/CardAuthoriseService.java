@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
@@ -96,14 +97,15 @@ public class CardAuthoriseService {
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
-            CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
             switch (charge.getAuthorisationMode()) {
                 case WEB:
+                    CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
                     operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
                     break;
                 case AGREEMENT:
-                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authoriseUserNotPresent(request, charge);
+                    RecurringPaymentAuthorisationGatewayRequest recurringRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authoriseUserNotPresent(recurringRequest);
                     break;
                 default:
                     throw new IllegalArgumentException("Authorise operation does not support authorisation mode");

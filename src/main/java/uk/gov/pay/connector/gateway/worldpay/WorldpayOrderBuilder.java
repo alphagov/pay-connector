@@ -66,7 +66,7 @@ public interface WorldpayOrderBuilder {
     }
 
     static GatewayOrder buildAuthoriseRecurringOrder(RecurringPaymentAuthorisationGatewayRequest request) {
-        var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new RuntimeException("Payment instrument not provided when trying to authorise a recurring payment"));
+        var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new IllegalArgumentException("Expected request to have payment instrument but it does not"));
 
         WorldpayOrderRequestBuilder builder = (WorldpayOrderRequestBuilder) aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withAgreementId(request.getAgreementId())
