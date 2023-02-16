@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -68,8 +69,8 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse authoriseUserNotPresent(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
-        var paymentInstrumentEntity = charge.getPaymentInstrument()
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        var paymentInstrumentEntity = request.getPaymentInstrument()
                 .orElseThrow(() -> new IllegalArgumentException("Expected charge to have payment instrument but it does not"));
         var firstDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getFirstDigitsCardNumber().toString();
         var lastDigitsCardNumber = paymentInstrumentEntity.getCardDetails().getLastDigitsCardNumber().toString();

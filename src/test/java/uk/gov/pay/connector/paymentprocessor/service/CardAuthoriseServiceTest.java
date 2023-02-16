@@ -1048,7 +1048,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private void providerWillRespondToAuthoriseUserNotPresentWith(GatewayResponse authResponse) throws GatewayException {
-        when(mockedPaymentProvider.authoriseUserNotPresent(any(), eq(charge))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseUserNotPresent(any())).thenReturn(authResponse);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());

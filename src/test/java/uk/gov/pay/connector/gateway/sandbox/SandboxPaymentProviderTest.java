@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
@@ -24,7 +25,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -115,9 +115,8 @@ public class SandboxPaymentProviderTest {
         var paymentInstrument = aPaymentInstrumentEntity(Instant.now())
                 .withCardDetails(cardDetails)
                 .build();
-        AuthCardDetails authCardDetails = new AuthCardDetails();
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withPaymentInstrument(paymentInstrument).build();
-        GatewayResponse gatewayResponse = provider.authoriseUserNotPresent(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(charge));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
