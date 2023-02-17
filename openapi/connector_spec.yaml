@@ -117,6 +117,14 @@ paths:
             or "false".
           example: "true"
           pattern: true|false
+      - in: query
+        name: recurring_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not recurring payments
+            are enabled for the account when this parameter is provided.
+          example: "true"
+          pattern: true|false
       responses:
         "200":
           content:
@@ -1416,6 +1424,14 @@ paths:
           description: The accounts will be filtered by whether or not payment provider
             switch is enabled for the account if this parameter is provided. "true"
             or "false".
+          example: "true"
+          pattern: true|false
+      - in: query
+        name: recurring_enabled
+        schema:
+          type: string
+          description: The accounts will be filtered by whether or not recurring payments
+            are enabled for the account when this parameter is provided.
           example: "true"
           pattern: true|false
       responses:

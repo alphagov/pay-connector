@@ -33,9 +33,9 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
-    
+
     private static ObjectMapper objectMapper = new ObjectMapper();
-    
+
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Test
@@ -201,7 +201,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
         String gatewayAccountId2 = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
         databaseTestHelper.insertWorldpay3dsFlexCredential(
-            Long.valueOf(gatewayAccountId2),
+                Long.valueOf(gatewayAccountId2),
                 "macKey",
                 "issuer",
                 "org_unit_id",
@@ -309,6 +309,20 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldGetGatewayAccountsByRecurringEnabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
+        updateGatewayAccount(gatewayAccountId1, "recurring_enabled", true);
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?recurring_enabled=true")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
     public void shouldGetGatewayAccountsByProvider() {
         String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
         createAGatewayAccountFor("sandbox");
@@ -373,6 +387,15 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .then()
                 .statusCode(422)
                 .body("message[0]", is("Parameter [payment_provider] must be one of 'sandbox', 'worldpay', 'smartpay', 'epdq' or 'stripe'"));
+    }
+
+    @Test
+    public void shouldReturn422WhenRecurringEnabledIsNotABooleanValue() {
+        givenSetup()
+                .get("/v1/api/accounts?recurring_enabled=somerandomvalue")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [recurring_enabled] must be true or false"));
     }
 
     @Test
@@ -839,7 +862,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         databaseTestHelper.setDisabled(gatewayAccountIdAsLong);
         String disabledReason = "Because reasons";
         databaseTestHelper.setDisabledReason(gatewayAccountIdAsLong, disabledReason);
-        
+
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
