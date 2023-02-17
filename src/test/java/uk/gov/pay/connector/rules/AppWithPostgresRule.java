@@ -42,16 +42,24 @@ abstract public class AppWithPostgresRule implements TestRule {
     private final int wireMockPort = PortFactory.findFreePort();
 
     public AppWithPostgresRule(ConfigOverride... configOverrides) {
-        this("config/test-it-config.yaml", configOverrides);
+        this(true, configOverrides);
+    }
+
+    public AppWithPostgresRule(boolean stubPaymentGateways, ConfigOverride... configOverrides) {
+        this("config/test-it-config.yaml", stubPaymentGateways, configOverrides);
     }
 
     public AppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
+        this(configPath, true, configOverrides);
+    }
+
+    public AppWithPostgresRule(String configPath, boolean stubPaymentGateways, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
         postgres = new PostgresDockerRule("11.16");
 
         ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
         newConfigOverrides = overrideSqsConfig(newConfigOverrides);
-        newConfigOverrides = overrideUrlsConfig(newConfigOverrides);
+        newConfigOverrides = overrideUrlsConfig(newConfigOverrides, stubPaymentGateways);
         appRule = newApplication(configFilePath, newConfigOverrides);
 
         rules = RuleChain.outerRule(postgres).around(appRule);
@@ -131,17 +139,18 @@ abstract public class AppWithPostgresRule implements TestRule {
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
 
-    private ConfigOverride[] overrideUrlsConfig(ConfigOverride[] configOverrides) {
+    private ConfigOverride[] overrideUrlsConfig(ConfigOverride[] configOverrides, boolean stubPaymentGateways) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
-        newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
-        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + wireMockPort + "/shopper/3ds/ddc.html"));
-        newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
-        newConfigOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
-        newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
-        newConfigOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
+        if (stubPaymentGateways) {
+            newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
+            newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
+            newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
+            newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+            newConfigOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
+            newConfigOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
+            newConfigOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
+        }
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
-        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
-        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
         newConfigOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
