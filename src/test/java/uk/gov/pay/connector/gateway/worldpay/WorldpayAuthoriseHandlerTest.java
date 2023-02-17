@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -24,13 +26,16 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import uk.gov.pay.connector.util.XPathUtils;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.ws.rs.client.Client;
@@ -42,6 +47,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,16 +72,21 @@ import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgre
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL;
@@ -110,7 +121,11 @@ class WorldpayAuthoriseHandlerTest {
                 .withCredentials(Map.of(
                         CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                         CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"))
+                        CREDENTIALS_PASSWORD, "password",
+                        RECURRING_MERCHANT_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "rc-worldpay-password",
+                                CREDENTIALS_PASSWORD, "rc-password")))
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
@@ -122,8 +137,12 @@ class WorldpayAuthoriseHandlerTest {
                         .withCredentials(Map.of(
                                 CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                                 CREDENTIALS_USERNAME, "worldpay-password",
-                                CREDENTIALS_PASSWORD, "password"
-                        ))
+                                CREDENTIALS_PASSWORD, "password",
+                                        RECURRING_MERCHANT_INITIATED, Map.of(
+                                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                                CREDENTIALS_USERNAME, "rc-worldpay-password",
+                                                CREDENTIALS_PASSWORD, "rc-password"
+                        )))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
     }
@@ -617,6 +636,115 @@ class WorldpayAuthoriseHandlerTest {
         assertTrue(response.getGatewayError().isPresent());
         assertGatewayErrorEquals(response.getGatewayError().get(),
                 new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
+    }
+
+    @Test
+    void should_call_with_right_template_when_valid_recurring_payment_request_with_scheme_identifier() throws Exception {
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        PaymentInstrumentEntity paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                .withRecurringAuthToken(Map.of(
+                        WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "test-payment-token-123456",
+                        WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "test-transaction-id-999999"
+                ))
+                .build();
+        AgreementEntity agreementEntity = AgreementEntity.AgreementEntityBuilder
+                .anAgreementEntity(Instant.now())
+                        .withReference("This is the reference")
+                        .withDescription("This is a description")
+                        .withUserIdentifier("This is the user identifier")
+                        .withServiceId(gatewayAccountEntity.getServiceId())
+                        .withLive(gatewayAccountEntity.isLive())
+                .build();
+        agreementEntity.setExternalId("test-agreement-123456");
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withAmount(500L)
+                .withDescription("This is the description")
+                .withReference(ServicePaymentReference.of("service-payment-reference"))
+                .withTransactionId("test-transaction-id-123")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrument(paymentInstrument)
+                .withAgreementEntity(agreementEntity)
+                .build();
+
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(authorisationSuccessResponse);
+
+        worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    void should_call_with_right_template_when_valid_recurring_payment_request_without_scheme_identifier() throws Exception {
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        PaymentInstrumentEntity paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                .withRecurringAuthToken(Map.of(
+                        WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "test-payment-token-123456"
+                ))
+                .build();
+        AgreementEntity agreementEntity = AgreementEntity.AgreementEntityBuilder
+                .anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withServiceId(gatewayAccountEntity.getServiceId())
+                .withLive(gatewayAccountEntity.isLive())
+                .build();
+        agreementEntity.setExternalId("test-agreement-123456");
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withAmount(500L)
+                .withDescription("This is the description")
+                .withReference(ServicePaymentReference.of("service-payment-reference"))
+                .withTransactionId("test-transaction-id-123")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrument(paymentInstrument)
+                .withAgreementEntity(agreementEntity)
+                .build();
+
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(authorisationSuccessResponse);
+
+        worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    void should_throw_illegal_argument_exception_when_no_payment_instrument_present() {
+        AgreementEntity agreementEntity = AgreementEntity.AgreementEntityBuilder
+                .anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withServiceId(gatewayAccountEntity.getServiceId())
+                .withLive(gatewayAccountEntity.isLive())
+                .build();
+        agreementEntity.setExternalId("test-agreement-123456");
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withAmount(500L)
+                .withDescription("This is the description")
+                .withReference(ServicePaymentReference.of("service-payment-reference"))
+                .withTransactionId("test-transaction-id-123")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrument(null)
+                .withAgreementEntity(agreementEntity)
+                .build();
+
+        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class, () ->
+                worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity))
+        );
+        assertThat(thrown.getMessage(), is("Expected request to have payment instrument but it does not"));
     }
 
     private void assertGatewayErrorEquals(GatewayError actual, GatewayError expected) {
