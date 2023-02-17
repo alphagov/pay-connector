@@ -12,9 +12,12 @@ import java.util.Map;
 import static java.util.Map.entry;
 
 public class StripeCustomerRequest extends StripePostRequest {
+
+    private static final String GOVUK_PAY_AGREEMENT_EXTERNAL_ID = "govuk_pay_agreement_external_id";
     
     private final String name;
     private final String description;
+    private final String agreementExternalId;
 
     private StripeCustomerRequest(
             GatewayAccountEntity gatewayAccount,
@@ -26,6 +29,7 @@ public class StripeCustomerRequest extends StripePostRequest {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         name = authCardDetails.getCardHolder();
         description = agreement.getDescription();
+        agreementExternalId = agreement.getExternalId();
     }
 
     public static StripeCustomerRequest of(CardAuthorisationGatewayRequest request, StripeGatewayConfig config, AgreementEntity agreement) {
@@ -51,7 +55,8 @@ public class StripeCustomerRequest extends StripePostRequest {
     protected Map<String, String> params() {
         return Map.ofEntries(
                 entry("name", name),
-                entry("description", description));
+                entry("description", description),
+                entry(String.format("metadata[%s]", GOVUK_PAY_AGREEMENT_EXTERNAL_ID), agreementExternalId));
     }
 
     @Override
