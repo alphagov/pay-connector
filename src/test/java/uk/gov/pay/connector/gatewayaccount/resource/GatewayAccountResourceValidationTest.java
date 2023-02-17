@@ -4,44 +4,32 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.common.validator.RequestValidator;
-import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class GatewayAccountResourceValidationTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static GatewayAccountCredentialsRequestValidator mockGatewayAccountCredentialsRequestValidator = mock(GatewayAccountCredentialsRequestValidator.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
             .addResource(new GatewayAccountResource(null, null,
-                    null, null,
+                    null,
                     new GatewayAccountRequestValidator(new RequestValidator()), null,
-                    null, mockGatewayAccountCredentialsRequestValidator))
+                    null))
             .build();
-
-    @BeforeAll
-    static void setUp() {
-        when(mockGatewayAccountCredentialsRequestValidator.getMissingCredentialsFields(any(), any())).thenReturn(List.of());
-    }
 
     @Test
     void shouldReturn422_whenEverythingMissing() {
