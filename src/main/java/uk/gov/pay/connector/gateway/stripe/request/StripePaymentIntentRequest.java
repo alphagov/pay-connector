@@ -21,11 +21,12 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     private final String chargeExternalId;
     private final String description;
     private boolean moto;
+    private final String customerId;
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description, boolean moto, Map<String, Object> credentials) {
+            String description, boolean moto, Map<String, Object> credentials, String customerId) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
@@ -34,6 +35,7 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         this.chargeExternalId = chargeExternalId;
         this.description = description;
         this.moto = moto;
+        this.customerId = customerId;
     }
 
     public static StripePaymentIntentRequest of(
@@ -52,8 +54,33 @@ public class StripePaymentIntentRequest extends StripePostRequest {
                 request.getGovUkPayPaymentId(),
                 request.getDescription(),
                 request.isMoto(),
-                request.getGatewayCredentials()
-        );
+                request.getGatewayCredentials(),
+                null);
+    }
+
+    public static StripePaymentIntentRequest of(
+            CardAuthorisationGatewayRequest request,
+            String paymentMethodId,
+            StripeGatewayConfig stripeGatewayConfig,
+            String frontendUrl,
+            String customerId) {
+        return new StripePaymentIntentRequest(
+                request.getGatewayAccount(),
+                request.getGovUkPayPaymentId(),
+                stripeGatewayConfig,
+                request.getAmount(),
+                paymentMethodId,
+                request.getGovUkPayPaymentId(),
+                frontendUrl,
+                request.getGovUkPayPaymentId(),
+                request.getDescription(),
+                request.isMoto(),
+                request.getGatewayCredentials(),
+                customerId);
+    }
+    
+    public String getCustomerId() {
+        return customerId;
     }
 
     @Override
@@ -83,6 +110,11 @@ public class StripePaymentIntentRequest extends StripePostRequest {
 
         if (moto) {
             params.put("payment_method_options[card[moto]]", "true");
+        }
+
+        if (customerId != null) {
+            params.put("customer", customerId);
+            params.put("setup_future_usage", "off_session");
         }
 
         return params;

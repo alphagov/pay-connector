@@ -7,7 +7,6 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
@@ -27,9 +26,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final GatewayAccountEntity gatewayAccount;
     private final AuthorisationMode authorisationMode;
     private final boolean savePaymentInstrumentToAgreement;
-    private final String agreementId;
-    private final PaymentInstrumentEntity paymentInstrument;
-    
+    private final Optional<AgreementEntity> agreement;
     
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
         // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
@@ -46,8 +43,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = charge.getGatewayAccount();
         this.authorisationMode = charge.getAuthorisationMode();
         this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
-        this.agreementId = charge.getAgreement().map(AgreementEntity::getExternalId).orElse(null);
-        this.paymentInstrument = charge.getPaymentInstrument().orElse(null);
+        this.agreement = charge.getAgreement();
     }
 
     public AuthorisationGatewayRequest(String gatewayTransactionId,
@@ -62,8 +58,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        GatewayAccountEntity gatewayAccount,
                                        AuthorisationMode authorisationMode,
                                        boolean savePaymentInstrumentToAgreement,
-                                       String agreementId,
-                                       PaymentInstrumentEntity paymentInstrument) {
+                                       AgreementEntity agreement) {
         this.gatewayTransactionId = gatewayTransactionId;
         this.email = email;
         this.language = language;
@@ -76,8 +71,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = gatewayAccount;
         this.authorisationMode = authorisationMode;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
-        this.agreementId = agreementId;
-        this.paymentInstrument = paymentInstrument;
+        this.agreement = Optional.ofNullable(agreement);
     }
 
     public String getEmail() {
@@ -136,10 +130,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         return savePaymentInstrumentToAgreement;
     }
 
-    public String getAgreementId() {
-        return agreementId;
+    public Optional<AgreementEntity> getAgreement() {
+        return agreement;
     }
-    
-    public Optional<PaymentInstrumentEntity> getPaymentInstrument() { return Optional.ofNullable(paymentInstrument); }
 
 }

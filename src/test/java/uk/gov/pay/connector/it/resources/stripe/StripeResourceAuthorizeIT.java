@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -39,13 +41,14 @@ import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.net.URLEncoder.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.emptyMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -56,7 +59,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
@@ -64,6 +68,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
@@ -84,6 +89,7 @@ public class StripeResourceAuthorizeIT {
     private static final String ADDRESS_POSTCODE = "DO11 4RS";
     private static final String ADDRESS_COUNTRY_GB = "GB";
     private static final String CARD_BRAND = "cardBrand";
+    private static final String AGREEMENT_DESCRIPTION = "An agreement description";
     private RestAssuredClient connectorRestApiClient;
 
     private String stripeAccountId;
@@ -93,6 +99,7 @@ public class StripeResourceAuthorizeIT {
     private final String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
     private final String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
     private final String paymentProvider = PaymentGatewayName.STRIPE.getName();
+    private final ObjectMapper mapper = new ObjectMapper();
     private String accountId;
     private StripeMockClient stripeMockClient;
     private DatabaseTestHelper databaseTestHelper;
@@ -107,6 +114,9 @@ public class StripeResourceAuthorizeIT {
     public void setup() {
         wireMockServer = testContext.getWireMockServer();
         stripeMockClient = new StripeMockClient(wireMockServer);
+
+        var ledgerStub = new LedgerStub(wireMockServer);
+        ledgerStub.acceptPostEvent();
 
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
@@ -163,8 +173,8 @@ public class StripeResourceAuthorizeIT {
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        verifyPaymentMethodRequest("/v1/payment_methods");
-        verifyPaymentIntentRequest("/v1/payment_intents", externalChargeId, stripeAccountId);
+        verifyPaymentMethodRequest();
+        verifyPaymentIntentRequest(externalChargeId, stripeAccountId);
     }
 
     @Test
@@ -189,6 +199,40 @@ public class StripeResourceAuthorizeIT {
         wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
+    }
+
+    @Test
+    public void authoriseChargeToSetUpRecurringPaymentAgreement() throws Exception {
+        stripeMockClient.mockCreatePaymentMethod();
+        stripeMockClient.mockCreateCustomer();
+        stripeMockClient.mockCreatePaymentIntentWithCustomer();
+        addGatewayAccountWith3DS2Enabled();
+
+        String agreementId = addAgreement();
+        String externalChargeId = addChargeWithAgreement(ENTERING_CARD_DETAILS, agreementId);
+
+        ValidatableResponse validatableResponse = given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then();
+
+        validatableResponse
+                .statusCode(OK_200)
+                .body("status", is(AUTHORISATION_SUCCESS.toString()));
+
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+
+        verifyPaymentMethodRequest();
+        verifyCustomerRequest();
+        verifyPaymentIntentRequest(externalChargeId, stripeAccountId);
+
+        Map<String, Object> paymentInstrument = databaseTestHelper.getPaymentInstrumentByChargeExternalId(externalChargeId.toString());
+        Map<String, String> recurringAuthTokenMap = mapper.readValue(paymentInstrument.get("recurring_auth_token").toString(), new TypeReference<Map<String, String>>() {});
+
+        assertThat(recurringAuthTokenMap, hasKey(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY));
+        assertThat(recurringAuthTokenMap, hasKey(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY));
     }
 
     @Test
@@ -307,6 +351,32 @@ public class StripeResourceAuthorizeIT {
         return externalChargeId;
     }
 
+    private String addChargeWithAgreement(ChargeStatus chargeStatus, String agreementId) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge-" + chargeId;
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withPaymentProvider("stripe")
+                .withGatewayAccountId(accountId)
+                .withAmount(Long.valueOf(AMOUNT))
+                .withStatus(chargeStatus)
+                .withGatewayCredentialId(accountCredentialsParams.getId())
+                .withAgreementId(agreementId)
+                .withSavePaymentInstrumentToAgreement(true)
+                .build());
+        return externalChargeId;
+    }
+
+    private String addAgreement() {
+        var addAgreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withDescription(AGREEMENT_DESCRIPTION)
+                .build();
+        databaseTestHelper.addAgreement(addAgreementParams);
+        return addAgreementParams.getExternalAgreementId();
+    }
+
     private void assertFrontendChargeStatusIs(String chargeId, String status) {
         connectorRestApiClient
                 .withChargeId(chargeId)
@@ -314,8 +384,16 @@ public class StripeResourceAuthorizeIT {
                 .body("status", is(status));
     }
 
-    private void verifyPaymentIntentRequest(String url, String externalChargeId, String stripeAccountId) {
-        wireMockServer.verify(postRequestedFor(urlEqualTo(url))
+    private void verifyCustomerRequest() {
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/customers"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withHeader("Authorization", equalTo("Bearer sk_test"))
+                .withRequestBody(containing(queryParamWithValue("name", CARD_HOLDER_NAME)))
+                .withRequestBody(containing(queryParamWithValue("description", AGREEMENT_DESCRIPTION))));
+    }
+
+    private void verifyPaymentIntentRequest(String externalChargeId, String stripeAccountId) {
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("amount", "6234")))
@@ -332,8 +410,8 @@ public class StripeResourceAuthorizeIT {
         );
     }
 
-    private void verifyPaymentMethodRequest(String url) {
-        wireMockServer.verify(postRequestedFor(urlEqualTo(url))
+    private void verifyPaymentMethodRequest() {
+        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("billing_details[name]", "Scrooge McDuck")))
