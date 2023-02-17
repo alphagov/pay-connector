@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -233,6 +234,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
         return worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+    }
+
+    @Override
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        return worldpayAuthoriseHandler.authoriseUserNotPresent(request);
     }
 
     private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {

@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
@@ -47,6 +48,32 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
     public GatewayResponse<WorldpayOrderStatusResponse> authoriseWithoutExemption(CardAuthorisationGatewayRequest request) {
         return authorise(request, false);
+    }
+
+    public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        LOGGER.info("Authorising user not present request: {}", request.getGatewayTransactionId().orElse("gatewayTransactionId is not present"));
+
+        try {
+            GatewayClient.Response response = authoriseClient.postRequestFor(
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    WORLDPAY,
+                    request.getGatewayAccount().getType(),
+                    WorldpayOrderBuilder.buildAuthoriseRecurringOrder(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
+            return getWorldpayGatewayResponse(response);
+        } catch (GatewayException.GatewayErrorException e) {
+            LOGGER.error("Authorisation user not present failed due to an internal error. Reason: {}. Status code from Worldpay: {}.",
+                    e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
+
+            GatewayError gatewayError = gatewayConnectionError(format("Non-success HTTP status code %s from gateway", e.getStatus().get()));
+
+            return responseBuilder().withGatewayError(gatewayError).build();
+        } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
+
+            LOGGER.error("GatewayException occurred, error:\n {}", e);
+
+            return responseBuilder().withGatewayError(e.toGatewayError()).build();
+        }
     }
     
     private GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, 
