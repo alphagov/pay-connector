@@ -10,6 +10,10 @@ public class DropwizardAppWithPostgresRule extends AppWithPostgresRule {
         super(configOverrides);
     }
 
+    public DropwizardAppWithPostgresRule(boolean stubPaymentGateways, ConfigOverride... configOverrides) {
+        super(stubPaymentGateways, configOverrides);
+    }
+
     @Override
     protected AppRule<ConnectorConfiguration> newApplication(final String configPath,
                                                              final ConfigOverride... configOverrides) {

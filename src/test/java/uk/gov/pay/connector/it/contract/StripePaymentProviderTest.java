@@ -17,55 +17,77 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static java.time.format.DateTimeFormatter.ofPattern;
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
+import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 /**
- * This is an integration test with Stripe that should be run manually. In order to make it work you need to set
- * a valid stripe.authToken and platformAccountId in the test-it-config.yaml and a valid stripeAccountId (a field in the test).
- * This test will hit the external https://api.stripe.com which is set in in stripe.url in the test-it-config.yaml.
+ * This is an integration test with Stripe that can be run locally, but is ignored and so it won't be run by CI. 
+ * In order to make it work you need to set the following environment variables:
+ * - GDS_CONNECTOR_STRIPE_AUTH_TOKEN: set this to the "Account API key" for the Stripe test environment 
+ * - STRIPE_PLATFORM_ACCOUNT_ID: set this to the platform account ID for our Stripe test account - get this from the
+ *   stripe dashboard.
+ * - TEST_STRIPE_CONNECT_ACCOUNT_ID: a Stripe connect account ID that exists in the test Stripe environment
  */
 @Ignore
 public class StripePaymentProviderTest {
 
+    private static final Long chargeAmount = 500L;
+
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(false);
 
     private StripePaymentProvider stripePaymentProvider;
-
-    private static final Long chargeAmount = 500L;
+    
     private GatewayAccountEntity gatewayAccountEntity;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
+    private final String validCardExpiryDate = ZonedDateTime.now().plusYears(1).format(ofPattern("MM/yy"));
+
     @Before
     public void setup() {
+        String stripeConnectAccountId = envOrThrow("TEST_STRIPE_CONNECT_ACCOUNT_ID");
+        
         stripePaymentProvider = app.getInstanceFromGuiceContainer(StripePaymentProvider.class);
         gatewayAccountEntity = new GatewayAccountEntity();
-        gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity().build();
+        gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("stripe_account_id", stripeConnectAccountId))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(STRIPE.getName())
+                .withState(ACTIVE)
+                .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
+        gatewayAccountEntity.setId(123L);
+        gatewayAccountEntity.setType(TEST);
     }
 
     @Test
@@ -78,7 +100,7 @@ public class StripePaymentProviderTest {
     public void shouldAuthoriseSuccessfully_WithNoBillingAddress() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
-                .withEndDate(CardExpiryDate.valueOf("01/30"))
+                .withEndDate(CardExpiryDate.valueOf(validCardExpiryDate))
                 .build();
         ChargeEntity charge = getCharge();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
@@ -97,7 +119,7 @@ public class StripePaymentProviderTest {
         usAddress.setCountry("US");
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(usAddress)
-                .withEndDate(CardExpiryDate.valueOf("01/30"))
+                .withEndDate(CardExpiryDate.valueOf(validCardExpiryDate))
                 .build();
         ChargeEntity charge = getCharge();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
@@ -116,13 +138,30 @@ public class StripePaymentProviderTest {
         canadaAddress.setCountry("CA");
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(canadaAddress)
-                .withEndDate(CardExpiryDate.valueOf("01/30"))
+                .withEndDate(CardExpiryDate.valueOf(validCardExpiryDate))
                 .build();
         ChargeEntity charge = getCharge();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
 
         assertTrue(gatewayResponse.isSuccessful());
+    }
+
+    @Test
+    public void shouldAuthoriseSuccessfully_WhenSettingUpRecurringPaymentAgreement() {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withEndDate(CardExpiryDate.valueOf(validCardExpiryDate))
+                .build();
+        ChargeEntity charge = getChargeWithAgreement();
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
+        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
+
+        StripeAuthorisationResponse response = (StripeAuthorisationResponse)(gatewayResponse.getBaseResponse().get());
+
+        assertTrue(gatewayResponse.isSuccessful());
+        assertThat(response.getGatewayRecurringAuthToken().isPresent(), is(true));
+        assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY));
+        assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY));
     }
 
     @Test
@@ -190,7 +229,7 @@ public class StripePaymentProviderTest {
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.getError().isPresent());
-        assertThat(refundResponse.getError().get().getMessage(), is("Refund amount (£5.01) is greater than charge amount (£5.00)"));
+        assertThat(refundResponse.getError().get().getMessage(), is("Stripe refund response (error: Refund amount (£5.01) is greater than charge amount (£5.00))"));
         assertThat(refundResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
@@ -216,14 +255,14 @@ public class StripePaymentProviderTest {
 
         assertTrue(refundResponse.getError().isPresent());
         // full message looks like "The transfer tr_blah_blah_blah is already fully reversed."
-        assertThat(refundResponse.getError().get().getMessage(), containsString("is already fully reversed"));
+        assertThat(refundResponse.getError().get().getMessage(), containsString("error code: charge_already_refunded"));
         assertThat(refundResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise() {
         ChargeEntity charge = getCharge();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge,
-                anAuthCardDetails().withEndDate(CardExpiryDate.valueOf("01/21")).build());
+                anAuthCardDetails().withEndDate(CardExpiryDate.valueOf(validCardExpiryDate)).build());
         return stripePaymentProvider.authorise(request, charge);
     }
 
@@ -234,23 +273,26 @@ public class StripePaymentProviderTest {
     }
 
     private ChargeEntity getCharge() {
-        gatewayAccountEntity.setId(123L);
-
-        String stripeAccountId = "<replace me>";
-
-        var creds = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of("stripe_account_id", stripeAccountId))
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider(STRIPE.getName())
-                .withState(ACTIVE)
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
-        gatewayAccountEntity.setType(TEST);
         return aValidChargeEntity()
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withAmount(chargeAmount)
                 .withTransactionId(randomUUID().toString())
                 .withDescription("stripe payment provider test charge")
+                .build();
+    }
+    
+    private ChargeEntity getChargeWithAgreement() {
+        var agreementEntity = anAgreementEntity().withGatewayAccount(gatewayAccountEntity).build();
+        
+        return aValidChargeEntity()
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withAmount(chargeAmount)
+                .withTransactionId(randomUUID().toString())
+                .withDescription("stripe payment provider test charge")
+                .withAgreementEntity(agreementEntity)
+                .withSavePaymentInstrumentToAgreement(true)
                 .build();
     }
 }
