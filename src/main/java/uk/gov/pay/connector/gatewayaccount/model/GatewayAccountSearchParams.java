@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,6 +32,7 @@ public class GatewayAccountSearchParams {
     private static final String PAYMENT_PROVIDER_SQL_FIELD = "gatewayName";
     private static final String PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD = "paymentProviderAccountId";
     private static final String PROVIDER_SWITCH_ENABLED_SQL_FIELD = "providerSwitchEnabled";
+    private static final String RECURRING_PAYMENTS_ENABLED = "recurringEnabled";
 
     @QueryParam("accountIds")
     @Pattern(regexp = "^[\\d,]+$",
@@ -104,6 +104,13 @@ public class GatewayAccountSearchParams {
     @Schema(example = "true", description = "The accounts will be filtered by whether or not payment provider switch is enabled for the account if this parameter is provided. \"true\" or \"false\".")
     private String providerSwitchEnabled;
 
+    @QueryParam("recurring_enabled")
+    @Pattern(regexp = "true|false",
+            message = "Parameter [recurring_enabled] must be true or false")
+    @JsonProperty("recurring_enabled")
+    @Schema(example = "true", description = "The accounts will be filtered by whether or not recurring payments are enabled for the account when this parameter is provided.")
+    private String recurringEnabled;
+
     public void setAccountIds(String accountIds) {
         this.accountIds = accountIds;
     }
@@ -138,6 +145,10 @@ public class GatewayAccountSearchParams {
 
     public void setProviderSwitchEnabled(String providerSwitchEnabled) {
         this.providerSwitchEnabled = providerSwitchEnabled;
+    }
+
+    public void setRecurringEnabled(String recurringEnabled) {
+        this.recurringEnabled = recurringEnabled;
     }
 
     public void setServiceIds(String serviceIds) {
@@ -217,6 +228,9 @@ public class GatewayAccountSearchParams {
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
             filters.add(" ga.provider_switch_enabled = #" + PROVIDER_SWITCH_ENABLED_SQL_FIELD);
         }
+        if (StringUtils.isNotEmpty(recurringEnabled)) {
+            filters.add(" ga.recurring_enabled = #" + RECURRING_PAYMENTS_ENABLED);
+        }
 
         return List.copyOf(filters);
     }
@@ -263,6 +277,9 @@ public class GatewayAccountSearchParams {
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
             queryMap.put(PROVIDER_SWITCH_ENABLED_SQL_FIELD, Boolean.valueOf(providerSwitchEnabled));
         }
+        if (StringUtils.isNotEmpty(recurringEnabled)) {
+            queryMap.put(RECURRING_PAYMENTS_ENABLED, Boolean.valueOf(recurringEnabled));
+        }
 
         return queryMap;
     }
@@ -279,6 +296,7 @@ public class GatewayAccountSearchParams {
                 ", type='" + type + '\'' +
                 ", paymentProvider='" + paymentProvider + '\'' +
                 ", providerSwitchEnabled='" + providerSwitchEnabled + '\'' +
+                ", recurringEnabled='" + recurringEnabled + '\'' +
                 ", paymentProviderAccountId='" + paymentProviderAccountId + '\'' +
                 '}';
     }

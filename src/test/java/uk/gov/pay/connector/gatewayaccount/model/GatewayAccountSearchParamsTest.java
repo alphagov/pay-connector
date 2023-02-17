@@ -28,6 +28,7 @@ public class GatewayAccountSearchParamsTest {
         params.setPaymentProvider("stripe");
         params.setPaymentProviderAccountId("acc123");
         params.setProviderSwitchEnabled("true");
+        params.setRecurringEnabled("true");
 
         List<String> filterTemplates = params.getFilterTemplates();
         assertThat(filterTemplates, containsInAnyOrder(
@@ -39,6 +40,7 @@ public class GatewayAccountSearchParamsTest {
                 " ga.requires_3ds = #requires3ds",
                 " ga.type = #type",
                 " ga.provider_switch_enabled = #providerSwitchEnabled",
+                " ga.recurring_enabled = #recurringEnabled",
                 " ga.id in ( " +
                         "  select gateway_account_id " +
                         "  from ( " +
@@ -87,9 +89,10 @@ public class GatewayAccountSearchParamsTest {
         params.setPaymentProvider("stripe");
         params.setPaymentProviderAccountId("acc123");
         params.setProviderSwitchEnabled("true");
+        params.setRecurringEnabled("true");
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, aMapWithSize(13));
+        assertThat(queryMap, aMapWithSize(14));
         assertThat(queryMap, hasEntry("accountIds0", 1L));
         assertThat(queryMap, hasEntry("accountIds1", 22L));
         assertThat(queryMap, hasEntry("serviceId0", "serviceidone"));
@@ -102,6 +105,7 @@ public class GatewayAccountSearchParamsTest {
         assertThat(queryMap, hasEntry("type", "LIVE"));
         assertThat(queryMap, hasEntry("gatewayName", "stripe"));
         assertThat(queryMap, hasEntry("providerSwitchEnabled", true));
+        assertThat(queryMap, hasEntry("recurringEnabled", true));
         assertThat(queryMap, hasEntry("paymentProviderAccountId", "acc123"));
     }
 
