@@ -28,8 +28,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
-import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
-import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
@@ -84,29 +82,23 @@ public class GatewayAccountResource {
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
-    private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
-    private final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator;
     private final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
 
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
                                   CardTypeDao cardTypeDao,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
-                                  GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   GatewayAccountRequestValidator validator,
                                   GatewayAccountServicesFactory gatewayAccountServicesFactory,
-                                  GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService,
-                                  GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator) {
+                                  GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
-        this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
         this.gatewayAccountSwitchPaymentProviderService = gatewayAccountSwitchPaymentProviderService;
-        this.gatewayAccountCredentialsRequestValidator = gatewayAccountCredentialsRequestValidator;
     }
 
     @GET
@@ -193,7 +185,7 @@ public class GatewayAccountResource {
     }
 
     private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
-        logger.info("Searching gateway accounts by parameters " + gatewayAccountSearchParams.toString());
+        logger.info(format("Searching gateway accounts by parameters %s", gatewayAccountSearchParams.toString()));
 
         List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
         gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
@@ -506,7 +498,7 @@ public class GatewayAccountResource {
         }
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map((gatewayAccountEntity) -> {
+                .map(gatewayAccountEntity -> {
                     try {
                         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
                                 gatewayAccountEntity);
@@ -548,7 +540,7 @@ public class GatewayAccountResource {
         Optional<String> descriptionMaybe = Optional.ofNullable(payload.get(DESCRIPTION_FIELD_NAME));
         Optional<String> analyticsIdMaybe = Optional.ofNullable(payload.get(ANALYTICS_ID_FIELD_NAME));
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map((gatewayAccountEntity) -> {
+                .map(gatewayAccountEntity -> {
                     descriptionMaybe.ifPresent(gatewayAccountEntity::setDescription);
                     analyticsIdMaybe.ifPresent(gatewayAccountEntity::setAnalyticsId);
                     return Response.ok().build();

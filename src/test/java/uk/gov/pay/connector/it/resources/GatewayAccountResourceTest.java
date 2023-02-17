@@ -12,8 +12,6 @@ import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
-import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
-import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 
 import javax.ws.rs.core.GenericType;
@@ -26,27 +24,23 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class GatewayAccountResourceTest {
+class GatewayAccountResourceTest {
 
     private static final GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
     private static final CardTypeDao cardTypeDao = mock(CardTypeDao.class);
     private static final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService = mock(GatewayAccountNotificationCredentialsService.class);
-    private static final GatewayAccountCredentialsService gatewayAccountCredentialsService = mock(GatewayAccountCredentialsService.class);
     private static final GatewayAccountRequestValidator gatewayAccountRequestValidator = mock(GatewayAccountRequestValidator.class);
     private static final GatewayAccountServicesFactory gatewayAccountServicesFactory = mock(GatewayAccountServicesFactory.class);
     private static final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService = mock(GatewayAccountSwitchPaymentProviderService.class);
-    private static final GatewayAccountCredentialsRequestValidator gatewayAccountCredentialsRequestValidator = mock(GatewayAccountCredentialsRequestValidator.class);
 
     public static ResourceExtension resources = ResourceExtension.builder()
             .addResource(new GatewayAccountResource(
                     gatewayAccountService,
                     cardTypeDao,
                     gatewayAccountNotificationCredentialsService,
-                    gatewayAccountCredentialsService,
                     gatewayAccountRequestValidator,
                     gatewayAccountServicesFactory,
-                    gatewayAccountSwitchPaymentProviderService,
-                    gatewayAccountCredentialsRequestValidator
+                    gatewayAccountSwitchPaymentProviderService
             ))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(ConstraintViolationExceptionMapper.class)
