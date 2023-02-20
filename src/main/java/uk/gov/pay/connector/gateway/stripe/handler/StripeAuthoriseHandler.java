@@ -27,6 +27,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 
@@ -51,7 +52,11 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
-        logger.info("Calling Stripe for authorisation of charge");
+        if (request.isSavePaymentInstrumentToAgreement()) {
+            logger.info("Calling Stripe for authorisation of charge to set up agreement");
+        } else {
+            logger.info("Calling Stripe for authorisation of charge");
+        }
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
@@ -63,9 +68,12 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 StripeCustomerResponse stripeCustomerResponse = createCustomer(request, request.getAgreement().orElseThrow(() -> new RuntimeException("Expected charge with isSavePaymentInstrumentToAgreement == true to have a saved agreement")));
                 var customerId = stripeCustomerResponse.getId();
                 stripePaymentIntentResponse = createPaymentIntentForSetUpAgreement(request, stripePaymentMethodResponse.getId(), customerId);
-            }
-            else {
+                logger.info("Created Stripe payment intent and stored payment details for recurring payment agreement",
+                        kv("stripe_payment_intent_id", stripePaymentIntentResponse.getId()));
+            } else {
                 stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+                logger.info("Created Stripe payment intent",
+                        kv("stripe_payment_intent_id", stripePaymentIntentResponse.getId()));
             }
 
             return GatewayResponse
