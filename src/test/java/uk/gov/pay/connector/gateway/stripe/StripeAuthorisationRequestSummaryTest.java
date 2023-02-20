@@ -25,33 +25,44 @@ class StripeAuthorisationRequestSummaryTest {
     @Test
     void billingAddressPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.of(mock(Address.class)));
-        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails);
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
         assertThat(stripeAuthorisationRequestSummary.billingAddress(), is(PRESENT));
     }
 
     @Test
     void billingAddressNotPresent() {
         given(mockAuthCardDetails.getAddress()).willReturn(Optional.empty());
-        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails);
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
         assertThat(stripeAuthorisationRequestSummary.billingAddress(), is(NOT_PRESENT));
     }
 
     @Test
     void dataFor3dsAlwaysNotApplicable() {
-        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails);
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
         assertThat(stripeAuthorisationRequestSummary.dataFor3ds(), is(NOT_APPLICABLE));
     }
 
     @Test
     void dataFor3ds2AlwaysNotApplicable() {
-        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails);
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
         assertThat(stripeAuthorisationRequestSummary.dataFor3ds2(), is(NOT_APPLICABLE));
     }
 
     @Test
     void deviceDataCollectionResultAlwaysNotApplicable() {
-        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails);
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
         assertThat(stripeAuthorisationRequestSummary.deviceDataCollectionResult(), is(NOT_APPLICABLE));
     }
 
+    @Test
+    void isSetUpAgreementPresent() {
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, true);
+        assertThat(stripeAuthorisationRequestSummary.setUpAgreement(), is(PRESENT));
+    }
+
+    @Test
+    void isSetUpAgreementNotPresent() {
+        var stripeAuthorisationRequestSummary = new StripeAuthorisationRequestSummary(mockAuthCardDetails, false);
+        assertThat(stripeAuthorisationRequestSummary.setUpAgreement(), is(NOT_PRESENT));
+    }
 }
