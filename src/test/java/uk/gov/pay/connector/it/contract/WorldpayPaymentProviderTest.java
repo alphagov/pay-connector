@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -26,6 +27,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -40,10 +42,12 @@ import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisation
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
@@ -82,6 +86,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 @Disabled("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
@@ -89,6 +94,8 @@ class WorldpayPaymentProviderTest {
 
     private static final String MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS = "3D";
     private static final String MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE = "3DS_V2_CHALLENGE_IDENTIFIED";
+    
+    private static final String VISA_CARD_NUMBER = "4444333322221111";
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
@@ -108,10 +115,16 @@ class WorldpayPaymentProviderTest {
     @BeforeEach
     void checkThatWorldpayIsUp() throws IOException {
         try {
-            validCredentials = Map.of(
+            var validRecurringMerchantInitiatedCredentials = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
+            
+            validCredentials = Map.of(
+                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
+                    "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
+                    "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"),
+                    "recurring_merchant_initiated", validRecurringMerchantInitiatedCredentials);
 
             validCredentialsFor3ds = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
@@ -338,6 +351,23 @@ class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getBaseResponse().get().getGatewayRecurringAuthToken().isPresent());
         assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get(), hasKey(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY));
+    }
+
+    @Test
+    void shouldBeAbleToTakeRecurringPaymentUsingStoredToken() {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        AgreementEntity agreement = anAgreementEntity().build();
+        PaymentInstrumentEntity paymentInstrument = setUpAgreement(paymentProvider, agreement);
+
+        ChargeEntity recurringCharge = createChargeEntity();
+        recurringCharge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
+        recurringCharge.setAgreementEntity(agreement);
+        recurringCharge.setPaymentInstrument(paymentInstrument);
+
+        var gatewayRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(recurringCharge);
+        GatewayResponse authoriseUserNotPresentResponse = paymentProvider.authoriseUserNotPresent(gatewayRequest);
+
+        assertTrue(authoriseUserNotPresentResponse.getBaseResponse().isPresent());
     }
 
     @ParameterizedTest
@@ -602,5 +632,20 @@ class WorldpayPaymentProviderTest {
 
     private Map<String, URI> gatewayUrlMap() {
         return Map.of(TEST.toString(), URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"));
+    }
+
+    private PaymentInstrumentEntity setUpAgreement(WorldpayPaymentProvider paymentProvider, AgreementEntity agreement) {
+        AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(VISA_CARD_NUMBER).build();
+        ChargeEntity setUpAgreementCharge = createChargeEntity();
+        setUpAgreementCharge.setSavePaymentInstrumentToAgreement(true);
+        setUpAgreementCharge.setAgreementEntity(agreement);
+        var request = new CardAuthorisationGatewayRequest(setUpAgreementCharge, authCardDetails);
+        GatewayResponse<WorldpayOrderStatusResponse> setUpAgreementResponse = paymentProvider.authorise(request, setUpAgreementCharge);
+
+        Map<String, String> recurringAuthToken = setUpAgreementResponse.getBaseResponse().get().getGatewayRecurringAuthToken().get();
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(recurringAuthToken)
+                .build();
+        return paymentInstrument;
     }
 }
