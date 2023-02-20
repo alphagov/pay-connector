@@ -66,7 +66,7 @@ public class StripeCustomerRequest extends StripePostRequest {
 
     @Override
     protected OrderRequestType orderRequestType() {
-        return OrderRequestType.AUTHORISE_SAVE_PAYMENT_DETAILS;
+        return OrderRequestType.AUTHORISE;
     }
 
     @Override

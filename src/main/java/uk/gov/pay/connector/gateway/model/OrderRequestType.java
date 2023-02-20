@@ -5,7 +5,6 @@ public enum OrderRequestType {
     AUTHORISE_3DS("authorise3DS"),
     AUTHORISE_APPLE_PAY("authoriseApplePay"),
     AUTHORISE_GOOGLE_PAY("authoriseGooglePay"),
-    AUTHORISE_SAVE_PAYMENT_DETAILS("authoriseSavePaymentDetails"),
     CAPTURE("capture"),
     CANCEL("cancel"),
     REFUND("refund"),
