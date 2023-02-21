@@ -9,23 +9,30 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.util.Map;
 import java.util.Optional;
 
-import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardAuthoriseServiceIT extends ChargingITestBase {
+
+    private static final LastDigitsCardNumber SANDBOX_SUCCESS_LAST_FOUR_DIGITS = LastDigitsCardNumber.of("4242");
+    private static final FirstDigitsCardNumber SANDBOX_SUCCESS_FIRST_SIX_DIGITS = FirstDigitsCardNumber.of("424242");
+    private static final LastDigitsCardNumber SANDBOX_DECLINE_LAST_FOUR_DIGITS = LastDigitsCardNumber.of("0002");
+    private static final FirstDigitsCardNumber SANDBOX_DECLINE_FIRST_SIX_DIGITS = FirstDigitsCardNumber.of("400000");
+    private static final LastDigitsCardNumber SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS = LastDigitsCardNumber.of("5100");
+    private static final FirstDigitsCardNumber SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS = FirstDigitsCardNumber.of("510510");
+    private static final String SANDBOX_RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE_CARD_NO = "5105105105105100";
 
     public CardAuthoriseServiceIT() {
         super("sandbox");
@@ -33,20 +40,19 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
     
     @Test
     public void shouldAuthoriseSandboxWebPayment() {
-        addWebCharge("external-charge-id");
+        String chargeExternalId = addCharge(ChargeStatus.ENTERING_CARD_DETAILS);
         var response = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class)
-                .doAuthoriseWeb("external-charge-id", AuthCardDetailsFixture.anAuthCardDetails().build());
+                .doAuthoriseWeb(chargeExternalId, AuthCardDetailsFixture.anAuthCardDetails().build());
         assertThat(response.getGatewayError(), is(Optional.empty()));
         assertThat(response.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
     }
 
     @Test
     public void shouldSuccessfullyAuthoriseSandboxUserNotPresentPayment() {
-        String SUCCESS_LAST_FOUR_DIGITS = "4242";
-        String SUCCESS_FIRST_SIX_DIGITS = "424242";
-        addAgreementCharge("success-charge-external-id", SUCCESS_FIRST_SIX_DIGITS, SUCCESS_LAST_FOUR_DIGITS);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = addChargeWithAuthorisationModeAgreement(
+                SANDBOX_SUCCESS_FIRST_SIX_DIGITS, SANDBOX_SUCCESS_LAST_FOUR_DIGITS, null);
 
-        var successCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("success-charge-external-id");
+        var successCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
         var successResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(successCharge);
         assertThat(successResponse.getGatewayError(), is(Optional.empty()));
@@ -55,11 +61,9 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
 
     @Test
     public void shouldDeclineAuthoriseSandboxUserNotPresentPayment() {
-        String DECLINE_LAST_FOUR_DIGITS = "0002";
-        String DECLINE_FIRST_SIX_DIGITS = "400000";
-        addAgreementCharge("decline-charge-external-id", DECLINE_FIRST_SIX_DIGITS, DECLINE_LAST_FOUR_DIGITS);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = addChargeWithAuthorisationModeAgreement(SANDBOX_DECLINE_FIRST_SIX_DIGITS, SANDBOX_DECLINE_LAST_FOUR_DIGITS, null);
 
-        var declineCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("decline-charge-external-id");
+        var declineCharge = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
         var declineResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(declineCharge);
         assertThat(declineResponse.getGatewayError(), is(Optional.empty()));
@@ -68,16 +72,12 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
 
     @Test
     public void shouldAuthoriseRecurringSandboxAgreementSetUpAndDeclineSubsequentRecurringPayment() {
-        addWebCharge("setup-external-id");
-        String SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS = "5100";
-        String SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS = "510510";
+        String setupAgreementChargeId = addCharge(ChargeStatus.ENTERING_CARD_DETAILS);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = addChargeWithAuthorisationModeAgreement(SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS, SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS, null);
 
-        addAgreementCharge("recurring-external-id", SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS, SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS);
+        var chargeRecurring = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
-        var chargeRecurring = testContext.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId("recurring-external-id");
-
-        String RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE = "5105105105105100";
-        var agreementSetUpResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseWeb("setup-external-id", AuthCardDetailsFixture.anAuthCardDetails().withCardNo(RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE).build());
+        var agreementSetUpResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseWeb(setupAgreementChargeId, AuthCardDetailsFixture.anAuthCardDetails().withCardNo(SANDBOX_RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE_CARD_NO).build());
         var recurringPaymentResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(chargeRecurring);
 
         assertThat(agreementSetUpResponse.getGatewayError(), is(Optional.empty()));
@@ -86,37 +86,4 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         assertThat(recurringPaymentResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
     }
 
-    private void addWebCharge(String externalId) {
-        addCharge(externalId, null, null);
-    }
-
-    private void addAgreementCharge(String externalId, String first6DigitsCardNumber, String last4DigitsCardNumber) {
-        addCharge(externalId, first6DigitsCardNumber, last4DigitsCardNumber);
-    }
-
-    private void addCharge(String externalId, String first6DigitsCardNumber, String last4DigitsCardNumber) {
-        var chargeParams = anAddChargeParams()
-                .withExternalChargeId(externalId)
-                .withPaymentProvider(SANDBOX.getName())
-                .withGatewayAccountId(accountId)
-                .withAmount(10000)
-                .withStatus(ChargeStatus.ENTERING_CARD_DETAILS);
-
-        if (last4DigitsCardNumber != null) {
-            long paymentInstrumentId = nextInt();
-            databaseTestHelper.addPaymentInstrument(
-                    anAddPaymentInstrumentParams()
-                            .withPaymentInstrumentId(paymentInstrumentId)
-                            .withExternalPaymentInstrumentId(String.valueOf(nextInt()))
-                            .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(first6DigitsCardNumber))
-                            .withLastDigitsCardNumber(LastDigitsCardNumber.of(last4DigitsCardNumber))
-                            .build()
-            );
-            chargeParams
-                   .withStatus(ChargeStatus.CREATED)
-                   .withAuthorisationMode(AuthorisationMode.AGREEMENT)
-                   .withPaymentInstrumentId(paymentInstrumentId);
-        }
-        databaseTestHelper.addCharge(chargeParams.build());
-    }
 }

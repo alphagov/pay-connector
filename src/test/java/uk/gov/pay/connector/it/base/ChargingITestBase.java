@@ -11,6 +11,8 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -26,6 +28,7 @@ import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -37,11 +40,13 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.contains;
@@ -52,6 +57,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -64,6 +70,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccoun
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
@@ -108,7 +115,7 @@ public class ChargingITestBase {
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
-    protected final int gatewayAccountCredentialsId; 
+    protected final int gatewayAccountCredentialsId;
     protected Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
 
@@ -139,6 +146,16 @@ public class ChargingITestBase {
 
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
+        } else if (paymentProvider.equals(WORLDPAY.getName())) {
+            credentials = Map.of(
+                    CREDENTIALS_MERCHANT_ID, "merchant-id",
+                    CREDENTIALS_USERNAME, "test-user",
+                    CREDENTIALS_PASSWORD, "test-password",
+                    "recurring_merchant_initiated", Map.of(
+                            "merchant_id", "rec-merchant-id",
+                            "username", "rec-user",
+                            "password", "rec-password")
+            );
         } else {
             credentials = Map.of(
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
@@ -165,7 +182,6 @@ public class ChargingITestBase {
                 .withAccountId(Long.parseLong(accountId))
                 .withPaymentProvider(getPaymentProvider())
                 .withGatewayAccountCredentials(List.of(credentialParams))
-                .withCredentials(credentials)
                 .withServiceId(SERVICE_ID)
                 .withAllowAuthApi(true)
                 .withCardTypeEntities(List.of(visaCreditCard))
@@ -448,13 +464,7 @@ public class ChargingITestBase {
     }
 
     protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {
-        String agreementId = "12345678901234567890123456";
-
-        AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(accountId)
-                .withExternalAgreementId(agreementId)
-                .build();
-        databaseTestHelper.addAgreement(agreementParams);
+        String agreementExternalId = addAgreeement();
 
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
@@ -467,9 +477,59 @@ public class ChargingITestBase {
                 .withStatus(status)
                 .withEmail("email@fake.test")
                 .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId(agreementId)
+                .withAgreementId(agreementExternalId)
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
                 .build());
+        return externalChargeId;
+    }
+
+    private String addAgreeement() {
+        String agreementExternalId = String.valueOf(nextLong());
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(agreementExternalId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+        return agreementExternalId;
+    }
+
+    protected ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(Map<String, String> recurringAuthToken) {
+        return addChargeWithAuthorisationModeAgreement(null, null, recurringAuthToken);
+    }
+
+    protected ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(
+            FirstDigitsCardNumber first6DigitsCardNumber,
+            LastDigitsCardNumber last4DigitsCardNumber,
+            Map<String, String> recurringAuthToken
+    ) {
+        String agreementExternalId = addAgreeement();
+
+        long paymentInstrumentId = nextInt();
+        AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder paymentInstrumentParamsBuilder = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withExternalPaymentInstrumentId(String.valueOf(nextInt()))
+                .withRecurringAuthToken(recurringAuthToken);
+
+        Optional.ofNullable(first6DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withFirstDigitsCardNumber);
+        Optional.ofNullable(last4DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withLastDigitsCardNumber);
+
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParamsBuilder.build());
+
+        long chargeId = RandomUtils.nextInt();
+        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
+        var chargeParams = anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountId(accountId)
+                .withGatewayCredentialId((long) gatewayAccountCredentialsId)
+                .withAgreementId(agreementExternalId)
+                .withAmount(10000)
+                .withStatus(ChargeStatus.CREATED)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrumentId(paymentInstrumentId);
+        databaseTestHelper.addCharge(chargeParams.build());
+
         return externalChargeId;
     }
 

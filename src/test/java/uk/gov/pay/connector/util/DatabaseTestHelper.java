@@ -28,6 +28,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.sql.Types.OTHER;
@@ -92,16 +93,9 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(AddChargeParams addChargeParams) {
-        PGobject jsonMetadata = new PGobject();
-        jsonMetadata.setType("json");
-        try {
-            if (addChargeParams.getExternalMetadata() != null &&
-                    !addChargeParams.getExternalMetadata().getMetadata().isEmpty()) {
-                jsonMetadata.setValue(new Gson().toJson(addChargeParams.getExternalMetadata().getMetadata()));
-            }
-        } catch (SQLException e) {
-            throw new ExternalMetadataConverterException("Failed to persist external metadata");
-        }
+        PGobject jsonMetadata = Optional.ofNullable(addChargeParams.getExternalMetadata())
+                .map(externalMetadata -> mapToJsonPGobject(externalMetadata.getMetadata()))
+                .orElseGet(DatabaseTestHelper::getJsonPGobject);
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO charges(id, external_id, amount, " +
                                 "status, gateway_account_id, return_url, gateway_transaction_id, " +
@@ -166,49 +160,54 @@ public class DatabaseTestHelper {
                         .bind("payment_instrument_id", addAgreementParams.getPaymentInstrumentId())
                         .execute());
     }
-    
+
     public void addPaymentInstrument(AddPaymentInstrumentParams addPaymentInstrumentParams) {
+        PGobject recurringAuthTokenJson = Optional.ofNullable(addPaymentInstrumentParams.getRecurringAuthToken())
+                .map(DatabaseTestHelper::mapToJsonPGobject)
+                .orElseGet(DatabaseTestHelper::getJsonPGobject);
         jdbi.withHandle(h ->
                 h.createUpdate("INSERT INTO payment_instruments(" +
-                                    "id," +
-                                    "external_id, " + 
-                                    "created_date, " +
-                                    "start_date, " +
-                                    "status, " +
-                                    "card_type, " +
-                                    "card_brand, " +
-                                    "expiry_date, " +
-                                    "last_digits_card_number, " +
-                                    "first_digits_card_number, " +
-                                    "cardholder_name, " +
-                                    "address_line1, " +
-                                    "address_line2, " +
-                                    "address_city, " + 
-                                    "address_state_province, " +
-                                    "address_postcode, " + 
-                                    "address_country" +
+                                "id," +
+                                "external_id, " +
+                                "created_date, " +
+                                "start_date, " +
+                                "status, " +
+                                "card_type, " +
+                                "card_brand, " +
+                                "expiry_date, " +
+                                "last_digits_card_number, " +
+                                "first_digits_card_number, " +
+                                "cardholder_name, " +
+                                "address_line1, " +
+                                "address_line2, " +
+                                "address_city, " +
+                                "address_state_province, " +
+                                "address_postcode, " +
+                                "address_country, " +
+                                "recurring_auth_token" +
                                 ") VALUES(" +
-                                    ":id," +
-                                    ":external_id, " +
-                                    ":created_date, " +
-                                    ":start_date, " +
-                                    ":status, " +
-                                    ":card_type, " +
-                                    ":card_brand, " +
-                                    ":expiry_date, " +
-                                    ":last_digits_card_number, " +
-                                    ":first_digits_card_number, " +
-                                    ":cardholder_name, " +
-                                    ":address_line1, " +
-                                    ":address_line2, " +
-                                    ":address_city, " +
-                                    ":address_state_province, " +
-                                    ":address_postcode, " +
-                                    ":address_country" +
+                                ":id," +
+                                ":external_id, " +
+                                ":created_date, " +
+                                ":start_date, " +
+                                ":status, " +
+                                ":card_type, " +
+                                ":card_brand, " +
+                                ":expiry_date, " +
+                                ":last_digits_card_number, " +
+                                ":first_digits_card_number, " +
+                                ":cardholder_name, " +
+                                ":address_line1, " +
+                                ":address_line2, " +
+                                ":address_city, " +
+                                ":address_state_province, " +
+                                ":address_postcode, " +
+                                ":address_country, " +
+                                ":recurring_auth_token" +
                                 ")")
                         .bind("id", addPaymentInstrumentParams.getPaymentInstrumentId())
                         .bind("external_id", addPaymentInstrumentParams.getExternalPaymentInstrumentId())
-                        .bind("created_date",  LocalDateTime.ofInstant(addPaymentInstrumentParams.getCreatedDate(), UTC))
+                        .bind("created_date", LocalDateTime.ofInstant(addPaymentInstrumentParams.getCreatedDate(), UTC))
                         .bind("start_date", LocalDateTime.ofInstant(addPaymentInstrumentParams.getStartDate(), UTC))
                         .bind("status", addPaymentInstrumentParams.getPaymentInstrumentStatus())
                         .bind("card_type", addPaymentInstrumentParams.getCardType())
@@ -223,6 +222,7 @@ public class DatabaseTestHelper {
                         .bind("address_city", addPaymentInstrumentParams.getCity())
                         .bind("address_state_province", addPaymentInstrumentParams.getStateOrProvince())
                         .bind("address_country", addPaymentInstrumentParams.getCountryCode())
+                        .bindBySqlType("recurring_auth_token", recurringAuthTokenJson, OTHER)
                         .execute());
     }
 
@@ -376,9 +376,9 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-    
+
     public Map<String, Object> getAgreementByExternalId(String agreementExternalId) {
-        return jdbi.withHandle(h -> 
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM agreements WHERE external_id = :agreement_external_id")
                         .bind("agreement_external_id", agreementExternalId)
                         .mapToMap()
@@ -394,7 +394,7 @@ public class DatabaseTestHelper {
                         .mapToMap()
                         .first());
     }
-    
+
     public String getChargeTokenId(Long chargeId) {
 
         return jdbi.withHandle(h ->
@@ -429,8 +429,8 @@ public class DatabaseTestHelper {
     public List<Map<String, Object>> getRefundsByChargeExternalId(String chargeExternalId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, amount, status, created_date, user_external_id, user_email, charge_external_id, gateway_transaction_id " +
-                        "FROM refunds r " +
-                        "WHERE charge_external_id = :charge_external_id")
+                                "FROM refunds r " +
+                                "WHERE charge_external_id = :charge_external_id")
                         .bind("charge_external_id", chargeExternalId)
                         .mapToMap()
                         .list());
@@ -440,8 +440,8 @@ public class DatabaseTestHelper {
     public Map<String, Object> getChargeCardDetailsByChargeId(Long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_state_province, address_country " +
-                        "FROM charges " +
-                        "WHERE id = :charge_id")
+                                "FROM charges " +
+                                "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
                         .mapToMap()
                         .first());
@@ -468,8 +468,8 @@ public class DatabaseTestHelper {
     public Map<String, Object> getChargeCardDetails(long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country, card_type " +
-                        "FROM charges " +
-                        "WHERE id = :charge_id")
+                                "FROM charges " +
+                                "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
                         .mapToMap()
                         .first());
@@ -581,9 +581,9 @@ public class DatabaseTestHelper {
 
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT ct.id, ct.label, ct.type, ct.brand, ct.version " +
-                        "FROM card_types ct " +
-                        "LEFT JOIN accepted_card_types act ON ct.id = act.card_type_id " +
-                        "WHERE act.gateway_account_id = :gatewayAccountId")
+                                "FROM card_types ct " +
+                                "LEFT JOIN accepted_card_types act ON ct.id = act.card_type_id " +
+                                "WHERE act.gateway_account_id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
                         .mapToMap()
                         .list());
@@ -593,8 +593,8 @@ public class DatabaseTestHelper {
     public List<Map<String, Object>> getChargeEvents(long chargeId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT ce.id, ce.charge_id, ce.status, ce.updated " +
-                        "FROM charge_events ce " +
-                        "WHERE ce.charge_id = :chargeId")
+                                "FROM charge_events ce " +
+                                "WHERE ce.charge_id = :chargeId")
                         .bind("chargeId", chargeId)
                         .mapToMap()
                         .list());
@@ -684,8 +684,7 @@ public class DatabaseTestHelper {
 
     public void updateCredentialsFor(long accountId, String credentials) {
         try {
-            PGobject pgCredentials = new PGobject();
-            pgCredentials.setType("json");
+            PGobject pgCredentials = getJsonPGobject();
             pgCredentials.setValue(credentials);
 
             jdbi.withHandle(handle ->
@@ -826,8 +825,7 @@ public class DatabaseTestHelper {
     }
 
     public void addExternalMetadata(long chargeId, ExternalMetadata externalMetadata) {
-        PGobject jsonExternMetadata = new PGobject();
-        jsonExternMetadata.setType("json");
+        PGobject jsonExternMetadata = getJsonPGobject();
 
         if (externalMetadata != null) {
             try {
@@ -872,7 +870,7 @@ public class DatabaseTestHelper {
         jdbi.withHandle(h -> {
             ZonedDateTime utcValue = updated.withZoneSameInstant(ZoneId.of("UTC"));
             return h.createUpdate("INSERT INTO charge_events(charge_id, status, updated) " +
-                    "VALUES(:charge_id, :status, :updated)")
+                            "VALUES(:charge_id, :status, :updated)")
                     .bind("charge_id", chargeId)
                     .bind("status", chargeStatus)
                     .bind("updated", Timestamp.valueOf(utcValue.toLocalDateTime()))
@@ -1060,7 +1058,7 @@ public class DatabaseTestHelper {
                                                 boolean isExemptionEngineEnabled) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine) " +
-                        "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
+                                "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
                         .bind("gatewayAccountId", gatewayAccountId)
                         .bind("jwtMacKey", jwtMacKey)
                         .bind("issuer", issuer)
@@ -1133,10 +1131,10 @@ public class DatabaseTestHelper {
 
         jdbi.withHandle(handle ->
                 handle.createUpdate("INSERT INTO gateway_account_credentials(id, credentials, gateway_account_id," +
-                        " payment_provider, state, last_updated_by_user_external_id, created_date, active_start_date, " +
-                        "active_end_date, external_id) " +
-                        "VALUES (:id, :credentials, :gatewayAccountId, :paymentProvider, :state, :lastUpdatedByUser, " +
-                        ":createdDate, :activeStartDate, :activeEndDate, :externalId)")
+                                " payment_provider, state, last_updated_by_user_external_id, created_date, active_start_date, " +
+                                "active_end_date, external_id) " +
+                                "VALUES (:id, :credentials, :gatewayAccountId, :paymentProvider, :state, :lastUpdatedByUser, " +
+                                ":createdDate, :activeStartDate, :activeEndDate, :externalId)")
                         .bind("id", params.getId())
                         .bind("gatewayAccountId", params.getGatewayAccountId())
                         .bindBySqlType("credentials", credentialsJson, OTHER)
@@ -1152,8 +1150,7 @@ public class DatabaseTestHelper {
 
     private PGobject buildCredentialsJson(AddGatewayAccountCredentialsParams params) {
         try {
-            PGobject credentialsJson = new PGobject();
-            credentialsJson.setType("json");
+            PGobject credentialsJson = getJsonPGobject();
             if (params.getCredentials().size() == 0) {
                 credentialsJson.setValue("{}");
             } else {
@@ -1163,5 +1160,23 @@ public class DatabaseTestHelper {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    private static PGobject mapToJsonPGobject(Map map) {
+        PGobject json = getJsonPGobject();
+        try {
+            if (!map.isEmpty()) {
+                json.setValue(new Gson().toJson(map));
+            }
+            return json;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to convert map to PGobject", e);
+        }
+    }
+    
+    private static PGobject getJsonPGobject() {
+        PGobject pGobject = new PGobject();
+        pGobject.setType("json");
+        return pGobject;
     }
 }

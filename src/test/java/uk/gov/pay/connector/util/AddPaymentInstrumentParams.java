@@ -7,6 +7,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -29,6 +30,8 @@ public class AddPaymentInstrumentParams {
     private final String stateOrProvince;
     private final String postcode;
     private final String countryCode;
+    
+    private Map<String, String> recurringAuthToken;
 
     public Long getPaymentInstrumentId() {
         return paymentInstrumentId;
@@ -98,6 +101,10 @@ public class AddPaymentInstrumentParams {
         return firstDigitsCardNumber;
     }
 
+    public Map<String, String> getRecurringAuthToken() {
+        return recurringAuthToken;
+    }
+
     private AddPaymentInstrumentParams(AddPaymentInstrumentParamsBuilder builder) {
         paymentInstrumentId = builder.paymentInstrumentId;
         externalPaymentInstrumentId = builder.externalPaymentInstrumentId;
@@ -116,6 +123,7 @@ public class AddPaymentInstrumentParams {
         postcode = builder.postcode;
         countryCode = builder.countryCode;
         firstDigitsCardNumber = builder.firstDigitsCardNumber;
+        recurringAuthToken = builder.recurringAuthToken;
     }
 
     public static final class AddPaymentInstrumentParamsBuilder {
@@ -136,6 +144,7 @@ public class AddPaymentInstrumentParams {
         private String stateOrProvince;
         private String postcode = "PAY ME";
         private String countryCode = "GB";
+        private Map<String, String> recurringAuthToken;
 
         private AddPaymentInstrumentParamsBuilder() {
         }
@@ -226,6 +235,11 @@ public class AddPaymentInstrumentParams {
 
         public AddPaymentInstrumentParamsBuilder withCountryCode(String countryCode) {
             this.countryCode = countryCode;
+            return this;
+        }
+        
+        public AddPaymentInstrumentParamsBuilder withRecurringAuthToken(Map<String, String> recurringAuthToken) {
+            this.recurringAuthToken = recurringAuthToken;
             return this;
         }
 
