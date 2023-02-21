@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentInstrumentServiceTest {
@@ -50,7 +51,7 @@ class PaymentInstrumentServiceTest {
         verify(mockPaymentInstrumentDao).persist(paymentInstrumentEntityCaptor.capture());
         var actualPaymentInstrumentEntity = paymentInstrumentEntityCaptor.getValue();
         assertThat(actualPaymentInstrumentEntity.getCreatedDate(), is(NOW));
-        assertThat(actualPaymentInstrumentEntity.getRecurringAuthToken(), is(token));
+        assertThat(actualPaymentInstrumentEntity.getRecurringAuthToken(), is(Optional.of(token)));
         assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getCardDetails()));
         assertThat(actualPaymentInstrumentEntity.getStartDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CREATED));

@@ -25,6 +25,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -68,8 +69,8 @@ public class PaymentInstrumentEntity {
         this.paymentInstrumentStatus = paymentInstrumentStatus;
     }
 
-    public Map<String, String> getRecurringAuthToken() {
-        return recurringAuthToken;
+    public Optional<Map<String, String>> getRecurringAuthToken() {
+        return Optional.ofNullable(recurringAuthToken);
     }
 
     public void setRecurringAuthToken(Map<String, String> recurringAuthToken) {
