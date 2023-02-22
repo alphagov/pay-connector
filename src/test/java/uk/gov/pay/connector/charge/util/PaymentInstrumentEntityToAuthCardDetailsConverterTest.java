@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.charge.util;
 
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -19,13 +21,16 @@ class PaymentInstrumentEntityToAuthCardDetailsConverterTest {
 
     @Test
     void shouldReturnAuthCardDetailsWithCardAndAddressDetail() {
+        CardDetailsEntity cardDetailsEntity = anAuthCardDetails()
+                .getCardDetailsEntity();
+        cardDetailsEntity.setCardType(CardType.DEBIT);
         PaymentInstrumentEntity paymentInstrumentEntity = PaymentInstrumentEntity.PaymentInstrumentEntityBuilder
                 .aPaymentInstrumentEntity(Instant.parse("2022-07-11T17:45:40Z"))
-                .withCardDetails(anAuthCardDetails().getCardDetailsEntity()).build();
+                .withCardDetails(cardDetailsEntity).build();
 
         AuthCardDetails authCardDetails = converter.convert(paymentInstrumentEntity);
 
-        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity);
+        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity, PayersCardType.DEBIT);
         assertThat(authCardDetails.getAddress().isPresent(), is(true));
 
         Address address = authCardDetails.getAddress().get();
@@ -40,23 +45,55 @@ class PaymentInstrumentEntityToAuthCardDetailsConverterTest {
     }
 
     @Test
-    void shouldReturnAuthCardDetailsWithoutAddress() {
+    void shouldReturnAuthCardDetailsWhenCardTypeIsCredit() {
+        CardDetailsEntity cardDetailsEntity = anAuthCardDetails().getCardDetailsEntity();
+        cardDetailsEntity.setCardType(CardType.CREDIT);
+
         PaymentInstrumentEntity paymentInstrumentEntity = PaymentInstrumentEntity.PaymentInstrumentEntityBuilder
                 .aPaymentInstrumentEntity(Instant.parse("2022-07-11T17:45:40Z"))
-                .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity()).build();
+                .withCardDetails(cardDetailsEntity).build();
 
         AuthCardDetails authCardDetails = converter.convert(paymentInstrumentEntity);
 
-        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity);
+        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity, PayersCardType.CREDIT);
+    }
+    
+    @Test
+    void shouldReturnAuthCardDetailsWhenCardTypeIsNull() {
+        CardDetailsEntity cardDetailsEntity = anAuthCardDetails().getCardDetailsEntity();
+        cardDetailsEntity.setCardType(null);
+        
+        PaymentInstrumentEntity paymentInstrumentEntity = PaymentInstrumentEntity.PaymentInstrumentEntityBuilder
+                .aPaymentInstrumentEntity(Instant.parse("2022-07-11T17:45:40Z"))
+                .withCardDetails(cardDetailsEntity).build();
+
+        AuthCardDetails authCardDetails = converter.convert(paymentInstrumentEntity);
+
+        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity, PayersCardType.CREDIT_OR_DEBIT);
+    }
+
+    @Test
+    void shouldReturnAuthCardDetailsWithoutAddress() {
+        CardDetailsEntity cardDetailsEntity = anAuthCardDetails()
+                .withAddress(null)
+                .getCardDetailsEntity();
+        cardDetailsEntity.setCardType(CardType.DEBIT);
+        PaymentInstrumentEntity paymentInstrumentEntity = PaymentInstrumentEntity.PaymentInstrumentEntityBuilder
+                .aPaymentInstrumentEntity(Instant.parse("2022-07-11T17:45:40Z"))
+                .withCardDetails(cardDetailsEntity).build();
+
+        AuthCardDetails authCardDetails = converter.convert(paymentInstrumentEntity);
+
+        assertAuthCardDetails(authCardDetails, paymentInstrumentEntity, PayersCardType.DEBIT);
         assertThat(authCardDetails.getAddress().isPresent(), is(false));
     }
 
-    private void assertAuthCardDetails(AuthCardDetails authCardDetails, PaymentInstrumentEntity paymentInstrumentEntity) {
+    private void assertAuthCardDetails(AuthCardDetails authCardDetails, PaymentInstrumentEntity paymentInstrumentEntity, PayersCardType expectedCardType) {
         assertThat(authCardDetails.getCardHolder(), is("Mr Test"));
         assertThat(authCardDetails.getEndDate().toString(), is("12/99"));
 
         assertThat(authCardDetails.getCardBrand(), is(paymentInstrumentEntity.getCardDetails().getCardBrand()));
-        assertThat(authCardDetails.getPayersCardType(), is(PayersCardType.from(paymentInstrumentEntity.getCardDetails().getCardType())));
+        assertThat(authCardDetails.getPayersCardType(), is(expectedCardType));
     }
 
 }

@@ -14,13 +14,16 @@ public enum PayersCardType {
     CREDIT_OR_DEBIT;
 
     public static PayersCardType from(CardType cardType) {
+        if (cardType == null) {
+            return PayersCardType.CREDIT_OR_DEBIT;
+        }
         switch (cardType) {
             case DEBIT:
                 return PayersCardType.DEBIT;
             case CREDIT:
                 return PayersCardType.CREDIT;
             default:
-                return null;
+                return CREDIT_OR_DEBIT;
         }
     }
 
