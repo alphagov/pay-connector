@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue.tasks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sentry.Sentry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -84,6 +85,7 @@ public class TaskQueueMessageHandler {
                         kv("queueMessageId", taskMessage.getQueueMessageId()),
                         kv("errorMessage", e.getMessage())
                 );
+                Sentry.captureException(e);
             } finally {
                 MDC.remove(PAYMENT_EXTERNAL_ID);
                 MDC.remove(STRIPE_EVENT_ID);
