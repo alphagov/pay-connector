@@ -63,9 +63,20 @@ public class GatewayAccountCredentials {
         this.activeEndDate = entity.getActiveEndDate();
         this.gatewayAccountId = entity.getGatewayAccountEntity().getId();
 
-        var clonedCredentials = new HashMap<>(entity.getCredentials());
+        this.credentials = removePasswords(entity.getCredentials());
+    }
+
+    private static Map<String, Object> removePasswords(Map<String, Object> credentials) {
+        HashMap<String, Object> clonedCredentials = new HashMap<>(credentials);
         clonedCredentials.remove("password");
-        this.credentials = clonedCredentials;
+        credentials.forEach((key, value) -> {
+            if (value instanceof Map<?, ?>) {
+                var clonedNestedMap = new HashMap<>((Map<?,?>)value);
+                clonedNestedMap.remove("password");
+                clonedCredentials.put(key, clonedNestedMap);
+            }
+        });
+        return clonedCredentials;
     }
 
     public Long getId() {
