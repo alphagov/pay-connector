@@ -5,6 +5,9 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import java.time.Instant;
 import java.util.Map;
 
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;
+
 public final class PaymentInstrumentEntityFixture {
     private Map<String, String> recurringAuthToken;
     private Instant createdDate = Instant.now();
@@ -22,6 +25,13 @@ public final class PaymentInstrumentEntityFixture {
 
     public PaymentInstrumentEntityFixture withRecurringAuthToken(Map<String, String> recurringAuthToken) {
         this.recurringAuthToken = recurringAuthToken;
+        return this;
+    }
+
+    public PaymentInstrumentEntityFixture withStripeRecurringAuthToken(String customerId, String paymentMethodId) {
+        this.recurringAuthToken = Map.of(
+                STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY, customerId,
+                STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY, paymentMethodId);
         return this;
     }
 
