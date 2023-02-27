@@ -20,6 +20,7 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     private String description;
     private Map<String, Object> credentials;
     private GatewayAccountEntity gatewayAccountEntity;
+    private String govUkPayPaymentId;
 
     private RecurringPaymentAuthorisationGatewayRequest(GatewayAccountEntity gatewayAccountEntity,
                                                         Map<String, Object> credentials,
@@ -27,7 +28,8 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
                                                         String amount,
                                                         String gatewayTransactionId,
                                                         String description,
-                                                        PaymentInstrumentEntity paymentInstrument) {
+                                                        PaymentInstrumentEntity paymentInstrument, 
+                                                        String govUkPayPaymentId) {
         this.gatewayAccountEntity = gatewayAccountEntity;
         this.credentials = credentials;
         this.agreementId = agreementId;
@@ -35,6 +37,7 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
         this.gatewayTransactionId = gatewayTransactionId;
         this.description = description;
         this.paymentInstrument = paymentInstrument;
+        this.govUkPayPaymentId = govUkPayPaymentId;
     }
 
     public static RecurringPaymentAuthorisationGatewayRequest valueOf(ChargeEntity charge) {
@@ -44,7 +47,8 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
                 String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)),
                 charge.getGatewayTransactionId(),
                 charge.getDescription(),
-                charge.getPaymentInstrument().orElse(null));
+                charge.getPaymentInstrument().orElse(null),
+                charge.getExternalId());
     }
 
     public Optional<PaymentInstrumentEntity> getPaymentInstrument() {
@@ -65,6 +69,10 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
 
     public String getDescription() {
         return description;
+    }
+
+    public String getGovUkPayPaymentId() {
+        return govUkPayPaymentId;
     }
 
     @Override
