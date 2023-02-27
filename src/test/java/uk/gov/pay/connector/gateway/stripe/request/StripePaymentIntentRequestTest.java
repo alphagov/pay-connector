@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
@@ -50,6 +51,7 @@ public class StripePaymentIntentRequestTest {
     private final String frontendUrl = "frontendUrl";
     private final Long amount = 100L;
     private final String description = "description";
+    private final String customerId = "a-customer-id";
 
     @Before
     public void setUp() {
@@ -76,7 +78,7 @@ public class StripePaymentIntentRequestTest {
 
     @Test
     public void shouldHaveCorrectParametersWithAddress() {
-        StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
+        StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
         assertThat(payload, containsString("payment_method=" + paymentMethodId));
@@ -90,11 +92,14 @@ public class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("description=" + description));
         assertThat(payload, containsString("return_url=" + URLEncoder.encode(frontendUrl + "/card_details/" + chargeExternalId + "/3ds_required_in", UTF_8)));
         assertThat(payload, containsString(URLEncoder.encode("metadata[govuk_pay_transaction_external_id]", UTF_8) + "=" + chargeExternalId));
+        assertThat(payload, not(containsString("customer=")));
+        assertThat(payload, not(containsString("setup_future_usage=")));
+        assertThat(payload, not(containsString("off_session=")));
     }
 
     @Test
     public void createsCorrectIdempotencyKey() {
-        StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
+        StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         assertThat(
                 stripePaymentIntentRequest.getHeaders().get("Idempotency-Key"),
@@ -103,7 +108,7 @@ public class StripePaymentIntentRequestTest {
 
     @Test
     public void shouldCreateCorrectUrl() {
-        StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
+        StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         assertThat(stripePaymentIntentRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/payment_intents")));
     }
@@ -113,7 +118,7 @@ public class StripePaymentIntentRequestTest {
     public void shouldIncludeMotoFlagWhenChargeIsMoto() {
         when(charge.isMoto()).thenReturn(true);
 
-        StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
+        StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
         assertThat(payload, containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8) + "=true"));
@@ -123,36 +128,38 @@ public class StripePaymentIntentRequestTest {
     public void shouldNotIncludeMotoFlagWhenChargeIsNotMoto() {
         when(charge.isMoto()).thenReturn(false);
 
-        StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
+        StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
         assertThat(payload, not(containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8))));
     }
 
     @Test
-    public void shouldIncludeCustomerIdAndSetupFutureUsageFlagWhenCustomerIdProvided() {
-        final var customerId = "a-customer-id";
-
+    public void shouldIncludeCustomerIdAndSetupFutureUsageFlagForSetupFutureUsageRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-        var stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl, customerId);
+        var stripePaymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithSetupFutureUsage(
+                authorisationGatewayRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
 
         assertThat(payload, containsString("customer=" + customerId));
         assertThat(payload, containsString("setup_future_usage=off_session"));
+        assertThat(payload, not(containsString("off_session=")));
     }
 
     @Test
-    public void shouldNotIncludeCustomerIdAndSetupFutureUsageFlagWhenCustomerIdNotProvided() {
-        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-        var stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
-        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+    public void shouldIncludeOffSessionFlagForUseSavedPaymentDetails() {
+        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestUseSavedPaymentDetails(
+                authRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
+        String payload = paymentIntentRequest.getGatewayOrder().getPayload();
 
-        assertThat(payload, not(containsString("customer=")));
+        assertThat(payload, containsString("customer=" + customerId));
+        assertThat(payload, containsString("off_session=true"));
         assertThat(payload, not(containsString("setup_future_usage=")));
     }
     
-    private StripePaymentIntentRequest createStripePaymentIntentRequest() {
+    private StripePaymentIntentRequest createOneOffStripePaymentIntentRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-        return StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+        return StripePaymentIntentRequest.createOneOffPaymentIntentRequest(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
     }
 }
