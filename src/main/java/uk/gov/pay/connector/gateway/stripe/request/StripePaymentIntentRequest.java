@@ -122,6 +122,10 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         return customerId;
     }
 
+    public String getPaymentMethodId() {
+        return paymentMethodId;
+    }
+
     @Override
     protected String urlPath() {
         return "/v1/payment_intents";

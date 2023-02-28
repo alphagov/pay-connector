@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.google.inject.Inject;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
@@ -12,6 +11,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
@@ -30,6 +30,8 @@ import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
+import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;
 
 public class StripeAuthoriseHandler implements AuthoriseHandler {
 
@@ -39,6 +41,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final JsonObjectMapper jsonObjectMapper;
     private final String frontendUrl;
+
     @Inject
     public StripeAuthoriseHandler(GatewayClient client,
                                   StripeGatewayConfig stripeGatewayConfig,
@@ -62,7 +65,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .responseBuilder();
         try {
             StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
-            
+
             StripePaymentIntentResponse stripePaymentIntentResponse;
             if (request.isSavePaymentInstrumentToAgreement()) {
                 StripeCustomerResponse stripeCustomerResponse = createCustomer(request, request.getAgreement().orElseThrow(() -> new RuntimeException("Expected charge with isSavePaymentInstrumentToAgreement == true to have a saved agreement")));
@@ -76,38 +79,53 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                         kv("stripe_payment_intent_id", stripePaymentIntentResponse.getId()));
             }
 
-            return GatewayResponse
-                    .GatewayResponseBuilder
-                    .responseBuilder()
-                    .withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
         } catch (GatewayException.GatewayErrorException e) {
-            if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
-                logger.error("Authorisation failed due to an internal error. Reason: {}. Status code from Stripe: {}.",
-                        e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
-                GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge");
-                return responseBuilder.withGatewayError(gatewayError).build();
-            }
-
-            if (e.getFamily() == CLIENT_ERROR) {
-                StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                logger.info("Authorisation failed. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
-    
-                return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
-            }
-
-            logger.info("Unrecognised response status when authorising - status={}, response={}",
-                    e.getStatus(), e.getResponseFromGateway());
-            throw new RuntimeException("Unrecognised response status when authorising.");
-
+            return handleGatewayError(responseBuilder, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
             logger.error("GatewayException occurred, error:\n {}", e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }
 
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+        try {
+            var stripePaymentIntentResponse = createPaymentIntentForUserNotPresent(request);
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
+        } catch (GatewayException.GatewayErrorException e) {
+            return handleGatewayError(responseBuilder, e);
+        } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
+            logger.error("GatewayException occurred, error:\n {}", e);
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        }
+    }
+
+    private GatewayResponse handleGatewayError(GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder, GatewayException.GatewayErrorException e) {
+        if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
+            logger.error("Authorisation failed due to an internal error. Reason: {}. Status code from Stripe: {}.",
+                    e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
+            GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge");
+            return responseBuilder.withGatewayError(gatewayError).build();
+        }
+
+        if (e.getFamily() == CLIENT_ERROR) {
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
+            logger.info("Authorisation failed. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                    stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+
+            return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
+        }
+
+        logger.info("Unrecognised response status when authorising - status={}, response={}",
+                e.getStatus(), e.getResponseFromGateway());
+        throw new RuntimeException("Unrecognised response status when authorising.");
+    }
+
     private StripeCustomerResponse createCustomer(CardAuthorisationGatewayRequest request, AgreementEntity agreement)
-            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException{
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         String jsonResponse = client.postRequestFor(StripeCustomerRequest.of(request, stripeGatewayConfig, agreement)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripeCustomerResponse.class);
     }
@@ -129,6 +147,19 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     private StripePaymentIntentResponse createPaymentIntentForSetUpAgreement(CardAuthorisationGatewayRequest request, String paymentMethodId, String customerId)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         var paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithSetupFutureUsage(
+                request, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
+        String jsonResponse = client.postRequestFor(paymentIntentRequest).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+    }
+
+    private StripePaymentIntentResponse createPaymentIntentForUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new IllegalArgumentException("Expected request to have payment instrument but it does not"));
+        var recurringAuthToken = paymentInstrument.getRecurringAuthToken().orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
+
+        var customerId = recurringAuthToken.get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY);
+        var paymentMethodId = recurringAuthToken.get(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY);
+        var paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestUseSavedPaymentDetails(
                 request, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
         String jsonResponse = client.postRequestFor(paymentIntentRequest).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);

@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -38,10 +39,12 @@ import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.List;
@@ -76,6 +79,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CUSTOMER_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
@@ -87,8 +91,12 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
 class StripePaymentProviderTest {
-    
+
     private static final String CARD_HOLDER = "Mr. Payment";
+    public static final String CUSTOMER_ID = "cus_abc213";
+    public static final String PAYMENT_METHOD_ID = "pm_abc123";
+    private static final String ISSUER_URL = "http://stripe.url/3ds";
+    private static final String THREE_DS_VERSION = "2.0.1";
 
     @Captor
     private ArgumentCaptor<StripeTransferInRequest> stripeTransferInRequestCaptor;
@@ -108,9 +116,6 @@ class StripePaymentProviderTest {
     private final GatewayClient.Response customerResponse = mock(GatewayClient.Response.class);
     private final GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
     private final GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
-
-    private static final String issuerUrl = "http://stripe.url/3ds";
-    private static final String threeDsVersion = "2.0.1";
 
     @BeforeEach
     void before() {
@@ -182,7 +187,7 @@ class StripePaymentProviderTest {
         when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        ChargeEntity charge = buildTestChargeWithAgreement(gatewayAccount, agreementDescription);
+        ChargeEntity charge = buildTestChargeToSetUpAgreement(gatewayAccount, agreementDescription);
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         verify(gatewayClient, times(3)).postRequestFor(stripePostRequestCaptor.capture());
@@ -313,7 +318,7 @@ class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
 
-        ChargeEntity charge = buildTestChargeWithAgreement(buildTestGatewayAccountEntity(), "agreement description");
+        ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(authoriseResponse.isFailed(), is(true));
@@ -331,7 +336,7 @@ class StripePaymentProviderTest {
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
         when(customerResponse.getEntity()).thenReturn(successCreateCustomerResponse());
 
-        ChargeEntity charge = buildTestChargeWithAgreement(buildTestGatewayAccountEntity(), "agreement description");
+        ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
         assertThat(authoriseResponse.isFailed(), is(true));
@@ -453,18 +458,91 @@ class StripePaymentProviderTest {
         assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
     }
 
+    @Test
+    void shouldAuthoriseUserNotPresentPayment() throws Exception {
+        
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+        when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseUserNotPresent(authRequest);
+
+        verify(gatewayClient).postRequestFor(stripePostRequestCaptor.capture());
+        var paymentIntentRequest = (StripePaymentIntentRequest)(stripePostRequestCaptor.getValue());
+        
+        assertThat(paymentIntentRequest.getCustomerId(), is(CUSTOMER_ID));
+        assertThat(paymentIntentRequest.getPaymentMethodId(), is(PAYMENT_METHOD_ID));
+        
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+    }
+
+    @Test
+    void shouldMarkChargeAsAuthorisationRejected_forUserNotPresentPayment_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
+
+        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
+        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+        assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+    }
+
+    @Test
+    void shouldNotAuthorise_forUserNotPresentPayment_WhenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
+
+        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
+
+        assertThat(authoriseResponse.isFailed(), is(true));
+        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                containsString("There was an internal server error"));
+        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+    }
+
+    @Test
+    void shouldNotAuthorise_forUserNotPresentPayment_whenProcessingExceptionIsThrown() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
+
+        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
+
+        assertThat(authoriseResponse.isFailed(), is(true));
+        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+        assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
+                authoriseResponse.getGatewayError().get().getMessage());
+        assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
+    }
+
+
     private void assert3dsRequiredEntityForResponse(Gateway3DSAuthorisationResponse response) {
         assertThat(response.getGateway3dsRequiredParams().isPresent(), is(true));
         Auth3dsRequiredEntity auth3dsRequiredEntity = response.getGateway3dsRequiredParams().get().toAuth3dsRequiredEntity();
-        assertThat(auth3dsRequiredEntity.getIssuerUrl(), is(issuerUrl));
-        assertThat(auth3dsRequiredEntity.getThreeDsVersion(), is(threeDsVersion));
+        assertThat(auth3dsRequiredEntity.getIssuerUrl(), is(ISSUER_URL));
+        assertThat(auth3dsRequiredEntity.getThreeDsVersion(), is(THREE_DS_VERSION));
     }
 
     private Auth3dsResponseGatewayRequest build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome auth3dsResultOutcome) {
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         if (auth3dsResultOutcome != null) {
             auth3dsResult.setAuth3dsResult(auth3dsResultOutcome.toString());
-            auth3dsResult.setThreeDsVersion(threeDsVersion);
+            auth3dsResult.setThreeDsVersion(THREE_DS_VERSION);
         }
         ChargeEntity chargeEntity = build3dsRequiredTestCharge();
 
@@ -515,7 +593,7 @@ class StripePaymentProviderTest {
                 .build();
     }
 
-    private ChargeEntity buildTestChargeWithAgreement(GatewayAccountEntity accountEntity, String agreementDescription) {
+    private ChargeEntity buildTestChargeToSetUpAgreement(GatewayAccountEntity accountEntity, String agreementDescription) {
         return aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
@@ -528,11 +606,29 @@ class StripePaymentProviderTest {
                 .withSavePaymentInstrumentToAgreement(true)
                 .build();
     }
+
+    private ChargeEntity buildTestAuthorisationModeAgreementCharge() {
+        PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity()
+                .withStripeRecurringAuthToken(CUSTOMER_ID, PAYMENT_METHOD_ID)
+                .build();
+        return aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
+                .withAgreementEntity(anAgreementEntity().build())
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrument(paymentInstrumentEntity)
+                .build();
+    }
     
     private ChargeEntity build3dsRequiredTestCharge() {
         String transactionId = "pi_a-payment-intent-id";
         
-        Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity().withIssuerUrl(issuerUrl).build();
+        Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity().withIssuerUrl(ISSUER_URL).build();
         return aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId(transactionId)

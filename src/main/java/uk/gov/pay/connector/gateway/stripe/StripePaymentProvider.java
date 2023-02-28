@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -116,7 +117,12 @@ public class StripePaymentProvider implements PaymentProvider {
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         return stripeAuthoriseHandler.authorise(request);
     }
-    
+
+    @Override
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        return stripeAuthoriseHandler.authoriseUserNotPresent(request);
+    }
+
     /**
      * IMPORTANT: this method should not attempt to update the Charge in the database. This is because it is executed
      * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
