@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -22,8 +24,10 @@ import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.ZonedDateTime;
@@ -48,6 +52,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 /**
@@ -154,14 +159,37 @@ public class StripePaymentProviderTest {
                 .build();
         ChargeEntity charge = getChargeWithAgreement();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
+        GatewayResponse<StripeAuthorisationResponse> gatewayResponse = stripePaymentProvider.authorise(request, charge);
 
-        StripeAuthorisationResponse response = (StripeAuthorisationResponse)(gatewayResponse.getBaseResponse().get());
+        StripeAuthorisationResponse response = gatewayResponse.getBaseResponse().get();
 
         assertTrue(gatewayResponse.isSuccessful());
         assertThat(response.getGatewayRecurringAuthToken().isPresent(), is(true));
         assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY));
         assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY));
+    }
+
+    @Test
+    public void shouldBeAbleToTakeRecurringPaymentUsingStoredPaymentDetails() {
+        AuthCardDetails authCardDetails = anAuthCardDetails().withEndDate(CardExpiryDate.valueOf(validCardExpiryDate)).build();
+        ChargeEntity setUpAgreementCharge = getChargeWithAgreement();
+        var request = new CardAuthorisationGatewayRequest(setUpAgreementCharge, authCardDetails);
+        GatewayResponse<StripeAuthorisationResponse> setUpAgreementResponse = stripePaymentProvider.authorise(request, setUpAgreementCharge);
+
+        Map<String, String> recurringAuthToken = setUpAgreementResponse.getBaseResponse().get().getGatewayRecurringAuthToken().get();
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(recurringAuthToken)
+                .build();
+
+        ChargeEntity recurringCharge = getCharge();
+        recurringCharge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
+        recurringCharge.setAgreementEntity(setUpAgreementCharge.getAgreement().get());
+        recurringCharge.setPaymentInstrument(paymentInstrument);
+
+        var gatewayRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(recurringCharge);
+        GatewayResponse authoriseUserNotPresentResponse = stripePaymentProvider.authoriseUserNotPresent(gatewayRequest);
+
+        Assertions.assertTrue(authoriseUserNotPresentResponse.getBaseResponse().isPresent());
     }
 
     @Test
