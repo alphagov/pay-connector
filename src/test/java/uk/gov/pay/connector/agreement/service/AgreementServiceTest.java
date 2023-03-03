@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -54,12 +55,13 @@ public class AgreementServiceTest {
     private LedgerService mockedLedgerService = mock(LedgerService.class);
 
     private AgreementService agreementService;
+    private TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
 
     @BeforeEach
     public void setUp() {
         String instantExpected = "2022-03-03T10:15:30Z";
         Clock clock = Clock.fixed(Instant.parse(instantExpected), ZoneOffset.UTC);
-        agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock);
+        agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock, mockedTaskQueueService);
     }
 
     @Test
@@ -139,6 +141,7 @@ public class AgreementServiceTest {
         when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
         when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
         agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, cancelRequest);
+        verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
         assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
     }
@@ -156,6 +159,7 @@ public class AgreementServiceTest {
         when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
         when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
         agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest());
+        verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
         assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
     }
