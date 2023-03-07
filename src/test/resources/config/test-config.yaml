@@ -18,6 +18,8 @@ logging:
 
 links:
   frontendUrl: http://Frontend/
+  cardFrontendUrl: http://CardFrontend/
+  cardFrontendEnabled: false
 
 worldpay:
   urls:

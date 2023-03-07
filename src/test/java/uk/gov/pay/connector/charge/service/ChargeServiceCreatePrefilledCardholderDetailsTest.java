@@ -154,6 +154,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         gatewayAccount.setGatewayAccountCredentials(gatewayAccountCredentialsEntities);
 
         when(mockedConfig.getLinks()).thenReturn(mockedLinksConfig);
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
@@ -164,7 +165,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWithAllPrefilledCardHolderDetails() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -194,7 +194,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWithPrefilledCardHolderDetailsAndSomeAddressMissing() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -227,7 +226,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWithNoCountryWhenPrefilledAddressCountryIsMoreThanTwoCharacters() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -259,7 +257,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWithPrefilledCardHolderDetailsCardholderNameOnly() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -282,7 +279,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWhenPrefilledCardHolderDetailsCardholderNameAndSomeAddressNotPresent() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -313,7 +309,6 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Test
     void shouldCreateAChargeWhenPrefilledCardHolderDetailsAreNotPresent() {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
-        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
