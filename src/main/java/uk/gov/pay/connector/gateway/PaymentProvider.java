@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -56,4 +57,7 @@ public interface PaymentProvider {
     
     AuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement);
 
+    default GatewayResponse deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) {
+        throw new NotImplementedException("Delete Stored Payment Details is not implemented for this payment provider");
+    }
 }

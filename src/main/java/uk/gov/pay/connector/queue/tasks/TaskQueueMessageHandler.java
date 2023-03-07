@@ -8,7 +8,7 @@ import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
-import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
@@ -30,7 +30,7 @@ public class TaskQueueMessageHandler {
     private final CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
     private final StripeWebhookTaskHandler stripeWebhookTaskHandler;
     private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
-    private final DeleteStoredPaymentDetailsHandler deleteStoredPaymentDetailsHandler;
+    private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -38,7 +38,7 @@ public class TaskQueueMessageHandler {
                                    CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler,
                                    StripeWebhookTaskHandler stripeWebhookTaskHandler,
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
-                                   DeleteStoredPaymentDetailsHandler deleteStoredPaymentDetailsHandler,
+                                   DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
