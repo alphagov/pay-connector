@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.agreement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.logstash.logback.argument.StructuredArgument;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -19,7 +21,14 @@ import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 
 @Entity
 @Table(name = "agreements")
@@ -161,6 +170,15 @@ public class AgreementEntity {
         this.paymentInstrument = paymentInstrumentEntity;
     }
 
+    @JsonIgnore
+    public Object[] getStructuredLoggingArgs() {
+        ArrayList<StructuredArgument> structuredArguments = new ArrayList<>(List.of(
+                kv(AGREEMENT_EXTERNAL_ID, getExternalId()),
+                kv(GATEWAY_ACCOUNT_ID, getGatewayAccount().getId()),
+                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType())
+        ));
+        return structuredArguments.toArray();
+    }
     public static class AgreementEntityBuilder {
         private GatewayAccountEntity gatewayAccount;
         private Instant createdDate;

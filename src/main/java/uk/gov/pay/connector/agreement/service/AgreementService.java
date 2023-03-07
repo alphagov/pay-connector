@@ -9,6 +9,7 @@ import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
+import uk.gov.pay.connector.charge.exception.AgreementNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
@@ -16,6 +17,7 @@ import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import javax.inject.Inject;
 import java.time.Clock;
@@ -30,18 +32,24 @@ public class AgreementService {
     private final AgreementDao agreementDao;
     private final LedgerService ledgerService;
     private final Clock clock;
+    private final TaskQueueService taskQueueService;
 
     @Inject
-    public AgreementService(AgreementDao agreementDao, GatewayAccountDao gatewayAccountDao, LedgerService ledgerService, Clock clock) {
+    public AgreementService(AgreementDao agreementDao, GatewayAccountDao gatewayAccountDao, LedgerService ledgerService, Clock clock, TaskQueueService taskQueueService) {
         this.agreementDao = agreementDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.ledgerService = ledgerService;
         this.clock = clock;
+        this.taskQueueService = taskQueueService;
     }
 
     public Optional<AgreementResponse> findByExternalId(String externalId, long gatewayAccountId) {
         return agreementDao.findByExternalId(externalId, gatewayAccountId)
                 .map(AgreementResponse::from);
+    }
+
+    public AgreementEntity findByExternalId(String externalId) {
+        return agreementDao.findByExternalId(externalId).orElseThrow(() -> new AgreementNotFoundRuntimeException(externalId));
     }
 
     @Transactional
@@ -87,7 +95,7 @@ public class AgreementService {
                 .filter(paymentInstrument -> paymentInstrument.getPaymentInstrumentStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {
                     paymentInstrument.setPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED);
-
+                    taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
                     if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
                         ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, Instant.now()));
                     } else {

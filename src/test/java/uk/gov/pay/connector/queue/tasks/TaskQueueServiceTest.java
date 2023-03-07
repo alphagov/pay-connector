@@ -15,11 +15,14 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
@@ -33,10 +36,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueServiceTest {
@@ -248,5 +253,19 @@ class TaskQueueServiceTest {
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
         assertThat(loggingEvent.getLevel(), is(Level.ERROR));
         assertThat(loggingEvent.getMessage(), is("Error adding task to queue"));
+    }
+
+    @Test
+    void shouldAddDeleteStoredPaymentDetailsTaskToQueue() throws QueueException, JsonProcessingException {
+        AgreementEntity agreement = anAgreementEntity()
+                .withExternalId("test-agreement-123")
+                .build();
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity()
+                .withExternalId("test-paymentInstrument-123")
+                .build();
+        var data = new DeleteStoredPaymentDetailsTaskData("test-agreement-123", "test-paymentInstrument-123");
+        var taskData = new Task(objectMapper.writeValueAsString(data), TaskType.DELETE_STORED_PAYMENT_DETAILS);
+        taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+        verify(mockTaskQueue).addTaskToQueue(eq(taskData));
     }
 }
