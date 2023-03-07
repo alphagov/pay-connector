@@ -6,7 +6,8 @@ public enum GatewayOperation {
     REFUND("refund"),
     QUERY("query"),
     CANCEL("cancel"),
-    VALIDATE_CREDENTIALS("validate_credentials");
+    VALIDATE_CREDENTIALS("validate_credentials"),
+    DELETE_STORED_PAYMENT_DETAILS("delete_stored_payment_details");
 
     private final String description;
 

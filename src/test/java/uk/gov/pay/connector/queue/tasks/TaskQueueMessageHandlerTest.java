@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
-import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
@@ -51,7 +51,7 @@ class TaskQueueMessageHandlerTest {
     private AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
 
     @Mock
-    private DeleteStoredPaymentDetailsHandler deleteStoredPaymentDetailsHandler;
+    private DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
