@@ -2,8 +2,6 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.Configuration;
 
-import java.time.Instant;
-
 public class LinksConfig extends Configuration {
 
     private String frontendUrl;
