@@ -19,8 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.StripeAuthTokens;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.dispute.DisputeIncludedInPayout;
@@ -29,6 +27,7 @@ import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
+import uk.gov.pay.connector.gateway.stripe.StripeSDKClient;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -71,17 +70,11 @@ public class PayoutReconcileProcessTest {
     private PayoutReconcileQueue payoutReconcileQueue;
 
     @Mock
-    private StripeClientWrapper stripeClientWrapper;
-
-    @Mock
-    private StripeGatewayConfig stripeGatewayConfig;
+    private StripeSDKClient stripeSDKClient;
 
     @Mock
     private ConnectorConfiguration connectorConfiguration;
-
-    @Mock
-    private StripeAuthTokens stripeAuthTokens;
-
+    
     @Mock
     private GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
@@ -117,8 +110,6 @@ public class PayoutReconcileProcessTest {
 
         when(gatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId))
                 .thenReturn(gatewayAccountEntity);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        when(stripeAuthTokens.getTest()).thenReturn(stripeApiKey);
 
         setupMockBalanceTransactions("pending");
 
@@ -207,7 +198,7 @@ public class PayoutReconcileProcessTest {
     @Test
     public void shouldNotMarkMessageAsSuccessfullyProcessedIfNoPaymentsOrRefundsFound() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
-        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+        when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(List.of());
 
         payoutReconcileProcess.processPayouts();
@@ -237,7 +228,7 @@ public class PayoutReconcileProcessTest {
         when(refundBalanceTransaction.getType()).thenReturn("transfer");
         when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
         when(refundTransferSource.getMetadata()).thenReturn(Map.of());
-        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+        when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(List.of(refundBalanceTransaction));
 
         payoutReconcileProcess.processPayouts();
@@ -260,7 +251,7 @@ public class PayoutReconcileProcessTest {
                 GOVUK_PAY_TRANSACTION_EXTERNAL_ID, "a_transaction_id",
                 REASON_KEY, "some_unknown_reason"
         ));
-        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+        when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(List.of(balanceTransaction));
 
         payoutReconcileProcess.processPayouts();
@@ -278,7 +269,7 @@ public class PayoutReconcileProcessTest {
         when(refundBalanceTransaction.getType()).thenReturn("transfer");
         when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
         when(refundTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId));
-        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+        when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(List.of(refundBalanceTransaction));
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
 
@@ -359,7 +350,7 @@ public class PayoutReconcileProcessTest {
                 feeBalanceTransaction,
                 disputeBalanceTransaction,
                 payoutBalanceTransaction);
-        when(stripeClientWrapper.getBalanceTransactionsForPayout(payoutId, stripeAccountId, stripeApiKey))
+        when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(balanceTransactions);
     }
 }
