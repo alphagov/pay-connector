@@ -24,6 +24,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
@@ -47,6 +48,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 
 public class WorldpayOrderRequestBuilderTest {
 
@@ -471,6 +473,23 @@ public class WorldpayOrderRequestBuilderTest {
 
         assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
+    }
+
+    @Test 
+    public void shouldGenerateValidDeleteTokenRequest() throws Exception {
+        GatewayOrder actualRequest = aWorldpayDeleteTokenOrderRequestBuilder()
+                .withAgreementId("test-agreement-123")
+                .withPaymentTokenId("test-paymentToken-789")
+                .withMerchantCode("MYMERCHANT")
+                .build();
+        
+        String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_DELETE_TOKEN_REQUEST)
+                .replace("{{merchantCode}}", "MYMERCHANT")
+                .replace("{{agreementId}}", "test-agreement-123")
+                .replace("{{paymentTokenId}}", "test-paymentToken-789");
+        
+        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
+        assertEquals(OrderRequestType.DELETE_STORED_PAYMENT_DETAILS, actualRequest.getOrderRequestType());
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
