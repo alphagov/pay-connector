@@ -27,7 +27,7 @@ import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
-import uk.gov.pay.connector.gateway.stripe.StripeSDKClient;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -70,7 +70,7 @@ public class PayoutReconcileProcessTest {
     private PayoutReconcileQueue payoutReconcileQueue;
 
     @Mock
-    private StripeSDKClient stripeSDKClient;
+    private StripeSdkClient stripeSDKClient;
 
     @Mock
     private ConnectorConfiguration connectorConfiguration;

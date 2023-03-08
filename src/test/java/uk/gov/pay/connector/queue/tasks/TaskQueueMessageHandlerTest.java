@@ -89,10 +89,10 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.INFO));
-        assertThat(loggingEvent.getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
+        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
     }
 
     @Test
@@ -110,10 +110,10 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.INFO));
-        assertThat(loggingEvent.getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
+        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
     }
 
     @Test
@@ -133,7 +133,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDeleteStoredPaymentDetailsTask() throws QueueException, GatewayException {
+    public void shouldProcessDeleteStoredPaymentDetailsTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"agreement_external_id\": \"external-agreement-id\", \"paymentInstrument_external_id\": \"external-paymentInstrument-id\"}", TaskType.DELETE_STORED_PAYMENT_DETAILS);
         taskQueueMessageHandler.processMessages();
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");

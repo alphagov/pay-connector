@@ -353,7 +353,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
-        GatewayClient.Response response = deleteTokenClient.postRequestFor(
+         deleteTokenClient.postRequestFor(
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 WORLDPAY,
                 request.getGatewayAccount().getType(),

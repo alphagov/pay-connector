@@ -15,7 +15,7 @@ import uk.gov.pay.connector.events.model.dispute.DisputeIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
-import uk.gov.pay.connector.gateway.stripe.StripeSDKClient;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayoutStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
@@ -45,7 +45,7 @@ public class PayoutReconcileProcess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PayoutReconcileProcess.class);
     private final PayoutReconcileQueue payoutReconcileQueue;
-    private final StripeSDKClient stripeClient;
+    private final StripeSdkClient stripeClient;
     private final ConnectorConfiguration connectorConfiguration;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final EventService eventService;
@@ -53,7 +53,7 @@ public class PayoutReconcileProcess {
 
     @Inject
     public PayoutReconcileProcess(PayoutReconcileQueue payoutReconcileQueue,
-                                  StripeSDKClient stripeClient,
+                                  StripeSdkClient stripeClient,
                                   ConnectorConfiguration connectorConfiguration,
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   EventService eventService,

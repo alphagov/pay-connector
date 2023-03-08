@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stripe.exception.StripeException;
 import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -21,12 +23,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -61,6 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,6 +81,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
 import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -126,6 +132,8 @@ class StripePaymentProviderTest {
     private GatewayClient.Response paymentMethodResponse;
     @Mock
     private GatewayClient.Response paymentIntentsResponse;
+    @Mock
+    private StripeSdkClient stripeSDKClient;
 
     private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
@@ -137,7 +145,7 @@ class StripePaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment);
+        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment, stripeSDKClient);
     }
 
     @Test
@@ -551,6 +559,47 @@ class StripePaymentProviderTest {
             assertThat(payload, containsString("currency=GBP"));
             assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + paymentIntentId));
             assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
+        }
+    }
+    
+    @Nested
+    class DeleteCustomer {
+        @Test
+        void shouldMakeRequestToStripeToDeleteCustomer() throws Exception {
+            String customerId = "cus_123";
+            AgreementEntity agreementEntity = createAgreementWithPaymentInstrument(customerId);
+
+            var request = new DeleteStoredPaymentDetailsGatewayRequest(agreementEntity, agreementEntity.getPaymentInstrument().get());
+            provider.deleteStoredPaymentDetails(request);
+
+            verify(stripeSDKClient).deleteCustomer(customerId, true);
+        }
+
+        @Test
+        void shouldWrapStripeExceptionIntoGatewayException() throws Exception {
+            String customerId = "cus_123";
+            AgreementEntity agreementEntity = createAgreementWithPaymentInstrument(customerId);
+            
+            StripeException mockStripeException = mock(StripeException.class);
+            when(mockStripeException.getStatusCode()).thenReturn(418);
+            when(mockStripeException.getCode()).thenReturn("im_a_teapot");
+            when(mockStripeException.getMessage()).thenReturn("I'm a teapot");
+            doThrow(mockStripeException).when(stripeSDKClient).deleteCustomer(customerId, true);
+            
+            var request = new DeleteStoredPaymentDetailsGatewayRequest(agreementEntity, agreementEntity.getPaymentInstrument().get());
+            GatewayException gatewayException = assertThrows(GatewayException.class, () -> provider.deleteStoredPaymentDetails(request));
+            assertThat(gatewayException.getMessage(), is("Error when attempting to delete Stripe customer cus_123. Status code: 418, Error code: im_a_teapot, Message: I'm a teapot"));
+        }
+
+        private AgreementEntity createAgreementWithPaymentInstrument(String customerId) {
+            PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity()
+                    .withStripeRecurringAuthToken(customerId, "pm_123")
+                    .build();
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
+            return anAgreementEntity()
+                    .withPaymentInstrument(paymentInstrumentEntity)
+                    .withGatewayAccount(gatewayAccountEntity)
+                    .build();
         }
     }
 

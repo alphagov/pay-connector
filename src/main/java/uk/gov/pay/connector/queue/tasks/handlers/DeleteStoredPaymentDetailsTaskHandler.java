@@ -18,7 +18,7 @@ public class DeleteStoredPaymentDetailsTaskHandler {
     private AgreementService agreementService;
     private PaymentInstrumentService paymentInstrumentService;
     private PaymentProviders providers;
-    
+
     @Inject
     public DeleteStoredPaymentDetailsTaskHandler(AgreementService agreementService, PaymentInstrumentService paymentInstrumentService, PaymentProviders providers) {
         this.agreementService = agreementService;

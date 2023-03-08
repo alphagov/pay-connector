@@ -23,6 +23,7 @@ import java.util.Map;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
@@ -45,7 +46,7 @@ public class DeleteStoredPaymentDetailsTaskHandlerIT {
     public void setUp() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(STRIPE.getName())
+                .withPaymentProvider(SANDBOX.getName())
                 .withGatewayAccountId(Long.parseLong(accountId))
                 .withState(ACTIVE)
                 .withCredentials(Map.of("stripe_account_id", stripeAccountId))
@@ -53,7 +54,7 @@ public class DeleteStoredPaymentDetailsTaskHandlerIT {
 
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
-                .withPaymentGateway(STRIPE.getName())
+                .withPaymentGateway(SANDBOX.getName())
                 .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .withIntegrationVersion3ds(1)
                 .build());
