@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -122,7 +122,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     private int integrationVersion3ds;
 
     @Column(name = "notify_settings", columnDefinition = "json")
-    @Convert(converter = JsonToMapConverter.class)
+    @Convert(converter = JsonToStringStringMapConverter.class)
     private Map<String, String> notifySettings;
 
     @OneToMany(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
