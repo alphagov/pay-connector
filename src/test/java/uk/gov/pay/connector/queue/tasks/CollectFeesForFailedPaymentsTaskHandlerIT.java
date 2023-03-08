@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -49,7 +50,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
     private String stripeAccountId = "stripe-account-id";
-    private String accountId = "555";
+    private String accountId = String.valueOf(nextLong());
     private String paymentIntentId = "stripe-payment-intent-id";
 
     @Before
