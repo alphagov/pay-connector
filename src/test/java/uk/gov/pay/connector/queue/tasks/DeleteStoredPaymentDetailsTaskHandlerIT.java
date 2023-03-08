@@ -2,6 +2,7 @@ package uk.gov.pay.connector.queue.tasks;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -37,7 +39,7 @@ public class DeleteStoredPaymentDetailsTaskHandlerIT {
     private DatabaseTestHelper databaseTestHelper;
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
     private String stripeAccountId = "stripe-account-id";
-    private String accountId = "555";
+    private String accountId = String.valueOf(nextLong());
     
     @Before
     public void setUp() {
@@ -65,6 +67,11 @@ public class DeleteStoredPaymentDetailsTaskHandlerIT {
         setupAgreementAndPaymentInstrument(agreementExternalId, paymentInstrumentExternalId);
         var thrown = assertThrows(RuntimeException.class, () -> taskHandler.process(agreementExternalId, paymentInstrumentExternalId));
         assertThat(thrown.getMessage(), Matchers.is("Delete Stored Payment Details is not implemented for this payment provider"));
+    }
+
+    @After
+    public void tearDown() {
+        databaseTestHelper.truncateAllData();
     }
     
     private void setupAgreementAndPaymentInstrument(String agreementExternalId, String paymentInstrumentExternalId) {
