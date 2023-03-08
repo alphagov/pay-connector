@@ -4,14 +4,15 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -105,35 +106,38 @@ class StripePaymentProviderTest {
     private ArgumentCaptor<StripePostRequest> stripePostRequestCaptor;
     
     private StripePaymentProvider provider;
-    private final GatewayClient gatewayClient = mock(GatewayClient.class);
-    private final GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
-    private final Environment environment = mock(Environment.class);
-    private final MetricRegistry metricRegistry = mock(MetricRegistry.class);
-    private final ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
-    private final StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
-    private final LinksConfig linksConfig = mock(LinksConfig.class);
+    @Mock
+    private GatewayClient gatewayClient;
+    @Mock
+    private GatewayClientFactory gatewayClientFactory;
+    @Mock
+    private Environment environment;
+    @Mock
+    private MetricRegistry metricRegistry;
+    @Mock
+    private ConnectorConfiguration configuration;
+    @Mock
+    private StripeGatewayConfig gatewayConfig;
+    @Mock
+    private LinksConfig linksConfig = mock(LinksConfig.class);
+    @Mock
+    private GatewayClient.Response customerResponse;
+    @Mock
+    private GatewayClient.Response paymentMethodResponse;
+    @Mock
+    private GatewayClient.Response paymentIntentsResponse;
+
     private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
-    private final GatewayClient.Response customerResponse = mock(GatewayClient.Response.class);
-    private final GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
-    private final GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
 
     @BeforeEach
-    void before() {
-        when(gatewayConfig.getUrl()).thenReturn("http://stripe.url");
-        when(gatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
+    void setUp() {
         when(configuration.getStripeConfig()).thenReturn(gatewayConfig);
-
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-
         when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
-
         when(environment.metrics()).thenReturn(metricRegistry);
 
         provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment);
-
-        when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
-        when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
     }
 
     @Test
@@ -146,390 +150,409 @@ class StripePaymentProviderTest {
         assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
-    @Test
-    void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+    @Nested
+    class Authorisation {
+        @Test
+        void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+            when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
 
-        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        gatewayAccount.setIntegrationVersion3ds(2);
-        ChargeEntity charge = buildTestCharge(gatewayAccount);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            gatewayAccount.setIntegrationVersion3ds(2);
+            ChargeEntity charge = buildTestCharge(gatewayAccount);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+        }
+
+        @Test
+        void shouldAuthorise_ForAddressInUs() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+            when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
+
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            gatewayAccount.setIntegrationVersion3ds(2);
+            ChargeEntity charge = buildTestCharge(gatewayAccount);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(charge), charge);
+
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+        }
+
+        @Test
+        void shouldAuthoriseSetUpRecurringPaymentAgreement() throws Exception {
+            final var agreementDescription = "an agreement description";
+
+            when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class))).thenReturn(customerResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            when(customerResponse.getEntity()).thenReturn(successCreateCustomerResponse());
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+            when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
+
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            ChargeEntity charge = buildTestChargeToSetUpAgreement(gatewayAccount, agreementDescription);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            verify(gatewayClient, times(3)).postRequestFor(stripePostRequestCaptor.capture());
+            var customerRequest = (StripeCustomerRequest) (stripePostRequestCaptor.getAllValues().get(1));
+            var paymentIntentRequest = (StripePaymentIntentRequest) (stripePostRequestCaptor.getAllValues().get(2));
+
+            assertThat(customerRequest.getName(), is(CARD_HOLDER));
+            assertThat(customerRequest.getDescription(), is(agreementDescription));
+            assertThat(paymentIntentRequest.getCustomerId(), is("cus_4QFOF3xrvBT3nU"));
+            assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().isPresent(), is(true));
+            assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY), is("cus_4QFOF3xrvBT3nU"));
+            assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY), is("pm_1FHESdEZsufgnuO0bzghQoZ2"));
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+        }
+
+        @Test
+        void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+            when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            gatewayAccount.setIntegrationVersion3ds(2);
+            ChargeEntity charge = buildTestCharge(gatewayAccount);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123")); // id from templates/stripe/create_payment_intent_requires_3ds_response.json
+
+            Optional<Stripe3dsRequiredParams> stripeParamsFor3ds = (Optional<Stripe3dsRequiredParams>) response.getBaseResponse().get().getGatewayParamsFor3ds();
+            assertThat(stripeParamsFor3ds.isPresent(), is(true));
+            assertThat(stripeParamsFor3ds.get().toAuth3dsRequiredEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
+        }
+
+        @Test
+        void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
+
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
+                    authoriseResponse.getGatewayError().get().getMessage());
+            assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
+        }
+
+        @Test
+        void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+            BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+            assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+            assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+        }
+
+        @Test
+        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+            BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+            assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
+            assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
+        }
+
+        @Test
+        void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
+            assertThrows(UnsupportedOperationException.class, () -> provider.authoriseWallet(null));
+        }
+
+        @Test
+        void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentMethod() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                    containsString("There was an internal server error"));
+            assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+        }
+
+        @Test
+        void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                    containsString("There was an internal server error"));
+            assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+        }
+
+        @Test
+        void shouldNotAuthoriseRecurringPaymentAgreement_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreateCustomer() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                    containsString("There was an internal server error"));
+            assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+        }
+
+        @Test
+        void shouldNotAuthoriseRecurringPaymentAgreement_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class))).thenReturn(customerResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+            when(customerResponse.getEntity()).thenReturn(successCreateCustomerResponse());
+
+            ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                    containsString("There was an internal server error"));
+            assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+        }
+
+        @Test
+        void shouldMark3DSChargeAsSuccess_when3DSAuthDetailsStatusIsAuthorised() {
+            Auth3dsResponseGatewayRequest request
+                    = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED);
+
+            Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+            assertThat(response.isSuccessful(), is(true));
+            assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_SUCCESS));
+            assert3dsRequiredEntityForResponse(response);
+        }
+
+        @Test
+        void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
+            Auth3dsResponseGatewayRequest request
+                    = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED);
+
+            Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+            assertThat(response.isSuccessful(), is(false));
+            assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+            assert3dsRequiredEntityForResponse(response);
+        }
+
+        @Test
+        void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
+            Auth3dsResponseGatewayRequest request
+                    = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED);
+
+            Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+            assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_CANCELLED));
+            assert3dsRequiredEntityForResponse(response);
+        }
+
+        @Test
+        void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
+            Auth3dsResponseGatewayRequest request
+                    = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR);
+
+            Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+            assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_ERROR));
+            assert3dsRequiredEntityForResponse(response);
+        }
+
+        @Test
+        void shouldKeep3DSChargeInAuthReadyState_when3DSAuthDetailsAreNotAvailable() {
+            Auth3dsResponseGatewayRequest request
+                    = build3dsResponseGatewayRequest(null);
+
+            Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
+
+            assertTrue(response.isSuccessful());
+            assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
+        }
     }
 
-    @Test
-    void shouldAuthorise_ForAddressInUs() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+    @Nested
+    class AuthoriseUserNotPresent {
+        @Test
+        void shouldAuthoriseUserNotPresentPayment() throws Exception {
 
-        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        gatewayAccount.setIntegrationVersion3ds(2);
-        ChargeEntity charge = buildTestCharge(gatewayAccount);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(charge), charge);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
 
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
-    }
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+            RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseUserNotPresent(authRequest);
 
-    @Test
-    void shouldAuthoriseSetUpRecurringPaymentAgreement() throws Exception {
-        final var agreementDescription = "an agreement description";
-        
-        when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class))).thenReturn(customerResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
-        when(customerResponse.getEntity()).thenReturn(successCreateCustomerResponse());
-        when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
+            verify(gatewayClient).postRequestFor(stripePostRequestCaptor.capture());
+            var paymentIntentRequest = (StripePaymentIntentRequest) (stripePostRequestCaptor.getValue());
 
-        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        ChargeEntity charge = buildTestChargeToSetUpAgreement(gatewayAccount, agreementDescription);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            assertThat(paymentIntentRequest.getCustomerId(), is(CUSTOMER_ID));
+            assertThat(paymentIntentRequest.getPaymentMethodId(), is(PAYMENT_METHOD_ID));
 
-        verify(gatewayClient, times(3)).postRequestFor(stripePostRequestCaptor.capture());
-        var customerRequest = (StripeCustomerRequest)(stripePostRequestCaptor.getAllValues().get(1));
-        var paymentIntentRequest = (StripePaymentIntentRequest)(stripePostRequestCaptor.getAllValues().get(2));
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+        }
 
-        assertThat(customerRequest.getName(), is(CARD_HOLDER));
-        assertThat(customerRequest.getDescription(), is(agreementDescription));
-        assertThat(paymentIntentRequest.getCustomerId(), is("cus_4QFOF3xrvBT3nU"));
-        assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().isPresent(), is(true));
-        assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY), is("cus_4QFOF3xrvBT3nU"));
-        assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY), is("pm_1FHESdEZsufgnuO0bzghQoZ2"));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
-    }
+        @Test
+        void shouldMarkChargeAsAuthorisationRejected_forUserNotPresentPayment_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
 
-    @Test
-    void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
-        when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+            RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
+            assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
 
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+            assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+            assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+        }
 
-        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        gatewayAccount.setIntegrationVersion3ds(2);
-        ChargeEntity charge = buildTestCharge(gatewayAccount);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+        @Test
+        void shouldNotAuthorise_forUserNotPresentPayment_WhenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
 
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123")); // id from templates/stripe/create_payment_intent_requires_3ds_response.json
+            ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+            RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
 
-        Optional<Stripe3dsRequiredParams> stripeParamsFor3ds = (Optional<Stripe3dsRequiredParams>) response.getBaseResponse().get().getGatewayParamsFor3ds();
-        assertThat(stripeParamsFor3ds.isPresent(), is(true));
-        assertThat(stripeParamsFor3ds.get().toAuth3dsRequiredEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
-    }
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertThat(authoriseResponse.getGatewayError().get().getMessage(),
+                    containsString("There was an internal server error"));
+            assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
+        }
 
-    @Test
-    void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
+        @Test
+        void shouldNotAuthorise_forUserNotPresentPayment_whenProcessingExceptionIsThrown() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
 
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
-        
-        ChargeEntity charge = buildTestCharge();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
+            RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
 
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
-                authoriseResponse.getGatewayError().get().getMessage());
-        assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
-    }
-
-    @Test
-    void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
-        
-        ChargeEntity charge = buildTestCharge();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
-        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
-        assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
-    }
-
-    @Test
-    void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
-        
-        ChargeEntity charge = buildTestCharge();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
-        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
-        assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
-    }
-
-    @Test
-    void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
-        assertThrows(UnsupportedOperationException.class, () -> provider.authoriseWallet(null));
-    }
-
-    @Test
-    void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentMethod() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-
-        ChargeEntity charge = buildTestCharge();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
-                containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
-    }
-
-    @Test
-    void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-
-        ChargeEntity charge = buildTestCharge();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
-                containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
-    }
-
-    @Test
-    void shouldNotAuthoriseRecurringPaymentAgreement_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreateCustomer() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-
-        ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
-                containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
-    }
-
-    @Test
-    void shouldNotAuthoriseRecurringPaymentAgreement_whenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
-        when(gatewayClient.postRequestFor(any(StripeCustomerRequest.class))).thenReturn(customerResponse);
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-        when(customerResponse.getEntity()).thenReturn(successCreateCustomerResponse());
-
-        ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
-                containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
-    }
-
-    @Test
-    void shouldMark3DSChargeAsSuccess_when3DSAuthDetailsStatusIsAuthorised() {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.AUTHORISED);
-        
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
-
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_SUCCESS));
-        assert3dsRequiredEntityForResponse(response);
-    }
-
-    @Test
-    void shouldReject3DSCharge_when3DSAuthDetailsStatusIsRejected() {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.DECLINED);
-
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
-
-        assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
-        assert3dsRequiredEntityForResponse(response);
-    }
-
-    @Test
-    void shouldCancel3DSCharge_when3DSAuthDetailsStatusIsCanceled() {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.CANCELED);
-
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
-
-        assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_CANCELLED));
-        assert3dsRequiredEntityForResponse(response);
-    }
-
-    @Test
-    void shouldMark3DSChargeAsError_when3DSAuthDetailsStatusIsError() {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsResult.Auth3dsResultOutcome.ERROR);
-
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
-
-        assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_ERROR));
-        assert3dsRequiredEntityForResponse(response);
-    }
-
-    @Test
-    void shouldKeep3DSChargeInAuthReadyState_when3DSAuthDetailsAreNotAvailable() {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(null);
-
-        Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
-
-        assertTrue(response.isSuccessful());
-        assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
-    }
-
-    @Test
-    void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresentForDispute() throws Exception {
-        BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
-        BalanceTransaction balanceTransaction2 = new BalanceTransaction(6500L, 1500L, 8000L);
-        EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
-        StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
-                balanceTransaction2), evidenceDetails, null, true);
-        
-        var gatewayAccountEntity = buildTestGatewayAccountEntity();
-        ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
-        Charge charge = Charge.from(chargeEntity);
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity()));
-        assertThat(exception.getMessage(), is("Expected lost dispute to have a single balance_transaction, but has 2"));
+            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+            assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
+                    authoriseResponse.getGatewayError().get().getMessage());
+            assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
+        }
     }
     
-    @Test
-    void shouldMakeTransferRequestForLostDispute() throws Exception {
-        BalanceTransaction balanceTransaction = new BalanceTransaction(-6500L, 1500L, -8000L);
-        EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
-        String stripeDisputeId = "du_1LIaq8Dv3CZEaFO2MNQJK333";
-        String paymentIntentId = "pi_123456789";
-        StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
-                paymentIntentId, "needs_response", 6500L, "fradulent", 
-                1642579160L, List.of(balanceTransaction), evidenceDetails, null, false);
-        String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
+    @Nested
+    class TransferDisputeAmount {
+        @Test
+        void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresentForDispute() throws Exception {
+            BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
+            BalanceTransaction balanceTransaction2 = new BalanceTransaction(6500L, 1500L, 8000L);
+            EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
+            StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
+                    "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
+                    balanceTransaction2), evidenceDetails, null, true);
 
-        var gatewayAccountEntity = buildTestGatewayAccountEntity();
-        ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
-        Charge charge = Charge.from(chargeEntity);
+            var gatewayAccountEntity = buildTestGatewayAccountEntity();
+            ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
+            Charge charge = Charge.from(chargeEntity);
 
-        String stripePlatformAccountId = "platform-account-id";
-        when(gatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-        
-        GatewayClient.Response response = mock(GatewayClient.Response.class);
-        when(response.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
-        when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(response);
-        
-        provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity());
-        
-        verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity()));
+            assertThat(exception.getMessage(), is("Expected lost dispute to have a single balance_transaction, but has 2"));
+        }
 
-        String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
+        @Test
+        void shouldMakeTransferRequestForLostDispute() throws Exception {
+            BalanceTransaction balanceTransaction = new BalanceTransaction(-6500L, 1500L, -8000L);
+            EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
+            String stripeDisputeId = "du_1LIaq8Dv3CZEaFO2MNQJK333";
+            String paymentIntentId = "pi_123456789";
+            StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
+                    paymentIntentId, "needs_response", 6500L, "fradulent",
+                    1642579160L, List.of(balanceTransaction), evidenceDetails, null, false);
+            String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
 
-        assertThat(payload, containsString("destination=" + stripePlatformAccountId));
-        assertThat(payload, containsString("amount=8000"));
-        assertThat(payload, containsString("transfer_group=" + charge.getExternalId()));
-        assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
-        assertThat(payload, containsString("expand%5B%5D=destination_payment"));
-        assertThat(payload, containsString("currency=GBP"));
-        assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + paymentIntentId));
-        assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
+            var gatewayAccountEntity = buildTestGatewayAccountEntity();
+            ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
+            Charge charge = Charge.from(chargeEntity);
+
+            String stripePlatformAccountId = "platform-account-id";
+            when(gatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
+
+            GatewayClient.Response response = mock(GatewayClient.Response.class);
+            when(response.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+            when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(response);
+
+            provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity());
+
+            verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
+
+            String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
+
+            assertThat(payload, containsString("destination=" + stripePlatformAccountId));
+            assertThat(payload, containsString("amount=8000"));
+            assertThat(payload, containsString("transfer_group=" + charge.getExternalId()));
+            assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
+            assertThat(payload, containsString("expand%5B%5D=destination_payment"));
+            assertThat(payload, containsString("currency=GBP"));
+            assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + paymentIntentId));
+            assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
+        }
     }
-
-    @Test
-    void shouldAuthoriseUserNotPresentPayment() throws Exception {
-        
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
-        when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentResponseWithCustomer());
-
-        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
-        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseUserNotPresent(authRequest);
-
-        verify(gatewayClient).postRequestFor(stripePostRequestCaptor.capture());
-        var paymentIntentRequest = (StripePaymentIntentRequest)(stripePostRequestCaptor.getValue());
-        
-        assertThat(paymentIntentRequest.getCustomerId(), is(CUSTOMER_ID));
-        assertThat(paymentIntentRequest.getPaymentMethodId(), is(PAYMENT_METHOD_ID));
-        
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
-    }
-
-    @Test
-    void shouldMarkChargeAsAuthorisationRejected_forUserNotPresentPayment_whenStripeRespondsWithErrorTypeCardError() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
-
-        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
-        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
-        assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
-        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
-        assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
-        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
-    }
-
-    @Test
-    void shouldNotAuthorise_forUserNotPresentPayment_WhenPaymentProviderReturnsUnexpectedStatusCodeFromCreatePaymentIntent() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
-
-        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
-        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertThat(authoriseResponse.getGatewayError().get().getMessage(),
-                containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
-    }
-
-    @Test
-    void shouldNotAuthorise_forUserNotPresentPayment_whenProcessingExceptionIsThrown() throws Exception {
-        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
-
-        ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
-        RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authoriseUserNotPresent(authRequest);
-
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-        assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
-                authoriseResponse.getGatewayError().get().getMessage());
-        assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
-    }
-
 
     private void assert3dsRequiredEntityForResponse(Gateway3DSAuthorisationResponse response) {
         assertThat(response.getGateway3dsRequiredParams().isPresent(), is(true));
