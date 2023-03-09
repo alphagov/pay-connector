@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayDeleteTokenResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotification;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
@@ -29,6 +30,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANC
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_DELETE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_SUCCESS_RESPONSE;
@@ -211,5 +213,15 @@ public class WorldpayXMLUnmarshallerTest {
         assertThat(response.getReference().isPresent(), is(false));
         assertThat(response.getErrorCode(), is("2"));
         assertThat(response.getErrorMessage(), is("Something went wrong."));
+    }
+
+    @Test
+    public void shouldUnmarshallADeleteTokenSuccessResponse() throws Exception {
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_DELETE_TOKEN_SUCCESS_RESPONSE);
+        WorldpayDeleteTokenResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayDeleteTokenResponse.class);
+
+        assertThat(response.getPaymentTokenID(), is("payment-token-123"));
+        assertThat(response.getErrorCode(), is(nullValue()));
+        assertThat(response.getErrorMessage(), is(nullValue()));
     }
 }
