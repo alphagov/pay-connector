@@ -14,7 +14,7 @@ import java.util.Map;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Converter
-public class JsonToMapConverter implements AttributeConverter<Map<String, String>, PGobject> {
+public class JsonToStringStringMapConverter implements AttributeConverter<Map<String, String>, PGobject> {
     
     private static ObjectMapper objectMapper = new ObjectMapper();
 

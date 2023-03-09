@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
-import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
@@ -46,7 +46,7 @@ public class PaymentInstrumentEntity {
     private Long id;
 
     @Column(name = "recurring_auth_token", columnDefinition = "json")
-    @Convert(converter = JsonToMapConverter.class)
+    @Convert(converter = JsonToStringStringMapConverter.class)
     private Map<String, String> recurringAuthToken;
 
     @Column(name = "created_date")
