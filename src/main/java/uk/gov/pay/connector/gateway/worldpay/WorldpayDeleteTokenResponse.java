@@ -8,8 +8,7 @@ import java.util.StringJoiner;
 
 @XmlRootElement(name = "paymentService")
 public class WorldpayDeleteTokenResponse extends WorldpayBaseResponse {
-
-
+    
     @XmlPath("reply/ok/deleteTokenReceived/@paymentTokenID")
     private String paymentTokenID;
     
@@ -21,7 +20,6 @@ public class WorldpayDeleteTokenResponse extends WorldpayBaseResponse {
         if (!StringUtils.isNotBlank(getErrorCode()) && !StringUtils.isNotBlank(getErrorMessage())) {
             return "Worldpay delete token response";
         }
-
         StringJoiner joiner = new StringJoiner(", ", "Worldpay delete token response (", ")");
         if (StringUtils.isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());

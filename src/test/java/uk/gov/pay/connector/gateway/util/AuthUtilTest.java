@@ -74,6 +74,21 @@ class AuthUtilTest {
     }
 
     @Test
+    void shouldRetrieveTheRightCredentialsForManagingTokens() {
+        Map<String, Object> credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, merchantCode,
+                CREDENTIALS_USERNAME, username,
+                CREDENTIALS_PASSWORD, password,
+                RECURRING_MERCHANT_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
+                        CREDENTIALS_USERNAME, "RC-" + username,
+                        CREDENTIALS_PASSWORD, "RC-" + password
+                ));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
+        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader(credentials);
+        assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
+    }
+    @Test
     void shouldThrowException_whenAuthModeAgreement_andNoCredentialsForMerchantId() {
         MissingCredentialsForRecurringPaymentException thrown = Assertions.assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             Map<String, Object> credentials = Map.of(
@@ -114,4 +129,20 @@ class AuthUtilTest {
         String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB);
         assertThat(merchantId, is(merchantCode));
     }
+
+    @Test
+    void shouldRetrieveTheRightMerchantIdForManagingTokens() {
+        Map<String, Object> credentials = Map.of(
+                CREDENTIALS_MERCHANT_ID, merchantCode,
+                CREDENTIALS_USERNAME, username,
+                CREDENTIALS_PASSWORD, password,
+                RECURRING_MERCHANT_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
+                        CREDENTIALS_USERNAME, "RC-" + username,
+                        CREDENTIALS_PASSWORD, "RC-" + password
+                ));
+        String merchantId = AuthUtil.getWorldpayMerchantCodeForManagingTokens(credentials);
+        assertThat(merchantId, is(merchantCode));
+    }
+
 }

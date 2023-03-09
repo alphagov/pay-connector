@@ -3,7 +3,9 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <modify>
-        <paymentTokenDelete tokenScope="shopper" paymentTokenID="${paymentTokenId}" authenticatedShopperID="${agreementId}">
+        <paymentTokenDelete tokenScope="shopper">
+            <paymentTokenID>${paymentTokenId}</paymentTokenID>
+            <authenticatedShopperID>${agreementId}</authenticatedShopperID>
         </paymentTokenDelete>
     </modify>
 </paymentService>

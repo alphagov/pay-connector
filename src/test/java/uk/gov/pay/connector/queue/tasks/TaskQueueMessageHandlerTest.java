@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
@@ -132,7 +133,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDeleteStoredPaymentDetailsTask() throws QueueException {
+    public void shouldProcessDeleteStoredPaymentDetailsTask() throws QueueException, GatewayException {
         TaskMessage taskMessage = setupQueueMessage("{ \"agreement_external_id\": \"external-agreement-id\", \"paymentInstrument_external_id\": \"external-paymentInstrument-id\"}", TaskType.DELETE_STORED_PAYMENT_DETAILS);
         taskQueueMessageHandler.processMessages();
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");

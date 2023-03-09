@@ -57,7 +57,7 @@ public interface PaymentProvider {
     
     AuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement);
 
-    default GatewayResponse deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) {
+    default void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
         throw new NotImplementedException("Delete Stored Payment Details is not implemented for this payment provider");
     }
 }

@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -33,6 +34,7 @@ import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
@@ -42,15 +44,18 @@ import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisation
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,11 +81,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -92,6 +99,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentia
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -108,6 +116,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEM
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
@@ -122,6 +131,8 @@ public class WorldpayPaymentProviderTest {
     private GatewayClient cancelClient;
     @Mock
     private GatewayClient inquiryClient;
+    @Mock
+    private GatewayClient deleteTokenClient;
     @Mock
     private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     @Mock
@@ -152,6 +163,7 @@ public class WorldpayPaymentProviderTest {
                 authoriseClient,
                 cancelClient,
                 inquiryClient,
+                deleteTokenClient, 
                 worldpayWalletAuthorisationHandler,
                 worldpayAuthoriseHandler,
                 worldpayCaptureHandler,
@@ -509,6 +521,32 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    void should_include_paymentTokenID_and_agreementId_in_delete_token_order() throws Exception {
+        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
+        AgreementEntity agreement = setUpAgreement(paymentInstrument);
+        DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+
+        worldpayPaymentProvider.deleteStoredPaymentDetails(request);
+        
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        
+        verify(deleteTokenClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(WORLDPAY), 
+                eq("test"),
+                gatewayOrderArgumentCaptor.capture(),
+                anyMap());
+        
+        String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_DELETE_TOKEN_REQUEST)
+                .replace("{{merchantCode}}", "MERCHANTCODE")
+                .replace("{{agreementId}}", "test-agreement-123")
+                .replace("{{paymentTokenId}}", "TESTTOKEN123456");
+        
+        assertXMLEqual(expectedRequestBody,
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+    
+    @Test
     void should_include_provider_session_id_when_available_for_charge() throws Exception {
         String providerSessionId = "provider-session-id";
         ChargeEntity chargeEntity = chargeEntityFixture
@@ -616,6 +654,27 @@ public class WorldpayPaymentProviderTest {
     }
 
     @Test
+    void assert_authorization_header_is_passed_to_gateway_client_when_deleting_token() throws Exception {
+        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
+        AgreementEntity agreement = setUpAgreement(paymentInstrument);
+        DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+
+        worldpayPaymentProvider.deleteStoredPaymentDetails(request);
+        
+        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+        
+        verify(deleteTokenClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(WORLDPAY), eq("test"),
+                any(GatewayOrder.class),
+                headers.capture());
+
+        assertThat(headers.getValue().size(), is(1));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String("worldpay-password" + ":" + "password").getBytes());
+        assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
+    }
+    
+    @Test
     void should_throw_exception_when_using_recurring_payment_and_no_creds() throws Exception {
         Map<String, Object> credentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
@@ -719,7 +778,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(result.getProviderSessionIdentifier().isPresent(), is(true));
         assertThat(result.getProviderSessionIdentifier().get(), is(ProviderSessionIdentifier.of("new-machine-cookie-value")));
     }
-
+    
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         auth3dsResult.setPaResponse("I am an opaque 3D Secure PA response from the card issuer");
@@ -747,5 +806,21 @@ public class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
 
         return gatewayAccountEntity;
+    }
+    
+    private PaymentInstrumentEntity setUpPaymentInstrument() {
+        Map<String, String> recurringAuthToken = new HashMap<>();
+        recurringAuthToken.put(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "TESTTOKEN123456");
+        return aPaymentInstrumentEntity()
+                .withRecurringAuthToken(recurringAuthToken)
+                .build();
+    }
+    
+    private AgreementEntity setUpAgreement(PaymentInstrumentEntity paymentInstrument) {
+        return anAgreementEntity()
+                .withExternalId("test-agreement-123")
+                .withGatewayAccount(gatewayAccountEntity)
+                .withPaymentInstrument(paymentInstrument)
+                .build();
     }
 }

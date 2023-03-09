@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -50,6 +51,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -58,9 +60,12 @@ import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -83,6 +88,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient inquiryClient;
+    private final GatewayClient deleteTokenClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final WorldpayCaptureHandler worldpayCaptureHandler;
     private final WorldpayRefundHandler worldpayRefundHandler;
@@ -99,6 +105,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    @Named("WorldpayAuthoriseGatewayClient") GatewayClient authoriseClient,
                                    @Named("WorldpayCancelGatewayClient") GatewayClient cancelClient,
                                    @Named("WorldpayInquiryGatewayClient") GatewayClient inquiryClient,
+                                   @Named("WorldpayDeleteTokenGatewayClient") GatewayClient deleteTokenClient, 
                                    WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler,
                                    WorldpayAuthoriseHandler worldpayAuthoriseHandler,
                                    WorldpayCaptureHandler worldpayCaptureHandler,
@@ -112,6 +119,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.cancelClient = cancelClient;
         this.inquiryClient = inquiryClient;
         this.authoriseClient = authoriseClient;
+        this.deleteTokenClient = deleteTokenClient;
         this.worldpayCaptureHandler = worldpayCaptureHandler;
         this.worldpayRefundHandler = worldpayRefundHandler;
         this.worldpayWalletAuthorisationHandler = worldpayWalletAuthorisationHandler;
@@ -344,6 +352,16 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
+    public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
+        GatewayClient.Response response = deleteTokenClient.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                WORLDPAY,
+                request.getGatewayAccount().getType(),
+                buildDeleteTokenOrder(request),
+                getGatewayAccountCredentialsForManagingTokensAsAuthHeader(request.getGatewayCredentials()));
+    }
+    
+    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
         return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
@@ -353,6 +371,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, isSetUpAgreement);
     }
 
+    
+    
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
@@ -369,6 +389,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .build();
     }
 
+    private GatewayOrder buildDeleteTokenOrder(DeleteStoredPaymentDetailsGatewayRequest request) {
+        var token = request.getPaymentInstrument().getRecurringAuthToken().orElseThrow(NoSuchElementException::new);
+        return aWorldpayDeleteTokenOrderRequestBuilder()
+                .withAgreementId(request.getAgreement().getExternalId())
+                .withPaymentTokenId(token.get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCodeForManagingTokens(request.getGatewayCredentials()))
+                .build();
+    }
     private String sanitiseMessage(String message) {
         return message.replaceAll("<cardHolderName>.*</cardHolderName>", "<cardHolderName>REDACTED</cardHolderName>");
     }

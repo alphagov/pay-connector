@@ -3,6 +3,7 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.service.AgreementService;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -25,13 +26,11 @@ public class DeleteStoredPaymentDetailsTaskHandler {
         this.providers = providers;
     }
 
-    public void process(String agreementExternalId, String paymentInstrumentExternalId) {
+    public void process(String agreementExternalId, String paymentInstrumentExternalId) throws GatewayException {
         var agreement = agreementService.findByExternalId(agreementExternalId);
         var paymentInstrument = paymentInstrumentService.findByExternalId(paymentInstrumentExternalId);
         PaymentProvider paymentProvider = providers.byName(PaymentGatewayName.valueFrom(agreement.getGatewayAccount().getGatewayName()));
-
         DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
-        var response = paymentProvider.deleteStoredPaymentDetails(request);
-        LOGGER.info("Processed deleteStoredPaymentDetails task with response: {}", response.toString());
+        paymentProvider.deleteStoredPaymentDetails(request);
     }
 }

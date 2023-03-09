@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.DELETE_STORED_PAYMENT_DETAILS;
 import static uk.gov.pay.connector.gateway.GatewayOperation.QUERY;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.GatewayOperation.VALIDATE_CREDENTIALS;
@@ -171,6 +172,13 @@ public class ConnectorModule extends AbstractModule {
     @Named("WorldpayInquiryGatewayClient")
     public GatewayClient worldpayInquiryGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayDeleteTokenGatewayClient")
+    public GatewayClient worldpayDeleteTokenGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createGatewayClient(WORLDPAY, DELETE_STORED_PAYMENT_DETAILS, environment.metrics());
     }
 
     @Provides
