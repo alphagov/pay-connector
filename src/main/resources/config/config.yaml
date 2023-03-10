@@ -31,6 +31,8 @@ logging:
 
 links:
   frontendUrl: ${FRONTEND_URL}
+  cardFrontendUrl: ${CARD_FRONTEND_URL}
+  cardFrontendEnabled: ${CARD_FRONTEND_ENABLED:-false}
 
 worldpay:
   urls:

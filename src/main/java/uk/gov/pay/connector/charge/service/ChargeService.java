@@ -285,8 +285,8 @@ public class ChargeService {
             }
 
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
-                agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
-                        .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
+                    agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
+                            .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
 
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
@@ -563,6 +563,7 @@ public class ChargeService {
                         .withLink("auth_url_post", POST, nextAuthUrl(uriInfo), APPLICATION_JSON, params);
             } else {
                 params.put("chargeTokenId", token.getToken());
+                
                 return builderOfResponse
                         .withLink("next_url", GET, nextUrl(token.getToken()))
                         .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
@@ -984,8 +985,8 @@ public class ChargeService {
                 if (!gatewayAccount.isRecurringEnabled()) {
                     throw new RecurringCardPaymentsNotAllowedException(
                             "Attempt to use authorisation mode 'agreement' for gateway account " +
-                             gatewayAccount.getId() +
-                            ", which does not have recurring card payments enabled");
+                                    gatewayAccount.getId() +
+                                    ", which does not have recurring card payments enabled");
                 } else if (chargeCreateRequest.getAgreementId() == null) {
                     throw new MissingMandatoryAttributeException("agreement_id");
                 } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
@@ -994,7 +995,7 @@ public class ChargeService {
                     throw new UnexpectedAttributeException("moto");
                 } else if (chargeCreateRequest.getEmail().isPresent()) {
                     throw new UnexpectedAttributeException("email");
-                }  else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
+                } else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
                     throw new UnexpectedAttributeException("prefilled_cardholder_details");
                 }
                 break;
@@ -1033,7 +1034,7 @@ public class ChargeService {
                     paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getPaymentInstrumentStatus() + "]");
         }
     }
-    
+
     public RefundAvailabilityUpdated createRefundAvailabilityUpdatedEvent(Charge charge, Instant eventTimestamp) {
         List<Refund> refundList = refundService.findRefunds(charge);
         ExternalChargeRefundAvailability refundAvailability;

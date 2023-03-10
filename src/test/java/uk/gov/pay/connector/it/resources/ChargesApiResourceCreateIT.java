@@ -123,8 +123,8 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
         String chargeTokenId = databaseTestHelper.getChargeTokenByExternalChargeId(externalChargeId);
 
-        String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
-        String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL;
+        String hrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
+        String hrefNextUrlPost = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL;
 
         response.header("Location", is(documentLocation))
                 .body("links", hasSize(4))
@@ -165,7 +165,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
         // Reload the charge token which as it should have changed
         String newChargeTokenId = databaseTestHelper.getChargeTokenByExternalChargeId(externalChargeId);
 
-        String newHrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
+        String newHrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
 
         getChargeResponse
                 .body("links", hasSize(4))
