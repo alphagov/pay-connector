@@ -69,7 +69,10 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_REFUND_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/refund-success-response.xml";
     public static final String WORLDPAY_REFUND_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/refund-error-response.xml";
     public static final String WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-refund-worldpay-request.xml";
-
+    
+    public static final String WORLDPAY_VALID_DELETE_TOKEN_REQUEST = WORLDPAY_BASE_NAME + "/valid-delete-token-worldpay-request.xml";
+    public static final String WORLDPAY_DELETE_TOKEN_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/delete-token-success-response.xml";
+    
     public static final String WORLDPAY_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/error-response.xml";
     public static final String WORLDPAY_NOTIFICATION = WORLDPAY_BASE_NAME + "/notification.xml";
     

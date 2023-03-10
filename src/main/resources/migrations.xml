@@ -1930,4 +1930,37 @@
     <changeSet id="drop not null constraint on payment instruments card type" author="">
         <dropNotNullConstraint tableName="payment_instruments" columnName="card_type" />
     </changeSet>
+
+    <changeSet id="add idempotency table" author="">
+
+        <createTable tableName="idempotency">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_external_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_body" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp without timezone"
+                    defaultValueComputed="(now() at time zone 'utc')">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="create unique constraint gateway_account_id_and_key_unique on idempotency table" author="">
+        <sql>ALTER TABLE idempotency
+            ADD CONSTRAINT gateway_account_id_and_key_unique
+                UNIQUE (gateway_account_id, key);</sql>
+    </changeSet>
+
 </databaseChangeLog>

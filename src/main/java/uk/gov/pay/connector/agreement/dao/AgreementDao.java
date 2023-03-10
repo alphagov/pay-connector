@@ -31,4 +31,15 @@ public class AgreementDao extends JpaDao<AgreementEntity> {
                 .setParameter("gatewayAccountId", gatewayAccountId)
                 .getResultList().stream().findFirst();
     }
+
+    public Optional<AgreementEntity> findByExternalId(String externalId) {
+
+        String query = "SELECT ae FROM AgreementEntity ae " +
+                "WHERE ae.externalId = :externalId";
+
+        return entityManager.get()
+                .createQuery(query, AgreementEntity.class)
+                .setParameter("externalId", externalId)
+                .getResultList().stream().findFirst();
+    }
 }

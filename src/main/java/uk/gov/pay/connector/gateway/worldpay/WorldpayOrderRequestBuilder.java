@@ -187,7 +187,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static final TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
     public static final TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayRefundOrderTemplate.xml");
     public static final TemplateBuilder INQUIRY_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayInquiryOrderTemplate.xml");
-
+    public static final TemplateBuilder DELETE_TOKEN_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("worldpay/WorldpayDeleteTokenOrderTemplate.xml");
     private final WorldpayTemplateData worldpayTemplateData;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
@@ -222,6 +222,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static WorldpayOrderRequestBuilder aWorldpayInquiryRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), INQUIRY_TEMPLATE_BUILDER, OrderRequestType.QUERY);
     }
+
+    public static WorldpayOrderRequestBuilder aWorldpayDeleteTokenOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), DELETE_TOKEN_ORDER_TEMPLATE_BUILDER, OrderRequestType.DELETE_STORED_PAYMENT_DETAILS);
+    }
+    
 
     private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
         super(worldpayTemplateData, payloadBuilder, orderRequestType);

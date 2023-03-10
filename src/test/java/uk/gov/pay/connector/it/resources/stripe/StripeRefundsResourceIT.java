@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
-import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.eclipse.jetty.http.HttpStatus.ACCEPTED_202;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,7 +38,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeRefundsResourceIT extends ChargingITestBase {
     private String stripeAccountId = "stripe_account_id";
-    private String accountId = "555";
+    private String accountId = String.valueOf(nextLong());
 
     private StripeMockClient stripeMockClient;
     private DatabaseFixtures.TestAccount defaultTestAccount;
@@ -72,7 +72,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
 
         stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
     }
-    
+
     @Test
     public void shouldSuccessfullyRefund_usingChargeId() {
         var testChargeCreatedWithStripeChargeAPI = DatabaseFixtures

@@ -7,10 +7,13 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
@@ -24,7 +27,6 @@ import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 public class TaskQueueService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final TaskQueue taskQueue;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ObjectMapper objectMapper;
@@ -74,6 +76,19 @@ public class TaskQueueService {
         }
     }
 
+    public void addDeleteStoredPaymentDetailsTask(AgreementEntity agreementEntity, PaymentInstrumentEntity paymentInstrumentEntity) {
+        try {
+            var data = new DeleteStoredPaymentDetailsTaskData(agreementEntity.getExternalId(), paymentInstrumentEntity.getExternalId());
+            add(new Task(objectMapper.writeValueAsString(data), TaskType.DELETE_STORED_PAYMENT_DETAILS));
+        } catch (Exception e) {
+            logger.warn("Error adding agreement task message to queue", ArrayUtils.addAll(
+                    agreementEntity.getStructuredLoggingArgs(),
+                    kv("task_name", TaskType.DELETE_STORED_PAYMENT_DETAILS),
+                    kv("error", e.getMessage()))
+            );
+            Sentry.captureException(e);
+        }
+    }
     private void addCollectStripeFeeForFailedPaymentTask(ChargeEntity chargeEntity) {
         try {
             MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());

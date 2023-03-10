@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
@@ -16,6 +15,7 @@ import uk.gov.pay.connector.events.model.dispute.DisputeIncludedInPayout;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.refund.RefundIncludedInPayout;
+import uk.gov.pay.connector.gateway.stripe.StripeSDKClient;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayoutStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata;
@@ -45,8 +45,7 @@ public class PayoutReconcileProcess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PayoutReconcileProcess.class);
     private final PayoutReconcileQueue payoutReconcileQueue;
-    private final StripeClientWrapper stripeClientWrapper;
-    private final StripeGatewayConfig stripeGatewayConfig;
+    private final StripeSDKClient stripeClient;
     private final ConnectorConfiguration connectorConfiguration;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final EventService eventService;
@@ -54,15 +53,13 @@ public class PayoutReconcileProcess {
 
     @Inject
     public PayoutReconcileProcess(PayoutReconcileQueue payoutReconcileQueue,
-                                  StripeClientWrapper stripeClientWrapper,
-                                  StripeGatewayConfig stripeGatewayConfig,
+                                  StripeSDKClient stripeClient,
                                   ConnectorConfiguration connectorConfiguration,
                                   GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                   EventService eventService,
                                   PayoutEmitterService payoutEmitterService) {
         this.payoutReconcileQueue = payoutReconcileQueue;
-        this.stripeClientWrapper = stripeClientWrapper;
-        this.stripeGatewayConfig = stripeGatewayConfig;
+        this.stripeClient = stripeClient;
         this.connectorConfiguration = connectorConfiguration;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.eventService = eventService;
@@ -79,47 +76,51 @@ public class PayoutReconcileProcess {
                         payoutReconcileMessage.getGatewayPayoutId(),
                         payoutReconcileMessage.getConnectAccountId());
 
-                String apiKey = getStripeApiKey(payoutReconcileMessage.getConnectAccountId());
+                GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService
+                        .findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, payoutReconcileMessage.getConnectAccountId());
 
                 AtomicInteger payments = new AtomicInteger();
                 AtomicInteger transfers = new AtomicInteger();
 
-                stripeClientWrapper.getBalanceTransactionsForPayout(payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId(), apiKey)
-                        .forEach(balanceTransaction -> {
-                            switch (balanceTransaction.getType()) {
-                                case "payment":
-                                    reconcilePayment(payoutReconcileMessage, balanceTransaction);
-                                    payments.getAndIncrement();
-                                    break;
-                                case "transfer":
-                                    reconcileTransfer(payoutReconcileMessage, balanceTransaction);
-                                    transfers.getAndIncrement();
-                                    break;
-                                case "payout":
-                                    emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
-                                    break;
-                                default:
-                                    LOGGER.error(format("Payout contains balance transfer of type [%s], which is unexpected.",
-                                                    balanceTransaction.getType()));
-                                    break;
-                            }
-                        });
+                Iterable<BalanceTransaction> balanceTransactions = stripeClient.getBalanceTransactionsForPayout(
+                        payoutReconcileMessage.getGatewayPayoutId(), payoutReconcileMessage.getConnectAccountId(),
+                        gatewayAccountEntity.isLive());
+
+                balanceTransactions.forEach(balanceTransaction -> {
+                    switch (balanceTransaction.getType()) {
+                        case "payment":
+                            reconcilePayment(payoutReconcileMessage, balanceTransaction);
+                            payments.getAndIncrement();
+                            break;
+                        case "transfer":
+                            reconcileTransfer(payoutReconcileMessage, balanceTransaction);
+                            transfers.getAndIncrement();
+                            break;
+                        case "payout":
+                            emitPayoutCreatedEvent(payoutReconcileMessage, balanceTransaction);
+                            break;
+                        default:
+                            LOGGER.error(format("Payout contains balance transfer of type [%s], which is unexpected.",
+                                    balanceTransaction.getType()));
+                            break;
+                    }
+                });
 
                 if (payments.intValue() == 0 && transfers.intValue() == 0) {
                     LOGGER.error("No payments or refunds retrieved for payout [{}]. Requires investigation.",
-                                    payoutReconcileMessage.getGatewayPayoutId());
+                            payoutReconcileMessage.getGatewayPayoutId());
                 } else {
                     LOGGER.info("Finished processing payout [{}]. Emitted events for {} payments and {} transfers.",
-                                    payoutReconcileMessage.getGatewayPayoutId(),
-                                    payments.intValue(),
-                                    transfers.intValue());
+                            payoutReconcileMessage.getGatewayPayoutId(),
+                            payments.intValue(),
+                            transfers.intValue());
 
                     payoutReconcileQueue.markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
                 }
             } catch (Exception e) {
                 LOGGER.error("Error processing payout from SQS message [queueMessageId={}] [errorMessage={}]",
-                                payoutReconcileMessage.getQueueMessageId(),
-                                e.getMessage());
+                        payoutReconcileMessage.getQueueMessageId(),
+                        e.getMessage());
             } finally {
                 MDC.remove(GATEWAY_PAYOUT_ID);
                 MDC.remove(CONNECT_ACCOUNT_ID);
@@ -155,13 +156,6 @@ public class PayoutReconcileProcess {
                             stripePayout.getId(), connectAccountId, stripePayout.getStatus())
             );
         }
-    }
-
-    private String getStripeApiKey(String stripeAccountId) {
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService
-                .findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
-
-        return gatewayAccountEntity.isLive() ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
 
     private void reconcilePayment(PayoutReconcileMessage payoutReconcileMessage, BalanceTransaction balanceTransaction) {

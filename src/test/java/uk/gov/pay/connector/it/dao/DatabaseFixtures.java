@@ -40,6 +40,7 @@ import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBui
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
@@ -65,6 +66,9 @@ public class DatabaseFixtures {
 
     public TestAgreement aTestAgreement() {
         return new TestAgreement();
+    }
+    public TestPaymentInstrument aTestPaymentInstrument() {
+        return new TestPaymentInstrument();
     }
 
     public TestChargeEvent aTestChargeEvent() {
@@ -1205,6 +1209,34 @@ public class DatabaseFixtures {
 
         public boolean getRequires3DS() {
             return requires3DS;
+        }
+    }
+    
+    public class TestPaymentInstrument {
+        Long paymentInstrumentId = RandomUtils.nextLong();;
+        Map<String, String> recurringAuthToken;
+        Instant createdDate = Instant.now();
+        Instant startDate = Instant.now();
+        String externalId = "externalIDabc";
+        
+        TestPaymentInstrument withPaymentInstrumentId(Long paymentInstrumentId) {
+            this.paymentInstrumentId = paymentInstrumentId;
+            return this;
+        }
+        
+        TestPaymentInstrument withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+
+        public TestPaymentInstrument insert() {
+            databaseTestHelper.addPaymentInstrument(anAddPaymentInstrumentParams()
+                    .withPaymentInstrumentId(paymentInstrumentId)
+                    .withExternalPaymentInstrumentId(externalId)
+                    .withCreatedDate(createdDate)
+                    .withStartDate(startDate)
+                    .build());
+            return this;
         }
     }
 }

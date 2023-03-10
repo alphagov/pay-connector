@@ -963,6 +963,7 @@ public class DatabaseTestHelper {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds_history").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE agreements CASCADE").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE payment_instruments CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE idempotency").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
@@ -1124,6 +1125,28 @@ public class DatabaseTestHelper {
                         .bind("id", paymentInstrumentId)
                         .mapToMap()
                         .first());
+    }
+
+    public Map<String, Object> getIdempotency() {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM idempotency")
+                        .mapToMap()
+                        .first()
+        );
+    }
+
+    public void insertIdempotency(String key, Long gatewayAccountId, String resourceExternalId, Map<String,Object> requestBody) {
+        PGobject requestBodyJson = mapToJsonPGobject(requestBody);
+
+        jdbi.withHandle(handle ->
+                handle.createUpdate("INSERT INTO idempotency(key, gateway_account_id, " +
+                        "resource_external_id, request_body) " +
+                        " VALUES (:key, :gatewayAccountId, :resourceExternalId, :requestBody)")
+                        .bind("key", key)
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .bind("resourceExternalId", resourceExternalId)
+                        .bindBySqlType("requestBody", requestBodyJson, OTHER)
+                        .execute());
     }
 
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {

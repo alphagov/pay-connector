@@ -8,7 +8,9 @@ import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
+import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -16,7 +18,9 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.STRIPE_EVENT_ID;
 
 public class TaskQueueMessageHandler {
@@ -26,6 +30,7 @@ public class TaskQueueMessageHandler {
     private final CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
     private final StripeWebhookTaskHandler stripeWebhookTaskHandler;
     private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
+    private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -33,11 +38,13 @@ public class TaskQueueMessageHandler {
                                    CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler,
                                    StripeWebhookTaskHandler stripeWebhookTaskHandler,
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
+                                   DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
         this.stripeWebhookTaskHandler = stripeWebhookTaskHandler;
         this.authoriseWithUserNotPresentHandler = authoriseWithUserNotPresentHandler;
+        this.deleteStoredPaymentDetailsHandler = deleteStoredPaymentDetailsHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -76,6 +83,13 @@ public class TaskQueueMessageHandler {
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         authoriseWithUserNotPresentHandler.process(taskData.getPaymentExternalId());
                         break;
+                    case DELETE_STORED_PAYMENT_DETAILS:
+                        var deleteStoredPaymentDetailsTaskData = objectMapper.readValue(taskMessage.getTask().getData(), DeleteStoredPaymentDetailsTaskData.class);
+                        MDC.put(AGREEMENT_EXTERNAL_ID, deleteStoredPaymentDetailsTaskData.getAgreementExternalId());
+                        MDC.put(PAYMENT_INSTRUMENT_EXTERNAL_ID, deleteStoredPaymentDetailsTaskData.getPaymentInstrumentExternalId());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        deleteStoredPaymentDetailsHandler.process(deleteStoredPaymentDetailsTaskData.getAgreementExternalId(), deleteStoredPaymentDetailsTaskData.getPaymentInstrumentExternalId());
+                        break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
                 }
@@ -89,6 +103,8 @@ public class TaskQueueMessageHandler {
             } finally {
                 MDC.remove(PAYMENT_EXTERNAL_ID);
                 MDC.remove(STRIPE_EVENT_ID);
+                MDC.remove(AGREEMENT_EXTERNAL_ID);
+                MDC.remove(PAYMENT_INSTRUMENT_EXTERNAL_ID);
             }
         });
     }

@@ -17,10 +17,10 @@
         <eclipselink.version>2.7.11</eclipselink.version>
         <guice.version>5.1.0</guice.version>
         <jackson.version>2.14.2</jackson.version>
-        <pay-java-commons.version>1.0.20230206115732</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20230306161941</pay-java-commons.version>
         <surefire.version>3.0.0-M9</surefire.version>
         <jooq.version>3.17.8</jooq.version>
-        <postgresql.version>42.5.3</postgresql.version>
+        <postgresql.version>42.5.4</postgresql.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <jjwt.version>0.11.5</jjwt.version>
         <pact.version>3.6.15</pact.version>
@@ -140,7 +140,7 @@
         <dependency>
             <groupId>uk.gov.service.notify</groupId>
             <artifactId>notifications-java-client</artifactId>
-            <version>3.19.0-RELEASE</version>
+            <version>3.19.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -313,7 +313,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>1.12.408</version>
+            <version>1.12.417</version>
         </dependency>
         <dependency>
             <groupId>org.dhatim</groupId>
@@ -541,7 +541,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.11.0</version>
                 <configuration>
                     <release>11</release>
                 </configuration>

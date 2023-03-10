@@ -2,7 +2,7 @@ package uk.gov.pay.connector.paymentinstrument.service;
 
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentCreated;
@@ -26,6 +26,10 @@ public class PaymentInstrumentService {
         this.clock = clock;
     }
 
+    public PaymentInstrumentEntity findByExternalId(String externalId) {
+        return paymentInstrumentDao.findByExternalId(externalId).orElseThrow(() -> new PaymentInstrumentNotFoundRuntimeException(externalId));
+    }
+    
     @Transactional
     public PaymentInstrumentEntity createPaymentInstrument(ChargeEntity charge, Map<String, String> recurringAuthToken) {
         var now = clock.instant();

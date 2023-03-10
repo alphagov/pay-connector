@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 @Converter
-public class CredentialsConverter implements AttributeConverter<Map<String,Object>, PGobject> {
+public class JsonToStringObjectMapConverter implements AttributeConverter<Map<String,Object>, PGobject> {
     
     private static ObjectMapper objectMapper = new ObjectMapper();
 

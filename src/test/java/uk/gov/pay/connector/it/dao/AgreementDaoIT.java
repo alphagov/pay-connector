@@ -64,6 +64,19 @@ public class AgreementDaoIT extends DaoITestBase {
         assertThat(agreement.isPresent(), is(false));
     }
 
+    @Test
+    public void findByExternalIdOnly_shouldFindAnAgreementEntity() {
+        insertTestAgreement(AGREEMENT_EXTERNAL_ID_ONE, gatewayAccount1.getId());
+        Optional<AgreementEntity> agreement = agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID_ONE);
+        assertThat(agreement.isPresent(), is(true));
+        assertThat(agreement.get().getExternalId(), is(AGREEMENT_EXTERNAL_ID_ONE));
+    }
+
+    @Test
+    public void findByExternalIdOnly_shouldNotFindAnAgreementEntity() {
+        Optional<AgreementEntity> agreement = agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID_TWO);
+        assertThat(agreement.isPresent(), is(false));
+    }
 
     @After
     public void clear() {

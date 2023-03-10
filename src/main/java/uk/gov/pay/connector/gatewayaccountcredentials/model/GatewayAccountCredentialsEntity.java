@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringObjectMapConverter;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
@@ -28,7 +28,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
 
 @Entity
 @Table(name = "gateway_account_credentials")
@@ -47,7 +46,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     private String paymentProvider;
 
     @Column(name = "credentials", columnDefinition = "json")
-    @Convert(converter = CredentialsConverter.class)
+    @Convert(converter = JsonToStringObjectMapConverter.class)
     @Schema(example = "{" +
             "                \"stripe_account_id\": \"an-id\"" +
             "            }")

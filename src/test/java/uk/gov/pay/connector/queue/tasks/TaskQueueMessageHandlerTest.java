@@ -6,7 +6,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
@@ -51,6 +51,8 @@ class TaskQueueMessageHandlerTest {
     private AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
 
     @Mock
+    private DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     @Captor
@@ -69,6 +71,7 @@ class TaskQueueMessageHandlerTest {
                 collectFeesForFailedPaymentsTaskHandler,
                 stripeWebhookTaskHandler,
                 authoriseWithUserNotPresentHandler,
+                deleteStoredPaymentDetailsHandler,
                 objectMapper);
 
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
@@ -128,6 +131,14 @@ class TaskQueueMessageHandlerTest {
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
 
+    @Test
+    public void shouldProcessDeleteStoredPaymentDetailsTask() throws QueueException {
+        TaskMessage taskMessage = setupQueueMessage("{ \"agreement_external_id\": \"external-agreement-id\", \"paymentInstrument_external_id\": \"external-paymentInstrument-id\"}", TaskType.DELETE_STORED_PAYMENT_DETAILS);
+        taskQueueMessageHandler.processMessages();
+        verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
+    
     private TaskMessage setupQueueMessage(String data, TaskType taskType) throws QueueException {
         Task paymentTask = new Task(data, taskType);
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
