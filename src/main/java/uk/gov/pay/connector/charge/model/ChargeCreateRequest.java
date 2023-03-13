@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.charge.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
+import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -70,6 +73,7 @@ public class ChargeCreateRequest {
 
     @JsonProperty("metadata")
     @JsonDeserialize(using = ExternalMetadataDeserialiser.class)
+    @JsonSerialize(using = ExternalMetadataSerialiser.class)
     @Valid
     private ExternalMetadata externalMetadata;
 
@@ -169,6 +173,7 @@ public class ChargeCreateRequest {
         return Optional.ofNullable(prefilledCardHolderDetails);
     }
 
+    @JsonIgnore
     public Optional<ExternalMetadata> getExternalMetadata() {
         return Optional.ofNullable(externalMetadata);
     }
