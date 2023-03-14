@@ -9,14 +9,14 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
-public class StripeSDKClient {
+public class StripeSdkClient {
 
     private final StripeGatewayConfig stripeGatewayConfig;
     
-    private final StripeSDKWrapper stripeSDKWrapper;
+    private final StripeSdkWrapper stripeSDKWrapper;
     
     @Inject
-    public StripeSDKClient(StripeGatewayConfig stripeGatewayConfig, StripeSDKWrapper stripeSDKWrapper) {
+    public StripeSdkClient(StripeGatewayConfig stripeGatewayConfig, StripeSdkWrapper stripeSDKWrapper) {
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.stripeSDKWrapper = stripeSDKWrapper;
     }

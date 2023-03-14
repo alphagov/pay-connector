@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class StripeSDKClientTest {
+class StripeSdkClientTest {
 
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
@@ -31,10 +31,10 @@ class StripeSDKClientTest {
     private StripeAuthTokens stripeAuthTokens;
 
     @Mock
-    private StripeSDKWrapper stripeSDKWrapper;
+    private StripeSdkWrapper stripeSDKWrapper;
 
     @InjectMocks
-    private StripeSDKClient stripeSDKClient;
+    private StripeSdkClient stripeSDKClient;
 
     @Captor
     private ArgumentCaptor<RequestOptions> requestOptionsArgumentCaptor;

@@ -94,6 +94,7 @@ public class TaskQueueMessageHandler {
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
                 }
                 taskQueue.markMessageAsProcessed(taskMessage.getQueueMessage());
+                LOGGER.info("Successfully processed [{}] task.", taskType.getName());
             } catch (Exception e) {
                 LOGGER.error("Error processing message from queue",
                         kv("queueMessageId", taskMessage.getQueueMessageId()),
