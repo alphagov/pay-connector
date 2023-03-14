@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.collect.Maps;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +20,7 @@ import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentEx
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
+import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
@@ -44,6 +49,7 @@ import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.charge.util.ChargeCreateRequestIdempotencyComparatorUtil;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -75,6 +81,8 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
+import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -130,6 +138,8 @@ public class ChargeService {
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
+
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
@@ -149,6 +159,7 @@ public class ChargeService {
     private final AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter;
     private final PaymentInstrumentService paymentInstrumentService;
     private final TaskQueueService taskQueueService;
+    private final IdempotencyDao idempotencyDao;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -166,8 +177,8 @@ public class ChargeService {
                          PaymentInstrumentService paymentInstrumentService,
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
                          AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
-                         TaskQueueService taskQueueService
-    ) {
+                         TaskQueueService taskQueueService,
+                         IdempotencyDao idempotencyDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -186,6 +197,7 @@ public class ChargeService {
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.authCardDetailsToCardDetailsEntityConverter = authCardDetailsToCardDetailsEntityConverter;
         this.taskQueueService = taskQueueService;
+        this.idempotencyDao = idempotencyDao;
     }
 
     @Transactional
@@ -246,15 +258,15 @@ public class ChargeService {
         }
     }
 
-    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
-        return createCharge(chargeRequest, accountId, uriInfo)
+    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo, String idempotencyKey) {
+        return createCharge(chargeRequest, accountId, idempotencyKey)
                 .map(charge ->
                         populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
                 );
     }
 
     @Transactional
-    private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, String idempotencyKey) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
             checkIfGatewayAccountDisabled(gatewayAccount);
 
@@ -314,6 +326,19 @@ public class ChargeService {
                     .ifPresent(chargeEntity::setCardDetails);
 
             if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                if (idempotencyKey != null) {
+                    Optional<IdempotencyEntity> optionalIdempotencyEntity = idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccount.getId(), idempotencyKey);
+                    if (optionalIdempotencyEntity.isPresent()) {
+                        IdempotencyEntity idempotencyEntity = optionalIdempotencyEntity.get();
+                        if (ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeRequest, idempotencyEntity.getRequestBody())) {
+                            LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
+                            // TODO implement PP-10833, query Ledger if Charge has been expunged
+                            return findChargeByExternalId(idempotencyEntity.getResourceExternalId());
+                        }
+                        LOGGER.info("Idempotency-Key already exist with different values {}", idempotencyKey);
+                        throw new IdempotencyKeyUsedException();
+                    }
+                }
                 agreementEntity.ifPresent(agreement -> {
                     checkAgreementHasActivePaymentInstrument(agreement);
                     agreement.getPaymentInstrument()
@@ -322,8 +347,20 @@ public class ChargeService {
             }
 
             chargeDao.persist(chargeEntity);
+
+            if (authorisationMode == AGREEMENT && idempotencyKey != null) {
+                IdempotencyEntity idempotencyEntity = new IdempotencyEntity(
+                        idempotencyKey,
+                        gatewayAccount,
+                        chargeEntity.getExternalId(),
+                        mapper.convertValue(chargeRequest, new TypeReference<>() {}),
+                        Instant.now());
+                idempotencyDao.persist(idempotencyEntity);
+            }
+            
             transitionChargeState(chargeEntity, CREATED);
             chargeDao.merge(chargeEntity);
+
             return chargeEntity;
         });
     }

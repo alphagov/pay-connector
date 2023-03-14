@@ -25,10 +25,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -116,8 +118,8 @@ public class ChargesApiResource {
     public Response createNewCharge(
             @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid ChargeCreateRequest chargeRequest,
-            @Context UriInfo uriInfo
-    ) {
+            @Context UriInfo uriInfo,
+            @Nullable @HeaderParam("Idempotency-Key") String idempotencyKey) {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
 
         AuthorisationMode authorisationMode = chargeRequest.getAuthorisationMode();
@@ -135,7 +137,7 @@ public class ChargesApiResource {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
 
-        return chargeService.create(chargeRequest, accountId, uriInfo)
+        return chargeService.create(chargeRequest, accountId, uriInfo, idempotencyKey)
                 .map(response -> {
                     if (authorisationMode == AuthorisationMode.AGREEMENT) {
                         chargeService.markChargeAsEligibleForAuthoriseUserNotPresent(response.getChargeId());

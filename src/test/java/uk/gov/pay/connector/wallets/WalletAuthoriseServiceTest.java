@@ -45,6 +45,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
@@ -149,6 +150,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
 
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
+
     private WalletAuthoriseService walletAuthoriseService;
 
     private final AppleDecryptedPaymentData validApplePayDetails =
@@ -187,7 +191,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService));
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
