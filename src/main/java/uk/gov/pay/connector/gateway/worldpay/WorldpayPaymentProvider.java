@@ -354,9 +354,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
          deleteTokenClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                gatewayUrlMap.get(request.getGatewayAccountType()),
                 WORLDPAY,
-                request.getGatewayAccount().getType(),
+                request.getGatewayAccountType(),
                 buildDeleteTokenOrder(request),
                 getGatewayAccountCredentialsForManagingTokensAsAuthHeader(request.getGatewayCredentials()));
     }
@@ -390,10 +390,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private GatewayOrder buildDeleteTokenOrder(DeleteStoredPaymentDetailsGatewayRequest request) {
-        var token = request.getPaymentInstrument().getRecurringAuthToken().orElseThrow(NoSuchElementException::new);
         return aWorldpayDeleteTokenOrderRequestBuilder()
-                .withAgreementId(request.getAgreement().getExternalId())
-                .withPaymentTokenId(token.get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
+                .withAgreementId(request.getAgreementExternalId())
+                .withPaymentTokenId(request.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCodeForManagingTokens(request.getGatewayCredentials()))
                 .build();
     }

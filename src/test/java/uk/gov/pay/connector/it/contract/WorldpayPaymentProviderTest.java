@@ -379,7 +379,7 @@ class WorldpayPaymentProviderTest {
         AgreementEntity agreement = anAgreementEntity().withGatewayAccount(validGatewayAccount).build();
         PaymentInstrumentEntity paymentInstrument = setUpAgreement(paymentProvider, agreement);
 
-        var gatewayDeleteTokenRequest = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+        var gatewayDeleteTokenRequest = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
         paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest);
         assertDoesNotThrow(() -> paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest));
         

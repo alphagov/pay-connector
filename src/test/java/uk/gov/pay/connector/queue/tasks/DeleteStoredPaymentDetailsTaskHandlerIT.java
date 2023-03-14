@@ -80,6 +80,7 @@ public class DeleteStoredPaymentDetailsTaskHandlerIT {
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withExternalPaymentInstrumentId(paymentInstrumentExternalId)
+                .withRecurringAuthToken(Map.of("token", "something"))
                 .build();
         databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
         

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
@@ -171,6 +173,16 @@ public final class GatewayAccountEntityFixture {
 
     public GatewayAccountEntityFixture withGatewayAccountCredentials(List<GatewayAccountCredentialsEntity> credentials) {
         this.gatewayAccountCredentialsEntities = credentials;
+        return this;
+    }
+    
+    public GatewayAccountEntityFixture withActiveStripeGatewayAccountCredentials() {
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withStripeCredentials()
+                .build();
+        this.gatewayAccountCredentialsEntities = List.of(credentialsEntity);
         return this;
     }
 
