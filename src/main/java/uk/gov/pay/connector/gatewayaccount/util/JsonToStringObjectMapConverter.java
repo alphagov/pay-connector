@@ -17,21 +17,21 @@ public class JsonToStringObjectMapConverter implements AttributeConverter<Map<St
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public PGobject convertToDatabaseColumn(Map<String,Object> credentials) {
-        PGobject pgCredentials = new PGobject();
-        pgCredentials.setType("json");
+    public PGobject convertToDatabaseColumn(Map<String,Object> stringObjectMap) {
+        PGobject pGobject = new PGobject();
+        pGobject.setType("json");
         try {
-            pgCredentials.setValue(objectMapper.writeValueAsString(credentials));
+            pGobject.setValue(objectMapper.writeValueAsString(stringObjectMap));
         } catch (SQLException | JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        return pgCredentials;
+        return pGobject;
     }
 
     @Override
-    public Map<String, Object> convertToEntityAttribute(PGobject dbCredentials) {
+    public Map<String, Object> convertToEntityAttribute(PGobject pGobject) {
         try {
-            return objectMapper.readValue(dbCredentials.toString(), new TypeReference<>() {});
+            return objectMapper.readValue(pGobject.toString(), new TypeReference<>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
