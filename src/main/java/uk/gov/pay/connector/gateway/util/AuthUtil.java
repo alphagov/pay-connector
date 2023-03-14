@@ -59,6 +59,10 @@ public class AuthUtil {
         return gatewayCredentials.get(CREDENTIALS_MERCHANT_ID).toString();
     }
 
+    public static String getWorldpayMerchantCodeForManagingTokens(Map<String, Object> gatewayCredentials) {
+        return gatewayCredentials.get(CREDENTIALS_MERCHANT_ID).toString();
+    }
+
     public static Map<String, String> getGatewayAccountCredentialsAsAuthHeader(Map<String, Object> gatewayCredentials) {
         String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME).toString(), gatewayCredentials.get(CREDENTIALS_PASSWORD).toString());
         return ImmutableMap.of(AUTHORIZATION, value);
@@ -77,6 +81,11 @@ public class AuthUtil {
         return ImmutableMap.of(AUTHORIZATION, value);
     }
 
+    public static Map<String, String> getGatewayAccountCredentialsForManagingTokensAsAuthHeader(Map<String, Object> gatewayCredentials) {
+        String value = encode(gatewayCredentials.get(CREDENTIALS_USERNAME).toString(), gatewayCredentials.get(CREDENTIALS_PASSWORD).toString());
+        return ImmutableMap.of(AUTHORIZATION, value);
+    }
+    
     public static Map<String, String> getWorldpayCredentialsCheckAuthHeader(WorldpayCredentials worldpayCredentials) {
         String value = encode(worldpayCredentials.getUsername(), worldpayCredentials.getPassword());
         return ImmutableMap.of(AUTHORIZATION, value);

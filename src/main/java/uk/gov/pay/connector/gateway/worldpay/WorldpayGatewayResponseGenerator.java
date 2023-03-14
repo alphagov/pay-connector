@@ -17,6 +17,10 @@ public interface WorldpayGatewayResponseGenerator {
         return getWorldpayGatewayResponse(response, WorldpayOrderStatusResponse.class);
     }
 
+    default GatewayResponse<WorldpayDeleteTokenResponse> getWorldpayDeleteTokenGatewayResponse(GatewayClient.Response response) throws GatewayErrorException {
+        return getWorldpayGatewayResponse(response, WorldpayDeleteTokenResponse.class);
+    }
+    
     default <T extends BaseResponse> GatewayResponse<T> getWorldpayGatewayResponse(GatewayClient.Response response, Class<T> target) throws GatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<T> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, target));

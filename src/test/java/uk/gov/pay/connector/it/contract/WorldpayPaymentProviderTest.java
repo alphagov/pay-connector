@@ -21,12 +21,14 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -66,6 +68,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -370,6 +373,26 @@ class WorldpayPaymentProviderTest {
         assertTrue(authoriseUserNotPresentResponse.getBaseResponse().isPresent());
     }
 
+    @Test
+    void shouldBeAbleToSendDeleteTokenRequestAndNotBeAbleToTakeFurtherPaymentsWithToken() throws GatewayException {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        AgreementEntity agreement = anAgreementEntity().withGatewayAccount(validGatewayAccount).build();
+        PaymentInstrumentEntity paymentInstrument = setUpAgreement(paymentProvider, agreement);
+
+        var gatewayDeleteTokenRequest = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+        paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest);
+        assertDoesNotThrow(() -> paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest));
+        
+        ChargeEntity recurringCharge = createChargeEntity();
+        recurringCharge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
+        recurringCharge.setAgreementEntity(agreement);
+        recurringCharge.setPaymentInstrument(paymentInstrument);
+
+        var gatewayPaymentRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(recurringCharge);
+        GatewayResponse authoriseAnotherUserNotPresentResponse = paymentProvider.authoriseUserNotPresent(gatewayPaymentRequest);
+        assertTrue(authoriseAnotherUserNotPresentResponse.getGatewayError().isPresent());
+    }
+    
     @ParameterizedTest
     @MethodSource("worldpayTestCardNumbersThatRequire3ds")
     void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress(String cardBrand, String cardNumber) {
@@ -617,6 +640,7 @@ class WorldpayPaymentProviderTest {
 
         return new WorldpayPaymentProvider(
                 gatewayUrlMap(),
+                gatewayClient,
                 gatewayClient,
                 gatewayClient,
                 gatewayClient,
