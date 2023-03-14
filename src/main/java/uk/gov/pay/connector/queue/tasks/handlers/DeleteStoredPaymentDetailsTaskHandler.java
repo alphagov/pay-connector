@@ -30,7 +30,7 @@ public class DeleteStoredPaymentDetailsTaskHandler {
         var agreement = agreementService.findByExternalId(agreementExternalId);
         var paymentInstrument = paymentInstrumentService.findByExternalId(paymentInstrumentExternalId);
         PaymentProvider paymentProvider = providers.byName(PaymentGatewayName.valueFrom(agreement.getGatewayAccount().getGatewayName()));
-        DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+        var request = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
         paymentProvider.deleteStoredPaymentDetails(request);
     }
 }

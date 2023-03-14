@@ -524,7 +524,7 @@ public class WorldpayPaymentProviderTest {
     void should_include_paymentTokenID_and_agreementId_in_delete_token_order() throws Exception {
         PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
         AgreementEntity agreement = setUpAgreement(paymentInstrument);
-        DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+        DeleteStoredPaymentDetailsGatewayRequest request = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
 
         worldpayPaymentProvider.deleteStoredPaymentDetails(request);
         
@@ -657,7 +657,7 @@ public class WorldpayPaymentProviderTest {
     void assert_authorization_header_is_passed_to_gateway_client_when_deleting_token() throws Exception {
         PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
         AgreementEntity agreement = setUpAgreement(paymentInstrument);
-        DeleteStoredPaymentDetailsGatewayRequest request = new DeleteStoredPaymentDetailsGatewayRequest(agreement, paymentInstrument);
+        DeleteStoredPaymentDetailsGatewayRequest request = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
 
         worldpayPaymentProvider.deleteStoredPaymentDetails(request);
         

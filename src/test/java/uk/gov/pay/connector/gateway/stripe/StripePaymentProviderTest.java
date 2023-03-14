@@ -569,7 +569,7 @@ class StripePaymentProviderTest {
             String customerId = "cus_123";
             AgreementEntity agreementEntity = createAgreementWithPaymentInstrument(customerId);
 
-            var request = new DeleteStoredPaymentDetailsGatewayRequest(agreementEntity, agreementEntity.getPaymentInstrument().get());
+            var request = DeleteStoredPaymentDetailsGatewayRequest.from(agreementEntity, agreementEntity.getPaymentInstrument().get());
             provider.deleteStoredPaymentDetails(request);
 
             verify(stripeSDKClient).deleteCustomer(customerId, true);
@@ -586,7 +586,7 @@ class StripePaymentProviderTest {
             when(mockStripeException.getMessage()).thenReturn("I'm a teapot");
             doThrow(mockStripeException).when(stripeSDKClient).deleteCustomer(customerId, true);
             
-            var request = new DeleteStoredPaymentDetailsGatewayRequest(agreementEntity, agreementEntity.getPaymentInstrument().get());
+            var request = DeleteStoredPaymentDetailsGatewayRequest.from(agreementEntity, agreementEntity.getPaymentInstrument().get());
             GatewayException gatewayException = assertThrows(GatewayException.class, () -> provider.deleteStoredPaymentDetails(request));
             assertThat(gatewayException.getMessage(), is("Error when attempting to delete Stripe customer cus_123. Status code: 418, Error code: im_a_teapot, Message: I'm a teapot"));
         }
@@ -595,10 +595,14 @@ class StripePaymentProviderTest {
             PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity()
                     .withStripeRecurringAuthToken(customerId, "pm_123")
                     .build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withType(LIVE)
+                    .withActiveStripeGatewayAccountCredentials()
+                    .build();
             return anAgreementEntity()
                     .withPaymentInstrument(paymentInstrumentEntity)
                     .withGatewayAccount(gatewayAccountEntity)
+                    .withLive(true)
                     .build();
         }
     }

@@ -194,12 +194,9 @@ public class StripePaymentProvider implements PaymentProvider {
 
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
-        PaymentInstrumentEntity paymentInstrument = request.getPaymentInstrument();
-        var recurringAuthToken = paymentInstrument.getRecurringAuthToken()
-                .orElseThrow(() -> new RuntimeException("Expected payment instrument to have recurring auth token set when attempting to delete Stripe customer"));
-        var customerId = recurringAuthToken.get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY);
+        var customerId = request.getRecurringAuthToken().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY);
         try {
-            stripeSDKClient.deleteCustomer(customerId, request.getGatewayAccount().isLive());
+            stripeSDKClient.deleteCustomer(customerId, request.isLive());
         } catch (StripeException e) {
             var message = String.format("Error when attempting to delete Stripe customer %s. Status code: %s, Error code: %s, Message: %s",
                     customerId, e.getStatusCode(), e.getCode(), e.getMessage());

@@ -287,7 +287,7 @@ public class StripePaymentProviderTest {
     public void shouldDeleteStoredPaymentDetails() throws Exception {
         ChargeEntity setUpAgreementCharge = setUpAgreement();
 
-        var request = new DeleteStoredPaymentDetailsGatewayRequest(setUpAgreementCharge.getAgreement().get(), setUpAgreementCharge.getPaymentInstrument().get());
+        var request = DeleteStoredPaymentDetailsGatewayRequest.from(setUpAgreementCharge.getAgreement().get(), setUpAgreementCharge.getPaymentInstrument().get());
         stripePaymentProvider.deleteStoredPaymentDetails(request);
 
         // attempt to take recurring payment to ensure customer is deleted

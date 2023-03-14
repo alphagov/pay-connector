@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -42,6 +43,11 @@ public final class GatewayAccountCredentialsEntityFixture {
 
     public GatewayAccountCredentialsEntityFixture withCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
+        return this;
+    }
+    
+    public GatewayAccountCredentialsEntityFixture withStripeCredentials() {
+        this.credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "acct_abc123");
         return this;
     }
 
