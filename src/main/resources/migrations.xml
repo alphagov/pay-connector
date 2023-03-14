@@ -1963,4 +1963,19 @@
                 UNIQUE (gateway_account_id, key);</sql>
     </changeSet>
 
+    <changeSet id="add agreement_external_id column to payment_instruments table" author="">
+        <addColumn tableName="payment_instruments">
+            <column name="agreement_external_id" type="varchar(32)">
+                <constraints
+                        foreignKeyName="fk__payment_instruments_agreements"
+                        referencedTableName="agreements"
+                        referencedColumnNames="external_id"
+                        nullable="true"/>
+            </column>
+        </addColumn>
+        <createIndex tableName="payment_instruments" indexName="idx_payment_instruments_agreement_external_id">
+            <column name="agreement_external_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
