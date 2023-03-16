@@ -20,6 +20,7 @@ import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.LedgerStub;
@@ -464,8 +465,15 @@ public class ChargingITestBase {
     }
 
     protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {
-        String agreementExternalId = addAgreeement();
+        String agreementExternalId = addAgreement();
+        return addChargeForSetUpAgreement(status, agreementExternalId);
+    }
 
+    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId) {
+        return addChargeForSetUpAgreement(status, agreementExternalId, null);
+    }
+    
+    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -479,11 +487,12 @@ public class ChargingITestBase {
                 .withSavePaymentInstrumentToAgreement(true)
                 .withAgreementId(agreementExternalId)
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
+                .withPaymentInstrumentId(paymentInstrumentId)
                 .build());
         return externalChargeId;
     }
 
-    private String addAgreeement() {
+    protected String addAgreement() {
         String agreementExternalId = String.valueOf(nextLong());
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(accountId)
@@ -491,6 +500,17 @@ public class ChargingITestBase {
                 .build();
         databaseTestHelper.addAgreement(agreementParams);
         return agreementExternalId;
+    }
+    
+    protected Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
+        Long paymentInstrumentId = nextLong();
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withAgreementExternalId(agreementExternalId)
+                .withPaymentInstrumentStatus(status)
+                .build();
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+        return paymentInstrumentId;
     }
 
     protected ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(Map<String, String> recurringAuthToken) {
@@ -502,7 +522,7 @@ public class ChargingITestBase {
             LastDigitsCardNumber last4DigitsCardNumber,
             Map<String, String> recurringAuthToken
     ) {
-        String agreementExternalId = addAgreeement();
+        String agreementExternalId = addAgreement();
 
         long paymentInstrumentId = nextInt();
         AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder paymentInstrumentParamsBuilder = anAddPaymentInstrumentParams()

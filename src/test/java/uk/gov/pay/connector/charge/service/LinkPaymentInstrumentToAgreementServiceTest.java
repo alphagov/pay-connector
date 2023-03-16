@@ -19,8 +19,10 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -30,9 +32,11 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,10 +46,13 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     private static final long GATEWAY_ACCOUNT_ID = 1;
 
     @Mock
-    private AgreementDao mockAgreementDao;
+    private PaymentInstrumentDao paymentInstrumentDao;
 
     @Mock
     private LedgerService ledgerService;
+    
+    @Mock
+    private TaskQueueService taskQueueService;
 
     @Mock
     private AgreementEntity mockAgreementEntity;
@@ -73,7 +80,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         logger.addAppender(mockAppender);
 
         clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
-        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(mockAgreementDao, ledgerService, clock);
+        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(paymentInstrumentDao, ledgerService, taskQueueService, clock);
     }
 
     @Test
@@ -83,7 +90,9 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockAgreementEntity.getExternalId()).thenReturn(agreementExternalId);
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
-        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementEntity(mockAgreementEntity).build();
+        
+        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity)
+                .withAgreementEntity(mockAgreementEntity).build();
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
@@ -94,6 +103,30 @@ class LinkPaymentInstrumentToAgreementServiceTest {
                 AgreementSetUp.from(mockAgreementEntity, clock.instant()),
                 PaymentInstrumentConfirmed.from(mockAgreementEntity, clock.instant())
         ));
+    }
+
+    @Test
+    void shouldUpdatePreviousActivePaymentInstrumentsToCancelledAndAddToTaskQueue() {
+        var oldPaymentInstrument1 = mock(PaymentInstrumentEntity.class);
+        var oldPaymentInstrument2 = mock(PaymentInstrumentEntity.class);
+        
+        String agreementExternalId = "an-agreement-external-id";
+        when(mockAgreementEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
+        when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
+        when(mockAgreementEntity.getExternalId()).thenReturn(agreementExternalId);
+        when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
+        when(paymentInstrumentDao.findPaymentInstrumentsByAgreementAndStatus(agreementExternalId, PaymentInstrumentStatus.ACTIVE))
+                .thenReturn(List.of(oldPaymentInstrument1, oldPaymentInstrument2));
+
+        var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity)
+                .withAgreementEntity(mockAgreementEntity).build();
+        
+        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
+        
+        verify(oldPaymentInstrument1).setStatus(PaymentInstrumentStatus.CANCELLED);
+        verify(oldPaymentInstrument2).setStatus(PaymentInstrumentStatus.CANCELLED);
+        verify(taskQueueService).addDeleteStoredPaymentDetailsTask(mockAgreementEntity, oldPaymentInstrument1);
+        verify(taskQueueService).addDeleteStoredPaymentDetailsTask(mockAgreementEntity, oldPaymentInstrument2);
     }
 
     @Test
