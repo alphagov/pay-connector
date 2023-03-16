@@ -59,6 +59,9 @@ public class PaymentInstrumentEntity {
 
     @Column(name = "external_id")
     private String externalId;
+    
+    @Column(name = "agreement_external_id")
+    private String agreementExternalId;
 
     private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus paymentInstrumentStatus) {
         this.createdDate = createdDate;
@@ -119,6 +122,14 @@ public class PaymentInstrumentEntity {
 
     public void setCardDetails(CardDetailsEntity cardDetails) {
         this.cardDetails = cardDetails;
+    }
+
+    public String getAgreementExternalId() {
+        return agreementExternalId;
+    }
+
+    public void setAgreementExternalId(String agreementExternalId) {
+        this.agreementExternalId = agreementExternalId;
     }
 
     @Column(name = "status")

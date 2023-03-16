@@ -4721,6 +4721,8 @@ components:
     PaymentInstrumentEntity_FrontendView:
       type: object
       properties:
+        agreementExternalId:
+          type: string
         cardDetails:
           $ref: '#/components/schemas/CardDetailsEntity_FrontendView'
         createdDate:
