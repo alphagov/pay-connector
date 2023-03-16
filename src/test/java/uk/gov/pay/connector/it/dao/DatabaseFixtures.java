@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -67,6 +68,7 @@ public class DatabaseFixtures {
     public TestAgreement aTestAgreement() {
         return new TestAgreement();
     }
+
     public TestPaymentInstrument aTestPaymentInstrument() {
         return new TestPaymentInstrument();
     }
@@ -428,7 +430,7 @@ public class DatabaseFixtures {
         public void setRecurringEnabled(boolean recurringEnabled) {
             this.recurringEnabled = recurringEnabled;
         }
-        
+
         public TestAccount withAccountId(long accountId) {
             this.accountId = accountId;
             return this;
@@ -538,11 +540,12 @@ public class DatabaseFixtures {
             this.allowTelephonePaymentNotifications = allowTelephonePaymentNotifications;
             return this;
         }
-        
+
         public TestAccount withRecurringEnabled(boolean recurringEnabled) {
             this.recurringEnabled = recurringEnabled;
             return this;
         }
+
         public TestAccount withDefaultCredentials() {
             this.credentialsMap = defaultCredentials;
             return this;
@@ -1211,21 +1214,36 @@ public class DatabaseFixtures {
             return requires3DS;
         }
     }
-    
+
     public class TestPaymentInstrument {
-        Long paymentInstrumentId = RandomUtils.nextLong();;
+        Long paymentInstrumentId = RandomUtils.nextLong();
+        ;
         Map<String, String> recurringAuthToken;
         Instant createdDate = Instant.now();
         Instant startDate = Instant.now();
         String externalId = "externalIDabc";
-        
+
+        String agreementExternalId;
+
+        PaymentInstrumentStatus status = PaymentInstrumentStatus.CREATED;
+
         TestPaymentInstrument withPaymentInstrumentId(Long paymentInstrumentId) {
             this.paymentInstrumentId = paymentInstrumentId;
             return this;
         }
-        
+
         TestPaymentInstrument withExternalId(String externalId) {
             this.externalId = externalId;
+            return this;
+        }
+
+        TestPaymentInstrument withAgreementExternalId(String agreementExternalId) {
+            this.agreementExternalId = agreementExternalId;
+            return this;
+        }
+
+        TestPaymentInstrument withStatus(PaymentInstrumentStatus status) {
+            this.status = status;
             return this;
         }
 
@@ -1235,6 +1253,8 @@ public class DatabaseFixtures {
                     .withExternalPaymentInstrumentId(externalId)
                     .withCreatedDate(createdDate)
                     .withStartDate(startDate)
+                    .withPaymentInstrumentStatus(status)
+                    .withAgreementExternalId(agreementExternalId)
                     .build());
             return this;
         }

@@ -30,11 +30,9 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -91,7 +89,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
         verify(mockPaymentInstrumentEntity).setAgreementExternalId(agreementExternalId);
-        verify(mockPaymentInstrumentEntity).setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
+        verify(mockPaymentInstrumentEntity).setStatus(PaymentInstrumentStatus.ACTIVE);
         verify(ledgerService).postEvent(List.of(
                 AgreementSetUp.from(mockAgreementEntity, clock.instant()),
                 PaymentInstrumentConfirmed.from(mockAgreementEntity, clock.instant())

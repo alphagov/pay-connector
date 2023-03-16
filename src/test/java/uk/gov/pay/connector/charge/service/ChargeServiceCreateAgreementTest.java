@@ -213,7 +213,7 @@ class ChargeServiceCreateAgreementTest {
     void shouldCreateChargeWithAuthorisationModeAgreement() {
         when(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
-        when(mockPaymentInstrumentEntity.getPaymentInstrumentStatus()).thenReturn(PaymentInstrumentStatus.ACTIVE);
+        when(mockPaymentInstrumentEntity.getStatus()).thenReturn(PaymentInstrumentStatus.ACTIVE);
         when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
         when(mockProviders.byName(PaymentGatewayName.SANDBOX)).thenReturn(mockPaymentProvider);
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
@@ -459,7 +459,7 @@ class ChargeServiceCreateAgreementTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         when(mockAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
-        when(mockPaymentInstrumentEntity.getPaymentInstrumentStatus()).thenReturn(paymentInstrumentStatus);
+        when(mockPaymentInstrumentEntity.getStatus()).thenReturn(paymentInstrumentStatus);
 
         final ChargeCreateRequest request = requestBuilder.withAmount(1000)
                 .withAgreementId(AGREEMENT_ID)
