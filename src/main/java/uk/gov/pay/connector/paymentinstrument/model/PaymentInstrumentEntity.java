@@ -63,13 +63,21 @@ public class PaymentInstrumentEntity {
     @Column(name = "agreement_external_id")
     private String agreementExternalId;
 
-    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus paymentInstrumentStatus) {
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    @JsonSerialize(using = ToLowerCaseStringSerializer.class)
+    private PaymentInstrumentStatus status;
+
+    @Embedded
+    private CardDetailsEntity cardDetails;
+
+    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus status) {
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.recurringAuthToken = recurringAuthToken;
         this.startDate = startDate;
         this.cardDetails = cardDetails;
-        this.paymentInstrumentStatus = paymentInstrumentStatus;
+        this.status = status;
     }
 
     public Optional<Map<String, String>> getRecurringAuthToken() {
@@ -104,16 +112,16 @@ public class PaymentInstrumentEntity {
         this.externalId = externalId;
     }
 
-    public PaymentInstrumentStatus getPaymentInstrumentStatus() {
-        return paymentInstrumentStatus;
+    public PaymentInstrumentStatus getStatus() {
+        return status;
     }
 
-    public void setPaymentInstrumentStatus(PaymentInstrumentStatus newStatus) {
-        logger.info(format("Changing payment instrument status for externalId [%s] [%s]->[%s]", this.externalId, this.paymentInstrumentStatus, newStatus),
+    public void setStatus(PaymentInstrumentStatus newStatus) {
+        logger.info(format("Changing payment instrument status for externalId [%s] [%s]->[%s]", this.externalId, this.status, newStatus),
                 kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, this.externalId),
-                kv("from_state", this.paymentInstrumentStatus),
+                kv("from_state", this.status),
                 kv("to_state", newStatus));
-        this.paymentInstrumentStatus = newStatus;
+        this.status = newStatus;
     }
 
     public CardDetailsEntity getCardDetails() {
@@ -131,15 +139,6 @@ public class PaymentInstrumentEntity {
     public void setAgreementExternalId(String agreementExternalId) {
         this.agreementExternalId = agreementExternalId;
     }
-
-    @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    @JsonProperty("status")
-    @JsonSerialize(using = ToLowerCaseStringSerializer.class)
-    private PaymentInstrumentStatus paymentInstrumentStatus;
-
-    @Embedded
-    private CardDetailsEntity cardDetails;
 
     public PaymentInstrumentEntity() {
         // For JPA

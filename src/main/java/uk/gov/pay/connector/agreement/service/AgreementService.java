@@ -92,9 +92,9 @@ public class AgreementService {
                 .findByExternalId(agreementExternalId, gatewayAccountId)
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
         agreement.getPaymentInstrument()
-                .filter(paymentInstrument -> paymentInstrument.getPaymentInstrumentStatus() == PaymentInstrumentStatus.ACTIVE)
+                .filter(paymentInstrument -> paymentInstrument.getStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {
-                    paymentInstrument.setPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED);
+                    paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
                     taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
                     if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
                         ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, Instant.now()));

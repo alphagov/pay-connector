@@ -4,9 +4,11 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import java.util.List;
 import java.util.Optional;
 
 @Transactional
@@ -26,5 +28,17 @@ public class PaymentInstrumentDao extends JpaDao<PaymentInstrumentEntity> {
                 .createQuery(query, PaymentInstrumentEntity.class)
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
+    }
+    
+    public List<PaymentInstrumentEntity> findPaymentInstrumentsByAgreementAndStatus(String agreementExternalId, PaymentInstrumentStatus status) {
+        String query = "SELECT p from PaymentInstrumentEntity p " +
+                "WHERE p.agreementExternalId = :agreementExternalId " +
+                "AND p.status = :status";
+        
+        return entityManager.get()
+                .createQuery(query, PaymentInstrumentEntity.class)
+                .setParameter("agreementExternalId", agreementExternalId)
+                .setParameter("status", status)
+                .getResultList();
     }
 }

@@ -18,6 +18,7 @@ public class AddPaymentInstrumentParams {
     private final Instant createdDate;
     private final Instant startDate;
     private final PaymentInstrumentStatus paymentInstrumentStatus;
+    private final String agreementExternalId;
     private final CardType cardType;
     private final String cardBrand;
     private final CardExpiryDate expiryDate;
@@ -51,6 +52,10 @@ public class AddPaymentInstrumentParams {
 
     public PaymentInstrumentStatus getPaymentInstrumentStatus() {
         return paymentInstrumentStatus;
+    }
+
+    public String getAgreementExternalId() {
+        return agreementExternalId;
     }
 
     public CardType getCardType() {
@@ -111,6 +116,7 @@ public class AddPaymentInstrumentParams {
         createdDate = builder.createdDate;
         startDate = builder.startDate;
         paymentInstrumentStatus = builder.paymentInstrumentStatus;
+        agreementExternalId = builder.agreementExternalId;
         cardType = builder.cardType;
         cardBrand = builder.cardBrand;
         expiryDate = builder.expiryDate;
@@ -132,6 +138,7 @@ public class AddPaymentInstrumentParams {
         private Instant createdDate = Instant.now();
         private Instant startDate = Instant.now();
         private PaymentInstrumentStatus paymentInstrumentStatus = PaymentInstrumentStatus.ACTIVE;
+        private String agreementExternalId;
         private CardType cardType = CardType.DEBIT;
         private String cardBrand = "visa";
         private CardExpiryDate expiryDate = CardExpiryDate.valueOf("12/27");
@@ -175,6 +182,11 @@ public class AddPaymentInstrumentParams {
 
         public AddPaymentInstrumentParamsBuilder withPaymentInstrumentStatus(PaymentInstrumentStatus paymentInstrumentStatus) {
             this.paymentInstrumentStatus = paymentInstrumentStatus;
+            return this;
+        }
+        
+        public AddPaymentInstrumentParamsBuilder withAgreementExternalId(String agreementExternalId) {
+            this.agreementExternalId = agreementExternalId;
             return this;
         }
 

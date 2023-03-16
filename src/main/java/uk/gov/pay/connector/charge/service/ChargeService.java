@@ -1029,9 +1029,9 @@ public class ChargeService {
                 .orElseThrow(() -> new AgreementMissingPaymentInstrumentException("Agreement with ID [" + agreementEntity.getExternalId() +
                         "] does not have a payment instrument"));
 
-        if (paymentInstrumentEntity.getPaymentInstrumentStatus() != PaymentInstrumentStatus.ACTIVE) {
+        if (paymentInstrumentEntity.getStatus() != PaymentInstrumentStatus.ACTIVE) {
             throw new PaymentInstrumentNotActiveException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
-                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getPaymentInstrumentStatus() + "]");
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]");
         }
     }
 

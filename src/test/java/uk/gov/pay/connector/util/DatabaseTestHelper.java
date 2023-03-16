@@ -172,6 +172,7 @@ public class DatabaseTestHelper {
                                 "created_date, " +
                                 "start_date, " +
                                 "status, " +
+                                "agreement_external_id, " +
                                 "card_type, " +
                                 "card_brand, " +
                                 "expiry_date, " +
@@ -191,6 +192,7 @@ public class DatabaseTestHelper {
                                 ":created_date, " +
                                 ":start_date, " +
                                 ":status, " +
+                                ":agreement_external_id, " +
                                 ":card_type, " +
                                 ":card_brand, " +
                                 ":expiry_date, " +
@@ -210,6 +212,7 @@ public class DatabaseTestHelper {
                         .bind("created_date", LocalDateTime.ofInstant(addPaymentInstrumentParams.getCreatedDate(), UTC))
                         .bind("start_date", LocalDateTime.ofInstant(addPaymentInstrumentParams.getStartDate(), UTC))
                         .bind("status", addPaymentInstrumentParams.getPaymentInstrumentStatus())
+                        .bind("agreement_external_id", addPaymentInstrumentParams.getAgreementExternalId())
                         .bind("card_type", addPaymentInstrumentParams.getCardType())
                         .bind("card_brand", addPaymentInstrumentParams.getCardBrand())
                         .bind("expiry_date", addPaymentInstrumentParams.getExpiryDate().toString())

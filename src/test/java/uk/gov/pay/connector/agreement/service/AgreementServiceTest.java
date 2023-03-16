@@ -143,7 +143,7 @@ public class AgreementServiceTest {
         agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, cancelRequest);
         verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
-        assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
+        assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
     }
 
     @Test
@@ -161,6 +161,6 @@ public class AgreementServiceTest {
         agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest());
         verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
-        assertThat(paymentInstrument.getPaymentInstrumentStatus(), is(PaymentInstrumentStatus.CANCELLED));
+        assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
     }
 }

@@ -66,7 +66,7 @@ public final class PaymentInstrumentEntityFixture {
         paymentInstrumentEntity.setCreatedDate(createdDate);
         paymentInstrumentEntity.setStartDate(startDate);
         paymentInstrumentEntity.setExternalId(externalId);
-        paymentInstrumentEntity.setPaymentInstrumentStatus(paymentInstrumentStatus);
+        paymentInstrumentEntity.setStatus(paymentInstrumentStatus);
         paymentInstrumentEntity.setCardDetails(cardDetails);
         return paymentInstrumentEntity;
     }
