@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
@@ -145,6 +146,9 @@ class ChargeServiceCreateAgreementTest {
     @Mock
     private PaymentInstrumentEntity mockPaymentInstrumentEntity;
 
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
+
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
@@ -181,7 +185,8 @@ class ChargeServiceCreateAgreementTest {
 
         chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao, mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao,
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
-                mockPaymentInstrumentService, mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+                mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao);
     }
 
     @Test
@@ -195,7 +200,7 @@ class ChargeServiceCreateAgreementTest {
 
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
 
-        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         assertThat(chargeResponse.isPresent(), is(true));
         assertThat(chargeResponse.get().getLink("next_url"), is(notNullValue()));
@@ -221,7 +226,7 @@ class ChargeServiceCreateAgreementTest {
 
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
 
-        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         assertThat(chargeResponse.isPresent(), is(true));
         assertThat(chargeResponse.get().getDataLinks().stream().anyMatch(link -> "next_url".equals(link.get("rel"))), is(false));
@@ -242,7 +247,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
 
         var thrown = assertThrows(MissingMandatoryAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Missing mandatory attribute: agreement_id"));
 
@@ -262,7 +267,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         assertThrows(IncorrectAuthorisationModeForSavePaymentToAgreementException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -280,7 +285,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: moto"));
 
@@ -300,7 +305,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class, 
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: email"));
 
@@ -320,7 +325,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: prefilled_cardholder_details"));
 
@@ -332,7 +337,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(false).build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: agreement_id"));
 
@@ -344,7 +349,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withSavePaymentInstrumentToAgreement(true).build();
 
         assertThrows(SavePaymentInstrumentToAgreementRequiresAgreementIdException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -362,7 +367,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: agreement_id"));
 
@@ -383,7 +388,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         var thrown = assertThrows(UnexpectedAttributeException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: agreement_id"));
         
@@ -403,7 +408,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
 
         assertThrows(IncorrectAuthorisationModeForSavePaymentToAgreementException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -416,7 +421,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(UNKNOWN_AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
         when(mockAgreementDao.findByExternalId(UNKNOWN_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -431,7 +436,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AgreementNotFoundBadRequestException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -448,7 +453,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(AgreementMissingPaymentInstrumentException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AgreementMissingPaymentInstrumentException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -467,7 +472,7 @@ class ChargeServiceCreateAgreementTest {
                 .build();
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(PaymentInstrumentNotActiveException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(PaymentInstrumentNotActiveException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -478,7 +483,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
         
         var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
         
         assertThat(thrown.getMessage(), is("Attempt to use authorisation mode 'agreement' for gateway account 10, which does not have recurring card payments enabled"));
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
@@ -490,7 +495,7 @@ class ChargeServiceCreateAgreementTest {
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
         
         var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
-                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+                () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Attempt to save payment instrument to agreement for gateway account 10, which does not have recurring card payments enabled"));
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
