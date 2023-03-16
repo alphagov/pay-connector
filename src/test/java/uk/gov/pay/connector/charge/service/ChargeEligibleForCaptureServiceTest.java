@@ -89,7 +89,7 @@ class ChargeEligibleForCaptureServiceTest {
 
         var inOrder = inOrder(mockChargeService, mockLinkPaymentInstrumentToAgreementService, mockCaptureQueue, mockUserNotificationService);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
-        inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
+        inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
         inOrder.verify(mockCaptureQueue).sendForCapture(result);
         inOrder.verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
     }
@@ -158,7 +158,7 @@ class ChargeEligibleForCaptureServiceTest {
 
         var inOrder = inOrder(mockChargeService, mockLinkPaymentInstrumentToAgreementService);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, AWAITING_CAPTURE_REQUEST);
-        inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
+        inOrder.verify(mockLinkPaymentInstrumentToAgreementService).linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
         verifyNoInteractions(mockCaptureQueue);
         verifyNoInteractions(mockUserNotificationService);

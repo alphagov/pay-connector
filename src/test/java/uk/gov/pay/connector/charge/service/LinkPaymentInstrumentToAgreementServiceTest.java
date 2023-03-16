@@ -80,14 +80,17 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Test
     void linksPaymentInstrumentFromChargeToAgreementFromChargeAndSetsPaymentInstrumentToActive() {
+        String agreementExternalId = "an-agreement-external-id";
         when(mockAgreementEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
+        when(mockAgreementEntity.getExternalId()).thenReturn(agreementExternalId);
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementEntity(mockAgreementEntity).build();
 
-        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
+        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
+        verify(mockPaymentInstrumentEntity).setAgreementExternalId(agreementExternalId);
         verify(mockPaymentInstrumentEntity).setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
         verify(ledgerService).postEvent(List.of(
                 AgreementSetUp.from(mockAgreementEntity, clock.instant()),
@@ -99,7 +102,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     void logsErrorIfChargeDoesNotHavePaymentInstrument() {
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(null).withAgreementEntity(mockAgreementEntity).build();
 
-        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
+        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         var loggingEvent = loggingEventArgumentCaptor.getValue();
@@ -116,7 +119,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     void logsErrorIfChargeHasPaymentInstrumentButDoesNotHaveAgreementId() {
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity).withAgreementEntity(null).build();
 
-        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(chargeEntity);
+        linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         var loggingEvent = loggingEventArgumentCaptor.getValue();

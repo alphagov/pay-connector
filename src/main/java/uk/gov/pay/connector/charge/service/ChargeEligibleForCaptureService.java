@@ -70,7 +70,7 @@ public class ChargeEligibleForCaptureService {
             }
 
             if (charge.isSavePaymentInstrumentToAgreement()) {
-                linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreementFromCharge(charge);
+                linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(charge);
             }
 
             return charge;

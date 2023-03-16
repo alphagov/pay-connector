@@ -33,10 +33,11 @@ public class LinkPaymentInstrumentToAgreementService {
     }
 
     @Transactional
-    public void linkPaymentInstrumentFromChargeToAgreementFromCharge(ChargeEntity chargeEntity) {
+    public void linkPaymentInstrumentFromChargeToAgreement(ChargeEntity chargeEntity) {
         chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity -> {
             chargeEntity.getAgreement().ifPresentOrElse(agreementEntity -> {
                 agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
+                paymentInstrumentEntity.setAgreementExternalId(agreementEntity.getExternalId());
                 paymentInstrumentEntity.setPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE);
                 ledgerService.postEvent(List.of(
                         AgreementSetUp.from(agreementEntity, clock.instant()),
