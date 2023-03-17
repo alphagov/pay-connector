@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
@@ -77,6 +78,8 @@ class ChargeServicePostAuthorisationTest {
     @Mock private CardDetailsEntity mockCardDetailsEntity;
     @Mock private ChargeEventEntity mockChargeEventEntity;
     @Mock private PaymentInstrumentEntity mockPaymentInstrumentEntity;
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
 
     private final Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity();
@@ -110,7 +113,8 @@ class ChargeServicePostAuthorisationTest {
         chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao,
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                mockTaskQueueService, mockIdempotencyDao);
     }
 
     @Test

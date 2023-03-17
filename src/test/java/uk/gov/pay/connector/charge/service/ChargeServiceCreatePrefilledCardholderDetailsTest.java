@@ -32,6 +32,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -122,6 +123,9 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Mock
     private TaskQueueService mockTaskQueueService;
 
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
+
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
@@ -159,7 +163,8 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                mockTaskQueueService, mockIdempotencyDao);
     }
 
     @Test
@@ -175,7 +180,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         var address = new PrefilledAddress("Line1", "Line2", "AB1 CD2", "London", null, "GB");
         cardHolderDetails.setAddress(address);
         final ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -206,7 +211,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
 
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -237,7 +242,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -266,7 +271,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         cardHolderDetails.setCardHolderName("Joe Bogs");
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -289,7 +294,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -315,7 +320,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         ChargeCreateRequest request = requestBuilder.build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();

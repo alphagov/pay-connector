@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -16,6 +19,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
+import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
@@ -46,6 +50,10 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
+import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -59,6 +67,8 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -88,11 +98,13 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 
 @ExtendWith(MockitoExtension.class)
@@ -102,7 +114,9 @@ class ChargeServiceCreateTest {
     private static final long GATEWAY_ACCOUNT_ID = 10L;
     private static final long CHARGE_ENTITY_ID = 12345L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
+    private static final String AGREEMENT_ID = "agreement-id";
     private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
+    private static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper().registerModule(new Jdk8Module());
 
     private ChargeCreateRequestBuilder requestBuilder;
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
@@ -166,11 +180,16 @@ class ChargeServiceCreateTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
 
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
     @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<IdempotencyEntity> idempotencyEntityArgumentCaptor;
 
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
@@ -225,7 +244,8 @@ class ChargeServiceCreateTest {
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                mockTaskQueueService, mockIdempotencyDao);
     }
 
     @Test
@@ -318,7 +338,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -354,7 +374,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withEmail("").build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -372,7 +392,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
     }
@@ -387,7 +407,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
 
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(false).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
     }
@@ -408,7 +428,7 @@ class ChargeServiceCreateTest {
                 "key4", 1.23);
         final ChargeCreateRequest request = requestBuilder.withExternalMetadata(new ExternalMetadata(metadata)).build();
 
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getExternalMetadata().get().getMetadata(), equalTo(metadata));
@@ -425,7 +445,7 @@ class ChargeServiceCreateTest {
 
         final ChargeCreateRequest request = requestBuilder.withLanguage(SupportedLanguage.WELSH).build();
 
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -446,7 +466,7 @@ class ChargeServiceCreateTest {
 
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
 
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -459,7 +479,7 @@ class ChargeServiceCreateTest {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(ZeroAmountNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(ZeroAmountNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -475,7 +495,7 @@ class ChargeServiceCreateTest {
 
         gatewayAccount.setAllowMoto(true);
         ChargeCreateRequest request = requestBuilder.withMoto(true).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -489,7 +509,7 @@ class ChargeServiceCreateTest {
 
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(MotoPaymentNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(MotoPaymentNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -505,7 +525,7 @@ class ChargeServiceCreateTest {
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
@@ -522,7 +542,7 @@ class ChargeServiceCreateTest {
 
         final ChargeCreateRequest request = requestBuilder.
                 withSource(CARD_API).build();
-        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
@@ -540,7 +560,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        ChargeResponse response = chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse response = chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo, null).get();
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
@@ -580,7 +600,7 @@ class ChargeServiceCreateTest {
                 .withAuthorisationMode(AuthorisationMode.MOTO_API)
                 .build();
 
-        ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, null).get();
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
@@ -606,7 +626,7 @@ class ChargeServiceCreateTest {
 
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(AuthorisationApiNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(AuthorisationApiNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -621,7 +641,7 @@ class ChargeServiceCreateTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         populateChargeEntity();
 
-        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
 
@@ -638,7 +658,136 @@ class ChargeServiceCreateTest {
 
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        assertThrows(GatewayAccountDisabledException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo));
+        assertThrows(GatewayAccountDisabledException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldCreateNewChargeAndPersistIdempotency() throws URISyntaxException {
+        String idempotencyKey = "idempotency-key";
+        ChargeCreateRequest chargeCreateRequest = requestBuilder
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withReturnUrl(null)
+                .build();
+
+        gatewayAccount.setRecurringEnabled(true);
+
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity(Instant.now())
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withPaymentInstrument(paymentInstrument)
+                .build();
+        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
+        when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.empty());
+        populateChargeEntity();
+
+        ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get();
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        verify(mockIdempotencyDao).persist(idempotencyEntityArgumentCaptor.capture());
+
+        IdempotencyEntity idempotency = idempotencyEntityArgumentCaptor.getValue();
+        assertThat(idempotency.getRequestBody(), is(requestBody));
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        ChargeResponse.ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(createdChargeEntity);
+
+        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0]));
+        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + EXTERNAL_CHARGE_ID[0] + "/refunds"));
+
+        assertThat(response, is(expectedChargeResponse.build()));
+    }
+
+    @Test
+    void shouldReturnExisingChargeAndNotPersistNewOne_whenIdempotencyExistsAndMatches() throws URISyntaxException {
+        String existingChargeExternalId = "existing-id";
+        String idempotencyKey = "idempotency-key";
+        ChargeCreateRequest chargeCreateRequest = requestBuilder
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withReturnUrl(null)
+                .build();
+
+        gatewayAccount.setRecurringEnabled(true);
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId(existingChargeExternalId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .build();
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity(Instant.now())
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withPaymentInstrument(paymentInstrument)
+                .build();
+        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
+        IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount, existingChargeExternalId,
+                requestBody, Instant.now());
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
+        when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
+        when(mockedChargeDao.findByExternalId(existingChargeExternalId)).thenReturn(Optional.of(chargeEntity));
+
+        ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get();
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+        assertThat(response.getChargeId(), is(existingChargeExternalId));
+    }
+
+    @Test
+    void shouldThrowException_whenIdempotencyExistsAndRequestBodyNotMatch() {
+        String existingChargeExternalId = "existing-id";
+        String idempotencyKey = "idempotency-key";
+        ChargeCreateRequest chargeCreateRequest = requestBuilder
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withReturnUrl(null)
+                .build();
+
+        gatewayAccount.setRecurringEnabled(true);
+
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity(Instant.now())
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withPaymentInstrument(paymentInstrument)
+                .build();
+        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
+        requestBody.put("metadata", Map.of("invoice", "invoice"));
+
+        IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount, existingChargeExternalId,
+                requestBody, Instant.now());
+
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
+        when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
+
+        assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get());
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }

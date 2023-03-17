@@ -328,6 +328,10 @@ paths:
         schema:
           type: integer
           format: int64
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
       requestBody:
         content:
           '*/*':

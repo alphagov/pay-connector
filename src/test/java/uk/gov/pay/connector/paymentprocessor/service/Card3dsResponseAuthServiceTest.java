@@ -31,6 +31,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexRequiredParams;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -85,6 +86,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
     @Mock
     private TaskQueueService mockTaskQueueService;
+    @Mock
+    private IdempotencyDao mockIdempotencyDao;
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
@@ -115,7 +118,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService);
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);
