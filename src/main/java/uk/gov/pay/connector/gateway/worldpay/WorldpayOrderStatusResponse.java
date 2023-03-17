@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
+import uk.gov.pay.connector.gateway.model.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
@@ -251,6 +252,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         }
         if (isNotBlank(getRefusedReturnCode())) {
             joiner.add("ISO8583ReturnCode code: " + getRefusedReturnCode());
+            joiner.add("Mapped rejection reason: " + WorldpayAuthorisationRejectedCodeMapper.toMappedAuthorisationRejectionReason(getRefusedReturnCode()).name());
         }
         if (isNotBlank(getRefusedReturnCodeDescription())) {
             joiner.add("ISO8583ReturnCode description: " + getRefusedReturnCodeDescription());
