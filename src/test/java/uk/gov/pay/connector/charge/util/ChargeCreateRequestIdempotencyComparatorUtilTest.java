@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.charge.util;
 
+import com.google.common.collect.MapDifference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.util.HashMap;
@@ -25,123 +27,66 @@ class ChargeCreateRequestIdempotencyComparatorUtilTest {
         idempotencyMap.put("delayed_capture", false);
         idempotencyMap.put("language", "ENGLISH");
         idempotencyMap.put("prefilled_cardholder_details", null);
-        idempotencyMap.put("metadata", Map.of("key1", "value1", "key2", 2023));
+        idempotencyMap.put("metadata", Map.of("key1", "value1"));
         idempotencyMap.put("source", null);
         idempotencyMap.put("moto", false);
         idempotencyMap.put("payment_provider", null);
         idempotencyMap.put("agreement_id", "an agreement");
         idempotencyMap.put("save_payment_instrument_to_agreement", false);
-        idempotencyMap.put("authorisation_mode", "web");
+        idempotencyMap.put("authorisation_mode", "agreement");
     }
+
     @Test
-    void shouldReturnTrue_whenRequestAndIdempotencyMatch() throws Exception {
+    void shouldReturnNoDifference() {
         ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
                 .withAmount(1500L)
                 .withDescription("a description")
                 .withReference("a reference")
                 .withAgreementId("an agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
+                        Map.of("key1", "value1")))
                 .build();
 
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(true));
+        Map<String, MapDifference.ValueDifference<Object>> diff = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeCreateRequest, idempotencyMap);
+        assertThat(diff.size(), is(0));
     }
 
     @Test
-    void shouldReturnTrue_whenMetadataIsNotPresent() {
+    void shouldReturnAgreementAndReferenceAsDifferent() {
         ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
                 .withAmount(1500L)
                 .withDescription("a description")
-                .withReference("a reference")
-                .withAgreementId("an agreement")
-                .build();
-
-        idempotencyMap.put("metadata", null);
-
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(true));
-    }
-
-    @Test
-    void shouldReturnFalse_whenIdempotencyMetadataIsNotPresent() {
-        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
-                .withAmount(1500L)
-                .withDescription("a description")
-                .withReference("a reference")
-                .withAgreementId("an agreement")
-                .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
-                .build();
-
-        idempotencyMap.put("metadata", null);
-
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
-    }
-
-    @Test
-    void shouldReturnFalse_whenAmountIsDifferent() {
-        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
-                .withAmount(1600L)
-                .withDescription("a description")
-                .withReference("a reference")
-                .withAgreementId("an agreement")
-                .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
-                .build();
-
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
-    }
-
-    @Test
-    void shouldReturnFalse_whenDescriptionIsDifferent() {
-        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
-                .withAmount(1500L)
-                .withDescription("different description")
-                .withReference("a reference")
-                .withAgreementId("an agreement")
-                .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
-                .build();
-
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
-    }
-
-    @Test
-    void shouldReturnFalse_whenReferenceIsDifferent() {
-        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
-                .withAmount(1500L)
-                .withDescription("a description")
-                .withReference("different reference")
-                .withAgreementId("an agreement")
-                .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
-                .build();
-
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
-    }
-
-    @Test
-    void shouldReturnFalse_whenAgreementIdIsDifferent() {
-        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
-                .withAmount(1500L)
-                .withDescription("a description")
-                .withReference("a reference")
+                .withReference("another reference")
                 .withAgreementId("different agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withExternalMetadata(new ExternalMetadata(
-                        Map.of("key1", "value1", "key2", 2023)))
+                        Map.of("key1", "value1")))
                 .build();
 
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
+        Map<String, MapDifference.ValueDifference<Object>> diff = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeCreateRequest, idempotencyMap);
+        assertThat(diff.size(), is(2));
+        assertThat(diff.get("agreement_id").leftValue().toString(), is("different agreement"));
+        assertThat(diff.get("agreement_id").rightValue().toString(), is("an agreement"));
+        assertThat(diff.get("reference").leftValue(), is("another reference"));
+        assertThat(diff.get("reference").rightValue(), is("a reference"));
     }
 
     @Test
-    void shouldReturnFalse_whenChargeRequestMetadataIsNull() {
+    void shouldReturnMetadataAsDifference() {
         ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
                 .withAmount(1500L)
                 .withDescription("a description")
                 .withReference("a reference")
                 .withAgreementId("an agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withExternalMetadata(new ExternalMetadata(
+                        Map.of("key1", "value2")))
                 .build();
 
-        assertThat(ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeCreateRequest, idempotencyMap), is(false));
+        Map<String, MapDifference.ValueDifference<Object>> diff = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeCreateRequest, idempotencyMap);
+        assertThat(diff.size(), is(1));
+        assertThat(diff.get("metadata").leftValue().toString(), is("{key1=value2}"));
+        assertThat(diff.get("metadata").rightValue().toString(), is("{key1=value1}"));
     }
 }
