@@ -138,8 +138,6 @@ public class ChargeService {
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
-    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
-
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
@@ -349,12 +347,11 @@ public class ChargeService {
             chargeDao.persist(chargeEntity);
 
             if (authorisationMode == AGREEMENT && idempotencyKey != null) {
-                IdempotencyEntity idempotencyEntity = new IdempotencyEntity(
+                IdempotencyEntity idempotencyEntity = IdempotencyEntity.from(
                         idempotencyKey,
+                        chargeRequest,
                         gatewayAccount,
-                        chargeEntity.getExternalId(),
-                        mapper.convertValue(chargeRequest, new TypeReference<>() {}),
-                        Instant.now());
+                        chargeEntity.getExternalId());
                 idempotencyDao.persist(idempotencyEntity);
             }
 
