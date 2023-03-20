@@ -3,12 +3,15 @@ package uk.gov.pay.connector.charge.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
 import uk.gov.pay.connector.events.model.charge.PaymentInstrumentConfirmed;
+import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import javax.inject.Inject;
 import java.time.Clock;
@@ -21,14 +24,19 @@ public class LinkPaymentInstrumentToAgreementService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LinkPaymentInstrumentToAgreementService.class);
 
-    private final AgreementDao agreementDao;
+    private final PaymentInstrumentDao paymentInstrumentDao;
     private final LedgerService ledgerService;
+    private final TaskQueueService taskQueueService;
     private final Clock clock;
 
     @Inject
-    public LinkPaymentInstrumentToAgreementService(AgreementDao agreementDao, LedgerService ledgerService, Clock clock) {
-        this.agreementDao = agreementDao;
+    public LinkPaymentInstrumentToAgreementService(PaymentInstrumentDao paymentInstrumentDao,
+                                                   LedgerService ledgerService,
+                                                   TaskQueueService taskQueueService, 
+                                                   Clock clock) {
+        this.paymentInstrumentDao = paymentInstrumentDao;
         this.ledgerService = ledgerService;
+        this.taskQueueService = taskQueueService;
         this.clock = clock;
     }
 
@@ -36,6 +44,7 @@ public class LinkPaymentInstrumentToAgreementService {
     public void linkPaymentInstrumentFromChargeToAgreement(ChargeEntity chargeEntity) {
         chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity -> {
             chargeEntity.getAgreement().ifPresentOrElse(agreementEntity -> {
+                cancelActivePaymentInstruments(agreementEntity);
                 agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
                 paymentInstrumentEntity.setAgreementExternalId(agreementEntity.getExternalId());
                 paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.ACTIVE);
@@ -47,6 +56,16 @@ public class LinkPaymentInstrumentToAgreementService {
                         kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId()));
             }, () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId()));
         }, () -> LOGGER.error("Expected charge {} to have a payment instrument but it does not have one", chargeEntity.getExternalId()));
+    }
+    
+    private void cancelActivePaymentInstruments(AgreementEntity agreement) {
+        List<PaymentInstrumentEntity> paymentInstruments = paymentInstrumentDao.findPaymentInstrumentsByAgreementAndStatus(
+                agreement.getExternalId(), PaymentInstrumentStatus.ACTIVE);
+        paymentInstruments.forEach(paymentInstrument -> {
+            paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
+            taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+        });
+        
     }
 
 }

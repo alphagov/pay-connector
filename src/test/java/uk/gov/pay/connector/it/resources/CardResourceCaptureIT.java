@@ -5,8 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -17,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
@@ -99,6 +102,29 @@ public class CardResourceCaptureIT extends ChargingITestBase {
         assertThat(chargeCardDetails.get("address_line2"), is(notNullValue()));
         assertThat(chargeCardDetails.get("address_postcode"), is(notNullValue()));
         assertThat(chargeCardDetails.get("address_country"), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldSetPaymentInstrumentOnAgreementAndCancelPreviousPaymentInstruments_forSetUpAgreementCharge() {
+        String agreementExternalId = addAgreement();
+        Long previousPaymentInstrumentId = addPaymentInstrument(agreementExternalId, PaymentInstrumentStatus.ACTIVE);
+        Long newPaymentInstrumentId = addPaymentInstrument(null, PaymentInstrumentStatus.CREATED);
+        ChargeUtils.ExternalChargeId externalChargeId = addChargeForSetUpAgreement(AUTHORISATION_SUCCESS, agreementExternalId, newPaymentInstrumentId);
+
+        givenSetup()
+                .post(captureChargeUrlFor(externalChargeId.toString()))
+                .then()
+                .statusCode(204);
+
+        Map<String, Object> previousPaymentInstrument = databaseTestHelper.getPaymentInstrument(previousPaymentInstrumentId);
+        assertThat(previousPaymentInstrument.get("status"), is("CANCELLED"));
+
+        Map<String, Object> newPaymentInstrument = databaseTestHelper.getPaymentInstrument(newPaymentInstrumentId);
+        assertThat(newPaymentInstrument.get("status"), is("ACTIVE"));
+        assertThat(newPaymentInstrument.get("agreement_external_id"), is(agreementExternalId));
+
+        Map<String, Object> agreement = databaseTestHelper.getAgreementByExternalId(agreementExternalId);
+        assertThat(agreement.get("payment_instrument_id"), is(newPaymentInstrumentId));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {
