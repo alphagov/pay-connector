@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.util;
 
+import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.stripe.json.LastPaymentError;
 import uk.gov.pay.connector.gateway.stripe.json.Outcome;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
@@ -105,8 +106,8 @@ public class PaymentIntentStringifier {
         }
         if (lastPaymentError.getDeclineCode() != null) {
             joiner.add("decline code: " + lastPaymentError.getDeclineCode());
+            joiner.add("Mapped rejection reason: " + StripeAuthorisationRejectedCodeMapper.toMappedAuthorisationRejectionReason(lastPaymentError.getDeclineCode()).name());
         }
-
         return joiner;
     }
 }
