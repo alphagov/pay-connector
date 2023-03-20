@@ -1,8 +1,14 @@
 package uk.gov.pay.connector.charge.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import net.logstash.logback.argument.StructuredArgument;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -84,6 +91,7 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -183,6 +191,9 @@ class ChargeServiceCreateTest {
     private TaskQueueService mockTaskQueueService;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
+    
+    @Mock
+    Appender<ILoggingEvent> mockAppender;
 
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
@@ -191,6 +202,9 @@ class ChargeServiceCreateTest {
 
     @Captor
     private ArgumentCaptor<IdempotencyEntity> idempotencyEntityArgumentCaptor;
+    
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
@@ -757,8 +771,12 @@ class ChargeServiceCreateTest {
 
     @Test
     void shouldThrowException_whenIdempotencyExistsAndRequestBodyNotMatch() {
+        Logger root = (Logger) LoggerFactory.getLogger(ChargeService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+        
         String existingChargeExternalId = "existing-id";
-        String idempotencyKey = "idempotency-key";
+        String idempotencyKey = "an-idempotency-key";
         ChargeCreateRequest newChargeCreateRequest = requestBuilder
                 .withAgreementId(AGREEMENT_ID)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
@@ -768,7 +786,7 @@ class ChargeServiceCreateTest {
         ChargeCreateRequest existingChargeCreateRequest = requestBuilder
                 .withAgreementId(AGREEMENT_ID)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
-                .withExternalMetadata(new ExternalMetadata(Map.of("invoice", "invoice")))
+                .withExternalMetadata(new ExternalMetadata(Map.of("invoice-number", "123")))
                 .withReturnUrl(null)
                 .build();
 
@@ -798,6 +816,13 @@ class ChargeServiceCreateTest {
         assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.create(newChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get());
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+        
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent value = loggingEventArgumentCaptor.getValue();
+        assertThat(value.getMessage(), is("Idempotency-Key [an-idempotency-key] was already used to create a charge with a different request body. Existing payment external id: existing-id"));
+        assertThat(value.getArgumentArray()[0], instanceOf(StructuredArgument.class));
+        StructuredArgument structuredArgument = (StructuredArgument) value.getArgumentArray()[0];
+        assertThat(structuredArgument.toString(), is("differences_in_request_body={metadata=(null, {invoice-number=123})}"));
     }
 
     private ChargeResponse.ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) {

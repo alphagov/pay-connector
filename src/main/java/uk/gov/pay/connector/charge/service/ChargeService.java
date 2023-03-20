@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.collect.MapDifference;
 import com.google.inject.persist.Transactional;
-import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -104,7 +103,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,8 +133,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTI
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeService {
 
@@ -334,14 +330,16 @@ public class ChargeService {
                     Optional<IdempotencyEntity> optionalIdempotencyEntity = idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccount.getId(), idempotencyKey);
                     if (optionalIdempotencyEntity.isPresent()) {
                         IdempotencyEntity idempotencyEntity = optionalIdempotencyEntity.get();
-                        Map<String, MapDifference.ValueDifference<Object>> diffMap = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeRequest, idempotencyEntity.getRequestBody());
-                        if (diffMap.isEmpty()) {
+                        if (ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeRequest, idempotencyEntity.getRequestBody())) {
                             LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
                             // TODO implement PP-10833, query Ledger if Charge has been expunged
                             return findChargeByExternalId(idempotencyEntity.getResourceExternalId());
                         }
-                        LOGGER.info(format("Idempotency-Key [%s] already exists with different values", idempotencyKey),
-                                getStructuredLoggingArgs(idempotencyEntity.getResourceExternalId(), gatewayAccount.getId(), diffMap));
+
+                        Map<String, MapDifference.ValueDifference<Object>> diffMap = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeRequest, idempotencyEntity.getRequestBody());
+                        LOGGER.info(format("Idempotency-Key [%s] was already used to create a charge with a different request body. Existing payment external id: %s",
+                                        idempotencyKey, idempotencyEntity.getResourceExternalId()),
+                                kv("differences_in_request_body", diffMap));
                         throw new IdempotencyKeyUsedException();
                     }
                 }
@@ -369,8 +367,7 @@ public class ChargeService {
             return chargeEntity;
         });
     }
-
-
+    
     private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
@@ -605,7 +602,7 @@ public class ChargeService {
                         .withLink("auth_url_post", POST, nextAuthUrl(uriInfo), APPLICATION_JSON, params);
             } else {
                 params.put("chargeTokenId", token.getToken());
-                
+
                 return builderOfResponse
                         .withLink("next_url", GET, nextUrl(token.getToken()))
                         .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
@@ -1098,14 +1095,4 @@ public class ChargeService {
         );
     }
 
-    public List<StructuredArgument> getStructuredLoggingArgs(String externalId, Long gatewayAccountId,
-                                                             Map<String, MapDifference.ValueDifference<Object>> diff) {
-        ArrayList<StructuredArgument> structuredArguments = new ArrayList<>();
-        structuredArguments.add(kv("existing " + PAYMENT_EXTERNAL_ID, externalId));
-        structuredArguments.add(kv(GATEWAY_ACCOUNT_ID, gatewayAccountId));
-        diff.forEach((key, value) -> {
-            structuredArguments.add(kv(key, "incoming: " + value.leftValue() + " existing: " + value.rightValue()));
-        });
-        return structuredArguments;
-    }
 }

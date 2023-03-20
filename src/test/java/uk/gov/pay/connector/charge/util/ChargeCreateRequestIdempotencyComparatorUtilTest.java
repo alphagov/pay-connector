@@ -12,6 +12,8 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder.aChargeCreateRequest;
 
 class ChargeCreateRequestIdempotencyComparatorUtilTest {
@@ -34,6 +36,51 @@ class ChargeCreateRequestIdempotencyComparatorUtilTest {
         idempotencyMap.put("agreement_id", "an agreement");
         idempotencyMap.put("save_payment_instrument_to_agreement", false);
         idempotencyMap.put("authorisation_mode", "agreement");
+    }
+
+    @Test
+    void shouldReturnTrueWhenRequestsEqual() {
+        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
+                .withAmount(1500L)
+                .withDescription("a description")
+                .withReference("a reference")
+                .withAgreementId("an agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withExternalMetadata(new ExternalMetadata(
+                        Map.of("key1", "value1")))
+                .build();
+
+        assertTrue(ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeCreateRequest, idempotencyMap));
+    }
+
+    @Test
+    void shouldReturnFalseWhenTopLevelFieldIsDifferent() {
+        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
+                .withAmount(1500L)
+                .withDescription("a description")
+                .withReference("a different reference")
+                .withAgreementId("an agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withExternalMetadata(new ExternalMetadata(
+                        Map.of("key1", "value1")))
+                .build();
+
+        assertFalse(ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeCreateRequest, idempotencyMap));
+    }
+
+    @Test
+    void shouldReturnFalseWhenMetadataIsDifferent() {
+        ChargeCreateRequest chargeCreateRequest = aChargeCreateRequest()
+                .withAmount(1500L)
+                .withDescription("a description")
+                .withReference("a reference")
+                .withAgreementId("an agreement")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withExternalMetadata(new ExternalMetadata(
+                        Map.of("key1", "different value")))
+                .build();
+
+        assertFalse(ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeCreateRequest, idempotencyMap));
     }
 
     @Test
