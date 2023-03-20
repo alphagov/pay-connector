@@ -30,6 +30,7 @@ class PaymentIntentStringifierTest {
 
         String expectedStringifiedPaymentIntent = "Stripe authorisation response - payment intent: pi_123 " +
                 "(stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde, type: invalid_request_error, decline code: generic_decline, " +
+                "Mapped rejection reason: GENERIC_DECLINE, " +
                 "code: card_declined, message: Your card was declined, status: failed, " +
                 "outcome.network_status: declined_by_network, " +
                 "outcome.reason: insufficient_funds, outcome.risk_level: normal, " +
