@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,7 +117,7 @@ class ChargeServiceCreateTest {
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final String AGREEMENT_ID = "agreement-id";
     private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
-    private static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper().registerModule(new Jdk8Module());
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
 
     private ChargeCreateRequestBuilder requestBuilder;
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
@@ -736,9 +737,8 @@ class ChargeServiceCreateTest {
                 .withUserIdentifier("This is the user identifier")
                 .withPaymentInstrument(paymentInstrument)
                 .build();
-        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
-        IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount, existingChargeExternalId,
-                requestBody, Instant.now());
+        IdempotencyEntity idempotencyEntity = IdempotencyEntity.from(
+                idempotencyKey, chargeCreateRequest, gatewayAccount, existingChargeExternalId);
 
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
@@ -759,9 +759,16 @@ class ChargeServiceCreateTest {
     void shouldThrowException_whenIdempotencyExistsAndRequestBodyNotMatch() {
         String existingChargeExternalId = "existing-id";
         String idempotencyKey = "idempotency-key";
-        ChargeCreateRequest chargeCreateRequest = requestBuilder
+        ChargeCreateRequest newChargeCreateRequest = requestBuilder
                 .withAgreementId(AGREEMENT_ID)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withReturnUrl(null)
+                .build();
+
+        ChargeCreateRequest existingChargeCreateRequest = requestBuilder
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withExternalMetadata(new ExternalMetadata(Map.of("invoice", "invoice")))
                 .withReturnUrl(null)
                 .build();
 
@@ -776,18 +783,19 @@ class ChargeServiceCreateTest {
                 .withUserIdentifier("This is the user identifier")
                 .withPaymentInstrument(paymentInstrument)
                 .build();
-        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
-        requestBody.put("metadata", Map.of("invoice", "invoice"));
 
-        IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount, existingChargeExternalId,
-                requestBody, Instant.now());
+        IdempotencyEntity idempotencyEntity = IdempotencyEntity.from(
+                idempotencyKey,
+                existingChargeCreateRequest,
+                gatewayAccount,
+                existingChargeExternalId);
 
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
         when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
 
-        assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get());
+        assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.create(newChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get());
 
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
