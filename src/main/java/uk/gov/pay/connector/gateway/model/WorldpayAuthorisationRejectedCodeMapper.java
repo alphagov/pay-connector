@@ -38,6 +38,7 @@ public class WorldpayAuthorisationRejectedCodeMapper {
                 entry("13", INVALID_AMOUNT),
                 entry("14", INVALID_CARD_NUMBER),
                 entry("15", NO_SUCH_ISSUER),
+                entry("34", SUSPECTED_FRAUD),
                 entry("41", LOST_CARD),
                 entry("43", STOLEN_CARD),
                 entry("46", CLOSED_ACCOUNT),
