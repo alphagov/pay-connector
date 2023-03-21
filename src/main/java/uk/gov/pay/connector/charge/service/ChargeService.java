@@ -3,7 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.collect.Maps;
+import com.google.common.collect.MapDifference;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,10 +111,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -328,12 +330,16 @@ public class ChargeService {
                     Optional<IdempotencyEntity> optionalIdempotencyEntity = idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccount.getId(), idempotencyKey);
                     if (optionalIdempotencyEntity.isPresent()) {
                         IdempotencyEntity idempotencyEntity = optionalIdempotencyEntity.get();
-                        if (ChargeCreateRequestIdempotencyComparatorUtil.compare(chargeRequest, idempotencyEntity.getRequestBody())) {
+                        if (ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeRequest, idempotencyEntity.getRequestBody())) {
                             LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
                             // TODO implement PP-10833, query Ledger if Charge has been expunged
                             return findChargeByExternalId(idempotencyEntity.getResourceExternalId());
                         }
-                        LOGGER.info("Idempotency-Key already exist with different values {}", idempotencyKey);
+
+                        Map<String, MapDifference.ValueDifference<Object>> diffMap = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeRequest, idempotencyEntity.getRequestBody());
+                        LOGGER.info(format("Idempotency-Key [%s] was already used to create a charge with a different request body. Existing payment external id: %s",
+                                        idempotencyKey, idempotencyEntity.getResourceExternalId()),
+                                kv("differences_in_request_body", diffMap));
                         throw new IdempotencyKeyUsedException();
                     }
                 }
@@ -361,8 +367,7 @@ public class ChargeService {
             return chargeEntity;
         });
     }
-
-
+    
     private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
@@ -597,7 +602,7 @@ public class ChargeService {
                         .withLink("auth_url_post", POST, nextAuthUrl(uriInfo), APPLICATION_JSON, params);
             } else {
                 params.put("chargeTokenId", token.getToken());
-                
+
                 return builderOfResponse
                         .withLink("next_url", GET, nextUrl(token.getToken()))
                         .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
