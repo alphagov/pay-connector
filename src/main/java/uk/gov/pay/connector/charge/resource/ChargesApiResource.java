@@ -40,9 +40,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransactionNotFound;
@@ -96,7 +98,7 @@ public class ChargesApiResource {
                               @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID") @PathParam("chargeId") String chargeId,
                               @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
-                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -135,6 +137,15 @@ public class ChargesApiResource {
 
         } else if (AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL.contains(authorisationMode) && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
+        }
+        
+        if (idempotencyKey != null && chargeRequest.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+            Optional<ChargeResponse> maybeExistingChargeResponse = chargeService.checkForChargeCreatedWithIdempotencyKey(
+                    chargeRequest, accountId, idempotencyKey, uriInfo);
+            if (maybeExistingChargeResponse.isPresent()) {
+                ChargeResponse existingChargeResponse = maybeExistingChargeResponse.get();
+                return ok(existingChargeResponse.getLink("self")).entity(existingChargeResponse).build();
+            }
         }
 
         return chargeService.create(chargeRequest, accountId, uriInfo, idempotencyKey)
@@ -227,7 +238,7 @@ public class ChargesApiResource {
     public Response getChargeForGatewayTransactionId(@Parameter(example = "5422624d-12b1-4821-8b26-d0383ecf1602", description = "Gateway transaction ID")
                                                      @PathParam("gatewayTransactionId") String gatewayTransactionId, @Context UriInfo uriInfo) {
         return chargeService.findChargeByGatewayTransactionId(gatewayTransactionId, uriInfo)
-                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithGatewayTransactionNotFound(gatewayTransactionId));
     }
 }

@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,6 +136,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
     private final String chargeExternalId = charge.getExternalId();
@@ -220,7 +222,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
         CaptureQueue captureQueue = mock(CaptureQueue.class);

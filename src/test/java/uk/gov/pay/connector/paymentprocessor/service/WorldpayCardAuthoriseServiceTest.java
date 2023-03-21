@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private CardExecutorService mockExecutorService;
@@ -124,7 +126,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 null, mock(AgreementDao.class), null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
                 mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
-                mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mock(IdempotencyDao.class));
+                mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mock(IdempotencyDao.class),
+                objectMapper);
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);

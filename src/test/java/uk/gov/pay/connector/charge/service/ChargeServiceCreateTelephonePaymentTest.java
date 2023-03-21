@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +66,7 @@ class ChargeServiceCreateTelephonePaymentTest {
     private static final long CHARGE_ENTITY_ID = 12345L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
 
@@ -163,7 +165,7 @@ class ChargeServiceCreateTelephonePaymentTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
     }
 
     @Test

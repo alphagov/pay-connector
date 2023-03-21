@@ -2,9 +2,11 @@ package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
@@ -20,11 +22,13 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.function.Predicate.not;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChargeCreateRequest {
 
     @NotNull(message = "Field [amount] cannot be null")
@@ -63,6 +67,7 @@ public class ChargeCreateRequest {
     private Boolean delayedCapture;
 
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
+    @JsonSerialize(using = ToStringSerializer.class)
     @JsonProperty("language")
     @Schema(example = "en")
     private SupportedLanguage language;
@@ -141,34 +146,42 @@ public class ChargeCreateRequest {
         this.authorisationMode = authorisationMode;
     }
 
+    @JsonIgnore
     public long getAmount() {
         return amount;
     }
 
+    @JsonIgnore
     public String getDescription() {
         return description;
     }
 
+    @JsonIgnore
     public String getReference() {
         return reference;
     }
 
+    @JsonIgnore
     public Optional<String> getReturnUrl() {
         return Optional.ofNullable(returnUrl).filter(not(String::isEmpty));
     }
 
+    @JsonIgnore
     public Optional<String> getEmail() {
         return Optional.ofNullable(email).filter(not(String::isBlank));
     }
 
+    @JsonIgnore
     public boolean isDelayedCapture() {
         return Optional.ofNullable(delayedCapture).orElse(false);
     }
 
+    @JsonIgnore
     public SupportedLanguage getLanguage() {
         return Optional.ofNullable(language).orElse(SupportedLanguage.ENGLISH);
     }
 
+    @JsonIgnore
     public Optional<PrefilledCardHolderDetails> getPrefilledCardHolderDetails() {
         return Optional.ofNullable(prefilledCardHolderDetails);
     }
@@ -178,30 +191,36 @@ public class ChargeCreateRequest {
         return Optional.ofNullable(externalMetadata);
     }
 
+    @JsonIgnore
     public Source getSource() {
         return source;
     }
 
+    @JsonIgnore
     public boolean isMoto() {
         return Optional.ofNullable(moto).orElse(false);
     }
 
+    @JsonIgnore
     public String getAgreementId() {
         return agreementId;
     }
 
+    @JsonIgnore
     public boolean getSavePaymentInstrumentToAgreement() {
         return Optional.ofNullable(savePaymentInstrumentToAgreement).orElse(false);
     }
 
+    @JsonIgnore
     public String getPaymentProvider() {
         return paymentProvider;
     }
 
+    @JsonIgnore
     public AuthorisationMode getAuthorisationMode() {
         return Optional.ofNullable(authorisationMode).orElse(AuthorisationMode.WEB);
     }
-
+    
     public String toStringWithoutPersonalIdentifiableInformation() {
         // Don't include:
         // description - some services include PII

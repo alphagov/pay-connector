@@ -30,7 +30,9 @@ import java.util.stream.Collectors;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -148,6 +150,140 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).collect(Collectors.toUnmodifiableList());
         assertThat(log.getMessage(), is("Task added to queue"));
         assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
+    }
+
+    @Test
+    public void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasMinimalValues() {
+        String idempotencyKey = "an-idempotency-key";
+
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
+        Long paymentInstrumentId = RandomUtils.nextLong();
+
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        String existingChargeExternalId = addCharge(CREATED);
+
+        // IMPORTANT: Do not modify this request body if the test fails. This is used to verify that when making a
+        // request with minimal properties, that it will match with a request stored in the idempotency database for
+        // a previous request with the same idempotency key. If adding new properties to the request, any default value
+        // should be provided in getters on ChargeCreateRequest, with the @JsonIgnore annotation added.
+        Map<String, Object> requestBodyMap = Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
+        );
+
+        databaseTestHelper.insertIdempotency(idempotencyKey, Long.valueOf(accountId), existingChargeExternalId, requestBodyMap);
+
+        connectorRestApiClient
+                .withHeader("Idempotency-Key", idempotencyKey)
+                .postCreateCharge(toJson(requestBodyMap))
+                .statusCode(SC_OK)
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(existingChargeExternalId));
+    }
+
+    @Test
+    public void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasValuesForAllProperties() {
+        String idempotencyKey = "an-idempotency-key";
+
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
+        Long paymentInstrumentId = RandomUtils.nextLong();
+
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        String existingChargeExternalId = addCharge(CREATED);
+        
+        Map<String, Object> requestBodyMap = Map.ofEntries(
+                Map.entry(JSON_AMOUNT_KEY, AMOUNT),
+                Map.entry(JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE),
+                Map.entry(JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE),
+                Map.entry(JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE),
+                Map.entry(JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT),
+                Map.entry(JSON_EMAIL_KEY, "joe.blogs@example.org"),
+                Map.entry(JSON_DELAYED_CAPTURE_KEY, Boolean.TRUE),
+                Map.entry(JSON_LANGUAGE_KEY, "en"),
+                Map.entry(JSON_SOURCE_KEY, "CARD_API"),
+                Map.entry(JSON_MOTO_KEY, Boolean.TRUE),
+                Map.entry(JSON_PROVIDER_KEY, "sandbox"),
+                Map.entry(JSON_METADATA_KEY, Map.of("foo", "bar")));
+
+        databaseTestHelper.insertIdempotency(idempotencyKey, Long.valueOf(accountId), existingChargeExternalId, requestBodyMap);
+
+        connectorRestApiClient
+                .withHeader("Idempotency-Key", idempotencyKey)
+                .postCreateCharge(toJson(requestBodyMap))
+                .statusCode(SC_OK)
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(existingChargeExternalId));
+    }
+
+    @Test
+    public void shouldReturn409_whenChargeAlreadyCreatedForIdempotencyKey_andRequestBodyDoesNotMatch() {
+        String idempotencyKey = "an-idempotency-key";
+
+        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
+        Long paymentInstrumentId = RandomUtils.nextLong();
+
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(accountId)
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        databaseTestHelper.addAgreement(agreementParams);
+
+        String existingChargeExternalId = addCharge(CREATED);
+        
+        Map<String, Object> previousRequestBodyMap = Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
+        );
+        Map<String, Object> newRequestBodyMap = Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "A DIFFERENT REF",
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
+        );
+
+        databaseTestHelper.insertIdempotency(idempotencyKey, Long.valueOf(accountId), existingChargeExternalId, previousRequestBodyMap);
+
+        connectorRestApiClient
+                .withHeader("Idempotency-Key", idempotencyKey)
+                .postCreateCharge(toJson(newRequestBodyMap))
+                .statusCode(SC_CONFLICT)
+                .contentType(JSON)
+                .body("message", contains("The Idempotency-Key has already been used to create a payment"));
     }
 
     @Test
@@ -272,7 +408,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 JSON_MOTO_KEY, true
-                ));
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody, accountId)
@@ -437,7 +573,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", contains("Agreement with ID [" + JSON_VALID_AGREEMENT_ID_VALUE + "] has payment instrument with ID ["
-                        + paymentInstrumentExternalId+ "] but its state is [" + PaymentInstrumentStatus.CREATED + "]"))
+                        + paymentInstrumentExternalId + "] but its state is [" + PaymentInstrumentStatus.CREATED + "]"))
                 .body("error_identifier", is(ErrorIdentifier.AGREEMENT_NOT_ACTIVE.toString()));
 
     }
@@ -605,7 +741,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON);
     }
-    
+
     @Test
     public void shouldReturn422OnSavePaymentToInstrumentRequestWhenRecurringNotEnabledForGatewayAccount() {
         AddAgreementParams agreementParams = anAddAgreementParams()
@@ -613,7 +749,7 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .build();
         databaseTestHelper.addAgreement(agreementParams);
-        
+
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -621,15 +757,15 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
-                ));
-        
+        ));
+
         connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
                 .body("message", contains("Recurring payment agreements are not enabled on this account"))
                 .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
-        }
+    }
 
     @After
     public void tearDown() {

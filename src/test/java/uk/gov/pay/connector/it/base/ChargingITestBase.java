@@ -105,6 +105,8 @@ public class ChargingITestBase {
     protected static final String JSON_METADATA_KEY = "metadata";
     protected static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
     protected static final String JSON_AUTH_MODE_MOTO_API = "moto_api";
+    protected static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
+    protected static final String JSON_SOURCE_KEY = "source";
 
     protected WorldpayMockClient worldpayMockClient;
     protected SmartpayMockClient smartpayMockClient;

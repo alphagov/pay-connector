@@ -1,9 +1,5 @@
 package uk.gov.pay.connector.idempotency.model;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringObjectMapConverter;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
@@ -29,7 +25,7 @@ import java.util.Map;
 @SequenceGenerator(name = "idempotency_id_seq",
         sequenceName = "idempotency_id_seq", allocationSize = 1)
 public class IdempotencyEntity {
-    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
+
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idempotency_id_seq")
@@ -57,20 +53,13 @@ public class IdempotencyEntity {
         // For JPA
     }
 
-    private IdempotencyEntity(String key, GatewayAccountEntity gatewayAccount, String resourceExternalId,
-                             Map<String, Object> requestBody, Instant createdDate) {
+    public IdempotencyEntity(String key, GatewayAccountEntity gatewayAccount, String resourceExternalId,
+                              Map<String, Object> requestBody, Instant createdDate) {
         this.key = key;
         this.gatewayAccount = gatewayAccount;
         this.resourceExternalId = resourceExternalId;
         this.requestBody = requestBody;
         this.createdDate = createdDate;
-    }
-
-    public static IdempotencyEntity from(String key, ChargeCreateRequest chargeCreateRequest,
-                                         GatewayAccountEntity gatewayAccount, String resourceExternalId) {
-        return new IdempotencyEntity(key, gatewayAccount, resourceExternalId,
-                mapper.convertValue(chargeCreateRequest, new TypeReference<>() {}), Instant.now());
-
     }
 
     public String getKey() {

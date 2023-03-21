@@ -80,7 +80,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/charges"
                 .replace("{accountId}", accountId);
 
-        return given().port(port)
+        return buildRequest()
                 .contentType(JSON)
                 .body(postBody)
                 .post(requestPath)
@@ -91,7 +91,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/telephone-charges"
                 .replace("{accountId}", accountId);
 
-        return given().port(port)
+        return buildRequest()
                 .contentType(JSON)
                 .body(postBody)
                 .post(requestPath)
@@ -103,19 +103,19 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
-        return given().port(port)
+        return buildRequest()
                 .get(requestPath)
                 .then();
     }
 
     public ValidatableResponse postChargeExpiryTask() {
-        return given().port(port)
+        return buildRequest()
                 .post("/v1/tasks/expired-charges-sweep")
                 .then();
     }
 
     public ValidatableResponse postEmittedEventsSweepTask() {
-        return given().port(port)
+        return buildRequest()
                 .body(Entity.json(""))
                 .post("/v1/tasks/emitted-events-sweep")
                 .then();
@@ -126,8 +126,7 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/status";
-        return given()
-                .port(port)
+        return buildRequest()
                 .contentType(JSON).body(putBody)
                 .put(requestPath)
                 .then();
@@ -138,8 +137,7 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
-        return given()
-                .port(port)
+        return buildRequest()
                 .contentType(JSON).body(patchBody)
                 .patch(requestPath)
                 .then();
@@ -150,7 +148,7 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
-        return given().port(port)
+        return buildRequest()
                 .post(requestPath)
                 .then();
     }
@@ -159,7 +157,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/events"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(port)
+        return buildRequest()
                 .get(requestPath)
                 .then();
     }
@@ -167,15 +165,13 @@ public class RestAssuredClient {
     public ValidatableResponse getFrontendCharge() {
         String requestPath = "/v1/frontend/charges/{chargeId}"
                 .replace("{chargeId}", chargeId);
-        return given()
-                .port(port)
+        return buildRequest()
                 .get(requestPath)
                 .then();
     }
 
     public ValidatableResponse getWorldpay3dsFlexDdcJwt() {
-        return given()
-                .port(port)
+        return buildRequest()
                 .get("/v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc"
                 .replace("{chargeId}", chargeId))
                 .then();
@@ -186,8 +182,7 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 .replace("{refundId}", refundId);
-        return given()
-                .port(port)
+        return buildRequest()
                 .get(requestPath)
                 .then();
     }
@@ -196,7 +191,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/frontend/charges/{chargeId}/cancel"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(port)
+        return buildRequest()
                 .post(requestPath)
                 .then();
     }
@@ -210,22 +205,28 @@ public class RestAssuredClient {
         final String path = "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(port)
+        return buildRequest()
                 .post(path)
                 .then();
     }
 
     public ValidatableResponse getDiscrepancyReport(String chargeIds) {
-        return addQueryParams(given().port(port))
+        return addQueryParams(buildRequest())
                 .contentType(JSON).body(chargeIds)
                 .post("/v1/api/discrepancies/report")
                 .then();
     }
 
     public ValidatableResponse resolveDiscrepancies(String chargeIds) {
-        return addQueryParams(given().port(port))
+        return addQueryParams(buildRequest())
                 .contentType(JSON).body(chargeIds)
                 .post("/v1/api/discrepancies/resolve")
                 .then();
+    }
+
+    private RequestSpecification buildRequest() {
+        return given()
+                .port(port)
+                .headers(headers);
     }
 }

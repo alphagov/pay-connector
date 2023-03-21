@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,6 +82,7 @@ class ChargeServicePostAuthorisationTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
     private final Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity();
     private AuthCardDetails authCardDetails;
@@ -114,7 +116,7 @@ class ChargeServicePostAuthorisationTest {
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
     }
 
     @Test

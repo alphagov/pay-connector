@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,12 +75,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceCreateAgreementTest {
     private static final long GATEWAY_ACCOUNT_ID = 10L;
-
     private static final String SERVICE_HOST = "https://service-host.test/";
-
     private static final String FRONTEND_URL = "https://frontend.test/";
-
     private static final String AGREEMENT_ID = "agreement-id";
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private ChargeCreateRequestBuilder requestBuilder;
 
@@ -186,7 +185,7 @@ class ChargeServiceCreateAgreementTest {
         chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao, mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao,
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
                 mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao);
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao, objectMapper);
     }
 
     @Test
