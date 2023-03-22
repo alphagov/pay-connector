@@ -2,8 +2,6 @@ package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.collect.MapDifference;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,6 @@ import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
-import uk.gov.pay.connector.charge.util.ChargeCreateRequestIdempotencyComparatorUtil;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -160,6 +157,7 @@ public class ChargeService {
     private final PaymentInstrumentService paymentInstrumentService;
     private final TaskQueueService taskQueueService;
     private final IdempotencyDao idempotencyDao;
+    private final ObjectMapper objectMapper;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -178,7 +176,8 @@ public class ChargeService {
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
                          AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
                          TaskQueueService taskQueueService,
-                         IdempotencyDao idempotencyDao) {
+                         IdempotencyDao idempotencyDao,
+                         ObjectMapper objectMapper) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -198,6 +197,7 @@ public class ChargeService {
         this.authCardDetailsToCardDetailsEntityConverter = authCardDetailsToCardDetailsEntityConverter;
         this.taskQueueService = taskQueueService;
         this.idempotencyDao = idempotencyDao;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -326,23 +326,6 @@ public class ChargeService {
                     .ifPresent(chargeEntity::setCardDetails);
 
             if (authorisationMode == AuthorisationMode.AGREEMENT) {
-                if (idempotencyKey != null) {
-                    Optional<IdempotencyEntity> optionalIdempotencyEntity = idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccount.getId(), idempotencyKey);
-                    if (optionalIdempotencyEntity.isPresent()) {
-                        IdempotencyEntity idempotencyEntity = optionalIdempotencyEntity.get();
-                        if (ChargeCreateRequestIdempotencyComparatorUtil.equals(chargeRequest, idempotencyEntity.getRequestBody())) {
-                            LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
-                            // TODO implement PP-10833, query Ledger if Charge has been expunged
-                            return findChargeByExternalId(idempotencyEntity.getResourceExternalId());
-                        }
-
-                        Map<String, MapDifference.ValueDifference<Object>> diffMap = ChargeCreateRequestIdempotencyComparatorUtil.diff(chargeRequest, idempotencyEntity.getRequestBody());
-                        LOGGER.info(format("Idempotency-Key [%s] was already used to create a charge with a different request body. Existing payment external id: %s",
-                                        idempotencyKey, idempotencyEntity.getResourceExternalId()),
-                                kv("differences_in_request_body", diffMap));
-                        throw new IdempotencyKeyUsedException();
-                    }
-                }
                 agreementEntity.ifPresent(agreement -> {
                     checkAgreementHasActivePaymentInstrument(agreement);
                     agreement.getPaymentInstrument()
@@ -353,11 +336,14 @@ public class ChargeService {
             chargeDao.persist(chargeEntity);
 
             if (authorisationMode == AGREEMENT && idempotencyKey != null) {
-                IdempotencyEntity idempotencyEntity = IdempotencyEntity.from(
+                Map<String, Object> requestBody = objectMapper.convertValue(chargeRequest, new TypeReference<>() {
+                });
+                IdempotencyEntity idempotencyEntity = new IdempotencyEntity(
                         idempotencyKey,
-                        chargeRequest,
                         gatewayAccount,
-                        chargeEntity.getExternalId());
+                        chargeEntity.getExternalId(),
+                        requestBody,
+                        Instant.now());
                 idempotencyDao.persist(idempotencyEntity);
             }
 
@@ -367,7 +353,33 @@ public class ChargeService {
             return chargeEntity;
         });
     }
-    
+
+    public Optional<ChargeResponse> checkForChargeCreatedWithIdempotencyKey(ChargeCreateRequest chargeRequest,
+                                                                            Long gatewayAccountId,
+                                                                            String idempotencyKey,
+                                                                            UriInfo uriInfo) {
+        return idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccountId, idempotencyKey).map(idempotencyEntity -> {
+            Map<String, Object> chargeRequestMap = objectMapper.convertValue(chargeRequest, new TypeReference<>() {});
+
+            // Convert to `ChargeCreateRequest` then back to a Map. This is to handle the fact that when we read the
+            // jsonb from the database, we read the amount as an integer, but on the `ChargeCreateRequest` it is a long.
+            ChargeCreateRequest previousChargeRequest = objectMapper.convertValue(idempotencyEntity.getRequestBody(), ChargeCreateRequest.class);
+            Map<String, Object> previousChargeRequestMap = objectMapper.convertValue(previousChargeRequest, new TypeReference<>() {});
+            if (chargeRequestMap.equals(previousChargeRequestMap)) {
+                LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
+                // TODO implement PP-10833, query Ledger if Charge has been expunged
+                ChargeEntity existingCharge = findChargeByExternalId(idempotencyEntity.getResourceExternalId());
+                return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, existingCharge).build();
+            }
+            
+            LOGGER.info(format("Idempotency-Key [%s] was already used to create a charge with a different request body. Existing payment external id: %s",
+                            idempotencyKey, idempotencyEntity.getResourceExternalId()),
+                    kv("previous_request_body", previousChargeRequest.toStringWithoutPersonalIdentifiableInformation()),
+                    kv("new_request_body", chargeRequest.toStringWithoutPersonalIdentifiableInformation()));
+            throw new IdempotencyKeyUsedException();
+        });
+    }
+
     private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);

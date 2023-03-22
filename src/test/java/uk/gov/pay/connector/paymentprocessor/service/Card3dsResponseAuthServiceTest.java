@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.Counter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
@@ -98,6 +99,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private static final String REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_TRANSACTION_ID = "challenge-transaction-id";
     private static final String REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_PAYLOAD = "challenge-payload";
     private static final String REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION = "2";
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
     private ChargeService chargeService;
@@ -118,7 +120,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao);
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao, objectMapper);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);

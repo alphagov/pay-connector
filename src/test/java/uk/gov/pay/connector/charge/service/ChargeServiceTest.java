@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,6 +109,7 @@ class ChargeServiceTest {
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private ChargeCreateRequestBuilder requestBuilder;
 
@@ -215,7 +217,7 @@ class ChargeServiceTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
     }
 
     @Test

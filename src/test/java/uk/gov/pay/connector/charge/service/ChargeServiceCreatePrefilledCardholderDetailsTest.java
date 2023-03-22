@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +64,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
 
     private static final String SERVICE_HOST = "http://my-service";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private ChargeCreateRequestBuilder requestBuilder;
 
@@ -164,7 +166,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
     }
 
     @Test

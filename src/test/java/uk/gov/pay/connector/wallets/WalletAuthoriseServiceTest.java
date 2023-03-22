@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
@@ -102,6 +103,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
@@ -191,7 +193,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao));
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao, objectMapper));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

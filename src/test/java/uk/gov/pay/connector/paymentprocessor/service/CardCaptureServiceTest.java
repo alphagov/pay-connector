@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -125,6 +126,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void beforeTest() {
@@ -136,7 +138,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao);
+                mockTaskQueueService, mockIdempotencyDao, objectMapper);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
