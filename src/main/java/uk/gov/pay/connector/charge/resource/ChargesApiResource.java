@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.hibernate.validator.constraints.Length;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
@@ -121,7 +122,7 @@ public class ChargesApiResource {
             @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid ChargeCreateRequest chargeRequest,
             @Context UriInfo uriInfo,
-            @Nullable @HeaderParam("Idempotency-Key") String idempotencyKey) {
+            @Nullable @Length(min = 1, max = 255, message = "Header [Idempotency-Key] can have a size between 1 and 255") @HeaderParam("Idempotency-Key") String idempotencyKey) {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
 
         AuthorisationMode authorisationMode = chargeRequest.getAuthorisationMode();

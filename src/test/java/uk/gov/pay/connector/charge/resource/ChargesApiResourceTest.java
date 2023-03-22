@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -77,6 +78,50 @@ public class ChargesApiResourceTest {
         assertThat(response.getStatus(), is(400));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(errorResponse.getMessages().get(0), startsWith("Cannot deserialize value of type `uk.gov.service.payments.commons.model.AuthorisationMode`"));
+        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+    }
+
+    @Test
+    void createCharge_idempotencyKeyAboveMaxLength_shouldReturn422() {
+        var payload = Map.of(
+                "amount", 100,
+                "reference", "ref",
+                "description", "desc",
+                "authorisation_mode", "agreement",
+                "agreement_id", "agreement12345677890123456"
+        );
+
+        Response response = resources
+                .target("/v1/api/accounts/1/charges")
+                .request()
+                .header("Idempotency-Key", "a".repeat(256))
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+        assertThat(errorResponse.getMessages(), contains("Header [Idempotency-Key] can have a size between 1 and 255"));
+        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+    }
+
+    @Test
+    void createCharge_idempotencyKeyEmpty_shouldReturn422() {
+        var payload = Map.of(
+                "amount", 100,
+                "reference", "ref",
+                "description", "desc",
+                "authorisation_mode", "agreement",
+                "agreement_id", "agreement12345677890123456"
+        );
+
+        Response response = resources
+                .target("/v1/api/accounts/1/charges")
+                .request()
+                .header("Idempotency-Key", "")
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+        assertThat(errorResponse.getMessages(), contains("Header [Idempotency-Key] can have a size between 1 and 255"));
         assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
     }
 }
