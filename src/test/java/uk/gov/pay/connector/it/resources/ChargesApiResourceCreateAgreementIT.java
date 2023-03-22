@@ -173,10 +173,11 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
 
         String existingChargeExternalId = addCharge(CREATED);
 
-        // IMPORTANT: Do not modify this request body if the test fails. This is used to verify that when making a
-        // request with minimal properties, that it will match with a request stored in the idempotency database for
-        // a previous request with the same idempotency key. If adding new properties to the request, any default value
-        // should be provided in getters on ChargeCreateRequest, with the @JsonIgnore annotation added.
+        // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
+        // create charge request, changes to the business code should be made in a way that a request stored in the 
+        // idempotency record will continue to be matched against a new request with the same payload coming from 
+        // consumers of the API. If adding new properties to the request, any default value should be provided by the
+        // getters on ChargeCreateRequest, with the @JsonIgnore annotation added.
         Map<String, Object> requestBodyMap = Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -215,7 +216,11 @@ public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
         databaseTestHelper.addAgreement(agreementParams);
 
         String existingChargeExternalId = addCharge(CREATED);
-        
+
+        // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
+        // create charge request, changes to the business code should be made in a way that a request stored in the 
+        // idempotency record will continue to be matched against a new request with the same payload coming from 
+        // consumers of the API.
         Map<String, Object> requestBodyMap = Map.ofEntries(
                 Map.entry(JSON_AMOUNT_KEY, AMOUNT),
                 Map.entry(JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE),
