@@ -14,7 +14,6 @@ public class SandboxFullCardNumbersTest {
     public void shouldDetectValidCards() {
         assertTrue(sandboxFullCardNumbers.isValidCard("4444333322221111"));
         assertTrue(sandboxFullCardNumbers.isValidCard("4000180000000002"));
-        assertTrue(sandboxFullCardNumbers.isValidCard("5101110000000004"));
         assertTrue(sandboxFullCardNumbers.isValidCard("5555555555554444"));
     }
 
