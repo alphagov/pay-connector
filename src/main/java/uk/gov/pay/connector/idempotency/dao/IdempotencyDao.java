@@ -6,6 +6,8 @@ import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 
 import javax.persistence.EntityManager;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
@@ -25,4 +27,13 @@ public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
                 .setParameter("key", key)
                 .getResultList().stream().findFirst();
     }
+    public int deleteIdempotencyKeysMoreThan24HoursOld() {
+        Instant nowMinus24Hours = Instant.now().minus(1, ChronoUnit.DAYS);
+        String query = "DELETE FROM IdempotencyEntity ie WHERE ie.createdDate < :nowMinus24Hours";
+        return entityManager.get()
+                .createQuery(query, IdempotencyEntity.class)
+                .setParameter("nowMinus24Hours", nowMinus24Hours)
+                .executeUpdate();
+    }
+
 }

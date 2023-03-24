@@ -1152,6 +1152,15 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
+    public void updateIdempotencyCreatedDate(String key, Instant newDate) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE idempotency SET created_date = :newDate " +
+                        "WHERE key = :key")
+                        .bind("key", key)
+                        .bind("newDate", newDate)
+                        .execute());
+    }
+
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
         PGobject credentialsJson = buildCredentialsJson(params);
 
