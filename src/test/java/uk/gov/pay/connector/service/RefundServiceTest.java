@@ -22,7 +22,6 @@ import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
-import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
@@ -73,7 +72,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -266,52 +264,6 @@ public class RefundServiceTest {
         assertThat(refundEntity.getAmount(), is(refundAmount));
         assertThat(refundEntity.getStatus(), is(CREATED));
         assertThat(refundEntity.getChargeExternalId(), is(externalChargeId));
-    }
-
-    @Test
-    void shouldRefundSuccessfully_forSmartpay() {
-        Long amount = 100L;
-        
-        gatewayAccountCredentialsEntityList.add(gatewayAccountCredentialsEntity);
-        chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(account)
-                .withTransactionId("transaction-id")
-                .withExternalId(externalChargeId)
-                .withStatus(CAPTURED)
-                .withPaymentProvider(SMARTPAY.getName())
-                .build();
-
-        String refundExternalId = "refundExternalId";
-        Charge charge = Charge.from(chargeEntity);
-        RefundEntity refundEntity = aValidRefundEntity()
-                .withExternalId(refundExternalId).withAmount(amount).build();
-        RefundEntity spiedRefundEntity = spy(refundEntity);
-
-        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
-        when(mockGatewayAccountCredentialsService.findCredentialFromCharge(charge, account)).thenReturn(Optional.of(gatewayAccountCredentialsEntity));
-        when(mockProviders.byName(SMARTPAY)).thenReturn(mockProvider);
-        String reference = "refund-pspReference";
-        setupSmartpayMock(reference, null);
-
-        doAnswer(invocation -> {
-            ((RefundEntity) invocation.getArgument(0)).setId(refundId);
-            return null;
-        }).when(mockRefundDao).persist(any(RefundEntity.class));
-
-        when(mockRefundDao.findById(refundId)).thenReturn(Optional.of(spiedRefundEntity));
-
-        ChargeRefundResponse gatewayResponse = refundService.doRefund(accountId, charge, new RefundRequest(amount, chargeEntity.getAmount(), userExternalId));
-
-        assertThat(gatewayResponse.getGatewayRefundResponse().isSuccessful(), is(true));
-        assertThat(gatewayResponse.getGatewayRefundResponse().getError().isPresent(), is(false));
-        assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
-
-        verify(mockRefundDao).persist(argThat(aRefundEntity(amount, chargeEntity)));
-        verify(mockProvider).refund(argThat(aRefundRequestWith(chargeEntity, amount)));
-        verify(mockRefundDao, times(1)).findById(refundId);
-        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
-        verify(spiedRefundEntity, never()).setStatus(RefundStatus.REFUNDED);
-        verify(spiedRefundEntity).setGatewayTransactionId(reference);
     }
 
     @Test
@@ -954,24 +906,6 @@ public class RefundServiceTest {
 
         GatewayRefundResponse gatewayRefundResponse = GatewayRefundResponse.fromBaseRefundResponse(baseRefundResponse,
                 GatewayRefundResponse.RefundState.COMPLETE);
-
-        when(mockProvider.refund(any())).thenReturn(gatewayRefundResponse);
-    }
-
-    private void setupSmartpayMock(String reference, String errorCode) {
-        SmartpayRefundResponse smartpayRefundResponse = mock(SmartpayRefundResponse.class);
-        when(smartpayRefundResponse.getReference()).thenReturn(Optional.ofNullable(reference));
-        when(smartpayRefundResponse.getErrorCode()).thenReturn(errorCode);
-
-        GatewayRefundResponse.RefundState refundState;
-        if (isNotBlank(errorCode)) {
-            refundState = GatewayRefundResponse.RefundState.ERROR;
-        } else {
-            refundState = GatewayRefundResponse.RefundState.PENDING;
-        }
-
-        GatewayRefundResponse gatewayRefundResponse =
-                GatewayRefundResponse.fromBaseRefundResponse(smartpayRefundResponse, refundState);
 
         when(mockProvider.refund(any())).thenReturn(gatewayRefundResponse);
     }
