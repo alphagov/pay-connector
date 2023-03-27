@@ -85,48 +85,6 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE = WORLDPAY_BASE_NAME + "/check-credentials/invalid-merchant-id.xml";
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE = WORLDPAY_BASE_NAME + "/check-credentials/unexpected-error-code.xml";
 
-    // SMARTPAY
-
-    private static final String SMARTPAY_BASE_NAME = TEMPLATE_BASE_NAME + "/smartpay";
-
-    public static final String SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-success-response.xml";
-    public static final String SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-3ds-success-response.xml";
-    public static final String SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-3ds-required-response.xml";
-    public static final String SMARTPAY_AUTHORISATION_FAILED_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-failed-response.xml";
-    public static final String SMARTPAY_3DS_AUTHORISATION_FAILED_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-3ds-failed-response.xml";
-    static final String SMARTPAY_AUTHORISATION_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-error-response.xml";
-    public static final String SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-request.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-minimal.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_INCLUDING_STATE = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-including-state.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-without-address.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITH_IP_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-with-ip-address.xml";
-    public static final String SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-3ds-request.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-minimal.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_INCLUDING_STATE = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-including-state.xml";
-    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_WITHOUT_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-without-address.xml";
-
-    static final String SMARTPAY_CANCEL_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-error-response.xml";
-    public static final String SMARTPAY_CANCEL_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-success-response.xml";
-    public static final String SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-cancel-smartpay-request.xml";
-
-    public static final String SMARTPAY_CAPTURE_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/capture-error-response.xml";
-    public static final String SMARTPAY_CAPTURE_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/capture-success-response.xml";
-    public static final String SMARTPAY_SPECIAL_CHAR_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-capture-smartpay-request.xml";
-    public static final String SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-capture-smartpay-request.xml";
-
-    public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS = SMARTPAY_BASE_NAME + "/multiple-notifications.json";
-    public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES = SMARTPAY_BASE_NAME + "/multiple-notifications-different-dates.json";
-    public static final String SMARTPAY_NOTIFICATION_AUTHORISATION = SMARTPAY_BASE_NAME + "/notification-authorisation.json";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS = SMARTPAY_BASE_NAME + "/notification-capture-with-unknown-status.json";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE = SMARTPAY_BASE_NAME + "/notification-capture.json";
-    public static final String SMARTPAY_NOTIFICATION_REFUND = SMARTPAY_BASE_NAME + "/notification-refund.json";
-
-    public static final String SMARTPAY_REFUND_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/refund-error-response.xml";
-    public static final String SMARTPAY_REFUND_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/refund-success-response.xml";
-    public static final String SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-refund-smartpay-request.xml";
-
     // EPDQ
     private static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
     public static final String EPDQ_AUTHORISATION_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/authorisation-success-response.xml";

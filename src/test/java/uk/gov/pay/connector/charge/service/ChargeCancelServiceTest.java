@@ -22,7 +22,6 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
@@ -298,32 +297,6 @@ public class ChargeCancelServiceTest {
         WorldpayCancelResponse worldpayResponse = new WorldpayCancelResponse();
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
-
-        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
-
-        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
-
-        verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
-        verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
-    }
-
-    @Test
-    public void doSystemCancel_shouldCancelSmartPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
-
-        String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = nextLong();
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId(externalChargeId)
-                .withTransactionId("transaction-id")
-                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
-                .build();
-
-        SmartpayCancelResponse smartpayCancelResponse = mock(SmartpayCancelResponse.class);
-        when(smartpayCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
-        GatewayResponse.GatewayResponseBuilder<SmartpayCancelResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(smartpayCancelResponse).build();
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
