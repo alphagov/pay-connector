@@ -63,8 +63,6 @@ import uk.gov.pay.connector.expunge.resource.ExpungeResource;
 import uk.gov.pay.connector.filters.LoggingMDCRequestFilter;
 import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
-import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
-import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
@@ -206,8 +204,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.lifecycle().manage(injector.getInstance(PayoutReconcileMessageReceiver.class));
         environment.lifecycle().manage(injector.getInstance(TaskQueueMessageReceiver.class));
 
-        setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
-
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
@@ -225,17 +221,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         final Injector injector = Guice.createInjector(module);
         environment.lifecycle().manage(InjectorLookup.registerInjector(this, injector));
         return injector;
-    }
-
-    private void setupSmartpayBasicAuth(Environment environment, Authenticator<BasicCredentials, BasicAuthUser> authenticator) {
-        BasicCredentialAuthFilter<BasicAuthUser> basicCredentialAuthFilter =
-                new BasicCredentialAuthFilter.Builder<BasicAuthUser>()
-                        .setAuthenticator(authenticator)
-                        .buildAuthFilter();
-
-        environment.jersey().register(RolesAllowedDynamicFeature.class);
-        environment.jersey().register(new AuthDynamicFeature(basicCredentialAuthFilter));
-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(BasicAuthUser.class));
     }
 
     private void initialiseMetrics(ConnectorConfiguration configuration, Environment environment) {
