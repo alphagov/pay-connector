@@ -22,9 +22,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -48,7 +47,7 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         String chargeId4 = addCharge(AUTHORISATION_TIMEOUT);
 
         credentialParams = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("smartpay")
+                .withPaymentProvider("sandbox")
                 .withGatewayAccountId(Long.parseLong(accountId))
                 .withState(RETIRED)
                 .withCredentials(credentials)
@@ -58,13 +57,13 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         var worldpayAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(RandomUtils.nextLong())
-                .withPaymentProvider(SMARTPAY.getName())
+                .withPaymentProvider(SANDBOX.getName())
                 .withGatewayAccountCredentials(List.of(credentialParams))
                 .insert();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withGatewayAccountId(String.valueOf(worldpayAccount.getAccountId()))
-                .withPaymentProvider("smartpay")
+                .withPaymentProvider("sandbox")
                 .withStatus(AUTHORISATION_ERROR)
                 .withGatewayCredentialId(credentialParams.getId())
                 .build());

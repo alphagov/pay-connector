@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -47,7 +47,7 @@ class WorldpayCredentialsValidationServiceTest {
     private WorldpayCredentialsValidationService worldpayCredentialsValidationService;
 
     private final GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-            .withGatewayName(SMARTPAY.getName())
+            .withGatewayName(STRIPE.getName())
             .withType(TEST)
             .build();
 

@@ -76,15 +76,6 @@ public class RefundGatewayRequest implements GatewayRequest {
      * </p>
      *
      * <p>
-     * For Smartpay ->
-     *         transactionId = The original charges.gateway_transaction_id (a.k.a pspReference) given to us by smartpay at the payment AUTHORIZATION response. <br>
-     *         reference = our externalId for this refund, <b> this is NOT our link to smartpay refund. its only a pass through value as far as smartpay is concerned </b> <br>
-     *
-     *        Smartpay does not respond with our reference when SUBMIT REFUND, however when they notify us REFUNDED they return
-     *          -  Our `reference` we sent above will also be returned as `merchantReference`.
-     *          - `transactionId` above will also be returned as `originalReference`.
-     *          - Their reference to the Refund in smartpay will be returned as `pspReference`.
-     * </p>
      */
     public static RefundGatewayRequest valueOf(Charge charge, RefundEntity refundEntity,
                                                GatewayAccountEntity gatewayAccountEntity,

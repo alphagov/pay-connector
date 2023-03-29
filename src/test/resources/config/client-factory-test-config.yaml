@@ -33,13 +33,6 @@ worldpay:
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}
 
-smartpay:
-  allowedCidrs: ${SMARTPAY_ALLOWED_CIDRS:-[]}
-  urls:
-    test: http://localhost:10107/not/used
-    live: http://localhost:10107/not/used
-  credentials: ['username','password']
-
 epdq:
   allowedCidrs: ${EPDQ_ALLOWED_CIDRS:-[]}
   urls:

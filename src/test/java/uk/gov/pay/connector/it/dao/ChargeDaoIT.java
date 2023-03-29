@@ -935,12 +935,10 @@ public class ChargeDaoIT extends DaoITestBase {
         DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
         DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
         DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
-        DatabaseFixtures.TestAccount smartpayAccount = insertTestAccountWithProvider("smartpay");
 
         TestCharge epdqCreatedCharge = insertTestChargeWithStatus(epdqAccount, CREATED);
         TestCharge worldpayCreatedCharge = insertTestChargeWithStatus(worldpayAccount, CREATED);
         TestCharge stripeCreatedCharge = insertTestChargeWithStatus(stripeAccount, CREATED);
-        TestCharge smartpayCreatedCharge = insertTestChargeWithStatus(smartpayAccount, CREATED);
         TestCharge epdqEnteringCardDetailsCharge = insertTestChargeWithStatus(epdqAccount, ENTERING_CARD_DETAILS);
         TestCharge worldpayAuthorisedCharge = insertTestChargeWithStatus(worldpayAccount, AUTHORISATION_SUCCESS);
         TestCharge stripeEnteringCardDetailsCharge = insertTestChargeWithStatus(stripeAccount, ENTERING_CARD_DETAILS);
@@ -957,7 +955,6 @@ public class ChargeDaoIT extends DaoITestBase {
                 hasProperty("externalId", is(stripeEnteringCardDetailsCharge.externalChargeId))
         ));
         assertThat(charges, not(containsInAnyOrder(
-                hasProperty("externalId", is(smartpayCreatedCharge.externalChargeId)),
                 hasProperty("externalId", is(worldpayAuthorisedCharge.externalChargeId))
         )));
     }
@@ -966,9 +963,9 @@ public class ChargeDaoIT extends DaoITestBase {
     public void shouldFindChargesWithPaymentProvidersAndStatusesWithLimit() {
         DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
         DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
-        DatabaseFixtures.TestAccount smartpayAccount = insertTestAccountWithProvider("smartpay");
+        DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
         insertTestChargeWithStatus(epdqAccount, CREATED);
-        TestCharge smartpayCreatedCharge = insertTestChargeWithStatus(smartpayAccount, CREATED);
+        TestCharge worldpayCreatedCharge = insertTestChargeWithStatus(worldpayAccount, CREATED);
         insertTestChargeWithStatus(stripeAccount, CREATED);
         insertTestChargeWithStatus(stripeAccount, CREATED);
 
@@ -976,7 +973,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 List.of(CREATED), List.of(WEB), 2);
         assertThat(charges, hasSize(2));
         assertThat(charges, not(containsInAnyOrder(
-                hasProperty("externalId", is(smartpayCreatedCharge.externalChargeId))
+                hasProperty("externalId", is(worldpayCreatedCharge.externalChargeId))
         )));
     }
 

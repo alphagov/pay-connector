@@ -26,14 +26,11 @@ Alternatively, docs can be generated using [Pay API Docs generator](https://gith
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
 | `WORLDPAY_3DS_FLEX_DDC_TEST_URL` | - | Pointing to Worldpay's TEST Device Data Collection URL. |
 | `WORLDPAY_3DS_FLEX_DDC_LIVE_URL` | - | Pointing to Cardinal Commerce's LIVE Device Data Collection URL. |
-| `GDS_CONNECTOR_SMARTPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Smartpay payment provider. |
-| `GDS_CONNECTOR_SMARTPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_EPDQ_TEST_URL` | - | Pointing to the TEST gateway URL of ePDQ payment provider. |
 | `GDS_CONNECTOR_EPDQ_LIVE_URL` | - | Pointing to the LIVE gateway URL of ePDQ payment provider. |
 | `COLLECT_FEE_FEATURE_FLAG` | false | enable or disable collecting fees for the Stripe payment gateway. |
 | `EPDQ_ALLOWED_CIDRS` | - | A list of allowed Epdq CIDRs used for IP firewalling on notifications coming from Epdq. |
 | `SANDBOX_ALLOWED_CIDRS` | - | A list of allowed Sandbox CIDRs used for IP firewalling on notifications coming from Sandbox. |
-| `SMARTPAY_ALLOWED_CIDRS` | - | A list of allowed Smartpay CIDRs used for IP firewalling on notifications coming from Smartpay. |
 | `STRIPE_ALLOWED_CIDRS` | - | A list of allowed Stripe CIDRs used for IP firewalling on notifications coming from Stripe. |
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
@@ -137,7 +134,6 @@ To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environme
 ## Contract tests
 
 `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worldpay contract tests.
-`GDS_CONNECTOR_SMARTPAY_USER`, `GDS_CONNECTOR_SMARTPAY_PASSWORD` must be set for the smartpay contract tests.
 
 ```
     eval $(boot2docker shellinit)

@@ -17,7 +17,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface ValidPaymentProvider {
 
-    String message() default "Field [payment_provider] must be one of [epdq, sandbox, smartpay, stripe, worldpay]";
+    String message() default "Field [payment_provider] must be one of [epdq, sandbox, stripe, worldpay]";
 
     Class<?>[] groups() default {};
 

@@ -413,7 +413,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void createValidNotificationCredentials_responseShouldBe200_Ok() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        String gatewayAccountId = createAGatewayAccountFor("stripe");
         givenSetup()
                 .body(toJson(Map.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
@@ -530,7 +530,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void shouldNotReturn3dsFlexCredentials_whenGatewayIsNotAWorldpayAccount() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay", "a-description", "analytics-id");
+        String gatewayAccountId = createAGatewayAccountFor("stripe", "a-description", "analytics-id");
         givenSetup()
                 .get("/v1/frontend/accounts/" + gatewayAccountId)
                 .then()
@@ -579,7 +579,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        String gatewayAccountId = createAGatewayAccountFor("stripe");
         givenSetup()
                 .body(toJson(Map.of("bob", "bob", "bobby", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
@@ -589,7 +589,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void whenNotificationCredentialsInvalidValues_shouldReturn400() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
+        String gatewayAccountId = createAGatewayAccountFor("stripe");
         givenSetup()
                 .body(toJson(Map.of("username", "bob", "password", "tooshort")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")

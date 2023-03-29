@@ -56,7 +56,7 @@ public class ChargesApiResourceTest {
 
         assertThat(response.getStatus(), is(422));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Field [payment_provider] must be one of [epdq, sandbox, smartpay, stripe, worldpay]"));
+        assertThat(errorResponse.getMessages(), hasItem("Field [payment_provider] must be one of [epdq, sandbox, stripe, worldpay]"));
         assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
     }
 

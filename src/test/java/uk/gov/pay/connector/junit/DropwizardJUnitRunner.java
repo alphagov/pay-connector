@@ -85,9 +85,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
         configOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + wireMockPort + "/shopper/3ds/ddc.html"));
-        configOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
-        configOverride.add(config("smartpay.urls.test", "http://localhost:" + wireMockPort + "/pal/servlet/soap/Payment"));
         configOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
         configOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
         configOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));

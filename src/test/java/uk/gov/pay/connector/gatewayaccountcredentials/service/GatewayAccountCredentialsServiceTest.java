@@ -48,7 +48,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -189,7 +188,7 @@ public class GatewayAccountCredentialsServiceTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"worldpay", "epdq", "smartpay"})
+        @ValueSource(strings = {"worldpay", "epdq"})
         void createCredentialsForProvidersShouldCreateRecordWithCreatedState(String paymentProvider) {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
 
@@ -647,7 +646,7 @@ public class GatewayAccountCredentialsServiceTest {
         @Test
         void shouldThrowForNoCredentialsForProvider() {
             GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("smartpay").withState(ENTERED).build();
+                    .withPaymentProvider("stripe").withState(ENTERED).build();
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                     .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
 
@@ -820,12 +819,12 @@ public class GatewayAccountCredentialsServiceTest {
                     .aGatewayAccountCredentialsEntity()
                     .withPaymentProvider(WORLDPAY.getName())
                     .build();
-            GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+            GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
                     .aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider(SMARTPAY.getName())
+                    .withPaymentProvider(STRIPE.getName())
                     .build();
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, stripeGatewayAccountCredentialsEntityOne))
                     .build();
             Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
             String chargeCredentialExternalId = charge.getCredentialExternalId().get();
@@ -842,12 +841,12 @@ public class GatewayAccountCredentialsServiceTest {
                     .aGatewayAccountCredentialsEntity()
                     .withPaymentProvider(WORLDPAY.getName())
                     .build();
-            GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+            GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
                     .aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider(SMARTPAY.getName())
+                    .withPaymentProvider(STRIPE.getName())
                     .build();
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, stripeGatewayAccountCredentialsEntityOne))
                     .build();
             Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
             charge.setCredentialExternalId(null);
@@ -865,13 +864,13 @@ public class GatewayAccountCredentialsServiceTest {
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.parse("2021-08-15T13:00:00Z"))
                     .build();
-            GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+            GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
                     .aGatewayAccountCredentialsEntity()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.parse("2021-08-17T15:00:00Z"))
                     .build();
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, stripeGatewayAccountCredentialsEntityOne))
                     .build();
 
             Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
@@ -889,13 +888,13 @@ public class GatewayAccountCredentialsServiceTest {
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.parse("2021-08-17T13:00:00Z"))
                     .build();
-            GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntityOne = GatewayAccountCredentialsEntityFixture
+            GatewayAccountCredentialsEntity worldpayGatewayAccountCredentialsEntityTwo = GatewayAccountCredentialsEntityFixture
                     .aGatewayAccountCredentialsEntity()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.parse("2021-08-18T15:00:00Z"))
                     .build();
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, smartpayGatewayAccountCredentialsEntityOne))
+                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, worldpayGatewayAccountCredentialsEntityTwo))
                     .build();
 
             Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
@@ -908,12 +907,12 @@ public class GatewayAccountCredentialsServiceTest {
         @Test
         void shouldReturnEmptyOptionalIfNoGatewayAccountCredentialsFoundWhenSearchingByPaymentProvider() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
-            GatewayAccountCredentialsEntity smartpayGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+            GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                     .aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider(SMARTPAY.getName())
+                    .withPaymentProvider(STRIPE.getName())
                     .build();
 
-            gatewayAccountEntity.setGatewayAccountCredentials(List.of(smartpayGatewayAccountCredentialsEntity));
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(stripeGatewayAccountCredentialsEntity));
             Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
             Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
 
