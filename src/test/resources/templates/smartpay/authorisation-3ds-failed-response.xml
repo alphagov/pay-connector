@@ -1,0 +1,19 @@
+<ns0:Envelope xmlns:ns0="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://payment.services.adyen.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ns0:Body>
+        <ns1:authorise3dResponse>
+            <ns1:paymentResult>
+                <ns1:additionalData xsi:nil="true" />
+                <ns1:authCode xsi:nil="true" />
+                <ns1:dccAmount xsi:nil="true" />
+                <ns1:dccSignature xsi:nil="true" />
+                <ns1:fraudResult xsi:nil="true" />
+                <ns1:issuerUrl xsi:nil="true" />
+                <ns1:md xsi:nil="true" />
+                <ns1:paRequest xsi:nil="true" />
+                <ns1:pspReference>8814436101583280</ns1:pspReference>
+                <ns1:refusalReason>CVC Declined</ns1:refusalReason>
+                <ns1:resultCode>Refused</ns1:resultCode>
+            </ns1:paymentResult>
+        </ns1:authorise3dResponse>
+    </ns0:Body>
+</ns0:Envelope>

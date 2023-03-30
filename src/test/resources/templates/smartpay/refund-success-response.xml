@@ -1,0 +1,12 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soap:Body>
+        <ns1:refundResponse xmlns:ns1="http://payment.services.adyen.com">
+            <ns1:refundResult>
+                <additionalData xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <pspReference xmlns="http://payment.services.adyen.com">{{pspReference}}</pspReference>
+                <response xmlns="http://payment.services.adyen.com">[refund-received]</response>
+            </ns1:refundResult>
+        </ns1:refundResponse>
+    </soap:Body>
+</soap:Envelope>
