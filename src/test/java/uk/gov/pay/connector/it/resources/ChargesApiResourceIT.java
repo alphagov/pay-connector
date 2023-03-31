@@ -85,9 +85,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
         
-        Thread.sleep(4000);
-
-        getCharge(chargeId)
+        getCharge(chargeId).log().body()
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
