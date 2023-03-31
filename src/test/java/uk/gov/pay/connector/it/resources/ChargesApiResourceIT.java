@@ -115,6 +115,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
+        // Trigger some tests to run
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
