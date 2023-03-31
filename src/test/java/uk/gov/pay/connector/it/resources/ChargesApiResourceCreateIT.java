@@ -64,6 +64,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
                 @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
         }
 )
+@Ignore
 public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";

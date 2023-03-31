@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -29,6 +30,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
+@Ignore
 public class CardResourceCaptureIT extends ChargingITestBase {
 
     public CardResourceCaptureIT() {

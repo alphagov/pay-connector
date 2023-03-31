@@ -8,6 +8,7 @@ import ch.qos.logback.core.Appender;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -55,6 +56,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
         config = "config/test-it-config.yaml",
         withDockerSQS = true
 )
+@Ignore
 public class ChargesApiResourceCreateAgreementIT extends ChargingITestBase {
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);

@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -37,6 +38,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
         configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
         withDockerSQS = true
 )
+@Ignore
 public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);

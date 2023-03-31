@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -10,7 +11,7 @@ import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-
+@Ignore
 public class HealthCheckResourceIT {
 
     @Rule

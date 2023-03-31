@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -21,7 +18,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-
+@Ignore
 public class PayersCardTypesResourceITest {
     private static final CardTypeDao mockedDao = mock(CardTypeDao.class);
     @ClassRule

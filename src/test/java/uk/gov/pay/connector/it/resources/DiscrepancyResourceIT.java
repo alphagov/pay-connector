@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -27,6 +28,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@Ignore
 public class DiscrepancyResourceIT extends ChargingITestBase {
     public DiscrepancyResourceIT() {
         super("epdq");

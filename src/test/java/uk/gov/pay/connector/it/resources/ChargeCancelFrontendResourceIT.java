@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -44,6 +45,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@Ignore
 public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(

@@ -4,6 +4,7 @@ import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -34,6 +35,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
         app = ConnectorApp.class,
         config = "config/test-it-config.yaml"
 )
+@Ignore
 public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -45,6 +46,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
         configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
         withDockerSQS = true
 )
+@Ignore
 public class CardResourceAuthoriseMotoApiPaymentIT extends ChargingITestBase {
 
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";

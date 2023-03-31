@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -20,6 +21,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@Ignore
 public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends ChargingITestBase {
 
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";

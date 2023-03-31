@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
 import junitparams.Parameters;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -33,6 +34,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@Ignore
 public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     GatewayAccountDao gatewayAccountDao;

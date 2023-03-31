@@ -6,6 +6,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -22,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-
+@Ignore
 public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";

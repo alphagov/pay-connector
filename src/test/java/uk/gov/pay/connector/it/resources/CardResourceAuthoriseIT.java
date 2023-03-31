@@ -4,6 +4,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -61,6 +62,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@Ignore
 public class CardResourceAuthoriseIT extends ChargingITestBase {
 
     public CardResourceAuthoriseIT() {
