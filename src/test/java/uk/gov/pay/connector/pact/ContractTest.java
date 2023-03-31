@@ -519,21 +519,6 @@ public class ContractTest {
         dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
     }
 
-    @State("a Smartpay gateway account with id 333 and external abc123 with credentials exists")
-    public void aSmartpayGatewayAccountWithCredentialsExists() {
-        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId("333")
-                .withExternalId("abc123")
-                .withPaymentGateway(SMARTPAY.getName())
-                .withAnalyticsId("an-analytics-id")
-                .withDefaultCredentials(SMARTPAY.getName())
-                .build());
-        dbHelper.addNotificationCredentialsFor(333L, "notification-username", "notification-password");
-        dbHelper.addEmailNotification(333L, "a template", true, PAYMENT_CONFIRMED);
-        dbHelper.addEmailNotification(333L, null, true, REFUND_ISSUED);
-    }
-
-
     @State("an ePDQ gateway account with id 333 and external abc123 with credentials exists")
     public void anEpdqGatewayAccountWithCredentialsExists() {
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
