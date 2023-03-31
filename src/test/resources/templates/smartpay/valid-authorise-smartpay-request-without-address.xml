@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<soap:Envelope
+        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="http://payment.services.adyen.com"
+        xmlns:ns2="http://common.services.adyen.com">
+    <soap:Body>
+        <ns1:authorise>
+            <ns1:paymentRequest>
+                <ns1:amount>
+                    <ns2:currency>GBP</ns2:currency>
+                    <ns2:value>2000</ns2:value>
+                </ns1:amount>
+                <ns1:card>
+                    <ns1:cvc>737</ns1:cvc>
+                    <ns1:expiryMonth>08</ns1:expiryMonth>
+                    <ns1:expiryYear>2018</ns1:expiryYear>
+                    <ns1:holderName>Mr. Payment</ns1:holderName>
+                    <ns1:number>5555444433331111</ns1:number>
+                </ns1:card>
+                <ns1:merchantAccount>MerchantAccount</ns1:merchantAccount>
+                <ns1:reference>MyPlatformReference</ns1:reference>
+                <ns1:shopperReference>MyDescription</ns1:shopperReference>
+            </ns1:paymentRequest>
+        </ns1:authorise>
+    </soap:Body>
+</soap:Envelope>

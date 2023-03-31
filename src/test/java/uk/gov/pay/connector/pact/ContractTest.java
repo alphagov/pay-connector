@@ -603,7 +603,7 @@ public class ContractTest {
         dbHelper.addGatewayAccount(
                 anAddGatewayAccountParams()
                         .withAccountId(gatewayAccountId)
-                        .withPaymentGateway("epdq")
+                        .withPaymentGateway("smartpay")
                         .withServiceName("a cool service")
                         .withProviderSwitchEnabled(true)
                         .build());
@@ -615,7 +615,7 @@ public class ContractTest {
                         .withCredentials(Map.of())
                         .withExternalId(activeExtId)
                         .withState(ACTIVE)
-                        .withPaymentProvider("epdq")
+                        .withPaymentProvider("smartpay")
                         .build();
         dbHelper.insertGatewayAccountCredentials(activeParams);
 

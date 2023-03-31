@@ -1,0 +1,31 @@
+{
+  "live": "false",
+  "notificationItems": [
+    {
+      "NotificationRequestItem": {
+        "additionalData": {
+          "expiryDate": "8/2018",
+          "authCode": "96968",
+          "cardSummary": "1111"
+        },
+        "amount": {
+          "currency": "GBP",
+          "value": 1051
+        },
+        "eventCode": "AUTHORISATION",
+        "eventDate": "2015-10-08T13:48:28+02:00",
+        "merchantAccountCode": "MerchantAccount",
+        "merchantReference": "{{transactionId}}-merchant",
+        "operations": [
+          "CANCEL",
+          "CAPTURE",
+          "REFUND"
+        ],
+        "paymentMethod": "visa",
+        "pspReference": "{{transactionId}}",
+        "reason": "96968:1111:8/2018",
+        "success": "true"
+      }
+    }
+  ]
+}

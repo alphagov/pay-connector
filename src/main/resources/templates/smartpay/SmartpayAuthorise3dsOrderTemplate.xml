@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+    <ns1:authorise3d xmlns:ns1="http://payment.services.adyen.com">
+        <ns1:paymentRequest3d>
+            <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
+            <ns1:md>${md}</ns1:md>
+            <ns1:paResponse>${paResponse}</ns1:paResponse>
+        </ns1:paymentRequest3d>
+    </ns1:authorise3d>
+</soap:Body>
+</soap:Envelope>

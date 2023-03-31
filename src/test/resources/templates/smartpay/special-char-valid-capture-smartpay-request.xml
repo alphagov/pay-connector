@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+>
+    <soap:Body>
+        <ns1:capture xmlns:ns1="http://payment.services.adyen.com">
+            <ns1:modificationRequest>
+                <merchantAccount xmlns="http://payment.services.adyen.com">MerchantAccount</merchantAccount>
+                <modificationAmount xmlns="http://payment.services.adyen.com">
+                    <currency xmlns="http://common.services.adyen.com">GBP</currency>
+                    <value xmlns="http://common.services.adyen.com">2000</value>
+                </modificationAmount>
+                <originalReference xmlns="http://payment.services.adyen.com">MyTransactionId &amp; &lt;!-- &gt;</originalReference>
+            </ns1:modificationRequest>
+        </ns1:capture>
+    </soap:Body>
+</soap:Envelope>

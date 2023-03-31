@@ -41,8 +41,8 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -225,7 +225,7 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void generateDdcToken_shouldThrowExceptionForNonWorldpayAccount() {
         var worldpay3dsFlexCredentials = mock(Worldpay3dsFlexCredentials.class);
-        var gatewayAccount = new GatewayAccount(1L, EPDQ.getName(), TEST);
+        var gatewayAccount = new GatewayAccount(1L, SMARTPAY.getName(), TEST);
 
         expectedException.expect(Worldpay3dsFlexJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +
@@ -300,10 +300,10 @@ public class Worldpay3dsFlexJwtServiceTest {
     public void generateChallengeToken_shouldThrowExceptionForNonWorldpayAccount() {
         gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
-                .withGatewayName(EPDQ.getName())
+                .withGatewayName(SMARTPAY.getName())
                 .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
-        addGatewayAccountCredentialsEntity(gatewayAccountEntity, EPDQ.getName());
+        addGatewayAccountCredentialsEntity(gatewayAccountEntity, SMARTPAY.getName());
         chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
         chargeEntity.setPaymentProvider(SANDBOX.getName());
 

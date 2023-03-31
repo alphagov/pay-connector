@@ -1,0 +1,14 @@
+<soap:Envelope
+        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soap:Body>
+        <ns1:cancelResponse xmlns:ns1="http://payment.services.adyen.com">
+            <ns1:cancelResult>
+                <additionalData xmlns="http://payment.services.adyen.com" xsi:nil="true" />
+                <pspReference xmlns="http://payment.services.adyen.com">7914435254138149</pspReference>
+                <response xmlns="http://payment.services.adyen.com">[cancel-received]
+                </response>
+            </ns1:cancelResult>
+        </ns1:cancelResponse>
+    </soap:Body>
+</soap:Envelope>

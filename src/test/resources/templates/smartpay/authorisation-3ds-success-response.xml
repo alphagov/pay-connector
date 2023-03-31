@@ -1,0 +1,20 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soap:Body>
+        <ns1:authorise3dResponse xmlns:ns1="http://payment.services.adyen.com">
+            <ns1:paymentResult>
+                <additionalData xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <authCode xmlns="http://payment.services.adyen.com">87802</authCode>
+                <dccAmount xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <dccSignature xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <fraudResult xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <issuerUrl xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <md xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <paRequest xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <pspReference xmlns="http://payment.services.adyen.com">{{pspReference}}</pspReference>
+                <refusalReason xmlns="http://payment.services.adyen.com" xsi:nil="true"/>
+                <resultCode xmlns="http://payment.services.adyen.com">Authorised</resultCode>
+            </ns1:paymentResult>
+        </ns1:authorise3dResponse>
+    </soap:Body>
+</soap:Envelope>

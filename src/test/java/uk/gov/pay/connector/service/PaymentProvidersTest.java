@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 
@@ -30,6 +31,9 @@ public class PaymentProvidersTest {
     private EpdqPaymentProvider epdqPaymentProvider;
     
     @Mock
+    private SmartpayPaymentProvider smartpayPaymentProvider;
+    
+    @Mock
     private SandboxPaymentProvider sandboxPaymentProvider;
     
     @Mock
@@ -42,7 +46,7 @@ public class PaymentProvidersTest {
 
     @Before
     public void setup() {
-        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
+        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
     }
 
     @Test
@@ -55,6 +59,12 @@ public class PaymentProvidersTest {
     public void shouldResolveWorldpayPaymentProvider() {
         PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
+    }
+
+    @Test
+    public void shouldResolveSmartpayPaymentProvider() {
+        PaymentProvider smartpay = providers.byName(PaymentGatewayName.SMARTPAY);
+        assertThat(smartpay, is(instanceOf(SmartpayPaymentProvider.class)));
     }
 
     @Test
