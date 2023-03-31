@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.specification.RequestSpecification;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -22,7 +21,6 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase {
 
     protected RequestSpecification givenSetup() {

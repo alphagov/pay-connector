@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import org.hamcrest.core.Is;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -33,7 +32,6 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     private static ObjectMapper objectMapper = new ObjectMapper();

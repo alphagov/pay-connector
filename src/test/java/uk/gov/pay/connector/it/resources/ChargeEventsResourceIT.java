@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -40,7 +39,6 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class ChargeEventsResourceIT {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";

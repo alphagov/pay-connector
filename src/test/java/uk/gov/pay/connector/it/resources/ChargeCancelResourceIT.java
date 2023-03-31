@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import junitparams.Parameters;
 import org.apache.commons.lang.StringUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -35,7 +34,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class ChargeCancelResourceIT extends ChargingITestBase {
 
     public ChargeCancelResourceIT() {

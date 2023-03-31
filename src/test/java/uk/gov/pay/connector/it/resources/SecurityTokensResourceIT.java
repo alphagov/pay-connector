@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -27,7 +26,6 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class SecurityTokensResourceIT {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;

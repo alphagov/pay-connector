@@ -13,8 +13,6 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
-import uk.gov.pay.connector.queue.capture.CaptureQueue;
-import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -27,7 +25,6 @@ import javax.ws.rs.core.HttpHeaders;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -85,21 +82,13 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        List<ChargeCaptureMessage> chargeCaptureMessages = testContext.getInstanceFromGuiceContainer(CaptureQueue.class).retrieveChargesForCapture();
-        System.out.println("chargeCaptureMessages size: " + chargeCaptureMessages.size());
-        if (!chargeCaptureMessages.isEmpty()) {
-            chargeCaptureMessages.forEach(message -> {
-                System.out.println(message.getQueueMessage().getMessageBody());
-            });
-        }
-
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-//        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
-//
-//        getCharge(chargeId).log().body()
-//                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-//                .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
-//                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
+        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+        
+        getCharge(chargeId).log().body()
+                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+                .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
+                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
 
     @Test

@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -24,7 +23,6 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTestBase {
 
     private static ObjectMapper objectMapper = new ObjectMapper();

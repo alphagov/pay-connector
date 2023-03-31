@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -14,7 +13,6 @@ import static org.hamcrest.Matchers.is;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class StripeAccountResourceIT extends GatewayAccountResourceTestBase {
 
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";

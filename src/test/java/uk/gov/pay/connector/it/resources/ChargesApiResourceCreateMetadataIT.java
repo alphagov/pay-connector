@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -33,7 +32,6 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class ChargesApiResourceCreateMetadataIT extends ChargingITestBase {
 
     public ChargesApiResourceCreateMetadataIT() {

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -22,7 +21,6 @@ import static uk.gov.service.payments.commons.model.Source.CARD_API;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-@Ignore
 public class ChargesApiResourceCreateSourceIT extends ChargingITestBase {
 
     private static final String JSON_SOURCE_KEY = "source";
