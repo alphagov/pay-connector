@@ -4031,8 +4031,6 @@ components:
           type: boolean
         requires3ds:
           type: boolean
-        requires_additional_kyc_data:
-          type: boolean
         send_payer_email_to_gateway:
           type: boolean
         send_payer_ip_address_to_gateway:
@@ -4134,8 +4132,6 @@ components:
           type: boolean
         requires3ds:
           type: boolean
-        requires_additional_kyc_data:
-          type: boolean
         send_payer_email_to_gateway:
           type: boolean
         send_payer_ip_address_to_gateway:
@@ -4234,8 +4230,6 @@ components:
         recurring_enabled:
           type: boolean
         requires3ds:
-          type: boolean
-        requires_additional_kyc_data:
           type: boolean
         send_payer_email_to_gateway:
           type: boolean
@@ -4450,12 +4444,6 @@ components:
         requires3ds:
           type: boolean
           description: Flag to indicate whether 3DS is enabled
-          example: true
-        requires_additional_kyc_data:
-          type: boolean
-          default: false
-          description: Flag to indicate whether the account requires additional KYC
-            data. Used to enable additional KYC data collection for stripe accounts
           example: true
         send_payer_email_to_gateway:
           type: boolean

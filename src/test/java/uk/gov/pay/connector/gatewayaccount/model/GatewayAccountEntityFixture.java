@@ -45,7 +45,6 @@ public final class GatewayAccountEntityFixture {
     private boolean sendPayerIpAddressToGateway;
     private List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = new ArrayList<>();
     private boolean providerSwitchEnabled = false;
-    private boolean requiresAdditionalKycData = false;
     private boolean blockPrepaidCards;
     private boolean disabled = false;
 
@@ -191,11 +190,6 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withRequiresAdditionalKycData(boolean requiresAdditionalKycData) {
-        this.requiresAdditionalKycData = requiresAdditionalKycData;
-        return this;
-    }
-    
     public GatewayAccountEntityFixture withBlockPrepaidCards(boolean blockPrepaidCards) {
         this.blockPrepaidCards = blockPrepaidCards;
         return this;
@@ -229,7 +223,6 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
         gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
-        gatewayAccountEntity.setRequiresAdditionalKycData(requiresAdditionalKycData);
         gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
         gatewayAccountEntity.setDisabled(disabled);
         gatewayAccountEntity.setAllowMoto(allowMoto);

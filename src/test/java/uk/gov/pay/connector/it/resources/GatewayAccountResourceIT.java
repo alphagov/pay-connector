@@ -6,11 +6,11 @@ import io.restassured.http.ContentType;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
 
@@ -832,27 +832,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
-    }
-
-    @Test
-    public void patchGatewayAccount_forRequiresAdditionalKycData() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
-        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                "path", "requires_additional_kyc_data",
-                "value", true));
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("requires_additional_kyc_data", is(false));
-        givenSetup()
-                .body(payload)
-                .patch("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(OK.getStatusCode());
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("requires_additional_kyc_data", is(true));
     }
 
     @Test

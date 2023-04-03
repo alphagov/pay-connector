@@ -59,7 +59,6 @@ class GatewayAccountResourceDTOTest {
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
         entity.setEmailNotifications(emailNotifications);
-        entity.setRequiresAdditionalKycData(true);
         
         GatewayAccountResourceDTO dto = new GatewayAccountResourceDTO(entity);
         assertThat(dto.getAccountId(), is(entity.getId()));
@@ -90,7 +89,6 @@ class GatewayAccountResourceDTOTest {
         assertThat(dto.isSendPayerIpAddressToGateway(), is(true));
         assertThat(dto.isSendPayerEmailToGateway(), is(true));
         assertThat(dto.isSendReferenceToGateway(), is(true));
-        assertThat(dto.isRequiresAdditionalKycData(), is(true));
         assertThat(dto.isAllowAuthorisationApi(), is(entity.isAllowAuthorisationApi()));
         assertThat(dto.isRecurringEnabled(), is(entity.isRecurringEnabled()));
         assertThat(dto.isDisabled(), is(entity.isDisabled()));
