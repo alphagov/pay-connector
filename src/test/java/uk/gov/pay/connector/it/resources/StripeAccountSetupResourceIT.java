@@ -40,7 +40,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("vat_number", is(false))
                 .body("company_number", is(false))
                 .body("director", is(false))
-                .body("additional_kyc_data", is(false))
                 .body("government_entity_document", is(false))
                 .body("organisation_details", is(false));
     }
@@ -60,7 +59,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("responsible_person", is(false))
                 .body("vat_number", is(true))
                 .body("director", is(true))
-                .body("additional_kyc_data", is(false))
                 .body("government_entity_document", is(false))
                 .body("organisation_details", is(false));
     }
@@ -104,7 +102,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("responsible_person", is(false))
                 .body("vat_number", is(false))
                 .body("company_number", is(false))
-                .body("additional_kyc_data", is(false))
                 .body("government_entity_document", is(false))
                 .body("organisation_details", is(false));
     }
@@ -136,10 +133,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                                 "value", true),
                         ImmutableMap.of(
                                 "op", "replace",
-                                "path", "additional_kyc_data",
-                                "value", true),
-                        ImmutableMap.of(
-                                "op", "replace",
                                 "path", "government_entity_document",
                                 "value", true),
                         ImmutableMap.of(
@@ -160,7 +153,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("vat_number", is(true))
                 .body("company_number", is(true))
                 .body("director", is(true))
-                .body("additional_kyc_data", is(true))
                 .body("government_entity_document", is(true))
                 .body("organisation_details", is(true));
     }
@@ -218,8 +210,7 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .body("responsible_person", is(false))
                 .body("vat_number", is(false))
                 .body("company_number", is(false))
-                .body("director", is(true))
-                .body("additional_kyc_data", is(false));
+                .body("director", is(true));
 
         givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
@@ -235,38 +226,6 @@ public class StripeAccountSetupResourceIT extends GatewayAccountResourceTestBase
                 .then()
                 .statusCode(200)
                 .body("director", is(false));
-    }
-
-    @Test
-    public void patchStripeSetupAdditionalKycDataWithFalse() {
-        long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
-        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.ADDITIONAL_KYC_DATA);
-
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
-                .then()
-                .statusCode(200)
-                .body("bank_account", is(false))
-                .body("responsible_person", is(false))
-                .body("vat_number", is(false))
-                .body("company_number", is(false))
-                .body("director", is(false))
-                .body("additional_kyc_data", is(true));
-
-        givenSetup()
-                .body(toJson(Collections.singletonList(ImmutableMap.of(
-                        "op", "replace",
-                        "path", "additional_kyc_data",
-                        "value", false))))
-                .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
-                .then()
-                .statusCode(200);
-
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
-                .then()
-                .statusCode(200)
-                .body("additional_kyc_data", is(false));
     }
 
     private void addCompletedTask(long gatewayAccountId, StripeAccountSetupTask task) {
