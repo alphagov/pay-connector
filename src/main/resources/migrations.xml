@@ -1978,4 +1978,8 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="remove requires_additional_kyc_data field from gateway accounts table" author="">
+        <dropColumn tableName="gateway_accounts" columnName="requires_additional_kyc_data"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -149,11 +149,6 @@ public class GatewayAccountResourceDTO {
             "Otherwise payment description is sent to the gateway. Only applicable for Worldpay accounts. Default value is 'false'", defaultValue = "false")
     private boolean sendReferenceToGateway;
 
-    @JsonProperty("requires_additional_kyc_data")
-    @Schema(example = "true", description = "Flag to indicate whether the account requires additional KYC data. Used to enable additional KYC data collection for stripe accounts",
-            defaultValue = "false")
-    private boolean requiresAdditionalKycData;
-
     @JsonProperty("allow_authorisation_api")
     @Schema(example = "true", description = "Flag to indicate whether the account is allowed to initiate MOTO payments that are authorised via " +
             "an API request rather than the web interface", defaultValue = "false")
@@ -203,7 +198,6 @@ public class GatewayAccountResourceDTO {
         this.sendReferenceToGateway = gatewayAccountEntity.isSendReferenceToGateway();
         this.sendPayerIpAddressToGateway = gatewayAccountEntity.isSendPayerIpAddressToGateway();
         this.serviceId = gatewayAccountEntity.getServiceId();
-        this.requiresAdditionalKycData = gatewayAccountEntity.isRequiresAdditionalKycData();
         this.allowAuthorisationApi = gatewayAccountEntity.isAllowAuthorisationApi();
         this.recurringEnabled = gatewayAccountEntity.isRecurringEnabled();
         this.disabled = gatewayAccountEntity.isDisabled();
@@ -328,10 +322,6 @@ public class GatewayAccountResourceDTO {
 
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {
         return Optional.ofNullable(worldpay3dsFlexCredentials);
-    }
-
-    public boolean isRequiresAdditionalKycData() {
-        return requiresAdditionalKycData;
     }
 
     public boolean isAllowAuthorisationApi() {

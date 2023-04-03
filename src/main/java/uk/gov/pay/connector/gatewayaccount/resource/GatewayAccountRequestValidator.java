@@ -45,7 +45,6 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_SEND_PAYER_EMAIL_TO_GATEWAY = "send_payer_email_to_gateway";
     public static final String FIELD_PROVIDER_SWITCH_ENABLED = "provider_switch_enabled";
     public static final String FIELD_SEND_REFERENCE_TO_GATEWAY = "send_reference_to_gateway";
-    public static final String FIELD_REQUIRES_ADDITIONAL_KYC_DATA = "requires_additional_kyc_data";
     public static final String FIELD_ALLOW_AUTHORISATION_API = "allow_authorisation_api";
     public static final String FIELD_RECURRING_ENABLED = "recurring_enabled";
     public static final String FIELD_DISABLED = "disabled";
@@ -72,7 +71,6 @@ public class GatewayAccountRequestValidator {
             FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
             FIELD_PROVIDER_SWITCH_ENABLED,
             FIELD_SEND_REFERENCE_TO_GATEWAY,
-            FIELD_REQUIRES_ADDITIONAL_KYC_DATA,
             FIELD_ALLOW_AUTHORISATION_API,
             FIELD_RECURRING_ENABLED,
             FIELD_DISABLED,
@@ -114,7 +112,6 @@ public class GatewayAccountRequestValidator {
             case FIELD_SEND_PAYER_EMAIL_TO_GATEWAY:
             case FIELD_PROVIDER_SWITCH_ENABLED:
             case FIELD_SEND_REFERENCE_TO_GATEWAY:
-            case FIELD_REQUIRES_ADDITIONAL_KYC_DATA:
             case FIELD_ALLOW_AUTHORISATION_API:
             case FIELD_RECURRING_ENABLED:
             case FIELD_DISABLED:
