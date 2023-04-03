@@ -40,9 +40,6 @@ public class StripeAccountSetupService {
                         case DIRECTOR:
                             stripeAccountSetup.setDirectorCompleted(true);
                             break;
-                        case ADDITIONAL_KYC_DATA:
-                            stripeAccountSetup.setAdditionalKycDataCompleted(true);
-                            break;
                         case GOVERNMENT_ENTITY_DOCUMENT:
                             stripeAccountSetup.setGovernmentEntityDocument(true);
                             break;

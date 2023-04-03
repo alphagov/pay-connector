@@ -70,7 +70,7 @@ public class StripeAccountSetupResource {
     @Operation(
             summary = "Update Stripe Connect account setup tasks have been completed for a given accountId",
             description = "Support patching following paths: <br>" +
-                    "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, additional_kyc_data, organisation_details",
+                    "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details",
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
                     "    {" +
                     "        \"op\": \"replace\"," +

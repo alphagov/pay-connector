@@ -25,9 +25,6 @@ public class StripeAccountSetup {
 
     @JsonProperty("government_entity_document")
     private boolean governmentEntityDocument = false;
-
-    @JsonProperty("additional_kyc_data")
-    private boolean additionalKycDataCompleted = false;
     
     @JsonProperty("organisation_details")
     private boolean organisationDetailsCompleted = false;
@@ -70,14 +67,6 @@ public class StripeAccountSetup {
 
     public boolean isDirectorCompleted() {
         return directorCompleted;
-    }
-
-    public boolean isAdditionalKycDataCompleted() {
-        return additionalKycDataCompleted;
-    }
-
-    public void setAdditionalKycDataCompleted(boolean additionalKycDatacompleted) {
-        this.additionalKycDataCompleted = additionalKycDatacompleted;
     }
 
     public boolean isGovernmentEntityDocument() {
