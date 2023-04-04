@@ -855,8 +855,7 @@ paths:
       - Gateway accounts
     patch:
       description: "Support patching following paths: <br>bank_account, responsible_person,\
-        \ vat_number, company_number, director, government_entity_document, additional_kyc_data,\
-        \ organisation_details"
+        \ vat_number, company_number, director, government_entity_document, organisation_details"
       operationId: patchStripeAccountSetup
       parameters:
       - description: Gateway account ID
@@ -4992,8 +4991,6 @@ components:
     StripeAccountSetup:
       type: object
       properties:
-        additional_kyc_data:
-          type: boolean
         bank_account:
           type: boolean
         company_number:

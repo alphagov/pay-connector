@@ -23,7 +23,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.ADDITIONAL_KYC_DATA;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.DIRECTOR;
@@ -54,8 +53,6 @@ public class StripeAccountSetupServiceTest {
     @Mock
     private StripeAccountSetupTaskEntity mockDirectorCompletedTaskEntity;
     @Mock
-    private StripeAccountSetupTaskEntity mockAdditionalKycDataCompletedTaskEntity;
-    @Mock
     private StripeAccountSetupTaskEntity mockGovernmentEntityDocumentTaskEntity;
     @Mock
     private StripeAccountSetupTaskEntity mockOrganisationDetailsCompletedTaskEntity;
@@ -71,7 +68,6 @@ public class StripeAccountSetupServiceTest {
         given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
         given(mockCompanyNumberCompletedTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
         given(mockDirectorCompletedTaskEntity.getTask()).willReturn(DIRECTOR);
-        given(mockAdditionalKycDataCompletedTaskEntity.getTask()).willReturn(ADDITIONAL_KYC_DATA);
         given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
         given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
 
@@ -90,7 +86,6 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isVatNumberCompleted(), is(false));
         assertThat(tasks.isCompanyNumberCompleted(), is(false));
         assertThat(tasks.isDirectorCompleted(), is(false));
-        assertThat(tasks.isAdditionalKycDataCompleted(), is(false));
         assertThat(tasks.isGovernmentEntityDocument(), is(false));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(false));
     }
@@ -101,8 +96,7 @@ public class StripeAccountSetupServiceTest {
                 .willReturn(Arrays.asList(mockResponsiblePersonCompletedTaskEntity,
                         mockBankDetailsCompletedTaskEntity, mockVatNumberCompletedTaskEntity,
                         mockCompanyNumberCompletedTaskEntity, mockDirectorCompletedTaskEntity,
-                        mockAdditionalKycDataCompletedTaskEntity, mockGovernmentEntityDocumentTaskEntity,
-                        mockOrganisationDetailsCompletedTaskEntity));
+                        mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsCompletedTaskEntity));
 
         StripeAccountSetup tasks = stripeAccountSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
@@ -111,7 +105,6 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isVatNumberCompleted(), is(true));
         assertThat(tasks.isCompanyNumberCompleted(), is(true));
         assertThat(tasks.isDirectorCompleted(), is(true));
-        assertThat(tasks.isAdditionalKycDataCompleted(), is(true));
         assertThat(tasks.isGovernmentEntityDocument(), is(true));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(true));
     }
@@ -127,7 +120,6 @@ public class StripeAccountSetupServiceTest {
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
         assertThat(tasks.isVatNumberCompleted(), is(true));
         assertThat(tasks.isDirectorCompleted(), is(false));
-        assertThat(tasks.isAdditionalKycDataCompleted(), is(false));
         assertThat(tasks.isGovernmentEntityDocument(), is(false));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(false));
     }
@@ -175,7 +167,6 @@ public class StripeAccountSetupServiceTest {
                 new StripeAccountSetupUpdateRequest(RESPONSIBLE_PERSON, true),
                 new StripeAccountSetupUpdateRequest(VAT_NUMBER, true),
                 new StripeAccountSetupUpdateRequest(DIRECTOR, true),
-                new StripeAccountSetupUpdateRequest(ADDITIONAL_KYC_DATA, true),
                 new StripeAccountSetupUpdateRequest(GOVERNMENT_ENTITY_DOCUMENT, true),
                 new StripeAccountSetupUpdateRequest(ORGANISATION_DETAILS, true));
 
@@ -183,18 +174,17 @@ public class StripeAccountSetupServiceTest {
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, RESPONSIBLE_PERSON)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, VAT_NUMBER)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, DIRECTOR)).willReturn(false);
-        given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, ADDITIONAL_KYC_DATA)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, GOVERNMENT_ENTITY_DOCUMENT)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, ORGANISATION_DETAILS)).willReturn(false);
 
         stripeAccountSetupService.update(mockGatewayAccountEntity, patchRequests);
 
         ArgumentCaptor<StripeAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(StripeAccountSetupTaskEntity.class);
-        verify(mockStripeAccountSetupDao, times(7)).persist(entityArgumentCaptor.capture());
+        verify(mockStripeAccountSetupDao, times(6)).persist(entityArgumentCaptor.capture());
 
         List<StripeAccountSetupTaskEntity> entities = entityArgumentCaptor.getAllValues();
 
-        assertThat(entities.size(), is(7));
+        assertThat(entities.size(), is(6));
 
         assertThat(entities.get(0).getGatewayAccount(), is(mockGatewayAccountEntity));
         assertThat(entities.get(0).getTask(), is(BANK_ACCOUNT));
@@ -209,12 +199,9 @@ public class StripeAccountSetupServiceTest {
         assertThat(entities.get(3).getTask(), is(DIRECTOR));
 
         assertThat(entities.get(4).getGatewayAccount(), is(mockGatewayAccountEntity));
-        assertThat(entities.get(4).getTask(), is(ADDITIONAL_KYC_DATA));
+        assertThat(entities.get(4).getTask(), is(GOVERNMENT_ENTITY_DOCUMENT));
 
         assertThat(entities.get(5).getGatewayAccount(), is(mockGatewayAccountEntity));
-        assertThat(entities.get(5).getTask(), is(GOVERNMENT_ENTITY_DOCUMENT));
-
-        assertThat(entities.get(6).getGatewayAccount(), is(mockGatewayAccountEntity));
-        assertThat(entities.get(6).getTask(), is(ORGANISATION_DETAILS));
+        assertThat(entities.get(5).getTask(), is(ORGANISATION_DETAILS));
     }
 }
