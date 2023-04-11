@@ -9,6 +9,7 @@ import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 
 import javax.persistence.RollbackException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,7 +23,6 @@ public class IdempotencyDaoIT extends DaoITestBase {
     private IdempotencyDao dao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private GatewayAccountEntity gatewayAccount;
-
     private String key = "idempotency-key";
     private String resourceExternalId = "resource-external-id";
 
@@ -59,6 +59,26 @@ public class IdempotencyDaoIT extends DaoITestBase {
         assertThrows(RollbackException.class, () -> dao.persist(entity));
     }
 
+    @Test
+    public void shouldDeleteOnlyIdempotencyEntitiesMoreThan24HoursOld() {
+        Map<String, Object> requestBody = Map.of("foo", "bar");
+        String expiringKey = "expiring-idempotency-key";
+        String newKey = "new-idempotency-key";
+        Instant nowMinus25Hours = Instant.now().minus(25, ChronoUnit.HOURS);
+        
+        databaseTestHelper.insertIdempotency(expiringKey, nowMinus25Hours, gatewayAccount.getId(), resourceExternalId, requestBody);
+        databaseTestHelper.insertIdempotency(newKey, gatewayAccount.getId(), resourceExternalId, requestBody);
+
+        Instant idempotencyKeyExpiryDate = Instant.now().minus(86400, ChronoUnit.SECONDS);
+        dao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(idempotencyKeyExpiryDate);
+        
+        Optional<IdempotencyEntity> optionalOldEntity = dao.findByGatewayAccountIdAndKey(gatewayAccount.getId(),expiringKey);
+        assertThat(optionalOldEntity.isPresent(), is(false));
+
+        Optional<IdempotencyEntity> optionalNewEntity = dao.findByGatewayAccountIdAndKey(gatewayAccount.getId(), newKey);
+        assertThat(optionalNewEntity.isPresent(), is(true));
+    }
+    
     private DatabaseFixtures.TestAccount insertTestAccount() {
         return DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
