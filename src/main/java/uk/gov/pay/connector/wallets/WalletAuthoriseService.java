@@ -72,7 +72,7 @@ public class WalletAuthoriseService {
 
             } catch (GatewayException e) {
 
-                LOGGER.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
+                LOGGER.info("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
 
                 if (e instanceof GatewayErrorException) {
                     LOGGER.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());

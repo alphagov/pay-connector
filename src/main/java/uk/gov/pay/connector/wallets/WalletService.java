@@ -58,7 +58,7 @@ public abstract class WalletService {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
                 return gatewayErrorResponse(error.getMessage());
             default:
-                LOGGER.error("Charge {}: error {}", chargeId, error.getMessage());
+                LOGGER.info("Charge {}: error {}", chargeId, error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }
