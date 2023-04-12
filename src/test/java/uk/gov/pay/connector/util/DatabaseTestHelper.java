@@ -1152,6 +1152,21 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
+    public void insertIdempotency(String key, Instant createdDate, Long gatewayAccountId, String resourceExternalId, Map<String,Object> requestBody) {
+        PGobject requestBodyJson = mapToJsonPGobject(requestBody);
+
+        jdbi.withHandle(handle ->
+                handle.createUpdate("INSERT INTO idempotency(key, created_date, gateway_account_id, " +
+                                "resource_external_id, request_body) " +
+                                " VALUES (:key, :createdDate, :gatewayAccountId, :resourceExternalId, :requestBody)")
+                        .bind("key", key)
+                        .bind("createdDate", createdDate)
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .bind("resourceExternalId", resourceExternalId)
+                        .bindBySqlType("requestBody", requestBodyJson, OTHER)
+                        .execute());
+    }
+    
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
         PGobject credentialsJson = buildCredentialsJson(params);
 

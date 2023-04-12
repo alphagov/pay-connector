@@ -6,6 +6,7 @@ import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 
 import javax.persistence.EntityManager;
+import java.time.Instant;
 import java.util.Optional;
 
 public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
@@ -24,5 +25,13 @@ public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
                 .setParameter("gatewayAccountId", gatewayAccountId)
                 .setParameter("key", key)
                 .getResultList().stream().findFirst();
+    }
+
+    public int deleteIdempotencyKeysOlderThanSpecifiedDateTime(Instant idempotencyKeyExpiryDate) {
+        String query = "DELETE FROM IdempotencyEntity ie WHERE ie.createdDate < :idempotencyKeyExpiryDate";
+        return entityManager.get()
+                .createQuery(query, IdempotencyEntity.class)
+                .setParameter("idempotencyKeyExpiryDate", idempotencyKeyExpiryDate)
+                .executeUpdate();
     }
 }
