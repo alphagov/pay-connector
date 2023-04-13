@@ -416,6 +416,7 @@ public class ChargeExpiryServiceTest {
                 ));
         verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), EXPIRED);
         verify(mockChargeService).transitionChargeState(chargeEntityAuthorisationSuccess.getExternalId(), EXPIRED);
+        verify(mockIdempotencyDao).deleteIdempotencyKeysOlderThanSpecifiedDateTime(Instant.parse("2022-06-08T00:00:00Z"));
     }
 
     @Test
