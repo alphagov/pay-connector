@@ -203,13 +203,14 @@ public class ChargesApiResource {
     @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Expire charges and tokens ",
+            summary = "Expire charges, tokens and idempotency keys",
             description = "This starts a task to expire the charges with a default window of 90 minutes. " +
                     "The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. " +
                     "Response of the call will tell you how many charges were successfully expired and how many of them failed for some reason. " +
                     "This endpoint also expires charges in AWAITING_CAPTURE_REQUEST status. The default window is 120 hours. " +
                     "It can be overriden by setting an environment variable AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW in seconds. " +
-                    "Also expires tokens older than the configured TOKEN_EXPIRY_WINDOW_SECONDS.",
+                    "Also expires tokens older than the configured TOKEN_EXPIRY_WINDOW_SECONDS, " +
+                    "and expires idempotency keys older than the configured IDEMPOTENCY_KEY_EXPIRY_WINDOW_SECONDS.",
             tags = {"Tasks"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
@@ -220,7 +221,7 @@ public class ChargesApiResource {
             }
     )
     public Response expireCharges(@Context UriInfo uriInfo) {
-        Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireChargesAndTokens();
+        Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireChargesAndTokensAndIdempotencyKeys();
         return successResponseWithEntity(resultMap);
     }
 

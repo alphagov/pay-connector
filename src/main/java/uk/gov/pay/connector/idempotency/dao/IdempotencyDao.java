@@ -27,11 +27,11 @@ public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public int deleteIdempotencyKeysOlderThanSpecifiedDateTime(Instant idempotencyKeyExpiryDate) {
-        String query = "DELETE FROM IdempotencyEntity ie WHERE ie.createdDate < :idempotencyKeyExpiryDate";
+    public int deleteIdempotencyKeysOlderThanSpecifiedDateTime(Instant expiryDate) {
+        String query = "DELETE FROM IdempotencyEntity ie WHERE ie.createdDate < :expiryDate";
         return entityManager.get()
                 .createQuery(query, IdempotencyEntity.class)
-                .setParameter("idempotencyKeyExpiryDate", idempotencyKeyExpiryDate)
+                .setParameter("expiryDate", expiryDate)
                 .executeUpdate();
     }
 }

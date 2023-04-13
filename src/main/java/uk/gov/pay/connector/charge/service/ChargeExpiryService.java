@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -64,6 +65,7 @@ public class ChargeExpiryService {
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
     private final TokenDao tokenDao;
+    private final IdempotencyDao idempotencyDao;
     private final PaymentProviders providers;
     private final QueryService queryService;
     private final ChargeSweepConfig chargeSweepConfig;
@@ -73,6 +75,7 @@ public class ChargeExpiryService {
     public ChargeExpiryService(ChargeDao chargeDao,
                                ChargeService chargeService,
                                TokenDao tokenDao,
+                               IdempotencyDao idempotencyDao,
                                PaymentProviders providers,
                                QueryService queryService,
                                ConnectorConfiguration config,
@@ -80,6 +83,7 @@ public class ChargeExpiryService {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.tokenDao = tokenDao;
+        this.idempotencyDao = idempotencyDao;
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
         this.queryService = queryService;
@@ -128,14 +132,17 @@ public class ChargeExpiryService {
         return ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).getAuthorisationStage();
     }
 
-    public Map<String, Integer> sweepAndExpireChargesAndTokens() {
+    public Map<String, Integer> sweepAndExpireChargesAndTokensAndIdempotencyKeys() {
         List<ChargeEntity> chargesToExpire = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
                 .addAll(getChargesToExpireWithDelayedExpiryThreshold())
                 .build();
         Instant tokenExpiryThreshold = getExpiryThresholdForTokens();
         int numberOfTokensDeleted = deleteTokensOlderThanSpecifiedDate(tokenExpiryThreshold);
+        Instant idempotencyExpiryThreshold = clock.instant().minus(chargeSweepConfig.getIdempotencyKeyExpiryThresholdInSeconds());
+        int numberOfIdempotencyKeysDeleted = idempotencyDao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(idempotencyExpiryThreshold);
         logger.info("Tokens deleted - number_of_tokens={}, since_date={}", numberOfTokensDeleted, tokenExpiryThreshold);
+        logger.info("Idempotency keys deleted - number_of_idempotency_keys={}, since_date={}", numberOfIdempotencyKeysDeleted, idempotencyExpiryThreshold);
         logger.info("Charges found for expiry - number_of_charges={}, since_date={}, updated_before={}, awaiting_capture_date={}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getDateToExpireChargesUpdatedBefore(),
                 getExpiryDateForAwaitingCaptureRequest());
@@ -146,7 +153,6 @@ public class ChargeExpiryService {
     private int deleteTokensOlderThanSpecifiedDate(Instant tokenExpiryDate) {
         return tokenDao.deleteTokensOlderThanSpecifiedDate(tokenExpiryDate.atZone(ZoneId.of("UTC")));
     }
-
 
     private List<ChargeEntity> getChargesToExpireWithDelayedExpiryThreshold() {
         return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
