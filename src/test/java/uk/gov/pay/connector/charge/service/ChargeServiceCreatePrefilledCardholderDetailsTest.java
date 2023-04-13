@@ -64,7 +64,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
 
     private static final String SERVICE_HOST = "http://my-service";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private ChargeCreateRequestBuilder requestBuilder;
 
