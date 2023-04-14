@@ -94,6 +94,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.inject.Inject;
+import javax.persistence.RollbackException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -259,10 +260,18 @@ public class ChargeService {
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo, String idempotencyKey) {
-        return createCharge(chargeRequest, accountId, idempotencyKey)
-                .map(charge ->
-                        populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
-                );
+        try {
+            return createCharge(chargeRequest, accountId, idempotencyKey)
+                    .map(charge ->
+                            populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
+                    );
+        } catch (RollbackException e) {
+            if (idempotencyKey != null && idempotencyDao.findByGatewayAccountIdAndKey(accountId, idempotencyKey).isPresent()) {
+                LOGGER.info("Race condition between two requests to create a charge with the same Idempotency Key handled");
+                throw new IdempotencyKeyUsedException();
+            }
+            throw e;
+        }
     }
 
     @Transactional
@@ -359,19 +368,21 @@ public class ChargeService {
                                                                             String idempotencyKey,
                                                                             UriInfo uriInfo) {
         return idempotencyDao.findByGatewayAccountIdAndKey(gatewayAccountId, idempotencyKey).map(idempotencyEntity -> {
-            Map<String, Object> chargeRequestMap = objectMapper.convertValue(chargeRequest, new TypeReference<>() {});
+            Map<String, Object> chargeRequestMap = objectMapper.convertValue(chargeRequest, new TypeReference<>() {
+            });
 
             // Convert to `ChargeCreateRequest` then back to a Map. This is to handle the fact that when we read the
             // jsonb from the database, we read the amount as an integer, but on the `ChargeCreateRequest` it is a long.
             ChargeCreateRequest previousChargeRequest = objectMapper.convertValue(idempotencyEntity.getRequestBody(), ChargeCreateRequest.class);
-            Map<String, Object> previousChargeRequestMap = objectMapper.convertValue(previousChargeRequest, new TypeReference<>() {});
+            Map<String, Object> previousChargeRequestMap = objectMapper.convertValue(previousChargeRequest, new TypeReference<>() {
+            });
             if (chargeRequestMap.equals(previousChargeRequestMap)) {
                 LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
                 // TODO implement PP-10833, query Ledger if Charge has been expunged
                 ChargeEntity existingCharge = findChargeByExternalId(idempotencyEntity.getResourceExternalId());
                 return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, existingCharge).build();
             }
-            
+
             LOGGER.info(format("Idempotency-Key [%s] was already used to create a charge with a different request body. Existing payment external id: %s",
                             idempotencyKey, idempotencyEntity.getResourceExternalId()),
                     kv("previous_request_body", previousChargeRequest.toStringWithoutPersonalIdentifiableInformation()),
