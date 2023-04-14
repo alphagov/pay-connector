@@ -603,6 +603,7 @@ public class DatabaseFixtures {
         Instant createdDate = Instant.now();
         boolean live = false;
         String serviceId = "service-id";
+        Long paymentInstumentId;
 
         public Long getAgreementId() {
             return agreementId;
@@ -681,6 +682,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public DatabaseFixtures.TestAgreement withPaymentInstrumentId(long paymentInstrumentId) {
+            this.paymentInstumentId = paymentInstrumentId;
+            return this;
+        }
+
         public TestAgreement insert() {
             if (gatewayAccountId == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -695,6 +701,7 @@ public class DatabaseFixtures {
                     .withReference(reference)
                     .withDescription(description)
                     .withUserIdentifier(userIdentifier)
+                    .withPaymentInstrumentId(paymentInstumentId)
                     .build());
 
             return this;
@@ -1227,22 +1234,26 @@ public class DatabaseFixtures {
 
         PaymentInstrumentStatus status = PaymentInstrumentStatus.CREATED;
 
-        TestPaymentInstrument withPaymentInstrumentId(Long paymentInstrumentId) {
+        public Long getPaymentInstrumentId() {
+            return paymentInstrumentId;
+        }
+
+        public TestPaymentInstrument withPaymentInstrumentId(Long paymentInstrumentId) {
             this.paymentInstrumentId = paymentInstrumentId;
             return this;
         }
 
-        TestPaymentInstrument withExternalId(String externalId) {
+        public TestPaymentInstrument withExternalId(String externalId) {
             this.externalId = externalId;
             return this;
         }
 
-        TestPaymentInstrument withAgreementExternalId(String agreementExternalId) {
+        public TestPaymentInstrument withAgreementExternalId(String agreementExternalId) {
             this.agreementExternalId = agreementExternalId;
             return this;
         }
 
-        TestPaymentInstrument withStatus(PaymentInstrumentStatus status) {
+        public TestPaymentInstrument withStatus(PaymentInstrumentStatus status) {
             this.status = status;
             return this;
         }
