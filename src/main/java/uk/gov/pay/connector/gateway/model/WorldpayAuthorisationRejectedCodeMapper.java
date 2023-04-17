@@ -13,8 +13,10 @@ import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReas
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_ACCOUNT_NUMBER;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_AMOUNT;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_CARD_NUMBER;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_CVV2;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_MERCHANT;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_TRANSACTION;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.ISSUER_TEMPORARILY_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.LOST_CARD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.NO_SUCH_ISSUER;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.PICKUP_CARD;
@@ -48,7 +50,9 @@ public class WorldpayAuthorisationRejectedCodeMapper {
                 entry("59", SUSPECTED_FRAUD),
                 entry("61", EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT),
                 entry("65", AUTHENTICATION_REQUESTED),
-                entry("141", INVALID_ACCOUNT_NUMBER));
+                entry("78", INVALID_ACCOUNT_NUMBER),
+                entry("91", ISSUER_TEMPORARILY_UNAVAILABLE),
+                entry("835", INVALID_CVV2));
     
     public static MappedAuthorisationRejectedReason toMappedAuthorisationRejectionReason(String worldpayRejectionCode) {
         return worldpayRejectionCodeMap.getOrDefault(worldpayRejectionCode, UNCATEGORISED);

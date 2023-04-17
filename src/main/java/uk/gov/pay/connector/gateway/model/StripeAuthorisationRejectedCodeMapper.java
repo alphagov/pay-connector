@@ -12,6 +12,7 @@ import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReas
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INSUFFICIENT_FUNDS;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_ACCOUNT_NUMBER;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.INVALID_AMOUNT;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.ISSUER_TEMPORARILY_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.LOST_CARD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.PICKUP_CARD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.REENTER_TRANSACTION;
@@ -37,6 +38,7 @@ public class StripeAuthorisationRejectedCodeMapper {
             entry("insufficient_funds", INSUFFICIENT_FUNDS),
             entry("invalid_account", INVALID_ACCOUNT_NUMBER),
             entry("invalid_amount", INVALID_AMOUNT),
+            entry("issuer_not_available", ISSUER_TEMPORARILY_UNAVAILABLE),
             entry("lost_card", LOST_CARD),
             entry("pickup_card", PICKUP_CARD),
             entry("reenter_transaction", REENTER_TRANSACTION),
