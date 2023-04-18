@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -173,5 +174,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
                 return "Sandbox cancel response (transactionId: " + getTransactionId() + ')';
             }
         }).build();
+    }
+
+    @Override
+    public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) {
+        //No action needs to be taken in sandbox in response to a deleteStoredPaymentDetails task
     }
 }
