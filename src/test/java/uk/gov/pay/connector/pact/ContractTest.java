@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -48,10 +49,10 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
@@ -59,9 +60,11 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ContractTest {
@@ -439,7 +442,7 @@ public class ContractTest {
                 Instant.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber,
                 firstDigitsCardNumber, params.get("gateway_transaction_id"), AuthorisationMode.WEB);
     }
-
+    
     @State("Refunds exist for a charge")
     public void refundsExistForACharge(Map<String, String> params) {
         String accountId = params.get("account_id");
@@ -615,4 +618,55 @@ public class ContractTest {
                         .build();
         dbHelper.insertGatewayAccountCredentials(switchToParams);
     }
+    
+    @State("an active agreement exists")
+    public void anActiveAgreementExists(Map<String, String> params) {
+        var agreementExternalId = params.get("agreement_external_id");
+        var gatewayAccountId = params.get("gateway_account_id");
+        var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
+        var agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withExternalAgreementId(agreementExternalId)
+                .withPaymentInstrumentId(addPaymentInstrumentParams.getPaymentInstrumentId())
+                .build();
+        dbHelper.addAgreement(agreementParams);
+    }
+
+    @State("a charge created with an idempotency key for an agreement exists")
+    public void aChargeCreatedWithAnIdempotencyKeyForAnAgreementExists(Map<String, String> params) {
+        Instant createdDate = Instant.parse(params.get("created"));
+        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_external_id");
+        String idempotencyKey = params.get("idempotency_key");
+        String agreementExternalId = params.get("agreement_external_id");
+        long amount = Long.parseLong(params.get("amount"));
+        String reference = params.get("reference");
+        String description = params.get("description");
+        String gatewayAccountId = (String) dbHelper.getAgreementByExternalId(agreementExternalId).get("gateway_account_id");
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withAgreementId(agreementExternalId)
+                .withAmount(amount)
+                .withReference(ServicePaymentReference.of(reference))
+                .withDescription(description)
+                .withStatus(ChargeStatus.CREATED)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withCreatedDate(createdDate)
+                .build());
+        
+        dbHelper.insertIdempotency(idempotencyKey, Long.valueOf(gatewayAccountId), chargeExternalId, Map.of(
+                "amount", amount,
+                "reference", reference,
+                "description", description,
+                "agreement_id", agreementExternalId,
+                "authorisation_mode", "agreement"));
+    }
+
 }
