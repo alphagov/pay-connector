@@ -646,7 +646,7 @@ public class ContractTest {
         long amount = Long.parseLong(params.get("amount"));
         String reference = params.get("reference");
         String description = params.get("description");
-        String gatewayAccountId = (String) dbHelper.getAgreementByExternalId(agreementExternalId).get("gateway_account_id");
+        String gatewayAccountId = dbHelper.getAgreementByExternalId(agreementExternalId).get("gateway_account_id").toString();
 
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
