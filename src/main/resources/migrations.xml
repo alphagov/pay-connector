@@ -1974,4 +1974,11 @@
         <dropColumn tableName="gateway_accounts" columnName="requires_additional_kyc_data"/>
     </changeSet>
 
+    <changeSet id="add agreement_external_id column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="agreement_external_id" type="varchar(26)">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
