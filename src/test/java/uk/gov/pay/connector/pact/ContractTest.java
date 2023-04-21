@@ -268,6 +268,17 @@ public class ContractTest {
                 .build());
     }
 
+    @State("a gateway account with external id and recurring payment enabled exists")
+    public void createGatewayAccountWithRecurringPaymentEnabled(Map<String, String> params) {
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(params.get("gateway_account_id"))
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of())
+                .withServiceName("a cool service")
+                .withRecurringEnabled(true)
+                .build());
+    }
+
     @State("the gateway account is disabled")
     public void disableGatewayAccount(Map<String, String> params) {
         given().port(app.getLocalPort())
