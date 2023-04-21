@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -10,6 +11,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -214,5 +216,18 @@ public class ChargeEntityTest {
                 kv(AUTHORISATION_MODE, authorisationMode),
                 kv(AGREEMENT_EXTERNAL_ID, agreementId)
         ));
+    }
+    
+    @Test
+    public void shouldAssignAgreementIdToBothAgreementIdAndAgreementExternalIdForWebCharges() {
+        String testAgreementId = "test-agreement-id-123";
+        AgreementEntity testAgreement = AgreementEntity.AgreementEntityBuilder.anAgreementEntity(Instant.now()).build();
+        testAgreement.setExternalId(testAgreementId);
+
+        ChargeEntity chargeCreated = ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity().withAgreementEntity(testAgreement).build();
+        
+        assertThat(chargeCreated.getExternalAgreement().isPresent(), is(true));
+        assertThat(chargeCreated.getExternalAgreement(), is(chargeCreated.getAgreement()));
+        assertThat(chargeCreated.getExternalAgreement().get().getExternalId(), is(testAgreementId));
     }
 }
