@@ -205,6 +205,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @ManyToOne
     @JoinColumn(name = "agreement_id", referencedColumnName="external_id", updatable = false, nullable = true)
     private AgreementEntity agreementEntity;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "agreement_external_id", referencedColumnName="external_id", updatable = false, nullable = true)
+    private AgreementEntity agreementExternalEntity;
     
     @Column(name = "save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
@@ -271,6 +276,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.moto = moto;
         this.serviceId = serviceId;
         this.agreementEntity = agreementEntity;
+        this.agreementExternalEntity = agreementEntity;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
     }
@@ -578,6 +584,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return Optional.ofNullable(agreementEntity);
     }
 
+    @JsonIgnore
+    public Optional<AgreementEntity> getExternalAgreement() {
+        return Optional.ofNullable(agreementExternalEntity);
+    }
+    
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
     }
@@ -818,7 +829,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.agreementEntity = agreementEntity;
             return this;
         }
-
+        
         public TelephoneChargeEntityBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
