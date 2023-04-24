@@ -102,13 +102,13 @@ public class DatabaseTestHelper {
                                 "description, created_date, reference, version, email, language, " +
                                 "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                                 "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
-                                "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode, updated_date, payment_instrument_id) " +
+                                "issuer_url_3ds, agreement_id, save_payment_instrument_to_agreement, authorisation_mode, updated_date, payment_instrument_id, agreement_external_id) " +
                                 "VALUES(:id, :external_id, :amount, " +
                                 ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                                 ":description, :created_date, :reference, :version, :email, :language, " +
                                 ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                                 ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
-                                ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, :paymentInstrumentId)")
+                                ":issuer_url_3ds, :agreementId, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, :paymentInstrumentId, :agreementId)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
