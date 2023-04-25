@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
-import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -11,7 +10,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import java.time.Instant;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -162,7 +160,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnLoggingFieldsWithoutAgreementId() {
+    public void shouldReturnLoggingFieldsWithoutAgreementExternalId() {
         Long gatewayAccountId = 12L;
         String externalId = "anExternalId";
         String paymentProvider = "sandbox";
@@ -189,11 +187,11 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnLoggingFieldsWithAgreementId() {
+    public void shouldReturnLoggingFieldsWithAgreementExternalId() {
         Long gatewayAccountId = 12L;
         String externalId = "anExternalId";
         String paymentProvider = "sandbox";
-        String agreementId = "anAgreementId";
+        String agreementExternalId = "anAgreementExternalId";
         GatewayAccountType gatewayAccountType = GatewayAccountType.LIVE;
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(gatewayAccountId)
@@ -205,7 +203,7 @@ public class ChargeEntityTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(paymentProvider)
                 .withAuthorisationMode(authorisationMode)
-                .withAgreementEntity(anAgreementEntity().withExternalId(agreementId).build())
+                .withAgreementEntity(anAgreementEntity().withExternalId(agreementExternalId).build())
                 .build();
         Object[] structuredLoggingArgs = chargeEntity.getStructuredLoggingArgs();
         assertThat(structuredLoggingArgs, arrayContainingInAnyOrder(
@@ -214,20 +212,8 @@ public class ChargeEntityTest {
                 kv(PROVIDER, paymentProvider),
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountType.toString()),
                 kv(AUTHORISATION_MODE, authorisationMode),
-                kv(AGREEMENT_EXTERNAL_ID, agreementId)
+                kv(AGREEMENT_EXTERNAL_ID, agreementExternalId)
         ));
     }
-    
-    @Test
-    public void shouldAssignAgreementIdToBothAgreementIdAndAgreementExternalIdForWebCharges() {
-        String testAgreementId = "test-agreement-id-123";
-        AgreementEntity testAgreement = AgreementEntity.AgreementEntityBuilder.anAgreementEntity(Instant.now()).build();
-        testAgreement.setExternalId(testAgreementId);
-
-        ChargeEntity chargeCreated = ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity().withAgreementEntity(testAgreement).build();
-        
-        assertThat(chargeCreated.getExternalAgreement().isPresent(), is(true));
-        assertThat(chargeCreated.getExternalAgreement(), is(chargeCreated.getAgreement()));
-        assertThat(chargeCreated.getExternalAgreement().get().getExternalId(), is(testAgreementId));
-    }
+     
 }

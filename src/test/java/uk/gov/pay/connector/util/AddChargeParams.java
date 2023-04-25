@@ -39,7 +39,7 @@ public class AddChargeParams {
     private final Long gatewayCredentialId;
     private final String serviceId;
     private final String issuerUrl;
-    private final String agreementId;
+    private final String agreementExternalId;
     private final boolean savePaymentInstrumentToAgreement;
     private final AuthorisationMode authorisationMode;
     private final Instant updatedDate;
@@ -70,7 +70,7 @@ public class AddChargeParams {
         gatewayCredentialId = builder.gatewayCredentialId;
         serviceId = builder.serviceId;
         issuerUrl = builder.issuerUrl;
-        agreementId = builder.agreementId;
+        agreementExternalId = builder.agreementExternalId;
         savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         authorisationMode = builder.authorisationMode;
         this.updatedDate = builder.updatedDate;
@@ -177,8 +177,8 @@ public class AddChargeParams {
         return savePaymentInstrumentToAgreement;
     }
 
-    public String getAgreementId() {
-        return agreementId;
+    public String getAgreementExternalId() {
+        return agreementExternalId;
     }
 
     public AuthorisationMode getAuthorisationMode() {
@@ -218,7 +218,7 @@ public class AddChargeParams {
         private Long gatewayCredentialId;
         private String serviceId;
         private String issuerUrl;
-        private String agreementId;
+        private String agreementExternalId;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
         private Instant updatedDate;
@@ -352,8 +352,8 @@ public class AddChargeParams {
             return this;
         }
 
-        public AddChargeParamsBuilder withAgreementId(String agreementId) {
-            this.agreementId = agreementId;
+        public AddChargeParamsBuilder withAgreementExternalId(String agreementExternalId) {
+            this.agreementExternalId = agreementExternalId;
             return this;
         }
 
