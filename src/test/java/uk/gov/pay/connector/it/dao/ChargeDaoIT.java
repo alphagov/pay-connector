@@ -8,7 +8,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
-import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -86,7 +85,7 @@ public class ChargeDaoIT extends DaoITestBase {
     public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
         agreementDao = env.getInstance(AgreementDao.class);
-        
+
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
 
@@ -340,29 +339,6 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(charge.get().getParityCheckStatus(), equalTo(ParityCheckStatus.EXISTS_IN_LEDGER));
         assertThat(charge.get().getParityCheckDate(), is(notNullValue()));
-    }
-
-    @Test
-    public void shouldCreateNewChargeWithAgreementExternalIdRecordedAsAgreementIdAndAsAgreementExternalId() {
-        
-        String testAgreementId = "test-agreement-id";
-        insertTestAgreement(testAgreementId, gatewayAccount.getId());
-        Optional<AgreementEntity> testAgreement = agreementDao.findByExternalId("test-agreement-id");
-        
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(gatewayAccount)
-                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
-                .withAgreementEntity(testAgreement.get())
-                .build();
-        
-        chargeDao.persist(chargeEntity);
-        chargeDao.forceRefresh(chargeEntity);
-        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
-        
-        assertThat(charge.get().getAgreement().isPresent(), is(true));
-        assertThat(charge.get().getAgreement().get().getExternalId(), is(testAgreementId));
-        assertThat(charge.get().getExternalAgreement().isPresent(), is(true));
-        assertThat(charge.get().getExternalAgreement().get().getExternalId(), is(testAgreementId));
     }
     
     @Test

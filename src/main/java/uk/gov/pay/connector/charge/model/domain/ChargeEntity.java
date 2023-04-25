@@ -200,16 +200,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "service_id")
     @Schema(example = "46eb1b601348499196c99de90482ee68")
     private String serviceId;
-
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "agreement_id", referencedColumnName="external_id", updatable = false, nullable = true)
-    private AgreementEntity agreementEntity;
-
+    
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "agreement_external_id", referencedColumnName="external_id", updatable = false, nullable = true)
-    private AgreementEntity agreementExternalEntity;
+    private AgreementEntity agreementEntity;
     
     @Column(name = "save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
@@ -276,7 +271,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.moto = moto;
         this.serviceId = serviceId;
         this.agreementEntity = agreementEntity;
-        this.agreementExternalEntity = agreementEntity;
+        this.agreementEntity = agreementEntity;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
     }
@@ -581,12 +576,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @JsonIgnore
     public Optional<AgreementEntity> getAgreement() {
-        return Optional.ofNullable(agreementExternalEntity);
-    }
-
-    @JsonIgnore
-    public Optional<AgreementEntity> getExternalAgreement() {
-        return Optional.ofNullable(agreementExternalEntity);
+        return Optional.ofNullable(agreementEntity);
     }
     
     public boolean isSavePaymentInstrumentToAgreement() {
@@ -825,7 +815,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return this;
         }
 
-        public TelephoneChargeEntityBuilder withAgreementId(AgreementEntity agreementEntity) {
+        public TelephoneChargeEntityBuilder withAgreementEntity(AgreementEntity agreementEntity) {
             this.agreementEntity = agreementEntity;
             return this;
         }

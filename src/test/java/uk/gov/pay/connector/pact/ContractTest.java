@@ -663,7 +663,7 @@ public class ContractTest {
                 .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(gatewayAccountId)
-                .withAgreementId(agreementExternalId)
+                .withAgreementExternalId(agreementExternalId)
                 .withAmount(amount)
                 .withReference(ServicePaymentReference.of(reference))
                 .withDescription(description)

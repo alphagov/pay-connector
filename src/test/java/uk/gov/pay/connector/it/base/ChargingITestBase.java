@@ -484,7 +484,7 @@ public class ChargingITestBase {
                 .withStatus(status)
                 .withEmail("email@fake.test")
                 .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementId(agreementExternalId)
+                .withAgreementExternalId(agreementExternalId)
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build());
@@ -542,7 +542,7 @@ public class ChargingITestBase {
                 .withPaymentProvider(getPaymentProvider())
                 .withGatewayAccountId(accountId)
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
-                .withAgreementId(agreementExternalId)
+                .withAgreementExternalId(agreementExternalId)
                 .withAmount(10000)
                 .withStatus(ChargeStatus.CREATED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)

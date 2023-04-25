@@ -351,7 +351,7 @@ public class StripeResourceAuthorizeIT {
         return externalChargeId;
     }
 
-    private String addChargeWithAgreement(ChargeStatus chargeStatus, String agreementId) {
+    private String addChargeWithAgreement(ChargeStatus chargeStatus, String agreementExternalId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -362,7 +362,7 @@ public class StripeResourceAuthorizeIT {
                 .withAmount(Long.valueOf(AMOUNT))
                 .withStatus(chargeStatus)
                 .withGatewayCredentialId(accountCredentialsParams.getId())
-                .withAgreementId(agreementId)
+                .withAgreementExternalId(agreementExternalId)
                 .withSavePaymentInstrumentToAgreement(true)
                 .build());
         return externalChargeId;
