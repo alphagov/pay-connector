@@ -581,7 +581,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @JsonIgnore
     public Optional<AgreementEntity> getAgreement() {
-        return Optional.ofNullable(agreementEntity);
+        return Optional.ofNullable(agreementExternalEntity);
     }
 
     @JsonIgnore

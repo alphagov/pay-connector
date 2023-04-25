@@ -166,7 +166,6 @@ public class ChargeEntityFixture {
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
-        chargeEntity.setAgreementEntity(agreementEntity);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
 
