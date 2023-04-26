@@ -1981,4 +1981,8 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="drop agreement_id column from charges table" author="">
+        <dropColumn tableName="charges" columnName="agreement_id"/>
+    </changeSet>
+
 </databaseChangeLog>
