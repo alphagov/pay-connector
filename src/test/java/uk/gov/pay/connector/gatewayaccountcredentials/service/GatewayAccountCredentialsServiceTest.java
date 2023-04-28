@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -28,7 +29,6 @@ import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -1002,6 +1002,40 @@ public class GatewayAccountCredentialsServiceTest {
             gatewayAccountCredentialsService.activateCredentialIfNotYetActive(stripeCredentialId);
 
             verify(mockGatewayAccountCredentialsDao, never()).merge(any(GatewayAccountCredentialsEntity.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("findByExternalIdAndGatewayAccountId")
+    class FindByExternalIdAndGatewayAccountId {
+
+        @Test
+        void shouldReturnCredentialForExternalId() {
+            String credentialExternalId = "credential-external-id";
+            GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                    .aGatewayAccountCredentialsEntity()
+                    .withExternalId(credentialExternalId)
+                    .build();
+            when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
+                    .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+
+            GatewayAccountCredentialsEntity credentialsEntity =
+                    gatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L);
+
+            assertThat(credentialExternalId, is(credentialsEntity.getExternalId()));
+        }
+
+        @Test
+        void shouldThrowExceptionIfCredentialNotFoundForExternalId() {
+            String credentialExternalId = "credential-external-id";
+            when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
+                    .thenReturn(Optional.empty());
+
+            CredentialsNotFoundBadRequestException exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> {
+                gatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L);
+            });
+
+            assertThat(exception.getMessage(), is("Credentials not found for gateway account [1] and credential_external_id [credential-external-id]"));
         }
     }
 }

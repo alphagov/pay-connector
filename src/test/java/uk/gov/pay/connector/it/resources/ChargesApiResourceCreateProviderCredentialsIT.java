@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -67,7 +70,145 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITest
     }
 
     @Test
-    public void shouldReturn400WhenNoCredentialsForProviderSpecified() {
+    public void shouldCreateChargeForCredentialIdProvided() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ENTERED)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountCredentialsParams activeCredentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId()
+        ));
+
+        String chargeId = connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Response.Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_PROVIDER_KEY, is("worldpay"))
+                .extract().body().jsonPath().get("charge_id");
+
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        assertThat(charge.get("gateway_account_credential_id"), is(credentialsToUse.getId()));
+    }
+
+    @Test
+    public void shouldCreateChargeForProvidedExternalIdAndPaymentProvider() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ENTERED)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountCredentialsParams activeCredentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId(),
+                JSON_PROVIDER_KEY, "worldpay"
+        ));
+
+        String chargeId = connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Response.Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_PROVIDER_KEY, is("worldpay"))
+                .extract().body().jsonPath().get("charge_id");
+
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        assertThat(charge.get("gateway_account_credential_id"), is(credentialsToUse.getId()));
+    }
+
+    @Test
+    public void shouldReturn400WhenCredentialsNotFoundForCredentialIdProvided() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withGatewayAccountCredentials(List.of(credentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_CREDENTIAL_ID_KEY, "random-credential-id"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
+                .body("message", contains(format("Credentials not found for gateway account [%s] and credential_external_id [random-credential-id]", accountId)));
+    }
+
+    @Test
+    public void shouldReturn400WhenProviderDoesNotMatchProviderOnGatewayCredentials() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider("worldpay")
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .withGatewayAccountId(Long.parseLong(accountId))
+                .build();
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withGatewayAccountCredentials(List.of(credentials))
+                .withAccountId(accountId)
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_CREDENTIAL_ID_KEY, credentials.getExternalId(),
+                JSON_PROVIDER_KEY, "stripe"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody, accountId)
+                .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", contains(format("Credentials not found for credential_id [%s] and payment_provider [stripe]", credentials.getExternalId())))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void shouldReturn400WhenCredentialsFoundButPaymentProviderMismatches() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("sandbox")

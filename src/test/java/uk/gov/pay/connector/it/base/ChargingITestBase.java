@@ -91,6 +91,7 @@ public class ChargingITestBase {
 
     protected static final String SERVICE_ID = "external-service-id";
     protected static final String JSON_PROVIDER_KEY = "payment_provider";
+    protected static final String JSON_CREDENTIAL_ID_KEY = "credential_id";
     protected static final String PROVIDER_NAME = "sandbox";
     protected static final String JSON_CHARGE_KEY = "charge_id";
     protected static final String JSON_MESSAGE_KEY = "message";

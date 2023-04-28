@@ -23,7 +23,7 @@ public class GatewayAccountCredentialsDao extends JpaDao<GatewayAccountCredentia
     public void persist(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         super.persist(gatewayAccountCredentialsEntity);
     }
-    
+
     public Optional<GatewayAccountCredentialsEntity> findById(Long id) {
         return super.findById(GatewayAccountCredentialsEntity.class, id);
     }
@@ -42,13 +42,15 @@ public class GatewayAccountCredentialsDao extends JpaDao<GatewayAccountCredentia
         return count > 0;
     }
 
-    public Optional<GatewayAccountCredentialsEntity> findByExternalId(String externalId) {
+    public Optional<GatewayAccountCredentialsEntity> findByExternalIdAndGatewayAccountId(String externalId, Long gatewayAccountId) {
         String query = "SELECT ce FROM GatewayAccountCredentialsEntity ce " +
-                "WHERE ce.externalId = :externalId";
+                "WHERE ce.externalId = :externalId" +
+                "  AND ce.gatewayAccountEntity.id = :gatewayAccountId";
 
         return entityManager.get()
                 .createQuery(query, GatewayAccountCredentialsEntity.class)
                 .setParameter("externalId", externalId)
+                .setParameter("gatewayAccountId", gatewayAccountId)
                 .getResultList().stream().findFirst();
     }
 

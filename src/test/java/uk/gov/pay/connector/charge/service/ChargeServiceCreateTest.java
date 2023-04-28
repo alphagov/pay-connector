@@ -48,6 +48,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
@@ -99,6 +100,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
@@ -117,6 +119,8 @@ class ChargeServiceCreateTest {
     private static final long CHARGE_ENTITY_ID = 12345L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final String AGREEMENT_ID = "agreement-id";
+
+    private static final String CREDENTIALS_EXTERNAL_ID = "credentials-external-id";
     private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -184,18 +188,19 @@ class ChargeServiceCreateTest {
     private TaskQueueService mockTaskQueueService;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
-    
+
     @Mock
     Appender<ILoggingEvent> mockAppender;
 
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
-    @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
+    @Captor
+    ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
 
     @Captor
     private ArgumentCaptor<IdempotencyEntity> idempotencyEntityArgumentCaptor;
-    
+
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
@@ -559,6 +564,70 @@ class ChargeServiceCreateTest {
     }
 
     @Test
+    void shouldCreateAChargeWhenCredentialEntityFoundForCredentialExternalId() {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        when(mockGatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(CREDENTIALS_EXTERNAL_ID, gatewayAccount.getId()))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
+        final ChargeCreateRequest request = requestBuilder.withCredentialId(CREDENTIALS_EXTERNAL_ID).build();
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
+    }
+
+    @Test
+    void shouldCreateAChargeWhenCredentialEntityFoundForCredentialExternalIdAndPaymentProvider() {
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        when(mockGatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(CREDENTIALS_EXTERNAL_ID, gatewayAccount.getId()))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
+        final ChargeCreateRequest request = requestBuilder
+                .withCredentialId(CREDENTIALS_EXTERNAL_ID)
+                .withPaymentProvider("sandbox")
+                .build();
+        chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getPaymentProvider(), is("sandbox"));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCredentialEntityIsFoundAndPaymentProviderMismatch() {
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        when(mockGatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(CREDENTIALS_EXTERNAL_ID, gatewayAccount.getId()))
+                .thenReturn(gatewayAccountCredentialsEntity);
+
+        final ChargeCreateRequest request = requestBuilder
+                .withCredentialId(CREDENTIALS_EXTERNAL_ID)
+                .withPaymentProvider("stripe")
+                .build();
+
+        CredentialsNotFoundBadRequestException exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> {
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+        });
+
+        verifyNoInteractions(mockedChargeDao);
+
+        assertThat(exception.getMessage(), is("Credentials not found for credential_id [credentials-external-id] and payment_provider [stripe]"));
+    }
+
+    @Test
     void shouldCreateAResponse() throws Exception {
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
@@ -658,7 +727,7 @@ class ChargeServiceCreateTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
         assertThat(tokenEntity.isUsed(), is(false));
     }
-    
+
     @Test
     void shouldThrowException_whenGatewayAccountDisabled() {
         gatewayAccount.setDisabled(true);
@@ -691,7 +760,8 @@ class ChargeServiceCreateTest {
                 .withUserIdentifier("This is the user identifier")
                 .withPaymentInstrument(paymentInstrument)
                 .build();
-        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {});
+        Map<String, Object> requestBody = mapper.convertValue(chargeCreateRequest, new TypeReference<>() {
+        });
 
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);

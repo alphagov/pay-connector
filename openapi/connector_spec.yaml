@@ -2833,6 +2833,10 @@ components:
           - moto_api
           - agreement
           - external
+        credential_id:
+          type: string
+          description: Credential external ID to which charge to be associated. Used
+            when verifying a live payment during PSP switch
         delayed_capture:
           type: boolean
         description:
