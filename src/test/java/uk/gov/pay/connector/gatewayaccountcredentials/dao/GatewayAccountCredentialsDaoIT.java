@@ -88,7 +88,7 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findsCredentialByExternalId() {
+    public void findsCredentialByExternalIdAndGatewayAccount() {
         long gatewayAccountId = nextLong();
         String externalCredentialId = randomUuid();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
@@ -106,7 +106,8 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 
-        Optional<GatewayAccountCredentialsEntity> optionalEntity = gatewayAccountCredentialsDao.findByExternalId(externalCredentialId);
+        Optional<GatewayAccountCredentialsEntity> optionalEntity =
+                gatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(externalCredentialId, gatewayAccountId);
 
         assertThat(optionalEntity.isPresent(), is(true));
         assertThat(optionalEntity.get().getExternalId(), is(externalCredentialId));

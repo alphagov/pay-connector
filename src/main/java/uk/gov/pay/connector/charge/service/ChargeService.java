@@ -76,6 +76,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
@@ -297,13 +298,8 @@ public class ChargeService {
                 }
             });
 
-            GatewayAccountCredentialsEntity gatewayAccountCredential;
-            if (chargeRequest.getPaymentProvider() != null) {
-                gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentialsForProvider(
-                        gatewayAccount, chargeRequest.getPaymentProvider());
-            } else {
-                gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
-            }
+            GatewayAccountCredentialsEntity gatewayAccountCredential =
+                    getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
 
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
                     agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
@@ -361,6 +357,31 @@ public class ChargeService {
 
             return chargeEntity;
         });
+    }
+
+    private GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount) {
+        GatewayAccountCredentialsEntity gatewayAccountCredential;
+        if (chargeRequest.getCredentialId() != null) {
+            gatewayAccountCredential = gatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(
+                    chargeRequest.getCredentialId(), gatewayAccount.getId());
+
+            if (chargeRequest.getPaymentProvider() != null
+                    && !chargeRequest.getPaymentProvider().equals(gatewayAccountCredential.getPaymentProvider())) {
+                throw new CredentialsNotFoundBadRequestException(
+                        format("Credentials not found for credential_id [%s] and payment_provider [%s]",
+                                chargeRequest.getCredentialId(),
+                                chargeRequest.getPaymentProvider())
+                );
+            }
+        } else {
+            if (chargeRequest.getPaymentProvider() != null) {
+                gatewayAccountCredential = gatewayAccountCredentialsService.getUsableCredentialsForProvider(
+                        gatewayAccount, chargeRequest.getPaymentProvider());
+            } else {
+                gatewayAccountCredential = gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
+            }
+        }
+        return gatewayAccountCredential;
     }
 
     public Optional<ChargeResponse> checkForChargeCreatedWithIdempotencyKey(ChargeCreateRequest chargeRequest,

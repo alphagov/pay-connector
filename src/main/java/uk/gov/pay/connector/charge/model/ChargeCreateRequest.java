@@ -22,7 +22,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.function.Predicate.not;
@@ -110,6 +109,11 @@ public class ChargeCreateRequest {
     @Schema(description = "Mode of authorisation for the payment. Payments created in `web` mode require the paying user to visit the `next_url` to complete the payment.")
     private AuthorisationMode authorisationMode;
 
+    @JsonProperty("credential_id")
+    @Valid
+    @Schema(description = "Credential external ID to which charge to be associated. Used when verifying a live payment during PSP switch")
+    private String credentialId;
+
     public ChargeCreateRequest() {
         // For Jackson
     }
@@ -128,7 +132,8 @@ public class ChargeCreateRequest {
                         String paymentProvider,
                         String agreementId,
                         boolean savePaymentInstrumentToAgreement,
-                        AuthorisationMode authorisationMode) {
+                        AuthorisationMode authorisationMode,
+                        String credentialId) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -144,6 +149,7 @@ public class ChargeCreateRequest {
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
+        this.credentialId = credentialId;
     }
 
     @JsonIgnore
@@ -220,7 +226,11 @@ public class ChargeCreateRequest {
     public AuthorisationMode getAuthorisationMode() {
         return Optional.ofNullable(authorisationMode).orElse(AuthorisationMode.WEB);
     }
-    
+
+    public String getCredentialId() {
+        return credentialId;
+    }
+
     public String toStringWithoutPersonalIdentifiableInformation() {
         // Don't include:
         // description - some services include PII
@@ -236,6 +246,7 @@ public class ChargeCreateRequest {
                 (agreementId != null ? ", agreement_id=" + agreementId : "") +
                 (savePaymentInstrumentToAgreement != null ? ", save_payment_instrument_to_agreement=" + savePaymentInstrumentToAgreement : "") +
                 (authorisationMode != null ? ", authorisation_mode=" + authorisationMode : "") +
+                (credentialId != null ? ", credential_id=" + credentialId : "") +
                 (getPrefilledCardHolderDetails().isPresent() && prefilledCardHolderDetails.getAddress().isPresent() ? ", prefilled_billing_address=true" : "") +
                 (getPrefilledCardHolderDetails().isPresent() && prefilledCardHolderDetails.getCardHolderName().isPresent() ? ", prefilled_cardholder_name=true" : "") +
                 (getEmail().isPresent() ? ", prefilled_email=true" : "") +

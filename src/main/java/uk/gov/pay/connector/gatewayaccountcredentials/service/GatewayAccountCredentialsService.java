@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -28,7 +29,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -318,5 +318,12 @@ public class GatewayAccountCredentialsService {
             }
             gatewayAccountCredentialsDao.merge(updatableCredentialEntity);
         });
+    }
+
+    public GatewayAccountCredentialsEntity findByExternalIdAndGatewayAccountId(String credentialExternalId, Long gatewayAccountId) {
+        return gatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, gatewayAccountId)
+                .orElseThrow(() -> new CredentialsNotFoundBadRequestException(
+                        format("Credentials not found for gateway account [%s] and credential_external_id [%s]",
+                                gatewayAccountId, credentialExternalId)));
     }
 }
