@@ -44,7 +44,6 @@ public class GatewayAccountCredentialsRequestValidator {
         // validator hooked into dependency injection as it needs access to top level connector configuration
         providerCredentialFields = newHashMap();
         providerCredentialFields.put("worldpay", configuration.getWorldpayConfig().getCredentials());
-        providerCredentialFields.put("smartpay", configuration.getSmartpayConfig().getCredentials());
         providerCredentialFields.put("epdq", configuration.getEpdqConfig().getCredentials());
         providerCredentialFields.put("stripe", configuration.getStripeConfig().getCredentials());
     }

@@ -120,7 +120,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
 
     @Test
     public void shouldGetNotificationCredentialsWhenTheyExistForGatewayAccount() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor("worldpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
         databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.addNotificationCredentialsFor(Long.parseLong(accountId), "bob", "bobssecret");
@@ -129,7 +129,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(200)
-                .body("payment_provider", is("smartpay"))
+                .body("payment_provider", is("worldpay"))
                 .body("gateway_account_id", is(Integer.parseInt(accountId)))
                 .body("notificationCredentials.userName", is("bob"))
                 .body("notificationCredentials.password", is(nullValue()));
@@ -339,7 +339,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
 
     @Test
     public void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor("stripe");
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
 
@@ -392,7 +392,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     @Test
     public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
-        createAGatewayAccountFor("smartpay");
+        createAGatewayAccountFor("stripe");
 
         Map<String, String> serviceNamePayload = GatewayAccountPayload.createDefault().buildServiceNamePayload();
         updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)

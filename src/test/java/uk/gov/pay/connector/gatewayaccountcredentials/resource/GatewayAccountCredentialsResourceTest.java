@@ -82,15 +82,15 @@ public class GatewayAccountCredentialsResourceTest {
             .withId(accountId)
             .withGatewayName("worldpay")
             .build();
-    private final long smartpayAccountId = 333;
+    private final long stripeAccountId = 333;
     private final GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
-            .withPaymentProvider("smartpay")
+            .withPaymentProvider("stripe")
             .withCredentials(Map.of())
             .withState(CREATED)
             .build();
-    private final GatewayAccountEntity smartpayGatewayAccountEntity = aGatewayAccountEntity()
-            .withId(smartpayAccountId)
-            .withGatewayName("smartpay")
+    private final GatewayAccountEntity stripeGatewayAccountEntity = aGatewayAccountEntity()
+            .withId(stripeAccountId)
+            .withGatewayName("stripe")
             .withGatewayAccountCredentials(List.of(credentialsEntity))
             .build();
 
@@ -215,7 +215,7 @@ public class GatewayAccountCredentialsResourceTest {
 
     @Test
     void update3dsFlexCredentials_nonWorldpayGatewayAccountReturns404() {
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(smartpayGatewayAccountEntity));
+        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(stripeGatewayAccountEntity));
         Response response = resources
                 .target(format("/v1/api/accounts/%s/3ds-flex-credentials", accountId))
                 .request()

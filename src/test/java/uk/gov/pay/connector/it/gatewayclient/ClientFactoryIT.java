@@ -12,10 +12,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
@@ -32,10 +32,7 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -180,26 +177,6 @@ public class ClientFactoryIT {
         Long authOverriddenTimeout = app.getConfiguration().getWorldpayConfig().getJerseyClientOverrides()
                 .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
                 .orElse(0L);
-        assertGatewayFailure(request, authOverriddenTimeout);
-    }
-
-    @Test
-    public void shouldUseGatewaySpecificReadTimeoutOverrideForSmartpay_whenSpecified() {
-        app = startApp("config/client-factory-test-config-with-smartpay-timeout-override.yaml", false);
-
-        String path = "/hello";
-        
-        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
-                .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
-
-        Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(SMARTPAY, AUTHORISE, mockMetricRegistry);
-
-        Invocation.Builder request = client.target(getServerUrl()).path(path).request();
-        Long authOverriddenTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides()
-                .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
-                .orElse(0L);
-
         assertGatewayFailure(request, authOverriddenTimeout);
     }
 

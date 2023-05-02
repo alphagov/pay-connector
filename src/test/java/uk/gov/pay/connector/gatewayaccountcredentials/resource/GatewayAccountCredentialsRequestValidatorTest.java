@@ -45,7 +45,6 @@ public class GatewayAccountCredentialsRequestValidatorTest {
         when(gatewayConfig.getCredentials()).thenReturn(List.of());
         when(stripeGatewayConfig.getCredentials()).thenReturn(List.of());
         when(connectorConfiguration.getWorldpayConfig()).thenReturn(worldpayConfig);
-        when(connectorConfiguration.getSmartpayConfig()).thenReturn(gatewayConfig);
         when(connectorConfiguration.getEpdqConfig()).thenReturn(gatewayConfig);
         when(connectorConfiguration.getStripeConfig()).thenReturn(stripeGatewayConfig);
 
@@ -67,9 +66,9 @@ public class GatewayAccountCredentialsRequestValidatorTest {
 
     @Test
     public void shouldThrowWhenPaymentProviderIsNotStripeOrWorldpay() {
-        var request = new GatewayAccountCredentialsRequest("smartpay", null);
+        var request = new GatewayAccountCredentialsRequest("sandbox", null);
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
-        assertThat(thrown.getErrors().get(0), is("Operation not supported for payment provider 'smartpay'"));
+        assertThat(thrown.getErrors().get(0), is("Operation not supported for payment provider 'sandbox'"));
     }
 
     @Test

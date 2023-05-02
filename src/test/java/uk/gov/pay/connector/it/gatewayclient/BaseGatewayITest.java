@@ -41,7 +41,7 @@ abstract public class BaseGatewayITest {
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password"
             );
-    private static final String PAYMENT_PROVIDER = "smartpay";
+    private static final String PAYMENT_PROVIDER = "worldpay";
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;

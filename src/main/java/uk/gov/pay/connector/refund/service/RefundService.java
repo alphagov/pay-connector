@@ -268,7 +268,6 @@ public class RefundService {
     /**
      * <p>Worldpay -> Worldpay doesn't return reference. We use our externalId because that's what we sent in the
      * request as our reference and it will be sent by Worldpay with the notification.</p>
-     * <p>Smartpay -> We get the pspReference returned by them. This will also be sent with the notification.</p>
      * <p>ePDQ -> We construct PAYID/PAYIDSUB and use that as the reference. PAYID and PAYIDSUB will be sent with the
      * notification.</p>
      * if not successful (and the fact that we have got a proper response from Gateway, we have to assume

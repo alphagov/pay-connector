@@ -15,11 +15,6 @@ aws_secret_key: x
 epdq_live_url: https://example.com/stub/epdq
 epdq_test_url: https://example.com/stub/epdq
 
-smartpay_live_url: https://example.com/stub/smartpay
-smartpay_test_url: https://example.com/stub/smartpay
-smartpay_notification_password: smartpay-password
-smartpay_notification_user: smartpay-user
-
 worldpay_live_url: https://example.com/stub/worldpay
 worldpay_test_url: https://example.com/stub/worldpay
 secure_worldpay_notification_domain: london.cloudapps.digital

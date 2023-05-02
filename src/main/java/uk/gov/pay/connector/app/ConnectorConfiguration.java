@@ -47,10 +47,6 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private GatewayConfig smartpayConfig;
-
-    @Valid
-    @NotNull
     private GatewayConfig epdqConfig;
 
     @Valid
@@ -183,11 +179,6 @@ public class ConnectorConfiguration extends Configuration {
         return sandboxConfig;
     }
 
-    @JsonProperty("smartpay")
-    public GatewayConfig getSmartpayConfig() {
-        return smartpayConfig;
-    }
-
     @JsonProperty("epdq")
     public GatewayConfig getEpdqConfig() {
         return epdqConfig;
@@ -202,10 +193,9 @@ public class ConnectorConfiguration extends Configuration {
         switch (gateway) {
             case WORLDPAY:
                 return getWorldpayConfig();
-            case SMARTPAY:
-                return getSmartpayConfig();
             case EPDQ:
                 return getEpdqConfig();
+            case SMARTPAY:
             default:
                 throw new PaymentGatewayName.Unsupported();
         }

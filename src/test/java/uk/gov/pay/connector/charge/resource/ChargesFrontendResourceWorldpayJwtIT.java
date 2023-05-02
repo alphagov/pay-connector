@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
@@ -91,7 +91,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "organisational_unit_id", "My Org",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        setUpChargeAndAccount(gatewayAccountId, SMARTPAY, validCredentials, nextLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
         connectorRestApi
