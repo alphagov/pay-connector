@@ -21,15 +21,18 @@ import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReas
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.NO_SUCH_ISSUER;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.PICKUP_CARD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.REFER_TO_CARD_ISSUER;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.REVOCATION_OF_ALL_AUTHORISATION;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.REVOCATION_OF_AUTHORISATION;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.STOLEN_CARD;
+import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.STOP_PAYMENT_ORDER;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.SUSPECTED_FRAUD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.TRANSACTION_NOT_PERMITTED;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.TRY_ANOTHER_CARD;
 import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason.UNCATEGORISED;
 
 public class WorldpayAuthorisationRejectedCodeMapper {
-    
-    private static final Map<String, MappedAuthorisationRejectedReason> worldpayRejectionCodeMap = Map.ofEntries(
+
+    private static final Map<String, MappedAuthorisationRejectedReason> WORLDPAY_REJECTION_CODE_MAP = Map.ofEntries(
                 entry("1", REFER_TO_CARD_ISSUER),
                 entry("3", INVALID_MERCHANT),
                 entry("4", CAPTURE_CARD),
@@ -52,9 +55,13 @@ public class WorldpayAuthorisationRejectedCodeMapper {
                 entry("65", AUTHENTICATION_REQUESTED),
                 entry("78", INVALID_ACCOUNT_NUMBER),
                 entry("91", ISSUER_TEMPORARILY_UNAVAILABLE),
-                entry("835", INVALID_CVV2));
-    
+                entry("835", INVALID_CVV2),
+                entry("972", STOP_PAYMENT_ORDER),
+                entry("973", REVOCATION_OF_AUTHORISATION),
+                entry("975", REVOCATION_OF_ALL_AUTHORISATION));
+
     public static MappedAuthorisationRejectedReason toMappedAuthorisationRejectionReason(String worldpayRejectionCode) {
-        return worldpayRejectionCodeMap.getOrDefault(worldpayRejectionCode, UNCATEGORISED);
+        return WORLDPAY_REJECTION_CODE_MAP.getOrDefault(worldpayRejectionCode, UNCATEGORISED);
     }
+
 }
