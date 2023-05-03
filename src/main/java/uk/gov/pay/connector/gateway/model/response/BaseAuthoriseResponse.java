@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.model.response;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +19,13 @@ public interface BaseAuthoriseResponse extends BaseResponse {
     default Optional<Auth3dsRequiredEntity> extractAuth3dsRequiredDetails() {
         return getGatewayParamsFor3ds().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity);
     }
-    
+
+    default Optional<MappedAuthorisationRejectedReason> getMappedAuthorisationRejectedReason() {
+        return Optional.ofNullable(authoriseStatus())
+                .filter(authoriseStatus -> authoriseStatus == AuthoriseStatus.REJECTED)
+                .map(authoriseStatus -> MappedAuthorisationRejectedReason.UNCATEGORISED);
+    }
+
     default Optional<Map<String, String>> getGatewayRecurringAuthToken() {
         return Optional.empty();
     }
