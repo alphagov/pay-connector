@@ -640,75 +640,6 @@ public class GatewayAccountCredentialsServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("getUsableCredentialsForProvider")
-    class GetUsableCredentialsForProviderTest {
-        @Test
-        void shouldThrowForNoCredentialsForProvider() {
-            GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("stripe").withState(ENTERED).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
-
-            NoCredentialsExistForProviderException exception = assertThrows(NoCredentialsExistForProviderException.class,
-                    () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
-            assertThat(exception.getMessage(), is("Account does not support payment provider [worldpay]"));
-        }
-
-        @Test
-        void shouldThrowForNoCredentialsInUsableState() {
-            GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(CREATED).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
-
-            NoCredentialsInUsableStateException exception = assertThrows(NoCredentialsInUsableStateException.class,
-                    () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
-            assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
-        }
-
-
-        @Test
-        void shouldThrowIfMultipleUsableCredentials() {
-            GatewayAccountCredentialsEntity credentials1 = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(ENTERED).build();
-            GatewayAccountCredentialsEntity credentials2 = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(VERIFIED_WITH_LIVE_PAYMENT).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(credentials1, credentials2)).build();
-
-            assertThrows(WebApplicationException.class,
-                    () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
-        }
-
-        @Test
-        void shouldThrowForCredentialsOnlyInCreatedState() {
-            GatewayAccountCredentialsEntity credentials = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(CREATED).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(Collections.singletonList(credentials)).build();
-
-            NoCredentialsInUsableStateException exception = assertThrows(NoCredentialsInUsableStateException.class,
-                    () -> gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, "worldpay"));
-            assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
-        }
-
-        @Test
-        void shouldReturnSingleUsableCredentialForPaymentProvider() {
-            GatewayAccountCredentialsEntity credentials1 = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(ENTERED).build();
-            GatewayAccountCredentialsEntity credentials2 = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(CREATED).build();
-            GatewayAccountCredentialsEntity credentials3 = aGatewayAccountCredentialsEntity()
-                    .withPaymentProvider("worldpay").withState(RETIRED).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withGatewayAccountCredentials(List.of(credentials1, credentials2, credentials3)).build();
-
-            GatewayAccountCredentialsEntity result = gatewayAccountCredentialsService.getUsableCredentialsForProvider(gatewayAccountEntity, credentials1.getPaymentProvider());
-            assertThat(result, is(credentials1));
-        }
-    }
-
     @DisplayName("findByCredentialsKeyValue")
     @Nested
     class FindByCredentialsKeyValueTest {
@@ -1005,8 +936,8 @@ public class GatewayAccountCredentialsServiceTest {
     }
 
     @Nested
-    @DisplayName("findByExternalIdAndGatewayAccountId")
-    class FindByExternalIdAndGatewayAccountId {
+    @DisplayName("getCredentialInUsableState")
+    class GetCredentialInUsableState {
 
         @Test
         void shouldReturnCredentialForExternalId() {
@@ -1019,7 +950,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
 
             GatewayAccountCredentialsEntity credentialsEntity =
-                    gatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L);
+                    gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L);
 
             assertThat(credentialExternalId, is(credentialsEntity.getExternalId()));
         }
@@ -1030,11 +961,30 @@ public class GatewayAccountCredentialsServiceTest {
             when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
                     .thenReturn(Optional.empty());
 
-            CredentialsNotFoundBadRequestException exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> {
-                gatewayAccountCredentialsService.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L);
+            var exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> {
+                gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L);
             });
 
             assertThat(exception.getMessage(), is("Credentials not found for gateway account [1] and credential_external_id [credential-external-id]"));
+        }
+
+        @Test
+        void shouldThrowExceptionIfCredentialIsNotInUsableState() {
+            String credentialExternalId = "credential-external-id";
+            GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                    .aGatewayAccountCredentialsEntity()
+                    .withExternalId(credentialExternalId)
+                    .withState(CREATED)
+                    .build();
+
+            when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
+                    .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
+
+            var exception = assertThrows(NoCredentialsInUsableStateException.class, () -> {
+                gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L);
+            });
+
+            assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
         }
     }
 }

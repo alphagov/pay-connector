@@ -13,7 +13,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
-import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -24,7 +23,6 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.WebApplicationException;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +49,6 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAcc
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.GATEWAY_MERCHANT_ID_PATH;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -221,30 +218,6 @@ public class GatewayAccountCredentialsService {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account with Stripe connect account ID [%s] not found.", stripeAccountId)));
     }
 
-    public GatewayAccountCredentialsEntity getUsableCredentialsForProvider(GatewayAccountEntity gatewayAccountEntity, String paymentProvider) {
-        List<GatewayAccountCredentialsEntity> credentialsForProvider = gatewayAccountEntity.getGatewayAccountCredentials()
-                .stream()
-                .filter(gatewayAccountCredentialsEntity -> gatewayAccountCredentialsEntity.getPaymentProvider().equals(paymentProvider))
-                .collect(Collectors.toList());
-
-        if (credentialsForProvider.isEmpty()) {
-            throw new NoCredentialsExistForProviderException(paymentProvider);
-        }
-
-        List<GatewayAccountCredentialsEntity> credentialsInState = credentialsForProvider
-                .stream()
-                .filter(gatewayAccountCredentialsEntity -> USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
-                .collect(Collectors.toList());
-
-        if (credentialsInState.isEmpty()) {
-            throw new NoCredentialsInUsableStateException();
-        }
-        if (credentialsInState.size() > 1) {
-            throw new WebApplicationException(badRequestResponse(Collections.singletonList("Multiple usable credentials exist for payment provider [%s], unable to determine which to use.")));
-        }
-        return credentialsInState.get(0);
-    }
-
     public GatewayAccountCredentialsEntity getCurrentOrActiveCredential(GatewayAccountEntity gatewayAccountEntity) {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
                 .orElseThrow(() -> new WebApplicationException(
@@ -320,10 +293,18 @@ public class GatewayAccountCredentialsService {
         });
     }
 
-    public GatewayAccountCredentialsEntity findByExternalIdAndGatewayAccountId(String credentialExternalId, Long gatewayAccountId) {
-        return gatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, gatewayAccountId)
-                .orElseThrow(() -> new CredentialsNotFoundBadRequestException(
-                        format("Credentials not found for gateway account [%s] and credential_external_id [%s]",
-                                gatewayAccountId, credentialExternalId)));
+    public GatewayAccountCredentialsEntity getCredentialInUsableState(String credentialExternalId, Long gatewayAccountId) {
+        Optional<GatewayAccountCredentialsEntity> credentialsEntity =
+                gatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, gatewayAccountId);
+
+        if (credentialsEntity.isEmpty()) {
+            throw new CredentialsNotFoundBadRequestException(
+                    format("Credentials not found for gateway account [%s] and credential_external_id [%s]",
+                            gatewayAccountId, credentialExternalId));
+        }
+
+        return credentialsEntity.filter(gatewayAccountCredentialsEntity ->
+                        USABLE_STATES.contains(gatewayAccountCredentialsEntity.getState()))
+                .orElseThrow(NoCredentialsInUsableStateException::new);
     }
 }
