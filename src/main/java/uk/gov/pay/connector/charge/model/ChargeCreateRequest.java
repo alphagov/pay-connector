@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
-import uk.gov.pay.connector.charge.validation.ValidPaymentProvider;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -90,11 +89,6 @@ public class ChargeCreateRequest {
     @Schema(description = "Mail Order / Telephone Order (MOTO) payment flag", example = "true")
     private Boolean moto;
 
-    @JsonProperty("payment_provider")
-    @ValidPaymentProvider
-    @Schema(description = "Payment provider for the charge. Internal use only", example = "sandbox")
-    private String paymentProvider;
-
     @JsonProperty("agreement_id")
     @Length(min = 26, max = 26, message = "Field [agreementId] length must be 26")
     @Schema(description = "Agreement ID to associate charge with", example = "md1mjge8gb6p4qndfs8mf8gto5")
@@ -129,7 +123,6 @@ public class ChargeCreateRequest {
                         ExternalMetadata externalMetadata,
                         Source source,
                         boolean moto,
-                        String paymentProvider,
                         String agreementId,
                         boolean savePaymentInstrumentToAgreement,
                         AuthorisationMode authorisationMode,
@@ -145,7 +138,6 @@ public class ChargeCreateRequest {
         this.externalMetadata = externalMetadata;
         this.source = source;
         this.moto = moto;
-        this.paymentProvider = paymentProvider;
         this.agreementId = agreementId;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
@@ -218,11 +210,6 @@ public class ChargeCreateRequest {
     }
 
     @JsonIgnore
-    public String getPaymentProvider() {
-        return paymentProvider;
-    }
-
-    @JsonIgnore
     public AuthorisationMode getAuthorisationMode() {
         return Optional.ofNullable(authorisationMode).orElse(AuthorisationMode.WEB);
     }
@@ -242,7 +229,6 @@ public class ChargeCreateRequest {
                 (source != null ? ", source=" + source : "") +
                 (moto != null ? ", moto=" + moto : "") +
                 (language != null ? ", language=" + language : "") +
-                (paymentProvider != null ? ", payment_provider=" + paymentProvider : "") +
                 (agreementId != null ? ", agreement_id=" + agreementId : "") +
                 (savePaymentInstrumentToAgreement != null ? ", save_payment_instrument_to_agreement=" + savePaymentInstrumentToAgreement : "") +
                 (authorisationMode != null ? ", authorisation_mode=" + authorisationMode : "") +

@@ -2859,10 +2859,6 @@ components:
           type: boolean
           description: Mail Order / Telephone Order (MOTO) payment flag
           example: true
-        payment_provider:
-          type: string
-          description: Payment provider for the charge. Internal use only
-          example: sandbox
         prefilled_cardholder_details:
           $ref: '#/components/schemas/PrefilledCardHolderDetails'
         reference:

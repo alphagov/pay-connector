@@ -17,7 +17,6 @@ public final class ChargeCreateRequestBuilder {
     private ExternalMetadata externalMetadata;
     private Source source;
     private boolean moto;
-    private String paymentProvider;
     private String agreementId;
     private boolean savePaymentInstrumentToAgreement;
     private AuthorisationMode authorisationMode;
@@ -95,11 +94,6 @@ public final class ChargeCreateRequestBuilder {
         return this;
     }
 
-    public ChargeCreateRequestBuilder withPaymentProvider(String paymentProvider) {
-        this.paymentProvider = paymentProvider;
-        return this;
-    }
-    
     public ChargeCreateRequestBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
         return this;
@@ -112,7 +106,7 @@ public final class ChargeCreateRequestBuilder {
 
     public ChargeCreateRequest build() {
         return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
-                prefilledCardHolderDetails, externalMetadata, source, moto, paymentProvider, agreementId, savePaymentInstrumentToAgreement, authorisationMode,
+                prefilledCardHolderDetails, externalMetadata, source, moto, agreementId, savePaymentInstrumentToAgreement, authorisationMode,
                 credentialExternalId);
     }
 }

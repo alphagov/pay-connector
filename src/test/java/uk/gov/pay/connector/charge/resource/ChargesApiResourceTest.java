@@ -17,7 +17,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,27 +37,6 @@ public class ChargesApiResourceTest {
             .addProvider(JsonMappingExceptionMapper.class)
             .addProvider(ValidationExceptionMapper.class)
             .build();
-
-    @Test
-    void createCharge_invalidPaymentProvider_shouldReturn422() {
-        var payload = Map.of(
-                "amount", 100,
-                "reference", "ref",
-                "description", "desc",
-                "return_url", "http://service.url/success-page/",
-                "payment_provider", "simon"
-        );
-
-        Response response = resources
-                .target("/v1/api/accounts/1/charges")
-                .request()
-                .post(Entity.json(payload));
-
-        assertThat(response.getStatus(), is(422));
-        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Field [payment_provider] must be one of [epdq, sandbox, stripe, worldpay]"));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
-    }
 
     @Test
     void createCharge_invalidAuthorisationMode_shouldReturn400() {

@@ -35,41 +35,6 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITest
     }
 
     @Test
-    public void shouldCreateChargeForProvidedPaymentProvider() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
-                .withState(GatewayAccountCredentialState.ENTERED)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountCredentialsParams activeCredentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("sandbox")
-                .withState(GatewayAccountCredentialState.ACTIVE)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withPaymentGateway("sandbox")
-                .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_PROVIDER_KEY, "worldpay"
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Response.Status.CREATED.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_PROVIDER_KEY, is("worldpay"));
-    }
-
-    @Test
     public void shouldCreateChargeForCredentialIdProvided() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
@@ -94,45 +59,6 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITest
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId()
-        ));
-
-        String chargeId = connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Response.Status.CREATED.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_PROVIDER_KEY, is("worldpay"))
-                .extract().body().jsonPath().get("charge_id");
-
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
-        assertThat(charge.get("gateway_account_credential_id"), is(credentialsToUse.getId()));
-    }
-
-    @Test
-    public void shouldCreateChargeForProvidedExternalIdAndPaymentProvider() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
-                .withState(GatewayAccountCredentialState.ENTERED)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountCredentialsParams activeCredentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
-                .withState(GatewayAccountCredentialState.ACTIVE)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId(),
-                JSON_PROVIDER_KEY, "worldpay"
         ));
 
         String chargeId = connectorRestApiClient
@@ -177,69 +103,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITest
     }
 
     @Test
-    public void shouldReturn400WhenProviderDoesNotMatchProviderOnGatewayCredentials() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("worldpay")
-                .withState(GatewayAccountCredentialState.ACTIVE)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withGatewayAccountCredentials(List.of(credentials))
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_CREDENTIAL_ID_KEY, credentials.getExternalId(),
-                JSON_PROVIDER_KEY, "stripe"
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", contains(format("Credentials not found for credential_id [%s] and payment_provider [stripe]", credentials.getExternalId())))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
-    public void shouldReturn400WhenCredentialsFoundButPaymentProviderMismatches() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
-        AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("sandbox")
-                .withState(GatewayAccountCredentialState.ACTIVE)
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .build();
-        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-                .withPaymentGateway("sandbox")
-                .withGatewayAccountCredentials(List.of(credentials))
-                .withAccountId(accountId)
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_PROVIDER_KEY, "worldpay"
-        ));
-
-        connectorRestApiClient
-                .postCreateCharge(postBody, accountId)
-                .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
-                .contentType(JSON)
-                .body("message", contains("Account does not support payment provider [worldpay]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
-    public void shouldReturn400WhenNoCredentialsInUsableStateForProvider() {
+    public void shouldReturn400WhenNoCredentialsAreInUsableState() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("worldpay")
@@ -258,7 +122,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITest
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_PROVIDER_KEY, "worldpay"
+                JSON_CREDENTIAL_ID_KEY, credentials.getExternalId()
         ));
 
         connectorRestApiClient
