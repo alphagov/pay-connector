@@ -3,8 +3,9 @@ package uk.gov.pay.connector.gateway.stripe.json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
+import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.stripe.handler.StripeAuthoriseHandler;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -47,6 +48,23 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
             return REJECTED;
         }
         return ERROR;
+    }
+
+    @Override
+    public Optional<MappedAuthorisationRejectedReason> getMappedAuthorisationRejectedReason() {
+        if (authoriseStatus() != AuthoriseStatus.REJECTED) {
+            return Optional.empty();
+        }
+
+        var mappedAuthorisationRejectedReason = Optional.ofNullable(errorResponse)
+                .map(StripeErrorResponse::getError)
+                .flatMap(StripeErrorResponse.Error::getStripePaymentIntent)
+                .flatMap(StripePaymentIntent::getLastPaymentError)
+                .map(LastPaymentError::getDeclineCode)
+                .map(StripeAuthorisationRejectedCodeMapper::toMappedAuthorisationRejectionReason)
+                .orElse(MappedAuthorisationRejectedReason.UNCATEGORISED);
+
+        return Optional.of(mappedAuthorisationRejectedReason);
     }
 
     @Override

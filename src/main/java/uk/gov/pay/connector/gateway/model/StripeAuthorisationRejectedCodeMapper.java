@@ -27,7 +27,7 @@ import static uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReas
 
 public class StripeAuthorisationRejectedCodeMapper {
     
-    private static final Map<String, MappedAuthorisationRejectedReason> stripeRejectionCodeMap = Map.ofEntries(
+    private static final Map<String, MappedAuthorisationRejectedReason> STRIPE_REJECTION_CODE_MAP = Map.ofEntries(
             entry("authentication_required", AUTHENTICATION_REQUIRED),
             entry("do_not_honor", DO_NOT_HONOUR),
             entry("do_not_try_again", DO_NOT_RETRY),
@@ -49,8 +49,9 @@ public class StripeAuthorisationRejectedCodeMapper {
             entry("transaction_not_allowed", TRANSACTION_NOT_PERMITTED),
             entry("try_again_later", TRY_AGAIN_LATER)
             );
-    
+
     public static MappedAuthorisationRejectedReason toMappedAuthorisationRejectionReason(String stripeRejectionCode) {
-        return stripeRejectionCodeMap.getOrDefault(stripeRejectionCode, UNCATEGORISED);
+        return STRIPE_REJECTION_CODE_MAP.getOrDefault(stripeRejectionCode, UNCATEGORISED);
     }
+
 }

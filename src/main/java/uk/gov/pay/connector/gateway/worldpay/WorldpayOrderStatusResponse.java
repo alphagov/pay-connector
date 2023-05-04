@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import static java.util.function.Predicate.not;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 
@@ -219,6 +221,20 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     }
 
     @Override
+    public Optional<MappedAuthorisationRejectedReason> getMappedAuthorisationRejectedReason() {
+        if (authoriseStatus() != AuthoriseStatus.REJECTED) {
+            return Optional.empty();
+        }
+
+        var mappedAuthorisationRejectedReason = Optional.ofNullable(getRefusedReturnCode())
+                .filter(not(String::isBlank))
+                .map(WorldpayAuthorisationRejectedCodeMapper::toMappedAuthorisationRejectionReason)
+                .orElse(MappedAuthorisationRejectedReason.UNCATEGORISED);
+
+        return Optional.of(mappedAuthorisationRejectedReason);
+    }
+
+    @Override
     public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
         return Optional.ofNullable(paymentTokenId).map(tokenId -> {
             Map<String, String> recurringAuthToken = new HashMap<>();
@@ -252,7 +268,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         }
         if (isNotBlank(getRefusedReturnCode())) {
             joiner.add("ISO8583ReturnCode code: " + getRefusedReturnCode());
-            joiner.add("Mapped rejection reason: " + WorldpayAuthorisationRejectedCodeMapper.toMappedAuthorisationRejectionReason(getRefusedReturnCode()).name());
+            getMappedAuthorisationRejectedReason().ifPresent(mappedAuthorisationRejectedReason ->
+                    joiner.add("Mapped rejection reason: " + mappedAuthorisationRejectedReason));
         }
         if (isNotBlank(getRefusedReturnCodeDescription())) {
             joiner.add("ISO8583ReturnCode description: " + getRefusedReturnCodeDescription());

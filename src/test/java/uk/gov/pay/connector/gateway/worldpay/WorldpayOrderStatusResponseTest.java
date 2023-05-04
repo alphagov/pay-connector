@@ -90,4 +90,5 @@ class WorldpayOrderStatusResponseTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
         assertTrue(worldpayOrderStatusResponse.toString().contains("Mapped rejection reason: DO_NOT_HONOUR"));
     }
+
 }
