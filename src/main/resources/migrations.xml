@@ -1985,4 +1985,10 @@
         <dropColumn tableName="charges" columnName="agreement_id"/>
     </changeSet>
 
+    <changeSet id="add can_retry column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="can_retry" type="boolean"></column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
