@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.client.ledger.exception.GetRefundsForPaymentException;
 import uk.gov.pay.connector.client.ledger.exception.LedgerException;
@@ -12,7 +13,12 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
+import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
 import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -37,7 +43,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 
 @ExtendWith(MockitoExtension.class)
 public class LedgerServiceTest {
@@ -113,7 +122,20 @@ public class LedgerServiceTest {
         setupMocksForPostRequest();
         var eventOne = new AgreementCreated("service-id", false, "resource-id", null, Instant.now());
         var eventTwo = new AgreementSetUp("service-id", false, "resource-id", null, Instant.now());
-        List<Event> list = List.of(eventOne, eventTwo);
+        PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.now())
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withPaymentInstrument(paymentInstrumentEntity)
+                .withGatewayAccount(gatewayAccountEntity)
+                .build();
+        var eventThree =  AgreementInactivated.from(agreementEntity, MappedAuthorisationRejectedReason.EXPIRED_CARD, Instant.now());
+
+        List<Event> list = List.of(eventOne, eventTwo, eventThree);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
         ledgerService.postEvent(list);
         verify(mockClientRequestInvocationBuilder).post(Entity.json(list));
