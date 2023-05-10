@@ -654,9 +654,9 @@ public class ChargeService {
                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                           ProviderSessionIdentifier sessionIdentifier,
                                                           AuthCardDetails authCardDetails,
-                                                          Map<String, String> recurringAuthToken) {
+                                                          Map<String, String> recurringAuthToken, Boolean canRetry) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null, recurringAuthToken);
+                null, null, recurringAuthToken, canRetry);
 
     }
 
@@ -669,7 +669,7 @@ public class ChargeService {
                                                             String emailAddress,
                                                             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
-                walletType, emailAddress, null);
+                walletType, emailAddress, null, null);
     }
 
     private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
@@ -680,9 +680,10 @@ public class ChargeService {
                                                                    ProviderSessionIdentifier sessionIdentifier,
                                                                    WalletType walletType,
                                                                    String emailAddress,
-                                                                   Map<String, String> recurringAuthToken) {
+                                                                   Map<String, String> recurringAuthToken,
+                                                                   Boolean canRetry) {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken);
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
@@ -705,7 +706,7 @@ public class ChargeService {
                                                       ProviderSessionIdentifier sessionIdentifier,
                                                       WalletType walletType,
                                                       String emailAddress,
-                                                      Map<String, String> recurringAuthToken) {
+                                                      Map<String, String> recurringAuthToken, Boolean canRetry) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
@@ -723,6 +724,8 @@ public class ChargeService {
                             detailsEntity.setFirstDigitsCardNumber(paymentInstrument.getCardDetails().getFirstDigitsCardNumber());
                             detailsEntity.setLastDigitsCardNumber(paymentInstrument.getCardDetails().getLastDigitsCardNumber());
                         });
+
+                charge.setCanRetry(canRetry);
             }
             charge.setCardDetails(detailsEntity);
 

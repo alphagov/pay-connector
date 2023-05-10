@@ -127,7 +127,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
         
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -135,6 +135,7 @@ class ChargeServicePostAuthorisationTest {
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(chargeEntity.getCanRetry(), is(nullValue()));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
@@ -152,7 +153,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, true);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -160,6 +161,7 @@ class ChargeServicePostAuthorisationTest {
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+        assertThat(chargeEntity.getCanRetry(), is(true));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
         verify(mockEventService).emitAndRecordEvent(PaymentDetailsTakenFromPaymentInstrument.from(chargeEntity));
@@ -173,7 +175,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockPaymentInstrumentService.createPaymentInstrument(chargeEntity, TOKEN)).thenReturn(mockPaymentInstrumentEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null);
 
         assertThat(chargeEntity.getPaymentInstrument().isPresent(), is(true));
         assertThat(chargeEntity.getPaymentInstrument().get(), is(mockPaymentInstrumentEntity));

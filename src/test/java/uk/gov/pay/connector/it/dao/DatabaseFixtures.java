@@ -731,6 +731,7 @@ public class DatabaseFixtures {
         Long gatewayCredentialId;
         private AuthorisationMode authorisationMode = WEB;
         private Instant updatedDate;
+        private Boolean canRetry;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -831,6 +832,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withCanRetry(Boolean canRetry) {
+            this.canRetry = canRetry;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -856,6 +862,7 @@ public class DatabaseFixtures {
                     .withParityCheckDate(parityCheckDate)
                     .withGatewayCredentialId(gatewayCredentialId)
                     .withAuthorisationMode(authorisationMode)
+                    .withCanRetry(canRetry)
                     .withUpdatedDate(updatedDate)
                     .build());
 
@@ -937,6 +944,10 @@ public class DatabaseFixtures {
 
         public AuthorisationMode getAuthorisationMode() {
             return authorisationMode;
+        }
+
+        public Boolean getCanRetry() {
+            return canRetry;
         }
     }
 

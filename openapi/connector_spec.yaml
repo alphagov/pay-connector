@@ -2904,6 +2904,8 @@ components:
           - moto_api
           - agreement
           - external
+        canRetry:
+          type: boolean
         captureSubmitTime:
           type: string
           format: date-time

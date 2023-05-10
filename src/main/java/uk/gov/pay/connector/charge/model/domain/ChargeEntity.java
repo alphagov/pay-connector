@@ -217,6 +217,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Enumerated(EnumType.STRING)
     private AuthorisationMode authorisationMode;
 
+    @Column(name = "can_retry")
+    private Boolean canRetry;
+
     @Column(name = "updated_date")
     @JsonIgnore
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
@@ -270,7 +273,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.cardDetails = cardDetails;
         this.moto = moto;
         this.serviceId = serviceId;
-        this.agreementEntity = agreementEntity;
         this.agreementEntity = agreementEntity;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
@@ -589,6 +591,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
+    }
+
+    public Boolean getCanRetry() {
+        return canRetry;
+    }
+
+    public void setCanRetry(Boolean canRetry) {
+        this.canRetry = canRetry;
     }
 
     public void setUpdatedDate(Instant updatedDate) {

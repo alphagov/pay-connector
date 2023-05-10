@@ -44,6 +44,7 @@ public class AddChargeParams {
     private final AuthorisationMode authorisationMode;
     private final Instant updatedDate;
     private final Long paymentInstrumentId;
+    private final Boolean canRetry;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -75,6 +76,7 @@ public class AddChargeParams {
         authorisationMode = builder.authorisationMode;
         this.updatedDate = builder.updatedDate;
         paymentInstrumentId = builder.paymentInstrumentId;
+        canRetry = builder.canRetry;
     }
 
     public Long getChargeId() {
@@ -193,6 +195,10 @@ public class AddChargeParams {
         return paymentInstrumentId;
     }
 
+    public Boolean getCanRetry() {
+        return canRetry;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -223,6 +229,7 @@ public class AddChargeParams {
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
         private Instant updatedDate;
         private Long paymentInstrumentId;
+        private Boolean canRetry;
 
         private AddChargeParamsBuilder() {
         }
@@ -374,6 +381,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withPaymentInstrumentId(Long paymentInstrumentId) {
             this.paymentInstrumentId = paymentInstrumentId;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withCanRetry(Boolean canRetry) {
+            this.canRetry = canRetry;
             return this;
         }
 
