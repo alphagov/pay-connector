@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
@@ -73,6 +74,13 @@ public class SandboxGatewayResponseGenerator {
             @Override
             public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
                 return Optional.of(Map.of("token", randomUUID().toString()));
+            }
+
+            @Override
+            public Optional<MappedAuthorisationRejectedReason> getMappedAuthorisationRejectedReason() {
+                return Optional.ofNullable(authoriseStatus())
+                        .filter(authoriseStatus -> authoriseStatus == AuthoriseStatus.REJECTED)
+                        .map(authoriseStatus -> MappedAuthorisationRejectedReason.DO_NOT_RETRY);
             }
 
             @Override
