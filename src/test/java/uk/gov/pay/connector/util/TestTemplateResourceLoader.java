@@ -21,6 +21,8 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITHOUT_TRANSACTION_IDENTIFIER = WORLDPAY_BASE_NAME + "/authorisation-create-token-success-response-without-transaction-identifier.xml";
     static final String WORLDPAY_AUTHORISATION_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-error-response.xml";
     public static final String WORLDPAY_AUTHORISATION_FAILED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-failed-response.xml";
+    public static final String WORLDPAY_AUTHORISATION_FAILED_USER_NON_PRESENT_NON_RETRIABLE_RESPONSE =
+            WORLDPAY_BASE_NAME + "/authorisation-failed-response-user-not-present-payment-non-retriable.xml";
     static final String WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-cancelled-response.xml";
     public static final String WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-pares-parse-error-response.xml";
     public static final String WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS = WORLDPAY_BASE_NAME + "/special-char-valid-authorise-worldpay-request-address.xml";
@@ -126,6 +128,10 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
+    public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE =
+            TEMPLATE_BASE_NAME + "/stripe/create_payment_method_failed_and_non_retriable_for_recurring_payment.json";
+    public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_RETRIABLE =
+            TEMPLATE_BASE_NAME + "/stripe/create_payment_method_failed_and_retriable_for_recurring_payment.json";
     public static final String STRIPE_NOTIFICATION_BALANCE_AVAILABLE = TEMPLATE_BASE_NAME + "/stripe/balance_available.json";
     public static final String STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_capture_success_response.json";
     public static final String STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_success_response.json";

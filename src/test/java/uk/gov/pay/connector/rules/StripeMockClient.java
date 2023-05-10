@@ -14,6 +14,8 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_RETRIABLE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CUSTOMER_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE;
@@ -53,6 +55,20 @@ public class StripeMockClient {
     public void mockAuthorisationFailedWithPaymentIntents() {
         String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 400);
+    }
+
+    public void mockAuthorisationFailedPaymentIntentAndRetriableForUserNotPresentPayment() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_RETRIABLE);
+        setupResponse(payload, "/v1/payment_intents", 400);
+    }
+
+    public void mockAuthorisationFailedPaymentIntentAndNonRetriableForUserNotPresentPayment() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE);
+        setupResponse(payload, "/v1/payment_intents", 400);
+    }
+
+    public void mockAuthorisationErrorForUserNotPresentPayment() {
+        setupResponse(null, "/v1/payment_intents", 500);
     }
 
     public void mockCancelPaymentIntent(String paymentIntentId) {
@@ -113,11 +129,6 @@ public class StripeMockClient {
     public void mockCreateCustomer() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CUSTOMER_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/customers", 200);
-    }
-
-    public void mockTransferReversal(String transferid) {
-        String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
-        setupResponse(payload, "/v1/transfers/" + transferid + "/reversals", 200);
     }
 
     public void mockCreatePaymentIntentDelayedResponse() {

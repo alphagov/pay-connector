@@ -1,0 +1,26 @@
+{
+  "error": {
+    "charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+    "code": "card_declined",
+    "decline_code": "revocation_of_all_authorizations",
+    "doc_url": "https://stripe.com/docs/declines/codes",
+    "message": "The card was declined for an unknown reason.",
+    "payment_intent": {
+      "id": "pi_3N6AIYHj08j2jFuB1IozJAVc",
+      "object": "payment_intent",
+      "amount": 10000,
+      "customer": "cus_123",
+      "last_payment_error": {
+        "charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+        "code": "card_declined",
+        "decline_code": "revocation_of_all_authorizations",
+        "doc_url": "https://stripe.com/docs/declines/codes",
+        "message": "The card was declined for an unknown reason.",
+        "type": "card_error"
+      },
+      "latest_charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+      "livemode": false
+    },
+    "type": "card_error"
+  }
+}

@@ -17,6 +17,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITH_TRANSACTION_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_USER_NON_PRESENT_NON_RETRIABLE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
@@ -67,6 +68,11 @@ public class WorldpayMockClient {
     
     public void mockAuthorisationFailure() {
         String authoriseResponse = load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
+        paymentServiceResponse(authoriseResponse);
+    }
+
+    public void mockAuthorisationFailureUserNotPresentNonRetriablePayment() {
+        String authoriseResponse = load(WORLDPAY_AUTHORISATION_FAILED_USER_NON_PRESENT_NON_RETRIABLE_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 

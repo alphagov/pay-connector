@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
@@ -152,7 +153,7 @@ public class CardAuthoriseService {
                     null,
                     null,
                     authCardDetails,
-                    null);
+                    null, null);
 
             LOGGER.info("Attempt to authorise charge synchronously timed out.");
 
@@ -192,6 +193,9 @@ public class CardAuthoriseService {
                 operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
 
         Optional<Map<String, String>> maybeToken = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRecurringAuthToken);
+        Optional<Boolean> mayBeCanRetry = operationResponse.getBaseResponse()
+                .flatMap(baseAuthoriseResponse ->
+                        baseAuthoriseResponse.getMappedAuthorisationRejectedReason().map(MappedAuthorisationRejectedReason::canRetry));
 
         ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                 charge.getExternalId(),
@@ -200,7 +204,8 @@ public class CardAuthoriseService {
                 auth3dsDetailsEntity.orElse(null),
                 sessionIdentifier.orElse(null),
                 authCardDetails,
-                maybeToken.orElse(null));
+                maybeToken.orElse(null),
+                mayBeCanRetry.orElse(null));
 
         var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 

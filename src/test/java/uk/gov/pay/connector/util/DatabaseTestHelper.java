@@ -102,13 +102,13 @@ public class DatabaseTestHelper {
                                 "description, created_date, reference, version, email, language, " +
                                 "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                                 "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
-                                "issuer_url_3ds, save_payment_instrument_to_agreement, authorisation_mode, updated_date, payment_instrument_id, agreement_external_id) " +
+                                "issuer_url_3ds, save_payment_instrument_to_agreement, authorisation_mode, updated_date, payment_instrument_id, agreement_external_id, can_retry) " +
                                 "VALUES(:id, :external_id, :amount, " +
                                 ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                                 ":description, :created_date, :reference, :version, :email, :language, " +
                                 ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                                 ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
-                                ":issuer_url_3ds, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, :paymentInstrumentId, :agreementExternalId)")
+                                ":issuer_url_3ds, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, :paymentInstrumentId, :agreementExternalId, :canRetry)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
                         .bind("amount", addChargeParams.getAmount())
@@ -137,6 +137,7 @@ public class DatabaseTestHelper {
                         .bind("authorisationMode", addChargeParams.getAuthorisationMode())
                         .bind("updatedDate", addChargeParams.getUpdatedDate() != null ? LocalDateTime.ofInstant(addChargeParams.getUpdatedDate(), UTC) : null)
                         .bind("paymentInstrumentId", addChargeParams.getPaymentInstrumentId())
+                        .bind("canRetry", addChargeParams.getCanRetry())
                         .execute());
     }
 

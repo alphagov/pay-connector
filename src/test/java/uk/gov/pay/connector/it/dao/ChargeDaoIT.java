@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -73,7 +72,6 @@ public class ChargeDaoIT extends DaoITestBase {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
-    private AgreementDao agreementDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
@@ -84,7 +82,6 @@ public class ChargeDaoIT extends DaoITestBase {
     @Before
     public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
-        agreementDao = env.getInstance(AgreementDao.class);
 
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
@@ -466,7 +463,17 @@ public class ChargeDaoIT extends DaoITestBase {
     public void findById_shouldFindChargeEntity() {
 
         // given
-        insertTestCharge();
+        this.defaultTestCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
+                .withCanRetry(true)
+                .insert();
+        defaultTestCardDetails
+                .withChargeId(defaultTestCharge.chargeId)
+                .update();
+
         insertTestRefund();
 
         // when
@@ -483,6 +490,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
         assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
+        assertThat(charge.getCanRetry(), is(true));
     }
 
     @Test
