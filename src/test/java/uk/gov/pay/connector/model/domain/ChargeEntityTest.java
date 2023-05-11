@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.model.domain;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -37,56 +39,58 @@ import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
-public class ChargeEntityTest {
+class ChargeEntityTest {
 
     @Test
-    public void shouldHaveTheGivenStatus() {
+    void shouldHaveTheGivenStatus() {
         assertEquals(aValidChargeEntity().withStatus(CREATED).build().getStatus(), CREATED.toString());
         assertEquals(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().getStatus(), ENTERING_CARD_DETAILS.toString());
     }
 
 
     @Test
-    public void shouldHaveAtLeastOneOfTheGivenStatuses() {
+    void shouldHaveAtLeastOneOfTheGivenStatuses() {
         assertEquals(aValidChargeEntity().withStatus(CREATED).build().getStatus(), CREATED.toString());
         assertEquals(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().getStatus(), ENTERING_CARD_DETAILS.toString());
     }
 
 
     @Test
-    public void shouldHaveTheExternalGivenStatus() {
+    void shouldHaveTheExternalGivenStatus() {
         assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasExternalStatus(EXTERNAL_CREATED));
         assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasExternalStatus(EXTERNAL_STARTED));
     }
 
     @Test
-    public void shouldHaveAtLeastOneOfTheExternalGivenStatuses() {
+    void shouldHaveAtLeastOneOfTheExternalGivenStatuses() {
         assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasExternalStatus(EXTERNAL_CREATED, EXTERNAL_STARTED, EXTERNAL_SUBMITTED));
         assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasExternalStatus(EXTERNAL_STARTED, EXTERNAL_SUCCESS));
     }
 
     @Test
-    public void shouldHaveNoneOfTheExternalGivenStatuses() {
+    void shouldHaveNoneOfTheExternalGivenStatuses() {
         assertFalse(aValidChargeEntity().withStatus(CREATED).build().hasExternalStatus());
         assertFalse(aValidChargeEntity().withStatus(CREATED).build().hasExternalStatus(EXTERNAL_STARTED, EXTERNAL_SUBMITTED, EXTERNAL_SUCCESS));
         assertFalse(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasExternalStatus(EXTERNAL_CREATED, EXTERNAL_SUCCESS));
     }
 
     @Test
-    public void shouldAllowAValidStatusTransition() {
+    void shouldAllowAValidStatusTransition() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
         chargeCreated.setStatus(ENTERING_CARD_DETAILS);
         assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.toString()));
     }
 
-    @Test(expected = InvalidStateTransitionException.class)
-    public void shouldRejectAnInvalidStatusTransition() {
+    @Test()
+    void shouldRejectAnInvalidStatusTransition() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
-        chargeCreated.setStatus(CAPTURED);
+        Assertions.assertThrows( InvalidStateTransitionException.class, () -> {
+            chargeCreated.setStatus(CAPTURED);
+        });
     }
 
     @Test
-    public void shouldReturnRightAmountOfFees() {
+    void shouldReturnRightAmountOfFees() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withFee(Fee.of(FeeType.TRANSACTION, 100L))
                 .withFee(Fee.of(FeeType.RADAR, 10L))
@@ -99,14 +103,14 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnNoFee() {
+    void shouldReturnNoFee() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
         Optional<Long> totalFee = chargeCreated.getFeeAmount();
         assertFalse(totalFee.isPresent());
     }
 
     @Test
-    public void shouldReturnAmountMinusFeeForSuccessfulPayment() {
+    void shouldReturnAmountMinusFeeForSuccessfulPayment() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(1000L)
                 .withFee(Fee.of(FeeType.TRANSACTION, 100L))
@@ -120,7 +124,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnTotalAmountMinusFeeForSuccessfulPaymentWithCorporateSurcharge() {
+    void shouldReturnTotalAmountMinusFeeForSuccessfulPaymentWithCorporateSurcharge() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(1000L)
                 .withCorporateSurcharge(250L)
@@ -135,7 +139,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnNegativeNetAmountForFailedPaymentWithFees() {
+    void shouldReturnNegativeNetAmountForFailedPaymentWithFees() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(1000L)
                 .withCorporateSurcharge(250L)
@@ -150,7 +154,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnEmptyOptionalWhenThereAreNoFees() {
+    void shouldReturnEmptyOptionalWhenThereAreNoFees() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(1000L)
                 .withStatus(CAPTURED).build();
@@ -160,7 +164,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnLoggingFieldsWithoutAgreementExternalId() {
+    void shouldReturnLoggingFieldsWithoutAgreementExternalId() {
         Long gatewayAccountId = 12L;
         String externalId = "anExternalId";
         String paymentProvider = "sandbox";
@@ -187,7 +191,7 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldReturnLoggingFieldsWithAgreementExternalId() {
+    void shouldReturnLoggingFieldsWithAgreementExternalId() {
         Long gatewayAccountId = 12L;
         String externalId = "anExternalId";
         String paymentProvider = "sandbox";
