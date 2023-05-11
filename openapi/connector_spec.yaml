@@ -4736,6 +4736,7 @@ components:
           enum:
           - CREATED
           - ACTIVE
+          - INACTIVE
           - CANCELLED
           - EXPIRED
     PaymentOutcome:

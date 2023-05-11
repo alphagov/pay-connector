@@ -82,6 +82,9 @@ public class StripeCardAuthoriseServiceIT extends ChargingITestBase {
         Map<String, Object> chargeUpdated = databaseTestHelper.getChargeByExternalId(userNotPresentChargeId.toString());
 
         assertThat(chargeUpdated.get("can_retry"), is(false));
+
+        Map<String, Object> paymentInstrument = databaseTestHelper.getPaymentInstrumentByChargeExternalId(chargeEntity.getExternalId());
+        assertThat(paymentInstrument.get("status"), is("INACTIVE"));
     }
 
     @Test

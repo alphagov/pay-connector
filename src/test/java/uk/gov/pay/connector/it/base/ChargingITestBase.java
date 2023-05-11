@@ -528,12 +528,14 @@ public class ChargingITestBase {
         AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder paymentInstrumentParamsBuilder = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withExternalPaymentInstrumentId(String.valueOf(nextInt()))
-                .withRecurringAuthToken(recurringAuthToken);
+                .withRecurringAuthToken(recurringAuthToken)
+                .withAgreementExternalId(agreementExternalId);
 
         Optional.ofNullable(first6DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withFirstDigitsCardNumber);
         Optional.ofNullable(last4DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withLastDigitsCardNumber);
 
         databaseTestHelper.addPaymentInstrument(paymentInstrumentParamsBuilder.build());
+        databaseTestHelper.updateAgreementPaymentInstrumentId(agreementExternalId, paymentInstrumentId);
 
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
