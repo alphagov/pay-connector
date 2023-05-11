@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 
@@ -57,6 +58,9 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         var successResponse = testContext.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(successCharge);
         assertThat(successResponse.getGatewayError(), is(Optional.empty()));
         assertThat(successResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
+
+        Map<String, Object> chargeUpdated = databaseTestHelper.getChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(chargeUpdated.get("can_retry"), is(nullValue()));
     }
 
     @Test
@@ -84,6 +88,9 @@ public class CardAuthoriseServiceIT extends ChargingITestBase {
         assertThat(agreementSetUpResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
         assertThat(recurringPaymentResponse.getGatewayError(), is(Optional.empty()));
         assertThat(recurringPaymentResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
+
+        Map<String, Object> chargeUpdated = databaseTestHelper.getChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(chargeUpdated.get("can_retry"), is(false));
     }
 
 }
