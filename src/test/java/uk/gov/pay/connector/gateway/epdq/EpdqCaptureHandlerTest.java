@@ -2,11 +2,11 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -42,8 +42,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EpdqCaptureHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class EpdqCaptureHandlerTest {
 
     private EpdqCaptureHandler epdqCaptureHandler;
 
@@ -52,13 +52,13 @@ public class EpdqCaptureHandlerTest {
     @Mock
     private Response response;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+     void setup() {
         epdqCaptureHandler = new EpdqCaptureHandler(client, emptyMap());
     }
 
     @Test
-    public void shouldCapture() throws Exception {
+    void shouldCapture() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-success-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
@@ -80,7 +80,7 @@ public class EpdqCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-error-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
@@ -92,7 +92,7 @@ public class EpdqCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         when(client.postRequestFor(any(URI.class), eq(EPDQ), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 

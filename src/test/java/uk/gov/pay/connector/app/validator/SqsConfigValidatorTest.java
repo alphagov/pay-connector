@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.app.validator;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.SqsConfig;
 
 import javax.validation.ConstraintValidatorContext;
@@ -16,8 +15,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class SqsConfigValidatorTest {
+@ExtendWith(MockitoExtension.class)
+class SqsConfigValidatorTest {
 
     @Mock
     SqsConfig sqsConfig;
@@ -28,13 +27,8 @@ public class SqsConfigValidatorTest {
 
     SqsConfigValidator sqsConfigValidator = new SqsConfigValidator();
 
-    @Before
-    public void setUp() {
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString())).thenReturn(constraintViolationBuilder);
-    }
-
     @Test
-    public void shouldPassValidation_WhenNonServiceEndpointIsFalse() {
+    void shouldPassValidation_WhenNonServiceEndpointIsFalse() {
         when(sqsConfig.isNonStandardServiceEndpoint()).thenReturn(false);
 
         boolean isValid = sqsConfigValidator.isValid(sqsConfig, constraintValidatorContext);
@@ -42,7 +36,9 @@ public class SqsConfigValidatorTest {
     }
 
     @Test
-    public void shouldPassValidation_WhenNonServiceEndpointIsTrueAndCredentialsAreAvailable() {
+    void shouldPassValidation_WhenNonServiceEndpointIsTrueAndCredentialsAreAvailable() {
+        when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString())).thenReturn(constraintViolationBuilder);
+
         when(sqsConfig.isNonStandardServiceEndpoint()).thenReturn(true);
         when(sqsConfig.getEndpoint()).thenReturn("http://endpoint");
         when(sqsConfig.getAccessKey()).thenReturn("access-key");
@@ -55,7 +51,9 @@ public class SqsConfigValidatorTest {
     }
 
     @Test
-    public void shouldFailValidation_WhenNonServiceEndpointIsTrueAndEndpointIsNotAvailable() {
+    void shouldFailValidation_WhenNonServiceEndpointIsTrueAndEndpointIsNotAvailable() {
+        when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString())).thenReturn(constraintViolationBuilder);
+
         when(sqsConfig.isNonStandardServiceEndpoint()).thenReturn(true);
         when(sqsConfig.getEndpoint()).thenReturn(null);
 
@@ -66,7 +64,8 @@ public class SqsConfigValidatorTest {
     }
 
     @Test
-    public void shouldFailValidation_WhenNonServiceEndpointIsTrueAndSecretKeyIsNotAvailable() {
+    void shouldFailValidation_WhenNonServiceEndpointIsTrueAndSecretKeyIsNotAvailable() {
+        when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString())).thenReturn(constraintViolationBuilder);
         when(sqsConfig.isNonStandardServiceEndpoint()).thenReturn(true);
         when(sqsConfig.getEndpoint()).thenReturn("http://endpoint");
         when(sqsConfig.getSecretKey()).thenReturn(null);
@@ -78,7 +77,8 @@ public class SqsConfigValidatorTest {
     }
 
     @Test
-    public void shouldFailValidation_WhenNonServiceEndpointIsTrueAndAccessKeyIsNotAvailable() {
+    void shouldFailValidation_WhenNonServiceEndpointIsTrueAndAccessKeyIsNotAvailable() {
+        when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString())).thenReturn(constraintViolationBuilder);
         when(sqsConfig.isNonStandardServiceEndpoint()).thenReturn(true);
         when(sqsConfig.getEndpoint()).thenReturn("http://endpoint");
         when(sqsConfig.getSecretKey()).thenReturn("secret-key");

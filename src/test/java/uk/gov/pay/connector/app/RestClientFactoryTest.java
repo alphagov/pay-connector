@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.app;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 
 import javax.net.ssl.SSLContext;
@@ -12,10 +13,10 @@ import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RestClientFactoryTest {
+class RestClientFactoryTest {
     
     @Test
-    public void jerseyClient_shouldUseSSLWhenSecureInternalCommunicationIsOn() {
+    void jerseyClient_shouldUseSSLWhenSecureInternalCommunicationIsOn() {
         //given
         RestClientConfig clientConfiguration = mock(RestClientConfig.class);
         when(clientConfiguration.isDisabledSecureConnection()).thenReturn(false);
@@ -30,7 +31,7 @@ public class RestClientFactoryTest {
     }
 
     @Test
-    public void jerseyClient_shouldNotUseSSLWhenSecureInternalCommunicationIsOff() {
+    void jerseyClient_shouldNotUseSSLWhenSecureInternalCommunicationIsOff() {
         //given
         RestClientConfig clientConfiguration = mock(RestClientConfig.class);
         when(clientConfiguration.isDisabledSecureConnection()).thenReturn(true);

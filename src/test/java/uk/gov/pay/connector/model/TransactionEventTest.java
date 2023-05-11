@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 
@@ -13,12 +13,12 @@ import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.Type;
 import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.extractState;
 import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
 
-public class TransactionEventTest {
+class TransactionEventTest {
 
     private static final String USER_EXTERNAL_ID = "r378y387y8weriyi";
 
     @Test
-    public void equals_shouldReturnTrue_whenSameInstance() {
+    void equals_shouldReturnTrue_whenSameInstance() {
 
         TransactionEvent event = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED),
                 100L, Instant.now());
@@ -27,7 +27,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnTrue_whenFieldsAreTheSame() {
+    void equals_shouldReturnTrue_whenFieldsAreTheSame() {
 
         TransactionEvent event1 = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED),
                 100L, Instant.now());
@@ -38,7 +38,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenFieldsRefundTransactionIdIsDifferent() {
+    void equals_shouldReturnFalse_whenFieldsRefundTransactionIdIsDifferent() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", "success", extractState(EXTERNAL_SUBMITTED),
                 100L, Instant.now(), USER_EXTERNAL_ID);
@@ -49,7 +49,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenFirstObjectRefundTransactionIdIsNull() {
+    void equals_shouldReturnFalse_whenFirstObjectRefundTransactionIdIsNull() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, "charge", null, extractState(EXTERNAL_SUBMITTED),
                 100L, Instant.now(),USER_EXTERNAL_ID);
@@ -60,7 +60,7 @@ public class TransactionEventTest {
     }
 
     @Test
-    public void equals_shouldReturnFalse_whenSecondObjectRefundTransactionIdIsNull() {
+    void equals_shouldReturnFalse_whenSecondObjectRefundTransactionIdIsNull() {
 
         TransactionEvent event1 = new TransactionEvent(Type.REFUND, null, "success", extractState(EXTERNAL_SUBMITTED),
                 100L, Instant.now(),USER_EXTERNAL_ID);

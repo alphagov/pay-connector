@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.model;
 
 import com.jayway.jsonassert.JsonAssert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -21,14 +21,14 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class RefundResponseTest {
+@ExtendWith(MockitoExtension.class)
+class RefundResponseTest {
 
     @Mock
     private UriInfo mockUriInfo;
 
     @Test
-    public void shouldSerializeARefundWithExpectedFieldsDefined() {
+    void shouldSerializeARefundWithExpectedFieldsDefined() {
 
         // given
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
@@ -59,7 +59,7 @@ public class RefundResponseTest {
     }
 
     @Test
-    public void shouldSerializeAListOfRefundsWithExpectedFieldsDefined() {
+    void shouldSerializeAListOfRefundsWithExpectedFieldsDefined() {
 
         // given
         RefundEntity refund1 = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
