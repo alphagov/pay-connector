@@ -13,25 +13,25 @@ public class AgreementInactivated extends AgreementEvent {
         super(serviceId, live, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static AgreementInactivated from(AgreementEntity agreement, MappedAuthorisationRejectedReason mappedReason, Instant timestamp) {
+    public static AgreementInactivated from(AgreementEntity agreement, String rejectedReason, Instant timestamp) {
         return new AgreementInactivated(
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementInactivated.AgreementInactivatedEventDetails(agreement.getPaymentInstrument().orElse(null), mappedReason),
+                new AgreementInactivated.AgreementInactivatedEventDetails(agreement.getPaymentInstrument().orElse(null), rejectedReason),
                 timestamp
         );
     }
 
-    static class AgreementInactivatedEventDetails extends EventDetails {
+    public static class AgreementInactivatedEventDetails extends EventDetails {
         private String paymentInstrumentExternalId;
         private String reason;
 
-        public AgreementInactivatedEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, MappedAuthorisationRejectedReason mappedReason) {
+        public AgreementInactivatedEventDetails(PaymentInstrumentEntity paymentInstrumentEntity, String rejectedReason) {
             this.paymentInstrumentExternalId = Optional.ofNullable(paymentInstrumentEntity)
                     .map(PaymentInstrumentEntity::getExternalId)
                     .orElse(null);
-            this.reason = mappedReason.name();
+            this.reason = rejectedReason;
         }
 
         public String getPaymentInstrumentExternalId() {

@@ -153,7 +153,9 @@ public class CardAuthoriseService {
                     null,
                     null,
                     authCardDetails,
-                    null, null);
+                    null,
+                    null,
+                    null);
 
             LOGGER.info("Attempt to authorise charge synchronously timed out.");
 
@@ -196,7 +198,9 @@ public class CardAuthoriseService {
         Optional<Boolean> mayBeCanRetry = operationResponse.getBaseResponse()
                 .flatMap(baseAuthoriseResponse ->
                         baseAuthoriseResponse.getMappedAuthorisationRejectedReason().map(MappedAuthorisationRejectedReason::canRetry));
-
+        Optional<String> mayBeRejectedReason = operationResponse.getBaseResponse()
+                .flatMap(baseAuthoriseResponse ->
+                        baseAuthoriseResponse.getMappedAuthorisationRejectedReason().map(MappedAuthorisationRejectedReason::name));
         ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                 charge.getExternalId(),
                 newStatus,
@@ -205,7 +209,8 @@ public class CardAuthoriseService {
                 sessionIdentifier.orElse(null),
                 authCardDetails,
                 maybeToken.orElse(null),
-                mayBeCanRetry.orElse(null));
+                mayBeCanRetry.orElse(null),
+                mayBeRejectedReason.orElse(null));
 
         var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 

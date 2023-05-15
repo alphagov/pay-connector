@@ -64,6 +64,7 @@ import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
+import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
@@ -73,6 +74,7 @@ import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -654,9 +656,11 @@ public class ChargeService {
                                                           Auth3dsRequiredEntity auth3dsRequiredDetails,
                                                           ProviderSessionIdentifier sessionIdentifier,
                                                           AuthCardDetails authCardDetails,
-                                                          Map<String, String> recurringAuthToken, Boolean canRetry) {
+                                                          Map<String, String> recurringAuthToken,
+                                                          Boolean canRetry,
+                                                          String rejectedReason) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null, recurringAuthToken, canRetry);
+                null, null, recurringAuthToken, canRetry, rejectedReason);
 
     }
 
@@ -669,7 +673,7 @@ public class ChargeService {
                                                             String emailAddress,
                                                             Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
-                walletType, emailAddress, null, null);
+                walletType, emailAddress, null, null, null);
     }
 
     private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
@@ -681,9 +685,10 @@ public class ChargeService {
                                                                    WalletType walletType,
                                                                    String emailAddress,
                                                                    Map<String, String> recurringAuthToken,
-                                                                   Boolean canRetry) {
+                                                                   Boolean canRetry,
+                                                                   String rejectedReason) {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry);
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry, rejectedReason);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
@@ -706,7 +711,9 @@ public class ChargeService {
                                                       ProviderSessionIdentifier sessionIdentifier,
                                                       WalletType walletType,
                                                       String emailAddress,
-                                                      Map<String, String> recurringAuthToken, Boolean canRetry) {
+                                                      Map<String, String> recurringAuthToken,
+                                                      Boolean canRetry,
+                                                      String rejectedReason) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
@@ -738,8 +745,23 @@ public class ChargeService {
             LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
 
+            if (canRetry != null && !canRetry) {
+                inactivateAgreement(charge, rejectedReason);
+            }
+
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+    }
+
+    private void inactivateAgreement(ChargeEntity charge, String rejectedReason) {
+        charge.getAgreement().ifPresent(agreementEntity -> {
+            AgreementInactivated inactivatedEvent = AgreementInactivated
+                .from(agreementEntity, rejectedReason, Instant.now());
+            ledgerService.postEvent(inactivatedEvent);
+        });
+        charge.getPaymentInstrument().ifPresent(paymentInstrumentEntity ->
+            paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.INACTIVE)
+        );
     }
 
     @Transactional

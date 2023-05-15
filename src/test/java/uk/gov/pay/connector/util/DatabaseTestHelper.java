@@ -162,6 +162,15 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
+    public void updateAgreementPaymentInstrumentId(String agreementExternalId, Long paymentInstrumentId) {
+        jdbi.withHandle(h ->
+                h.createUpdate("UPDATE agreements SET payment_instrument_id = :payment_instrument_id " +
+                                "WHERE external_id = external_id")
+                        .bind("payment_instrument_id", paymentInstrumentId)
+                        .bind("external_id", agreementExternalId)
+                        .execute());
+    }
+
     public void addPaymentInstrument(AddPaymentInstrumentParams addPaymentInstrumentParams) {
         PGobject recurringAuthTokenJson = Optional.ofNullable(addPaymentInstrumentParams.getRecurringAuthToken())
                 .map(DatabaseTestHelper::mapToJsonPGobject)

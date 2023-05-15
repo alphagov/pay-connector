@@ -133,7 +133,7 @@ public class LedgerServiceTest {
                 .withPaymentInstrument(paymentInstrumentEntity)
                 .withGatewayAccount(gatewayAccountEntity)
                 .build();
-        var eventThree =  AgreementInactivated.from(agreementEntity, MappedAuthorisationRejectedReason.EXPIRED_CARD, Instant.now());
+        var eventThree =  AgreementInactivated.from(agreementEntity, MappedAuthorisationRejectedReason.EXPIRED_CARD.name(), Instant.now());
 
         List<Event> list = List.of(eventOne, eventTwo, eventThree);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
