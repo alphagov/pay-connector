@@ -745,7 +745,7 @@ public class ChargeService {
             LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
 
-            if (canRetry != null && !canRetry) {
+            if (charge.getAuthorisationMode() == AGREEMENT && canRetry != null && !canRetry) {
                 inactivateAgreement(charge, rejectedReason);
             }
 
