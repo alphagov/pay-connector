@@ -13,13 +13,13 @@ import java.time.Instant;
  *
  */
 public class AuthorisationRejected extends PaymentEvent {
-    private AuthorisationRejected(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, timestamp);
+    private AuthorisationRejected(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 
-    private AuthorisationRejected(String serviceId, boolean live, String resourceExternalId,
+    private AuthorisationRejected(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                                  AuthorisationRejectedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static AuthorisationRejected from(ChargeEventEntity chargeEvent) {
@@ -28,6 +28,7 @@ public class AuthorisationRejected extends PaymentEvent {
             return new AuthorisationRejected(
                     charge.getServiceId(),
                     charge.getGatewayAccount().isLive(),
+                    charge.getGatewayAccount().getId(),
                     charge.getExternalId(),
                     AuthorisationRejectedEventDetails.from(charge),
                     chargeEvent.getUpdated().toInstant()
@@ -36,6 +37,7 @@ public class AuthorisationRejected extends PaymentEvent {
         return new AuthorisationRejected(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 chargeEvent.getUpdated().toInstant()
         );

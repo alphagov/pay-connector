@@ -95,6 +95,7 @@ public class QueueMessageContractTest {
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 PaymentCreatedEventDetails.from(charge),
                 Instant.now()
@@ -119,6 +120,7 @@ public class QueueMessageContractTest {
         CaptureConfirmed captureConfirmedEvent = new CaptureConfirmed(
                 chargeEventEntity.getChargeEntity().getServiceId(),
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
                 Instant.now()
@@ -138,6 +140,7 @@ public class QueueMessageContractTest {
         PaymentDetailsEntered captureConfirmedEvent = new PaymentDetailsEntered(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 PaymentDetailsEnteredEventDetails.from(charge),
                 Instant.now()
@@ -157,6 +160,7 @@ public class QueueMessageContractTest {
         PaymentDetailsSubmittedByAPI paymentDetailsSubmittedByAPIEvent = new PaymentDetailsSubmittedByAPI(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 PaymentDetailsSubmittedByAPIEventDetails.from(charge),
                 Instant.now()
@@ -175,6 +179,7 @@ public class QueueMessageContractTest {
         UserEmailCollected userEmailCollected = new UserEmailCollected(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 UserEmailCollectedEventDetails.from(charge),
                 Instant.now()
@@ -192,6 +197,7 @@ public class QueueMessageContractTest {
         CaptureSubmitted captureSubmittedEvent = new CaptureSubmitted(
                 chargeEventEntity.getChargeEntity().getServiceId(),
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
                 resourceId,
                 CaptureSubmittedEventDetails.from(chargeEventEntity),
                 Instant.now()
@@ -338,6 +344,7 @@ public class QueueMessageContractTest {
         var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtained(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 Gateway3dsExemptionResultObtainedEventDetails.from(charge),
                 Instant.now()
@@ -357,6 +364,7 @@ public class QueueMessageContractTest {
         var gateway3dsInfoObtained = new Gateway3dsInfoObtained(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 Gateway3dsInfoObtainedEventDetails.from(charge),
                 Instant.now()
@@ -376,6 +384,7 @@ public class QueueMessageContractTest {
         var gatewayRequires3dsAuthorisation = new GatewayRequires3dsAuthorisation(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 resourceId,
                 GatewayRequires3dsAuthorisationEventDetails.from(charge),
                 Instant.now());
@@ -398,6 +407,7 @@ public class QueueMessageContractTest {
         StatusCorrectedToCapturedToMatchGatewayStatus event = new StatusCorrectedToCapturedToMatchGatewayStatus(
                 chargeEventEntity.getChargeEntity().getServiceId(),
                 chargeEventEntity.getChargeEntity().getGatewayAccount().isLive(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getId(),
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
                 Instant.now()

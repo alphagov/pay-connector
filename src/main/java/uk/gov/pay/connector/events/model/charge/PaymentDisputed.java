@@ -7,14 +7,15 @@ import uk.gov.pay.connector.events.eventdetails.charge.PaymentDisputedEventDetai
 import java.time.Instant;
 
 public class PaymentDisputed extends PaymentEvent {
-    private PaymentDisputed(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+    private PaymentDisputed(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
     }
     
     public static PaymentDisputed from(LedgerTransaction ledgerTransaction, Instant disputeCreatedDate) {
         return new PaymentDisputed(
                 ledgerTransaction.getServiceId(),
                 ledgerTransaction.getLive(),
+                Long.valueOf(ledgerTransaction.getGatewayAccountId()),
                 ledgerTransaction.getTransactionId(),
                 new PaymentDisputedEventDetails(),
                 disputeCreatedDate

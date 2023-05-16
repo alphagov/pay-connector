@@ -159,9 +159,10 @@ public class EventFactory {
                 return AuthorisationRejected.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class,
-                        boolean.class, String.class, Instant.class).newInstance(
+                        boolean.class, Long.class, String.class, Instant.class).newInstance(
                         chargeEvent.getChargeEntity().getServiceId(),
                         chargeEvent.getChargeEntity().getGatewayAccount().isLive(),
+                        chargeEvent.getChargeEntity().getGatewayAccount().getId(),
                         chargeEvent.getChargeEntity().getExternalId(),
                         chargeEvent.getUpdated().toInstant()
                 );
@@ -178,10 +179,11 @@ public class EventFactory {
             } else if (eventClass == RefundCreatedByUser.class) {
                 return RefundCreatedByUser.from(refundHistory, charge);
             } else {
-                return eventClass.getConstructor(String.class, boolean.class, String.class, String.class,
+                return eventClass.getConstructor(String.class, boolean.class, Long.class, String.class, String.class,
                         RefundEventWithGatewayTransactionIdDetails.class, Instant.class).newInstance(
                         charge.getServiceId(),
                         charge.isLive(),
+                        charge.getGatewayAccountId(),
                         refundHistory.getExternalId(),
                         refundHistory.getChargeExternalId(),
                         new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),

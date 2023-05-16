@@ -8,14 +8,15 @@ import java.time.Instant;
 
 public class RefundSucceeded extends RefundEvent {
 
-    public RefundSucceeded(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId,
+    public RefundSucceeded(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, String parentResourceExternalId,
                            RefundEventWithGatewayTransactionIdDetails referenceDetails, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
     }
 
     public static RefundSucceeded from(Charge charge, RefundHistory refundHistory) {
         return new RefundSucceeded(charge.getServiceId(),
                 charge.isLive(),
+                charge.getGatewayAccountId(),
                 refundHistory.getExternalId(),
                 refundHistory.getChargeExternalId(),
                 new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),

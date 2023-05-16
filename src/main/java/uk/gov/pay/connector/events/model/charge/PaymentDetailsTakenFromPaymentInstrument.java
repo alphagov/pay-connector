@@ -13,10 +13,11 @@ public class PaymentDetailsTakenFromPaymentInstrument extends PaymentEvent {
 
     public PaymentDetailsTakenFromPaymentInstrument(String serviceId,
                                                     boolean live,
+                                                    Long gatewayAccountInternalId,
                                                     String resourceExternalId,
                                                     PaymentDetailsTakenFromPaymentInstrumentEventDetails eventDetails,
                                                     Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentDetailsTakenFromPaymentInstrument from(ChargeEntity charge) {
@@ -29,6 +30,7 @@ public class PaymentDetailsTakenFromPaymentInstrument extends PaymentEvent {
         return new PaymentDetailsTakenFromPaymentInstrument(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 PaymentDetailsTakenFromPaymentInstrumentEventDetails.from(charge),
                 lastEventDate.toInstant());
@@ -40,6 +42,7 @@ public class PaymentDetailsTakenFromPaymentInstrument extends PaymentEvent {
         return new PaymentDetailsTakenFromPaymentInstrument(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 PaymentDetailsTakenFromPaymentInstrumentEventDetails.from(charge),
                 chargeEventEntity.getUpdated().toInstant()

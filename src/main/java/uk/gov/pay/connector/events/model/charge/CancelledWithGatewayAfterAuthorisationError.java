@@ -7,10 +7,10 @@ import uk.gov.pay.connector.events.eventdetails.charge.CancelledWithGatewayAfter
 import java.time.Instant;
 
 public class CancelledWithGatewayAfterAuthorisationError extends PaymentEvent {
-    public CancelledWithGatewayAfterAuthorisationError(String serviceId, boolean live, String resourceExternalId,
+    public CancelledWithGatewayAfterAuthorisationError(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
                                                        CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails, 
                                                        Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
     }
     
     public static CancelledWithGatewayAfterAuthorisationError from(ChargeEventEntity chargeEvent) {
@@ -19,6 +19,7 @@ public class CancelledWithGatewayAfterAuthorisationError extends PaymentEvent {
         return new CancelledWithGatewayAfterAuthorisationError(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 CancelledWithGatewayAfterAuthorisationErrorEventDetails.from(charge),
                 chargeEvent.getUpdated().toInstant()

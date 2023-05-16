@@ -7,15 +7,16 @@ import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreate
 import java.time.Instant;
 
 public class PaymentNotificationCreated extends PaymentEvent {
-    public PaymentNotificationCreated(String serviceId, boolean live, String resourceExternalId,
+    public PaymentNotificationCreated(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
                                       PaymentNotificationCreatedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentNotificationCreated from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
         return new  PaymentNotificationCreated(charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 PaymentNotificationCreatedEventDetails.from(charge),
                 chargeEvent.getUpdated().toInstant());

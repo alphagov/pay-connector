@@ -18,10 +18,11 @@ public class PaymentDetailsEntered extends PaymentEvent {
 
     public PaymentDetailsEntered(String serviceId,
                                  boolean live,
+                                 Long gatewayAccountInternalId,
                                  String resourceExternalId,
                                  PaymentDetailsEnteredEventDetails eventDetails,
                                  Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentDetailsEntered from(ChargeEntity charge) {
@@ -34,6 +35,7 @@ public class PaymentDetailsEntered extends PaymentEvent {
         return new PaymentDetailsEntered(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 lastEventDate.toInstant());
@@ -45,6 +47,7 @@ public class PaymentDetailsEntered extends PaymentEvent {
         return new PaymentDetailsEntered(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 chargeEvent.getUpdated().toInstant()

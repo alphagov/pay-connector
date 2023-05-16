@@ -8,15 +8,16 @@ import java.time.Instant;
 
 public class RefundError extends RefundEvent {
 
-    public RefundError(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId,
+    public RefundError(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, String parentResourceExternalId,
                        RefundEventWithGatewayTransactionIdDetails referenceDetails, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
+        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
     }
 
     public RefundError from(RefundHistory refundHistory, Charge charge) {
         return new RefundError(
                 charge.getServiceId(),
                 charge.isLive(),
+                charge.getGatewayAccountId(),
                 refundHistory.getExternalId(),
                 refundHistory.getChargeExternalId(),
                 new RefundEventWithGatewayTransactionIdDetails(refundHistory.getGatewayTransactionId()),

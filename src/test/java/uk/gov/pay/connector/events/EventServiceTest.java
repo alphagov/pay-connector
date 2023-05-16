@@ -33,14 +33,14 @@ class EventServiceTest {
 
     @Test
     void emitEvent() throws QueueException {
-        Event event = new PaymentEvent("service-id", true, "external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L, "external-id", now());
         eventService.emitEvent(event);
         verify(eventQueue).emitEvent(event);
     }
 
     @Test
     void emitEventShouldRecordEvent() throws QueueException {
-        Event event = new PaymentEvent("service-id", true, "external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L, "external-id", now());
         eventService.emitEvent(event, false);
 
         verify(eventQueue).emitEvent(event);
@@ -48,14 +48,14 @@ class EventServiceTest {
 
     @Test
     void emitEventShouldThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
-        Event event = new PaymentEvent("service-id", true,"external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L, "external-id", now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         assertThrows(QueueException.class, ()-> eventService.emitEvent(event, false));
     }
 
     @Test
     void emitEventShouldNotThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
-        Event event = new PaymentEvent("service-id", true,"external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L, "external-id", now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         eventService.emitEvent(event, true);
         verify(eventQueue).emitEvent(event);
@@ -63,7 +63,7 @@ class EventServiceTest {
 
     @Test
     void emitAndRecordEvent_shouldRecordEmission() throws QueueException {
-        Event event = new PaymentEvent("service-id", true,"external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L,"external-id", now());
         eventService.emitAndRecordEvent(event);
 
         verify(emittedEventDao).recordEmission(event, null);
@@ -72,7 +72,7 @@ class EventServiceTest {
 
     @Test
     void emitAndRecordEvent_shouldRecordEmissionWithDoNotRetryEmitUntilDate() throws QueueException {
-        Event event = new PaymentEvent("service-id", true,"external-id", now());
+        Event event = new PaymentEvent("service-id", true,100L,"external-id", now());
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.now(UTC);
         eventService.emitAndRecordEvent(event, doNotRetryEmitUntilDate);
 
@@ -82,7 +82,7 @@ class EventServiceTest {
 
     @Test
     void emitAndRecordEvent_shouldRecordEmissionWithoutEmittedDateForQueueException() throws QueueException {
-        Event event = new PaymentCreated("service-id", true,"external-id", null, now());
+        Event event = new PaymentCreated("service-id", true, 100L, "external-id", null, now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         eventService.emitAndRecordEvent(event);
 
@@ -94,7 +94,7 @@ class EventServiceTest {
 
     @Test
     void emitAndMarkEventAsEmitted() throws QueueException {
-        Event event = new PaymentEvent("service-id", true, "external-id", now());
+        Event event = new PaymentEvent("service-id", true, 100L, "external-id", now());
         eventService.emitAndMarkEventAsEmitted(event);
 
         verify(eventQueue).emitEvent(event);
