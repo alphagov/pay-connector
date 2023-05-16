@@ -8,10 +8,10 @@ import java.time.Instant;
 
 public class GatewayRequires3dsAuthorisation extends PaymentEvent {
     public GatewayRequires3dsAuthorisation(String serviceId, boolean live,
-                                           Long gatewayAccountInternalId, String resourceExternalId,
+                                           Long gatewayAccountId, String resourceExternalId,
                                            GatewayRequires3dsAuthorisationEventDetails eventDetails,
                                            Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static GatewayRequires3dsAuthorisation from(ChargeEventEntity chargeEvent) {

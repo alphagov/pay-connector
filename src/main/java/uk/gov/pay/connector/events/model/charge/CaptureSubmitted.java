@@ -8,8 +8,8 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDeta
 import java.time.Instant;
 
 public class CaptureSubmitted extends PaymentEvent {
-    public CaptureSubmitted(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+    public CaptureSubmitted(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static CaptureSubmitted from(ChargeEventEntity chargeEvent) {

@@ -4,7 +4,7 @@ import java.time.Instant;
 
 // Semantically same as auth rejected
 public class AuthorisationCancelled extends PaymentEventWithoutDetails {
-    public AuthorisationCancelled(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, timestamp);
+    public AuthorisationCancelled(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

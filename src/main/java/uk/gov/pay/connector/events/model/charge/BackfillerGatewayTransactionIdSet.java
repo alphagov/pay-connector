@@ -14,11 +14,11 @@ public class BackfillerGatewayTransactionIdSet extends PaymentEvent {
 
     public BackfillerGatewayTransactionIdSet(String serviceId,
                                              boolean live,
-                                             Long gatewayAccountInternalId,
+                                             Long gatewayAccountId,
                                              String resourceExternalId,
                                              BackFillerGatewayTransactionIdSetEventDetails eventDetails,
                                              Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static BackfillerGatewayTransactionIdSet from(ChargeEntity charge) {

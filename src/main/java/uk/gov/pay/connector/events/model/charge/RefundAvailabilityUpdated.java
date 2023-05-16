@@ -8,9 +8,9 @@ import java.time.Instant;
 
 public class RefundAvailabilityUpdated extends PaymentEvent {
 
-    public RefundAvailabilityUpdated(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
+    public RefundAvailabilityUpdated(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                                      RefundAvailabilityUpdatedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static RefundAvailabilityUpdated from(LedgerTransaction ledgerTransaction,

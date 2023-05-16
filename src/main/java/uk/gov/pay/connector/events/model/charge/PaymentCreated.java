@@ -8,8 +8,8 @@ import java.time.Instant;
 
 public class PaymentCreated extends PaymentEvent {
 
-    public PaymentCreated(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, PaymentCreatedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+    public PaymentCreated(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, PaymentCreatedEventDetails eventDetails, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentCreated from(ChargeEventEntity event) {

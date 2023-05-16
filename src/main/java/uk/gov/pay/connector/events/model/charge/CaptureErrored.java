@@ -4,7 +4,7 @@ import java.time.Instant;
 
 // In rare circumstances...
 public class CaptureErrored extends PaymentEventWithoutDetails {
-    public CaptureErrored(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, timestamp);
+    public CaptureErrored(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

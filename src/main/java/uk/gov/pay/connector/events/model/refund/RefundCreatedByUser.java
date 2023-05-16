@@ -8,9 +8,9 @@ import java.time.Instant;
 
 public class RefundCreatedByUser extends RefundEvent {
 
-    private RefundCreatedByUser(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, String parentResourceExternalId,
+    private RefundCreatedByUser(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, String parentResourceExternalId,
                                 RefundCreatedByUserEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
     }
 
     public static RefundCreatedByUser from(RefundHistory refundHistory, Charge charge) {

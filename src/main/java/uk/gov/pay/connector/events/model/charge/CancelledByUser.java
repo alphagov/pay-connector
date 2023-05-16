@@ -7,8 +7,8 @@ import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetai
 import java.time.Instant;
 
 public class CancelledByUser extends PaymentEvent {
-    public CancelledByUser(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, CancelledByUserEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+    public CancelledByUser(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, CancelledByUserEventDetails eventDetails, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static CancelledByUser from(ChargeEventEntity chargeEvent) {

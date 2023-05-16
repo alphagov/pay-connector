@@ -7,9 +7,9 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDeta
 import java.time.Instant;
 
 public class StatusCorrectedToCapturedToMatchGatewayStatus extends PaymentEvent {
-    public StatusCorrectedToCapturedToMatchGatewayStatus(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
+    public StatusCorrectedToCapturedToMatchGatewayStatus(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                                                          CaptureConfirmedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
     
     public static StatusCorrectedToCapturedToMatchGatewayStatus from(ChargeEventEntity chargeEvent) {

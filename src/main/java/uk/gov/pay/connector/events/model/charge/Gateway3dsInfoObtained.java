@@ -7,9 +7,9 @@ import java.time.Instant;
 
 public class Gateway3dsInfoObtained extends PaymentEvent {
 
-    public Gateway3dsInfoObtained(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
+    public Gateway3dsInfoObtained(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                                   Gateway3dsInfoObtainedEventDetails eventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static Gateway3dsInfoObtained from(ChargeEntity charge, Instant eventDate) {

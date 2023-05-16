@@ -8,9 +8,9 @@ import java.time.Instant;
 
 public class RefundError extends RefundEvent {
 
-    public RefundError(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, String parentResourceExternalId,
+    public RefundError(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, String parentResourceExternalId,
                        RefundEventWithGatewayTransactionIdDetails referenceDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, parentResourceExternalId, referenceDetails, timestamp);
     }
 
     public RefundError from(RefundHistory refundHistory, Charge charge) {

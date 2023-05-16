@@ -10,9 +10,9 @@ import java.time.Instant;
  *  Confirmed by notification from payment gateway
  **/
 public class CaptureConfirmed extends PaymentEvent {
-    public CaptureConfirmed(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId,
+    public CaptureConfirmed(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                             CaptureConfirmedEventDetails captureConfirmedEventDetails, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, captureConfirmedEventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, captureConfirmedEventDetails, timestamp);
     }
 
     public static CaptureConfirmed from(ChargeEventEntity chargeEvent) {

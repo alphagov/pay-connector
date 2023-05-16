@@ -21,11 +21,11 @@ public class BackfillerRecreatedUserEmailCollected extends PaymentEvent {
 
     public BackfillerRecreatedUserEmailCollected(String serviceId,
                                                  boolean live,
-                                                 Long gatewayAccountInternalId,
+                                                 Long gatewayAccountId,
                                                  String resourceExternalId,
                                                  UserEmailCollectedEventDetails eventDetails,
                                                  Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static BackfillerRecreatedUserEmailCollected from(ChargeEntity charge) {

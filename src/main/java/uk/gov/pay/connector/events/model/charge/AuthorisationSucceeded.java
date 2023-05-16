@@ -7,7 +7,7 @@ import java.time.Instant;
  *
  */
 public class AuthorisationSucceeded extends PaymentEventWithoutDetails {
-    public AuthorisationSucceeded(String serviceId, boolean live, Long gatewayAccountInternalId, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, timestamp);
+    public AuthorisationSucceeded(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

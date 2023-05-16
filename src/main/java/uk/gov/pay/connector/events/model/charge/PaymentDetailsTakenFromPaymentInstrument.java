@@ -13,11 +13,11 @@ public class PaymentDetailsTakenFromPaymentInstrument extends PaymentEvent {
 
     public PaymentDetailsTakenFromPaymentInstrument(String serviceId,
                                                     boolean live,
-                                                    Long gatewayAccountInternalId,
+                                                    Long gatewayAccountId,
                                                     String resourceExternalId,
                                                     PaymentDetailsTakenFromPaymentInstrumentEventDetails eventDetails,
                                                     Instant timestamp) {
-        super(serviceId, live, gatewayAccountInternalId, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentDetailsTakenFromPaymentInstrument from(ChargeEntity charge) {
