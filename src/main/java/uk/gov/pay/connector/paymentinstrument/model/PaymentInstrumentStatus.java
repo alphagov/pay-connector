@@ -4,6 +4,5 @@ public enum PaymentInstrumentStatus {
     CREATED,
     ACTIVE,
     INACTIVE,
-    CANCELLED,
-    EXPIRED
+    CANCELLED
 }
