@@ -4738,7 +4738,6 @@ components:
           - ACTIVE
           - INACTIVE
           - CANCELLED
-          - EXPIRED
     PaymentOutcome:
       type: object
       description: Only applicable for telephone payments reported. Outcome after
