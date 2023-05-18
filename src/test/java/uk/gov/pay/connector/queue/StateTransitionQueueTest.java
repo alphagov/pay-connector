@@ -1,16 +1,18 @@
 package uk.gov.pay.connector.queue;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
-public class StateTransitionQueueTest {
+class StateTransitionQueueTest {
     @Test
-    public void shouldNotReturnElementBeforeDelay() throws InterruptedException {
+    void shouldNotReturnElementBeforeDelay() throws InterruptedException {
         StateTransitionQueue queue = new StateTransitionQueue();
         PaymentStateTransition transition = new PaymentStateTransition(1L, PaymentEvent.class);
 
@@ -22,7 +24,7 @@ public class StateTransitionQueueTest {
     }
 
     @Test
-    public void shouldReturnElementAfterDelay() throws InterruptedException {
+    void shouldReturnElementAfterDelay() throws InterruptedException {
         long chargeEventId = 1L;
         long delayBufferInMilliseconds = 100L;
         StateTransitionQueue queue = new StateTransitionQueue();

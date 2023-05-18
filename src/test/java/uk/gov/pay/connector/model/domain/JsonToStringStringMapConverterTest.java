@@ -2,8 +2,8 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
 
@@ -13,21 +13,21 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-public class JsonToStringStringMapConverterTest {
+class JsonToStringStringMapConverterTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
     
     private JsonToStringStringMapConverter jsonToStringStringMapConverter = new JsonToStringStringMapConverter();
     private PGobject pGobject;
 
-    @Before
-    public void setUp(){
+    @BeforeEach
+    void setUp(){
         pGobject = new PGobject();
         pGobject.setType("json");
     }
 
     @Test
-    public void shouldReturnAMapContainingTheValuesOfAPGObject() throws Exception {
+    void shouldReturnAMapContainingTheValuesOfAPGObject() throws Exception {
         JsonNode payload = objectMapper.valueToTree(
                 Map.of("json_field_1", "json_value_1","json_field_2", "json_value_2"));
 
@@ -40,7 +40,7 @@ public class JsonToStringStringMapConverterTest {
     }
 
     @Test
-    public void shouldReturnNoMapWhenDBFieldIsNull() throws Exception {
+    void shouldReturnNoMapWhenDBFieldIsNull() throws Exception {
         pGobject.setValue(null);
         Map<String, String> jsonValues = jsonToStringStringMapConverter.convertToEntityAttribute(pGobject);
 
@@ -48,7 +48,7 @@ public class JsonToStringStringMapConverterTest {
     }
 
     @Test
-    public void shouldReturnPGObjectContainingPredifinedValues() throws Exception {
+    void shouldReturnPGObjectContainingPredifinedValues() throws Exception {
         Map<String, String> values = Map.of("json_field_1", "json_value_1", "json_field_2", "json_value_2");
         pGobject = jsonToStringStringMapConverter.convertToDatabaseColumn(values);
 
@@ -57,7 +57,7 @@ public class JsonToStringStringMapConverterTest {
     }
 
     @Test
-    public void shouldReturnNullWhenEmptyMap() {
+    void shouldReturnNullWhenEmptyMap() {
         pGobject = jsonToStringStringMapConverter.convertToDatabaseColumn(Map.of());
         assertThat(pGobject.getValue(), is(nullValue()));
     }

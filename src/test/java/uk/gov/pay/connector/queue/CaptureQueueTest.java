@@ -2,11 +2,11 @@ package uk.gov.pay.connector.queue;
 
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
@@ -28,8 +28,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class CaptureQueueTest {
+@ExtendWith(MockitoExtension.class)
+class CaptureQueueTest {
 
     @Mock
     SqsQueueService sqsQueueService;
@@ -39,25 +39,25 @@ public class CaptureQueueTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
-    @Before
-    public void setUp() throws Exception {
-        String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
-
-        List<QueueMessage> messages = Arrays.asList(
-                QueueMessage.of(messageResult, validJsonMessage)
-        );
+    @BeforeEach
+    void setUp() throws Exception {
         CaptureProcessConfig captureProcessConfig = mock(CaptureProcessConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getCaptureQueueUrl()).thenReturn("");
         when(captureProcessConfig.getFailedCaptureRetryDelayInSeconds()).thenReturn(3600);
         when(connectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
         when(connectorConfiguration.getCaptureProcessConfig()).thenReturn(captureProcessConfig);
-        when(sqsQueueService.receiveMessages(anyString(), anyString())).thenReturn(messages);
     }
 
     @Test
-    public void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON() throws QueueException {
+    void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON() throws QueueException {
+                String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
+        SendMessageResult messageResult = mock(SendMessageResult.class);
+
+        List<QueueMessage> messages = Arrays.asList(
+                QueueMessage.of(messageResult, validJsonMessage)
+        );
+        when(sqsQueueService.receiveMessages(anyString(), anyString())).thenReturn(messages);
         CaptureQueue queue = new CaptureQueue(sqsQueueService, connectorConfiguration, objectMapper);
         List<ChargeCaptureMessage> chargeCaptureMessages = queue.retrieveChargesForCapture();
 
@@ -66,7 +66,7 @@ public class CaptureQueueTest {
     }
 
     @Test
-    public void shouldSendValidSerialisedChargeToQueue() throws QueueException {
+    void shouldSendValidSerialisedChargeToQueue() throws QueueException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExternalId("charge-id").build();
         when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
 
