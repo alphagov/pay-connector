@@ -71,6 +71,7 @@ public class ChargeEntityFixture {
     private boolean savePaymentInstrumentToAgreement = false;
     private PaymentInstrumentEntity paymentInstrument = null;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+    private Boolean canRetry;
     private Instant updatedDate;
 
     public static ChargeEntityFixture aValidChargeEntity() {
@@ -157,7 +158,8 @@ public class ChargeEntityFixture {
                 serviceId,
                 agreementEntity,
                 savePaymentInstrumentToAgreement,
-                authorisationMode);
+                authorisationMode,
+                canRetry);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
@@ -364,6 +366,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withUpdatedDate(Instant updatedDate){
         this.updatedDate = updatedDate;
+        return this;
+    }
+
+    public ChargeEntityFixture withCanRetry(Boolean canRetry) {
+        this.canRetry = canRetry;
         return this;
     }
 }

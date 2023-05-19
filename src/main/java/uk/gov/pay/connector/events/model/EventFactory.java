@@ -7,6 +7,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithGatewayTransactionIdDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
+import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.CancelByExpirationSubmitted;
 import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceSubmitted;
@@ -154,6 +155,8 @@ public class EventFactory {
                 return StatusCorrectedToCapturedToMatchGatewayStatus.from(chargeEvent);
             } else if (eventClass == CancelledWithGatewayAfterAuthorisationError.class) {
                 return CancelledWithGatewayAfterAuthorisationError.from(chargeEvent);
+            } else if (eventClass == AuthorisationRejected.class) {
+                return AuthorisationRejected.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class,
                         boolean.class, String.class, Instant.class).newInstance(

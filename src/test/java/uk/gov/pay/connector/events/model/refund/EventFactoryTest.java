@@ -17,6 +17,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.AuthorisationRejectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CancelledWithGatewayAfterAuthorisationErrorEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
@@ -73,6 +74,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.List;
@@ -87,6 +89,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(JUnitParamsRunner.class)
@@ -442,6 +445,77 @@ public class EventFactoryTest {
 
         PaymentNotificationCreatedEventDetails eventDetails = (PaymentNotificationCreatedEventDetails) event.getEventDetails();
         assertThat(eventDetails.getGatewayTransactionId(), is(charge.getGatewayTransactionId()));
+    }
+
+    @Test
+    public void shouldCreateCorrectEventWithEventDetailsForAuthorisationRejectedAgreementAuthorisationMode() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withCanRetry(true)
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withChargeStatus(AUTHORISATION_REJECTED)
+                .withId(chargeEventEntityId)
+                .build();
+        charge.getEvents().add(chargeEventEntity);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated().toInstant()))
+                .thenReturn(refundAvailabilityUpdated);
+
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, AuthorisationRejected.class);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+
+        AuthorisationRejected event = (AuthorisationRejected) events.get(0);
+        assertThat(event, is(instanceOf(AuthorisationRejected.class)));
+
+        assertThat(event.getEventDetails(), instanceOf(AuthorisationRejectedEventDetails.class));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
+
+        AuthorisationRejectedEventDetails eventDetails = (AuthorisationRejectedEventDetails) event.getEventDetails();
+        assertThat(eventDetails.getCanRetry(), is(true));
+    }
+
+    @Test
+    public void shouldCreateCorrectEventWithoutEventDetailsForAuthorisationRejectedWebAuthorisationMode() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withCanRetry(true)
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withChargeStatus(AUTHORISATION_REJECTED)
+                .withId(chargeEventEntityId)
+                .build();
+        charge.getEvents().add(chargeEventEntity);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated().toInstant()))
+                .thenReturn(refundAvailabilityUpdated);
+
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, AuthorisationRejected.class);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+
+        AuthorisationRejected event = (AuthorisationRejected) events.get(0);
+        assertThat(event, is(instanceOf(AuthorisationRejected.class)));
+
+        assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
     }
 
     @Test
