@@ -22,6 +22,7 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
@@ -89,6 +90,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
@@ -120,7 +123,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao, objectMapper);
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao,
+                mockExternalTransactionStateFactory, objectMapper);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);

@@ -25,6 +25,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -127,7 +128,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
                 mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
                 mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mock(IdempotencyDao.class),
-                objectMapper);
+                mock(ExternalTransactionStateFactory.class), objectMapper);
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);

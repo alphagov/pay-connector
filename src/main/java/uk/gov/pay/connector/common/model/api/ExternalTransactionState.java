@@ -2,22 +2,29 @@ package uk.gov.pay.connector.common.model.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ExternalTransactionState {
 
     private final String value;
     private final boolean finished;
     private final String code;
     private final String message;
+    private final Boolean canRetry;
 
     public ExternalTransactionState(String value, boolean finished) {
         this.value = value;
         this.finished = finished;
         this.code = null;
         this.message = null;
+        this.canRetry = null;
     }
 
     public ExternalTransactionState(String value, boolean finished, String code, String message) {
@@ -25,6 +32,15 @@ public class ExternalTransactionState {
         this.finished = finished;
         this.code = code;
         this.message = message;
+        this.canRetry = null;
+    }
+
+    public ExternalTransactionState(String value, boolean finished, String code, String message, boolean canRetry) {
+        this.value = value;
+        this.finished = finished;
+        this.code = code;
+        this.message = message;
+        this.canRetry = canRetry;
     }
 
     @Schema(example = "success")
@@ -42,31 +58,36 @@ public class ExternalTransactionState {
         return code;
     }
 
-    @Schema(example = "Payment method rejected", description = "Message describing erro code if Payment failed")
+    @Schema(example = "Payment method rejected", description = "Message describing error code if payment failed")
     public String getMessage() {
         return message;
     }
 
+    @Schema(example = "true", description = "If a failed payment, whether it may be possible to retry it")
+    public Boolean getCanRetry() {
+        return canRetry;
+    }
+
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExternalTransactionState)) return false;
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
 
-        ExternalTransactionState that = (ExternalTransactionState) o;
+        if (other instanceof ExternalTransactionState) {
+            var that = (ExternalTransactionState) other;
+            return finished == that.finished
+                    && Objects.equals(code, that.code)
+                    && Objects.equals(message, that.message)
+                    && Objects.equals(canRetry, that.canRetry);
+        }
 
-        if (finished != that.finished) return false;
-        if (!value.equals(that.value)) return false;
-        if (code != null ? !code.equals(that.code) : that.code != null) return false;
-        return message != null ? message.equals(that.message) : that.message == null;
+        return false;
     }
 
     @Override
     public int hashCode() {
-        int result = value.hashCode();
-        result = 31 * result + (finished ? 1 : 0);
-        result = 31 * result + (code != null ? code.hashCode() : 0);
-        result = 31 * result + (message != null ? message.hashCode() : 0);
-        return result;
+        return Objects.hash(value, finished, code, message, canRetry);
     }
 
     @Override
@@ -76,6 +97,7 @@ public class ExternalTransactionState {
                 ", finished=" + finished +
                 ", code='" + code + '\'' +
                 ", message='" + message + '\'' +
+                ", can_retry='" + canRetry+ '\'' +
                 '}';
     }
 }

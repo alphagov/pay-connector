@@ -31,6 +31,7 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
@@ -155,6 +156,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
     private WalletAuthoriseService walletAuthoriseService;
 
     private final AppleDecryptedPaymentData validApplePayDetails =
@@ -193,7 +197,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao, objectMapper));
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao,
+                mockExternalTransactionStateFactory, objectMapper));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
