@@ -19,6 +19,7 @@ import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConver
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -91,6 +92,8 @@ class ChargeServicePostAuthorisationTest {
     @Mock private PaymentInstrumentEntity mockPaymentInstrumentEntity;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
     @Captor
     private ArgumentCaptor<AgreementInactivated> agreementInactivatedArgumentCaptor;
@@ -129,7 +132,7 @@ class ChargeServicePostAuthorisationTest {
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, objectMapper);
+                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
 
     @Test

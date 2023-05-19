@@ -13,7 +13,6 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
-import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -23,7 +22,6 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -46,16 +44,17 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
@@ -595,6 +594,126 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("authorisation_mode", is("moto_api"));
+    }
+
+    @Test
+    public void shouldReturnCanRetryTrueWhenChargeCanBeRetried() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(true)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body("state.can_retry", is(true));
+    }
+
+    @Test
+    public void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCanBeRetried() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(true)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body("state.can_retry", is(true));
+    }
+
+    @Test
+    public void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCannotBeRetried() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(false)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body("state.can_retry", is(false));
+    }
+
+    @Test
+    public void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeAgreementAndUnspecifiedWhetherItCanBeRetried() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(null)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body("state.can_retry", is(nullValue()));
+    }
+
+    @Test
+    public void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeWeb() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(true)
+                .build());
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body("state.can_retry", is(nullValue()));
     }
 
     private void createCharge(String externalChargeId, long chargeId) {

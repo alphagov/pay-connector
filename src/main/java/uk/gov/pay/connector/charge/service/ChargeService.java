@@ -59,6 +59,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
@@ -74,7 +75,6 @@ import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -160,6 +160,7 @@ public class ChargeService {
     private final PaymentInstrumentService paymentInstrumentService;
     private final TaskQueueService taskQueueService;
     private final IdempotencyDao idempotencyDao;
+    private final ExternalTransactionStateFactory externalTransactionStateFactory;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -180,6 +181,7 @@ public class ChargeService {
                          AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
                          TaskQueueService taskQueueService,
                          IdempotencyDao idempotencyDao,
+                         ExternalTransactionStateFactory externalTransactionStateFactory,
                          ObjectMapper objectMapper) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
@@ -200,6 +202,7 @@ public class ChargeService {
         this.authCardDetailsToCardDetailsEntityConverter = authCardDetailsToCardDetailsEntityConverter;
         this.taskQueueService = taskQueueService;
         this.idempotencyDao = idempotencyDao;
+        this.externalTransactionStateFactory = externalTransactionStateFactory;
         this.objectMapper = objectMapper;
     }
 
@@ -582,14 +585,13 @@ public class ChargeService {
             threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
             authorisationSummary.setThreeDSecure(threeDSecure);
         }
-        ExternalChargeState externalChargeState = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal();
 
         T builderOfResponse = responseBuilder
                 .withChargeId(chargeId)
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()))
+                .withState(externalTransactionStateFactory.newExternalTransactionState(chargeEntity))
                 .withGatewayTransactionId(chargeEntity.getGatewayTransactionId())
                 .withProviderName(chargeEntity.getPaymentProvider())
                 .withCreatedDate(chargeEntity.getCreatedDate())

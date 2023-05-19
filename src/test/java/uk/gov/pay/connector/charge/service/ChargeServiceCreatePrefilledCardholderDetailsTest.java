@@ -22,6 +22,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -128,6 +129,9 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
@@ -166,7 +170,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, objectMapper);
+                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
 
     @Test

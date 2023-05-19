@@ -34,6 +34,7 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -125,6 +126,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
     private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -138,7 +142,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, objectMapper);
+                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);

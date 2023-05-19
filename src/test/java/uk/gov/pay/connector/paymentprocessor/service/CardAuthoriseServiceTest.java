@@ -43,6 +43,7 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -198,6 +199,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
@@ -222,7 +226,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, objectMapper);
+                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
         CaptureQueue captureQueue = mock(CaptureQueue.class);

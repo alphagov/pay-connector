@@ -9,6 +9,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
 import javax.ws.rs.client.Entity;
@@ -24,15 +25,17 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class ChargesFrontendResourceTest {
-    private static ChargeService chargeService = mock(ChargeService.class);
-    private static ChargeDao chargeDao = mock(ChargeDao.class);
-    private static CardTypeDao cardTypeDao = mock(CardTypeDao.class);
-    private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService = mock(Worldpay3dsFlexJwtService.class);
-    private static AgreementService agreementService = mock(AgreementService.class);
+    private static final ChargeService CHARGE_SERVICE = mock(ChargeService.class);
+    private static final ChargeDao CHARGE_DAO = mock(ChargeDao.class);
+    private static final CardTypeDao CARD_TYPE_DAO = mock(CardTypeDao.class);
+    private static final Worldpay3dsFlexJwtService WORLDPAY_3DS_FLEX_JWT_SERVICE = mock(Worldpay3dsFlexJwtService.class);
+    private static final AgreementService AGREEMENT_SERVICE = mock(AgreementService.class);
+    private static final ExternalTransactionStateFactory EXTERNAL_TRANSACTION_STATE_FACTORY = mock(ExternalTransactionStateFactory.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
-            .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao, worldpay3dsFlexJwtService, agreementService))
+            .addResource(new ChargesFrontendResource(CHARGE_DAO, CHARGE_SERVICE, CARD_TYPE_DAO,
+                    WORLDPAY_3DS_FLEX_JWT_SERVICE, AGREEMENT_SERVICE, EXTERNAL_TRANSACTION_STATE_FACTORY))
             .build();
 
     @Test

@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 public class FrontendChargeResponse extends ChargeResponse {
@@ -16,10 +15,10 @@ public class FrontendChargeResponse extends ChargeResponse {
         private AgreementResponse agreement;
         private boolean savePaymentInstrumentToAgreement;
 
-        public FrontendChargeResponseBuilder withStatus(String status) {
-            this.status = status;
-            ExternalChargeState externalChargeState = ChargeStatus.fromString(status).toExternal();
-            super.withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()));
+        public FrontendChargeResponseBuilder withStatus(ChargeEntity chargeEntity,
+                                                        ExternalTransactionStateFactory externalTransactionStateFactory) {
+            this.status = chargeEntity.getStatus();
+            super.withState(externalTransactionStateFactory.newExternalTransactionState(chargeEntity));
             return this;
         }
 

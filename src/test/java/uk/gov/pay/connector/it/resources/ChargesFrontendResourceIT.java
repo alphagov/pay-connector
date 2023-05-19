@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
+import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -51,6 +53,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -359,6 +362,34 @@ public class ChargesFrontendResourceIT {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("$card_details", not(hasKey("billing_address")));
+    }
+
+    @Test
+    public void getChargeShouldIncludeExternalChargeStatus() {
+        String externalChargeId = RandomIdGenerator.newId();
+        long chargeId = nextLong();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(expectedAmount)
+                .withStatus(AUTHORISATION_REJECTED)
+                .withCanRetry(true)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withReturnUrl(returnUrl)
+                .withDelayedCapture(false)
+                .withEmail(email)
+                .build());
+
+        getChargeFromResource(externalChargeId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("state.status", is(ExternalChargeState.EXTERNAL_FAILED_REJECTED.getStatus()))
+                .body("state.finished", is(ExternalChargeState.EXTERNAL_FAILED_REJECTED.isFinished()))
+                .body("state.code", is(ExternalChargeState.EXTERNAL_FAILED_REJECTED.getCode()))
+                .body("state.message", is(ExternalChargeState.EXTERNAL_FAILED_REJECTED.getMessage()))
+                .body("state.can_retry", is(true));
     }
 
     @Test

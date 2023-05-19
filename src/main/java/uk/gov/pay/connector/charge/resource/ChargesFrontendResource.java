@@ -26,6 +26,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -67,14 +68,19 @@ public class ChargesFrontendResource {
     private final CardTypeDao cardTypeDao;
     private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
     private final AgreementService agreementService;
+    private final ExternalTransactionStateFactory externalTransactionStateFactory;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, Worldpay3dsFlexJwtService worldpay3dsFlexJwtService, AgreementService agreementService) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao,
+                                   Worldpay3dsFlexJwtService worldpay3dsFlexJwtService,
+                                   AgreementService agreementService,
+                                   ExternalTransactionStateFactory externalTransactionStateFactory) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
         this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
         this.agreementService = agreementService;
+        this.externalTransactionStateFactory = externalTransactionStateFactory;
     }
 
     @GET
@@ -227,7 +233,7 @@ public class ChargesFrontendResource {
         String chargeId = charge.getExternalId();
 
         FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
-                .withStatus(charge.getStatus())
+                .withStatus(charge, externalTransactionStateFactory)
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())

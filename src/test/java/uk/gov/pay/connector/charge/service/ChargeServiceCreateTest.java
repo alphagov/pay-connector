@@ -42,6 +42,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -105,6 +106,7 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBu
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -188,6 +190,9 @@ class ChargeServiceCreateTest {
     private IdempotencyDao mockIdempotencyDao;
 
     @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
+    @Mock
     Appender<ILoggingEvent> mockAppender;
 
     @Captor
@@ -205,6 +210,7 @@ class ChargeServiceCreateTest {
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
+    private ExternalTransactionState externalTransactionState;
 
     @BeforeEach
     void setUp() {
@@ -252,11 +258,13 @@ class ChargeServiceCreateTest {
         when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
+        externalTransactionState = new ExternalTransactionState(EXTERNAL_CREATED.getStatus(), false);
+
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, mapper);
+                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper);
     }
 
     @Test
@@ -589,6 +597,7 @@ class ChargeServiceCreateTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(any(ChargeEntity.class))).thenReturn(externalTransactionState);
         populateChargeEntity();
 
         ChargeResponse response = chargeService.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo, null).get();
@@ -619,6 +628,7 @@ class ChargeServiceCreateTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(any(ChargeEntity.class))).thenReturn(externalTransactionState);
         gatewayAccount.setAllowAuthorisationApi(true);
         gatewayAccount.setAllowMoto(false);
         populateChargeEntity();
@@ -723,6 +733,7 @@ class ChargeServiceCreateTest {
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(any(ChargeEntity.class))).thenReturn(externalTransactionState);
         populateChargeEntity();
 
         ChargeResponse response = chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo, idempotencyKey).get();

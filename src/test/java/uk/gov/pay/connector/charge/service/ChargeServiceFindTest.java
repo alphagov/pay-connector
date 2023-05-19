@@ -27,6 +27,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -83,6 +84,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAP
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CAPTURABLE;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
@@ -153,6 +157,9 @@ class ChargeServiceFindTest {
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
+    @Mock
+    private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+
     @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
 
     private ChargeService chargeService;
@@ -198,7 +205,7 @@ class ChargeServiceFindTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService,
-                mockIdempotencyDao, objectMapper);
+                mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
     @Test
     void shouldNotFindCharge() {
@@ -242,6 +249,8 @@ class ChargeServiceFindTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(newCharge));
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(newCharge))
+                .thenReturn(new ExternalTransactionState(status.toExternal().getStatus(), false));
 
         Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
@@ -345,6 +354,8 @@ class ChargeServiceFindTest {
 
         String externalId = newCharge.getExternalId();
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(newCharge));
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(newCharge))
+                .thenReturn(new ExternalTransactionState(EXTERNAL_SUCCESS.getStatus(), true));
 
         Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
@@ -385,6 +396,8 @@ class ChargeServiceFindTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(newCharge));
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(newCharge))
+                .thenReturn(new ExternalTransactionState(EXTERNAL_CREATED.getStatus(), false));
 
         ChargeResponse response = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
@@ -404,7 +417,6 @@ class ChargeServiceFindTest {
         assertThat(response, is(expectedChargeResponse.build()));
     }
 
-
     @Test
     void shouldFindChargeWithCaptureUrlAndNoNextUrl_whenChargeInAwaitingCaptureRequest() throws URISyntaxException {
         Long chargeId = 101L;
@@ -421,6 +433,8 @@ class ChargeServiceFindTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(newCharge));
+        when(mockExternalTransactionStateFactory.newExternalTransactionState(newCharge))
+                .thenReturn(new ExternalTransactionState(EXTERNAL_CAPTURABLE.getStatus(), false));
 
         Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 

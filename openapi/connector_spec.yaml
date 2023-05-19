@@ -3486,6 +3486,10 @@ components:
       description: A structure representing the current state of the payment in its
         lifecycle
       properties:
+        can_retry:
+          type: boolean
+          description: "If a failed payment, whether it may be possible to retry it"
+          example: true
         code:
           type: string
           description: Error code for failed payments
@@ -3495,7 +3499,7 @@ components:
           example: true
         message:
           type: string
-          description: Message describing erro code if Payment failed
+          description: Message describing error code if payment failed
           example: Payment method rejected
         status:
           type: string
@@ -3505,6 +3509,10 @@ components:
       description: A structure representing the current state of the payment in its
         lifecycle
       properties:
+        can_retry:
+          type: boolean
+          description: "If a failed payment, whether it may be possible to retry it"
+          example: true
         code:
           type: string
           description: Error code for failed payments
@@ -3514,7 +3522,7 @@ components:
           example: true
         message:
           type: string
-          description: Message describing erro code if Payment failed
+          description: Message describing error code if payment failed
           example: Payment method rejected
         status:
           type: string
