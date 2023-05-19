@@ -252,7 +252,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             String serviceId,
             AgreementEntity agreementEntity,
             boolean savePaymentInstrumentToAgreement,
-            AuthorisationMode authorisationMode
+            AuthorisationMode authorisationMode,
+            Boolean canRetry
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -276,6 +277,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.agreementEntity = agreementEntity;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
+        this.canRetry = canRetry;
     }
 
     public Long getId() {
@@ -743,7 +745,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     serviceId,
                     agreementEntity,
                     savePaymentInstrumentToAgreement,
-                    authorisationMode);
+                    authorisationMode,
+                    null);
         }
     }
 
@@ -857,7 +860,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     serviceId,
                     agreementEntity,
                     savePaymentInstrumentToAgreement,
-                    AuthorisationMode.EXTERNAL);
+                    AuthorisationMode.EXTERNAL,
+                    null);
         }
     }
 }
