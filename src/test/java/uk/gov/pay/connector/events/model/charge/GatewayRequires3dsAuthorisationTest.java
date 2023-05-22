@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -17,12 +17,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
-public class GatewayRequires3dsAuthorisationTest {
+class GatewayRequires3dsAuthorisationTest {
 
     private final ChargeEntityFixture chargeEntity = aValidChargeEntity();
 
     @Test
-    public void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
+    void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
 
         Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
@@ -46,7 +46,7 @@ public class GatewayRequires3dsAuthorisationTest {
     }
 
     @Test
-    public void serializesEventCorrectlyWhenVersion3dsIsNotAvailable() throws JsonProcessingException {
+    void serializesEventCorrectlyWhenVersion3dsIsNotAvailable() throws JsonProcessingException {
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
 
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -17,13 +17,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 
-public class BackfillerRecreatedUserEmailCollectedTest {
+class BackfillerRecreatedUserEmailCollectedTest {
 
     private final String time = "2018-03-12T16:25:01.123456Z";
 
     private ChargeEntityFixture chargeEntityFixture;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ZonedDateTime latestDateTime = ZonedDateTime.parse(time);
 
@@ -43,7 +43,7 @@ public class BackfillerRecreatedUserEmailCollectedTest {
     }
 
     @Test
-    public void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
+    void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         String actual = BackfillerRecreatedUserEmailCollected.from(chargeEntity).toJsonString();
 

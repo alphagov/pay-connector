@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
@@ -12,10 +12,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MICROSECOND_PRECISION;
 
-public class UserEmailCollectedTest {
+class UserEmailCollectedTest {
 
     @Test
-    public void serializesEventDetailsForChargeAndEventDate() throws JsonProcessingException {
+    void serializesEventDetailsForChargeAndEventDate() throws JsonProcessingException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         Instant eventDate = Instant.now();
         String actual = UserEmailCollected.from(chargeEntity, eventDate).toJsonString();

@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.events;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
@@ -30,8 +30,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StateTransitionEmitterProcessTest {
+@ExtendWith(MockitoExtension.class)
+class StateTransitionEmitterProcessTest {
     @Mock
     StateTransitionQueue stateTransitionQueue;
 
@@ -48,7 +48,7 @@ public class StateTransitionEmitterProcessTest {
     StateTransitionEmitterProcess stateTransitionEmitterProcess;
 
     @Test
-    public void shouldEmitPaymentEventGivenStateTransitionMessageOnQueue() throws Exception {
+    void shouldEmitPaymentEventGivenStateTransitionMessageOnQueue() throws Exception {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentCreated.class);
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenReturn(List.of(
                 new PaymentCreated("service-id", true,
@@ -64,7 +64,7 @@ public class StateTransitionEmitterProcessTest {
     }
 
     @Test
-    public void shouldPutPaymentTransitionBackOnQueueIfEventCreationFails() throws Exception {
+    void shouldPutPaymentTransitionBackOnQueueIfEventCreationFails() throws Exception {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
         when(stateTransitionQueue.poll(anyLong(), any(TimeUnit.class))).thenReturn(paymentStateTransition);
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenThrow(EventCreationException.class);
@@ -76,7 +76,7 @@ public class StateTransitionEmitterProcessTest {
     }
 
     @Test
-    public void shouldPutPaymentTransitionBackOnQueueIfEventEmitFails() throws Exception {
+    void shouldPutPaymentTransitionBackOnQueueIfEventEmitFails() throws Exception {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(stateTransitionQueue.poll(anyLong(), any(TimeUnit.class))).thenReturn(paymentStateTransition);
@@ -95,7 +95,7 @@ public class StateTransitionEmitterProcessTest {
 
 
     @Test
-    public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
+    void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
         StateTransitionQueue spyQueue = spy(new StateTransitionQueue());
         StateTransitionEmitterProcess stateTransitionEmitterProcess = new StateTransitionEmitterProcess(spyQueue, eventFactory, stateTransitionQueueMetricEmitter, mockEventService);
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class, 0);

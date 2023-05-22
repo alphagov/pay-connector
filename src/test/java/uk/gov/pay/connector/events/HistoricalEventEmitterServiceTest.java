@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.events;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -74,8 +74,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTI
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
-@RunWith(MockitoJUnitRunner.class)
-public class HistoricalEventEmitterServiceTest {
+@ExtendWith(MockitoExtension.class)
+class HistoricalEventEmitterServiceTest {
 
     @Mock
     ChargeDao chargeDao;
@@ -96,13 +96,12 @@ public class HistoricalEventEmitterServiceTest {
     private ChargeEntity chargeEntity;
     private ConnectorConfiguration connectorConfiguration;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         connectorConfiguration = new ConnectorConfiguration();
         historicalEventEmitterService = new HistoricalEventEmitterService(chargeDao, refundDao, chargeEventDao, emittedEventDao,
                 stateTransitionService, eventService, chargeService, connectorConfiguration);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
-        when(cardDetails.getLastDigitsCardNumber()).thenReturn(LastDigitsCardNumber.of("1234"));
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withCardDetails(cardDetails)
@@ -116,7 +115,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeEmitsEventAndRecordsEmission() {
+    void executeEmitsEventAndRecordsEmission() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
@@ -132,7 +131,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotProcessIfNoEventsFound() {
+    void executeShouldNotProcessIfNoEventsFound() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
@@ -144,7 +143,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void iteratesThroughSpecifiedRange() {
+    void iteratesThroughSpecifiedRange() {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
 
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.of(100L), 1L);
@@ -154,7 +153,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitEventIfEmittedPreviously() {
+    void executeShouldNotEmitEventIfEmittedPreviously() {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
         when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(true);
 
@@ -165,7 +164,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldIgnoreEventIfStateTransitionIsNotFound() {
+    void executeShouldIgnoreEventIfStateTransitionIsNotFound() {
         ChargeEventEntity secondChargeEventEntity = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -187,7 +186,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitManualEventsWithTerminalAuthenticationState() {
+    void executeShouldEmitManualEventsWithTerminalAuthenticationState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -212,7 +211,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitPaymentSubmittedByApiEventForMotoApiCharges() {
+    void executeShouldEmitPaymentSubmittedByApiEventForMotoApiCharges() {
         chargeEntity.setAuthorisationMode(MOTO_API);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
@@ -235,7 +234,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitPaymentDetailsTakenFromPaymentInstrumentEventForAgreementCharges() {
+    void executeShouldEmitPaymentDetailsTakenFromPaymentInstrumentEventForAgreementCharges() {
         chargeEntity.setAuthorisationMode(AGREEMENT);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
@@ -258,7 +257,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitUserEmailCollectedEventWhenEnteringCardDetailsStateExists() {
+    void executeShouldEmitUserEmailCollectedEventWhenEnteringCardDetailsStateExists() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -276,7 +275,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitGatewayTransactionIdSetEvent() {
+    void executeShouldEmitGatewayTransactionIdSetEvent() {
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayTransactionId("gateway-tx-id")
@@ -298,7 +297,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitGatewayTransactionIdSetEventWhenThereIsNoGatewayTransactionIdOnCharge() {
+    void executeShouldNotEmitGatewayTransactionIdSetEventWhenThereIsNoGatewayTransactionIdOnCharge() {
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayTransactionId(null)
@@ -319,7 +318,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeHasAuthorisationEvent() {
+    void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeHasAuthorisationEvent() {
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayTransactionId("gateway-tx-id")
@@ -346,7 +345,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeIsATelephonePaymentNotification() {
+    void executeShouldNotEmitGatewayTransactionIdSetEventIfChargeIsATelephonePaymentNotification() {
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayTransactionId("gateway-tx-id")
@@ -373,7 +372,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitPaymentDetailsEnteredEventWithTerminalAuthenticationStateForNotificationPayment() {
+    void executeShouldNotEmitPaymentDetailsEnteredEventWithTerminalAuthenticationStateForNotificationPayment() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -398,7 +397,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
+    void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -416,7 +415,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldOfferOutOfOrderCaptureStatesInOrder() {
+    void executeShouldOfferOutOfOrderCaptureStatesInOrder() {
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .build();
@@ -456,7 +455,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitFeeIncurredEvent() {
+    void executeShouldEmitFeeIncurredEvent() {
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withFee(Fee.of(FeeType.TRANSACTION, 5L))
@@ -473,7 +472,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitFeeIncurredEventWhenFeeTypeIsNull() {
+    void executeShouldNotEmitFeeIncurredEventWhenFeeTypeIsNull() {
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withFee(Fee.of(null, 5L))
@@ -488,7 +487,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldNotEmitFeeIncurredEventWhenEventHasBeenEmittedBefore() {
+    void executeShouldNotEmitFeeIncurredEventWhenEventHasBeenEmittedBefore() {
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withFee(Fee.of(FeeType.TRANSACTION, 5L))
@@ -505,7 +504,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldEmitFeeIncurredEventWhenOnlyRadarFeeIsPresent() {
+    void executeShouldEmitFeeIncurredEventWhenOnlyRadarFeeIsPresent() {
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withFee(Fee.of(FeeType.RADAR, 2L))
@@ -521,7 +520,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldOfferEventsWithIntermediateState() {
+    void executeShouldOfferEventsWithIntermediateState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now())
                 .withCharge(chargeEntity)
@@ -556,7 +555,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeShouldOfferRefundEventsWithRefundHistory() {
+    void executeShouldOfferRefundEventsWithRefundHistory() {
         RefundHistory refundHistory = RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()
                 .withChargeExternalId(chargeEntity.getExternalId())
@@ -580,7 +579,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void shouldEmitPaymentDetailsEnteredOnlyOnce_IfChargeEventsContainsBothAuth3DSRequiredAndAuthSuccessEvents() {
+    void shouldEmitPaymentDetailsEnteredOnlyOnce_IfChargeEventsContainsBothAuth3DSRequiredAndAuthSuccessEvents() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now())
                 .withCharge(chargeEntity)
@@ -622,7 +621,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeForDateRange_ShouldEmitAllEventsOfAChargeWithEventWithinDateRange() {
+    void executeForDateRange_ShouldEmitAllEventsOfAChargeWithEventWithinDateRange() {
         ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
         ChargeEventEntity firstEvent = getChargeEventEntity(chargeEntity, ChargeStatus.CREATED, eventDate);
@@ -646,7 +645,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeForDateRange_ShouldEmitAllRefundsEventsOfAChargeWithRefundEventWithinDateRange() {
+    void executeForDateRange_ShouldEmitAllRefundsEventsOfAChargeWithRefundEventWithinDateRange() {
         ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
         RefundHistory refundHistory = getRefundHistoryEntity(chargeEntity, RefundStatus.CREATED);
@@ -667,7 +666,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void emitHistoricEventsById_shouldNotProcessIfRecordDoesNotExist() {
+    void emitHistoricEventsById_shouldNotProcessIfRecordDoesNotExist() {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         verifyNoInteractions(emittedEventDao);
@@ -675,7 +674,7 @@ public class HistoricalEventEmitterServiceTest {
     }
 
     @Test
-    public void executeForRefundsOnly_shouldEmitRefundEvents() {
+    void executeForRefundsOnly_shouldEmitRefundEvents() {
         RefundHistory refundHistory = getRefundHistoryEntity(chargeEntity, RefundStatus.CREATED);
         RefundHistory refundHistory2 = getRefundHistoryEntity(chargeEntity, RefundStatus.REFUNDED);
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withId(1L).

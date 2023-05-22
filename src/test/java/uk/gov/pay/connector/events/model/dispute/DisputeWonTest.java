@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.dispute;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
 
@@ -13,10 +13,10 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.events.model.dispute.DisputeWon.from;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 
-public class DisputeWonTest {
+class DisputeWonTest {
 
     @Test
-    public void shouldSerialiseEventDetails() throws JsonProcessingException {
+    void shouldSerialiseEventDetails() throws JsonProcessingException {
         LedgerTransaction transaction = aValidLedgerTransaction()
                 .withExternalId("payment-external-id")
                 .withGatewayAccountId(1234L)

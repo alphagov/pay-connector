@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.model.charge;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
@@ -9,10 +9,10 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class PaymentIncludedInPayoutTest {
+class PaymentIncludedInPayoutTest {
 
     @Test
-    public void serializesEventDetailsGivenPaymentIncludedInPayoutTest() throws Exception {
+    void serializesEventDetailsGivenPaymentIncludedInPayoutTest() throws Exception {
         var paymentExternalId = "payment-id";
         var gatewayPayoutId = "payout-id";
         String eventDateStr = "2020-05-10T10:30:00.000000Z";

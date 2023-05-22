@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.events;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
@@ -15,12 +15,13 @@ import java.time.ZonedDateTime;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EventServiceTest {
+@ExtendWith(MockitoExtension.class)
+class EventServiceTest {
 
     @Mock
     EventQueue eventQueue;
@@ -31,29 +32,31 @@ public class EventServiceTest {
     EventService eventService;
 
     @Test
-    public void emitEvent() throws QueueException {
+    void emitEvent() throws QueueException {
         Event event = new PaymentEvent("service-id", true, "external-id", now());
         eventService.emitEvent(event);
         verify(eventQueue).emitEvent(event);
     }
 
     @Test
-    public void emitEventShouldRecordEvent() throws QueueException {
+    void emitEventShouldRecordEvent() throws QueueException {
         Event event = new PaymentEvent("service-id", true, "external-id", now());
         eventService.emitEvent(event, false);
 
         verify(eventQueue).emitEvent(event);
     }
 
-    @Test(expected = QueueException.class)
-    public void emitEventShouldThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
+    @Test
+    void emitEventShouldThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
-        eventService.emitEvent(event, false);
+        assertThrows(QueueException.class, ()-> {
+            eventService.emitEvent(event, false);    
+        });
     }
 
     @Test
-    public void emitEventShouldNotThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
+    void emitEventShouldNotThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         eventService.emitEvent(event, true);
@@ -61,7 +64,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void emitAndRecordEvent_shouldRecordEmission() throws QueueException {
+    void emitAndRecordEvent_shouldRecordEmission() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
         eventService.emitAndRecordEvent(event);
 
@@ -70,7 +73,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void emitAndRecordEvent_shouldRecordEmissionWithDoNotRetryEmitUntilDate() throws QueueException {
+    void emitAndRecordEvent_shouldRecordEmissionWithDoNotRetryEmitUntilDate() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.now(UTC);
         eventService.emitAndRecordEvent(event, doNotRetryEmitUntilDate);
@@ -80,7 +83,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void emitAndRecordEvent_shouldRecordEmissionWithoutEmittedDateForQueueException() throws QueueException {
+    void emitAndRecordEvent_shouldRecordEmissionWithoutEmittedDateForQueueException() throws QueueException {
         Event event = new PaymentCreated("service-id", true,"external-id", null, now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         eventService.emitAndRecordEvent(event);
@@ -92,7 +95,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void emitAndMarkEventAsEmitted() throws QueueException {
+    void emitAndMarkEventAsEmitted() throws QueueException {
         Event event = new PaymentEvent("service-id", true, "external-id", now());
         eventService.emitAndMarkEventAsEmitted(event);
 

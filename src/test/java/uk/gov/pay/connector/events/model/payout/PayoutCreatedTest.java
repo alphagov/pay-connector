@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.payout;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;

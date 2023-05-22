@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -15,7 +15,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class CancelledByUserTest {
+class CancelledByUserTest {
 
     private final boolean live = true;
     private final String paymentId = "jweojfewjoifewj";
@@ -25,8 +25,8 @@ public class CancelledByUserTest {
 
     private ChargeEntityFixture chargeEntityFixture;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.parse(time))
                 .withStatus(ChargeStatus.USER_CANCELLED)
@@ -36,7 +36,7 @@ public class CancelledByUserTest {
     }
 
     @Test
-    public void whenAllTheDataIsAvailable() throws JsonProcessingException {
+    void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
         String actual = new CancelledByUser(chargeEntity.getServiceId(), chargeEntity.getGatewayAccount().isLive(), transactionId,
@@ -47,7 +47,7 @@ public class CancelledByUserTest {
     }
 
     @Test
-    public void whenNoGatewayTransactionIdIsAvailable() throws JsonProcessingException {
+    void whenNoGatewayTransactionIdIsAvailable() throws JsonProcessingException {
         ChargeEntity charge = new ChargeEntity();
         charge.setExternalId(transactionId);
         charge.setGatewayTransactionId(null);

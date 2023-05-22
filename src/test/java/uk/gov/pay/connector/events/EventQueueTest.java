@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.events;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.EventQueueConfig;
 import uk.gov.pay.connector.app.SqsConfig;
@@ -16,8 +17,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EventQueueTest {
+@ExtendWith(MockitoExtension.class)
+class EventQueueTest {
 
     private EventQueue eventQueue;
     
@@ -34,15 +35,15 @@ public class EventQueueTest {
     @Mock
     private Event event;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         when(mockConnectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
         when(mockConnectorConfiguration.getEventQueueConfig()).thenReturn(eventQueueConfig);
         when(sqsConfig.getEventQueueUrl()).thenReturn(eventQueueUrl);
     }
 
     @Test
-    public void emitEvent_serialisesTheEventAndSendsToSqs() throws Exception {
+    void emitEvent_serialisesTheEventAndSendsToSqs() throws Exception {
         when(eventQueueConfig.getEventQueueEnabled()).thenReturn(true);
         eventQueue = new EventQueue(mockSqsQueueService,
                 mockConnectorConfiguration);
@@ -54,7 +55,7 @@ public class EventQueueTest {
     }
 
     @Test
-    public void emitEvent_doesNotEmitIfFeatureFlagIsFalse() throws Exception {
+    void emitEvent_doesNotEmitIfFeatureFlagIsFalse() throws Exception {
         when(eventQueueConfig.getEventQueueEnabled()).thenReturn(false);
         eventQueue = new EventQueue(mockSqsQueueService,
                 mockConnectorConfiguration);
