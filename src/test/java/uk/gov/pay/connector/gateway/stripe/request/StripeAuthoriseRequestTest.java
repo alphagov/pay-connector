@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -30,8 +29,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeAuthoriseRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripeAuthoriseRequestTest {
     private final String stripeSourceId = "stripeSourceId";
     private final String stripeConnectAccountId = "stripeConnectAccountId";
     private final String description = "chargeDescription";
@@ -51,8 +50,8 @@ public class StripeAuthoriseRequestTest {
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
@@ -71,17 +70,14 @@ public class StripeAuthoriseRequestTest {
         when(charge.getAmount()).thenReturn(amount);
         when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        
         authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
 
         stripeAuthoriseRequest = StripeAuthoriseRequest.of(stripeSourceId, authorisationGatewayRequest, stripeGatewayConfig);
     }
 
     @Test
-    public void shouldCreateAuthoriseCaptureUrl() {
+    void shouldCreateAuthoriseCaptureUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         assertThat(
                 stripeAuthoriseRequest.getUrl(),
                 is(URI.create(stripeBaseUrl + "/v1/charges"))
@@ -89,26 +85,26 @@ public class StripeAuthoriseRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectPayload() {
+    void shouldCreateCorrectPayload() {
         String payload = stripeAuthoriseRequest.getGatewayOrder().getPayload();
 
-        Assert.assertThat(payload, CoreMatchers.containsString("amount=" + amount));
-        Assert.assertThat(payload, CoreMatchers.containsString("transfer_group=" + chargeExternalId));
-        Assert.assertThat(payload, CoreMatchers.containsString("currency=GBP"));
-        Assert.assertThat(payload, CoreMatchers.containsString("source=" + stripeSourceId));
-        Assert.assertThat(payload, CoreMatchers.containsString("capture=false"));
-        Assert.assertThat(payload, CoreMatchers.containsString("on_behalf_of=" + stripeConnectAccountId));
-        Assert.assertThat(payload, CoreMatchers.containsString("description=" + description));
+        assertThat(payload, CoreMatchers.containsString("amount=" + amount));
+        assertThat(payload, CoreMatchers.containsString("transfer_group=" + chargeExternalId));
+        assertThat(payload, CoreMatchers.containsString("currency=GBP"));
+        assertThat(payload, CoreMatchers.containsString("source=" + stripeSourceId));
+        assertThat(payload, CoreMatchers.containsString("capture=false"));
+        assertThat(payload, CoreMatchers.containsString("on_behalf_of=" + stripeConnectAccountId));
+        assertThat(payload, CoreMatchers.containsString("description=" + description));
     }
 
     @Test
-    public void shouldSetCorrectOrderRequestTypeForAuthorisationWithout3DS() {
+    void shouldSetCorrectOrderRequestTypeForAuthorisationWithout3DS() {
         assertThat(stripeAuthoriseRequest.getGatewayOrder().getOrderRequestType(), is(OrderRequestType.AUTHORISE));
 
     }
 
     @Test
-    public void shouldSetCorrectOrderRequestTypeForAuthorisationWith3DS() {
+    void shouldSetCorrectOrderRequestTypeForAuthorisationWith3DS() {
         Auth3dsResponseGatewayRequest authorisationGatewayRequest = new Auth3dsResponseGatewayRequest(charge, new Auth3dsResult());
 
         assertThat(StripeAuthoriseRequest
@@ -118,7 +114,8 @@ public class StripeAuthoriseRequestTest {
     }
 
     @Test
-    public void shouldSetCorrectIdempotencyKey() {
+    void shouldSetCorrectIdempotencyKey() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(stripeAuthoriseRequest.getHeaders().get("Idempotency-Key"), is("authorise" + chargeExternalId));
     }
 }

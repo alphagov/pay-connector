@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -21,15 +21,15 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripePaymentMethodRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripePaymentMethodRequestTest {
     private final String stripeConnectAccountId = "stripeConnectAccountId";
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeBaseUrl = "stripeUrl";
@@ -56,8 +56,8 @@ public class StripePaymentMethodRequestTest {
     StripeGatewayConfig stripeGatewayConfig;
     private AuthCardDetails authCardDetails;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
@@ -73,8 +73,6 @@ public class StripePaymentMethodRequestTest {
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
         when(charge.getReference()).thenReturn(ServicePaymentReference.of("a-reference"));
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
 
         authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(cardNo);
@@ -88,7 +86,7 @@ public class StripePaymentMethodRequestTest {
     }
     
     @Test
-    public void shouldHaveCorrectParametersWithAddress() {
+    void shouldHaveCorrectParametersWithAddress() {
         Address address = new Address();
         address.setLine1(line1);
         address.setLine2(line2);
@@ -114,7 +112,7 @@ public class StripePaymentMethodRequestTest {
     }
     
     @Test
-    public void shouldHaveCanadianProvinceOrTerritoryInBillingDetailsWhenProvided() {
+    void shouldHaveCanadianProvinceOrTerritoryInBillingDetailsWhenProvided() {
         Address address = new Address();
         address.setLine1(line1);
         address.setLine2(line2);
@@ -134,7 +132,7 @@ public class StripePaymentMethodRequestTest {
     }
 
     @Test
-    public void shouldHaveUsStateInBillingDetailsWhenProvided() {
+    void shouldHaveUsStateInBillingDetailsWhenProvided() {
         Address address = new Address();
         address.setLine1(line1);
         address.setLine2(line2);
@@ -154,7 +152,7 @@ public class StripePaymentMethodRequestTest {
     }
 
     @Test
-    public void shouldHaveCorrectParametersWithoutAddress() {
+    void shouldHaveCorrectParametersWithoutAddress() {
         CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
         
@@ -167,14 +165,18 @@ public class StripePaymentMethodRequestTest {
     }
 
     @Test
-    public void createsCorrectIdempotencyKey() {
+    void createsCorrectIdempotencyKey() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
+
         assertThat(
                 stripePaymentMethodRequest.getHeaders().get("Idempotency-Key"),
                 is("payment_method" + chargeExternalId));
     }
 
     @Test
-    public void shouldCreateCorrectUrl() {
+    void shouldCreateCorrectUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
+
         assertThat(stripePaymentMethodRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/payment_methods")));
     }
 }

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.events.model.payout.PayoutCreated;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -14,10 +14,10 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_UPDATED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 
-public class StripeNotificationTypeTest {
+class StripeNotificationTypeTest {
 
     @Test
-    public void shouldHaveCorrectEventClassAssignedToPayoutTypes() {
+    void shouldHaveCorrectEventClassAssignedToPayoutTypes() {
         assertThat(PAYOUT_CREATED.getEventClass().get(), is(PayoutCreated.class));
         assertThat(PAYOUT_FAILED.getEventClass().get(), is(PayoutFailed.class));
         assertThat(PAYOUT_PAID.getEventClass().get(), is(PayoutPaid.class));

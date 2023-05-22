@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -26,8 +26,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeTransferInRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripeTransferInRequestTest {
     private final String refundExternalId = "payRefundExternalId";
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeChargeId = "stripeChargeId";
@@ -54,8 +54,8 @@ public class StripeTransferInRequestTest {
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
@@ -72,10 +72,6 @@ public class StripeTransferInRequestTest {
         when(refundEntity.getAmount()).thenReturn(refundAmount);
         when(refundEntity.getExternalId()).thenReturn(refundExternalId);
 
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount, gatewayAccountCredentialsEntity);
 
         refundTransferInRequest = StripeTransferInRequest.createRefundTransferRequest(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
@@ -87,12 +83,14 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectUrl() {
+    void shouldCreateCorrectUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         assertThat(refundTransferInRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/transfers")));
     }
 
     @Test
-    public void shouldCreateCorrectPayload_forRefundTransfer() {
+    void shouldCreateCorrectPayload_forRefundTransfer() {
+        when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
         String payload = refundTransferInRequest.getGatewayOrder().getPayload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
@@ -107,7 +105,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectPayload_forFeeTransfer() {
+    void shouldCreateCorrectPayload_forFeeTransfer() {
+        when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
         String payload = feeTransferInRequest.getGatewayOrder().getPayload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
@@ -122,7 +121,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectPayload_forDisputeTransfer() {
+    void shouldCreateCorrectPayload_forDisputeTransfer() {
+        when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
         String payload = disputeTransferInRequest.getGatewayOrder().getPayload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
@@ -137,7 +137,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldHaveStripeAccountHeaderSetToStripeConnectAccountId() {
+    void shouldHaveStripeAccountHeaderSetToStripeConnectAccountId() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 refundTransferInRequest.getHeaders().get("Stripe-Account"),
                 is(stripeConnectAccountId)
@@ -145,7 +146,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldHaveIdempotencyKeySetToRefundExternalId_forRefundTransfer() {
+    void shouldHaveIdempotencyKeySetToRefundExternalId_forRefundTransfer() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 refundTransferInRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_in" + refundExternalId)
@@ -153,7 +155,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldHaveIdempotencyKeySetToRefundExternalId_forFeeTransfer() {
+    void shouldHaveIdempotencyKeySetToRefundExternalId_forFeeTransfer() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 feeTransferInRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_in" + chargeExternalId)
@@ -161,7 +164,8 @@ public class StripeTransferInRequestTest {
     }
 
     @Test
-    public void shouldHaveIdempotencyKeySetToDisputeExternalId_forDisputeTransfer() {
+    void shouldHaveIdempotencyKeySetToDisputeExternalId_forDisputeTransfer() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 disputeTransferInRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_in" + disputeExternalId)

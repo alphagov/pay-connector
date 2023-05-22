@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class StripePayoutTest {
+class StripePayoutTest {
 
     @Test
-    public void shouldReturnCreatedAsZonedDateTime() {
+    void shouldReturnCreatedAsZonedDateTime() {
         StripePayout payout = new StripePayout("po_123", 1213L, null, 1589395533L,
                 "pending", "card", null);
 
@@ -16,7 +16,7 @@ public class StripePayoutTest {
     }
 
     @Test
-    public void shouldReturnArrivalDateAsZonedDateTime() {
+    void shouldReturnArrivalDateAsZonedDateTime() {
         StripePayout payout = new StripePayout("po_123", 1213L, 1589395533L,
                 null, "pending", "card", null);
 
