@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,8 +39,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeQueryPaymentStatusHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class StripeQueryPaymentStatusHandlerTest {
     private StripeQueryPaymentStatusHandler handler;
 
     @Mock
@@ -52,8 +53,8 @@ public class StripeQueryPaymentStatusHandlerTest {
     private ChargeQueryGatewayRequest queryGatewayRequest;
     private final GatewayClient.Response paymentSearchResponse = mock(GatewayClient.Response.class);
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         handler = new StripeQueryPaymentStatusHandler(gatewayClient, stripeGatewayConfig, objectMapper);
         gatewayAccount = buildGatewayAccountEntity();
         when(paymentSearchResponse.getEntity()).thenReturn(searchResponse());
@@ -71,7 +72,7 @@ public class StripeQueryPaymentStatusHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveChargeCaptured_whenQueryingByMetadataAndStatusIsSucceeded() throws GatewayException {
+    void shouldRetrieveChargeCaptured_whenQueryingByMetadataAndStatusIsSucceeded() throws GatewayException {
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
         assertThat(response.foundCharge(), is(true));
@@ -80,7 +81,7 @@ public class StripeQueryPaymentStatusHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveChargeNotCaptured_whenQueryingByMetadataAndStatusIsRequiresPaymentMethod() throws GatewayException {
+    void shouldRetrieveChargeNotCaptured_whenQueryingByMetadataAndStatusIsRequiresPaymentMethod() throws GatewayException {
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         when(paymentSearchResponse.getEntity()).thenReturn(searchResponse().replace("succeeded", "requires_payment_method"));
         ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
@@ -90,7 +91,7 @@ public class StripeQueryPaymentStatusHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveChargeNotCaptured_whenQueryingByMetadataAndStatusIsCanceled() throws GatewayException {
+    void shouldRetrieveChargeNotCaptured_whenQueryingByMetadataAndStatusIsCanceled() throws GatewayException {
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         when(paymentSearchResponse.getEntity()).thenReturn(searchResponse().replace("succeeded", "canceled"));
         ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
@@ -98,19 +99,19 @@ public class StripeQueryPaymentStatusHandlerTest {
         assertThat(response.getMappedStatus().isPresent(), is(true));
         assertThat(response.getMappedStatus().get(), is(ChargeStatus.AUTHORISATION_CANCELLED));
     }
-    
+
     @Test
-    public void shouldReturnGatewayTransactionIdInTheResponse() throws GatewayException {
+    void shouldReturnGatewayTransactionIdInTheResponse() throws GatewayException {
         chargeEntity.setGatewayTransactionId(null);
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         when(paymentSearchResponse.getEntity()).thenReturn(searchResponse().replace("succeeded", "canceled"));
         ChargeQueryResponse response = handler.queryPaymentStatus(queryGatewayRequest);
-        
+
         assertThat(response.getRawGatewayResponse().get().getTransactionId(), is("pi_1FJMFKDv3CZEaFO2UhknVpXZ"));
     }
 
     @Test
-    public void shouldReturnError_whenQueryingByMetadataFindsNoCharge() throws GatewayException {
+    void shouldReturnError_whenQueryingByMetadataFindsNoCharge() throws GatewayException {
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenReturn(paymentSearchResponse);
         when(paymentSearchResponse.getEntity()).thenReturn("{\n" +
                 "  \"object\": \"search_result\",\n" +
@@ -128,22 +129,22 @@ public class StripeQueryPaymentStatusHandlerTest {
         assertThat(response.getRawGatewayResponse().isPresent(), is(false));
     }
 
-    @Test(expected = GatewayException.GatewayErrorException.class)
-    public void shouldHandleGatewayErrorException_whenQueryingByMetadata() throws GatewayException {
+    @Test
+    void shouldHandleGatewayErrorException_whenQueryingByMetadata() throws GatewayException {
         GatewayException.GatewayErrorException gatewayClientException = new GatewayException.GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), 402);
 
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenThrow(gatewayClientException);
 
-        handler.queryPaymentStatus(queryGatewayRequest);
+        assertThrows(GatewayException.GatewayErrorException.class, () -> handler.queryPaymentStatus(queryGatewayRequest));
     }
 
-    @Test(expected = GatewayException.GatewayConnectionTimeoutException.class)
-    public void shouldHandleGatewayConnectionTimeoutException_whenQueryingByMetadata() throws GatewayException {
+    @Test
+    void shouldHandleGatewayConnectionTimeoutException_whenQueryingByMetadata() throws GatewayException {
         GatewayException.GatewayConnectionTimeoutException gatewayClientException = new GatewayException.GatewayConnectionTimeoutException("Unexpected HTTP status code 418 from gateway");
 
         when(gatewayClient.getRequestFor(any(StripeQueryPaymentStatusRequest.class))).thenThrow(gatewayClientException);
 
-        handler.queryPaymentStatus(queryGatewayRequest);
+        assertThrows(GatewayException.GatewayConnectionTimeoutException.class, () -> handler.queryPaymentStatus(queryGatewayRequest));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {

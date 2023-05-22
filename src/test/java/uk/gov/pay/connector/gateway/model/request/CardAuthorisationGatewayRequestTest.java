@@ -1,17 +1,17 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-public class CardAuthorisationGatewayRequestTest {
+ class CardAuthorisationGatewayRequestTest {
     
     @Test
-    public void shouldReturnTotalAmount_whenThereIsACorporateSurcharge() {
+     void shouldReturnTotalAmount_whenThereIsACorporateSurcharge() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(2000L)
                 .withCorporateSurcharge(250L)
@@ -21,7 +21,7 @@ public class CardAuthorisationGatewayRequestTest {
     }
     
     @Test
-    public void shouldReturnBaseAmount_whenThereIsNoCorporateSurcharge() {
+     void shouldReturnBaseAmount_whenThereIsNoCorporateSurcharge() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(2000L)
                 .build();

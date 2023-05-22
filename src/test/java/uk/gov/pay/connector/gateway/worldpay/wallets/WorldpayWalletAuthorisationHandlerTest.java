@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.gateway.worldpay.wallets;
 
 import com.amazonaws.util.json.Jackson;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -54,8 +54,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL;
 
-@RunWith(MockitoJUnitRunner.class)
-public class WorldpayWalletAuthorisationHandlerTest {
+@ExtendWith(MockitoExtension.class)
+ class WorldpayWalletAuthorisationHandlerTest {
 
     @Mock
     private GatewayClient mockGatewayClient;
@@ -77,8 +77,8 @@ public class WorldpayWalletAuthorisationHandlerTest {
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.test");
     private static final String GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS = "uniqueSessionId";
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+     void setUp() throws Exception {
         worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
         chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withDescription("This is the description")
@@ -109,7 +109,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
+     void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(false));
         } catch (GatewayErrorException e) {
@@ -122,7 +122,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendApplePayRequestWithPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+     void shouldSendApplePayRequestWithPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(true));
@@ -136,7 +136,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+     void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(true));
@@ -150,7 +150,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+     void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(false));
@@ -164,7 +164,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
+     void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(false));
         } catch (GatewayErrorException e) {
@@ -177,7 +177,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePayRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+     void shouldSendGooglePayRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(true));
@@ -191,7 +191,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+     void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(true));
@@ -205,7 +205,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+     void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(false));
@@ -219,7 +219,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWithDDCResultWhenWorldpay3dsFlexResultIsAvailable() throws Exception {
+     void shouldSendGooglePay3dsRequestWithDDCResultWhenWorldpay3dsFlexResultIsAvailable() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, true, false, true));
         } catch (GatewayErrorException e) {
@@ -232,7 +232,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, false, false));
         } catch (GatewayErrorException e) {
@@ -246,7 +246,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithIpAddressArePresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithIpAddressArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, true, false, false));
         } catch (GatewayErrorException e) {
@@ -258,7 +258,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithout3dsEnabledArePresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithout3dsEnabledArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(false, true, false, false));
         } catch (GatewayErrorException e) {
@@ -270,7 +270,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, true, false));
@@ -285,7 +285,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, true, false));
@@ -300,7 +300,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, false, false));

@@ -1,19 +1,19 @@
 package uk.gov.pay.connector.gateway.model.response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 
-public class GatewayResponseTest {
+ class GatewayResponseTest {
 
     @Test
-    public void shouldHandleAGatewayError() {
+     void shouldHandleAGatewayError() {
         GatewayError error = new GatewayError(
                 "an error message",
                 GENERIC_GATEWAY_ERROR);
@@ -31,7 +31,7 @@ public class GatewayResponseTest {
 
 
     @Test
-    public void shouldHandleAValidGatewayResponse() {
+     void shouldHandleAValidGatewayResponse() {
         BaseResponse baseResponse = createBaseResponseWith(null, null);
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
@@ -45,7 +45,7 @@ public class GatewayResponseTest {
     }
 
     @Test
-    public void shouldHandleAGatewayResponseWithAnErrorCodeAndMessage() {
+     void shouldHandleAGatewayResponseWithAnErrorCodeAndMessage() {
         BaseResponse baseResponse = createBaseResponseWith("123", "oops, something went wrong");
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder

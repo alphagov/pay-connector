@@ -50,9 +50,7 @@ class EventServiceTest {
     void emitEventShouldThrowExceptionIfSwallowExceptionIsFalse() throws QueueException {
         Event event = new PaymentEvent("service-id", true,"external-id", now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
-        assertThrows(QueueException.class, ()-> {
-            eventService.emitEvent(event, false);    
-        });
+        assertThrows(QueueException.class, ()-> eventService.emitEvent(event, false));
     }
 
     @Test

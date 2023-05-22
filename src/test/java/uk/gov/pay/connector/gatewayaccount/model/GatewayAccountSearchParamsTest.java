@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -11,12 +11,11 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapWithSize.aMapWithSize;
 import static org.hamcrest.collection.IsMapWithSize.anEmptyMap;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
-public class GatewayAccountSearchParamsTest {
+ class GatewayAccountSearchParamsTest {
 
     @Test
-    public void shouldReturnFilterTemplatesWithAllParameters() {
+     void shouldReturnFilterTemplatesWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("1,2");
         params.setServiceIds("serviceidone,serviceidtwo,serviceidthree");
@@ -60,7 +59,7 @@ public class GatewayAccountSearchParamsTest {
     }
 
     @Test
-    public void shouldReturnEmptyFilterTemplatesForNoParamsSet() {
+     void shouldReturnEmptyFilterTemplatesForNoParamsSet() {
         var params = new GatewayAccountSearchParams();
 
         List<String> filterTemplates = params.getFilterTemplates();
@@ -68,7 +67,7 @@ public class GatewayAccountSearchParamsTest {
     }
 
     @Test
-    public void shouldNotIncludeAccountIdsInFilterTemplatesForEmptyString() {
+     void shouldNotIncludeAccountIdsInFilterTemplatesForEmptyString() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("");
 
@@ -77,7 +76,7 @@ public class GatewayAccountSearchParamsTest {
     }
 
     @Test
-    public void shouldReturnQueryMapWithAllParameters() {
+     void shouldReturnQueryMapWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("1,22");
         params.setServiceIds("serviceidone,serviceidtwo,serviceidthree");
@@ -110,7 +109,7 @@ public class GatewayAccountSearchParamsTest {
     }
 
     @Test
-    public void shouldReturnEmptyQueryMapForNoParamsSet() {
+     void shouldReturnEmptyQueryMapForNoParamsSet() {
         var params = new GatewayAccountSearchParams();
 
         Map<String, Object> queryMap = params.getQueryMap();
@@ -118,7 +117,7 @@ public class GatewayAccountSearchParamsTest {
     }
 
     @Test
-    public void shouldNotIncludeAccountIdsInQueryMapForEmptyString() {
+     void shouldNotIncludeAccountIdsInQueryMapForEmptyString() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds("");
 
