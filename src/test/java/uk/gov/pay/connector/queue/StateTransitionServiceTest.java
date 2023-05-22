@@ -4,12 +4,12 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -49,8 +49,8 @@ import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEve
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StateTransitionServiceTest {
+@ExtendWith(MockitoExtension.class)
+class StateTransitionServiceTest {
 
     StateTransitionService stateTransitionService;
 
@@ -67,16 +67,16 @@ public class StateTransitionServiceTest {
     @Mock
     Meter meter;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         when(environment.metrics()).thenReturn(metricRegistry);
-        when(metricRegistry.counter(anyString())).thenReturn(counter);
-        when(metricRegistry.meter(anyString())).thenReturn(meter);
         stateTransitionService = new StateTransitionService(mockStateTransitionQueue, mockEventService, environment);
     }
 
     @Test
-    public void shouldOfferPaymentStateTransitionMessageForAValidStateTransitionIntoNonLockingState() {
+    void shouldOfferPaymentStateTransitionMessageForAValidStateTransitionIntoNonLockingState() {
+        when(metricRegistry.counter(anyString())).thenReturn(counter);
+        when(metricRegistry.meter(anyString())).thenReturn(meter);
         ChargeEventEntity chargeEvent = aValidChargeEventEntity()
                 .withId(100L)
                 .build();
@@ -92,7 +92,7 @@ public class StateTransitionServiceTest {
     }
 
     @Test
-    public void shouldNotOfferStateTransitionMessageForAValidStateTransitionIntoLockingState() {
+    void shouldNotOfferStateTransitionMessageForAValidStateTransitionIntoLockingState() {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         stateTransitionService.offerPaymentStateTransition("external-id", ChargeStatus.CREATED, AUTHORISATION_READY, chargeEvent);
 
@@ -101,7 +101,7 @@ public class StateTransitionServiceTest {
     }
 
     @Test
-    public void shouldOfferRefundStateTransitionMessageForAValidStateTransition() {
+    void shouldOfferRefundStateTransitionMessageForAValidStateTransition() {
         RefundEntity refundEntity = aValidRefundEntity()
                 .withExternalId("external-id")
                 .withStatus(CREATED)
@@ -130,7 +130,7 @@ public class StateTransitionServiceTest {
     }
 
     @Test
-    public void offerStateTransition_shouldOfferAndRecordEvent() {
+    void offerStateTransition_shouldOfferAndRecordEvent() {
         RefundStateTransition refundStateTransition = new RefundStateTransition("external-id", CREATED, RefundCreatedByUser.class);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withExternalId("external-id")

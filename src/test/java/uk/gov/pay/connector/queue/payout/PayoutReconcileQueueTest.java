@@ -3,11 +3,11 @@ package uk.gov.pay.connector.queue.payout;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.app.config.PayoutReconcileProcessConfig;
@@ -26,8 +26,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class PayoutReconcileQueueTest {
+@ExtendWith(MockitoExtension.class)
+class PayoutReconcileQueueTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
     
@@ -37,8 +37,8 @@ public class PayoutReconcileQueueTest {
     private ConnectorConfiguration connectorConfiguration;
     private PayoutReconcileQueue payoutReconcileQueue;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         PayoutReconcileProcessConfig payoutReconcileProcessConfig = mock(PayoutReconcileProcessConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getPayoutReconcileQueueUrl()).thenReturn("");
@@ -49,7 +49,7 @@ public class PayoutReconcileQueueTest {
     }
 
     @Test
-    public void shouldParsePayoutFromQueueGivenWellFormattedJSON() throws QueueException {
+    void shouldParsePayoutFromQueueGivenWellFormattedJSON() throws QueueException {
         String validJsonMessage = "{ \"gateway_payout_id\": \"payout-id\", \"connect_account_id\": \"connect-accnt-id\",\"created_date\":\"2020-05-01T10:30:00.000000Z\"}";
         SendMessageResult messageResult = mock(SendMessageResult.class);
 
@@ -67,7 +67,7 @@ public class PayoutReconcileQueueTest {
     }
 
     @Test
-    public void shouldSendValidSerialisedPayoutToQueue() throws QueueException, JsonProcessingException {
+    void shouldSendValidSerialisedPayoutToQueue() throws QueueException, JsonProcessingException {
         Payout payout = new Payout("payout-id", "connect-accnt-id", ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
         when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
 

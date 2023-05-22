@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
@@ -18,10 +19,10 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
-public class RefundEntityTest {
+class RefundEntityTest {
 
     @Test
-    public void shouldConstructANewEntity() {
+    void shouldConstructANewEntity() {
         ChargeEntity chargeEntity = aValidChargeEntity().build();
         Long amount = 100L;
 
@@ -36,19 +37,19 @@ public class RefundEntityTest {
     }
 
     @Test
-    public void shouldHaveTheGivenStatus() {
+    void shouldHaveTheGivenStatus() {
         assertTrue(aValidRefundEntity().withStatus(CREATED).build().hasStatus(CREATED));
         assertTrue(aValidRefundEntity().withStatus(REFUNDED).build().hasStatus(REFUNDED));
     }
 
     @Test
-    public void shouldHaveAtLeastOneOfTheGivenStatuses() {
+    void shouldHaveAtLeastOneOfTheGivenStatuses() {
         assertTrue(aValidRefundEntity().withStatus(CREATED).build().hasStatus(CREATED, REFUNDED));
         assertTrue(aValidRefundEntity().withStatus(REFUNDED).build().hasStatus(CREATED, REFUNDED));
     }
 
     @Test
-    public void shouldHaveNoneOfTheGivenStatuses() {
+    void shouldHaveNoneOfTheGivenStatuses() {
         assertFalse(aValidRefundEntity().withStatus(CREATED).build().hasStatus(REFUND_SUBMITTED, REFUNDED));
     }
 
