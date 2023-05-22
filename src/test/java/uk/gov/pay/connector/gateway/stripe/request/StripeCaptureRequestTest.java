@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -26,8 +26,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeCaptureRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripeCaptureRequestTest {
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeChargeId = "stripeChargeId";
     private final String stripeBaseUrl = "stripeUrl";
@@ -46,8 +46,8 @@ public class StripeCaptureRequestTest {
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withId(gatewayAccountId)
                 .withGatewayName("stripe")
@@ -68,15 +68,14 @@ public class StripeCaptureRequestTest {
 
         captureGatewayRequest = CaptureGatewayRequest.valueOf(charge);
 
-        when(stripeAuthTokens.getLive()).thenReturn(stripeLiveApiToken);
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
 
         stripeCaptureRequest = StripePaymentIntentCaptureRequest.of(captureGatewayRequest, stripeGatewayConfig);
     }
 
     @Test
-    public void shouldCreateCorrectCaptureUrl() {
+    void shouldCreateCorrectCaptureUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
+
         assertThat(
                 stripeCaptureRequest.getUrl(),
                 is(URI.create(stripeBaseUrl + "/v1/payment_intents/" + stripeChargeId + "/capture"))
@@ -84,7 +83,7 @@ public class StripeCaptureRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectCapturePayload() {
+    void shouldCreateCorrectCapturePayload() {
         assertThat(
                 stripeCaptureRequest.getGatewayOrder().getPayload(),
                 containsString("expand%5B%5D=charges.data.balance_transaction")
@@ -92,7 +91,7 @@ public class StripeCaptureRequestTest {
     }
 
     @Test
-    public void shouldSetGatewayOrderToBeOfTypeCapture() {
+    void shouldSetGatewayOrderToBeOfTypeCapture() {
         assertThat(
                 stripeCaptureRequest.getGatewayOrder().getOrderRequestType(),
                 is(OrderRequestType.CAPTURE)
@@ -100,7 +99,10 @@ public class StripeCaptureRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectCaptureHeaders() {
+    void shouldCreateCorrectCaptureHeaders() {
+        when(stripeAuthTokens.getLive()).thenReturn(stripeLiveApiToken);
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
+
         assertThat(
                 stripeCaptureRequest.getHeaders().get("Idempotency-Key"),
                 is("capture" + chargeExternalId)
@@ -113,7 +115,7 @@ public class StripeCaptureRequestTest {
     }
     
     @Test
-    public void shouldHaveCorrectGatewayAccountType() {
+    void shouldHaveCorrectGatewayAccountType() {
         assertThat(
                 stripeCaptureRequest.getGatewayAccountType(),
                 is(gatewayAccount.getType())

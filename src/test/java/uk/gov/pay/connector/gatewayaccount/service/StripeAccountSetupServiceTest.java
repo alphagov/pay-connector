@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
@@ -31,8 +31,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.O
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeAccountSetupServiceTest {
+@ExtendWith(MockitoExtension.class)
+class StripeAccountSetupServiceTest {
 
     private static final long GATEWAY_ACCOUNT_ID = 42;
 
@@ -59,23 +59,15 @@ public class StripeAccountSetupServiceTest {
 
     private StripeAccountSetupService stripeAccountSetupService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
-
-        given(mockBankDetailsCompletedTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
-        given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
-        given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
-        given(mockCompanyNumberCompletedTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
-        given(mockDirectorCompletedTaskEntity.getTask()).willReturn(DIRECTOR);
-        given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
-        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
+        
 
         this.stripeAccountSetupService = new StripeAccountSetupService(mockStripeAccountSetupDao);
     }
 
     @Test
-    public void shouldReturnStripeAccountSetupWithNoTasksCompleted() {
+    void shouldReturnStripeAccountSetupWithNoTasksCompleted() {
         given(mockStripeAccountSetupDao.findByGatewayAccountId(GATEWAY_ACCOUNT_ID))
                 .willReturn(Collections.emptyList());
 
@@ -91,12 +83,20 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldReturnStripeAccountSetupWithAllTasksCompleted() {
+    void shouldReturnStripeAccountSetupWithAllTasksCompleted() {
         given(mockStripeAccountSetupDao.findByGatewayAccountId(GATEWAY_ACCOUNT_ID))
                 .willReturn(Arrays.asList(mockResponsiblePersonCompletedTaskEntity,
                         mockBankDetailsCompletedTaskEntity, mockVatNumberCompletedTaskEntity,
                         mockCompanyNumberCompletedTaskEntity, mockDirectorCompletedTaskEntity,
                         mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsCompletedTaskEntity));
+
+        given(mockBankDetailsCompletedTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
+        given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
+        given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
+        given(mockCompanyNumberCompletedTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
+        given(mockDirectorCompletedTaskEntity.getTask()).willReturn(DIRECTOR);
+        given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
+        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
 
         StripeAccountSetup tasks = stripeAccountSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
@@ -110,9 +110,13 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldReturnStripeAccountSetupWithSomeTasksCompleted() {
+    void shouldReturnStripeAccountSetupWithSomeTasksCompleted() {
+        
         given(mockStripeAccountSetupDao.findByGatewayAccountId(GATEWAY_ACCOUNT_ID))
                 .willReturn(Arrays.asList(mockResponsiblePersonCompletedTaskEntity, mockVatNumberCompletedTaskEntity));
+
+        given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
+        given(mockVatNumberCompletedTaskEntity.getTask()).willReturn(VAT_NUMBER);
 
         StripeAccountSetup tasks = stripeAccountSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
@@ -125,7 +129,8 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldRecordBankAccountCompleted() {
+    void shouldRecordBankAccountCompleted() {
+        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true);
 
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT)).willReturn(false);
@@ -141,7 +146,8 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldDoNothingWhenAskedToRecordBankAccountCompletedIfAlreadyRecorded() {
+    void shouldDoNothingWhenAskedToRecordBankAccountCompletedIfAlreadyRecorded() {
+        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true);
 
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT)).willReturn(true);
@@ -152,7 +158,8 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldRecordBankAccountNotCompleted() {
+    void shouldRecordBankAccountNotCompleted() {
+        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, false);
 
         stripeAccountSetupService.update(mockGatewayAccountEntity, Collections.singletonList(patchRequest));
@@ -161,7 +168,8 @@ public class StripeAccountSetupServiceTest {
     }
 
     @Test
-    public void shouldRecordMultipleTasksCompleted() {
+    void shouldRecordMultipleTasksCompleted() {
+        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         List<StripeAccountSetupUpdateRequest> patchRequests = Arrays.asList(
                 new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true),
                 new StripeAccountSetupUpdateRequest(RESPONSIBLE_PERSON, true),

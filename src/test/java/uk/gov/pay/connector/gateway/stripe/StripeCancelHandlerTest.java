@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import org.hamcrest.core.Is;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -39,8 +39,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeCancelHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class StripeCancelHandlerTest {
     @Mock
     private GatewayClient client;
     @Mock
@@ -51,7 +51,7 @@ public class StripeCancelHandlerTest {
     
     private ChargeEntity chargeEntity;
 
-    @Before
+    @BeforeEach
     public void setup() {
         final String transactionId = "ch_1231231123123";
         chargeEntity = aValidChargeEntity()
@@ -67,7 +67,7 @@ public class StripeCancelHandlerTest {
     }
 
     @Test
-    public void shouldCancelPaymentSuccessfully() throws Exception {
+    void shouldCancelPaymentSuccessfully() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
         assertThat(response.isSuccessful(), is(true));
@@ -75,7 +75,7 @@ public class StripeCancelHandlerTest {
     } 
     
     @Test
-    public void shouldCancelPaymentSuccessfullyUsingPaymentIntents() throws Exception {
+    void shouldCancelPaymentSuccessfullyUsingPaymentIntents() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(aValidChargeEntity()
                 .withGatewayAccountEntity(buildGatewayAccountEntity())
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
@@ -92,7 +92,7 @@ public class StripeCancelHandlerTest {
     }
 
     @Test
-    public void shouldHandle4xxFromStripeGateway() throws Exception {
+    void shouldHandle4xxFromStripeGateway() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_BAD_REQUEST);
         when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(exception);
 
@@ -106,7 +106,7 @@ public class StripeCancelHandlerTest {
     }
 
     @Test
-    public void shouldHandle5xxFromStripeGateway() throws Exception {
+    void shouldHandle5xxFromStripeGateway() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Problem with Stripe servers", "stripe server error", SC_SERVICE_UNAVAILABLE);
         when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(exception);
 
@@ -120,7 +120,7 @@ public class StripeCancelHandlerTest {
     }
 
     @Test
-    public void shouldHandleGatewayException() throws Exception {
+    void shouldHandleGatewayException() throws Exception {
         GatewayConnectionTimeoutException gatewayException = new GatewayConnectionTimeoutException("couldn't connect to https://stripe.url");
         when(client.postRequestFor(any(StripePaymentIntentCancelRequest.class))).thenThrow(gatewayException);
 

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
@@ -12,11 +12,11 @@ import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_PAYMENT_AMOUNT;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeTransferMetadataTest {
+@ExtendWith(MockitoExtension.class)
+class StripeTransferMetadataTest {
 
     @Test
-    public void shouldDeserialiseFromMetadata() {
+    void shouldDeserialiseFromMetadata() {
         Map<String, String> stripeObjectMetadata = Map.of(
                 "stripe_charge_id", "some-charge-id",
                 "govuk_pay_transaction_external_id", "some-reconciliation-transaction-id",
@@ -29,7 +29,7 @@ public class StripeTransferMetadataTest {
     }
 
     @Test
-    public void shouldDeserialiseFromMetadata_whenMetadataDoesNotIncludeReason() {
+    void shouldDeserialiseFromMetadata_whenMetadataDoesNotIncludeReason() {
         Map<String, String> stripeObjectMetadata = Map.of(
                 "stripe_charge_id", "some-charge-id",
                 "govuk_pay_transaction_external_id", "some-reconciliation-transaction-id"
@@ -41,7 +41,7 @@ public class StripeTransferMetadataTest {
     }
 
     @Test
-    public void shouldSerialiseToMetadata() {
+    void shouldSerialiseToMetadata() {
         var stripeTransferMetadata = new StripeTransferMetadata("some-charge-id",
                 "some-reconciliation-transaction-id",
                 TRANSFER_REFUND_AMOUNT);

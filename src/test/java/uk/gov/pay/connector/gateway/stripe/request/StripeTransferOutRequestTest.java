@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -24,9 +24,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeTransferOutRequestTest {
-    
+@ExtendWith(MockitoExtension.class)
+class StripeTransferOutRequestTest {
+
     private final String netTransferAmount = "200";
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeChargeId = "stripeChargeId";
@@ -44,9 +44,8 @@ public class StripeTransferOutRequestTest {
     @Mock
     StripeAuthTokens stripeAuthTokens;
 
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
@@ -62,21 +61,19 @@ public class StripeTransferOutRequestTest {
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-
         final CaptureGatewayRequest captureGatewayRequest = CaptureGatewayRequest.valueOf(charge);
 
         stripeTransferOutRequest = StripeTransferOutRequest.of(netTransferAmount, stripeChargeId, captureGatewayRequest, stripeGatewayConfig);
     }
 
     @Test
-    public void shouldCreateCorrectUrl() {
+    void shouldCreateCorrectUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         assertThat(stripeTransferOutRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/transfers")));
     }
 
     @Test
-    public void shouldCreateCorrectPayload() {
+    void shouldCreateCorrectPayload() {
         String payload = stripeTransferOutRequest.getGatewayOrder().getPayload();
 
         assertThat(payload, containsString("destination=" + stripeConnectAccountId));
@@ -90,7 +87,8 @@ public class StripeTransferOutRequestTest {
     }
 
     @Test
-    public void shouldHaveIdempotencyKeySetToChargeExternalId() {
+    void shouldHaveIdempotencyKeySetToChargeExternalId() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 stripeTransferOutRequest.getHeaders().get("Idempotency-Key"),
                 is("transfer_out" + chargeExternalId)

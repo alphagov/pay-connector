@@ -1,13 +1,12 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -30,8 +29,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripePaymentIntentRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripePaymentIntentRequestTest {
 
     @Mock
     private ChargeEntity charge;
@@ -53,8 +52,8 @@ public class StripePaymentIntentRequestTest {
     private final String description = "description";
     private final String customerId = "a-customer-id";
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
                 .build();
@@ -70,14 +69,11 @@ public class StripePaymentIntentRequestTest {
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getAmount()).thenReturn(amount);
         when(charge.getDescription()).thenReturn(description);
-        when(charge.getReference()).thenReturn(ServicePaymentReference.of("a-reference"));
         when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
     }
 
     @Test
-    public void shouldHaveCorrectParametersWithAddress() {
+    void shouldHaveCorrectParametersWithAddress() {
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
@@ -98,7 +94,8 @@ public class StripePaymentIntentRequestTest {
     }
 
     @Test
-    public void createsCorrectIdempotencyKey() {
+    void createsCorrectIdempotencyKey() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         assertThat(
@@ -107,7 +104,8 @@ public class StripePaymentIntentRequestTest {
     }
 
     @Test
-    public void shouldCreateCorrectUrl() {
+    void shouldCreateCorrectUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
         assertThat(stripePaymentIntentRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/payment_intents")));
@@ -115,7 +113,7 @@ public class StripePaymentIntentRequestTest {
 
 
     @Test
-    public void shouldIncludeMotoFlagWhenChargeIsMoto() {
+    void shouldIncludeMotoFlagWhenChargeIsMoto() {
         when(charge.isMoto()).thenReturn(true);
 
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
@@ -125,7 +123,7 @@ public class StripePaymentIntentRequestTest {
     }
     
     @Test
-    public void shouldNotIncludeMotoFlagWhenChargeIsNotMoto() {
+    void shouldNotIncludeMotoFlagWhenChargeIsNotMoto() {
         when(charge.isMoto()).thenReturn(false);
 
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
@@ -135,7 +133,7 @@ public class StripePaymentIntentRequestTest {
     }
 
     @Test
-    public void shouldIncludeCustomerIdAndSetupFutureUsageFlagForSetupFutureUsageRequest() {
+    void shouldIncludeCustomerIdAndSetupFutureUsageFlagForSetupFutureUsageRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
         var stripePaymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithSetupFutureUsage(
                 authorisationGatewayRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
@@ -147,7 +145,7 @@ public class StripePaymentIntentRequestTest {
     }
 
     @Test
-    public void shouldIncludeOffSessionFlagForUseSavedPaymentDetails() {
+    void shouldIncludeOffSessionFlagForUseSavedPaymentDetails() {
         RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
         StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestUseSavedPaymentDetails(
                 authRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);

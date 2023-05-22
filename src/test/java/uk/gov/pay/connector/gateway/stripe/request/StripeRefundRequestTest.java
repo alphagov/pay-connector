@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -18,15 +18,15 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeRefundRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StripeRefundRequestTest {
     private final String refundExternalId = "payRefundExternalId";
     private final long refundAmount = 100L;
     private final String stripeChargeId = "stripeChargeId";
@@ -45,7 +45,7 @@ public class StripeRefundRequestTest {
     @Mock
     StripeAuthTokens stripeAuthTokens;
     
-    @Before
+    @BeforeEach
     public void setUp() {
         gatewayAccount = aGatewayAccountEntity()
                 .withGatewayName("stripe")
@@ -61,20 +61,18 @@ public class StripeRefundRequestTest {
         when(refundEntity.getAmount()).thenReturn(refundAmount);
         when(refundEntity.getExternalId()).thenReturn(refundExternalId);
 
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount, gatewayAccountCredentialsEntity);
 
         stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }
     @Test
-    public void createsCorrectRefundUrl() {
+    void createsCorrectRefundUrl() {
+        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         assertThat(stripeRefundRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/refunds")));
     }
 
     @Test
-    public void createsCorrectRefundPayload() {
+    void createsCorrectRefundPayload() {
         String payload = stripeRefundRequest.getGatewayOrder().getPayload();
         
         assertThat(payload, containsString("charge=" + stripeChargeId));
@@ -82,7 +80,8 @@ public class StripeRefundRequestTest {
     }
     
     @Test
-    public void createsCorrectIdempotencyKey() {
+    void createsCorrectIdempotencyKey() {
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         assertThat(
                 stripeRefundRequest.getHeaders().get("Idempotency-Key"), 
                 is("refund" + refundExternalId));

@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -36,7 +36,6 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
@@ -44,6 +43,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -73,8 +73,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_SEARCH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeCaptureHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class StripeCaptureHandlerTest {
 
     private StripeCaptureHandler stripeCaptureHandler;
 
@@ -93,13 +93,13 @@ public class StripeCaptureHandlerTest {
     private GatewayAccountEntity gatewayAccount;
     private String transactionId = "ch_1231231123123";
 
-    @Before
+    @BeforeEach
     public void setup() {
         stripeCaptureHandler = new StripeCaptureHandler(gatewayClient, stripeGatewayConfig, objectMapper);
-        when(stripeGatewayConfig.getFeePercentage()).thenReturn(0.08);
-        when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(5);
-        when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(6);
-        when(stripeGatewayConfig.isCollectFee()).thenReturn(true);
+        lenient().when(stripeGatewayConfig.getFeePercentage()).thenReturn(0.08);
+        lenient().when(stripeGatewayConfig.getRadarFeeInPence()).thenReturn(5);
+        lenient().when(stripeGatewayConfig.getThreeDsFeeInPence()).thenReturn(6);
+        lenient().when(stripeGatewayConfig.isCollectFee()).thenReturn(true);
 
         gatewayAccount = buildGatewayAccountEntity();
 
@@ -116,9 +116,9 @@ public class StripeCaptureHandlerTest {
 
         captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
     }
-
+    
     @Test
-    public void shouldCaptureWithFeeAndTransferCorrectAmountToConnectAccount() throws Exception {
+    void shouldCaptureWithFeeAndTransferCorrectAmountToConnectAccount() throws Exception {
         mockStripeCaptureAndTransfer();
 
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
@@ -140,7 +140,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureWithFee_feeCalculationShouldAlwaysRoundUp() throws Exception {
+    void shouldCaptureWithFee_feeCalculationShouldAlwaysRoundUp() throws Exception {
         final String transactionId = "ch_1231231123123";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -167,7 +167,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureWithFee_feeCalculationShouldRoundUpTo1() throws Exception {
+    void shouldCaptureWithFee_feeCalculationShouldRoundUpTo1() throws Exception {
         final String transactionId = "ch_1231231123123";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -194,7 +194,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
+    void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE));
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
@@ -214,7 +214,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
@@ -226,7 +226,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("uh oh", "Problem with Stripe servers", INTERNAL_SERVER_ERROR_500);
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
@@ -238,7 +238,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturns4XXOnTransfer() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturns4XXOnTransfer() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE));
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
@@ -255,7 +255,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCorrectlyCaptureUsingPaymentIntentsApi() throws Exception {
+    void shouldCorrectlyCaptureUsingPaymentIntentsApi() throws Exception {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId("pi_123")
@@ -282,7 +282,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturns5XXOnTransfer() throws Exception {
+    void shouldNotCaptureIfPaymentProviderReturns5XXOnTransfer() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE));
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
@@ -299,7 +299,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldFailWhenCannotResolveStripeFee() throws Exception {
+    void shouldFailWhenCannotResolveStripeFee() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_WITHOUT_BALANCE_TRANSACTION_EXPANDED));
 
@@ -314,7 +314,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldFailWhenPaymentIntentHasMultipleCharges() throws Exception {
+    void shouldFailWhenPaymentIntentHasMultipleCharges() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_GET_PAYMENT_INTENT_WITH_MULTIPLE_CHARGES));
 
@@ -329,7 +329,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureWithRadarAnd3dsFeesAndTransferCorrectAmountToConnectAccount() throws Exception {
+    void shouldCaptureWithRadarAnd3dsFeesAndTransferCorrectAmountToConnectAccount() throws Exception {
         mockStripeCaptureAndTransfer();
 
         int chargeCreatedDate = 1629936000; //26Aug2021
@@ -372,7 +372,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureWithRadarAndNo3dsFeesAndTransferCorrectAmountToConnectAccount() throws Exception {
+    void shouldCaptureWithRadarAndNo3dsFeesAndTransferCorrectAmountToConnectAccount() throws Exception {
         mockStripeCaptureAndTransfer();
 
         int chargeCreatedDate = 1629936000; //26Aug2021
@@ -413,7 +413,7 @@ public class StripeCaptureHandlerTest {
     }
     
     @Test
-    public void shouldNotAttemptToCaptureOrTransfer_whenRetry_andChargeAlreadyCaptured_andTransferExists() throws Exception {
+    void shouldNotAttemptToCaptureOrTransfer_whenRetry_andChargeAlreadyCaptured_andTransferExists() throws Exception {
         ChargeEventEntity event = aValidChargeEventEntity().withChargeStatus(CAPTURE_APPROVED_RETRY).build();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -458,7 +458,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldDoTransfer_whenRetry_andChargeAlreadyCaptured_andTransferDoesNotExist() throws Exception {
+    void shouldDoTransfer_whenRetry_andChargeAlreadyCaptured_andTransferDoesNotExist() throws Exception {
         ChargeEventEntity event = aValidChargeEventEntity().withChargeStatus(CAPTURE_APPROVED_RETRY).build();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -502,7 +502,7 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureAndTransfer_whenRetry_andChargeNotAlreadyCaptured() throws Exception {
+    void shouldCaptureAndTransfer_whenRetry_andChargeNotAlreadyCaptured() throws Exception {
         ChargeEventEntity event = aValidChargeEventEntity().withChargeStatus(CAPTURE_APPROVED_RETRY).build();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
