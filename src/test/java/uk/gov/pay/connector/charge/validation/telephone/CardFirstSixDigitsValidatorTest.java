@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -22,7 +22,7 @@ public class CardFirstSixDigitsValidatorTest {
 
     private static Validator validator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpValidator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
@@ -39,7 +39,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForFiveDigits() {
+    void failsValidationForFiveDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withFirstSixDigits("12345")
@@ -52,7 +52,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForSevenDigits() {
+    void failsValidationForSevenDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withFirstSixDigits("1234567")
@@ -65,7 +65,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForSixDigits() {
+    void passesValidationForSixDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withFirstSixDigits("123456")
@@ -77,7 +77,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullDigits() {
+    void passesValidationForNullDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withFirstSixDigits(null)

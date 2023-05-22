@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.charge.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -51,8 +51,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-@RunWith(MockitoJUnitRunner.class)
-public class AuthorisationErrorGatewayCleanupServiceTest {
+@ExtendWith(MockitoExtension.class)
+class AuthorisationErrorGatewayCleanupServiceTest {
 
     @Mock
     private ChargeDao mockChargeDao;
@@ -84,10 +84,8 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     private ChargeEntity worldpayCharge;
     private ChargeEntity stripeCharge;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        when(mockPaymentProviders.byName(WORLDPAY)).thenReturn(mockWorldpayPaymentProvider);
-
         GatewayAccountEntity worldpayGatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName(WORLDPAY.getName())
                 .build();
@@ -108,12 +106,13 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldCleanupChargeThatIsAuthorisedOnTheGateway() throws Exception {
+    void shouldCleanupChargeThatIsAuthorisedOnTheGateway() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
                 eq(List.of(WEB, MOTO_API)),
                 any(Integer.class))).thenReturn(List.of(worldpayCharge, stripeCharge));
+        when(mockPaymentProviders.byName(WORLDPAY)).thenReturn(mockWorldpayPaymentProvider);
         when(mockPaymentProviders.byName(STRIPE)).thenReturn(mockStripePaymentProvider);
         when(worldpayQueryResponse.getTransactionId()).thenReturn("worldpay-order-code");
         when(stripeQueryResponse.getTransactionId()).thenReturn("stripe-order-code");
@@ -138,7 +137,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldSetStripeGatewayTransactionIdOnChargeWhenNull() throws Exception {
+    void shouldSetStripeGatewayTransactionIdOnChargeWhenNull() throws Exception {
         assertThat(stripeCharge.getGatewayTransactionId(), is(nullValue()));
 
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
@@ -163,7 +162,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldTransitionChargeStateToErrorRejectedWhenFailedOnGateway() throws Exception {
+    void shouldTransitionChargeStateToErrorRejectedWhenFailedOnGateway() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
@@ -183,7 +182,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldTransitionChargeStateToErrorChargeMissingWhenNotFoundOnGateway() throws Exception {
+    void shouldTransitionChargeStateToErrorChargeMissingWhenNotFoundOnGateway() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
@@ -203,7 +202,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldTransitionChargeStateToErrorCancelledWhenAlreadyCancelledOnGateway() throws Exception {
+    void shouldTransitionChargeStateToErrorCancelledWhenAlreadyCancelledOnGateway() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
@@ -223,7 +222,8 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldReportFailureWhenGatewayCancelFails() throws Exception {
+    void shouldReportFailureWhenGatewayCancelFails() throws Exception {
+        when(mockPaymentProviders.byName(WORLDPAY)).thenReturn(mockWorldpayPaymentProvider);
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
@@ -246,7 +246,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldReportFailureWhenGatewayStatusMapsToUnhandledStatus() throws Exception {
+    void shouldReportFailureWhenGatewayStatusMapsToUnhandledStatus() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),
@@ -266,7 +266,7 @@ public class AuthorisationErrorGatewayCleanupServiceTest {
     }
 
     @Test
-    public void shouldReportFailureWhenGatewayStatusDoesNotMapToInternalStatus() throws Exception {
+    void shouldReportFailureWhenGatewayStatusDoesNotMapToInternalStatus() throws Exception {
         when(mockChargeDao.findWithPaymentProvidersStatusesAndAuthorisationModesIn(
                 eq(List.of(EPDQ.getName(), WORLDPAY.getName(), STRIPE.getName())),
                 eq(List.of(AUTHORISATION_ERROR, AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR)),

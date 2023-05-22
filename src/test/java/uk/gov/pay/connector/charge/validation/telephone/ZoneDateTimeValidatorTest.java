@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -22,7 +22,7 @@ public class ZoneDateTimeValidatorTest {
 
     private static Validator validator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpValidator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
@@ -40,7 +40,7 @@ public class ZoneDateTimeValidatorTest {
     }
 
     @Test
-    public void failsValidationForInvalidCreatedDate() {
+    void failsValidationForInvalidCreatedDate() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCreatedDate("invalid date")
@@ -53,7 +53,7 @@ public class ZoneDateTimeValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullCreatedDate() {
+    void passesValidationForNullCreatedDate() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCreatedDate(null)
@@ -65,7 +65,7 @@ public class ZoneDateTimeValidatorTest {
     }
 
     @Test
-    public void passesValidationForValidCreatedDate() {
+    void passesValidationForValidCreatedDate() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCreatedDate("2018-02-21T16:04:25Z")
