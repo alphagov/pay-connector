@@ -1,16 +1,13 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 
-import java.net.URLEncoder;
 import java.util.Map;
 
-import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
@@ -19,7 +16,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-public class StripeCustomerRequestTest {
+class StripeCustomerRequestTest {
     
     private final static String CARD_HOLDER = "a-card-holder-name";
     private final static String AGREEMENT_DESCRIPTION = "an-agreement-description";
@@ -30,7 +27,7 @@ public class StripeCustomerRequestTest {
     private StripeGatewayConfig stripeGatewayConfig;
     
     @Test
-    public void shouldHaveCorrectParameters() {
+    void shouldHaveCorrectParameters() {
         StripeCustomerRequest stripeCustomerRequest = createStripeCustomerRequest();
 
         String payload = stripeCustomerRequest.getGatewayOrder().getPayload();

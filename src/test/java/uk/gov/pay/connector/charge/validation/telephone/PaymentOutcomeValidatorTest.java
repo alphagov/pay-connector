@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -23,7 +23,7 @@ public class PaymentOutcomeValidatorTest {
 
     private static Validator validator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpValidator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
@@ -41,7 +41,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void failsValidationForInvalidPaymentOutcomeStatus() {
+    void failsValidationForInvalidPaymentOutcomeStatus() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(new PaymentOutcome("invalid"))
@@ -54,7 +54,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void failsValidationForPaymentOutcomeStatusSuccessAndErrorCodeGiven() {
+    void failsValidationForPaymentOutcomeStatusSuccessAndErrorCodeGiven() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome(
                 "success",
@@ -76,7 +76,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void failsValidationForInvalidErrorCode() {
+    void failsValidationForInvalidErrorCode() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome(
                 "failed",
@@ -98,7 +98,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void passesValidationForCorrectErrorCode() {
+    void passesValidationForCorrectErrorCode() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome(
                 "failed",
@@ -119,7 +119,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void passesValidationForPaymentOutcomeStatusOfSuccess() {
+    void passesValidationForPaymentOutcomeStatusOfSuccess() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(new PaymentOutcome("success"))
@@ -131,7 +131,7 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullPaymentOutcome() {
+    void passesValidationForNullPaymentOutcome() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(null)

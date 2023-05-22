@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -22,7 +22,7 @@ public class CardBrandValidatorTest {
     
     private static Validator validator; 
     
-    @BeforeClass
+    @BeforeAll
     public static void setUpValidator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
@@ -39,7 +39,7 @@ public class CardBrandValidatorTest {
     }
     
     @Test
-    public void failsValidationForInvalidCardBrand() {
+    void failsValidationForInvalidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType("bad-card")
@@ -52,7 +52,7 @@ public class CardBrandValidatorTest {
     }
 
     @Test
-    public void passesValidationForValidCardBrand() {
+    void passesValidationForValidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType("visa")
@@ -64,7 +64,7 @@ public class CardBrandValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullCardBrand() {
+    void passesValidationForNullCardBrand() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType(null)
