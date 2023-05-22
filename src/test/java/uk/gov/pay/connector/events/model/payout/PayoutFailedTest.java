@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.payout;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 
 import java.time.Instant;
@@ -10,9 +10,9 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class PayoutFailedTest {
+class PayoutFailedTest {
     @Test
-    public void shouldSerializePayoutFailedEventWithCorrectEventDetails() throws JsonProcessingException {
+    void shouldSerializePayoutFailedEventWithCorrectEventDetails() throws JsonProcessingException {
         StripePayout payout = new StripePayout("po_123", "pending", "account_closed",
                 "The bank account has been closed", "ba_1GkZtqDv3CZEaFO2CQhLrluk");
         String payoutEventJson = PayoutFailed.from(Instant.parse("2020-05-13T18:50:00Z"), payout).toJsonString();

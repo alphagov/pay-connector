@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -22,7 +22,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
-public class PaymentDetailsEnteredTest {
+class PaymentDetailsEnteredTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
@@ -30,8 +30,8 @@ public class PaymentDetailsEnteredTest {
 
     private ChargeEntityFixture chargeEntityFixture;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         ZonedDateTime latestDateTime = ZonedDateTime.parse(time);
 
         List<ChargeEventEntity> list = List.of(
@@ -53,7 +53,7 @@ public class PaymentDetailsEnteredTest {
     }
 
     @Test
-    public void whenAllTheDataIsAvailable() throws JsonProcessingException {
+    void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
 
@@ -84,7 +84,7 @@ public class PaymentDetailsEnteredTest {
     }
 
     @Test
-    public void whenAllTheDataIsAvailableForUsCountry() throws JsonProcessingException {
+    void whenAllTheDataIsAvailableForUsCountry() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         chargeEntity.getCardDetails().getBillingAddress().ifPresent(address -> address.setStateOrProvince(UsState.VERMONT.getAbbreviation()));
         String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
@@ -99,7 +99,7 @@ public class PaymentDetailsEnteredTest {
     }
 
     @Test
-    public void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
+    void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withCardDetails(anAuthCardDetails().withAddress(null).withCardNo("4242").withCardType(PayersCardType.CREDIT_OR_DEBIT).getCardDetailsEntity())
                 .withWalletType(null)

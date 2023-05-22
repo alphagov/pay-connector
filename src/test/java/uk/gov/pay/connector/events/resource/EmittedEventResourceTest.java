@@ -1,35 +1,32 @@
 package uk.gov.pay.connector.events.resource;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.events.EmittedEventsBackfillService;
 import uk.gov.pay.connector.events.HistoricalEventEmitterService;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
 import java.time.ZonedDateTime;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EmittedEventResourceTest {
+@ExtendWith(DropwizardExtensionsSupport.class)
+class EmittedEventResourceTest {
     private static final EmittedEventsBackfillService emittedEventsBackfillService = mock(EmittedEventsBackfillService.class);
     private static final HistoricalEventEmitterService historicalEventEmitterService = mock(HistoricalEventEmitterService.class);
 
-    @ClassRule
-    public static final ResourceTestRule resources = ResourceTestRule.builder()
+    public static final ResourceExtension resources = ResourceExtension.builder()
             .addResource(new EmittedEventResource(emittedEventsBackfillService, historicalEventEmitterService))
             .build();
-
+    
     @Test
-    public void shouldReturn200() {
+    void shouldReturn200() {
         Response response = resources
                 .target("/v1/tasks/emitted-events-sweep")
                 .request()
@@ -39,7 +36,7 @@ public class EmittedEventResourceTest {
     }
 
     @Test
-    public void shouldReturn200onHistoricEventById() {
+    void shouldReturn200onHistoricEventById() {
         Response response = resources
                 .target("/v1/tasks/historical-event-emitter")
                 .queryParam("start_id", 1L)
@@ -53,7 +50,7 @@ public class EmittedEventResourceTest {
     }
 
     @Test
-    public void shouldReturn200onHistoricEventByIdWithNoRecordType() {
+    void shouldReturn200onHistoricEventByIdWithNoRecordType() {
         Response response = resources
                 .target("/v1/tasks/historical-event-emitter")
                 .queryParam("start_id", 1L)
@@ -66,7 +63,7 @@ public class EmittedEventResourceTest {
     }
 
     @Test
-    public void shouldReturn400onNonStandardRecordTypes() {
+    void shouldReturn400onNonStandardRecordTypes() {
         Response response = resources
                 .target("/v1/tasks/historical-event-emitter")
                 .queryParam("start_id", 1L)
@@ -80,7 +77,7 @@ public class EmittedEventResourceTest {
     }
 
     @Test
-    public void shouldReturn200OnHistoricEventByDate() {
+    void shouldReturn200OnHistoricEventByDate() {
         Response response = resources
                 .target("/v1/tasks/historical-event-emitter-by-date")
                 .queryParam("start_date",         ZonedDateTime.now().minusSeconds(2).toString())

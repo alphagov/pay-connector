@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.model.refund;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RefundCreatedByUserTest {
+class RefundCreatedByUserTest {
 
     private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(ChargeEntityFixture.defaultGatewayAccountEntity()).build();
@@ -31,7 +31,7 @@ public class RefundCreatedByUserTest {
             );
 
     @Test
-    public void serializesEventDetailsForAGivenRefundEvent() {
+    void serializesEventDetailsForAGivenRefundEvent() {
         RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, charge);
 
         assertThat(refundCreatedByUser.getParentResourceExternalId(), is(chargeEntity.getExternalId()));

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -16,11 +16,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
-public class RefundAvailabilityUpdatedTest {
+class RefundAvailabilityUpdatedTest {
     private final ChargeEntityFixture chargeEntity = aValidChargeEntity();
 
     @Test
-    public void serialisesRefundAvailabilityEventDetails() throws JsonProcessingException {
+    void serialisesRefundAvailabilityEventDetails() throws JsonProcessingException {
 
         ChargeEntity charge = chargeEntity.build();
         

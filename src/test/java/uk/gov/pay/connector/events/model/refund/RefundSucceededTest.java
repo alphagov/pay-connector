@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.refund;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -15,7 +15,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class RefundSucceededTest {
+class RefundSucceededTest {
 
     private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(ChargeEntityFixture.defaultGatewayAccountEntity()).build();
@@ -31,7 +31,7 @@ public class RefundSucceededTest {
             "test@example.com");
 
     @Test
-    public void serializesEventDetailsForAGivenRefundEvent() throws JsonProcessingException {
+    void serializesEventDetailsForAGivenRefundEvent() throws JsonProcessingException {
         String actual = RefundSucceeded.from(charge, refundHistory).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("REFUND_SUCCEEDED")));

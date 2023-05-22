@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -20,12 +20,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MICROSECOND_PRECISION;
 
-public class CaptureConfirmedTest {
+class CaptureConfirmedTest {
 
     private final ChargeEntityFixture chargeEntity = aValidChargeEntity().withStatus(CAPTURED);
 
     @Test
-    public void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
+    void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
         ZonedDateTime gatewayEventTime = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
         Long fee = 5L;
@@ -49,7 +49,7 @@ public class CaptureConfirmedTest {
     }
 
     @Test
-    public void shouldSerializeEventDetailsWithoutFeeGivenChargeWithMultipleFees() throws JsonProcessingException {
+    void shouldSerializeEventDetailsWithoutFeeGivenChargeWithMultipleFees() throws JsonProcessingException {
         ZonedDateTime gatewayEventTime = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
         Long fee = 5L;
@@ -75,7 +75,7 @@ public class CaptureConfirmedTest {
     }
 
     @Test
-    public void serializesEventGivenNoDetailValues() throws JsonProcessingException {
+    void serializesEventGivenNoDetailValues() throws JsonProcessingException {
         ZonedDateTime updated = ZonedDateTime.parse("2018-03-12T16:25:02.123456Z");
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getUpdated()).thenReturn(updated);
