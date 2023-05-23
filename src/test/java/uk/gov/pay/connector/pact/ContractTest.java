@@ -696,4 +696,22 @@ public class ContractTest {
                 "authorisation_mode", "agreement"));
     }
 
+    @State("a charge with authorisation mode agreement and rejected status exists")
+    public void aChargeWithAuthorisationModeAgreementAndRejectedStatusExists(Map<String, String> params) {
+        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_external_id");
+        String agreementExternalId = params.get("agreement_external_id");
+        String gatewayAccountId = params.get("gateway_account_id");
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withAgreementExternalId(agreementExternalId)
+                .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withCanRetry(true)
+                .build());
+    }
+
 }
