@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.northamericaregion;
 
-import org.junit.Before;
-import org.junit.Test;
-import uk.gov.pay.connector.charge.model.AddressEntity;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
 
 import java.util.Optional;
@@ -19,7 +18,7 @@ public class NorthAmericanRegionMapperTest {
     
     private Address address;
     
-    @Before
+    @BeforeEach
     public void setUp() {
         address = new Address();
         address.setLine1("Line 1");
