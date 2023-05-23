@@ -7,7 +7,7 @@ import java.time.Instant;
  *
  */
 public class GatewayErrorDuringAuthorisation extends PaymentEventWithoutDetails {
-    public GatewayErrorDuringAuthorisation(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, timestamp);
+    public GatewayErrorDuringAuthorisation(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

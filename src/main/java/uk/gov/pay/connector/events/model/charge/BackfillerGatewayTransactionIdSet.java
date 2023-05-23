@@ -14,10 +14,11 @@ public class BackfillerGatewayTransactionIdSet extends PaymentEvent {
 
     public BackfillerGatewayTransactionIdSet(String serviceId,
                                              boolean live,
+                                             Long gatewayAccountId,
                                              String resourceExternalId,
                                              BackFillerGatewayTransactionIdSetEventDetails eventDetails,
                                              Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static BackfillerGatewayTransactionIdSet from(ChargeEntity charge) {
@@ -30,6 +31,7 @@ public class BackfillerGatewayTransactionIdSet extends PaymentEvent {
         return new BackfillerGatewayTransactionIdSet(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 BackFillerGatewayTransactionIdSetEventDetails.from(charge),
                 lastEventDate.toInstant());

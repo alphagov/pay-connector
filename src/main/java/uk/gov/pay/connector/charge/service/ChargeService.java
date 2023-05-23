@@ -1140,6 +1140,7 @@ public class ChargeService {
         return new RefundAvailabilityUpdated(
                 charge.getServiceId(),
                 charge.isLive(),
+                charge.getGatewayAccountId(),
                 charge.getExternalId(),
                 RefundAvailabilityUpdatedEventDetails.from(
                         charge,

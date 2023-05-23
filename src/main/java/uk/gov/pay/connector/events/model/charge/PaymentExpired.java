@@ -7,7 +7,7 @@ import java.time.Instant;
  * succeeding or failing to expire.
  */
 public class PaymentExpired extends PaymentEventWithoutDetails {
-    public PaymentExpired(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, timestamp);
+    public PaymentExpired(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

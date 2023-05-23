@@ -9,14 +9,16 @@ import java.time.Instant;
 public abstract class RefundEvent extends Event {
     private String serviceId;
     private Boolean live;
+    private Long gatewayAccountId;
     private String parentResourceExternalId;
 
-    public RefundEvent(String serviceId, boolean live, String resourceExternalId, String parentResourceExternalId,
+    public RefundEvent(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, String parentResourceExternalId,
                        EventDetails eventDetails, Instant timestamp) {
         super(timestamp, resourceExternalId, eventDetails);
         this.parentResourceExternalId = parentResourceExternalId;
         this.serviceId = serviceId;
         this.live = live;
+        this.gatewayAccountId = gatewayAccountId;
     }
 
     public RefundEvent(String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
@@ -38,5 +40,9 @@ public abstract class RefundEvent extends Event {
 
     public String getServiceId() {
         return serviceId;
+    }
+
+    public Long getGatewayAccountId() {
+        return gatewayAccountId;
     }
 }

@@ -7,7 +7,7 @@ import java.time.Instant;
  *
  */
 public class PaymentStarted extends PaymentEventWithoutDetails {
-    public PaymentStarted(String serviceId, boolean live, String resourceExternalId, Instant timestamp) {
-        super(serviceId, live, resourceExternalId, timestamp);
+    public PaymentStarted(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId, Instant timestamp) {
+        super(serviceId, live, gatewayAccountId, resourceExternalId, timestamp);
     }
 }

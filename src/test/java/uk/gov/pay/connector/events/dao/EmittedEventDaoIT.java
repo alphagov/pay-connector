@@ -210,12 +210,12 @@ public class EmittedEventDaoIT extends DaoITestBase {
                 .withDelayedCapture(false)
                 .withLive(false)
                 .build();
-        return new PaymentCreated("service-id", true, "my-resource-external-id", eventDetails,
+        return new PaymentCreated("service-id", true, 100L, "my-resource-external-id", eventDetails,
                 Instant.parse("2019-01-01T14:00:00Z"));
     }
 
     private RefundSubmitted aRefundSubmittedEvent(Instant eventTimestamp) {
-        return new RefundSubmitted("service-id", true, "my-resource-external-id",
+        return new RefundSubmitted("service-id", true, 100L, "my-resource-external-id",
                 "parent-external-id",
                 null, eventTimestamp);
     }

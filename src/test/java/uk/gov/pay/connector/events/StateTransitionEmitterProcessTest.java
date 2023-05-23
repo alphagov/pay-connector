@@ -51,7 +51,9 @@ class StateTransitionEmitterProcessTest {
     void shouldEmitPaymentEventGivenStateTransitionMessageOnQueue() throws Exception {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentCreated.class);
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenReturn(List.of(
-                new PaymentCreated("service-id", true,
+                new PaymentCreated("service-id",
+                        true,
+                        100L,
                         "id",
                         mock(PaymentCreatedEventDetails.class),
                         Instant.now()
@@ -81,7 +83,9 @@ class StateTransitionEmitterProcessTest {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(stateTransitionQueue.poll(anyLong(), any(TimeUnit.class))).thenReturn(paymentStateTransition);
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenReturn(List.of(
-                new PaymentCreated("service-id", true,
+                new PaymentCreated("service-id",
+                        true,
+                        100L,
                         "id",
                         mock(PaymentCreatedEventDetails.class),
                         Instant.now()

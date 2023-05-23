@@ -7,16 +7,17 @@ import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthori
 import java.time.Instant;
 
 public class GatewayRequires3dsAuthorisation extends PaymentEvent {
-    public GatewayRequires3dsAuthorisation(String serviceId, boolean live, String resourceExternalId,
+    public GatewayRequires3dsAuthorisation(String serviceId, boolean live,
+                                           Long gatewayAccountId, String resourceExternalId,
                                            GatewayRequires3dsAuthorisationEventDetails eventDetails,
                                            Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static GatewayRequires3dsAuthorisation from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
         return new GatewayRequires3dsAuthorisation(charge.getServiceId(), charge.getGatewayAccount().isLive(),
-                charge.getExternalId(), GatewayRequires3dsAuthorisationEventDetails.from(charge),
+                charge.getGatewayAccount().getId(), charge.getExternalId(), GatewayRequires3dsAuthorisationEventDetails.from(charge),
                 chargeEvent.getUpdated().toInstant());
     }
 }

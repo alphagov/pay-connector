@@ -39,8 +39,8 @@ class CancelledByUserTest {
     void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
-        String actual = new CancelledByUser(chargeEntity.getServiceId(), chargeEntity.getGatewayAccount().isLive(), transactionId,
-                CancelledByUserEventDetails.from(chargeEntity), Instant.parse(time)).toJsonString();
+        String actual = new CancelledByUser(chargeEntity.getServiceId(), chargeEntity.getGatewayAccount().isLive(), chargeEntity.getGatewayAccount().getId(),
+                transactionId, CancelledByUserEventDetails.from(chargeEntity), Instant.parse(time)).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CANCELLED_BY_USER")));
         assertThat(actual, hasJsonPath("event_details.gateway_transaction_id", equalTo(gatewayTransactionId)));
@@ -51,7 +51,7 @@ class CancelledByUserTest {
         ChargeEntity charge = new ChargeEntity();
         charge.setExternalId(transactionId);
         charge.setGatewayTransactionId(null);
-        String actual = new CancelledByUser(charge.getServiceId(), live, transactionId,
+        String actual = new CancelledByUser(charge.getServiceId(), live, 100L, transactionId,
                 CancelledByUserEventDetails.from(charge), Instant.parse(time)).toJsonString();
 
         assertThat(actual, hasJsonPath("$.event_type", equalTo("CANCELLED_BY_USER")));

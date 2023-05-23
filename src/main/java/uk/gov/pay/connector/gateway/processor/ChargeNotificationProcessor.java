@@ -104,7 +104,7 @@ public class ChargeNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
                 kv(PROVIDER, charge.getPaymentGatewayName()));
         
-        Event event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(), charge.getExternalId(), Instant.now());
+        Event event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(), charge.getGatewayAccountId(), charge.getExternalId(), Instant.now());
         eventService.emitEvent(event);
     }
 }

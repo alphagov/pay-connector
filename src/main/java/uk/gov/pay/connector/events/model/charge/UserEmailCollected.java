@@ -7,16 +7,17 @@ import java.time.Instant;
 
 public class UserEmailCollected extends PaymentEvent {
 
-    public UserEmailCollected(String serviceId, boolean live, String resourceExternalId,
+    public UserEmailCollected(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
                               UserEmailCollectedEventDetails eventDetails,
                               Instant timestamp) {
-        super(serviceId, live, resourceExternalId, eventDetails, timestamp);
+        super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
     public static UserEmailCollected from(ChargeEntity charge, Instant eventDate) {
         return new UserEmailCollected(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 UserEmailCollectedEventDetails.from(charge),
                 eventDate);

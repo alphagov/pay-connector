@@ -27,6 +27,7 @@ class RefundAvailabilityUpdatedTest {
         String event = new RefundAvailabilityUpdated(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
                 charge.getExternalId(),
                 RefundAvailabilityUpdatedEventDetails.from(Charge.from(charge), List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
                 Instant.now()
