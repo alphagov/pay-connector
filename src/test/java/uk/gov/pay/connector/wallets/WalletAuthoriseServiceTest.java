@@ -10,13 +10,13 @@ import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
@@ -71,13 +71,15 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -99,8 +101,8 @@ import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixt
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
-@RunWith(MockitoJUnitRunner.class)
-public class WalletAuthoriseServiceTest extends CardServiceTest {
+@ExtendWith(MockitoExtension.class)
+class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
@@ -176,23 +178,22 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @InjectMocks
     private PaymentInstrumentService mockPaymentInstrumentService;
 
-    @Before
-    public void setUp() {
-        when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationData.class))).thenReturn(mockAuthCardDetails);
-        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(mockAuthCardDetails)).thenReturn(mockCardDetailsEntity);
+    @BeforeEach
+    void setUp() {
+        lenient().when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
+        lenient().when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
+        lenient().when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+        lenient().when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        lenient().when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        lenient().when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationData.class))).thenReturn(mockAuthCardDetails);
+        lenient().when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(mockAuthCardDetails)).thenReturn(mockCardDetailsEntity);
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
-        when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
-        when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
-        when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
+        lenient().when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
+        lenient().when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
+        lenient().when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
@@ -217,7 +218,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void verifyLogging() throws Exception {
+    void verifyLogging() throws Exception {
         GatewayResponse gatewayResponse = providerWillAuthorise();
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
@@ -230,7 +231,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
+    void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
@@ -260,7 +261,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws Exception {
+    void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
@@ -293,7 +294,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess_whenCardNumberIsEmptyString() throws Exception {
+    void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess_whenCardNumberIsEmptyString() throws Exception {
         providerWillAuthorise();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
@@ -328,7 +329,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
+    void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
         providerWillReject();
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -340,7 +341,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldSetProviderTransactionId_whenProviderAuthorisationIsErroredWithoutProviderId() throws Exception {
+    void doAuthorise_shouldSetProviderTransactionId_whenProviderAuthorisationIsErroredWithoutProviderId() throws Exception {
         providerWillRejectWithNoTransactionId();
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -354,7 +355,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
+    void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
 
@@ -367,7 +368,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationError() throws Exception {
+    void shouldRespondAuthorisationError() throws Exception {
         providerWillError();
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -379,7 +380,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() throws Exception {
+    void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() throws Exception {
         providerWillReject();
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -389,7 +390,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreCardDetails_evenIfInAuthorisationError() throws Exception {
+    void doAuthorise_shouldStoreCardDetails_evenIfInAuthorisationError() throws Exception {
         providerWillError();
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -399,7 +400,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreProviderSessionId_evenIfAuthorisationRejected() throws Exception {
+    void doAuthorise_shouldStoreProviderSessionId_evenIfAuthorisationRejected() throws Exception {
         providerWillReject();
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -408,7 +409,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldNotStoreProviderSessionId_whenAuthorisationError() throws Exception {
+    void doAuthorise_shouldNotStoreProviderSessionId_whenAuthorisationError() throws Exception {
         providerWillError();
 
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -417,7 +418,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
+    void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
         when(mockExecutorService.execute(any(), anyInt())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
@@ -429,39 +430,39 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         }
     }
 
-    @Test(expected = ChargeNotFoundRuntimeException.class)
-    public void doAuthorise_shouldThrowAChargeNotFoundRuntimeException_whenChargeDoesNotExist() {
+    @Test
+    void doAuthorise_shouldThrowAChargeNotFoundRuntimeException_whenChargeDoesNotExist() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        walletAuthoriseService.doAuthorise(chargeId, validApplePayDetails);
+        assertThrows(ChargeNotFoundRuntimeException.class, () -> walletAuthoriseService.doAuthorise(chargeId, validApplePayDetails));
     }
 
-    @Test(expected = OperationAlreadyInProgressRuntimeException.class)
-    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenStatusIsAuthorisationReady() {
+    @Test
+    void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenStatusIsAuthorisationReady() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
-        walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
-
-        verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
-    }
-
-    @Test(expected = IllegalStateRuntimeException.class)
-    public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
-        ChargeEntity charge = createNewChargeWith(1L, UNDEFINED);
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-
-        walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
+        assertThrows(OperationAlreadyInProgressRuntimeException.class,
+                () -> walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     @Test
-    public void doAuthorise_shouldReportAuthorisationTimeout_whenProviderTimeout() throws Exception {
+    void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
+        ChargeEntity charge = createNewChargeWith(1L, UNDEFINED);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+
+        assertThrows(IllegalStateRuntimeException.class,
+                () -> walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails));
+
+        verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+    }
+
+    @Test
+    void doAuthorise_shouldReportAuthorisationTimeout_whenProviderTimeout() throws Exception {
         providerWillRespondWithError(new GatewayConnectionTimeoutException("Connection timed out"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -471,7 +472,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
+    void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
         providerWillRespondWithError(new GatewayException.GatewayErrorException("Malformed response received"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -482,9 +483,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
-        when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
-        when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        lenient().when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
+        lenient().when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
+        lenient().when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         return responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(SESSION_IDENTIFIER)
@@ -502,8 +503,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                 .build();
     }
 
-    public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
-        doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
+    void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
+        lenient().doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class), anyInt());
     }
 

@@ -2,11 +2,11 @@ package uk.gov.pay.connector.wallets.googlepay;
 
 import com.amazonaws.util.json.Jackson;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -20,17 +20,17 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-@RunWith(MockitoJUnitRunner.class)
-public class GooglePayServiceTest {
+@ExtendWith(MockitoExtension.class)
+class GooglePayServiceTest {
 
     @Mock
     private WalletAuthoriseService mockedWalletAuthoriseService;
@@ -41,15 +41,15 @@ public class GooglePayServiceTest {
     private GooglePayAuthRequest googlePayAuthRequest;
     private GooglePayAuthRequest googlePayAuth3dsRequest;
     
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws IOException {
         googlePayService = new GooglePayService(mockedWalletAuthoriseService);
         googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
     }
     
     @Test
-    public void shouldAuthoriseAValidCharge() {
+    void shouldAuthoriseAValidCharge() {
         String externalChargeId = "external-charge-id";
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
@@ -66,7 +66,7 @@ public class GooglePayServiceTest {
     }
 
     @Test
-    public void shouldReturnAuthorise3dsRequiredForAValid3dsCharge() {
+    void shouldReturnAuthorise3dsRequiredForAValid3dsCharge() {
         String externalChargeId = "external-charge-id";
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
@@ -83,7 +83,7 @@ public class GooglePayServiceTest {
     }
 
     @Test
-    public void shouldReturnInternalServerError_ifGatewayErrors() {
+    void shouldReturnInternalServerError_ifGatewayErrors() {
         String externalChargeId = "external-charge-id";
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()

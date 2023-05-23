@@ -5,13 +5,13 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
@@ -52,8 +52,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 
-@RunWith(MockitoJUnitRunner.class)
-public class WalletAuthoriseServiceForGooglePay3dsTest {
+@ExtendWith(MockitoExtension.class)
+class WalletAuthoriseServiceForGooglePay3dsTest {
 
     private WalletAuthoriseService walletAuthoriseService;
     
@@ -95,8 +95,8 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
     
     private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
     
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
@@ -125,7 +125,7 @@ public class WalletAuthoriseServiceForGooglePay3dsTest {
     }
 
     @Test
-    public void the_charge_service_should_be_called_with_auth3dsRequiredDetails_when_3ds_is_required_for_a_google_payment() throws Exception {
+    void the_charge_service_should_be_called_with_auth3dsRequiredDetails_when_3ds_is_required_for_a_google_payment() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);

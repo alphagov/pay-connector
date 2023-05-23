@@ -1,26 +1,21 @@
 package uk.gov.pay.connector.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.WebApplicationException;
-import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class JsonObjectMapperTest {
+class JsonObjectMapperTest {
     private ObjectMapper objectMapper = new ObjectMapper();
     private JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(objectMapper);
 
     @Test
-    public void shouldMapToObject() {
+    void shouldMapToObject() {
         String jsonString = "{\"id\":1}";
         LocalTestObject fromJson = jsonObjectMapper.getObject(jsonString, LocalTestObject.class);
         assertNotNull(fromJson);
@@ -28,7 +23,7 @@ public class JsonObjectMapperTest {
     }
 
     @Test()
-    public void shouldThrowException() {
+    void shouldThrowException() {
         String jsonString = "{\"id\":\"abc\"}";
         assertThrows(WebApplicationException.class, () -> jsonObjectMapper.getObject(jsonString, LocalTestObject.class));
     }
@@ -38,7 +33,7 @@ class LocalTestObject {
     @JsonProperty("id")
     private int id;
 
-    public int getId() {
+    int getId() {
         return id;
     }
 }

@@ -3,9 +3,7 @@ package uk.gov.pay.connector.util;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXParseException;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
@@ -14,14 +12,12 @@ import javax.xml.bind.UnmarshalException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class XMLUnmarshallerSecurityTest {
-
-    @Rule
-    public final ExpectedException expectedException = ExpectedException.none();
+class XMLUnmarshallerSecurityTest {
 
     @Test
-    public void preventXEE_aBillionLaughsAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() throws Exception {
+    void preventXEE_aBillionLaughsAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() throws Exception {
 
         String xmlData = "<!DOCTYPE foo [" +
                 "<!ENTITY a \"1234567890\" >" +
@@ -37,14 +33,14 @@ public class XMLUnmarshallerSecurityTest {
                 "]> " +
                 "<foo>&mrdanger;</foo>";
 
-        expectedException.expect(XMLUnmarshallerException.class);
-        expectedException.expectCause(is(unmarshalExceptionWithLinkedSAXParseException("JAXP00010001: The parser has encountered more than \"1\" entity expansions in this document; this is the limit imposed by the JDK.")));
+        var exception = assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
 
-        XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
+        assertThat(exception.getCause(),
+                is(unmarshalExceptionWithLinkedSAXParseException("JAXP00010001: The parser has encountered more than \"1\" entity expansions in this document; this is the limit imposed by the JDK.")));
     }
 
     @Test
-    public void preventXEE_externalEntityReference_shouldFailUnmarshallingWithOneEntityWithAnExternalReference() throws Exception {
+    void preventXEE_externalEntityReference_shouldFailUnmarshallingWithOneEntityWithAnExternalReference() throws Exception {
 
         String xmlData = "<!DOCTYPE foo [" +
                 "<!ENTITY mrdanger SYSTEM \"file:///boot.ini\" >" +
@@ -58,7 +54,7 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    public void preventXEE_XMLInclude_shouldNotProcessXmlIncludeWhenUnmarshalling() throws Exception {
+    void preventXEE_XMLInclude_shouldNotProcessXmlIncludeWhenUnmarshalling() throws Exception {
 
         String xmlData = "<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\">" +
                 "<xi:include href=\"metadata.xml\" parse=\"xml\" xpointer=\"name\"/>" +
@@ -71,7 +67,7 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    public void preventXMLInjections_whenXmlTagsInsideExpectedTags_shouldReturnEmpty() throws Exception {
+    void preventXMLInjections_whenXmlTagsInsideExpectedTags_shouldReturnEmpty() throws Exception {
 
         String xmlData = "<foo>asd<hi>boom!</hi></foo>";
 
@@ -82,13 +78,11 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    public void shouldFailUnmarshalling_whenXMLIsNotWellFormed() throws Exception {
+    void shouldFailUnmarshalling_whenXMLIsNotWellFormed() throws Exception {
 
         String xmlData = "<foo>asd<</foo>";
 
-        expectedException.expect(XMLUnmarshallerException.class);
-
-        XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
+        assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
     }
 
     private Matcher<Throwable> unmarshalExceptionWithLinkedSAXParseException(final String expectedMessage) {

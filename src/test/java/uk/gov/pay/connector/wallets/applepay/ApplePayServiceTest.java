@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.wallets.applepay;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -18,9 +18,9 @@ import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,8 +29,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ApplePayServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ApplePayServiceTest {
 
     @Mock
     private ApplePayDecrypter mockedApplePayDecrypter;
@@ -44,16 +44,17 @@ public class ApplePayServiceTest {
                     .withApplePaymentInfo(
                             anApplePayPaymentInfo().build())
                     .build();
-    @Before
-    public void setUp() {
+
+    @BeforeEach
+    void setUp() {
         applePayService = new ApplePayService(mockedApplePayDecrypter, mockedApplePayAuthoriseService);
     }
-    
+
     @Test
-    public void shouldDecryptAndAuthoriseAValidCharge() throws IOException {
+    void shouldDecryptAndAuthoriseAValidCharge() throws IOException {
         String externalChargeId = "external-charge-id";
         ApplePayAuthRequest applePayAuthRequest = ApplePayAuthRequestBuilder.anApplePayToken().build();
-                
+
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
@@ -71,7 +72,7 @@ public class ApplePayServiceTest {
     }
 
     @Test
-    public void shouldReturnInternalServerError_ifGatewayErrors() throws IOException {
+    void shouldReturnInternalServerError_ifGatewayErrors() throws IOException {
         String externalChargeId = "external-charge-id";
         ApplePayAuthRequest applePayAuthRequest = ApplePayAuthRequestBuilder.anApplePayToken().build();
         GatewayError gatewayError = mock(GatewayError.class);
@@ -88,7 +89,7 @@ public class ApplePayServiceTest {
 
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(402));
-        ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
+        ErrorResponse response = (ErrorResponse) authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
     }
 }
