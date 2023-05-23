@@ -616,7 +616,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body("state.can_retry", is(true));
     }
 
@@ -640,7 +639,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body("state.can_retry", is(true));
     }
 
@@ -664,7 +662,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body("state.can_retry", is(false));
     }
 
@@ -688,7 +685,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body("state.can_retry", is(nullValue()));
     }
 
@@ -712,7 +708,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body("state.can_retry", is(nullValue()));
     }
 
