@@ -3,8 +3,8 @@ package uk.gov.pay.connector.client;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import javax.ws.rs.ProcessingException;
@@ -21,38 +21,29 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.TestClientFactory.createClientWithApacheConnectorAndTimeout;
 import static uk.gov.pay.connector.util.TestClientFactory.createJerseyClient;
 
-@Ignore //this should be run manaully
+@Disabled //this should be run manually
 public class GatewayClientExploratoryTest {
 
     @Test
     public void connectionToInvalidUrlUsingDefaultJerseyConnectorProvider() {
         Client client = ClientBuilder.newClient();
         String gatewayUrl = "http://invalidone.invalid";
-        try {
-            postXMLRequestFor(client, gatewayUrl, "<request/>");
-            fail("Exception not thrown!");
-        } catch (Exception e) {
-            assertTrue(e instanceof ProcessingException);
-            assertTrue(e.getCause() instanceof UnknownHostException);
-        }
+        var ex = assertThrows(ProcessingException.class, () -> postXMLRequestFor(client, gatewayUrl, "<request/>"));
+        assertThat(UnknownHostException.class, is(ex.getCause().getClass()));
     }
 
     @Test
     public void connectionToInvalidUrlUsingApacheConnectorProvider() {
         Client client = createJerseyClient();
         String gatewayUrl = "http://invalidone.invalid";
-        try {
-            postXMLRequestFor(client, gatewayUrl, "<request/>");
-            fail("Exception not thrown!");
-        } catch (Exception e) {
-            assertTrue(e instanceof ProcessingException);
-            assertTrue(e.getCause() instanceof UnknownHostException);
-        }
+        var ex = assertThrows(ProcessingException.class, () -> postXMLRequestFor(client, gatewayUrl, "<request/>"));
+        assertThat(UnknownHostException.class, is(ex.getCause().getClass()));
     }
 
     @Test
@@ -77,15 +68,10 @@ public class GatewayClientExploratoryTest {
 
         Client client = createClientWithApacheConnectorAndTimeout(500);
 
-        try {
-            postXMLRequestFor(client, gatewayUrl, "<request/>");
-            fail("Exception not thrown!");
-        } catch (Exception e) {
-            assertTrue(e.getMessage(), e instanceof ProcessingException);
-            assertTrue(e.getMessage(), e.getCause() instanceof SocketTimeoutException);
-        } finally {
-            wireMockServer.stop();
-        }
+        var ex = assertThrows(ProcessingException.class, () -> postXMLRequestFor(client, gatewayUrl, "<request/>"));
+        assertThat(SocketTimeoutException.class, is(ex.getCause().getClass()));
+        
+        wireMockServer.stop();
     }
 
     public Response postXMLRequestFor(Client client, String gatewayUrl, String requestBody) {

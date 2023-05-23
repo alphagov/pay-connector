@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.chargeevent.model.domain;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -13,7 +13,7 @@ public class LocalDateTimeConverterTest {
 
     private LocalDateTimeConverter localDateTimeConverter;
     
-    @Before
+    @BeforeEach
     public void setUp(){
         localDateTimeConverter = new LocalDateTimeConverter();
     }
