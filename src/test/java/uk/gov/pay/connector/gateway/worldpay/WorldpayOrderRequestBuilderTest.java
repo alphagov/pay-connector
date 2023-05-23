@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -17,7 +17,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.time.LocalDate;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
@@ -50,7 +50,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 
-public class WorldpayOrderRequestBuilderTest {
+ class WorldpayOrderRequestBuilderTest {
 
     protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
     protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
@@ -63,7 +63,7 @@ public class WorldpayOrderRequestBuilderTest {
                     .build();
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
 
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
@@ -85,7 +85,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() throws Exception {
+     void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
                 .withSchemeTransactionIdentifier("test-transaction-id-999999")
@@ -101,7 +101,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseRecurringOrderRequestWithOutSchemeIdentifier() throws Exception {
+     void shouldGenerateValidAuthoriseRecurringOrderRequestWithOutSchemeIdentifier() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
                 .withAgreementId("test-agreement-123456")
@@ -116,7 +116,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
     
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
 
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
@@ -139,7 +139,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
 
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
@@ -161,7 +161,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() throws Exception {
 
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
@@ -184,7 +184,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
 
         Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
 
@@ -206,7 +206,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
 
         Address address = new Address("123 & My Street", "This road -->", "SW8 > URR", "London !>", null, "GB");
 
@@ -228,7 +228,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
+     void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
         AuthCardDetails authCardDetails = getValidTestCard(null);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
@@ -247,7 +247,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
+     void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
@@ -260,7 +260,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
+     void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
                 .withWalletTemplateData(validApplePayData)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
@@ -277,7 +277,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() throws Exception {
+     void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() throws Exception {
         AppleDecryptedPaymentData validData =
                 anApplePayDecryptedPaymentData()
                         .withEciIndicator(null)
@@ -302,7 +302,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
+     void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture();
 
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
@@ -318,7 +318,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
+     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
                 .withGooglePaymentInfo(new WalletPaymentInfo(
                         "4242",
@@ -349,7 +349,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
+     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
                 .withGooglePaymentInfo(new WalletPaymentInfo(
                                 "4242",
@@ -381,7 +381,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
+     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
                 .withGooglePaymentInfo(new WalletPaymentInfo(
                                 "4242",
@@ -410,7 +410,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidCaptureOrderRequest() throws Exception {
+     void shouldGenerateValidCaptureOrderRequest() throws Exception {
         var date = LocalDate.of(2013, 2, 23);
 
         GatewayOrder actualRequest = aWorldpayCaptureOrderRequestBuilder()
@@ -425,7 +425,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidCaptureOrderRequestWithSpecialCharactersInStrings() throws Exception {
+     void shouldGenerateValidCaptureOrderRequestWithSpecialCharactersInStrings() throws Exception {
         var date = LocalDate.of(2013, 2, 23);
 
         GatewayOrder actualRequest = aWorldpayCaptureOrderRequestBuilder()
@@ -440,7 +440,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidCancelOrderRequest() throws Exception {
+     void shouldGenerateValidCancelOrderRequest() throws Exception {
 
         GatewayOrder actualRequest = aWorldpayCancelOrderRequestBuilder()
                 .withMerchantCode("MERCHANTCODE")
@@ -456,7 +456,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidRefundOrderRequest() throws Exception {
+     void shouldGenerateValidRefundOrderRequest() throws Exception {
 
         GatewayOrder actualRequest = aWorldpayRefundOrderRequestBuilder()
                 .withReference("reference")
@@ -476,7 +476,7 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     @Test 
-    public void shouldGenerateValidDeleteTokenRequest() throws Exception {
+     void shouldGenerateValidDeleteTokenRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpayDeleteTokenOrderRequestBuilder()
                 .withAgreementId("test-agreement-123")
                 .withPaymentTokenId("test-paymentToken-789")

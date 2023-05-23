@@ -3,20 +3,21 @@ package uk.gov.pay.connector.gateway.epdq;
 import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class EpdqSha512SignatureGeneratorTest {
+class EpdqSha512SignatureGeneratorTest {
 
     private final EpdqSha512SignatureGenerator epdqSha512SignatureGenerator = new EpdqSha512SignatureGenerator();
 
     @Test
-    public void shouldConcatEachParameterAsNameThenEqualsThenValueThenPassphraseToProduceSha512SignatureAsHex() {
+    void shouldConcatEachParameterAsNameThenEqualsThenValueThenPassphraseToProduceSha512SignatureAsHex() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("PARAM1", "Value1"),
                 new BasicNameValuePair("PARAM2", "Value2"),
@@ -33,7 +34,7 @@ public class EpdqSha512SignatureGeneratorTest {
     }
 
     @Test
-    public void shouldIgnoreEmptyParameters() {
+    void shouldIgnoreEmptyParameters() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("PARAM1", "Value1"),
                 new BasicNameValuePair("PARAM2", ""),
@@ -50,7 +51,7 @@ public class EpdqSha512SignatureGeneratorTest {
     }
 
     @Test
-    public void shouldUpperCaseParameterNames() {
+    void shouldUpperCaseParameterNames() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("param1", "Value1"),
                 new BasicNameValuePair("Param2", "Value2"),
@@ -67,7 +68,7 @@ public class EpdqSha512SignatureGeneratorTest {
     }
 
     @Test
-    public void shouldSortParametersAlphabeticallyByName() {
+    void shouldSortParametersAlphabeticallyByName() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("BBB", "Value2"),
                 new BasicNameValuePair("DDD", "Value4"),
@@ -85,7 +86,7 @@ public class EpdqSha512SignatureGeneratorTest {
     }
 
     @Test
-    public void shouldPerformAllNormalisations() {
+    void shouldPerformAllNormalisations() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("bBb", "Value2"),
                 new BasicNameValuePair("DDD", "Value4"),
@@ -103,7 +104,7 @@ public class EpdqSha512SignatureGeneratorTest {
     }
 
     @Test
-    public void shouldNotModifyInputList() {
+    void shouldNotModifyInputList() {
         List<NameValuePair> params = new ArrayList<>(ImmutableList.of(
                 new BasicNameValuePair("bBb", "Value2"),
                 new BasicNameValuePair("DDD", "Value4"),
@@ -119,24 +120,24 @@ public class EpdqSha512SignatureGeneratorTest {
         assertThat(params, is(originalParams));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowAnIllegalArgumentExceptionIfPassphraseIsBlank() {
+    @Test
+    void shouldThrowAnIllegalArgumentExceptionIfPassphraseIsBlank() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("PARAM1", "Value1"),
                 new BasicNameValuePair("PARAM2", "Value2"),
                 new BasicNameValuePair("PARAM3", "Value3"));
 
-        epdqSha512SignatureGenerator.sign(params, " ");
+        assertThrows(IllegalArgumentException.class, () -> epdqSha512SignatureGenerator.sign(params, " "));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowAnIllegalArgumentExceptionIfPassphraseIsNull() {
+    @Test
+    void shouldThrowAnIllegalArgumentExceptionIfPassphraseIsNull() {
         List<NameValuePair> params = ImmutableList.of(
                 new BasicNameValuePair("PARAM1", "Value1"),
                 new BasicNameValuePair("PARAM2", "Value2"),
                 new BasicNameValuePair("PARAM3", "Value3"));
 
-        epdqSha512SignatureGenerator.sign(params, null);
+        assertThrows(IllegalArgumentException.class, () -> epdqSha512SignatureGenerator.sign(params, null));
     }
 
 }

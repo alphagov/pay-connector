@@ -2,11 +2,11 @@ package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class GatewayAccountCredentialsRequestValidatorTest {
+@ExtendWith(MockitoExtension.class)
+class GatewayAccountCredentialsRequestValidatorTest {
     @Mock
     private ConnectorConfiguration connectorConfiguration;
     @Mock
@@ -39,8 +39,8 @@ public class GatewayAccountCredentialsRequestValidatorTest {
 
     private GatewayAccountCredentialsRequestValidator validator;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         when(worldpayConfig.getCredentials()).thenReturn(List.of("merchant_id"));
         when(gatewayConfig.getCredentials()).thenReturn(List.of());
         when(stripeGatewayConfig.getCredentials()).thenReturn(List.of());
@@ -52,34 +52,34 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldNotThrowWithValidRequest() {
+    void shouldNotThrowWithValidRequest() {
         var request = new GatewayAccountCredentialsRequest("worldpay", Map.of("merchant_id", "some-merchant-id"));
         assertDoesNotThrow(() -> validator.validateCreate(request));
     }
 
     @Test
-    public void shouldThrowWhenPaymentProviderIsMissing() {
+    void shouldThrowWhenPaymentProviderIsMissing() {
         var request = new GatewayAccountCredentialsRequest(null, null);
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Field(s) missing: [payment_provider]"));
     }
 
     @Test
-    public void shouldThrowWhenPaymentProviderIsNotStripeOrWorldpay() {
+    void shouldThrowWhenPaymentProviderIsNotStripeOrWorldpay() {
         var request = new GatewayAccountCredentialsRequest("sandbox", null);
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Operation not supported for payment provider 'sandbox'"));
     }
 
     @Test
-    public void shouldThrowWhenCredentialsAreMissing() {
+    void shouldThrowWhenCredentialsAreMissing() {
         var request = new GatewayAccountCredentialsRequest("worldpay", Map.of("missing_merchant_id", "some-merchant-id"));
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
         assertThat(thrown.getErrors().get(0), is("Field(s) missing: [merchant_id]"));
     }
 
     @Test
-    public void shouldThrowWhenPatchRequestInvalid() {
+    void shouldThrowWhenPatchRequestInvalid() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(Map.of("path", "credentials",
                         "op", "add",
@@ -89,7 +89,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenCredentialsFieldsAreMissingFromPatchRequest() {
+    void shouldThrowWhenCredentialsFieldsAreMissingFromPatchRequest() {
         Map<String, Object> credentials = Map.of(
                 "missing_merchant_id", "some-merchant-id"
         );
@@ -102,7 +102,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenLastUpdatedByUserExternalIdIsNotAString() {
+    void shouldThrowWhenLastUpdatedByUserExternalIdIsNotAString() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "last_updated_by_user_external_id",
@@ -114,7 +114,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenStateIsNotAString() {
+    void shouldThrowWhenStateIsNotAString() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "state",
@@ -126,7 +126,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenStateIsNotAllowedValue() {
+    void shouldThrowWhenStateIsNotAllowedValue() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "state",
@@ -138,7 +138,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldNotThrowWhenValidPatchRequest() {
+    void shouldNotThrowWhenValidPatchRequest() {
         Map<String, Object> credentials = Map.of(
                 "merchant_id", "some-merchant-id"
         );
@@ -161,7 +161,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenOperationNotAllowedForGatewayMerchantId() {
+    void shouldThrowWhenOperationNotAllowedForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",
@@ -173,7 +173,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenValueIsNotValidForGatewayMerchantId() {
+    void shouldThrowWhenValueIsNotValidForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",
@@ -185,7 +185,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowWhenValueIsMissingForGatewayMerchantId() {
+    void shouldThrowWhenValueIsMissingForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",
@@ -196,7 +196,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowIfPaymentProviderIsNotWorldpayForGatewayMerchantId() {
+    void shouldThrowIfPaymentProviderIsNotWorldpayForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",
@@ -208,7 +208,7 @@ public class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    public void shouldThrowIfCredentialsAreEmptyOnGatewayAccountCredentialsForGatewayMerchantId() {
+    void shouldThrowIfCredentialsAreEmptyOnGatewayAccountCredentialsForGatewayMerchantId() {
         JsonNode request = objectMapper.valueToTree(
                 Collections.singletonList(
                         Map.of("path", "credentials/gateway_merchant_id",

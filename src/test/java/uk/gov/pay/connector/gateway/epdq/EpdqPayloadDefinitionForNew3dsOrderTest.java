@@ -2,11 +2,11 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
@@ -21,7 +21,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.ACCEPTURL_KEY;
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder.DECLINEURL_KEY;
@@ -48,8 +48,8 @@ import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionFor
 import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder.USERID_KEY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_3DS_REQUEST;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EpdqPayloadDefinitionForNew3dsOrderTest {
+@ExtendWith(MockitoExtension.class)
+class EpdqPayloadDefinitionForNew3dsOrderTest {
 
     private static final String OPERATION_TYPE = "RES";
     private static final String ORDER_ID = "OrderId";
@@ -84,8 +84,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
 
     private final EpdqPayloadDefinitionForNew3dsOrder epdqPayloadDefinitionFor3dsNewOrder = new EpdqPayloadDefinitionForNew3dsOrder(FRONTEND_URL);
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         epdqPayloadDefinitionFor3dsNewOrder.setPspId(PSP_ID);
         epdqPayloadDefinitionFor3dsNewOrder.setPassword(PASSWORD);
         epdqPayloadDefinitionFor3dsNewOrder.setUserId(USER_ID);
@@ -93,21 +93,10 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         epdqPayloadDefinitionFor3dsNewOrder.setAmount(AMOUNT);
 
         epdqPayloadDefinitionFor3dsNewOrder.setAuthCardDetails(mockAuthCardDetails);
-        when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
-        when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
-        when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
-        when(mockAuthCardDetails.getCardHolder()).thenReturn(CARDHOLDER_NAME);
-        when(mockAuthCardDetails.getAcceptHeader()).thenReturn(ACCEPT_HEADER);
-        when(mockAuthCardDetails.getUserAgentHeader()).thenReturn(USER_AGENT_HEADER);
-
-        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.of(mockAddress));
-        when(mockAddress.getCity()).thenReturn(CITY);
-        when(mockAddress.getPostcode()).thenReturn(POSTCODE);
-        when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
     }
 
     @Test
-    public void assert_payload_and_order_request_type_are_as_expected() {
+    void assert_payload_and_order_request_type_are_as_expected() {
         epdqPayloadDefinitionFor3dsNewOrder.setOrderId("mq4ht90j2oir6am585afk58kml");
         epdqPayloadDefinitionFor3dsNewOrder.setPassword("password");
         epdqPayloadDefinitionFor3dsNewOrder.setUserId("username");
@@ -135,7 +124,9 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     }
 
     @Test
-    public void shouldExtractParametersWithOneLineStreetAddress() {
+    void shouldExtractParametersWithOneLineStreetAddress() {
+        mockCardAndAddressDetails();
+
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
         List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
@@ -170,7 +161,9 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     }
 
     @Test
-    public void shouldExtractParametersWithTwoLineStreetAddress() {
+    void shouldExtractParametersWithTwoLineStreetAddress() {
+        mockCardAndAddressDetails();
+
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
@@ -206,7 +199,14 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     }
 
     @Test
-    public void shouldOmitAddressWhenInputAddressIsNotPresent() {
+    void shouldOmitAddressWhenInputAddressIsNotPresent() {
+        when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
+        when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
+        when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
+        when(mockAuthCardDetails.getCardHolder()).thenReturn(CARDHOLDER_NAME);
+        when(mockAuthCardDetails.getAcceptHeader()).thenReturn(ACCEPT_HEADER);
+        when(mockAuthCardDetails.getUserAgentHeader()).thenReturn(USER_AGENT_HEADER);
+
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
         List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract();
@@ -234,5 +234,19 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(USERID_KEY, USER_ID),
                 new BasicNameValuePair(WIN3DS_URL, "MAINW"))
                 ));
+    }
+
+    private void mockCardAndAddressDetails() {
+        when(mockAuthCardDetails.getCardNo()).thenReturn(CARD_NO);
+        when(mockAuthCardDetails.getCvc()).thenReturn(CVC);
+        when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
+        when(mockAuthCardDetails.getCardHolder()).thenReturn(CARDHOLDER_NAME);
+        when(mockAuthCardDetails.getAcceptHeader()).thenReturn(ACCEPT_HEADER);
+        when(mockAuthCardDetails.getUserAgentHeader()).thenReturn(USER_AGENT_HEADER);
+
+        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.of(mockAddress));
+        when(mockAddress.getCity()).thenReturn(CITY);
+        when(mockAddress.getPostcode()).thenReturn(POSTCODE);
+        when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
     }
 }

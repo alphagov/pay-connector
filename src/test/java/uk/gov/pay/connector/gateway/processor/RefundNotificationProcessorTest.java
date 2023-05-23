@@ -5,13 +5,13 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -35,8 +35,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class RefundNotificationProcessorTest {
+@ExtendWith(MockitoExtension.class)
+ class RefundNotificationProcessorTest {
 
     @Mock
     private RefundService refundService;
@@ -64,13 +64,10 @@ public class RefundNotificationProcessorTest {
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+     void setup() {
         charge = Charge.from(chargeEntity);
         refundEntity = aValidRefundEntity().build();
-        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
 
         refundNotificationProcessor = new RefundNotificationProcessor(refundService, userNotificationService);
 
@@ -80,19 +77,22 @@ public class RefundNotificationProcessorTest {
     }
 
     @Test
-    public void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
+     void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
-    public void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
+     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
-    public void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
+     void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -104,7 +104,7 @@ public class RefundNotificationProcessorTest {
     }
 
     @Test
-    public void shouldLogError_whenRefundEntityIsNotAvailable() {
+     void shouldLogError_whenRefundEntityIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", transactionId, charge);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -118,7 +118,7 @@ public class RefundNotificationProcessorTest {
     }
 
     @Test
-    public void shouldLogWarning_whenNotificationIsForAnExpungedRefund() {
+     void shouldLogWarning_whenNotificationIsForAnExpungedRefund() {
         String gatewayTransactionId = "refund-gateway-tx-id123";
         when(refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId))
                 .thenReturn(Optional.of(Refund.from(refundEntity)));
@@ -133,7 +133,7 @@ public class RefundNotificationProcessorTest {
         assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 
-    public static RefundEntityFixture aValidRefundEntity() {
+     static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
 }

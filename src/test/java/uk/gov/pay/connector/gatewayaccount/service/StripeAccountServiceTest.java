@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 
@@ -19,20 +19,20 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeAccountServiceTest {
+@ExtendWith(MockitoExtension.class)
+ class StripeAccountServiceTest {
 
     private StripeAccountService stripeAccountService;
 
     private GatewayAccountEntity gatewayAccountEntity;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+     void setUp() {
         stripeAccountService = new StripeAccountService();
     }
 
     @Test
-    public void buildStripeAccountResponseShouldReturnStripeAccountResponse() {
+     void buildStripeAccountResponseShouldReturnStripeAccountResponse() {
         String stripeAccountId = "acct_123example123";
         gatewayAccountEntity = aServiceAccount(Map.of("stripe_account_id", stripeAccountId));
 
@@ -43,7 +43,7 @@ public class StripeAccountServiceTest {
     }
 
     @Test
-    public void buildStripeAccountResponseShouldReturnEmptyOptionalWhenCredentialsAreEmpty() {
+     void buildStripeAccountResponseShouldReturnEmptyOptionalWhenCredentialsAreEmpty() {
         gatewayAccountEntity = aServiceAccount(Map.of());
 
         Optional<StripeAccountResponse> stripeAccountResponseOptional =
@@ -53,7 +53,7 @@ public class StripeAccountServiceTest {
     }
 
     @Test
-    public void buildStripeAccountResponseShouldReturnEmptyOptionalWhenCredentialsPropertyIsNull() {
+     void buildStripeAccountResponseShouldReturnEmptyOptionalWhenCredentialsPropertyIsNull() {
         gatewayAccountEntity = aServiceAccount(Collections.singletonMap("stripe_account_id", null));
 
         Optional<StripeAccountResponse> stripeAccountResponseOptional =

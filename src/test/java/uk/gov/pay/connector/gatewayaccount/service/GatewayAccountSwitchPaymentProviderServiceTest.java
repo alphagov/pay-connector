@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -31,8 +32,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-@RunWith(MockitoJUnitRunner.class)
-public class GatewayAccountSwitchPaymentProviderServiceTest {
+@ExtendWith(MockitoExtension.class)
+ class GatewayAccountSwitchPaymentProviderServiceTest {
 
     private GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
     private GatewayAccountEntity gatewayAccountEntity;
@@ -44,15 +45,15 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     @Mock
     private GatewayAccountDao mockGatewayAccountDao;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+     void setUp() {
         gatewayAccountSwitchPaymentProviderService = new GatewayAccountSwitchPaymentProviderService(mockGatewayAccountDao, mockGatewayAccountCredentialsDao);
         gatewayAccountEntity = aGatewayAccountEntity().build();
         request = new GatewayAccountSwitchPaymentProviderRequest(randomUuid(), randomUuid());
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialIsMissing() {
+     void shouldThrowExceptionWhenCredentialIsMissing() {
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withState(ACTIVE)
                 .build();
@@ -62,7 +63,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenNoActiveCredentialFound() {
+     void shouldThrowExceptionWhenNoActiveCredentialFound() {
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withState(VERIFIED_WITH_LIVE_PAYMENT)
                 .build();
@@ -75,7 +76,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialNonExistent() {
+     void shouldThrowExceptionWhenCredentialNonExistent() {
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withState(ACTIVE)
                 .build();
@@ -88,7 +89,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialNotCorrectState() {
+     void shouldThrowExceptionWhenCredentialNotCorrectState() {
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withState(ACTIVE)
                 .build();
@@ -102,7 +103,7 @@ public class GatewayAccountSwitchPaymentProviderServiceTest {
     }
 
     @Test
-    public void shouldMergeCredentials() {
+     void shouldMergeCredentials() {
         var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                 .withState(ACTIVE)
                 .build();

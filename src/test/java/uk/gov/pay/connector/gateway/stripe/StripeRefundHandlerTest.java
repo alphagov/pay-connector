@@ -2,11 +2,11 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.core.Is;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -48,8 +48,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StripeRefundHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class StripeRefundHandlerTest {
     private StripeRefundHandler refundHandler;
     private RefundGatewayRequest refundRequest;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
@@ -63,11 +63,11 @@ public class StripeRefundHandlerTest {
     @Mock
     private Charge charge;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig, objectMapper);
 
-        gatewayAccount =  aGatewayAccountEntity()
+        gatewayAccount = aGatewayAccountEntity()
                 .withId(123L)
                 .withGatewayName(STRIPE.getName())
                 .withRequires3ds(false)
@@ -92,7 +92,7 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldRefundSuccessfully_usingPaymentIntentId() throws Exception {
+    void shouldRefundSuccessfully_usingPaymentIntentId() throws Exception {
         RefundEntity refundEntity = RefundEntityFixture
                 .aValidRefundEntity()
                 .withAmount(100L)
@@ -109,8 +109,9 @@ public class StripeRefundHandlerTest {
         assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
         assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
     }
-@Test
-    public void shouldRefundSuccessfully_usingChargeId() throws Exception {
+
+    @Test
+    void shouldRefundSuccessfully_usingChargeId() throws Exception {
         mockTransferSuccess();
         mockRefundSuccess();
 
@@ -123,8 +124,7 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_whenStatusCode4xxOnRefund() throws Exception {
-        mockTransferSuccess();
+    void shouldNotRefund_whenStatusCode4xxOnRefund() throws Exception {
         mockRefund4xxResponse();
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
@@ -137,8 +137,7 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_whenStatusCode5xxOnRefund() throws Exception {
-        mockTransferSuccess();
+    void shouldNotRefund_whenStatusCode5xxOnRefund() throws Exception {
         mockRefund5xxResponse();
 
         GatewayRefundResponse response = refundHandler.refund(refundRequest);
@@ -149,7 +148,7 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_whenStatusCode4xxOnTransfer() throws Exception {
+    void shouldNotRefund_whenStatusCode4xxOnTransfer() throws Exception {
         mockRefundSuccess();
         mockTransfer4xxResponse();
 
@@ -163,7 +162,7 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_whenStatusCode5xxOnTransfer() throws Exception {
+    void shouldNotRefund_whenStatusCode5xxOnTransfer() throws Exception {
         mockRefund5xxResponse();
 
         GatewayRefundResponse refund = refundHandler.refund(refundRequest);
@@ -172,7 +171,7 @@ public class StripeRefundHandlerTest {
         assertThat(refund.getError().get().getMessage(), containsString("An internal server error occurred while refunding Transaction id:"));
         assertThat(refund.getError().get().getErrorType(), Is.is(GATEWAY_ERROR));
     }
-    
+
     private void mockRefundSuccess() throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         GatewayClient.Response response = mock(GatewayClient.Response.class);
         when(response.getEntity()).thenReturn(load(STRIPE_REFUND_FULL_CHARGE_RESPONSE));
