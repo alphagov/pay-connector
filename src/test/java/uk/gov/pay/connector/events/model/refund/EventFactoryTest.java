@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.events.model.refund;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.hamcrest.core.Is;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -60,10 +61,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
@@ -85,15 +83,14 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
-@RunWith(JUnitParamsRunner.class)
-public class EventFactoryTest {
+@ExtendWith(MockitoExtension.class)
+class EventFactoryTest {
 
     private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
@@ -106,8 +103,8 @@ public class EventFactoryTest {
 
     private EventFactory eventFactory;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         chargeService = mock(ChargeService.class);
         refundDao = mock(RefundDao.class);
         refundService = mock(RefundService.class);
@@ -115,14 +112,11 @@ public class EventFactoryTest {
         paymentProviders = mock(PaymentProviders.class);
         paymentInstrumentService = mock(PaymentInstrumentService.class);
 
-        PaymentProvider paymentProvider = new SandboxPaymentProvider();
-        when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
-
         eventFactory = new EventFactory(chargeService, refundDao, refundService, chargeEventDao, paymentProviders);
     }
 
     @Test
-    public void shouldCreateCorrectEventsFromRefundCreatedStateTransition() throws Exception {
+    void shouldCreateCorrectEventsFromRefundCreatedStateTransition() throws Exception {
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundCreatedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.CREATED.getValue())
@@ -162,7 +156,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateCorrectEventsFromRefundSubmittedStateTransition() throws Exception {
+    void shouldCreateCorrectEventsFromRefundSubmittedStateTransition() throws Exception {
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundSubmittedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_SUBMITTED.getValue())
@@ -193,7 +187,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateCorrectEventsFromRefundSucceededStateTransition() throws Exception {
+    void shouldCreateCorrectEventsFromRefundSucceededStateTransition() throws Exception {
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
         RefundHistory refundSucceededHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
@@ -224,7 +218,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateCorrectEventsFromRefundErrorStateTransition() throws Exception {
+    void shouldCreateCorrectEventsFromRefundErrorStateTransition() throws Exception {
         Charge charge = Charge.from(chargeEntity);
         when(chargeService.findCharge(chargeEntity.getExternalId())).thenReturn(Optional.of(charge));
         RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
@@ -263,7 +257,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatePaymentCreatedEventWithCorrectPayloadForPaymentCreatedStateTransition() throws Exception {
+    void shouldCreatePaymentCreatedEventWithCorrectPayloadForPaymentCreatedStateTransition() throws Exception {
         Long chargeEventEntityId = 100L;
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
@@ -291,7 +285,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateEventWithNoPayloadForNonPayloadEventStateTransition() throws Exception {
+    void shouldCreateEventWithNoPayloadForNonPayloadEventStateTransition() throws Exception {
         Long chargeEventEntityId = 100L;
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
@@ -315,7 +309,7 @@ public class EventFactoryTest {
         assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
     }
 
-    private Object[] statesAffectingRefundability() {
+    static private Object[] statesAffectingRefundability() {
         return new Object[]{
                 // non terminal events
                 new Object[]{PaymentCreated.class, PaymentCreatedEventDetails.class},
@@ -346,9 +340,9 @@ public class EventFactoryTest {
         };
     }
 
-    @Test
-    @Parameters(method = "statesAffectingRefundability")
-    public void shouldCreatedRefundAvailabilityUpdatedEventForTerminalAndOtherStatesAffectingRefundability(
+    @ParameterizedTest
+    @MethodSource("statesAffectingRefundability")
+    void shouldCreatedRefundAvailabilityUpdatedEventForTerminalAndOtherStatesAffectingRefundability(
             Class eventClass, Class eventDetailsClass) throws Exception {
 
         Long chargeEventEntityId = 100L;
@@ -377,7 +371,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatedARefundAvailabilityUpdatedEvent_ifPaymentIsHistoric() throws Exception {
+    void shouldCreatedARefundAvailabilityUpdatedEvent_ifPaymentIsHistoric() throws Exception {
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");
         LedgerTransaction transaction = new LedgerTransaction();
@@ -419,7 +413,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatedCorrectEventForPaymentNotificationCreated() throws Exception {
+    void shouldCreatedCorrectEventForPaymentNotificationCreated() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
                 .build();
@@ -448,7 +442,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateCorrectEventWithEventDetailsForAuthorisationRejectedAgreementAuthorisationMode() throws Exception {
+    void shouldCreateCorrectEventWithEventDetailsForAuthorisationRejectedAgreementAuthorisationMode() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
@@ -485,7 +479,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreateCorrectEventWithoutEventDetailsForAuthorisationRejectedWebAuthorisationMode() throws Exception {
+    void shouldCreateCorrectEventWithoutEventDetailsForAuthorisationRejectedWebAuthorisationMode() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
                 .withAuthorisationMode(AuthorisationMode.WEB)
@@ -519,7 +513,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatedCorrectEventForBackfillRecreatedUserEmailCollectedEvent() throws Exception {
+    void shouldCreatedCorrectEventForBackfillRecreatedUserEmailCollectedEvent() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.USER_CANCELLED)
                 .withEmail("test@example.org")
@@ -552,7 +546,7 @@ public class EventFactoryTest {
     }
 
     @Test
-    public void shouldCreatedCorrectEventForGatewayRequires3dsAuthorisationEvent() throws Exception {
+    void shouldCreatedCorrectEventForGatewayRequires3dsAuthorisationEvent() throws Exception {
         Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
         auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
@@ -589,7 +583,7 @@ public class EventFactoryTest {
     }
     
     @Test
-    public void shouldCreateCorrectEventForCancelledWithGatewayAfterAuthorisationErrorEvent() throws EventCreationException {
+    void shouldCreateCorrectEventForCancelledWithGatewayAfterAuthorisationErrorEvent() throws EventCreationException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.AUTHORISATION_ERROR)
                 .withGatewayTransactionId("gateway_transaction_id")

@@ -1,17 +1,16 @@
 package uk.gov.pay.connector.charge.service;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -43,11 +42,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-@RunWith(JUnitParamsRunner.class)
-public class ChargeCancelServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ChargeCancelServiceTest {
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     @Mock
     private ChargeDao mockChargeDao;
@@ -68,7 +65,7 @@ public class ChargeCancelServiceTest {
     private ChargeCancelService chargeCancelService;
 
     @Test
-    public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
+   void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -82,14 +79,13 @@ public class ChargeCancelServiceTest {
 
         verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
     }
-
-    @Test
-    @Parameters({
+    @ParameterizedTest
+    @ValueSource( strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION READY"
     })
-    public void doSystemCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
+    void doSystemCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
 
         String externalChargeId = "external-charge-id";
@@ -108,8 +104,9 @@ public class ChargeCancelServiceTest {
         verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
     }
 
-    @Test
-    @Parameters({
+
+    @ParameterizedTest
+    @ValueSource( strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS"
@@ -143,7 +140,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_chargeStatusAfterAuthorisation_cancelledWithProvider() throws Exception {
+    void doSystemCancel_chargeStatusAfterAuthorisation_cancelledWithProvider() throws Exception {
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -168,7 +165,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldFail_whenChargeNotFound() {
+    void doSystemCancel_shouldFail_whenChargeNotFound() {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -180,7 +177,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
+    void doUserCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
         String externalChargeId = "external-charge-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
@@ -194,13 +191,14 @@ public class ChargeCancelServiceTest {
         verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
     }
 
-    @Test
-    @Parameters({
+
+    @ParameterizedTest
+    @ValueSource( strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION READY"
     })
-    public void doUserCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
+    void doUserCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
 
         String externalChargeId = "external-charge-id";
@@ -218,13 +216,14 @@ public class ChargeCancelServiceTest {
         verify(chargeService).transitionChargeState(externalChargeId, USER_CANCELLED);
     }
 
-    @Test
-    @Parameters({
+
+    @ParameterizedTest
+    @ValueSource( strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS"
     })
-    public void doUserCancel_chargeStatusDuringAuthorisation_needsCancellationWithProvider(String chargeStatus) throws Exception {
+    void doUserCancel_chargeStatusDuringAuthorisation_needsCancellationWithProvider(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
 
         String externalChargeId = "external-charge-id";
@@ -253,7 +252,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_shouldCancel_chargeStatusAfterAuthorisation_cancelledWithProvider() throws Exception {
+    void doUserCancel_shouldCancel_chargeStatusAfterAuthorisation_cancelledWithProvider() throws Exception {
         String externalChargeId = "external-charge-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
@@ -275,7 +274,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_shouldFail_whenChargeNotFound() {
+    void doUserCancel_shouldFail_whenChargeNotFound() {
         String externalChargeId = "external-charge-id";
 
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.empty());
@@ -285,7 +284,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
+    void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -309,7 +308,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() throws Exception {
+    void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() throws Exception {
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()

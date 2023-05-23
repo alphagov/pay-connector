@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.gateway.processor;
 
-import junitparams.JUnitParamsRunner;
 import org.exparity.hamcrest.date.InstantMatchers;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -29,11 +26,8 @@ import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
-@RunWith(JUnitParamsRunner.class)
-public class ChargeNotificationProcessorTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+@ExtendWith(MockitoExtension.class)
+class ChargeNotificationProcessorTest {
 
     protected static final long GATEWAY_ACCOUNT_ID = 10L;
     
@@ -46,8 +40,8 @@ public class ChargeNotificationProcessorTest {
     @Mock
     protected EventService eventService;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gatewayAccount = GatewayAccountEntityFixture
                 .aGatewayAccountEntity()
                 .build();
@@ -56,7 +50,7 @@ public class ChargeNotificationProcessorTest {
     }
     
     @Test
-    public void receivedCaptureNotification_shouldEmitEvent() {
+    void receivedCaptureNotification_shouldEmitEvent() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_ERROR).build();
         Charge charge = Charge.from(chargeEntity);
         
