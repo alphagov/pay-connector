@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.util;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
@@ -13,27 +13,27 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class IpDomainMatcherTest {
+@ExtendWith(MockitoExtension.class)
+class IpDomainMatcherTest {
 
     private IpDomainMatcher ipDomainMatcher;
     
     @Mock
     private ReverseDnsLookup reverseDnsLookup;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         ipDomainMatcher = new IpDomainMatcher(reverseDnsLookup);
     }
     
     @Test
-    public void reverseDnsShouldReturnHostIfIpIsValid() {
+    void reverseDnsShouldReturnHostIfIpIsValid() {
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord("195.35.90.1"))).thenReturn(Optional.of("worldpay.com."));
         assertThat(ipDomainMatcher.ipMatchesDomain("195.35.90.1", "worldpay.com"), is(true));
     }
     
     @Test
-    public void reverseDnsShouldCorrectlyMatchValidForwardedHeaderToDomain() {
+    void reverseDnsShouldCorrectlyMatchValidForwardedHeaderToDomain() {
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord("195.35.90.1"))).thenReturn(Optional.of("worldpay.com."));
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord("8.8.8.8"))).thenReturn(Optional.of("dns.google."));
         assertThat(ipDomainMatcher.ipMatchesDomain("8.8.8.8, 195.35.90.1", "worldpay.com"), is(true));
@@ -41,7 +41,7 @@ public class IpDomainMatcherTest {
     }
 
     @Test
-    public void reverseDnsShouldFailGracefullyIfForwardedHeaderIsNotValid() {
+    void reverseDnsShouldFailGracefullyIfForwardedHeaderIsNotValid() {
         when(reverseDnsLookup.lookup(any(DnsPointerResourceRecord.class))).thenReturn(Optional.empty());
         assertThat(ipDomainMatcher.ipMatchesDomain("not-an-ip", "worldpay.com"), is(false));
         assertThat(ipDomainMatcher.ipMatchesDomain(null, "worldpay.com"), is(false));

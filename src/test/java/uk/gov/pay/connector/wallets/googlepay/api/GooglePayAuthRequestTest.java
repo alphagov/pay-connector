@@ -3,7 +3,7 @@ package uk.gov.pay.connector.wallets.googlepay.api;
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -11,10 +11,10 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class GooglePayAuthRequestTest {
+class GooglePayAuthRequestTest {
 
     @Test
-    public void shouldDeserializeFromJsonCorrectly() throws IOException {
+    void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
         JsonNode expected = objectMapper.readTree(fixture("googlepay/example-3ds-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(

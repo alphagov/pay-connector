@@ -5,14 +5,14 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
@@ -21,11 +21,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
+@ExtendWith(MockitoExtension.class)
+ class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
 
     @InjectMocks
     ApplicationStartupDependentResourceChecker applicationStartupDependentResourceChecker;
@@ -41,8 +44,8 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+     void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(ApplicationStartupDependentResourceChecker.class);
         mockAppender = mockAppender();
         root.setLevel(Level.INFO);
@@ -50,7 +53,7 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     }
 
     @Test
-    public void start_ShouldWaitAndLogUntilDatabaseIsAccessible() throws Exception {
+     void start_ShouldWaitAndLogUntilDatabaseIsAccessible() throws Exception {
 
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection())
@@ -71,7 +74,7 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     }
 
     @Test
-    public void start_ShouldProgressivelyIncrementSleepingTimeBetweenChecksForDBAccessibility() throws Exception {
+     void start_ShouldProgressivelyIncrementSleepingTimeBetweenChecksForDBAccessibility() throws Exception {
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection())
                 .thenThrow(new SQLException("not there"))
@@ -96,7 +99,7 @@ public class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
     }
 
     @Test
-    public void start_ShouldCloseAnyAcquiredConnectionWhenTheCheckIsDone() throws Exception {
+     void start_ShouldCloseAnyAcquiredConnectionWhenTheCheckIsDone() throws Exception {
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection()).thenReturn(mockConnection);
 

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
@@ -13,13 +13,12 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 
 import java.time.LocalDate;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE;
@@ -35,10 +34,10 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_REFUND_SUCCESS_RESPONSE;
 
-public class WorldpayXMLUnmarshallerTest {
+class WorldpayXMLUnmarshallerTest {
 
     @Test
-    public void shouldUnmarshallACancelSuccessResponse() throws Exception {
+    void shouldUnmarshallACancelSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_SUCCESS_RESPONSE);
         WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCancelResponse.class);
         assertThat(response.getTransactionId(), is("transaction-id"));
@@ -46,9 +45,8 @@ public class WorldpayXMLUnmarshallerTest {
         assertThat(response.getErrorMessage(), is(nullValue()));
     }
 
-
     @Test
-    public void shouldUnmarshallACancelErrorResponse() throws Exception {
+    void shouldUnmarshallACancelErrorResponse() throws Exception {
         String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_CANCEL_ERROR_RESPONSE);
 
         WorldpayCancelResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayCancelResponse.class);
@@ -58,7 +56,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallANotification() throws Exception {
+    void shouldUnmarshallANotification() throws Exception {
         String transactionId = "MyUniqueTransactionId!";
         String status = "CAPTURED";
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
@@ -77,7 +75,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallACaptureSuccessResponse() throws Exception {
+    void shouldUnmarshallACaptureSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_SUCCESS_RESPONSE);
         WorldpayCaptureResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayCaptureResponse.class);
         assertThat(response.getTransactionId(), is("transaction-id"));
@@ -86,7 +84,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallACaptureErrorResponse() throws Exception {
+    void shouldUnmarshallACaptureErrorResponse() throws Exception {
         String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_CAPTURE_ERROR_RESPONSE);
         WorldpayCaptureResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayCaptureResponse.class);
         assertThat(response.getTransactionId(), is(nullValue()));
@@ -95,7 +93,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallAAuthorisationSuccessResponse() throws Exception {
+    void shouldUnmarshallAAuthorisationSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         assertTrue(response.getLastEvent().isPresent());
@@ -111,7 +109,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshall3dsResponse() throws Exception {
+    void shouldUnmarshall3dsResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
 
@@ -129,7 +127,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshall3dsFlexResponse() throws Exception {
+    void shouldUnmarshall3dsFlexResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_FLEX_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
 
@@ -149,7 +147,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallAAuthorisationFailedResponse() throws Exception {
+    void shouldUnmarshallAAuthorisationFailedResponse() throws Exception {
         String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
         assertTrue(response.getLastEvent().isPresent());
@@ -165,7 +163,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallCanceledAuthorisations() throws Exception {
+    void shouldUnmarshallCanceledAuthorisations() throws Exception {
         String failedPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(failedPayload, WorldpayOrderStatusResponse.class);
         assertThat(response.cancelStatus(), is(BaseCancelResponse.CancelStatus.CANCELLED));
@@ -182,7 +180,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallAAuthorisationErrorResponse() throws Exception {
+    void shouldUnmarshallAAuthorisationErrorResponse() throws Exception {
         String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_ERROR_RESPONSE);
         WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayOrderStatusResponse.class);
 
@@ -194,7 +192,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallARefundSuccessResponse() throws Exception {
+    void shouldUnmarshallARefundSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_REFUND_SUCCESS_RESPONSE);
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayRefundResponse.class);
 
@@ -205,7 +203,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallARefundErrorResponse() throws Exception {
+    void shouldUnmarshallARefundErrorResponse() throws Exception {
         String errorPayload = TestTemplateResourceLoader.load(WORLDPAY_REFUND_ERROR_RESPONSE);
         WorldpayRefundResponse response = XMLUnmarshaller.unmarshall(errorPayload, WorldpayRefundResponse.class);
 
@@ -216,7 +214,7 @@ public class WorldpayXMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallADeleteTokenSuccessResponse() throws Exception {
+    void shouldUnmarshallADeleteTokenSuccessResponse() throws Exception {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_DELETE_TOKEN_SUCCESS_RESPONSE);
         WorldpayDeleteTokenResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayDeleteTokenResponse.class);
 
