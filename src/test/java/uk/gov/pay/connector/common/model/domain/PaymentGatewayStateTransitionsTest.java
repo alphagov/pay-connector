@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.common.model.domain;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.apache.commons.lang3.tuple.Triple;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.model.Event;
@@ -61,30 +62,30 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
-@RunWith(JUnitParamsRunner.class)
-public class PaymentGatewayStateTransitionsTest {
+@ExtendWith(MockitoExtension.class)
+class PaymentGatewayStateTransitionsTest {
     PaymentGatewayStateTransitions transitions = PaymentGatewayStateTransitions.getInstance();
 
     @Test
-    public void allStatuses_hasEveryValidChargeStatus() {
+    void allStatuses_hasEveryValidChargeStatus() {
         Set<ChargeStatus> expected = new HashSet<>(Arrays.asList(ChargeStatus.values()));
         assertThat(transitions.allStatuses(), is(expected));
     }
 
     @Test
-    public void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() {
+    void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() {
         Set<Triple<ChargeStatus, ChargeStatus, String>> actual = transitions.allTransitions();
         assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, PaymentExpired.class.getSimpleName())));
     }
 
     @Test
-    public void isValidTransition_indicatesValidAndInvalidTransition() {
+    void isValidTransition_indicatesValidAndInvalidTransition() {
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new UnspecifiedEvent()), is(true));
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CREATED, AUTHORISATION_SUCCESS, new UnspecifiedEvent()), is(false));
     }
 
     @Test
-    public void isValidTransition_deniesTransitionWithInvalidEvent() {
+    void isValidTransition_deniesTransitionWithInvalidEvent() {
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED,
                 new CaptureSubmitted("id", true, 100L, "a", new EmptyEventDetails(), Instant.now())), is(true));
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED,
@@ -92,24 +93,24 @@ public class PaymentGatewayStateTransitionsTest {
     }
 
     @Test
-    public void getEventTransitionFor_returnsEventForModelledTypedEvent() {
+    void getEventTransitionFor_returnsEventForModelledTypedEvent() {
         Optional<Class<Event>> eventClassType = transitions.getEventForTransition(CAPTURE_APPROVED, CAPTURE_ERROR);
         assertThat(eventClassType.get(), is(CaptureAbandonedAfterTooManyRetries.class));
     }
 
     @Test
-    public void getEventTransitionFor_returnsEmptyForInvalidTransition() {
+    void getEventTransitionFor_returnsEmptyForInvalidTransition() {
         Optional<Class<Event>> eventClassType = transitions.getEventForTransition(CAPTURE_APPROVED, CREATED);
         assertThat(eventClassType, is(Optional.empty()));
     }
 
     @Test
-    public void getEventTransitionFor_returnsEmptyForUnmodelledEvent() {
+    void getEventTransitionFor_returnsEmptyForUnmodelledEvent() {
         Optional<Class<Event>> eventClassType = transitions.getEventForTransition(CAPTURE_APPROVED, CAPTURE_READY);
         assertThat(eventClassType, is(Optional.empty()));
     }
 
-    private Object[] intermediateStatesForTransitions() {
+    static private Object[] intermediateStatesForTransitions() {
         return new Object[]{
                 new Object[]{AUTHORISATION_READY, ENTERING_CARD_DETAILS, AUTHORISATION_3DS_REQUIRED},
                 new Object[]{AUTHORISATION_READY, ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED},
@@ -150,9 +151,9 @@ public class PaymentGatewayStateTransitionsTest {
         };
     }
 
-    @Test
-    @Parameters(method = "intermediateStatesForTransitions")
-    public void getIntermediateChargeStatusShouldDeriveStatusCorrectly(ChargeStatus expectedIntermediateStatus,
+    @ParameterizedTest
+    @MethodSource( "intermediateStatesForTransitions")
+    void getIntermediateChargeStatusShouldDeriveStatusCorrectly(ChargeStatus expectedIntermediateStatus,
                                                                        ChargeStatus fromStatus,
                                                                        ChargeStatus toStatus) {
         Optional<ChargeStatus> actualStatus = transitions.getIntermediateChargeStatus(fromStatus, toStatus);
@@ -160,13 +161,13 @@ public class PaymentGatewayStateTransitionsTest {
     }
 
     @Test
-    public void getEventTransitionForUndefinedToPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
+    void getEventTransitionForUndefinedToPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
         Optional<Class<Event>> eventClassType = transitions.getEventForTransition(UNDEFINED, PAYMENT_NOTIFICATION_CREATED);
         assertThat(eventClassType.get(), is(PaymentNotificationCreated.class));
     }
 
     @Test
-    public void getEventTransitionForPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
+    void getEventTransitionForPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
         Optional<Class<Event>> eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, CAPTURE_SUBMITTED);
         assertThat(eventClassType.get(), is(CaptureSubmitted.class));
 
@@ -181,7 +182,7 @@ public class PaymentGatewayStateTransitionsTest {
     }
 
     @Test
-    public void getNextStatus_returnsAListOfFollowingStatuses() {
+    void getNextStatus_returnsAListOfFollowingStatuses() {
         assertThat(transitions.getNextStatus(AUTHORISATION_READY), hasItems(AUTHORISATION_ABORTED,
                 AUTHORISATION_SUCCESS,
                 AUTHORISATION_REJECTED,

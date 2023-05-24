@@ -1,14 +1,13 @@
 package uk.gov.pay.connector.expunge.service;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -41,11 +40,8 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 
-@RunWith(JUnitParamsRunner.class)
-public class ChargeExpungeServiceTest {
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+@ExtendWith(MockitoExtension.class)
+class ChargeExpungeServiceTest {
 
     @Mock
     private ExpungeConfig mockExpungeConfig;
@@ -70,8 +66,8 @@ public class ChargeExpungeServiceTest {
             .withType(GatewayAccountType.LIVE)
             .build();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(mockExpungeConfig);
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
 
@@ -80,7 +76,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
+   void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
         when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
@@ -93,14 +89,14 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldNotExpungeChargesIfFeatureIsNotEnabled() {
+    void expunge_shouldNotExpungeChargesIfFeatureIsNotEnabled() {
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(false);
         chargeExpungeService.expunge(null);
         verifyNoInteractions(mockChargeDao);
     }
 
     @Test
-    public void expunge_shouldNotExpungeChargeIfInNonTerminalStateAndUpdateParityCheckStatusToSkipped() {
+    void expunge_shouldNotExpungeChargeIfInNonTerminalStateAndUpdateParityCheckStatusToSkipped() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CREATED)
                 .withPaymentProvider("worldpay")
@@ -117,7 +113,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldNotExpungeCharge_ifIsStripePaymentMissingFees_andUpdateParityCheckStatusToSkipped() {
+    void expunge_shouldNotExpungeCharge_ifIsStripePaymentMissingFees_andUpdateParityCheckStatusToSkipped() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(liveGatewayAccount)
                 .withStatus(AUTHORISATION_REJECTED)
@@ -137,7 +133,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldExpungeCharge_whenStripePaymentHasFees() {
+    void expunge_shouldExpungeCharge_whenStripePaymentHasFees() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(liveGatewayAccount)
                 .withStatus(AUTHORISATION_REJECTED)
@@ -159,7 +155,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldNotExpungeCharge__whenInAuthorisationErrorState() {
+    void expunge_shouldNotExpungeCharge__whenInAuthorisationErrorState() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(liveGatewayAccount)
                 .withStatus(AUTHORISATION_ERROR)
@@ -170,7 +166,6 @@ public class ChargeExpungeServiceTest {
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
-        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
         when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
                 .thenReturn(Optional.of(chargeEntity));
         when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
@@ -182,7 +177,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldExpungeCharge_whenInAuthorisationErrorStateButIsExternalReportedPayment() {
+    void expunge_shouldExpungeCharge_whenInAuthorisationErrorStateButIsExternalReportedPayment() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAuthorisationMode(EXTERNAL)
                 .withGatewayAccountEntity(liveGatewayAccount)
@@ -204,7 +199,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldExpungeCharge_ifStripePaymentWithoutGatewayTransactionIdAndNoFees() {
+    void expunge_shouldExpungeCharge_ifStripePaymentWithoutGatewayTransactionIdAndNoFees() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(liveGatewayAccount)
                 .withStatus(AUTHORISATION_REJECTED)
@@ -224,7 +219,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldNotExpungeCharge_ifIsTestStripePaymentMissingFees() {
+    void expunge_shouldNotExpungeCharge_ifIsTestStripePaymentMissingFees() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(testGatewayAccount)
                 .withStatus(AUTHORISATION_REJECTED)
@@ -244,9 +239,10 @@ public class ChargeExpungeServiceTest {
         verify(mockChargeDao, never()).expungeCharge(any(), any());
     }
 
-    @Test
-    @Parameters({"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED"})
-    public void expunge_shouldExpungeChargeIfInSubmittedStateAndChargeIsOlderThanHistoric(String state) {
+
+    @ParameterizedTest
+    @ValueSource( strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED"})
+    void expunge_shouldExpungeChargeIfInSubmittedStateAndChargeIsOlderThanHistoric(String state) {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
@@ -266,7 +262,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_shouldNotExpungeChargeIfInCaptureSubmittedAndChargeIsNewerThanHistoric() {
+    void expunge_shouldNotExpungeChargeIfInCaptureSubmittedAndChargeIsNewerThanHistoric() {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(8);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
@@ -286,7 +282,7 @@ public class ChargeExpungeServiceTest {
     }
 
     @Test
-    public void expunge_whenChargeMeetsTheConditions() {
+    void expunge_whenChargeMeetsTheConditions() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(aGatewayAccountEntity().withId(1L).build())
                 .withAmount(120L)
@@ -303,9 +299,10 @@ public class ChargeExpungeServiceTest {
         verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 
-    @Test
-    @Parameters({"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
-    public void shouldNotExpungeEpdqChargeWithState(String state) {
+
+    @ParameterizedTest
+    @CsvSource( {"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
+    void shouldNotExpungeEpdqChargeWithState(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))
@@ -325,9 +322,10 @@ public class ChargeExpungeServiceTest {
         verify(mockChargeDao, never()).expungeCharge(any(), any());
     }
 
-    @Test
-    @Parameters({"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
-    public void shouldExpungeEpdqChargesWithState(String state) {
+
+    @ParameterizedTest
+    @ValueSource( strings = {"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
+    void shouldExpungeEpdqChargesWithState(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))

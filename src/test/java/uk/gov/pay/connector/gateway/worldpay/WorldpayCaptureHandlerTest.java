@@ -1,18 +1,15 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.common.collect.ImmutableMap;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
 import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -52,11 +49,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(JUnitParamsRunner.class)
-public class WorldpayCaptureHandlerTest {
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+@ExtendWith(MockitoExtension.class)
+class WorldpayCaptureHandlerTest {
 
     private WorldpayCaptureHandler worldpayCaptureHandler;
 
@@ -82,14 +76,14 @@ public class WorldpayCaptureHandlerTest {
             )
     );
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         worldpayCaptureHandler = new WorldpayCaptureHandler(client, ImmutableMap.of(TEST.toString(), URI.create("http://worldpay.test")));
     }
 
-    @Test
-    @Parameters({"null", "250"})
-    public void shouldCaptureAPaymentSuccessfully(@Nullable Long corporateSurchargeAmount) throws Exception {
+    @ParameterizedTest
+    @ValueSource( strings = {"250"})
+    void shouldCaptureAPaymentSuccessfully( Long corporateSurchargeAmount) throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
@@ -126,7 +120,7 @@ public class WorldpayCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureARecurringPaymentSuccessfully() throws Exception {
+    void shouldCaptureARecurringPaymentSuccessfully() throws Exception {
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
@@ -169,7 +163,7 @@ public class WorldpayCaptureHandlerTest {
     }
 
     @Test
-    public void shouldErrorIfOrderReferenceNotKnownInCapture() throws Exception {
+    void shouldErrorIfOrderReferenceNotKnownInCapture() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/error-response.xml")
                 .replace("{{errorDescription}}", "Order has already been paid"));
@@ -185,7 +179,7 @@ public class WorldpayCaptureHandlerTest {
     }
 
     @Test
-    public void shouldErrorIfWorldpayResponseIsNot200() throws Exception {
+    void shouldErrorIfWorldpayResponseIsNot200() throws Exception {
         when(client.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 

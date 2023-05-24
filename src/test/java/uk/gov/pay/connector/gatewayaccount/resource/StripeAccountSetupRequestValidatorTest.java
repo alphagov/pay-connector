@@ -2,11 +2,12 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.Arrays;
@@ -19,13 +20,14 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertThrows;
 
-@RunWith(JUnitParamsRunner.class)
-public class StripeAccountSetupRequestValidatorTest {
+@ExtendWith(MockitoExtension.class)
+class StripeAccountSetupRequestValidatorTest {
 
     private final StripeAccountSetupRequestValidator validator = new StripeAccountSetupRequestValidator();
     private static ObjectMapper objectMapper = new ObjectMapper();
 
-    @Parameters({
+    @ParameterizedTest
+    @CsvSource( {
             "replace, bank_account, true",
             "replace, bank_account, false",
             "replace, responsible_person, true",
@@ -41,8 +43,7 @@ public class StripeAccountSetupRequestValidatorTest {
             "replace, organisation_details, true",
             "replace, organisation_details, false",
     })
-    @Test
-    public void shouldAllowReplaceOperationForValidPathsAndValues(String operation, String path, boolean value) {
+    void shouldAllowReplaceOperationForValidPathsAndValues(String operation, String path, boolean value) {
         JsonNode jsonNode = objectMapper.valueToTree(Collections.singletonList(Map.of(
                 "op", operation,
                 "path", path,
@@ -51,7 +52,7 @@ public class StripeAccountSetupRequestValidatorTest {
         validator.validatePatchRequest(jsonNode);
     }
 
-    private Object[] invalidData() {
+    static private Object[] invalidData() {
         return new Object[]{
                 Map.of("operation", "add", "path", "bank_account", "value", true,
                         "expectedErrorMessage", "Operation [add] not supported for path [bank_account]"),
@@ -84,9 +85,9 @@ public class StripeAccountSetupRequestValidatorTest {
                 new HashMap<String, Object>() {{put("expectedErrorMessage", "Field [op] is required"); put("operation", null); put("path", "government_entity_document"); put("value", true);}},
         };
     }
-    @Parameters(method = "invalidData")
-    @Test
-    public void shouldThrowExceptionForInvalidValues(@Nullable  Map<Object, Object> data) {
+    @ParameterizedTest
+    @MethodSource("invalidData")
+    void shouldThrowExceptionForInvalidValues(  Map<Object, Object> data) {
         JsonNode jsonNode = getJsonNode(data);
 
         ValidationException validationException = assertThrows(ValidationException.class,
@@ -110,8 +111,8 @@ public class StripeAccountSetupRequestValidatorTest {
         return objectMapper.valueToTree(Collections.singletonList(params));
     }
 
-    @Test
-    public void multipleUpdatesAreValid() {
+    @org.junit.jupiter.api.Test
+    void multipleUpdatesAreValid() {
         JsonNode jsonNode = objectMapper.valueToTree(Arrays.asList(
                 Map.of(
                         "op", "replace",
@@ -131,7 +132,7 @@ public class StripeAccountSetupRequestValidatorTest {
     }
 
     @Test
-    public void notAnArrayIsInvalid() {
+    void notAnArrayIsInvalid() {
         JsonNode jsonNode = objectMapper.valueToTree(Map.of(
                 "op", "replace",
                 "path", "bank_account",
