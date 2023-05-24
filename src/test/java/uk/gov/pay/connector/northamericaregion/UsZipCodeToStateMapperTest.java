@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.northamericaregion;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
@@ -8,12 +9,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 
-public class UsZipCodeToStateMapperTest {
+class UsZipCodeToStateMapperTest {
 
-    public final UsZipCodeToStateMapper mapper = new UsZipCodeToStateMapper();
+    final UsZipCodeToStateMapper mapper = new UsZipCodeToStateMapper();
 
     @Test
-    public void shouldReturnTheCorrectStateForValidZipCode() {
+    void shouldReturnTheCorrectStateForValidZipCode() {
         Optional<UsState> usState = mapper.getState("05910");
 
         assertThat(usState.isPresent(), is (true));
@@ -21,7 +22,7 @@ public class UsZipCodeToStateMapperTest {
     }
 
     @Test
-    public void shouldReturnTheCorrectStateForValidZipCodePlusFour() {
+    void shouldReturnTheCorrectStateForValidZipCodePlusFour() {
         Optional<UsState> usState = mapper.getState("05910-1234");
 
         assertThat(usState.isPresent(), is (true));
@@ -29,7 +30,7 @@ public class UsZipCodeToStateMapperTest {
     }
 
     @Test
-    public void shouldReturnTheCorrectStateForValidStateAndZipCode() {
+    void shouldReturnTheCorrectStateForValidStateAndZipCode() {
         Optional<UsState> usState = mapper.getState("VT05910");
 
         assertThat(usState.isPresent(), is (true));
@@ -37,7 +38,7 @@ public class UsZipCodeToStateMapperTest {
     }
 
     @Test
-    public void shouldReturnTheCorrectStateForValidStateAndZipCodeFourPlus() {
+    void shouldReturnTheCorrectStateForValidStateAndZipCodeFourPlus() {
         Optional<UsState> usState = mapper.getState("VT05910-1234");
 
         assertThat(usState.isPresent(), is (true));
@@ -45,25 +46,25 @@ public class UsZipCodeToStateMapperTest {
     }
 
     @Test
-    public void shouldNotReturnStateForInvalidStateAndZipCodeFormat() {
+    void shouldNotReturnStateForInvalidStateAndZipCodeFormat() {
         Optional<UsState> usState = mapper.getState("XX05910");
         assertThat(usState.isEmpty(), is (true));
     }
 
     @Test
-    public void shouldNotReturnStateForInvalidStateAndZipCodePlusFourFormat() {
+    void shouldNotReturnStateForInvalidStateAndZipCodePlusFourFormat() {
         Optional<UsState> usState = mapper.getState("XX05910-1234");
         assertThat(usState.isEmpty(), is (true));
     }
 
     @Test
-    public void shouldNotReturnStateForZipCodeNotInUse() {
+    void shouldNotReturnStateForZipCodeNotInUse() {
         Optional<UsState> usState = mapper.getState("00000");
         assertThat(usState.isEmpty(), is (true));
     }
 
     @Test
-    public void shouldNotReturnStateForInvalidZipCodeFormat() {
+    void shouldNotReturnStateForInvalidZipCodeFormat() {
         Optional<UsState> usState = mapper.getState("xxxxx");
         assertThat(usState.isEmpty(), is (true));
     }

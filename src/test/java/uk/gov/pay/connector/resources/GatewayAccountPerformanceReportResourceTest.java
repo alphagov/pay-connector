@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.report.dao.PerformanceReportDao;
 import uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportEntity;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
@@ -20,8 +20,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 
-@RunWith(MockitoJUnitRunner.class)
-public class GatewayAccountPerformanceReportResourceTest {
+@ExtendWith(MockitoExtension.class)
+class GatewayAccountPerformanceReportResourceTest {
 
     @Mock
     private PerformanceReportDao mockPerformanceReportDao;
@@ -36,8 +36,8 @@ public class GatewayAccountPerformanceReportResourceTest {
 
     private PerformanceReportResource resource;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         someTransactionsPerformanceReportEntity = Stream.of(new GatewayAccountPerformanceReportEntity(
             totalVolume,
             totalAmount,
@@ -51,7 +51,7 @@ public class GatewayAccountPerformanceReportResourceTest {
     }
 
     @Test
-    public void noTransactionsPerformanceReportEntitySerializesCorrectly() {
+    void noTransactionsPerformanceReportEntitySerializesCorrectly() {
         Stream<GatewayAccountPerformanceReportEntity> noTransactionsPerformanceReportEntity
                 = Stream.empty();
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount())
@@ -67,7 +67,7 @@ public class GatewayAccountPerformanceReportResourceTest {
     }
 
     @Test
-    public void someTransactionsPerformanceReportEntitySerializesCorrectly() {
+    void someTransactionsPerformanceReportEntitySerializesCorrectly() {
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount())
                 .willReturn(someTransactionsPerformanceReportEntity);
 

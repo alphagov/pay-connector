@@ -1,15 +1,16 @@
 package uk.gov.pay.connector.common.model.domain;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
 
-public class NumbersInStringsSanitizerTest {
+class NumbersInStringsSanitizerTest {
 
     @Test
-    public void sanitize_shouldSanitizeNumbersAsStarsInStringWith11Numbers() {
+    void sanitize_shouldSanitizeNumbersAsStarsInStringWith11Numbers() {
 
         String sanitizedValue = NumbersInStringsSanitizer.sanitize("01234567892");
 
@@ -17,7 +18,7 @@ public class NumbersInStringsSanitizerTest {
     }
 
     @Test
-    public void sanitize_shouldNotSanitizeNumbersAsStarsInStringWith10Numbers() {
+    void sanitize_shouldNotSanitizeNumbersAsStarsInStringWith10Numbers() {
 
         String sanitizedValue = NumbersInStringsSanitizer.sanitize("2345678912");
 
@@ -25,7 +26,7 @@ public class NumbersInStringsSanitizerTest {
     }
 
     @Test
-    public void sanitize_shouldNotSanitizeABlankString() {
+    void sanitize_shouldNotSanitizeABlankString() {
 
         String sanitizedValue = NumbersInStringsSanitizer.sanitize("  ");
 
@@ -33,7 +34,7 @@ public class NumbersInStringsSanitizerTest {
     }
 
     @Test
-    public void sanitize_shouldNotSanitizeANullValue() {
+    void sanitize_shouldNotSanitizeANullValue() {
 
         String sanitizedValue = NumbersInStringsSanitizer.sanitize(null);
 
@@ -41,7 +42,7 @@ public class NumbersInStringsSanitizerTest {
     }
 
     @Test
-    public void sanitize_shouldSanitizeStringWithDigitsInRandomPositions() {
+    void sanitize_shouldSanitizeStringWithDigitsInRandomPositions() {
 
         String sanitizedValue = NumbersInStringsSanitizer.sanitize("&%)9(&%^&*988   hjdjkd$%12  **2221opsdja9q8987^&*88&6^f99s*%^");
 

@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import fj.data.Either;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 
 import java.time.ZonedDateTime;
@@ -32,10 +32,10 @@ import static uk.gov.pay.connector.common.validator.ApiValidators.validateCharge
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateFromDateIsBeforeToDate;
 
 
-public class ApiValidatorsTest {
+class ApiValidatorsTest {
 
     @Test
-    public void shouldValidateEmailLength_WhenPatchingAnEmail() {
+    void shouldValidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
                 ImmutableMap.of(
@@ -49,7 +49,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void shouldInvalidateEmailLength_WhenPatchingAnEmail() {
+    void shouldInvalidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
                 ImmutableMap.of(
@@ -63,7 +63,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_fromDateBeforeToDate() {
+    void validateFromDateIsBeforeToDate_fromDateBeforeToDate() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", "2017-11-23T12:00:00Z",
                 "to_date", "2017-11-23T15:00:00Z");
 
@@ -72,7 +72,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_fromDateAfterToDate() {
+    void validateFromDateIsBeforeToDate_fromDateAfterToDate() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", "2017-11-23T15:00:00Z",
                 "to_date", "2017-11-23T12:00:00Z");
 
@@ -81,7 +81,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_fromDateIsMissing() {
+    void validateFromDateIsBeforeToDate_fromDateIsMissing() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", null,
                 "to_date", "2017-11-23T15:00:00Z");
 
@@ -90,7 +90,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_toDateIsMissing() {
+    void validateFromDateIsBeforeToDate_toDateIsMissing() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", "2017-11-23T12:00:00Z",
                 "to_date", null);
 
@@ -99,7 +99,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_fromDateIsInIncorrectFormat() {
+    void validateFromDateIsBeforeToDate_fromDateIsInIncorrectFormat() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", "Thu, 23 Nov 2017 12:00:00 GMT",
                 "to_date", "2017-11-23T15:00:00Z");
 
@@ -108,7 +108,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateFromDateIsBeforeToDate_toDateIsInIncorrectFormat() {
+    void validateFromDateIsBeforeToDate_toDateIsInIncorrectFormat() {
         Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> result = validateFromDateIsBeforeToDate("from_date", "2017-11-23T12:00:00Z",
                 "to_date", "2017/11/23 03:00:00 PM");
 
@@ -117,7 +117,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void parseZonedDateTimeParsesZonedDateTimes() {
+    void parseZonedDateTimeParsesZonedDateTimes() {
         String rawDate = "2018-06-20T00:00:00Z";
         Optional<ZonedDateTime> maybeDate = parseZonedDateTime(rawDate);
 
@@ -130,7 +130,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAccept_whenEmailAndAmountValid() {
+    void validateChargeParams_shouldAccept_whenEmailAndAmountValid() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(EMAIL_KEY, "anonymous@example.com");
         inputData.put(AMOUNT_KEY, "500");
@@ -141,7 +141,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectEmail_when255Characters() {
+    void validateChargeParams_shouldRejectEmail_when255Characters() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(EMAIL_KEY, RandomStringUtils.randomAlphanumeric(255));
 
@@ -151,7 +151,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectAmount_whenBelowMinAmount() {
+    void validateChargeParams_shouldRejectAmount_whenBelowMinAmount() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(AMOUNT_KEY, String.valueOf(MIN_AMOUNT - 1));
 
@@ -161,7 +161,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectAmount_whenAboveMaxAmount() {
+    void validateChargeParams_shouldRejectAmount_whenAboveMaxAmount() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));
 
@@ -171,7 +171,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectAmount_whenNotParsableAsLong() {
+    void validateChargeParams_shouldRejectAmount_whenNotParsableAsLong() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(AMOUNT_KEY, "this is not a number");
 
@@ -181,7 +181,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAcceptLanguage_whenEn() {
+    void validateChargeParams_shouldAcceptLanguage_whenEn() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, "en");
 
@@ -191,7 +191,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAcceptLanguage_whenCy() {
+    void validateChargeParams_shouldAcceptLanguage_whenCy() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, "cy");
 
@@ -201,7 +201,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectLanguage_whenEmptyString() {
+    void validateChargeParams_shouldRejectLanguage_whenEmptyString() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, "");
 
@@ -211,7 +211,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectLanguage_whenNull() {
+    void validateChargeParams_shouldRejectLanguage_whenNull() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, null);
 
@@ -221,7 +221,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldRejectLanguage_whenIsFr() {
+    void validateChargeParams_shouldRejectLanguage_whenIsFr() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(LANGUAGE_KEY, "fr");
 
@@ -231,7 +231,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAcceptDelayedCapture_whenTrue() {
+    void validateChargeParams_shouldAcceptDelayedCapture_whenTrue() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(DELAYED_CAPTURE_KEY, "true");
 
@@ -241,7 +241,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAcceptDelayedCapture_whenFalse() {
+    void validateChargeParams_shouldAcceptDelayedCapture_whenFalse() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(DELAYED_CAPTURE_KEY, "false");
 
@@ -251,7 +251,7 @@ public class ApiValidatorsTest {
     }
 
     @Test
-    public void validateChargeParams_shouldAcceptDelayedCapture_whenNotTrueOrFalse() {
+    void validateChargeParams_shouldAcceptDelayedCapture_whenNotTrueOrFalse() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(DELAYED_CAPTURE_KEY, "maybe");
 
@@ -261,7 +261,7 @@ public class ApiValidatorsTest {
     }
     
     @Test
-    public void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
+    void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(EMAIL_KEY, RandomStringUtils.randomAlphanumeric(255));
         inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));

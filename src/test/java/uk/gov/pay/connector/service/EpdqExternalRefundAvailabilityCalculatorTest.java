@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -45,15 +45,14 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_FULL;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_PENDING;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
-public class EpdqExternalRefundAvailabilityCalculatorTest {
+class EpdqExternalRefundAvailabilityCalculatorTest {
 
     private final ExternalRefundAvailabilityCalculator epdqExternalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
     
     @Test
-    public void testGetChargeRefundAvailabilityReturnsPending() {
+    void testGetChargeRefundAvailabilityReturnsPending() {
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(CREATED), List.of()), is(EXTERNAL_PENDING));
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(ENTERING_CARD_DETAILS), List.of()), is(EXTERNAL_PENDING));
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_READY), List.of()), is(EXTERNAL_PENDING));
@@ -67,7 +66,7 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     @Test
-    public void testGetChargeRefundAvailabilityReturnsUnavailable() {
+    void testGetChargeRefundAvailabilityReturnsUnavailable() {
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_REJECTED), List.of()), is(EXTERNAL_UNAVAILABLE));
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_ERROR), List.of()), is(EXTERNAL_UNAVAILABLE));
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED), List.of()), is(EXTERNAL_UNAVAILABLE));
@@ -83,7 +82,7 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     @Test
-    public void testGetChargeRefundAvailabilityReturnsAvailableIfChargeIsCaptured() {
+    void testGetChargeRefundAvailabilityReturnsAvailableIfChargeIsCaptured() {
         List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
@@ -95,7 +94,7 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     @Test
-    public void testGetChargeRefundAvailabilityReturnsAvailableIfChargeIsCapturedSubmitted() {
+    void testGetChargeRefundAvailabilityReturnsAvailableIfChargeIsCapturedSubmitted() {
         List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
@@ -107,12 +106,12 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     @Test
-    public void shouldGetChargeRefundAvailabilityAsUnavailable_whenChargeStatusIsInANonRefundableState() {
+    void shouldGetChargeRefundAvailabilityAsUnavailable_whenChargeStatusIsInANonRefundableState() {
         assertThat(epdqExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED, 500L), List.of()), is(EXTERNAL_UNAVAILABLE));
     }
 
     @Test
-    public void testGetChargeRefundAvailabilityReturnsFullIfChargeIsCaptured() {
+    void testGetChargeRefundAvailabilityReturnsFullIfChargeIsCaptured() {
         List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),
@@ -123,7 +122,7 @@ public class EpdqExternalRefundAvailabilityCalculatorTest {
     }
 
     @Test
-    public void testGetChargeRefundAvailabilityReturnsFullIfChargeIsCapturedSubmitted() {
+    void testGetChargeRefundAvailabilityReturnsFullIfChargeIsCapturedSubmitted() {
         List<Refund> refunds = Stream.of(
                 aValidRefundEntity().withStatus(RefundStatus.CREATED).withAmount(100L).build(),
                 aValidRefundEntity().withStatus(RefundStatus.REFUND_SUBMITTED).withAmount(200L).build(),

@@ -1,12 +1,10 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -20,8 +18,8 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
-@RunWith(MockitoJUnitRunner.class)
-public class PaymentProvidersTest {
+@ExtendWith(MockitoExtension.class)
+class PaymentProvidersTest {
 
     @Mock
     private WorldpayPaymentProvider worldpayPaymentProvider;
@@ -34,31 +32,28 @@ public class PaymentProvidersTest {
     
     @Mock
     private StripePaymentProvider stripePaymentProvider;
-    
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     private PaymentProviders providers;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
     }
 
     @Test
-    public void shouldResolveSandboxPaymentProvider() {
+    void shouldResolveSandboxPaymentProvider() {
         PaymentProvider sandbox = providers.byName(PaymentGatewayName.SANDBOX);
         assertThat(sandbox, is(instanceOf(SandboxPaymentProvider.class)));
     }
 
     @Test
-    public void shouldResolveWorldpayPaymentProvider() {
+    void shouldResolveWorldpayPaymentProvider() {
         PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
     }
 
     @Test
-    public void shouldResolveEpdqPaymentProvider() {
+    void shouldResolveEpdqPaymentProvider() {
         PaymentProvider epdq = providers.byName(EPDQ);
         assertThat(epdq, is(instanceOf(EpdqPaymentProvider.class)));
     }

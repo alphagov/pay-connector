@@ -1,13 +1,15 @@
 package uk.gov.pay.connector.healthcheck;
 
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class PingTest {
+class PingTest {
 
     @Test
-    public void testPing() {
+    void testPing() {
         assertTrue(new Ping().execute().isHealthy());
     }
 }
