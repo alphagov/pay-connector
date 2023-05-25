@@ -701,13 +701,17 @@ public class ContractTest {
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_external_id");
         String agreementExternalId = params.get("agreement_external_id");
-        String gatewayAccountId = params.get("gateway_account_id");
+        long amount = Long.parseLong(params.get("amount"));
+        String gatewayAccountId = dbHelper.getAgreementByExternalId(agreementExternalId).get("gateway_account_id").toString();
 
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(gatewayAccountId)
                 .withAgreementExternalId(agreementExternalId)
+                .withAmount(amount)
+                .withReference(ServicePaymentReference.of("reference"))
+                .withDescription("description")
                 .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withCanRetry(true)
