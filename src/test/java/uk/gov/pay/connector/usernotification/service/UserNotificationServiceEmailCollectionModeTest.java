@@ -3,16 +3,12 @@ package uk.gov.pay.connector.usernotification.service;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
@@ -34,11 +30,8 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
 
-@RunWith(JUnitParamsRunner.class)
-public class UserNotificationServiceEmailCollectionModeTest {
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+@ExtendWith(MockitoExtension.class)
+class UserNotificationServiceEmailCollectionModeTest {
 
     @Mock
     private ConnectorConfiguration connectorConfig;
@@ -66,8 +59,8 @@ public class UserNotificationServiceEmailCollectionModeTest {
     
     private UserNotificationService userNotificationService;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         when(connectorConfig.getNotifyConfiguration()).thenReturn(notifyConfiguration);
         when(notifyConfiguration.getEmailTemplateId()).thenReturn("some-template");
         when(notifyConfiguration.getRefundIssuedEmailTemplateId()).thenReturn("another-template");
@@ -81,16 +74,15 @@ public class UserNotificationServiceEmailCollectionModeTest {
         userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment);
 
     }
-    
-    @Test
-    @Parameters({
+
+    @ParameterizedTest
+    @CsvSource(value = {
             "OPTIONAL, email@example.com, true",
             "OPTIONAL, null, false",
             "OFF, null, false",
             "OFF, email@example.com, false",
-    })
-    public void determineSendingEmailForEmailCollectionModes(String emailCollectionMode, 
-                                                          @Nullable String emailAddress, 
+    }, nullValues={"null"})
+    void determineSendingEmailForEmailCollectionModes(String emailCollectionMode, String emailAddress,
                                                           boolean shouldEmailBeSent) throws Exception {
 
         if ("OPTIONAL".equals(emailCollectionMode) && "email@example.com".equals(emailAddress) && shouldEmailBeSent) {

@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -20,8 +20,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class CardCaptureProcessTest {
+@ExtendWith(MockitoExtension.class)
+class CardCaptureProcessTest {
 
     private static final String chargeExternalId = "some-charge-id";
     @Mock
@@ -38,8 +38,8 @@ public class CardCaptureProcessTest {
     ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter;
     CardCaptureProcess cardCaptureProcess;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         List<ChargeCaptureMessage> messages = Arrays.asList(chargeCaptureMessage);
 
         when(chargeCaptureMessage.getChargeId()).thenReturn(chargeExternalId);
@@ -51,7 +51,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldMarkMessageAsProcessedGivenSuccessfulChargeCapture() throws QueueException {
+    void shouldMarkMessageAsProcessedGivenSuccessfulChargeCapture() throws QueueException {
         when(captureResponse.isSuccessful()).thenReturn(true);
 
         cardCaptureProcess.handleCaptureMessages();
@@ -60,7 +60,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldScheduleRetriableMessageGivenUnsuccessfulChargeCapture() throws QueueException {
+    void shouldScheduleRetriableMessageGivenUnsuccessfulChargeCapture() throws QueueException {
         when(captureResponse.isSuccessful()).thenReturn(false);
         when(chargeService.isChargeRetriable(chargeExternalId)).thenReturn(true);
 
@@ -70,7 +70,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldMarkNonRetribaleMessageAsProcessed_MarkChargeAsCaptureErrorGivenUnsuccessfulChargeCapture() throws QueueException {
+    void shouldMarkNonRetribaleMessageAsProcessed_MarkChargeAsCaptureErrorGivenUnsuccessfulChargeCapture() throws QueueException {
         when(captureResponse.isSuccessful()).thenReturn(false);
         when(chargeService.isChargeRetriable(chargeExternalId)).thenReturn(false);
 
@@ -81,7 +81,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldMarkMessageAsProcessedGivenChargeInCapturedState() throws QueueException {
+    void shouldMarkMessageAsProcessedGivenChargeInCapturedState() throws QueueException {
         when(cardCaptureService.doCapture(anyString())).thenThrow(IllegalStateRuntimeException.class);
         when(chargeService.isChargeCaptureSuccess(anyString())).thenReturn(true);
 

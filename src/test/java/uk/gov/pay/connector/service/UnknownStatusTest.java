@@ -17,7 +17,8 @@ class UnknownStatusTest {
         assertThat(UnknownStatus.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
-    @Test()
+
+    @Test
     void shouldThrowExceptionForGetChargeStatus() {
 
         Assertions.assertThrows(IllegalStateException.class, () -> {
@@ -25,7 +26,8 @@ class UnknownStatusTest {
         });
     }
 
-    @Test()
+
+    @Test
     void shouldThrowExceptionForGetRefundStatus() {
         Assertions.assertThrows(IllegalStateException.class, () -> {
             UnknownStatus.getRefundStatus();

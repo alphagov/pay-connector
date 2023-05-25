@@ -1,20 +1,20 @@
 package uk.gov.pay.connector.usernotification.model;
 
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
-public class NotificationsTest {
+class NotificationsTest {
 
     @Test
-    public void shouldBuildNotifications() {
+    void shouldBuildNotifications() {
         ZonedDateTime now = ZonedDateTime.now();
 
         Notifications<String> notifications = Notifications
@@ -42,7 +42,7 @@ public class NotificationsTest {
     }
 
     @Test
-    public void shouldConvertToString() {
+    void shouldConvertToString() {
         ZonedDateTime now = ZonedDateTime.now();
 
         Notifications<String> notifications = Notifications
