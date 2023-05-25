@@ -1,33 +1,34 @@
 package uk.gov.pay.connector.common.model.domain;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class PrefilledAddressTest {
+class PrefilledAddressTest {
     
     @Test
-    public void shouldSetCountryWhenProvidedValueIsTwoCharactersLong() {
+    void shouldSetCountryWhenProvidedValueIsTwoCharactersLong() {
         var address = createPrefilledAdddressWithCountryOf("GB");
         assertThat(address.getCountry(), is("GB"));
     }
 
     @Test
-    public void shouldSetCountryToNullWhenCountryNotSupplied() {
+    void shouldSetCountryToNullWhenCountryNotSupplied() {
         var address = createPrefilledAdddressWithCountryOf(null);
         assertThat(address.getCountry(), is(nullValue()));
     }
     
     @Test
-    public void shouldSetCountryToNullWhenProvidedCountryTooShort() {
+    void shouldSetCountryToNullWhenProvidedCountryTooShort() {
         var address = createPrefilledAdddressWithCountryOf("G");
         assertThat(address.getCountry(), is(nullValue()));
     }
 
     @Test
-    public void shouldSetCountryToNullWhenProvidedCountryTooLong() {
+    void shouldSetCountryToNullWhenProvidedCountryTooLong() {
         var address = createPrefilledAdddressWithCountryOf("GBR");
         assertThat(address.getCountry(), is(nullValue()));
     }

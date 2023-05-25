@@ -1,23 +1,22 @@
 package uk.gov.pay.connector.service;
 
 import com.codahale.metrics.MetricRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 
-@RunWith(MockitoJUnitRunner.class)
-public class GatewayClientFactoryTest {
+@ExtendWith(MockitoExtension.class)
+class GatewayClientFactoryTest {
 
     @InjectMocks
     GatewayClientFactory gatewayClientFactory;
@@ -27,7 +26,7 @@ public class GatewayClientFactoryTest {
     @Mock
     MetricRegistry mockMetricRegistry;
     @Test
-    public void shouldBuildGatewayClient() {
+    void shouldBuildGatewayClient() {
         GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         assertNotNull(gatewayClient);

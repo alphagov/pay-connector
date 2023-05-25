@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
@@ -8,23 +9,26 @@ import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class MappedChargeStatusTest {
+class MappedChargeStatusTest {
 
     private final MappedChargeStatus mappedChargeStatus = new MappedChargeStatus(ChargeStatus.CAPTURED);
 
     @Test
-    public void shouldReturnCorrectType() {
+    void shouldReturnCorrectType() {
         assertThat(mappedChargeStatus.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
     }
 
     @Test
-    public void shouldGetChargeStatus() {
+    void shouldGetChargeStatus() {
         assertThat(mappedChargeStatus.getChargeStatus(), is(ChargeStatus.CAPTURED));
     }
 
-    @Test(expected =  IllegalStateException.class)
-    public void shouldThrowExceptionForGetRefundStatus() {
-        mappedChargeStatus.getRefundStatus();
+    @Test()
+    void shouldThrowExceptionForGetRefundStatus() {
+
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            mappedChargeStatus.getRefundStatus();
+        });
     }
 
 }

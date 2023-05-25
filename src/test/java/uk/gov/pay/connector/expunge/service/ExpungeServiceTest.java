@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.expunge.service;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 
@@ -12,8 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ExpungeServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ExpungeServiceTest {
 
     @Mock
     ChargeExpungeService mockChargeExpungeService;
@@ -26,18 +25,16 @@ public class ExpungeServiceTest {
     int defaultNumberOfRefundsToExpunge = 100;
     ExpungeService expungeService;
 
-    @Before
-    public void setUp() {
+
+    @Test
+    void shouldInvokeChargeAndRefundExpungerWithNoOfRecordsToExpungeBasedOnConfigurationWhenQueryParamIsNotPassed() {
         ExpungeConfig expungeConfig = mock(ExpungeConfig.class);
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(expungeConfig);
         when(expungeConfig.getNumberOfChargesToExpunge()).thenReturn(defaultNumberOfChargesToExpunge);
         when(expungeConfig.getNumberOfRefundsToExpunge()).thenReturn(defaultNumberOfRefundsToExpunge);
 
         expungeService = new ExpungeService(mockChargeExpungeService, mockRefundExpungeService, mockConnectorConfiguration);
-    }
 
-    @Test
-    public void shouldInvokeChargeAndRefundExpungerWithNoOfRecordsToExpungeBasedOnConfigurationWhenQueryParamIsNotPassed() {
         expungeService.expunge(null, null);
 
         verify(mockChargeExpungeService).expunge(defaultNumberOfChargesToExpunge);
@@ -45,7 +42,12 @@ public class ExpungeServiceTest {
     }
 
     @Test
-    public void shouldInvokeChargeAndRefundExpungerWithQueryParameterPassedForNoOfRecordsToExpunge() {
+    void shouldInvokeChargeAndRefundExpungerWithQueryParameterPassedForNoOfRecordsToExpunge() {
+        ExpungeConfig expungeConfig = mock(ExpungeConfig.class);
+        when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(expungeConfig);
+
+        expungeService = new ExpungeService(mockChargeExpungeService, mockRefundExpungeService, mockConnectorConfiguration);
+
         expungeService.expunge(5, 10);
 
         verify(mockChargeExpungeService).expunge(5);

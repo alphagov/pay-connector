@@ -1,33 +1,39 @@
 package uk.gov.pay.connector.common.model.api;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class ExternalRefundStatusMapTest {
+class ExternalRefundStatusMapTest {
 
     @Test
-    public void shouldHaveCorrectNumberOfStatuses() {
+    void shouldHaveCorrectNumberOfStatuses() {
         assertThat(ExternalRefundStatus.values().length, is(3));
     }
 
     @Test
-    public void shouldGetStatusValue() {
+    void shouldGetStatusValue() {
         assertThat(ExternalRefundStatus.EXTERNAL_SUBMITTED.getStatus(), is("submitted"));
         assertThat(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus(), is("success"));
         assertThat(ExternalRefundStatus.EXTERNAL_ERROR.getStatus(), is("error"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowExceptionForUnrecognisedStatusLabelValue() {
+    @Test()
+    void shouldThrowExceptionForUnrecognisedStatusLabelValue() {
 
-        ExternalRefundStatus.fromPublicStatusLabel("whatever");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ExternalRefundStatus.fromPublicStatusLabel("whatever");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowExceptionForEmptyStatusLabelValue() {
+    @Test()
+    void shouldThrowExceptionForEmptyStatusLabelValue() {
 
-        ExternalRefundStatus.fromPublicStatusLabel("");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ExternalRefundStatus.fromPublicStatusLabel("");
+        });
     }
+
 }

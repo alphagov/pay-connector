@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.UnknownStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class UnknownStatusTest {
+class UnknownStatusTest {
 
     private final UnknownStatus UnknownStatus = new UnknownStatus();
 
@@ -16,14 +17,19 @@ public class UnknownStatusTest {
         assertThat(UnknownStatus.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
-    @Test(expected =  IllegalStateException.class)
-    public void shouldThrowExceptionForGetChargeStatus() {
-        UnknownStatus.getChargeStatus();
+    @Test()
+    void shouldThrowExceptionForGetChargeStatus() {
+
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            UnknownStatus.getChargeStatus();
+        });
     }
 
-    @Test(expected =  IllegalStateException.class)
-    public void shouldThrowExceptionForGetRefundStatus() {
-        UnknownStatus.getRefundStatus();
+    @Test()
+    void shouldThrowExceptionForGetRefundStatus() {
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            UnknownStatus.getRefundStatus();
+        });
     }
     
 }

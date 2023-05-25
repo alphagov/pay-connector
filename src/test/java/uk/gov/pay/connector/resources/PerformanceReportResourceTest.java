@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.report.dao.PerformanceReportDao;
 import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
@@ -18,8 +18,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 
-@RunWith(MockitoJUnitRunner.class)
-public class PerformanceReportResourceTest {
+@ExtendWith(MockitoExtension.class)
+class PerformanceReportResourceTest {
 
     private final Long totalVolume = 100000000000000L;
     private final BigDecimal totalAmount = new BigDecimal("10000000000000000");
@@ -34,8 +34,8 @@ public class PerformanceReportResourceTest {
 
     private PerformanceReportResource resource;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         noTransactionsPerformanceReportEntity = new PerformanceReportEntity(
             0L,
             BigDecimal.ZERO,
@@ -51,7 +51,7 @@ public class PerformanceReportResourceTest {
     }
 
     @Test
-    public void emptyPerformanceReportSerialisesCorrectly() {
+    void emptyPerformanceReportSerialisesCorrectly() {
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPayments())
                 .willReturn(noTransactionsPerformanceReportEntity);
 
@@ -67,7 +67,7 @@ public class PerformanceReportResourceTest {
     }
 
     @Test
-    public void nonEmptyPerformanceReportSerialisesCorrectly() {
+    void nonEmptyPerformanceReportSerialisesCorrectly() {
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPayments())
                 .willReturn(someTransactionsPerformanceReportEntity);
 
