@@ -22,7 +22,7 @@ public enum MappedAuthorisationRejectedReason {
     ISSUER_TEMPORARILY_UNAVAILABLE(true),
     LOST_CARD(false),
     NO_SUCH_ISSUER(true),
-    PICKUP_CARD(true),
+    PICKUP_CARD(false),
     REENTER_TRANSACTION(true),
     REFER_TO_CARD_ISSUER(true),
     REVOCATION_OF_ALL_AUTHORISATION(false),
@@ -30,7 +30,7 @@ public enum MappedAuthorisationRejectedReason {
     STOLEN_CARD(true),
     STOP_PAYMENT_ORDER(false),
     SUSPECTED_FRAUD(true),
-    TRANSACTION_NOT_PERMITTED(true),
+    TRANSACTION_NOT_PERMITTED(false),
     TRY_AGAIN_LATER(true),
     TRY_ANOTHER_CARD(true),
     UNCATEGORISED(true);
