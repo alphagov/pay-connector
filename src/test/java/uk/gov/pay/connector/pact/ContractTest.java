@@ -718,4 +718,28 @@ public class ContractTest {
                 .build());
     }
 
+    @State("a gateway account with id 3456 and an active agreement exists")
+    public void aGatewayAccountWithId3456AndAnActiveAgreementExists() {
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("3456")
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of())
+                .withServiceName("a brilliant service")
+                .withRecurringEnabled(true)
+                .build());
+
+        var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
+                .build();
+        dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
+
+        var agreementParams = anAddAgreementParams()
+                .withGatewayAccountId("3456")
+                .withExternalAgreementId("abcdefghijklmnopqrstuvwxyz")
+                .withPaymentInstrumentId(addPaymentInstrumentParams.getPaymentInstrumentId())
+                .build();
+        dbHelper.addAgreement(agreementParams);
+    }
+
 }
