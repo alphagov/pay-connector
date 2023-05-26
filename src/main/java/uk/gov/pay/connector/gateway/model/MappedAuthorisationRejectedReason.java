@@ -3,13 +3,13 @@ package uk.gov.pay.connector.gateway.model;
 public enum MappedAuthorisationRejectedReason {
 
     AUTHENTICATION_REQUESTED(true),
-    AUTHENTICATION_REQUIRED(true),
+    AUTHENTICATION_REQUIRED(false),
     CAPTURE_CARD(false),
     CLOSED_ACCOUNT(false),
     DO_NOT_HONOUR(true),
     DO_NOT_RETRY(false),
     EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT(true),
-    EXPIRED_CARD(true),
+    EXPIRED_CARD(false),
     GENERIC_DECLINE(true),
     INCORRECT_NUMBER(false),
     INSUFFICIENT_FUNDS(true),
@@ -18,16 +18,16 @@ public enum MappedAuthorisationRejectedReason {
     INVALID_CARD_NUMBER(false),
     INVALID_MERCHANT(true),
     INVALID_TRANSACTION(false),
-    INVALID_CVV2(true),
+    INVALID_CVV2(false),
     ISSUER_TEMPORARILY_UNAVAILABLE(true),
     LOST_CARD(false),
-    NO_SUCH_ISSUER(true),
+    NO_SUCH_ISSUER(false),
     PICKUP_CARD(false),
     REENTER_TRANSACTION(true),
     REFER_TO_CARD_ISSUER(true),
     REVOCATION_OF_ALL_AUTHORISATION(false),
     REVOCATION_OF_AUTHORISATION(false),
-    STOLEN_CARD(true),
+    STOLEN_CARD(false),
     STOP_PAYMENT_ORDER(false),
     SUSPECTED_FRAUD(true),
     TRANSACTION_NOT_PERMITTED(false),
@@ -35,14 +35,14 @@ public enum MappedAuthorisationRejectedReason {
     TRY_ANOTHER_CARD(true),
     UNCATEGORISED(true);
 
-    private final boolean canRetry;
+    private final boolean recurringPaymentCanBeRetried;
 
-    MappedAuthorisationRejectedReason(boolean canRetry) {
-        this.canRetry = canRetry;
+    MappedAuthorisationRejectedReason(boolean recurringPaymentCanBeRetried) {
+        this.recurringPaymentCanBeRetried = recurringPaymentCanBeRetried;
     }
 
     public boolean canRetry() {
-        return canRetry;
+        return recurringPaymentCanBeRetried;
     }
 
 }
