@@ -71,6 +71,10 @@ public class AgreementEntity {
     @OneToOne
     @JoinColumn(name = "payment_instrument_id", nullable = true)
     private PaymentInstrumentEntity paymentInstrument;
+
+    @Column(name = "cancelled_date")
+    @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
+    private Instant cancelledDate;
     
 
     public AgreementEntity() {
@@ -168,6 +172,14 @@ public class AgreementEntity {
 
     public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrumentEntity) {
         this.paymentInstrument = paymentInstrumentEntity;
+    }
+
+    public Instant getCancelledDate() {
+        return cancelledDate;
+    }
+
+    public void setCancelledDate(Instant cancelledDate) {
+        this.cancelledDate = cancelledDate;
     }
 
     @JsonIgnore
