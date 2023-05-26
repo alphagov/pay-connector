@@ -94,12 +94,14 @@ public class AgreementService {
         agreement.getPaymentInstrument()
                 .filter(paymentInstrument -> paymentInstrument.getStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {
+                    Instant now = clock.instant();
                     paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
+                    agreement.setCancelledDate(now);
                     taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
                     if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
-                        ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, Instant.now()));
+                        ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, now));
                     } else {
-                        ledgerService.postEvent(AgreementCancelledByService.from(agreement, Instant.now()));
+                        ledgerService.postEvent(AgreementCancelledByService.from(agreement, now));
                     }
                 }, () -> {
                     throw new PaymentInstrumentNotActiveException("Payment instrument not active.");

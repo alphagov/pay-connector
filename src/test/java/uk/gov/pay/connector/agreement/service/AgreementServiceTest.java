@@ -57,10 +57,11 @@ public class AgreementServiceTest {
     private AgreementService agreementService;
     private TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
 
+    String INSTANT_EXPECTED = "2022-03-03T10:15:30Z";
+
     @BeforeEach
     public void setUp() {
-        String instantExpected = "2022-03-03T10:15:30Z";
-        Clock clock = Clock.fixed(Instant.parse(instantExpected), ZoneOffset.UTC);
+        Clock clock = Clock.fixed(Instant.parse(INSTANT_EXPECTED), ZoneOffset.UTC);
         agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock, mockedTaskQueueService);
     }
 
@@ -144,6 +145,7 @@ public class AgreementServiceTest {
         verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
         assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+        assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
     }
 
     @Test
@@ -162,5 +164,6 @@ public class AgreementServiceTest {
         verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
         assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+        assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
     }
 }
