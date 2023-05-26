@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.events.model.agreement;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.service.payments.commons.model.agreement.AgreementStatus;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecondPrecisionSerializer;
 
 import java.time.Instant;
 
@@ -18,7 +19,7 @@ public class AgreementCancelledByUser extends AgreementEvent {
                 agreement.getServiceId(),
                 agreement.getGatewayAccount().isLive(),
                 agreement.getExternalId(),
-                new AgreementCancelledByUserEventDetails(agreementCancelRequest),
+                new AgreementCancelledByUserEventDetails(agreementCancelRequest, timestamp),
                 timestamp
         );
     }
@@ -26,10 +27,13 @@ public class AgreementCancelledByUser extends AgreementEvent {
     static class AgreementCancelledByUserEventDetails extends EventDetails {
         private final String userExternalId;
         private final String userEmail;
+        @JsonSerialize(using = ApiResponseInstantWithMicrosecondPrecisionSerializer.class)
+        private final Instant cancelledDate;
 
-        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest) {
+        public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest, Instant cancelledDate) {
             this.userExternalId = agreementCancelRequest.getUserExternalId();
             this.userEmail = agreementCancelRequest.getUserEmail();
+            this.cancelledDate = cancelledDate;
         }
 
         public String getUserExternalId() {
@@ -38,6 +42,10 @@ public class AgreementCancelledByUser extends AgreementEvent {
 
         public String getUserEmail() {
             return userEmail;
+        }
+
+        public Instant getCancelledDate() {
+            return cancelledDate;
         }
     }
 }
