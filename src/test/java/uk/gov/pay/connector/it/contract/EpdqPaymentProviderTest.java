@@ -6,13 +6,12 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.core.Is;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -61,6 +60,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -73,9 +73,9 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
-@Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
-@RunWith(MockitoJUnitRunner.class)
-public class EpdqPaymentProviderTest {
+@Disabled("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
+@ExtendWith(MockitoExtension.class)
+class EpdqPaymentProviderTest {
 
     private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ = "4000000000000002";
     private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ = "4874970686672022";
@@ -117,8 +117,8 @@ public class EpdqPaymentProviderTest {
     @Mock
     private GatewayClientFactory mockGatewayClientFactory;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         when(mockConnectorConfiguration.getLinks()).thenReturn(mockLinksConfig);
         when(mockConnectorConfiguration.getGatewayConfigFor(EPDQ)).thenReturn(mockGatewayConfig);
         when(mockLinksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
@@ -142,7 +142,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfully() throws Exception {
+    void shouldAuthoriseSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request, chargeEntity);
@@ -150,7 +150,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() throws Exception {
+    void shouldAuthoriseSuccessfullyWithNoAddressInRequest() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         AuthCardDetails authCardDetails = authCardDetailsFixture()
                 .withAddress(null)
@@ -163,7 +163,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
+    void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds1().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request, chargeEntity);
@@ -172,7 +172,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() throws Exception {
+    void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
 
         AuthCardDetails authCardDetails = authCardDetailsFixture()
@@ -187,7 +187,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3ds2OnSuccessfully() throws Exception {
+    void shouldAuthoriseWith3ds2OnSuccessfully() throws Exception {
         setUpFor3ds2AndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixtureThatWillRequire3ds2().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request, chargeEntity);
@@ -196,7 +196,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3ds2OnAndMaxLengthsExceededOnSuccessfully() throws Exception {
+    void shouldAuthoriseWith3ds2OnAndMaxLengthsExceededOnSuccessfully() throws Exception {
         String addressLine1LongerThanEpdq3ds2LimitOf35Characters = "1001 Periphrastic Circuitous Crescent";
         String addressLine2LongerThanEpdq3ds2LimitOf35Characters = "Discursive Prolix Multiloquent Wittering";
         String addressCityLongerThanEpdq3ds2LimitOf25Characters = "Prolonged Longhampton-upon-Sea";
@@ -224,7 +224,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCheckAuthorisationStatusSuccessfully() throws Exception {
+    void shouldCheckAuthorisationStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request, chargeEntity);
@@ -237,7 +237,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() throws Exception {
+    void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
 
@@ -251,7 +251,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCaptureSuccessfully() throws Exception {
+    void shouldCaptureSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
@@ -267,7 +267,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCancelSuccessfully() throws Exception {
+    void shouldCancelSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request, chargeEntity);
@@ -281,7 +281,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldRefundSuccessfully() throws Exception {
+    void shouldRefundSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
@@ -300,7 +300,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldQueryPaymentStatusSuccessfully() throws Exception {
+    void shouldQueryPaymentStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
         var request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetailsFixture().build());
@@ -314,7 +314,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
+    void shouldReturnQueryResponseWhenChargeNotFound() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
         ChargeQueryResponse chargeQueryResponse = paymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
@@ -395,7 +395,7 @@ public class EpdqPaymentProviderTest {
                     .build();
 
         } catch (IOException ex) {
-            Assume.assumeTrue(false);
+            fail();
         }
     }
 

@@ -4,9 +4,9 @@ package uk.gov.pay.connector.model.domain;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EmailNotificationTypeTest {
 

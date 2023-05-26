@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-public class PayersCardTypesResourceITest {
+public class PayersCardTypesResourceIT {
     private static final CardTypeDao mockedDao = mock(CardTypeDao.class);
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRule.builder().addResource(new CardTypesResource(mockedDao)).build();

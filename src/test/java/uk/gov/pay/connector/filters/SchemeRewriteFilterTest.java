@@ -2,21 +2,21 @@ package uk.gov.pay.connector.filters;
 
 import org.glassfish.jersey.internal.PropertiesDelegate;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.ws.rs.core.SecurityContext;
 import java.net.URI;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
-public class SchemeRewriteFilterTest {
+class SchemeRewriteFilterTest {
 
     private SchemeRewriteFilter schemeRewriteFilter = new SchemeRewriteFilter();
 
     @Test
-    public void filter_shouldRewriteSchemeInBaseUriAndRequestUriToHttps() {
+    void filter_shouldRewriteSchemeInBaseUriAndRequestUriToHttps() {
 
         SecurityContext securityContextMock = Mockito.mock(SecurityContext.class);
         PropertiesDelegate propertiesDelegateMock = Mockito.mock(PropertiesDelegate.class);

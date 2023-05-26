@@ -4,7 +4,6 @@ import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,8 +47,9 @@ import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.anyString;
@@ -393,8 +393,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
     @Test
     void shouldThrowAChargeNotFoundRuntimeExceptionWhenChargeDoesNotExist() {
-
-        Assertions.assertThrows(ChargeNotFoundRuntimeException.class, () -> {
+        assertThrows(ChargeNotFoundRuntimeException.class, () -> {
             String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
 
             setupMockExecutorServiceMock();
@@ -407,7 +406,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Test
     void shouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenStatusIsAuthorisation3dsReady() {
 
-        Assertions.assertThrows(OperationAlreadyInProgressRuntimeException.class, () ->{
+        assertThrows(OperationAlreadyInProgressRuntimeException.class, () ->{
             ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_3DS_READY);
 
             when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -424,7 +423,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Test
     void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus() {
 
-        Assertions.assertThrows(IllegalStateRuntimeException.class, () -> {
+        assertThrows(IllegalStateRuntimeException.class, () -> {
             ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
 
             when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -440,7 +439,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Test
     void shouldThrowChargeExpiredRuntimeExceptionWhenChargeExpired() {
 
-        Assertions.assertThrows( IllegalStateRuntimeException.class, () -> {
+        assertThrows( IllegalStateRuntimeException.class, () -> {
             ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.EXPIRED);
 
             when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));

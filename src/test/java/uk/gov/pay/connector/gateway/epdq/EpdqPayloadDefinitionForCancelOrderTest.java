@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCancelO
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST_WITH_ORDERID;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST_WITH_PAYID;
 

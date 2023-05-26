@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.service;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MappedRefundStatusTest {
 
@@ -23,10 +23,9 @@ class MappedRefundStatusTest {
         assertThat(mappedRefundStatus.getRefundStatus(), is(RefundStatus.REFUNDED));
     }
 
-    @Test()
+    @Test
     void shouldThrowExceptionForGetChargeStatus() {
-
-        Assertions.assertThrows(IllegalStateException.class,() -> {
+        assertThrows(IllegalStateException.class,() -> {
             mappedRefundStatus.getChargeStatus();
         });
     }

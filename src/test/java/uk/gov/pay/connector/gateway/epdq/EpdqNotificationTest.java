@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -10,6 +9,7 @@ import java.util.Arrays;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
 
 class EpdqNotificationTest {
@@ -58,9 +58,9 @@ class EpdqNotificationTest {
         assertThat(epdqNotification.getReference(), is(""));
     }
 
-    @Test()
+    @Test
     void shouldFailToParseMalformedPayload() {
-        Assertions.assertThrows(EpdqParseException.class, () -> new EpdqNotification("malformed") );
+        assertThrows(EpdqParseException.class, () -> new EpdqNotification("malformed") );
     }
 
 

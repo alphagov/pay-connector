@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.gateway.util;
 
-import org.junit.Rule;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.rules.ExpectedException;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -15,6 +12,7 @@ import java.util.Map;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -26,12 +24,9 @@ class AuthUtilTest {
     private String username = "worldpay-username";
     private String password = "password"; //pragma: allowlist secret
 
-    @Rule
-    public final ExpectedException exception = ExpectedException.none();
-
     @Test
     void shouldThrowException_whenAuthModeAgreement_andNoCredentials() {
-        MissingCredentialsForRecurringPaymentException thrown = Assertions.assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
+        MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             Map<String, Object> credentials = Map.of(
                     CREDENTIALS_MERCHANT_ID, merchantCode,
                     CREDENTIALS_USERNAME, username,
@@ -90,7 +85,7 @@ class AuthUtilTest {
     }
     @Test
     void shouldThrowException_whenAuthModeAgreement_andNoCredentialsForMerchantId() {
-        MissingCredentialsForRecurringPaymentException thrown = Assertions.assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
+        MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             Map<String, Object> credentials = Map.of(
                     CREDENTIALS_MERCHANT_ID, merchantCode,
                     CREDENTIALS_USERNAME, username,

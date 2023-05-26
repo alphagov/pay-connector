@@ -30,9 +30,9 @@ import java.time.ZonedDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;

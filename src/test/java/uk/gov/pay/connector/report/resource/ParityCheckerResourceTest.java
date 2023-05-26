@@ -1,32 +1,29 @@
 package uk.gov.pay.connector.report.resource;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.ClassRule;
-import org.junit.Test;
-import uk.gov.pay.connector.events.EmittedEventsBackfillService;
-import uk.gov.pay.connector.events.HistoricalEventEmitterService;
-import uk.gov.pay.connector.events.resource.EmittedEventResource;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.report.ParityCheckerService;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class ParityCheckerResourceTest {
+@ExtendWith(DropwizardExtensionsSupport.class)
+class ParityCheckerResourceTest {
     
     private static final ParityCheckerService parityCheckerService = mock(ParityCheckerService.class);
 
-    @ClassRule
-    public static final ResourceTestRule resources = ResourceTestRule.builder()
+    public static final ResourceExtension resources = ResourceExtension.builder()
             .addResource(new ParityCheckerResource(parityCheckerService))
             .build();
 
-
     @Test
-    public void parityCheckCharge() {
+    void parityCheckCharge() {
         Response response = resources
                 .target("/v1/tasks/parity-checker")
                 .queryParam("start_id", 1L)
@@ -41,7 +38,7 @@ public class ParityCheckerResourceTest {
     }
 
     @Test
-    public void parityCheckRefunds() {
+    void parityCheckRefunds() {
         Response response = resources
                 .target("/v1/tasks/parity-checker")
                 .queryParam("start_id", 1L)
@@ -56,7 +53,7 @@ public class ParityCheckerResourceTest {
     }
 
     @Test
-    public void parityCheckRefundsWorksWithNoRecordType() {
+    void parityCheckRefundsWorksWithNoRecordType() {
         Response response = resources
                 .target("/v1/tasks/parity-checker")
                 .queryParam("start_id", 1L)
@@ -71,7 +68,7 @@ public class ParityCheckerResourceTest {
 
 
     @Test
-    public void parityCheckRefundsFailsWithNonStandardRecordType() {
+    void parityCheckRefundsFailsWithNonStandardRecordType() {
         Response response = resources
                 .target("/v1/tasks/parity-checker")
                 .queryParam("start_id", 1L)

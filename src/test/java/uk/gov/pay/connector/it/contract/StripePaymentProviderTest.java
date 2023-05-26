@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -44,7 +43,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -185,7 +183,7 @@ public class StripePaymentProviderTest {
         var gatewayRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(recurringCharge);
         GatewayResponse authoriseUserNotPresentResponse = stripePaymentProvider.authoriseUserNotPresent(gatewayRequest);
 
-        Assertions.assertTrue(authoriseUserNotPresentResponse.getBaseResponse().isPresent());
+        assertTrue(authoriseUserNotPresentResponse.getBaseResponse().isPresent());
     }
 
     @Test

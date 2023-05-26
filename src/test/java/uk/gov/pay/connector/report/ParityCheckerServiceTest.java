@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.report;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -44,11 +44,11 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
@@ -61,9 +61,10 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefund
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ParityCheckerServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ParityCheckerServiceTest {
     @Mock
     private ChargeDao chargeDao;
     @Mock
@@ -99,9 +100,9 @@ public class ParityCheckerServiceTest {
     private Optional<String> emptyParityCheckStatus = Optional.empty();
     private RefundParityChecker refundParityChecker;
 
-    @Before
-    public void setUp() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+    @BeforeEach
+    void setUp() {
+        lenient().when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         refundParityChecker = new RefundParityChecker(refundDao);
         parityCheckService = new ParityCheckService(ledgerService, chargeService, historicalEventEmitter,
                 chargeParityChecker, refundParityChecker, refundService);
@@ -138,7 +139,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeSkipsParityCheckForAlreadyCheckedChargesExistingInLedger() {
+    void executeSkipsParityCheckForAlreadyCheckedChargesExistingInLedger() {
         chargeEntity.updateParityCheck(ParityCheckStatus.EXISTS_IN_LEDGER);
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
@@ -153,7 +154,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeRecordsParityStatusForChargesExistingInLedger() {
+    void executeRecordsParityStatusForChargesExistingInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));
@@ -167,7 +168,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeRecordsParityStatusForChargeAndRefundsExistingInLedger() {
+    void executeRecordsParityStatusForChargeAndRefundsExistingInLedger() {
         RefundEntity refundEntity = aValidRefundEntity().build();
         chargeEntity.setStatus(ChargeStatus.EXPIRED);
         when(chargeDao.findMaxId()).thenReturn(1L);
@@ -195,7 +196,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeRecordsParityStatusForChargeWithDifferentStatusInLedger() {
+    void executeRecordsParityStatusForChargeWithDifferentStatusInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("started").build()));
@@ -209,7 +210,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
+    void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(refundService.findNotExpungedRefunds(chargeEntity.getExternalId()))
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
@@ -225,7 +226,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeEmitsEventAndRecordsEmissionWhenRefundWithDifferentStatusInLedger() {
+    void executeEmitsEventAndRecordsEmissionWhenRefundWithDifferentStatusInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(refundService.findNotExpungedRefunds(chargeEntity.getExternalId()))
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
@@ -242,7 +243,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeEmitsEventAndRecordsEmission() {
+    void executeEmitsEventAndRecordsEmission() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
@@ -257,7 +258,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeShouldEmitEventIfEmittedPreviously() {
+    void executeShouldEmitEventIfEmittedPreviously() {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
@@ -269,7 +270,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void executeForParityCheckStatusShouldEmitEventsOnlyForStatus() {
+    void executeForParityCheckStatusShouldEmitEventsOnlyForStatus() {
         when(chargeDao.findByParityCheckStatus(DATA_MISMATCH, 100, chargeEntity.getId())).thenReturn(List.of());
         when(chargeDao.findByParityCheckStatus(DATA_MISMATCH, 100, 0L)).thenReturn(List.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
@@ -283,7 +284,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void parityCheckForRefundsByParityCheckStatus__shouldEmitEventsAndSetParityCheckStatus() {
+    void parityCheckForRefundsByParityCheckStatus__shouldEmitEventsAndSetParityCheckStatus() {
         when(refundDao.findByParityCheckStatus(DATA_MISMATCH, 100, refundEntity.getId())).thenReturn(List.of());
         when(refundDao.findByParityCheckStatus(DATA_MISMATCH, 100, 0L)).thenReturn(List.of(refundEntity));
         when(chargeService.findCharge(refundEntity.getChargeExternalId())).thenReturn(Optional.of(Charge.from(chargeEntity)));
@@ -299,7 +300,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void parityCheckForRefundsByParityCheckStatus_shouldSkipPreviouslyMatchedRecordsWhenDoNoReprocessValidRecordsIsSet() {
+    void parityCheckForRefundsByParityCheckStatus_shouldSkipPreviouslyMatchedRecordsWhenDoNoReprocessValidRecordsIsSet() {
         refundEntity.setParityCheckStatus(EXISTS_IN_LEDGER);
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, 0L)).thenReturn(List.of(refundEntity));
         when(refundDao.findByParityCheckStatus(EXISTS_IN_LEDGER, 100, refundEntity.getId())).thenReturn(List.of());
@@ -311,7 +312,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void parityCheckRefundsByIdRange_shouldEmitEventsAndSetParityCheckStatus() {
+    void parityCheckRefundsByIdRange_shouldEmitEventsAndSetParityCheckStatus() {
         when(refundDao.findMaxId()).thenReturn(1L);
         when(refundDao.findById(1L)).thenReturn(Optional.of(refundEntity));
 
@@ -327,7 +328,7 @@ public class ParityCheckerServiceTest {
     }
 
     @Test
-    public void parityCheckRefundsByIdRange_shouldSkipPreviouslyMatchedRecordsWhenDoNoReprocessValidRecordsIsSet() {
+    void parityCheckRefundsByIdRange_shouldSkipPreviouslyMatchedRecordsWhenDoNoReprocessValidRecordsIsSet() {
         refundEntity.setParityCheckStatus(EXISTS_IN_LEDGER);
         when(refundDao.findMaxId()).thenReturn(1L);
         when(refundDao.findById(1L)).thenReturn(Optional.of(refundEntity));
